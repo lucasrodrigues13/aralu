@@ -352,7 +352,7 @@ export class BudgetDialog {
         <div class="coluna">
       <section class="gd-painel servicos">
         <div class="gd-barra">
-          <h2>Serviços e fornecedores</h2>
+          <h2>Serviços e Fornecedores</h2>
           <div class="acoes">
             <button mat-stroked-button type="button" (click)="abrirBudget()"><mat-icon>request_quote</mat-icon> Orçamento</button>
             <button mat-stroked-button type="button" (click)="adicionarServico()"><mat-icon>add</mat-icon> Adicionar serviço</button>

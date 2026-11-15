@@ -60,7 +60,7 @@ export class NovoServicoDialog {
   template: `
     <header class="gd-cabecalho">
       <div>
-        <h1>Serviços e fornecedores</h1>
+        <h1>Serviços e Fornecedores</h1>
         <p>Catálogo da conta e lista de serviços.</p>
       </div>
       <button mat-flat-button type="button" (click)="abrirFornecedor()">
