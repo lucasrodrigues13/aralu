@@ -13,9 +13,11 @@ import { mensagemDeErro } from '../../core/mensagem-erro';
 import { Modelo, NegocioClient } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { CampoDataComponent } from '../../shared/campo-data';
+import { CampoDinheiroComponent } from '../../shared/campo-dinheiro';
+import { CampoHoraComponent } from '../../shared/campo-hora';
 import { deDataParaIso, deIsoParaData } from '../../shared/data';
-import { MascaraDirective } from '../../shared/mascara.directive';
-import { aplicarMascara } from '../../shared/mascaras';
+import { grupoLocal, localPedido, LocalCamposComponent } from '../../shared/local-campos';
+import { aplicarMascara, horaParaApi } from '../../shared/mascaras';
 
 export interface EventoFormDados {
   id?: string;
@@ -25,7 +27,8 @@ export interface EventoFormDados {
   selector: 'app-evento-form',
   imports: [
     ReactiveFormsModule, RouterLink, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule,
-    MatSelectModule, MatCheckboxModule, MatTabsModule, MatDialogModule, CampoDataComponent, MascaraDirective,
+    MatSelectModule, MatCheckboxModule, MatTabsModule, MatDialogModule, CampoDataComponent, CampoHoraComponent,
+    CampoDinheiroComponent, LocalCamposComponent,
   ],
   template: `
     <div [class.gd-dialog-miolo]="!!dialogRef">
@@ -68,8 +71,8 @@ export interface EventoFormDados {
                 <mat-form-field appearance="outline"><mat-label>Nome</mat-label><input matInput formControlName="primeiroNome" /></mat-form-field>
               }
               <app-campo-data rotulo="Data" formControlName="data" />
-              <mat-form-field appearance="outline"><mat-label>Horário do convite</mat-label><input matInput type="time" formControlName="hora" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Budget</mat-label><input matInput type="number" min="0" formControlName="orcamentoEstimado" /></mat-form-field>
+              <app-campo-hora rotulo="Horário do convite" formControlName="hora" />
+              <app-campo-dinheiro rotulo="Orçamento" formControlName="orcamentoEstimado" />
               <mat-form-field appearance="outline"><mat-label>Convidados estimados</mat-label><input matInput type="number" min="0" formControlName="convidadosEstimados" /></mat-form-field>
               <mat-form-field appearance="outline"><mat-label>URL do site</mat-label><input matInput [value]="urlSite()" readonly /></mat-form-field>
               <mat-form-field appearance="outline"><mat-label>Senha do site</mat-label><input matInput formControlName="senhaSite" /></mat-form-field>
@@ -81,31 +84,17 @@ export interface EventoFormDados {
               @if (formulario.controls.salvarNaAgenda.value) { <p>O vínculo com o Google fica vazio.</p> }
             </mat-tab>
             <mat-tab label="Detalhes do evento">
-              <mat-form-field appearance="outline"><mat-label>Tempo de festa</mat-label><input matInput type="time" formControlName="tempoFesta" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Início da cerimônia</mat-label><input matInput type="time" formControlName="inicioCerimonia" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Início da recepção</mat-label><input matInput type="time" formControlName="inicioRecepcao" /></mat-form-field>
+              <app-campo-hora rotulo="Tempo de festa" formControlName="tempoFesta" />
+              <app-campo-hora rotulo="Início da cerimônia" formControlName="inicioCerimonia" />
+              <app-campo-hora rotulo="Início da recepção" formControlName="inicioRecepcao" />
               <mat-form-field appearance="outline"><mat-label>Padrinhos</mat-label><input matInput type="number" min="0" formControlName="quantidadePadrinhos" /></mat-form-field>
               <mat-form-field appearance="outline"><mat-label>Damas e pajens</mat-label><input matInput type="number" min="0" formControlName="quantidadeDamas" /></mat-form-field>
             </mat-tab>
             <mat-tab label="Cerimônia">
-              <mat-form-field appearance="outline"><mat-label>Local</mat-label><input matInput formControlName="cerimoniaNome" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>CEP</mat-label><input matInput formControlName="cerimoniaCep" gdMascara="cep" (blur)="completarCep('cerimonia')" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>País</mat-label><input matInput formControlName="cerimoniaPais" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Endereço</mat-label><input matInput formControlName="cerimoniaEndereco" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Número</mat-label><input matInput formControlName="cerimoniaNumero" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Estado</mat-label><input matInput formControlName="cerimoniaEstado" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Cidade</mat-label><input matInput formControlName="cerimoniaCidade" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Bairro</mat-label><input matInput formControlName="cerimoniaBairro" /></mat-form-field>
+              <app-local-campos [grupo]="formulario.controls.cerimonia" />
             </mat-tab>
             <mat-tab label="Recepção">
-              <mat-form-field appearance="outline"><mat-label>Local</mat-label><input matInput formControlName="recepcaoNome" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>CEP</mat-label><input matInput formControlName="recepcaoCep" gdMascara="cep" (blur)="completarCep('recepcao')" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>País</mat-label><input matInput formControlName="recepcaoPais" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Endereço</mat-label><input matInput formControlName="recepcaoEndereco" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Número</mat-label><input matInput formControlName="recepcaoNumero" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Estado</mat-label><input matInput formControlName="recepcaoEstado" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Cidade</mat-label><input matInput formControlName="recepcaoCidade" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Bairro</mat-label><input matInput formControlName="recepcaoBairro" /></mat-form-field>
+              <app-local-campos [grupo]="formulario.controls.recepcao" />
             </mat-tab>
           </mat-tab-group>
         } @else {
@@ -117,13 +106,11 @@ export interface EventoFormDados {
             <mat-form-field appearance="outline"><mat-label>Nome</mat-label><input matInput formControlName="primeiroNome" /></mat-form-field>
           }
           <app-campo-data rotulo="Data" formControlName="data" />
-          <mat-form-field appearance="outline"><mat-label>Horário do convite</mat-label><input matInput type="time" formControlName="hora" /></mat-form-field>
-          <mat-form-field appearance="outline"><mat-label>Budget</mat-label><input matInput type="number" min="0" formControlName="orcamentoEstimado" /></mat-form-field>
+          <app-campo-hora rotulo="Horário do convite" formControlName="hora" />
+          <app-campo-dinheiro rotulo="Orçamento" formControlName="orcamentoEstimado" />
           <mat-form-field appearance="outline"><mat-label>Convidados estimados</mat-label><input matInput type="number" min="0" formControlName="convidadosEstimados" /></mat-form-field>
-          <h2>Local da cerimônia</h2>
-          <mat-form-field appearance="outline"><mat-label>Nome</mat-label><input matInput formControlName="cerimoniaNome" /></mat-form-field>
-          <h2>Local da recepção</h2>
-          <mat-form-field appearance="outline"><mat-label>Nome</mat-label><input matInput formControlName="recepcaoNome" /></mat-form-field>
+          <app-local-campos titulo="Local da cerimônia" [grupo]="formulario.controls.cerimonia" />
+          <app-local-campos titulo="Local da recepção" [grupo]="formulario.controls.recepcao" />
           <mat-form-field appearance="outline"><mat-label>Tags</mat-label><input matInput formControlName="tags" placeholder="Assessoria completa" /></mat-form-field>
           <mat-checkbox formControlName="notificarAssessor">Notificar assessor(a)</mat-checkbox>
           <mat-checkbox formControlName="notificarAssistentes">Notificar assistentes</mat-checkbox>
@@ -165,7 +152,7 @@ export class EventoFormPage implements OnInit {
     segundoNome: '',
     data: this.fb.control<Date | null>(null),
     hora: '',
-    orcamentoEstimado: '',
+    orcamentoEstimado: this.fb.control<number | null>(null),
     convidadosEstimados: '',
     tags: '',
     senhaSite: '',
@@ -178,8 +165,8 @@ export class EventoFormPage implements OnInit {
     inicioRecepcao: '',
     quantidadePadrinhos: '',
     quantidadeDamas: '',
-    cerimoniaNome: '', cerimoniaPais: '', cerimoniaCep: '', cerimoniaEndereco: '', cerimoniaNumero: '', cerimoniaEstado: '', cerimoniaCidade: '', cerimoniaBairro: '',
-    recepcaoNome: '', recepcaoPais: '', recepcaoCep: '', recepcaoEndereco: '', recepcaoNumero: '', recepcaoEstado: '', recepcaoCidade: '', recepcaoBairro: '',
+    cerimonia: grupoLocal(this.fb),
+    recepcao: grupoLocal(this.fb),
   });
 
   ngOnInit(): void {
@@ -199,7 +186,7 @@ export class EventoFormPage implements OnInit {
             segundoNome: evento.segundoNome ?? '',
             data: deIsoParaData(evento.data),
             hora: (evento.hora ?? '').slice(0, 5),
-            orcamentoEstimado: evento.orcamentoEstimado?.toString() ?? '',
+            orcamentoEstimado: evento.orcamentoEstimado,
             convidadosEstimados: evento.convidadosEstimados?.toString() ?? '',
             tags: evento.tags.join(', '),
             senhaSite: evento.senhaSite ?? '',
@@ -212,8 +199,8 @@ export class EventoFormPage implements OnInit {
             inicioRecepcao: (evento.inicioRecepcao ?? '').slice(0, 5),
             quantidadePadrinhos: evento.quantidadePadrinhos?.toString() ?? '',
             quantidadeDamas: evento.quantidadeDamas?.toString() ?? '',
-            ...this.localParaForm('cerimonia', evento.cerimonia),
-            ...this.localParaForm('recepcao', evento.recepcao),
+            cerimonia: this.localParaGrupo(evento.cerimonia),
+            recepcao: this.localParaGrupo(evento.recepcao),
           });
         },
         error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
@@ -230,26 +217,6 @@ export class EventoFormPage implements OnInit {
   protected escolherFoto(evento: Event): void {
     const entrada = evento.target as HTMLInputElement;
     this.foto = entrada.files?.[0] ?? null;
-  }
-
-  protected completarCep(grupo: 'cerimonia' | 'recepcao'): void {
-    const controle = this.formulario.get(`${grupo}Cep`);
-    const digitos = (controle?.value ?? '').replace(/\D/g, '');
-    if (digitos.length !== 8) {
-      return;
-    }
-    this.negocio.cep(digitos).subscribe({
-      next: (endereco) => {
-        this.formulario.patchValue({
-          [`${grupo}Pais`]: endereco.pais || 'Brasil',
-          [`${grupo}Endereco`]: endereco.endereco,
-          [`${grupo}Estado`]: endereco.estado,
-          [`${grupo}Cidade`]: endereco.cidade,
-          [`${grupo}Bairro`]: endereco.bairro,
-        });
-      },
-      error: () => undefined,
-    });
   }
 
   protected salvar(): void {
@@ -286,8 +253,8 @@ export class EventoFormPage implements OnInit {
       primeiroNome: valor.primeiroNome ?? '',
       segundoNome: valor.segundoNome ?? '',
       data: deDataParaIso(valor.data),
-      hora: this.hora(valor.hora ?? ''),
-      orcamentoEstimado: this.numero(valor.orcamentoEstimado ?? ''),
+      hora: horaParaApi(valor.hora),
+      orcamentoEstimado: valor.orcamentoEstimado,
       convidadosEstimados: this.numero(valor.convidadosEstimados ?? ''),
       tags: (valor.tags ?? '').split(',').map((item) => item.trim()).filter(Boolean),
       senhaSite: valor.senhaSite ?? '',
@@ -295,39 +262,27 @@ export class EventoFormPage implements OnInit {
       notificarAssistentes: !!valor.notificarAssistentes,
       notificarClientes: !!valor.notificarClientes,
       salvarNaAgenda: !!valor.salvarNaAgenda,
-      tempoFesta: this.hora(valor.tempoFesta ?? ''),
-      inicioCerimonia: this.hora(valor.inicioCerimonia ?? ''),
-      inicioRecepcao: this.hora(valor.inicioRecepcao ?? ''),
+      tempoFesta: horaParaApi(valor.tempoFesta),
+      inicioCerimonia: horaParaApi(valor.inicioCerimonia),
+      inicioRecepcao: horaParaApi(valor.inicioRecepcao),
       quantidadePadrinhos: this.numero(valor.quantidadePadrinhos ?? ''),
       quantidadeDamas: this.numero(valor.quantidadeDamas ?? ''),
-      cerimonia: this.local('cerimonia'),
-      recepcao: this.local('recepcao'),
+      cerimonia: localPedido(valor.cerimonia),
+      recepcao: localPedido(valor.recepcao),
       cadastrarCliente: false,
     };
   }
 
-  private local(grupo: 'cerimonia' | 'recepcao') {
-    const valor = this.formulario.getRawValue() as unknown as Record<string, string | boolean | null>;
-    const campo = (nome: string) => {
-      const item = valor[`${grupo}${nome}`];
-      return typeof item === 'string' && item !== '' ? item : null;
-    };
+  private localParaGrupo(local: { nome: string | null; pais: string | null; cep: string | null; endereco: string | null; numero: string | null; estado: string | null; cidade: string | null; bairro: string | null }) {
     return {
-      nome: campo('Nome'), pais: campo('Pais'), cep: campo('Cep'), endereco: campo('Endereco'),
-      numero: campo('Numero'), estado: campo('Estado'), cidade: campo('Cidade'), bairro: campo('Bairro'),
-    };
-  }
-
-  private localParaForm(grupo: 'cerimonia' | 'recepcao', local: { nome: string | null; pais: string | null; cep: string | null; endereco: string | null; numero: string | null; estado: string | null; cidade: string | null; bairro: string | null }) {
-    return {
-      [`${grupo}Nome`]: local.nome ?? '',
-      [`${grupo}Pais`]: local.pais ?? '',
-      [`${grupo}Cep`]: aplicarMascara(local.cep ?? '', 'cep'),
-      [`${grupo}Endereco`]: local.endereco ?? '',
-      [`${grupo}Numero`]: local.numero ?? '',
-      [`${grupo}Estado`]: local.estado ?? '',
-      [`${grupo}Cidade`]: local.cidade ?? '',
-      [`${grupo}Bairro`]: local.bairro ?? '',
+      nome: local.nome ?? '',
+      pais: local.pais ?? '',
+      cep: aplicarMascara(local.cep ?? '', 'cep'),
+      endereco: local.endereco ?? '',
+      numero: local.numero ?? '',
+      estado: local.estado ?? '',
+      cidade: local.cidade ?? '',
+      bairro: local.bairro ?? '',
     };
   }
 
@@ -337,12 +292,5 @@ export class EventoFormPage implements OnInit {
     }
     const numero = Number(valor);
     return Number.isFinite(numero) ? numero : null;
-  }
-
-  private hora(valor: string): string | null {
-    if (!valor) {
-      return null;
-    }
-    return valor.length === 5 ? `${valor}:00` : valor;
   }
 }

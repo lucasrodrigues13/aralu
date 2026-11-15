@@ -1,4 +1,4 @@
-import { aplicarMascara } from './mascaras';
+import { aplicarDinheiro, aplicarHora, aplicarMascara, dinheiroParaNumero, horaParaApi, numeroParaDinheiro } from './mascaras';
 
 describe('aplicarMascara', () => {
   it('formata CPF', () => {
@@ -11,5 +11,36 @@ describe('aplicarMascara', () => {
 
   it('formata telefone fixo', () => {
     expect(aplicarMascara('1133334444', 'telefone')).toBe('(11) 3333-4444');
+  });
+
+  it('formata dinheiro com vírgula e duas casas', () => {
+    expect(aplicarDinheiro('1')).toBe('0,01');
+    expect(aplicarDinheiro('123456')).toBe('1.234,56');
+    expect(numeroParaDinheiro(150000)).toBe('150.000,00');
+    expect(dinheiroParaNumero('150.000,00')).toBe(150000);
+    expect(dinheiroParaNumero('')).toBeNull();
+  });
+
+  it('formata agência e conta com dígito verificador', () => {
+    expect(aplicarMascara('1234', 'agencia')).toBe('1234');
+    expect(aplicarMascara('12345', 'agencia')).toBe('1234-5');
+    expect(aplicarMascara('12345678', 'conta')).toBe('12345678');
+    expect(aplicarMascara('123456789', 'conta')).toBe('12345678-9');
+    expect(aplicarMascara('1234567890123', 'conta')).toBe('123456789012-3');
+    expect(aplicarMascara('12345-6', 'conta')).toBe('12345-6');
+  });
+
+  it('formata chave Pix de telefone e aleatória', () => {
+    expect(aplicarMascara('11987654321', 'pixTelefone')).toBe('+55 (11) 98765-4321');
+    expect(aplicarMascara('+5511987654321', 'pixTelefone')).toBe('+55 (11) 98765-4321');
+    expect(aplicarMascara('123e4567e12b12d1a456426655440000', 'pixAleatoria')).toBe('123e4567-e12b-12d1-a456-426655440000');
+  });
+
+  it('formata hora em 24h', () => {
+    expect(aplicarHora('1830')).toBe('18:30');
+    expect(aplicarHora('9')).toBe('09');
+    expect(aplicarHora('930')).toBe('09:30');
+    expect(horaParaApi('18:30')).toBe('18:30:00');
+    expect(horaParaApi('18:3')).toBeNull();
   });
 });

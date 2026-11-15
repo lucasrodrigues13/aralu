@@ -256,6 +256,11 @@ public class NegocioFluxoTests
         Assert.Equal(HttpStatusCode.BadRequest, assinatura.StatusCode);
         Assert.DoesNotContain("..", await assinatura.Content.ReadAsStringAsync(), StringComparison.Ordinal);
 
+        var removida = await dono.DeleteAsync($"/api/v1/eventos/{eventoId}/imagem");
+        Assert.Equal(HttpStatusCode.OK, removida.StatusCode);
+        var semFoto = await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}"));
+        Assert.True(!semFoto.TryGetProperty("imagemId", out var imagemRestante) || imagemRestante.ValueKind == JsonValueKind.Null);
+
         await dono.PostAsync($"/api/v1/eventos/{eventoId}/concluir", new StringContent("{}", System.Text.Encoding.UTF8, "application/json"));
         var painelDepois = await Ler(await dono.GetAsync("/api/v1/painel"));
         Assert.True(painelDepois.GetProperty("concluidos").GetInt32() >= 1);

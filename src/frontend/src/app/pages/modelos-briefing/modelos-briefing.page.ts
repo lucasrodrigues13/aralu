@@ -174,15 +174,15 @@ export class BriefingEditorDialog {
       </div>
       <button mat-flat-button type="button" (click)="abrir()">
         <mat-icon>add</mat-icon>
-        Criar novo modelo
+        Novo Modelo de Briefing
       </button>
     </header>
     <section class="gd-painel">
       <div class="gd-barra">
         <span></span>
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>Buscar por nome</mat-label>
-          <input matInput [value]="busca()" (input)="buscar($event)" />
+        <mat-form-field class="gd-busca" appearance="outline" subscriptSizing="dynamic">
+          <mat-icon matIconPrefix>search</mat-icon>
+          <input matInput placeholder="Buscar por nome" [value]="busca()" (input)="buscar($event)" />
         </mat-form-field>
       </div>
       @if (lista().length === 0) {

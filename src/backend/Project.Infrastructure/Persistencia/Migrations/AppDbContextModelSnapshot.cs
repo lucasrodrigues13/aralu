@@ -1323,7 +1323,22 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("BairroCerimonia")
+                        .HasColumnType("text");
+
+                    b.Property<string>("BairroRecepcao")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CepCerimonia")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CepRecepcao")
+                        .HasColumnType("text");
+
                     b.Property<string>("Cidade")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CidadeRecepcao")
                         .HasColumnType("text");
 
                     b.Property<string>("ContaId")
@@ -1344,6 +1359,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
                     b.Property<DateTimeOffset>("EntradaNoEstagioEm")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EstadoRecepcao")
+                        .HasColumnType("text");
 
                     b.Property<string>("Estagio")
                         .IsRequired()
@@ -1369,6 +1387,18 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
                     b.Property<string>("Nome")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("NumeroCerimonia")
+                        .HasColumnType("text");
+
+                    b.Property<string>("NumeroRecepcao")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PaisCerimonia")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PaisRecepcao")
                         .HasColumnType("text");
 
                     b.Property<int?>("QuantidadeConvidados")
@@ -1798,6 +1828,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
                     b.Property<string>("Endereco")
                         .HasColumnType("text");
+
+                    b.Property<Guid?>("FotoId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateOnly?>("Nascimento")
                         .HasColumnType("date");

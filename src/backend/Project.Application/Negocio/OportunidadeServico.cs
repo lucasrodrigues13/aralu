@@ -23,8 +23,18 @@ public sealed record OportunidadeLeitura(
     int? QuantidadeDamas,
     string? LocalCerimonia,
     string? EnderecoCerimonia,
+    string? CepCerimonia,
+    string? PaisCerimonia,
+    string? NumeroCerimonia,
+    string? BairroCerimonia,
     string? LocalRecepcao,
     string? EnderecoRecepcao,
+    string? CepRecepcao,
+    string? PaisRecepcao,
+    string? NumeroRecepcao,
+    string? BairroRecepcao,
+    string? EstadoRecepcao,
+    string? CidadeRecepcao,
     string? Uf,
     string? Cidade,
     string? MotivoDescarte,
@@ -50,8 +60,18 @@ public sealed record SalvarOportunidade(
     int? QuantidadeDamas,
     string? LocalCerimonia,
     string? EnderecoCerimonia,
+    string? CepCerimonia,
+    string? PaisCerimonia,
+    string? NumeroCerimonia,
+    string? BairroCerimonia,
     string? LocalRecepcao,
     string? EnderecoRecepcao,
+    string? CepRecepcao,
+    string? PaisRecepcao,
+    string? NumeroRecepcao,
+    string? BairroRecepcao,
+    string? EstadoRecepcao,
+    string? CidadeRecepcao,
     string? Uf,
     string? Cidade,
     string? MotivoDescarte,
@@ -149,8 +169,18 @@ public sealed class OportunidadeServico(IDados dados)
         item.QuantidadeDamas = novo.QuantidadeDamas;
         item.LocalCerimonia = novo.LocalCerimonia;
         item.EnderecoCerimonia = novo.EnderecoCerimonia;
+        item.CepCerimonia = novo.CepCerimonia;
+        item.PaisCerimonia = novo.PaisCerimonia;
+        item.NumeroCerimonia = novo.NumeroCerimonia;
+        item.BairroCerimonia = novo.BairroCerimonia;
         item.LocalRecepcao = novo.LocalRecepcao;
         item.EnderecoRecepcao = novo.EnderecoRecepcao;
+        item.CepRecepcao = novo.CepRecepcao;
+        item.PaisRecepcao = novo.PaisRecepcao;
+        item.NumeroRecepcao = novo.NumeroRecepcao;
+        item.BairroRecepcao = novo.BairroRecepcao;
+        item.EstadoRecepcao = novo.EstadoRecepcao;
+        item.CidadeRecepcao = novo.CidadeRecepcao;
         item.Uf = novo.Uf;
         item.Cidade = novo.Cidade;
         item.MotivoDescarte = novo.MotivoDescarte;
@@ -361,8 +391,18 @@ public sealed class OportunidadeServico(IDados dados)
             QuantidadeDamas = pedido.QuantidadeDamas,
             LocalCerimonia = Domain.Comum.Texto.Limpo(pedido.LocalCerimonia),
             EnderecoCerimonia = Domain.Comum.Texto.Limpo(pedido.EnderecoCerimonia),
+            CepCerimonia = Domain.Comum.Texto.Limpo(pedido.CepCerimonia),
+            PaisCerimonia = Domain.Comum.Texto.Limpo(pedido.PaisCerimonia),
+            NumeroCerimonia = Domain.Comum.Texto.Limpo(pedido.NumeroCerimonia),
+            BairroCerimonia = Domain.Comum.Texto.Limpo(pedido.BairroCerimonia),
             LocalRecepcao = Domain.Comum.Texto.Limpo(pedido.LocalRecepcao),
             EnderecoRecepcao = Domain.Comum.Texto.Limpo(pedido.EnderecoRecepcao),
+            CepRecepcao = Domain.Comum.Texto.Limpo(pedido.CepRecepcao),
+            PaisRecepcao = Domain.Comum.Texto.Limpo(pedido.PaisRecepcao),
+            NumeroRecepcao = Domain.Comum.Texto.Limpo(pedido.NumeroRecepcao),
+            BairroRecepcao = Domain.Comum.Texto.Limpo(pedido.BairroRecepcao),
+            EstadoRecepcao = Domain.Comum.Texto.Limpo(pedido.EstadoRecepcao),
+            CidadeRecepcao = Domain.Comum.Texto.Limpo(pedido.CidadeRecepcao),
             Uf = Domain.Comum.Texto.Limpo(pedido.Uf),
             Cidade = Domain.Comum.Texto.Limpo(pedido.Cidade),
             MotivoDescarte = estagio == EstagioOportunidade.Descartado
@@ -417,8 +457,18 @@ public sealed class OportunidadeServico(IDados dados)
             item.QuantidadeDamas,
             item.LocalCerimonia,
             item.EnderecoCerimonia,
+            item.CepCerimonia,
+            item.PaisCerimonia,
+            item.NumeroCerimonia,
+            item.BairroCerimonia,
             item.LocalRecepcao,
             item.EnderecoRecepcao,
+            item.CepRecepcao,
+            item.PaisRecepcao,
+            item.NumeroRecepcao,
+            item.BairroRecepcao,
+            item.EstadoRecepcao,
+            item.CidadeRecepcao,
             item.Uf,
             item.Cidade,
             item.MotivoDescarte,

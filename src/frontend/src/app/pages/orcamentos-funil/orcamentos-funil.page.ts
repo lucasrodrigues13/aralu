@@ -12,12 +12,13 @@ import { mensagemDeErro } from '../../core/mensagem-erro';
 import { ModeloOrcamentoFunil, NegocioClient, Oportunidade, OrcamentoFunil } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
+import { CampoDinheiroComponent } from '../../shared/campo-dinheiro';
 import { DIALOG } from '../../shared/dialog';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 
 @Component({
   selector: 'app-orcamento-funil-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule],
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, CampoDinheiroComponent],
   template: `
     <h2 mat-dialog-title>{{ dados ? 'Editar orçamento' : 'Novo orçamento' }}</h2>
     <mat-dialog-content>
@@ -38,7 +39,7 @@ import { GdDataPipe } from '../../shared/gd-data.pipe';
           </mat-form-field>
         }
         <mat-form-field appearance="outline"><mat-label>Conteúdo</mat-label><textarea matInput rows="8" formControlName="conteudo"></textarea></mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>Valor</mat-label><input matInput type="number" formControlName="valor" /></mat-form-field>
+        <app-campo-dinheiro rotulo="Valor" formControlName="valor" />
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
@@ -108,9 +109,9 @@ export class OrcamentoFunilDialog implements OnInit {
             <button type="button" [class.ativa]="situacao() === aba.valor" (click)="situacao.set(aba.valor); carregar()">{{ aba.rotulo }}</button>
           }
         </div>
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>Buscar</mat-label>
-          <input matInput [value]="busca()" (input)="buscar($event)" />
+        <mat-form-field class="gd-busca" appearance="outline" subscriptSizing="dynamic">
+          <mat-icon matIconPrefix>search</mat-icon>
+          <input matInput placeholder="Buscar" [value]="busca()" (input)="buscar($event)" />
         </mat-form-field>
       </div>
       @if (lista().length === 0) {

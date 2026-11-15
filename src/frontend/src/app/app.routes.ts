@@ -41,7 +41,7 @@ export const routes: Routes = [
       { path: 'eventos/:id/convidados', loadComponent: () => import('./pages/convidados/convidados.page').then((m) => m.ConvidadosPage) },
       { path: 'tarefas', loadComponent: () => import('./pages/tarefas/tarefas.page').then((m) => m.TarefasPage) },
       { path: 'clientes', loadComponent: () => import('./pages/clientes/clientes.page').then((m) => m.ClientesPage) },
-      { path: 'convidados', loadComponent: () => import('./pages/convidados/convidados.page').then((m) => m.ConvidadosPage) },
+      { path: 'convidados', redirectTo: 'eventos', pathMatch: 'full' },
       { path: 'pagamentos', loadComponent: () => import('./pages/atalhos/em-breve.page').then((m) => m.EmBrevePage) },
       { path: 'anexos', loadComponent: () => import('./pages/atalhos/em-breve.page').then((m) => m.EmBrevePage) },
       { path: 'equipe', loadComponent: () => import('./pages/atalhos/em-breve.page').then((m) => m.EmBrevePage) },

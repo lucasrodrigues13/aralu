@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
@@ -16,12 +16,13 @@ import { ToastService } from '../../core/toast.service';
 import { DIALOG } from '../../shared/dialog';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { MascaraDirective } from '../../shared/mascara.directive';
-import { EventoResumo, ListaConvites, NegocioClient } from '../../core/negocio.client';
+import { ListaConvites, NegocioClient } from '../../core/negocio.client';
+import { EventoAbasComponent } from '../eventos/evento-abas.component';
 
 @Component({
   selector: 'app-convidados',
   imports: [
-    ReactiveFormsModule, RouterLink, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule,
+    ReactiveFormsModule, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, EventoAbasComponent,
     MatSelectModule, MatButtonToggleModule, MatCheckboxModule, MatIconModule, MatTableModule, MascaraDirective,
   ],
   styles: `
@@ -33,13 +34,11 @@ import { EventoResumo, ListaConvites, NegocioClient } from '../../core/negocio.c
       <header class="gd-cabecalho">
         <div>
           <h1>Convidados</h1>
-          <p>Escolha o evento para ver os convites.</p>
+          <p>A lista fica dentro do evento.</p>
         </div>
       </header>
-      @for (evento of eventos(); track evento.id) {
-        <p><a [routerLink]="['/eventos', evento.id, 'convidados']">{{ evento.nome }}</a></p>
-      }
     } @else {
+      <app-evento-abas [eventoId]="eventoId()" />
       <header class="gd-cabecalho">
         <div>
           <h1>Convites e convidados</h1>
@@ -50,7 +49,6 @@ import { EventoResumo, ListaConvites, NegocioClient } from '../../core/negocio.c
           Novo convite
         </button>
       </header>
-      <a mat-button [routerLink]="['/eventos', eventoId()]">Voltar ao evento</a>
       <mat-button-toggle-group [value]="visao()" (change)="visao.set($event.value)">
         <mat-button-toggle value="convite">Por convite</mat-button-toggle>
         <mat-button-toggle value="convidado">Por convidado</mat-button-toggle>
@@ -190,7 +188,6 @@ export class ConvidadosPage implements OnInit {
   private readonly negocio = inject(NegocioClient);
   private readonly rota = inject(ActivatedRoute);
   private readonly toast = inject(ToastService);
-  protected readonly eventos = signal<EventoResumo[]>([]);
   protected readonly lista = signal<ListaConvites | null>(null);
   protected readonly grupos = signal<{ id: string; nome: string }[]>([]);
   protected readonly locais = signal<string[]>([]);
@@ -212,10 +209,6 @@ export class ConvidadosPage implements OnInit {
     const id = this.rota.snapshot.paramMap.get('id') ?? '';
     this.eventoId.set(id);
     if (!id) {
-      this.negocio.eventos({ situacao: 'EmAndamento' }).subscribe({
-        next: (eventos) => this.eventos.set(eventos),
-        error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
-      });
       return;
     }
     this.negocio.evento(id).subscribe({

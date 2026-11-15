@@ -16,13 +16,14 @@ import {
 } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
+import { CampoDinheiroComponent } from '../../shared/campo-dinheiro';
 import { DIALOG } from '../../shared/dialog';
 
 type TipoModelo = 'servico' | 'orcamento' | 'contrato';
 
 @Component({
   selector: 'app-modelo-funil-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule],
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, CampoDinheiroComponent],
   template: `
     <h2 mat-dialog-title>{{ dados.item ? 'Editar' : 'Novo' }} modelo</h2>
     <mat-dialog-content>
@@ -30,7 +31,7 @@ type TipoModelo = 'servico' | 'orcamento' | 'contrato';
         <mat-form-field appearance="outline"><mat-label>Nome</mat-label><input matInput formControlName="nome" /></mat-form-field>
         @if (dados.tipo === 'servico') {
           <mat-form-field appearance="outline"><mat-label>Descrição</mat-label><textarea matInput rows="3" formControlName="descricao" maxlength="200"></textarea></mat-form-field>
-          <mat-form-field appearance="outline"><mat-label>Valor</mat-label><input matInput type="number" formControlName="valor" /></mat-form-field>
+          <app-campo-dinheiro rotulo="Valor" formControlName="valor" />
         } @else {
           <mat-form-field appearance="outline"><mat-label>Texto</mat-label><textarea matInput rows="8" formControlName="texto" #area></textarea></mat-form-field>
           <div class="params">
@@ -113,14 +114,14 @@ export class ModeloFunilDialog {
         <h1>{{ titulo }}</h1>
         <p>{{ apoio }}</p>
       </div>
-      <button mat-flat-button type="button" (click)="abrir()"><mat-icon>add</mat-icon> Novo</button>
+      <button mat-flat-button type="button" (click)="abrir()"><mat-icon>add</mat-icon> {{ rotuloNovo }}</button>
     </header>
     <section class="gd-painel">
       <div class="gd-barra">
         <span></span>
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>Buscar por nome</mat-label>
-          <input matInput [value]="busca()" (input)="buscar($event)" />
+        <mat-form-field class="gd-busca" appearance="outline" subscriptSizing="dynamic">
+          <mat-icon matIconPrefix>search</mat-icon>
+          <input matInput placeholder="Buscar por nome" [value]="busca()" (input)="buscar($event)" />
         </mat-form-field>
       </div>
       @if (lista().length === 0) {
@@ -157,6 +158,14 @@ export class ModelosFunilPage implements OnInit {
   protected readonly lista = signal<Array<ModeloServicoFunil | ModeloOrcamentoFunil | ModeloContratoFunil>>([]);
   protected readonly busca = signal('');
   protected readonly colunas = ['nome', 'detalhe', 'acoes'];
+
+  get rotuloNovo(): string {
+    return this.tipo === 'servico'
+      ? 'Novo Modelo de Serviço/Produto'
+      : this.tipo === 'orcamento'
+        ? 'Novo Modelo de Orçamento'
+        : 'Novo Modelo de Contrato';
+  }
 
   get titulo(): string {
     return this.tipo === 'servico'

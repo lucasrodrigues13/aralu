@@ -1,4 +1,6 @@
-import { Component, inject } from '@angular/core';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -18,23 +20,37 @@ interface GrupoMenu {
   itens: ItemMenu[];
 }
 
+function telaEstreita(): boolean {
+  return typeof matchMedia === 'function' && matchMedia('(max-width: 959px)').matches;
+}
+
 @Component({
   selector: 'app-casca',
   host: { class: 'gd-casca' },
   imports: [RouterOutlet, RouterLink, RouterLinkActive, MatSidenavModule, MatButtonModule, MatIconModule],
   template: `
     <mat-sidenav-container>
-      <mat-sidenav class="gd-sidebar" mode="side" opened>
+      <mat-sidenav
+        class="gd-sidebar"
+        [mode]="estreito() ? 'over' : 'side'"
+        [opened]="!estreito() || menuAberto()"
+        (closedStart)="menuAberto.set(false)"
+      >
         <div class="gd-marca">
           <span class="gd-marca-selo">G</span>
           <span>gevents</span>
+          @if (estreito()) {
+            <button mat-icon-button type="button" class="gd-fechar-menu" (click)="fecharMenu()" aria-label="Fechar menu">
+              <mat-icon>close</mat-icon>
+            </button>
+          }
         </div>
         @for (grupo of grupos; track grupo.rotulo) {
           <div class="gd-grupo">{{ grupo.rotulo }}</div>
           <nav>
             @for (item of grupo.itens; track item.rotulo) {
               @if (item.rota && !item.emBreve) {
-                <a class="gd-item" [routerLink]="item.rota" routerLinkActive="ativo">
+                <a class="gd-item" [routerLink]="item.rota" routerLinkActive="ativo" (click)="fecharMenu()">
                   <mat-icon>{{ item.icone }}</mat-icon>
                   <span>{{ item.rotulo }}</span>
                 </a>
@@ -51,7 +67,7 @@ interface GrupoMenu {
         @if (auth.ehAdmin()) {
           <div class="gd-grupo">Sistema</div>
           <nav>
-            <a class="gd-item" routerLink="/admin" routerLinkActive="ativo">
+            <a class="gd-item" routerLink="/admin" routerLinkActive="ativo" (click)="fecharMenu()">
               <mat-icon>admin_panel_settings</mat-icon>
               <span>Administração</span>
             </a>
@@ -60,6 +76,11 @@ interface GrupoMenu {
       </mat-sidenav>
       <mat-sidenav-content>
         <header class="gd-topo">
+          @if (estreito()) {
+            <button mat-icon-button type="button" (click)="menuAberto.set(true)" aria-label="Abrir menu">
+              <mat-icon>menu</mat-icon>
+            </button>
+          }
           <div class="gd-topo-titulo">
             <strong>Painel</strong>
             <span>{{ auth.email() }}</span>
@@ -78,6 +99,21 @@ export class CascaComponent {
   protected readonly auth = inject(AuthService);
   private readonly conta = inject(ContaClient);
   private readonly router = inject(Router);
+  private readonly breakpoints = inject(BreakpointObserver);
+  protected readonly estreito = signal(telaEstreita());
+  protected readonly menuAberto = signal(false);
+
+  constructor() {
+    this.breakpoints
+      .observe('(max-width: 959px)')
+      .pipe(takeUntilDestroyed(inject(DestroyRef)))
+      .subscribe((estado) => {
+        this.estreito.set(estado.matches);
+        if (estado.matches) {
+          this.menuAberto.set(false);
+        }
+      });
+  }
 
   protected readonly grupos: GrupoMenu[] = [
     {
@@ -93,7 +129,6 @@ export class CascaComponent {
         { rotulo: 'Eventos', icone: 'celebration', rota: '/eventos' },
         { rotulo: 'Tarefas', icone: 'task_alt', rota: '/tarefas' },
         { rotulo: 'Clientes', icone: 'group', rota: '/clientes' },
-        { rotulo: 'Convidados', icone: 'mail', rota: '/convidados' },
         { rotulo: 'Modelos de evento', icone: 'content_copy', rota: '/modelos-evento' },
         { rotulo: 'Modelos de briefing', icone: 'quiz', rota: '/modelos-briefing' },
         { rotulo: 'Modelos de roteiro', icone: 'schedule', rota: '/modelos-roteiro' },
@@ -122,6 +157,12 @@ export class CascaComponent {
       ],
     },
   ];
+
+  protected fecharMenu(): void {
+    if (this.estreito()) {
+      this.menuAberto.set(false);
+    }
+  }
 
   protected sair(): void {
     this.conta.sair().subscribe({

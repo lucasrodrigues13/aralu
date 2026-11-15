@@ -105,9 +105,9 @@ export class ContratoFunilDialog implements OnInit {
             <button type="button" [class.ativa]="situacao() === aba.valor" (click)="situacao.set(aba.valor); carregar()">{{ aba.rotulo }}</button>
           }
         </div>
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>Buscar oportunidade</mat-label>
-          <input matInput [value]="busca()" (input)="buscar($event)" />
+        <mat-form-field class="gd-busca" appearance="outline" subscriptSizing="dynamic">
+          <mat-icon matIconPrefix>search</mat-icon>
+          <input matInput placeholder="Buscar oportunidade" [value]="busca()" (input)="buscar($event)" />
         </mat-form-field>
       </div>
       @if (lista().length === 0) {

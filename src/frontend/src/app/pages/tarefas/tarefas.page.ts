@@ -1,5 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { EventoAbasComponent } from '../eventos/evento-abas.component';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
@@ -17,8 +18,9 @@ import { TarefaFormDialog } from './tarefa-form.dialog';
 
 @Component({
   selector: 'app-tarefas',
-  imports: [RouterLink, MatCardModule, MatButtonModule, MatButtonToggleModule, MatIconModule, MatTableModule, GdDataPipe],
+  imports: [RouterLink, MatCardModule, MatButtonModule, MatButtonToggleModule, MatIconModule, MatTableModule, GdDataPipe, EventoAbasComponent],
   template: `
+    @if (eventoId()) { <app-evento-abas [eventoId]="eventoId()" /> }
     <header class="gd-cabecalho">
       <div>
         <h1>Tarefas</h1>
@@ -31,7 +33,6 @@ import { TarefaFormDialog } from './tarefa-form.dialog';
         </button>
       }
     </header>
-    @if (eventoId()) { <a mat-button [routerLink]="['/eventos', eventoId()]">Voltar ao evento</a> }
     <mat-button-toggle-group [value]="visao()" (change)="visao.set($event.value)">
       <mat-button-toggle value="lista">Lista</mat-button-toggle>
       @if (eventoId()) { <mat-button-toggle value="quadro">Quadro</mat-button-toggle> }

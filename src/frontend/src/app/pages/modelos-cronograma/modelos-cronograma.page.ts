@@ -10,6 +10,8 @@ import { mensagemDeErro } from '../../core/mensagem-erro';
 import { Cronograma, NegocioClient } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { CampoDataComponent } from '../../shared/campo-data';
+import { CampoHoraComponent } from '../../shared/campo-hora';
+import { horaParaApi } from '../../shared/mascaras';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { deDataParaIso, deIsoParaData } from '../../shared/data';
 import { DIALOG } from '../../shared/dialog';
@@ -18,7 +20,7 @@ import { DIALOG } from '../../shared/dialog';
   selector: 'app-cronograma-editor-dialog',
   imports: [
     ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule,
-    CampoDataComponent,
+    CampoDataComponent, CampoHoraComponent,
   ],
   template: `
     <h2 mat-dialog-title>{{ dados ? 'Editar cronograma' : 'Novo cronograma' }}</h2>
@@ -35,7 +37,7 @@ import { DIALOG } from '../../shared/dialog';
               </div>
               <div class="linha">
                 <app-campo-data rotulo="Data" formControlName="data" />
-                <mat-form-field appearance="outline"><mat-label>Hora</mat-label><input matInput type="time" formControlName="hora" /></mat-form-field>
+                <app-campo-hora rotulo="Hora" formControlName="hora" />
               </div>
               <mat-form-field appearance="outline" class="grow"><mat-label>Responsável</mat-label><input matInput formControlName="responsavel" /></mat-form-field>
               <mat-form-field appearance="outline" class="grow"><mat-label>Recado fornecedores</mat-label><input matInput formControlName="recadoFornecedores" /></mat-form-field>
@@ -116,7 +118,7 @@ export class CronogramaEditorDialog {
       itens: (valor.itens ?? []).map((item) => ({
         rotulo: item.rotulo || null,
         data: deDataParaIso(item.data),
-        hora: item.hora ? `${item.hora}:00` : null,
+        hora: horaParaApi(item.hora),
         responsavel: item.responsavel || null,
         recadoFornecedores: item.recadoFornecedores || null,
       })),
@@ -145,15 +147,15 @@ export class CronogramaEditorDialog {
       </div>
       <button mat-flat-button type="button" (click)="abrir()">
         <mat-icon>add</mat-icon>
-        Criar novo modelo
+        Novo Modelo de Cronograma
       </button>
     </header>
     <section class="gd-painel">
       <div class="gd-barra">
         <span></span>
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>Buscar</mat-label>
-          <input matInput [value]="busca()" (input)="buscar($event)" />
+        <mat-form-field class="gd-busca" appearance="outline" subscriptSizing="dynamic">
+          <mat-icon matIconPrefix>search</mat-icon>
+          <input matInput placeholder="Buscar" [value]="busca()" (input)="buscar($event)" />
         </mat-form-field>
       </div>
       @if (lista().length === 0) {

@@ -83,7 +83,10 @@ import { EventoFormPage } from './evento-form.page';
         </div>
         @if (!ehEstatisticas()) {
           <form class="filtros" [formGroup]="filtro" (ngSubmit)="carregar()">
-            <mat-form-field appearance="outline" subscriptSizing="dynamic"><mat-label>Nome</mat-label><input matInput formControlName="nome" /></mat-form-field>
+            <mat-form-field class="gd-busca" appearance="outline" subscriptSizing="dynamic">
+              <mat-icon matIconPrefix>search</mat-icon>
+              <input matInput formControlName="nome" placeholder="Nome" />
+            </mat-form-field>
             <mat-form-field appearance="outline" subscriptSizing="dynamic">
               <mat-label>Tipo</mat-label>
               <mat-select formControlName="tipo">
@@ -217,7 +220,8 @@ import { EventoFormPage } from './evento-form.page';
   styles: `
     .resumo { margin-bottom: 16px; }
     .filtros { flex-direction: row; align-items: center; flex-wrap: wrap; }
-    .filtros mat-form-field, .filtros app-campo-data { width: 140px; }
+    .filtros mat-form-field:not(.gd-busca), .filtros app-campo-data { width: 140px; }
+    .filtros .gd-busca { width: 220px; }
     .filtros app-campo-data { display: block; }
     .stats .total { margin: 8px 0 16px; }
     .barras { display: flex; gap: 8px; align-items: flex-end; height: 140px; margin: 16px 0 24px; }

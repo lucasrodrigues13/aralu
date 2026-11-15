@@ -1,4 +1,6 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { HttpBackend, HttpClient } from '@angular/common/http';
+import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -11,103 +13,198 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { Fornecedor, NegocioClient, ServicoConta } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
+import { CampoDinheiroComponent } from '../../shared/campo-dinheiro';
+import { DIALOG } from '../../shared/dialog';
 import { MascaraDirective } from '../../shared/mascara.directive';
-import { aplicarMascara } from '../../shared/mascaras';
+import { TipoMascara, aplicarMascara } from '../../shared/mascaras';
+
+interface BancoBrasil {
+  ispb: string;
+  name: string | null;
+  code: number | null;
+  fullName: string | null;
+}
+
+const TIPOS_CONTA = ['Corrente', 'Pagamento', 'Poupança'];
+const TIPOS_PIX = [
+  { valor: 'Cpf', rotulo: 'CPF' },
+  { valor: 'Cnpj', rotulo: 'CNPJ' },
+  { valor: 'Email', rotulo: 'E-mail' },
+  { valor: 'Telefone', rotulo: 'Telefone celular' },
+  { valor: 'Aleatoria', rotulo: 'Chave aleatória' },
+];
+
+export const DIALOG_FORNECEDOR = {
+  ...DIALOG,
+  panelClass: ['gd-dialog', 'gd-dialog-largo'],
+  width: 'min(1120px, calc(100vw - 32px))',
+  maxWidth: 'min(1120px, calc(100vw - 32px))',
+  maxHeight: '90vh',
+};
 
 @Component({
   selector: 'app-fornecedor-form-dialog',
   imports: [
     ReactiveFormsModule, MatDialogModule, MatButtonModule, MatCheckboxModule, MatFormFieldModule, MatInputModule,
-    MatSelectModule, MatTabsModule, MatIconModule, MascaraDirective,
+    MatSelectModule, MatTabsModule, MatIconModule, MascaraDirective, CampoDinheiroComponent,
   ],
   template: `
     <h2 mat-dialog-title>{{ dados ? 'Editar fornecedor' : 'Novo fornecedor' }}</h2>
     <mat-dialog-content>
       <form class="formulario" [formGroup]="form">
-        <mat-tab-group>
+        <mat-tab-group dynamicHeight>
           <mat-tab label="Dados">
             <div class="aba">
-              <mat-form-field appearance="outline"><mat-label>Nome</mat-label><input matInput formControlName="nome" /></mat-form-field>
-              <mat-form-field appearance="outline">
-                <mat-label>Serviços</mat-label>
-                <mat-select formControlName="servicoContaIds" multiple>
-                  @for (servico of servicos(); track servico.id) {
-                    <mat-option [value]="servico.id">{{ servico.nome }}</mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Razão social</mat-label><input matInput formControlName="razaoSocial" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>CNPJ</mat-label><input matInput formControlName="cnpj" gdMascara="cnpj" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>CPF</mat-label><input matInput formControlName="cpf" gdMascara="cpf" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Responsável</mat-label><input matInput formControlName="nomeResponsavel" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Preço de</mat-label><input matInput type="number" formControlName="precoDe" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Preço até</mat-label><input matInput type="number" formControlName="precoAte" /></mat-form-field>
-              <div formArrayName="telefones">
+              <div class="grade">
+                <mat-form-field appearance="outline"><mat-label>Nome</mat-label><input matInput formControlName="nome" /></mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Serviços</mat-label>
+                  <mat-select formControlName="servicoContaIds" multiple>
+                    @for (servico of servicos(); track servico.id) {
+                      <mat-option [value]="servico.id">{{ servico.nome }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline"><mat-label>Razão social</mat-label><input matInput formControlName="razaoSocial" /></mat-form-field>
+                <mat-form-field appearance="outline"><mat-label>Responsável</mat-label><input matInput formControlName="nomeResponsavel" /></mat-form-field>
+                <mat-form-field appearance="outline"><mat-label>CNPJ</mat-label><input matInput formControlName="cnpj" gdMascara="cnpj" /></mat-form-field>
+                <mat-form-field appearance="outline"><mat-label>CPF</mat-label><input matInput formControlName="cpf" gdMascara="cpf" /></mat-form-field>
+                <app-campo-dinheiro rotulo="Preço de" formControlName="precoDe" />
+                <app-campo-dinheiro rotulo="Preço até" formControlName="precoAte" />
+              </div>
+              <div class="lista" formArrayName="telefones">
                 @for (tel of telefones.controls; track $index; let i = $index) {
                   <div class="linha" [formGroupName]="i">
                     <mat-form-field appearance="outline"><mat-label>DDI</mat-label><input matInput formControlName="ddi" /></mat-form-field>
-                    <mat-form-field appearance="outline" class="grow"><mat-label>Telefone</mat-label><input matInput formControlName="numero" gdMascara="celular" /></mat-form-field>
+                    <mat-form-field appearance="outline"><mat-label>Telefone</mat-label><input matInput formControlName="numero" gdMascara="celular" /></mat-form-field>
                     <mat-checkbox formControlName="movel">Móvel</mat-checkbox>
-                    <button mat-icon-button type="button" (click)="removerTelefone(i)"><mat-icon>close</mat-icon></button>
+                    <button mat-icon-button type="button" aria-label="Remover telefone" (click)="removerTelefone(i)"><mat-icon>close</mat-icon></button>
                   </div>
                 }
+                <button mat-stroked-button type="button" class="acao" (click)="adicionarTelefone()">Adicionar telefone</button>
               </div>
-              <button mat-stroked-button type="button" (click)="adicionarTelefone()">Adicionar telefone</button>
-              <div formArrayName="emails">
+              <div class="lista" formArrayName="emails">
                 @for (email of emails.controls; track $index; let i = $index) {
-                  <div class="linha" [formGroupName]="i">
-                    <mat-form-field appearance="outline" class="grow"><mat-label>E-mail</mat-label><input matInput formControlName="endereco" /></mat-form-field>
-                    <button mat-icon-button type="button" (click)="removerEmail(i)"><mat-icon>close</mat-icon></button>
+                  <div class="linha email" [formGroupName]="i">
+                    <mat-form-field appearance="outline"><mat-label>E-mail</mat-label><input matInput formControlName="endereco" /></mat-form-field>
+                    <button mat-icon-button type="button" aria-label="Remover e-mail" (click)="removerEmail(i)"><mat-icon>close</mat-icon></button>
                   </div>
                 }
+                <button mat-stroked-button type="button" class="acao" (click)="adicionarEmail()">Adicionar e-mail</button>
               </div>
-              <button mat-stroked-button type="button" (click)="adicionarEmail()">Adicionar e-mail</button>
             </div>
           </mat-tab>
           <mat-tab label="Redes sociais">
             <div class="aba">
-              <mat-form-field appearance="outline"><mat-label>Site</mat-label><input matInput formControlName="site" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Facebook</mat-label><input matInput formControlName="facebook" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Instagram</mat-label><input matInput formControlName="instagram" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Youtube</mat-label><input matInput formControlName="youtube" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Pinterest</mat-label><input matInput formControlName="pinterest" /></mat-form-field>
+              <div class="grade">
+                <mat-form-field appearance="outline"><mat-label>Site</mat-label><input matInput formControlName="site" /></mat-form-field>
+                <mat-form-field appearance="outline"><mat-label>Facebook</mat-label><input matInput formControlName="facebook" /></mat-form-field>
+                <mat-form-field appearance="outline"><mat-label>Instagram</mat-label><input matInput formControlName="instagram" /></mat-form-field>
+                <mat-form-field appearance="outline"><mat-label>Youtube</mat-label><input matInput formControlName="youtube" /></mat-form-field>
+                <mat-form-field appearance="outline"><mat-label>Pinterest</mat-label><input matInput formControlName="pinterest" /></mat-form-field>
+              </div>
             </div>
           </mat-tab>
           <mat-tab label="Endereço">
             <div class="aba">
-              <mat-form-field appearance="outline"><mat-label>CEP</mat-label><input matInput formControlName="cep" gdMascara="cep" (blur)="completarCep()" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>País</mat-label><input matInput formControlName="pais" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Endereço</mat-label><input matInput formControlName="endereco" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Número</mat-label><input matInput formControlName="numero" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Estado</mat-label><input matInput formControlName="estado" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Cidade</mat-label><input matInput formControlName="cidade" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Bairro</mat-label><input matInput formControlName="bairro" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Complemento</mat-label><input matInput formControlName="complemento" /></mat-form-field>
+              <div class="grade">
+                <mat-form-field appearance="outline"><mat-label>CEP</mat-label><input matInput formControlName="cep" gdMascara="cep" (blur)="completarCep()" /></mat-form-field>
+                <mat-form-field appearance="outline"><mat-label>País</mat-label><input matInput formControlName="pais" /></mat-form-field>
+                <mat-form-field appearance="outline"><mat-label>Endereço</mat-label><input matInput formControlName="endereco" /></mat-form-field>
+                <mat-form-field appearance="outline"><mat-label>Número</mat-label><input matInput formControlName="numero" /></mat-form-field>
+                <mat-form-field appearance="outline"><mat-label>Estado</mat-label><input matInput formControlName="estado" /></mat-form-field>
+                <mat-form-field appearance="outline"><mat-label>Cidade</mat-label><input matInput formControlName="cidade" /></mat-form-field>
+                <mat-form-field appearance="outline"><mat-label>Bairro</mat-label><input matInput formControlName="bairro" /></mat-form-field>
+                <mat-form-field appearance="outline"><mat-label>Complemento</mat-label><input matInput formControlName="complemento" /></mat-form-field>
+              </div>
             </div>
           </mat-tab>
           <mat-tab label="Dados bancários">
             <div class="aba">
-              <mat-form-field appearance="outline"><mat-label>Banco</mat-label><input matInput formControlName="banco" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Agência</mat-label><input matInput formControlName="agencia" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Conta</mat-label><input matInput formControlName="contaBancaria" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Titular</mat-label><input matInput formControlName="titularConta" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Tipo de conta</mat-label><input matInput formControlName="tipoConta" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Documentos</mat-label><input matInput formControlName="documentosBancarios" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Pix tipo</mat-label><input matInput formControlName="pixTipo" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Pix chave</mat-label><input matInput formControlName="pixChave" /></mat-form-field>
+              <div class="grade">
+                <mat-form-field appearance="outline">
+                  <mat-label>Banco</mat-label>
+                  <mat-select formControlName="banco" (openedChange)="aoAbrirBancos($event, buscaBanco)">
+                    <mat-option class="gd-opcao-busca" disabled>
+                      <input
+                        #buscaBanco
+                        class="gd-input-busca"
+                        placeholder="Buscar banco"
+                        [value]="termoBanco()"
+                        (input)="filtrarBanco($event)"
+                        (keydown)="$event.stopPropagation()"
+                        (click)="$event.stopPropagation()"
+                      />
+                    </mat-option>
+                    @if (carregandoBancos()) {
+                      <mat-option disabled>Carregando bancos…</mat-option>
+                    } @else if (bancosFiltrados().length === 0) {
+                      <mat-option disabled>Nenhum banco encontrado</mat-option>
+                    } @else {
+                      @for (banco of bancosFiltrados(); track banco.ispb) {
+                        <mat-option [value]="rotuloBanco(banco)">{{ rotuloBanco(banco) }}</mat-option>
+                      }
+                    }
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Agência</mat-label>
+                  <input matInput formControlName="agencia" gdMascara="agencia" placeholder="0000-0" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Conta</mat-label>
+                  <input matInput formControlName="contaBancaria" gdMascara="conta" placeholder="00000000-0" />
+                </mat-form-field>
+                <mat-form-field appearance="outline"><mat-label>Titular</mat-label><input matInput formControlName="titularConta" /></mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Tipo de conta</mat-label>
+                  <mat-select formControlName="tipoConta">
+                    <mat-option value="">Selecione</mat-option>
+                    @for (tipo of opcoesTipoConta(); track tipo) {
+                      <mat-option [value]="tipo">{{ tipo }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>CPF ou CNPJ</mat-label>
+                  <input matInput formControlName="documentosBancarios" gdMascara="documento" (input)="aoDigitarDocumento()" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Tipo Chave Pix</mat-label>
+                  <mat-select formControlName="pixTipo">
+                    <mat-option value="">Selecione</mat-option>
+                    @if (pixTipoAvulso(); as avulso) {
+                      <mat-option [value]="avulso">{{ avulso }}</mat-option>
+                    }
+                    @for (tipo of tiposPix; track tipo.valor) {
+                      <mat-option [value]="tipo.valor">{{ tipo.rotulo }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Chave Pix</mat-label>
+                  @if (pixDocumento()) {
+                    <input matInput formControlName="pixChave" />
+                  } @else if (mascaraPix(); as mascara) {
+                    <input matInput formControlName="pixChave" [gdMascara]="mascara" />
+                  } @else {
+                    <input matInput formControlName="pixChave" maxlength="77" />
+                  }
+                </mat-form-field>
+              </div>
             </div>
           </mat-tab>
           <mat-tab label="Orçamentos">
             <div class="aba" formArrayName="orcamentos">
               @for (orc of orcamentos.controls; track $index; let i = $index) {
-                <div class="linha" [formGroupName]="i">
-                  <mat-form-field appearance="outline" class="grow"><mat-label>Título</mat-label><input matInput formControlName="titulo" /></mat-form-field>
-                  <mat-form-field appearance="outline" class="grow"><mat-label>Link</mat-label><input matInput formControlName="link" /></mat-form-field>
+                <div class="linha orcamento" [formGroupName]="i">
+                  <mat-form-field appearance="outline"><mat-label>Título</mat-label><input matInput formControlName="titulo" /></mat-form-field>
+                  <mat-form-field appearance="outline"><mat-label>Link</mat-label><input matInput formControlName="link" /></mat-form-field>
                   <mat-checkbox formControlName="visivelClientes">Visível</mat-checkbox>
-                  <button mat-icon-button type="button" (click)="removerOrcamento(i)"><mat-icon>close</mat-icon></button>
+                  <button mat-icon-button type="button" aria-label="Remover orçamento" (click)="removerOrcamento(i)"><mat-icon>close</mat-icon></button>
                 </div>
               }
-              <button mat-stroked-button type="button" (click)="adicionarOrcamento()">Adicionar orçamento</button>
+              <button mat-stroked-button type="button" class="acao" (click)="adicionarOrcamento()">Adicionar orçamento</button>
             </div>
           </mat-tab>
           <mat-tab label="Diferencial">
@@ -135,19 +232,53 @@ import { aplicarMascara } from '../../shared/mascaras';
     </mat-dialog-actions>
   `,
   styles: `
-    .aba { padding: 12px 0; display: flex; flex-direction: column; gap: 8px; }
-    .linha { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-    .grow { flex: 1; min-width: 140px; }
+    :host {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      max-height: 90vh;
+      overflow: hidden;
+    }
+    .aba { padding: 12px 0 4px; display: flex; flex-direction: column; gap: 12px; }
+    .grade {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 4px 16px;
+      align-items: start;
+    }
+    .lista { display: flex; flex-direction: column; gap: 8px; }
+    .linha {
+      display: grid;
+      grid-template-columns: 120px minmax(0, 1fr) auto auto;
+      gap: 8px 12px;
+      align-items: center;
+    }
+    .linha.email { grid-template-columns: minmax(0, 1fr) auto; }
+    .linha.orcamento { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto auto; }
+    .acao { align-self: flex-start; justify-self: start; }
     .full { width: 100%; }
+    @media (max-width: 720px) {
+      .grade,
+      .linha,
+      .linha.email,
+      .linha.orcamento { grid-template-columns: 1fr; }
+    }
   `,
 })
 export class FornecedorFormDialog implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly negocio = inject(NegocioClient);
   private readonly toast = inject(ToastService);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly http = new HttpClient(inject(HttpBackend));
   protected readonly dados = inject<Fornecedor | null>(MAT_DIALOG_DATA);
   protected readonly ref = inject(MatDialogRef<FornecedorFormDialog, boolean>);
   protected readonly servicos = signal<ServicoConta[]>([]);
+  protected readonly bancos = signal<BancoBrasil[]>([]);
+  protected readonly termoBanco = signal('');
+  protected readonly carregandoBancos = signal(true);
+  protected readonly tiposPix = TIPOS_PIX;
+  private tipoPixAtual = '';
 
   protected readonly form = this.fb.group({
     nome: [this.dados?.nome ?? '', Validators.required],
@@ -172,12 +303,12 @@ export class FornecedorFormDialog implements OnInit {
     bairro: [this.dados?.bairro ?? ''],
     complemento: [this.dados?.complemento ?? ''],
     banco: [this.dados?.banco ?? ''],
-    agencia: [this.dados?.agencia ?? ''],
-    contaBancaria: [this.dados?.contaBancaria ?? ''],
+    agencia: [aplicarMascara(this.dados?.agencia ?? '', 'agencia')],
+    contaBancaria: [aplicarMascara(this.dados?.contaBancaria ?? '', 'conta')],
     titularConta: [this.dados?.titularConta ?? ''],
-    tipoConta: [this.dados?.tipoConta ?? ''],
-    documentosBancarios: [this.dados?.documentosBancarios ?? ''],
-    pixTipo: [this.dados?.pixTipo ?? ''],
+    tipoConta: [normalizarTipoConta(this.dados?.tipoConta)],
+    documentosBancarios: [aplicarMascara(this.dados?.documentosBancarios ?? '', 'documento')],
+    pixTipo: [normalizarPix(this.dados?.pixTipo)],
     pixChave: [this.dados?.pixChave ?? ''],
     diferencial: [this.dados?.diferencial ?? ''],
     diferencialVisivelCliente: [this.dados?.diferencialVisivelCliente ?? false],
@@ -201,9 +332,21 @@ export class FornecedorFormDialog implements OnInit {
   }
 
   ngOnInit(): void {
+    this.sincronizarPix(false);
+    this.form.controls.pixTipo.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.sincronizarPix(true));
     this.negocio.servicosConta().subscribe({
       next: (lista) => this.servicos.set(lista),
       error: () => this.servicos.set([]),
+    });
+    this.http.get<BancoBrasil[]>('https://brasilapi.com.br/api/banks/v1').subscribe({
+      next: (lista) => {
+        this.bancos.set([...lista].sort(compararBancos));
+        this.carregandoBancos.set(false);
+      },
+      error: () => {
+        this.carregandoBancos.set(false);
+        this.toast.erro('Não foi possível carregar a lista de bancos.');
+      },
     });
     for (const tel of this.dados?.telefones ?? []) {
       this.telefones.push(this.fb.group({
@@ -223,6 +366,73 @@ export class FornecedorFormDialog implements OnInit {
         visivelClientes: [orc.visivelClientes],
       }));
     }
+  }
+
+  protected opcoesTipoConta(): string[] {
+    const atual = this.form.controls.tipoConta.value ?? '';
+    if (atual && !TIPOS_CONTA.includes(atual)) {
+      return [atual, ...TIPOS_CONTA];
+    }
+    return TIPOS_CONTA;
+  }
+
+  protected bancosFiltrados(): BancoBrasil[] {
+    const termo = normalizarBusca(this.termoBanco());
+    const lista = this.bancos();
+    if (!termo) {
+      return lista;
+    }
+    return lista.filter((banco) => {
+      const rotulo = normalizarBusca(this.rotuloBanco(banco));
+      const codigo = banco.code == null ? '' : String(banco.code);
+      return rotulo.includes(termo) || codigo.includes(termo) || banco.ispb.includes(termo);
+    });
+  }
+
+  protected rotuloBanco(banco: BancoBrasil): string {
+    const nome = banco.fullName?.trim() || banco.name?.trim() || 'Banco';
+    if (banco.code == null) {
+      return nome;
+    }
+    return `${String(banco.code).padStart(3, '0')} — ${nome}`;
+  }
+
+  protected filtrarBanco(evento: Event): void {
+    this.termoBanco.set((evento.target as HTMLInputElement).value);
+  }
+
+  protected aoAbrirBancos(aberto: boolean, campo: HTMLInputElement): void {
+    if (!aberto) {
+      return;
+    }
+    this.termoBanco.set('');
+    campo.value = '';
+    setTimeout(() => campo.focus());
+  }
+
+  protected pixTipoAvulso(): string | null {
+    const atual = this.form.controls.pixTipo.value ?? '';
+    if (atual && !TIPOS_PIX.some((tipo) => tipo.valor === atual)) {
+      return atual;
+    }
+    return null;
+  }
+
+  protected pixDocumento(): boolean {
+    const tipo = this.form.controls.pixTipo.value;
+    return tipo === 'Cpf' || tipo === 'Cnpj';
+  }
+
+  protected mascaraPix(): TipoMascara | null {
+    return mascaraDoPix(this.form.controls.pixTipo.value);
+  }
+
+  protected aoDigitarDocumento(): void {
+    setTimeout(() => {
+      if (this.pixDocumento()) {
+        this.form.controls.pixChave.setValue(this.form.controls.documentosBancarios.value ?? '', { emitEvent: false });
+      }
+    });
   }
 
   protected adicionarTelefone(): void {
@@ -285,8 +495,8 @@ export class FornecedorFormDialog implements OnInit {
       ...valor,
       cnpj: valor.cnpj || null,
       cpf: valor.cpf || null,
-      precoDe: valor.precoDe === null || valor.precoDe === '' ? null : Number(valor.precoDe),
-      precoAte: valor.precoAte === null || valor.precoAte === '' ? null : Number(valor.precoAte),
+      precoDe: typeof valor.precoDe === 'number' ? valor.precoDe : null,
+      precoAte: typeof valor.precoAte === 'number' ? valor.precoAte : null,
       telefones: (valor.telefones ?? []).filter((t) => t.numero),
       emails: (valor.emails ?? []).filter((e) => e.endereco),
       orcamentos: (valor.orcamentos ?? []).filter((o) => o.titulo),
@@ -302,4 +512,90 @@ export class FornecedorFormDialog implements OnInit {
       error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
     });
   }
+
+  private sincronizarPix(limpar: boolean): void {
+    const tipo = this.form.controls.pixTipo.value ?? '';
+    const chave = this.form.controls.pixChave;
+    if (tipo === 'Cpf' || tipo === 'Cnpj') {
+      chave.disable({ emitEvent: false });
+      chave.setValue(this.form.controls.documentosBancarios.value ?? '', { emitEvent: false });
+    } else {
+      const bloqueada = chave.disabled;
+      chave.enable({ emitEvent: false });
+      if (limpar && (bloqueada || this.tipoPixAtual !== tipo)) {
+        chave.setValue('', { emitEvent: false });
+      } else {
+        const mascara = mascaraDoPix(tipo);
+        if (mascara) {
+          chave.setValue(aplicarMascara(chave.value ?? '', mascara), { emitEvent: false });
+        }
+      }
+    }
+    this.tipoPixAtual = tipo;
+  }
+}
+
+function mascaraDoPix(tipo: string | null | undefined): TipoMascara | null {
+  if (tipo === 'Telefone') {
+    return 'pixTelefone';
+  }
+  if (tipo === 'Aleatoria') {
+    return 'pixAleatoria';
+  }
+  return null;
+}
+
+function normalizarTipoConta(valor: string | null | undefined): string {
+  const texto = (valor ?? '').trim();
+  const chave = texto.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
+  if (chave.startsWith('corr')) {
+    return 'Corrente';
+  }
+  if (chave.startsWith('pag')) {
+    return 'Pagamento';
+  }
+  if (chave.startsWith('poup')) {
+    return 'Poupança';
+  }
+  return texto;
+}
+
+function normalizarPix(valor: string | null | undefined): string {
+  const texto = (valor ?? '').trim().toLowerCase();
+  if (!texto) {
+    return '';
+  }
+  if (texto.includes('cnpj')) {
+    return 'Cnpj';
+  }
+  if (texto === 'cpf' || texto.includes('cpf')) {
+    return 'Cpf';
+  }
+  if (texto.includes('mail')) {
+    return 'Email';
+  }
+  if (texto.includes('tel') || texto.includes('cel') || texto.includes('fone')) {
+    return 'Telefone';
+  }
+  if (texto.includes('aleat') || texto.includes('evp')) {
+    return 'Aleatoria';
+  }
+  return (valor ?? '').trim();
+}
+
+function compararBancos(a: BancoBrasil, b: BancoBrasil): number {
+  if (a.code == null && b.code == null) {
+    return (a.fullName || a.name || '').localeCompare(b.fullName || b.name || '', 'pt');
+  }
+  if (a.code == null) {
+    return 1;
+  }
+  if (b.code == null) {
+    return -1;
+  }
+  return a.code - b.code || (a.fullName || '').localeCompare(b.fullName || '', 'pt');
+}
+
+function normalizarBusca(valor: string): string {
+  return valor.trim().toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
 }

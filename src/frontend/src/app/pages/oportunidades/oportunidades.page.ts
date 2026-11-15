@@ -1,4 +1,3 @@
-import { DecimalPipe } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -18,9 +17,12 @@ import {
 } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { CampoDataComponent } from '../../shared/campo-data';
+import { CampoDinheiroComponent } from '../../shared/campo-dinheiro';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { deDataParaIso, deIsoParaData } from '../../shared/data';
 import { DIALOG } from '../../shared/dialog';
+import { GdDinheiroPipe } from '../../shared/gd-dinheiro.pipe';
+import { grupoLocal, localPedido, LocalCamposComponent } from '../../shared/local-campos';
 
 @Component({
   selector: 'app-oportunidade-dialog',
@@ -32,6 +34,8 @@ import { DIALOG } from '../../shared/dialog';
     MatInputModule,
     MatSelectModule,
     CampoDataComponent,
+    CampoDinheiroComponent,
+    LocalCamposComponent,
   ],
   template: `
     <h2 mat-dialog-title>{{ dados ? 'Editar oportunidade' : 'Nova oportunidade' }}</h2>
@@ -46,7 +50,7 @@ import { DIALOG } from '../../shared/dialog';
           </mat-select>
         </mat-form-field>
         <mat-form-field appearance="outline"><mat-label>Fonte</mat-label><input matInput formControlName="fonte" /></mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>Valor da proposta</mat-label><input matInput type="number" formControlName="valorProposta" /></mat-form-field>
+        <app-campo-dinheiro rotulo="Valor da proposta" formControlName="valorProposta" />
         <mat-form-field appearance="outline"><mat-label>Responsável</mat-label><input matInput formControlName="responsavel" /></mat-form-field>
         <mat-form-field appearance="outline">
           <mat-label>Serviço/produto</mat-label>
@@ -69,14 +73,11 @@ import { DIALOG } from '../../shared/dialog';
         </mat-form-field>
         <app-campo-data formControlName="dataPrevista" rotulo="Data prevista" />
         <mat-form-field appearance="outline"><mat-label>Convidados</mat-label><input matInput type="number" formControlName="quantidadeConvidados" /></mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>Horários</mat-label><input matInput formControlName="horarios" /></mat-form-field>
-        <h3>Cerimônia e recepção</h3>
-        <mat-form-field appearance="outline"><mat-label>Local cerimônia</mat-label><input matInput formControlName="localCerimonia" /></mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>Endereço cerimônia</mat-label><input matInput formControlName="enderecoCerimonia" /></mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>Local recepção</mat-label><input matInput formControlName="localRecepcao" /></mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>Endereço recepção</mat-label><input matInput formControlName="enderecoRecepcao" /></mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>UF</mat-label><input matInput formControlName="uf" /></mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>Cidade</mat-label><input matInput formControlName="cidade" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Horários</mat-label><input matInput formControlName="horarios" placeholder="hh:mm" /></mat-form-field>
+        <h3>Cerimônia</h3>
+        <app-local-campos [grupo]="form.controls.cerimonia" />
+        <h3>Recepção</h3>
+        <app-local-campos [grupo]="form.controls.recepcao" />
         <h3>Contatos</h3>
         <div formArrayName="contatos">
           @for (c of contatos.controls; track $index; let i = $index) {
@@ -113,7 +114,7 @@ export class OportunidadeDialog implements OnInit {
     nome: [this.dados?.nome ?? '', Validators.required],
     estagio: [this.dados?.estagio ?? 'Contato inicial', Validators.required],
     fonte: [this.dados?.fonte ?? ''],
-    valorProposta: [this.dados?.valorProposta ?? null as number | null],
+    valorProposta: this.fb.control<number | null>(this.dados?.valorProposta ?? null),
     responsavel: [this.dados?.responsavel ?? ''],
     modeloServicoFunilId: [this.dados?.modeloServicoFunilId ?? null as string | null],
     servicoProduto: [this.dados?.servicoProduto ?? ''],
@@ -122,12 +123,26 @@ export class OportunidadeDialog implements OnInit {
     dataPrevista: this.fb.control<Date | null>(deIsoParaData(this.dados?.dataPrevista)),
     quantidadeConvidados: [this.dados?.quantidadeConvidados ?? null as number | null],
     horarios: [this.dados?.horarios ?? ''],
-    localCerimonia: [this.dados?.localCerimonia ?? ''],
-    enderecoCerimonia: [this.dados?.enderecoCerimonia ?? ''],
-    localRecepcao: [this.dados?.localRecepcao ?? ''],
-    enderecoRecepcao: [this.dados?.enderecoRecepcao ?? ''],
-    uf: [this.dados?.uf ?? ''],
-    cidade: [this.dados?.cidade ?? ''],
+    cerimonia: grupoLocal(this.fb, {
+      nome: this.dados?.localCerimonia,
+      endereco: this.dados?.enderecoCerimonia,
+      cep: this.dados?.cepCerimonia,
+      pais: this.dados?.paisCerimonia,
+      numero: this.dados?.numeroCerimonia,
+      bairro: this.dados?.bairroCerimonia,
+      estado: this.dados?.uf,
+      cidade: this.dados?.cidade,
+    }),
+    recepcao: grupoLocal(this.fb, {
+      nome: this.dados?.localRecepcao,
+      endereco: this.dados?.enderecoRecepcao,
+      cep: this.dados?.cepRecepcao,
+      pais: this.dados?.paisRecepcao,
+      numero: this.dados?.numeroRecepcao,
+      bairro: this.dados?.bairroRecepcao,
+      estado: this.dados?.estadoRecepcao,
+      cidade: this.dados?.cidadeRecepcao,
+    }),
     contatos: this.fb.array(
       (this.dados?.contatos?.length ? this.dados.contatos : [{ nome: '', telefone: '', email: '' }]).map((c) =>
         this.fb.nonNullable.group({
@@ -162,11 +177,39 @@ export class OportunidadeDialog implements OnInit {
     }
     const v = this.form.getRawValue();
     const dataIso = deDataParaIso(v.dataPrevista);
+    const cerimonia = localPedido(v.cerimonia);
+    const recepcao = localPedido(v.recepcao);
     const gravar = () => {
       const pedido = {
-        ...v,
+        nome: v.nome,
+        estagio: v.estagio,
+        fonte: v.fonte,
+        valorProposta: v.valorProposta,
+        responsavel: v.responsavel,
+        modeloServicoFunilId: v.modeloServicoFunilId,
+        servicoProduto: v.servicoProduto,
+        motivoDescarte: v.motivoDescarte,
+        tipoEvento: v.tipoEvento,
         dataPrevista: dataIso,
-        valorProposta: v.valorProposta === null || v.valorProposta === ('' as unknown) ? null : Number(v.valorProposta),
+        quantidadeConvidados: v.quantidadeConvidados,
+        horarios: v.horarios?.trim() || null,
+        localCerimonia: cerimonia.nome,
+        enderecoCerimonia: cerimonia.endereco,
+        cepCerimonia: cerimonia.cep,
+        paisCerimonia: cerimonia.pais,
+        numeroCerimonia: cerimonia.numero,
+        bairroCerimonia: cerimonia.bairro,
+        uf: cerimonia.estado,
+        cidade: cerimonia.cidade,
+        localRecepcao: recepcao.nome,
+        enderecoRecepcao: recepcao.endereco,
+        cepRecepcao: recepcao.cep,
+        paisRecepcao: recepcao.pais,
+        numeroRecepcao: recepcao.numero,
+        bairroRecepcao: recepcao.bairro,
+        estadoRecepcao: recepcao.estado,
+        cidadeRecepcao: recepcao.cidade,
+        contatos: v.contatos,
       };
       const req = this.dados
         ? this.negocio.atualizarOportunidade(this.dados.id, pedido)
@@ -198,7 +241,6 @@ export class OportunidadeDialog implements OnInit {
 @Component({
   selector: 'app-oportunidades',
   imports: [
-    DecimalPipe,
     ReactiveFormsModule,
     MatButtonModule,
     MatFormFieldModule,
@@ -206,6 +248,7 @@ export class OportunidadeDialog implements OnInit {
     MatIconModule,
     MatSelectModule,
     CampoDataComponent,
+    GdDinheiroPipe,
   ],
   template: `
     <header class="gd-cabecalho">
@@ -221,9 +264,9 @@ export class OportunidadeDialog implements OnInit {
     </header>
     <section class="gd-painel">
       <form class="gd-barra filtros" [formGroup]="filtros" (ngSubmit)="carregar()">
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>Buscar por nome</mat-label>
-          <input matInput formControlName="nome" />
+        <mat-form-field class="gd-busca" appearance="outline" subscriptSizing="dynamic">
+          <mat-icon matIconPrefix>search</mat-icon>
+          <input matInput formControlName="nome" placeholder="Buscar por nome" />
         </mat-form-field>
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>Responsável</mat-label>
@@ -245,12 +288,12 @@ export class OportunidadeDialog implements OnInit {
           <div class="coluna">
             <header>
               <strong>{{ estagio }}</strong>
-              <span>{{ resumo(estagio).qtd }} · {{ resumo(estagio).valor | number: '1.2-2' }}</span>
+              <span>{{ resumo(estagio).qtd }} · {{ resumo(estagio).valor | gdDinheiro }}</span>
             </header>
             @for (item of daColuna(estagio); track item.id) {
               <article>
                 <strong>{{ item.nome }}</strong>
-                <span class="gd-sub">{{ item.valorProposta ?? 0 | number: '1.2-2' }}</span>
+                <span class="gd-sub">{{ (item.valorProposta ?? 0) | gdDinheiro }}</span>
                 <div class="gd-acoes">
                   <button mat-icon-button type="button" (click)="abrir(item)"><mat-icon>edit</mat-icon></button>
                   <button mat-icon-button type="button" (click)="mover(item)"><mat-icon>swap_horiz</mat-icon></button>
@@ -266,7 +309,8 @@ export class OportunidadeDialog implements OnInit {
   styles: `
     .acoes-topo { display: flex; gap: 8px; flex-wrap: wrap; }
     .filtros { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-    .filtros mat-form-field, .filtros app-campo-data { width: 160px; }
+    .filtros mat-form-field:not(.gd-busca), .filtros app-campo-data { width: 160px; }
+    .filtros .gd-busca { width: 240px; }
     .filtros app-campo-data { display: block; }
     .quadro { display: grid; grid-template-columns: repeat(4, minmax(180px, 1fr)); gap: 12px; overflow-x: auto; }
     .coluna { background: var(--gd-card); border: 1px solid var(--gd-border); border-radius: 8px; padding: 10px; min-height: 240px; }

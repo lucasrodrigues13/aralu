@@ -93,7 +93,7 @@ O casal do formulário não cria cliente. O vínculo de cliente é a SPEC-006.
 
 ## 12. Interface
 
-Três abas, busca por nome, filtros de tipo, período e tag. Formulário com os dados da seção 11. Home com dados, contagem regressiva, resumo de tarefas e resumo de convidados, mais os links para SPEC-003, SPEC-004 e SPEC-006. Concluir e cancelar só em andamento.
+Três abas na lista, busca por nome, filtros de tipo, período e tag. Formulário com os dados da seção 11. Clicar no evento abre a home. No topo, as abas do próprio evento: Início, Convidados e Tarefas. Convidado não tem item na barra lateral da conta, porque a lista só existe dentro do evento. A aba Início começa com o cartão da imagem (ou das iniciais), nome, data, hora, situação, dados básicos preenchidos, links preenchidos (mapa da cerimônia, mapa da recepção e site) e o botão Editar. Os cartões seguintes trazem o resumo (contagem regressiva, tarefas e convidados), as tags quando houver, serviços e fornecedores, e os clientes do evento. Concluir e cancelar só em andamento.
 
 ## 13. Erros
 

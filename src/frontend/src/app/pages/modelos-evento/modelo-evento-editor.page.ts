@@ -20,6 +20,7 @@ import {
   TIPOS_ITEM_CHECKLIST,
 } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
+import { CampoDinheiroComponent } from '../../shared/campo-dinheiro';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { DIALOG } from '../../shared/dialog';
 
@@ -27,7 +28,7 @@ import { DIALOG } from '../../shared/dialog';
   selector: 'app-modelo-evento-editor',
   imports: [
     ReactiveFormsModule, RouterLink, MatButtonModule, MatCheckboxModule, MatFormFieldModule, MatInputModule,
-    MatSelectModule, MatTabsModule, MatIconModule,
+    MatSelectModule, MatTabsModule, MatIconModule, CampoDinheiroComponent,
   ],
   template: `
     <a mat-button routerLink="/modelos-evento">Voltar</a>
@@ -42,7 +43,7 @@ import { DIALOG } from '../../shared/dialog';
         <button mat-flat-button type="button" (click)="salvar()">Salvar</button>
       </div>
     </header>
-    <form class="formulario" [formGroup]="form">
+    <form class="formulario gd-painel-form" [formGroup]="form">
       <mat-form-field appearance="outline"><mat-label>Nome</mat-label><input matInput formControlName="nome" /></mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>Tipo</mat-label>
@@ -57,15 +58,14 @@ import { DIALOG } from '../../shared/dialog';
           <div formArrayName="servicos" class="aba">
             @for (servico of servicos.controls; track $index; let i = $index) {
               <div class="bloco" [formGroupName]="i">
-                <div class="linha">
+                <div class="linha linha-servico">
                   <mat-form-field appearance="outline"><mat-label>Serviço</mat-label><input matInput formControlName="nome" /></mat-form-field>
-                  <mat-form-field appearance="outline"><mat-label>Valor estimado</mat-label><input matInput type="number" min="0" formControlName="valorEstimado" /></mat-form-field>
-                  <button mat-icon-button type="button" (click)="removerServico(i)"><mat-icon>delete</mat-icon></button>
+                  <app-campo-dinheiro rotulo="Valor estimado" formControlName="valorEstimado" />
                 </div>
-                <div formArrayName="itens">
+                <div formArrayName="itens" class="itens">
                   @for (item of itensDe(i).controls; track $index; let j = $index) {
                     <div class="linha" [formGroupName]="j">
-                      <mat-form-field appearance="outline">
+                      <mat-form-field class="curto" appearance="outline">
                         <mat-label>Tipo</mat-label>
                         <mat-select formControlName="tipo">
                           @for (t of tiposItem; track t.valor) {
@@ -74,31 +74,37 @@ import { DIALOG } from '../../shared/dialog';
                         </mat-select>
                       </mat-form-field>
                       <mat-form-field appearance="outline" class="grow"><mat-label>Texto</mat-label><input matInput formControlName="texto" /></mat-form-field>
-                      <button mat-icon-button type="button" (click)="removerItem(i, j)"><mat-icon>close</mat-icon></button>
+                      <button mat-icon-button type="button" aria-label="Remover item" (click)="removerItem(i, j)"><mat-icon>close</mat-icon></button>
                     </div>
                   }
                 </div>
-                <button mat-stroked-button type="button" (click)="adicionarItem(i)">Adicionar item</button>
+                <div class="acoes-lista">
+                  <button mat-icon-button type="button" aria-label="Adicionar item" (click)="adicionarItem(i)"><mat-icon>add</mat-icon></button>
+                  <button mat-icon-button type="button" aria-label="Remover serviço" (click)="removerServico(i)"><mat-icon>delete</mat-icon></button>
+                </div>
               </div>
             }
-            <button mat-stroked-button type="button" (click)="adicionarServico()">Adicionar serviço</button>
+            <button mat-stroked-button type="button" class="acao-esquerda" (click)="adicionarServico()">Adicionar serviço</button>
           </div>
         </mat-tab>
         <mat-tab label="Tarefas">
           <div formArrayName="tarefas" class="aba">
             @for (tarefa of tarefas.controls; track $index; let i = $index) {
-              <div class="linha" [formGroupName]="i">
-                <mat-form-field appearance="outline" class="grow"><mat-label>Título</mat-label><input matInput formControlName="titulo" /></mat-form-field>
-                <mat-form-field appearance="outline"><mat-label>Dias antes</mat-label><input matInput type="number" formControlName="diasAntes" /></mat-form-field>
-                <button mat-icon-button type="button" (click)="removerTarefa(i)"><mat-icon>delete</mat-icon></button>
+              <div class="bloco" [formGroupName]="i">
+                <div class="linha linha-tarefa">
+                  <mat-form-field appearance="outline" class="grow"><mat-label>Título</mat-label><input matInput formControlName="titulo" /></mat-form-field>
+                  <mat-form-field class="curto" appearance="outline"><mat-label>Dias antes</mat-label><input matInput type="number" formControlName="diasAntes" /></mat-form-field>
+                  <button mat-icon-button type="button" (click)="removerTarefa(i)"><mat-icon>delete</mat-icon></button>
+                </div>
               </div>
             }
-            <button mat-stroked-button type="button" (click)="adicionarTarefa()">Adicionar tarefa</button>
+            <button mat-stroked-button type="button" class="acao-esquerda" (click)="adicionarTarefa()">Adicionar tarefa</button>
           </div>
         </mat-tab>
         <mat-tab label="Briefings">
           <div class="aba">
-            <mat-form-field appearance="outline">
+            <div class="bloco bloco-curto">
+            <mat-form-field class="campo" appearance="outline">
               <mat-label>Modelo de briefing</mat-label>
               <mat-select [value]="vinculo('Briefing')" (valueChange)="definirVinculo('Briefing', $event)">
                 <mat-option value="">Nenhum</mat-option>
@@ -107,11 +113,13 @@ import { DIALOG } from '../../shared/dialog';
                 }
               </mat-select>
             </mat-form-field>
+            </div>
           </div>
         </mat-tab>
         <mat-tab label="Roteiros">
           <div class="aba">
-            <mat-form-field appearance="outline">
+            <div class="bloco bloco-curto">
+            <mat-form-field class="campo" appearance="outline">
               <mat-label>Modelo de roteiro</mat-label>
               <mat-select [value]="vinculo('Roteiro')" (valueChange)="definirVinculo('Roteiro', $event)">
                 <mat-option value="">Nenhum</mat-option>
@@ -120,11 +128,13 @@ import { DIALOG } from '../../shared/dialog';
                 }
               </mat-select>
             </mat-form-field>
+            </div>
           </div>
         </mat-tab>
         <mat-tab label="Inspirações">
           <div class="aba">
-            <mat-form-field appearance="outline">
+            <div class="bloco bloco-curto">
+            <mat-form-field class="campo" appearance="outline">
               <mat-label>Modelo de inspirações</mat-label>
               <mat-select [value]="vinculo('Inspiracao')" (valueChange)="definirVinculo('Inspiracao', $event)">
                 <mat-option value="">Nenhum</mat-option>
@@ -133,11 +143,13 @@ import { DIALOG } from '../../shared/dialog';
                 }
               </mat-select>
             </mat-form-field>
+            </div>
           </div>
         </mat-tab>
         <mat-tab label="RSVP e Mensagens">
           <div class="aba">
-            <mat-form-field appearance="outline">
+            <div class="bloco bloco-curto">
+            <mat-form-field class="campo" appearance="outline">
               <mat-label>Modelo de mensagem</mat-label>
               <mat-select [value]="vinculo('Mensagem')" (valueChange)="definirVinculo('Mensagem', $event)">
                 <mat-option value="">Nenhum</mat-option>
@@ -146,6 +158,7 @@ import { DIALOG } from '../../shared/dialog';
                 }
               </mat-select>
             </mat-form-field>
+            </div>
           </div>
         </mat-tab>
         <mat-tab label="Permissões">
@@ -161,11 +174,98 @@ import { DIALOG } from '../../shared/dialog';
     </form>
   `,
   styles: `
+    :host { display: block; max-width: 100%; min-width: 0; }
+    :host .gd-painel-form {
+      width: min(1040px, 100%);
+      margin-inline: auto;
+      box-sizing: border-box;
+      background: var(--gd-card);
+      border: 1px solid var(--gd-border);
+      border-radius: 14px;
+      padding: 24px;
+    }
+    :host .formulario,
+    :host mat-tab-group { min-width: 0; max-width: 100%; }
     .acoes { display: flex; gap: 8px; flex-wrap: wrap; }
-    .aba { padding: 16px 0; display: flex; flex-direction: column; gap: 12px; }
-    .bloco { border: 1px solid var(--gd-borda, #e0e0e0); border-radius: 8px; padding: 12px; margin-bottom: 8px; }
-    .linha { display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; }
-    .grow { flex: 1; min-width: 160px; }
+    .aba { padding: 16px 0; display: flex; flex-direction: column; gap: 12px; min-width: 0; max-width: 100%; }
+    .bloco {
+      box-sizing: border-box;
+      width: min(840px, 100%);
+      margin-inline: auto;
+      border: 1px solid var(--gd-border);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 8px;
+    }
+    .bloco-curto {
+      width: fit-content;
+      max-width: 100%;
+      align-self: center;
+    }
+    .itens .linha + .linha {
+      border-top: 1px solid var(--gd-border);
+      margin-top: 8px;
+      padding-top: 16px;
+    }
+    .linha {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    :host .linha mat-form-field {
+      width: auto;
+      flex: 1 1 0;
+      min-width: 0;
+    }
+    :host .linha .curto {
+      flex: 0 0 220px;
+      width: 220px;
+    }
+    .linha button {
+      flex: 0 0 auto;
+      margin-top: 6px;
+    }
+    .linha-tarefa {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 220px auto;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+    }
+    :host .linha-tarefa > * { min-width: 0; }
+    :host .linha-tarefa mat-form-field,
+    :host .linha-tarefa .curto {
+      width: 100%;
+      min-width: 0;
+      max-width: 100%;
+    }
+    .linha-servico {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 12px;
+      align-items: start;
+    }
+    :host .linha-servico mat-form-field,
+    .linha-servico app-campo-dinheiro {
+      width: 100%;
+      min-width: 0;
+    }
+    :host .aba .campo {
+      width: 320px;
+      max-width: 100%;
+      align-self: flex-start;
+    }
+    .acoes-lista { display: flex; align-items: center; }
+    .acao-esquerda { align-self: flex-start; }
+    .grow { flex: 1; min-width: 0; }
+    @media (max-width: 720px) {
+      .linha { flex-wrap: wrap; }
+      :host .linha mat-form-field,
+      :host .linha .curto { flex: 1 1 100%; width: 100%; }
+      .linha-servico,
+      .linha-tarefa { grid-template-columns: 1fr; width: 100%; }
+      :host .aba .campo { width: 100%; }
+    }
   `,
 })
 export class ModeloEventoEditorPage implements OnInit {
@@ -304,9 +404,7 @@ export class ModeloEventoEditorPage implements OnInit {
       permissoes: valor.permissoes,
       servicos: (valor.servicos ?? []).map((servico) => ({
         nome: servico.nome,
-        valorEstimado: servico.valorEstimado === '' || servico.valorEstimado == null
-          ? null
-          : Number(servico.valorEstimado),
+        valorEstimado: typeof servico.valorEstimado === 'number' ? servico.valorEstimado : null,
         itens: (servico.itens ?? []).filter((item) => item.texto?.trim()),
       })),
       tarefas: (valor.tarefas ?? []).map((tarefa) => ({

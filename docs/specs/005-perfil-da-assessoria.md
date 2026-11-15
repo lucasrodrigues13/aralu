@@ -29,6 +29,7 @@ Organizer autenticado com e-mail confirmado.
 3. Ele informa nome da empresa, responsável, CPF ou CNPJ, celular, data de nascimento e endereço.
 4. Salva.
 5. Ao reabrir, os dados gravados continuam lá.
+6. Se quiser, envia uma foto. Sem foto, a tela mostra só "Enviar foto". Com foto, passar o mouse sobre ela mostra "Alterar" e "Remover". Alterar substitui o arquivo. Remover apaga a foto e volta ao botão único.
 
 ## 7. Fluxos alternativos
 
@@ -44,6 +45,7 @@ Organizer autenticado com e-mail confirmado.
 - CPF ou CNPJ é um único campo de documento. Não foi vista validação de dígito.
 - Endereço é um único texto. A exploração não separou CEP, rua, cidade ou estado.
 - Estes dados não criam evento, contato de cliente nem conta Identity.
+- A foto é opcional. JPG, PNG ou WebP de até 5 MB, o mesmo limite das outras imagens. Sem foto gravada, não há miniatura.
 
 ## 9. Validações
 
@@ -55,11 +57,11 @@ Sem perfil gravado e perfil gravado. Salvar de novo substitui os campos editáve
 
 ## 11. Dados necessários
 
-E-mail da conta, nome da empresa, responsável, documento, celular, nascimento e endereço.
+E-mail da conta, nome da empresa, responsável, documento, celular, nascimento, endereço e foto opcional.
 
 ## 12. Interface
 
-Uma página autenticada, e-mail visível e bloqueado, os outros campos editáveis e uma ação de salvar. Sem foto, assistente ou notificação.
+Uma página autenticada. O título é "Editar" e o nome do responsável, ou o da empresa, ou "Editar perfil" quando os dois estão vazios. Duas colunas: Identidade e Endereço à esquerda; foto e Ações à direita. O e-mail fica visível e bloqueado. Os outros campos são editáveis. Ações tem Salvar e Cancelar. Cancelar restaura o texto da última leitura e não apaga a foto. Sem foto, só o botão "Enviar foto". Com foto, o círculo mostra a imagem e, no hover, "Alterar" e "Remover". Sem assistente ou notificação.
 
 ## 13. Erros
 
@@ -72,6 +74,7 @@ Data inválida indica o campo e não salva. Falha ao gravar mantém o perfil ant
 3. Salvar com os campos vazios não apaga o e-mail.
 4. Data futura ou inválida não grava.
 5. Outra conta não lê esse perfil.
+6. Sem foto, a página mostra "Enviar foto" e não mostra "Remover". Com foto, "Alterar" e "Remover" estão na foto. Remover volta ao botão único.
 
 ## 15. Cenários de teste
 

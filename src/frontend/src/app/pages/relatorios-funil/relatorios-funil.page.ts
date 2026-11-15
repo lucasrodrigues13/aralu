@@ -1,4 +1,3 @@
-import { DecimalPipe } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -9,11 +8,12 @@ import { mensagemDeErro } from '../../core/mensagem-erro';
 import { CatalogoRelatoriosFunil, NegocioClient } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { CampoDataComponent } from '../../shared/campo-data';
+import { GdDinheiroPipe } from '../../shared/gd-dinheiro.pipe';
 import { deDataParaIso } from '../../shared/data';
 
 @Component({
   selector: 'app-relatorios-funil',
-  imports: [DecimalPipe, ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatTableModule, CampoDataComponent],
+  imports: [ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatTableModule, CampoDataComponent, GdDinheiroPipe],
   template: `
     <header class="gd-cabecalho">
       <div><h1>Relatórios do funil</h1><p>Catálogo de métricas comerciais da conta.</p></div>
@@ -44,7 +44,7 @@ import { deDataParaIso } from '../../shared/data';
                   </ng-container>
                   <ng-container matColumnDef="valor">
                     <th mat-header-cell *matHeaderCellDef>Valor</th>
-                    <td mat-cell *matCellDef="let item">{{ item.valor | number: '1.2-2' }}</td>
+                    <td mat-cell *matCellDef="let item">{{ item.valor | gdDinheiro }}</td>
                   </ng-container>
                   <tr mat-header-row *matHeaderRowDef="colunas"></tr>
                   <tr mat-row *matRowDef="let row; columns: colunas"></tr>

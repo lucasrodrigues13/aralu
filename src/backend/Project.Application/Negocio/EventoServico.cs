@@ -519,6 +519,20 @@ public sealed class EventoServico(IDados dados, IConsultaCep cep, ClienteServico
         return Resultado<Guid?>.Sucesso(anterior);
     }
 
+    public async Task<Resultado<Guid?>> RemoverImagemAsync(string contaId, Guid id, CancellationToken ct)
+    {
+        var evento = await dados.ObterEventoAsync(contaId, id, ct);
+        if (evento is null)
+        {
+            return Resultado<Guid?>.Erro(Codigos.Indisponivel, "Indisponível.");
+        }
+
+        var anterior = evento.ImagemId;
+        evento.ImagemId = null;
+        await dados.SalvarEventoAsync(ct);
+        return Resultado<Guid?>.Sucesso(anterior);
+    }
+
     private async Task<Resultado<LocalEvento>> LocalAsync(LocalPedido? pedido, CancellationToken ct)
     {
         var local = new LocalEvento

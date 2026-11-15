@@ -7,10 +7,11 @@ import { mensagemDeErro } from '../../core/mensagem-erro';
 import { NegocioClient, Painel } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
+import { GdDinheiroPipe } from '../../shared/gd-dinheiro.pipe';
 
 @Component({
   selector: 'app-painel',
-  imports: [RouterLink, MatCardModule, MatIconModule, MatListModule, GdDataPipe],
+  imports: [RouterLink, MatCardModule, MatIconModule, MatListModule, GdDataPipe, GdDinheiroPipe],
   template: `
     <header class="gd-cabecalho">
       <div>
@@ -40,7 +41,7 @@ import { GdDataPipe } from '../../shared/gd-data.pipe';
             <span>{{ estagio.estagio }}</span>
             <span class="gd-icone"><mat-icon>filter_alt</mat-icon></span>
             <strong>{{ estagio.quantidade }}</strong>
-            <small>{{ estagio.valor }}</small>
+            <small>{{ estagio.valor | gdDinheiro }}</small>
           </a>
         }
       </section>

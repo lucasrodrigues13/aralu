@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { ToastAviso } from './toast-aviso';
 
 @Injectable({ providedIn: 'root' })
 export class ToastService {
@@ -19,7 +20,8 @@ export class ToastService {
       return;
     }
 
-    this.snack.open(texto, undefined, {
+    this.snack.openFromComponent(ToastAviso, {
+      data: texto,
       duration,
       horizontalPosition: 'end',
       verticalPosition: 'top',

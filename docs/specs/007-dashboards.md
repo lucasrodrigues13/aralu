@@ -8,7 +8,7 @@ SPEC-007. Dashboards.
 
 ## 2. Objetivo
 
-Depois do login, o Organizer vê a situação da própria conta. A tela mostra dashboards. O menu fica na lateral e não ocupa o miolo.
+Depois do login, o Organizer vê a situação da própria conta. A tela mostra dashboards. O menu fica na lateral e não ocupa o miolo. Em tela estreita, até 959px, ele abre por cima da página, começa fechado e pode ser fechado de novo, para o miolo continuar visível.
 
 ## 3. Requisitos relacionados
 
@@ -25,7 +25,7 @@ Organizer autenticado, SPEC-001. Evento vem da SPEC-002. Oportunidade do funil a
 ## 6. Fluxo principal
 
 1. O login bem-sucedido abre esta tela.
-2. A barra lateral lista os módulos do corte: dashboards, perfil, eventos, tarefas, clientes e convidados.
+2. A barra lateral lista os módulos gerais da conta: dashboards, perfil, eventos, tarefas, clientes e os demais do corte. Convidado não entra nessa barra: a lista fica na aba do evento.
 3. O miolo mostra dois blocos.
 4. Eventos: quantidade em andamento, quantidade concluída e quantidade cancelada. Abaixo, os eventos em andamento, com nome e data, quando houver data.
 5. Funil: quantidade e valor em contato inicial, orçamento enviado, contratado e descartado.
@@ -62,7 +62,7 @@ Eventos da conta, com situação, nome e data. Oportunidades da conta, com está
 
 ## 12. Interface
 
-Referência visual: Angular Material, DA-044. Vale a estrutura: barra lateral, barra superior com a conta e cartões no miolo. Não valem a paleta de comando, o modo escuro, os gráficos nem os widgets de demonstração.
+Referência visual: Angular Material, DA-044. Vale a estrutura: barra lateral, barra superior com a conta e cartões no miolo. Em tela estreita a lateral abre por cima, com botão para abrir e X para fechar, e também fecha ao toque fora ou ao escolher um item. A partir de 960px ela permanece aberta ao lado. Não valem a paleta de comando, o modo escuro, os gráficos nem os widgets de demonstração.
 
 Sem biblioteca de gráfico neste corte. Quantidade em cartão. Funil em quatro cartões, cada um com quantidade e valor. Lista simples dos eventos em andamento.
 
@@ -83,6 +83,7 @@ Falha ao carregar mostra mensagem genérica e não mostra dado parcial de outra 
 6. Outra conta não altera nem aparece nesses números.
 7. Sem oportunidades, o funil mostra zero nos quatro estágios.
 8. Não aparecem estágios de contrato pendente, contrato assinado, descoberta ou orçamento aprovado.
+9. Em tela estreita, a barra lateral começa fechada. Abrir mostra o menu sobre a página. Fechar devolve a página inteira.
 
 ## 15. Cenários de teste
 
@@ -90,7 +91,7 @@ Conta sem dados. Conta com um evento em cada situação e outro em andamento sem
 
 ## 16. Dependências
 
-SPEC-001 e SPEC-002. O valor e a quantidade do funil passam a mudar quando existir spec de oportunidade. Perfil, tarefa, cliente e convite só aparecem na lateral.
+SPEC-001 e SPEC-002. O valor e a quantidade do funil passam a mudar quando existir spec de oportunidade. Perfil, tarefa e cliente aparecem na lateral. Convite aparece na aba do evento.
 
 ## 17. Premissas e pontos não definidos
 

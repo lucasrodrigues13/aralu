@@ -37,7 +37,7 @@ if (deny) {
 }
 
 const allow =
-  /\b(dotnet|npm|npx|ng|node|tsc|vitest|docker|git\s+(status|diff|log|add|commit|branch|checkout|fetch|pull)|pwsh|powershell)\b/.test(
+  /\b(dotnet|npm|npx|ng|node|tsc|vitest|docker|rg|git\s+(status|diff|log|add|commit|branch|checkout|fetch|pull)|pwsh|powershell|-o|-l)\b/.test(
     lower,
   ) ||
   /\b(test|build|restore|publish|serve|compose\s+up|compose\s+build|ef\s+migrations)\b/.test(lower);

@@ -110,7 +110,7 @@ Ator “Assessoria” na referência corresponde ao `Organizer` neste produto. S
 
 | ID | Nome | Comportamento | Ator | Regras | Depende de | Status |
 |---|---|---|---|---|---|---|
-| RF-044 | Perfil da assessoria | Cadastro da empresa com nome, responsável, e-mail, CPF ou CNPJ, celular, nascimento e endereço. | Organizer | E-mail da conta não é editável. SPEC-005. | RF-011 | Definido |
+| RF-044 | Perfil da assessoria | Cadastro da empresa com nome, responsável, e-mail, CPF ou CNPJ, celular, nascimento, endereço e foto opcional. | Organizer | E-mail da conta não é editável. SPEC-005. | RF-011 | Definido |
 | RF-045 | Assistentes | A assessoria cadastra assistentes e limita módulos. | Assessoria, assistente | Fora deste corte. Não vira role. | RF-040 | Observado (fora do corte) |
 | RF-046 | Busca global | Campo para buscar eventos ou ferramentas. | Organizer | Não fechado nas specs 001–028. | RF-048 | Observado |
 | RF-047 | Notificações | Sino com lista e ação de marcar como lidas. | Organizer | Não fechado nas specs 001–028. | — | Observado |
@@ -243,7 +243,7 @@ Não há cookie de autenticação. DA-019 registra isso.
 | DA-041 | Esta versão não inclui antivírus. O risco de malware fica registrado e precisa ser reavaliado antes de liberar upload de usuário não confiável. | Definido |
 | DA-042 | Testes com xUnit. Integração HTTP com `WebApplicationFactory`. PostgreSQL real com Testcontainers e Npgsql. O provider InMemory não valida o comportamento do PostgreSQL. E-mail de teste substitui o Gmail. | Definido |
 | DA-043 | Confirmação de e-mail vale 24 horas e recuperação de senha vale 1 hora. Prazos diferentes usam providers de token do próprio Identity, sem criptografia própria. | Definido |
-| DA-044 | A interface usa Angular Material em `src/frontend/`, com componentes standalone. O visual segue `docs/design-system.md`, extraído da demo pública https://apex-angular.dashboardpack.com: as cores são as da demo, com modo claro e escuro; a casca, os cartões, as tabelas e os diálogos seguem esse documento. O código do template pago não entra no repositório. A casca autenticada tem barra lateral, barra superior e a área principal. As telas do produto são só as das specs, com textos em português. Formulário, tabela, diálogo e aviso usam o Material. Novo e Editar de cadastro abrem diálogo sobre a tela atual. O miolo do dashboard continua em cartões e lista. Gráfico não entra enquanto um RF não pedir a série. | Definido |
+| DA-044 | A interface usa Angular Material em `src/frontend/`, com componentes standalone. O visual segue `docs/design-system.md`, extraído da demo pública https://apex-angular.dashboardpack.com: as cores são as da demo, com modo claro e escuro, e no modo claro o texto é preto; a casca, os cartões, as tabelas e os diálogos seguem esse documento. O código do template pago não entra no repositório. A casca autenticada tem barra lateral, barra superior e a área principal. Até 959px a barra abre por cima e pode ser fechada, para não cobrir a página. As telas do produto são só as das specs, com textos em português. Formulário, tabela, diálogo e aviso usam o Material. O aviso fica no canto superior, abaixo da barra, e tem fechar. Novo e Editar de cadastro abrem diálogo sobre a tela atual, com o primeiro campo afastado do título. O miolo do dashboard continua em cartões e lista. Gráfico não entra enquanto um RF não pedir a série. | Definido |
 
 ## 5. Stack tecnológica
 
@@ -707,6 +707,7 @@ Decisões anteriores que este texto altera ou que precisam de cuidado:
 17. **Interface e sessão.** A interface deixou de ser Razor Pages com AdminLTE, DA-003 e DA-044, e passou a ser o build estático do Angular, com a API em `Project.Api`. A sessão deixou de ser cookie, RF-012, DA-006, DA-029, RNF-013 e RNF-016, e passou a ser JWT de acesso de 8 horas, sem renovação, sem refresh e sem lista de revogação. DA-019 deixa de propor `SameSite`. O logout do cliente não invalida um token já emitido.
 18. **Template da interface.** O Apex foi descartado como dependência porque é pago. DA-044 permanece Angular Material. O item 19 fixa a referência visual.
 19. **Referência visual.** A demo pública do Apex passa a ser a fonte de cor e de layout, em `docs/design-system.md`. O código do template continua de fora. Modo claro e escuro fazem parte dessa decisão. Cadastro e edição abrem diálogo sobre a tela atual. A sessão do item 17 permanece.
+20. **Casca no celular, contraste, aviso e diálogo.** A barra lateral deixa de ficar sempre aberta em tela estreita: até 959px ela abre por cima e fecha pelo X, pelo toque fora ou ao escolher um item. No modo claro o texto passa a ser preto, no lugar do cinza claro. O aviso continua no alto, à direita, mas desce para logo abaixo da barra, com X para fechar, e deixa de cobrir Sair. O primeiro campo de um diálogo deixa de encostar no título. O detalhe visual fica em `docs/design-system.md` e a decisão continua em DA-044.
 
 ## 15. Pendências já resolvidas
 

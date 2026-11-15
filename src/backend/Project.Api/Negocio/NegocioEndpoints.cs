@@ -22,6 +22,8 @@ public static class NegocioEndpoints
         var api = app.MapGroup("/api/v1").RequireAuthorization();
         api.MapGet("/perfil", Perfil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapPut("/perfil", GravarPerfil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
+        api.MapPost("/perfil/foto", FotoPerfil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer)).DisableAntiforgery();
+        api.MapDelete("/perfil/foto", RemoverFotoPerfil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapGet("/painel", Painel).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapGet("/modelos", Modelos).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapPost("/modelos", CriarModelo).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
@@ -59,6 +61,7 @@ public static class NegocioEndpoints
         api.MapPost("/eventos/{id:guid}/assessoria", Assessoria).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapPut("/eventos/{id:guid}/transfer", Transfer).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapPost("/eventos/{id:guid}/imagem", ImagemEvento).RequireAuthorization(policy => policy.RequireRole(SoOrganizer)).DisableAntiforgery();
+        api.MapDelete("/eventos/{id:guid}/imagem", RemoverImagemEvento).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapGet("/eventos/{id:guid}/tarefas", TarefasDoEvento);
         api.MapPost("/eventos/{id:guid}/tarefas", CriarTarefa);
         api.MapGet("/tarefas", Tarefas);
@@ -147,6 +150,39 @@ public static class NegocioEndpoints
 
     private static Task<IResult> GravarPerfil(SalvarPerfil pedido, ClaimsPrincipal usuario, PerfilServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.SalvarAsync(conta, Email(usuario), pedido, Hoje(), ct)));
+
+    private static Task<IResult> FotoPerfil(
+        IFormFile? arquivo,
+        ClaimsPrincipal usuario,
+        PerfilServico servico,
+        IArmazenamentoArquivo armazenamento,
+        CancellationToken ct) =>
+        ComConta(usuario, conta => Imagem(conta, arquivo, armazenamento, async (imagem, token) =>
+        {
+            var anterior = await servico.GuardarFotoAsync(conta, imagem, token);
+            return (anterior.Ok, anterior.Falha, anterior.Valor);
+        }, ct));
+
+    private static Task<IResult> RemoverFotoPerfil(
+        ClaimsPrincipal usuario,
+        PerfilServico servico,
+        IArmazenamentoArquivo armazenamento,
+        CancellationToken ct) =>
+        ComConta(usuario, async conta =>
+        {
+            var removida = await servico.RemoverFotoAsync(conta, ct);
+            if (!removida.Ok)
+            {
+                return Falha(removida.Falha!);
+            }
+
+            if (removida.Valor is Guid anterior)
+            {
+                await armazenamento.DescartarAsync(anterior, ct);
+            }
+
+            return Results.Ok(new { mensagem = "Foto removida." });
+        });
 
     private static Task<IResult> Painel(ClaimsPrincipal usuario, PainelServico servico, CancellationToken ct) =>
         ComConta(usuario, async conta => Results.Ok(await servico.ObterAsync(conta, ct)));
@@ -430,6 +466,28 @@ public static class NegocioEndpoints
             var anterior = await servico.GuardarImagemAsync(conta, id, imagem, token);
             return (anterior.Ok, anterior.Falha, anterior.Valor);
         }, ct));
+
+    private static Task<IResult> RemoverImagemEvento(
+        Guid id,
+        ClaimsPrincipal usuario,
+        EventoServico servico,
+        IArmazenamentoArquivo armazenamento,
+        CancellationToken ct) =>
+        ComConta(usuario, async conta =>
+        {
+            var removida = await servico.RemoverImagemAsync(conta, id, ct);
+            if (!removida.Ok)
+            {
+                return Falha(removida.Falha!);
+            }
+
+            if (removida.Valor is Guid anterior)
+            {
+                await armazenamento.DescartarAsync(anterior, ct);
+            }
+
+            return Results.Ok(new { mensagem = "Foto removida." });
+        });
 
     private static Task<IResult> TarefasDoEvento(Guid id, ClaimsPrincipal usuario, TarefaServico servico, IDados dados, CancellationToken ct) =>
         ComConta(usuario, async conta =>

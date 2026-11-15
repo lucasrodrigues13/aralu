@@ -18,5 +18,7 @@ public sealed class PerfilAssessoria
 
     public string? Endereco { get; set; }
 
+    public Guid? FotoId { get; set; }
+
     public bool CapturaLeadRsvp { get; set; } = true;
 }

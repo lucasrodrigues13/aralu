@@ -1625,3 +1625,102 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261114235308_FotoDoPerfil') THEN
+    ALTER TABLE "Perfis" ADD "FotoId" uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261114235308_FotoDoPerfil') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261114235308_FotoDoPerfil', '10.0.4');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261115000318_LocaisDaOportunidade') THEN
+    ALTER TABLE "Oportunidades" ADD "BairroCerimonia" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261115000318_LocaisDaOportunidade') THEN
+    ALTER TABLE "Oportunidades" ADD "BairroRecepcao" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261115000318_LocaisDaOportunidade') THEN
+    ALTER TABLE "Oportunidades" ADD "CepCerimonia" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261115000318_LocaisDaOportunidade') THEN
+    ALTER TABLE "Oportunidades" ADD "CepRecepcao" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261115000318_LocaisDaOportunidade') THEN
+    ALTER TABLE "Oportunidades" ADD "CidadeRecepcao" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261115000318_LocaisDaOportunidade') THEN
+    ALTER TABLE "Oportunidades" ADD "EstadoRecepcao" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261115000318_LocaisDaOportunidade') THEN
+    ALTER TABLE "Oportunidades" ADD "NumeroCerimonia" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261115000318_LocaisDaOportunidade') THEN
+    ALTER TABLE "Oportunidades" ADD "NumeroRecepcao" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261115000318_LocaisDaOportunidade') THEN
+    ALTER TABLE "Oportunidades" ADD "PaisCerimonia" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261115000318_LocaisDaOportunidade') THEN
+    ALTER TABLE "Oportunidades" ADD "PaisRecepcao" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261115000318_LocaisDaOportunidade') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261115000318_LocaisDaOportunidade', '10.0.4');
+    END IF;
+END $EF$;
+COMMIT;
+

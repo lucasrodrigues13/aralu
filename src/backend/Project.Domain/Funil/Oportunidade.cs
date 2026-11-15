@@ -38,9 +38,29 @@ public sealed class Oportunidade
 
     public string? EnderecoCerimonia { get; set; }
 
+    public string? CepCerimonia { get; set; }
+
+    public string? PaisCerimonia { get; set; }
+
+    public string? NumeroCerimonia { get; set; }
+
+    public string? BairroCerimonia { get; set; }
+
     public string? LocalRecepcao { get; set; }
 
     public string? EnderecoRecepcao { get; set; }
+
+    public string? CepRecepcao { get; set; }
+
+    public string? PaisRecepcao { get; set; }
+
+    public string? NumeroRecepcao { get; set; }
+
+    public string? BairroRecepcao { get; set; }
+
+    public string? EstadoRecepcao { get; set; }
+
+    public string? CidadeRecepcao { get; set; }
 
     public string? Uf { get; set; }
 

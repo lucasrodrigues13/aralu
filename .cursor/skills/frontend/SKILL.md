@@ -25,11 +25,12 @@ O build publicado é estático. O Caddy serve esse build e encaminha `/api`. Sem
 
 Siga `docs/design-system.md` em toda tela nova ou alterada.
 
-- Cores iguais às da demo, com modo claro e modo escuro. A classe `escuro` no `html` liga o escuro. A escolha fica em `localStorage` (`gevents-tema`).
-- Casca: barra lateral escura de 260px e barra superior de 64px. Item ativo em verde.
+- Cores iguais às da demo, com modo claro e modo escuro. No modo claro o texto é preto. A classe `escuro` no `html` liga o escuro. A escolha fica em `localStorage` (`gevents-tema`).
+- Casca: barra lateral escura de 260px e barra superior de 64px. Item ativo em verde. Até 959px a barra abre por cima, começa fechada e fecha pelo X, pelo toque fora ou ao escolher um item.
 - Cabeçalho de lista: título, linha de apoio e botão verde à direita, no padrão de New Order.
 - Tabela dentro de `.gd-painel`, com abas em pílula e busca quando a tela já tem esses filtros. A última coluna é Ações, com Editar e Excluir. Excluir só chama a API quando o fluxo já tem remoção.
-- Novo e Editar de evento, cliente e tarefa são `MatDialog` (`gd-dialog`) sobre a tela aberta. Novo convite abre painel modal sobre a lista. Não navegue para uma página só para esses formulários.
+- Novo e Editar de evento, cliente e tarefa são `MatDialog` (`gd-dialog`) sobre a tela aberta. O primeiro campo fica afastado do título. Novo convite abre painel modal sobre a lista. Não navegue para uma página só para esses formulários.
+- O aviso é o snackbar do Material, no canto superior direito e logo abaixo da barra, com X para fechar. Ele não cobre Sair.
 - Cartões de número do painel usam `.gd-numero`. Sem gráfico enquanto um requisito não pedir a série.
 - Formulário, tabela, diálogo, botão, campo e aviso continuam no Angular Material. O tema do Material aponta para os tokens `--gd-*`.
 

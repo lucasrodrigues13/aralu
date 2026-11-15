@@ -27,8 +27,7 @@ Navegação lateral alinhada à Assessoria VIP. O agente de frontend implementa 
 | Grupo | Itens / specs |
 |---|---|
 | Início | Dashboards (SPEC-007) |
-| Gestão de eventos | Lista e cadastro (002, 008), estatísticas e resumo (011), home do evento, serviços/fornecedores no evento (018), tarefas (003), clientes do evento (006, 009) |
-| Convidados | Convites, RSVP, grupos, transfer (004, 010) |
+| Gestão de eventos | Lista e cadastro (002, 008), estatísticas e resumo (011), home do evento, serviços/fornecedores no evento (018), tarefas (003), clientes do evento (006, 009). Convites, RSVP, grupos e transfer (004, 010) ficam na aba do evento, sem item próprio na lateral |
 | Modelos | Evento (012), briefing (013), roteiro (014), cronograma (015), inspirações (016), mensagens (017) |
 | Funil de vendas | Oportunidades (020), oportunidades de RSVP (021), contratos (022), tarefas comerciais (023), relatórios (024), orçamentos (025), modelos de serviço/orçamento/contrato (026–028) |
 | Agenda | Minha agenda (019) |

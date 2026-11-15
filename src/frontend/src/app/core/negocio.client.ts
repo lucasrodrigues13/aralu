@@ -18,6 +18,7 @@ export interface Perfil {
   celular: string | null;
   nascimento: string | null;
   endereco: string | null;
+  fotoId: string | null;
 }
 
 export interface ItemServicoModelo {
@@ -446,6 +447,20 @@ export class NegocioClient {
     return this.http.put<Perfil>(`${this.base}/api/v1/perfil`, perfil);
   }
 
+  enviarFotoPerfil(arquivo: File) {
+    const dados = new FormData();
+    dados.append('arquivo', arquivo);
+    return this.http.post<{ imagemId: string }>(`${this.base}/api/v1/perfil/foto`, dados);
+  }
+
+  removerFotoPerfil() {
+    return this.http.delete(`${this.base}/api/v1/perfil/foto`);
+  }
+
+  baixarArquivo(id: string) {
+    return this.http.get(`${this.base}/api/v1/arquivos/${id}`, { responseType: 'blob' });
+  }
+
   modelos(nome = '') {
     const params = nome ? new HttpParams().set('nome', nome) : undefined;
     return this.http.get<Modelo[]>(`${this.base}/api/v1/modelos`, { params });
@@ -715,7 +730,11 @@ export class NegocioClient {
   imagemEvento(id: string, arquivo: File) {
     const dados = new FormData();
     dados.append('arquivo', arquivo);
-    return this.http.post(`${this.base}/api/v1/eventos/${id}/imagem`, dados);
+    return this.http.post<{ imagemId: string }>(`${this.base}/api/v1/eventos/${id}/imagem`, dados);
+  }
+
+  removerImagemEvento(id: string) {
+    return this.http.delete(`${this.base}/api/v1/eventos/${id}/imagem`);
   }
 
   tarefas() {
@@ -1111,8 +1130,18 @@ export interface Oportunidade {
   quantidadeDamas: number | null;
   localCerimonia: string | null;
   enderecoCerimonia: string | null;
+  cepCerimonia: string | null;
+  paisCerimonia: string | null;
+  numeroCerimonia: string | null;
+  bairroCerimonia: string | null;
   localRecepcao: string | null;
   enderecoRecepcao: string | null;
+  cepRecepcao: string | null;
+  paisRecepcao: string | null;
+  numeroRecepcao: string | null;
+  bairroRecepcao: string | null;
+  estadoRecepcao: string | null;
+  cidadeRecepcao: string | null;
   uf: string | null;
   cidade: string | null;
   motivoDescarte: string | null;

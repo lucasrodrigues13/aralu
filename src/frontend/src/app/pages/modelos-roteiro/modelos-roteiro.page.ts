@@ -9,12 +9,14 @@ import { MatTableModule } from '@angular/material/table';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { NegocioClient, Roteiro } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
+import { CampoHoraComponent } from '../../shared/campo-hora';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
+import { horaParaApi } from '../../shared/mascaras';
 import { DIALOG } from '../../shared/dialog';
 
 @Component({
   selector: 'app-roteiro-editor-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule],
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, CampoHoraComponent],
   template: `
     <h2 mat-dialog-title>{{ dados ? 'Editar roteiro' : 'Novo roteiro' }}</h2>
     <mat-dialog-content>
@@ -25,7 +27,7 @@ import { DIALOG } from '../../shared/dialog';
             <div class="bloco" [formGroupName]="i">
               <div class="linha">
                 <mat-form-field appearance="outline" class="grow"><mat-label>Título</mat-label><input matInput formControlName="titulo" /></mat-form-field>
-                <mat-form-field appearance="outline"><mat-label>Horário</mat-label><input matInput type="time" formControlName="horario" /></mat-form-field>
+                <app-campo-hora rotulo="Horário" formControlName="horario" />
                 <button mat-icon-button type="button" (click)="removerSecao(i)"><mat-icon>delete</mat-icon></button>
               </div>
               <mat-form-field appearance="outline" class="grow"><mat-label>Música</mat-label><input matInput formControlName="musica" /></mat-form-field>
@@ -110,7 +112,7 @@ export class RoteiroEditorDialog {
       nome: valor.nome,
       secoes: (valor.secoes ?? []).map((secao) => ({
         titulo: secao.titulo || null,
-        horario: secao.horario ? `${secao.horario}:00` : null,
+        horario: horaParaApi(secao.horario),
         musica: secao.musica || null,
         itens: (secao.itens ?? [])
           .filter((item) => item.texto?.trim())
@@ -150,15 +152,15 @@ export class RoteiroEditorDialog {
       </div>
       <button mat-flat-button type="button" (click)="abrir()">
         <mat-icon>add</mat-icon>
-        Criar novo modelo
+        Novo Modelo de Roteiro
       </button>
     </header>
     <section class="gd-painel">
       <div class="gd-barra">
         <span></span>
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>Buscar por nome</mat-label>
-          <input matInput [value]="busca()" (input)="buscar($event)" />
+        <mat-form-field class="gd-busca" appearance="outline" subscriptSizing="dynamic">
+          <mat-icon matIconPrefix>search</mat-icon>
+          <input matInput placeholder="Buscar por nome" [value]="busca()" (input)="buscar($event)" />
         </mat-form-field>
       </div>
       @if (lista().length === 0) {

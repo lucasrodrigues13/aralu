@@ -22,9 +22,9 @@ import { GdDataPipe } from '../../shared/gd-data.pipe';
     <section class="gd-painel">
       <div class="gd-barra">
         <span></span>
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>Buscar por convite ou evento</mat-label>
-          <input matInput [value]="busca()" (input)="buscar($event)" />
+        <mat-form-field class="gd-busca" appearance="outline" subscriptSizing="dynamic">
+          <mat-icon matIconPrefix>search</mat-icon>
+          <input matInput placeholder="Buscar por convite ou evento" [value]="busca()" (input)="buscar($event)" />
         </mat-form-field>
       </div>
       @if (lista().length === 0) {
