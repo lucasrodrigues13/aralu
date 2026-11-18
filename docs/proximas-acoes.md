@@ -87,11 +87,14 @@ dotnet tool run dotnet-ef migrations script --idempotent --project src/backend/P
 Atualize este arquivo: marque o que ficou pronto e anote as dúvidas para o usuário.
 
 - [x] Bloco 3 implementado (SPEC-012 v2 aprovada)
-- [ ] SPEC-003 (bloco 4)
-- [ ] SPEC-007 (bloco 5)
-- [ ] SPEC-029 (bloco 6)
-- [ ] SPEC-030 (bloco 7)
+- [x] SPEC-003 (bloco 4) — rascunho
+- [x] SPEC-007 (bloco 5) — rascunho
+- [x] SPEC-029 (bloco 6) — rascunho
+- [x] SPEC-030 (bloco 7) — rascunho
 
 Dúvidas para o usuário:
 
-- (anote aqui)
+- SPEC-003 §17: fronteira de "Esta semana", definição de "Para conferir", atrasada automática, exclusão de tarefa.
+- SPEC-007 §17: o que conta no "N" da saudação e limiar de "respostas abaixo do esperado".
+- SPEC-029 §17: fórmula do Resultado e cobrar sem Pix.
+- SPEC-030 §17: sintaxe dos campos do modelo e se o casal assina pelo link na 1.0.
