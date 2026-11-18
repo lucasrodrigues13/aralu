@@ -97,12 +97,6 @@ function telaEstreita(): boolean {
           }
           <span class="gd-topo-titulo">{{ titulo() }}</span>
           <app-tema [fixo]="false" />
-          @if (!estreito()) {
-            <button mat-flat-button type="button" class="gd-pequeno" (click)="novoEvento()">
-              <mat-icon>add</mat-icon>
-              Novo evento
-            </button>
-          }
         </header>
         <main class="gd-conteudo">
           <router-outlet />

@@ -1,18 +1,18 @@
 # 003. Tarefas do evento
 
-**Status: aprovada (versão 2, 18/11/2026).** Substitui a SPEC-003 anterior. O código segue esta spec, exceto a seção 17. Fonte: [produto-v1.md](../produto-v1.md) 5.5, RF-061; campo **grupo** já existe na tarefa (SPEC-012 v2).
+**Status: aprovada (versão 3, 18/11/2026).** A versão 2 está no histórico do Git. O código segue esta spec, exceto a seção 17. Fonte: pedido de 18/11/2026 para a aba Tarefas do evento seguir a lista de eventos. RF-061 e [produto-v1.md](../produto-v1.md) 5.5 acompanham esta versão.
 
 ## 1. Identificador e nome
 
-SPEC-003. Tarefas do evento (v2).
+SPEC-003. Tarefas do evento (v3).
 
 ## 2. Objetivo
 
-Deixar as tarefas do dia a dia rápidas de criar e fáceis de achar: criação numa linha, visão padrão em grupos de prazo, vários responsáveis, visibilidade para o casal, prioridade, checklist e anexos.
+Deixar as tarefas do evento numa lista igual à lista de eventos, com criação e edição em modal, vários responsáveis, visibilidade para o casal, prioridade, checklist e anexos.
 
 ## 3. Requisitos relacionados
 
-RF-061 (tarefas). RF-062 (redatar prazos) já está na SPEC-012 §6.6. RF-056 (o casal só vê tarefas com visibilidade casal/compartilhada — detalhe do link no bloco 11). RF-058/RF-059 (tarefa ligada a serviço; contratar fecha "Contratar X").
+RF-061 (tarefas): lista do evento e criação em modal. RF-062 (redatar prazos) já está na SPEC-012 §6.6. RF-056 (o casal só vê tarefas com visibilidade casal/compartilhada — detalhe do link no bloco 11). RF-058/RF-059 (tarefa ligada a serviço; contratar fecha "Contratar X").
 
 Fora deste rascunho: mural da equipe, caixa global de anexos, lembrete de aniversário.
 
@@ -31,28 +31,24 @@ Usuário autenticado (SPEC-001) ou link do casal (quando o bloco 11 existir). Ev
 
 ## 6. Fluxo principal
 
-### 6.1. Criar numa linha
+### 6.1. Criar pelo botão
 
-1. Na aba Tarefas do evento, a linha de criação pede **título**; prazo e responsável(eis) são opcionais.
-2. Salvar (Enter ou botão) cria a tarefa pendente. Campos extras (visibilidade, prioridade, grupo, checklist, anexos, serviço) ficam na leitura/edição.
+1. Na aba Tarefas do evento, o cabeçalho tem o botão **Nova tarefa**, no mesmo lugar e no mesmo peso do botão "Novo evento" da lista de eventos. "Aplicar modelo" continua ao lado (SPEC-012).
+2. "Nova tarefa" abre o modal de criação sobre a lista. A rota não muda. O modal segue o padrão das outras telas (design-system 5.10): título do modal, frase de apoio, corpo com os campos e rodapé com Cancelar e Salvar.
+3. O título é obrigatório. Prazo, responsáveis, visibilidade, prioridade, grupo, descrição, serviço e checklist são opcionais e já entram neste modal. A situação nasce pendente e não é pedida na criação.
+4. Salvar grava a tarefa e ela aparece na lista. Cancelar, Esc ou toque fora fecha sem gravar. Não há linha de criação na própria lista.
 
-### 6.2. Visão padrão em grupos
+### 6.2. Lista do evento
 
-A lista do evento abre agrupada, nesta ordem:
+A aba Tarefas do evento é uma lista no padrão da lista de eventos: cabeçalho, painel e uma tabela. Não há seções por prazo (Esta semana, Depois, Sem prazo, Para conferir, Feitas) nem troca de visão para quadro.
 
-| Grupo | Critério |
-|---|---|
-| Esta semana | Não concluída; prazo entre hoje e o domingo da semana corrente (fuso da conta — ver §17). |
-| Depois | Não concluída; prazo depois desta semana. |
-| Sem prazo | Não concluída; sem data de prazo. |
-| Para conferir | Não concluída; prazo já estava vencido **no momento em que o evento foi criado** (ou quando a tarefa recebeu prazo pela primeira vez a partir do modelo — ver §17). |
-| Feitas | Situação concluída. |
+A tabela mostra título, prazo, situação, responsáveis e, quando houver, o grupo de texto (Cerimônia, Recepção…). A última coluna traz Editar e Excluir. Ordenação pelo prazo (mais perto primeiro); sem prazo, por título.
 
-Dentro de cada grupo, ordenação pelo prazo (mais perto primeiro); sem prazo, por título. O **grupo de texto** da tarefa (Cerimônia, Recepção…) pode aparecer como rótulo na linha; não substitui estes agrupamentos de prazo.
+A barra da lista tem o filtro de situação (pendente, em andamento, concluída, atrasada e todas).
 
-### 6.3. Situações e quadro
+### 6.3. Situações
 
-As situações pendente, em andamento, concluída e atrasada continuam como **filtro** e como **quadro** (uma coluna por situação). A visão padrão deixa de ser o quadro; o usuário escolhe Lista (grupos), Quadro por situação ou Quadro por dia.
+Pendente, em andamento, concluída e atrasada aparecem na coluna da tabela e no filtro da barra. Na aba do evento não há quadro por situação nem quadro por dia. Essas visões continuam só na lista de todos os eventos (§6.7).
 
 ### 6.4. Leitura e edição
 
@@ -76,10 +72,11 @@ Lista de tarefas de todos os eventos da conta, com filtros: situação, respons�
 
 ## 7. Fluxos alternativos
 
-- Título vazio: não grava.
-- Evento concluído ou cancelado: não cria nem edita; só consulta (ou bloqueia — §17).
+- Título vazio: o modal não grava e o campo mostra o erro.
+- Fechar o modal sem salvar: nada é gravado.
+- Evento concluído ou cancelado: o botão "Nova tarefa" não aparece; não cria nem edita; só consulta (ou bloqueia — §17).
 - Casal tenta editar campo que não é "marcar feita": indisponível.
-- Sem tarefas: mensagem vazia por visão.
+- Sem tarefas, ou filtro sem resultado: a lista diz que não há tarefa para mostrar.
 - Aplicar modelo (SPEC-012): tarefas novas entram com grupo copiado e responsáveis = Organizer.
 
 ## 8. Regras de negócio
@@ -104,17 +101,17 @@ Título; descrição opcional; prazo; situação; grupo (texto); responsáveis (
 
 ## 12. Interface
 
-Criação e edição em modal (design-system 5.10). Lista com `.gd-grade` ou seções por grupo. Quadro usa colunas. Botão "Aplicar modelo" na aba (SPEC-012).
+A aba do evento repete a lista de eventos: `.gd-cabecalho` com a ação principal "Nova tarefa", `.gd-painel` com `.gd-barra` (filtro de situação) e uma tabela `.gd-grade`. Editar e Excluir ficam na última coluna. Criar e editar abrem o modal padrão (design-system 5.10), com título, corpo e rodapé Cancelar / Salvar. "Aplicar modelo" permanece no cabeçalho (SPEC-012). A lista de todos os eventos (§6.7) mantém as visões em quadro.
 
 ## 13. Erros
 
-Validação no campo. Outra conta: indisponível. Falha ao gravar não deixa checklist/anexo pela metade.
+Validação no campo, dentro do modal. Outra conta: indisponível. Falha ao gravar não deixa checklist/anexo pela metade e não fecha o modal como se tivesse salvo.
 
 ## 14. Critérios de aceite
 
-1. Criar só com título numa linha gera tarefa pendente na visão em grupos.
-2. Tarefa com prazo nesta semana aparece em "Esta semana"; sem prazo em "Sem prazo"; concluída em "Feitas".
-3. Tocar abre leitura; editar é ação separada.
+1. "Nova tarefa" abre o modal sobre a lista. Salvar só com título gera tarefa pendente na tabela.
+2. A aba do evento mostra uma tabela só, com título, prazo, situação e responsáveis. Não há grupos de prazo nem quadro.
+3. Tocar a linha abre leitura; Editar, na coluna de ações, abre o modal de edição. "Nova tarefa" não abre a leitura.
 4. Dá para marcar dois responsáveis e prioridade alta.
 5. Visibilidade "só eu" não aparece no link do casal (quando o bloco 11 existir).
 6. Checklist e anexos começam recolhidos.
@@ -123,7 +120,7 @@ Validação no campo. Outra conta: indisponível. Falha ao gravar não deixa che
 
 ## 15. Cenários de teste
 
-Criar numa linha. Agrupar Esta semana / Depois / Sem prazo / Feitas. Abrir leitura sem editar. Dois responsáveis. Prioridade. Visibilidade. Checklist. Isolamento entre contas. Tarefa com grupo vindo do modelo.
+Abrir "Nova tarefa" e fechar sem salvar (nada é criado). Criar só com título e ver a linha na tabela. Filtro de situação. Abrir leitura sem editar. Dois responsáveis. Prioridade. Visibilidade. Checklist. Isolamento entre contas. Tarefa com grupo vindo do modelo. Evento concluído sem o botão "Nova tarefa".
 
 ## 16. Dependências
 
@@ -131,11 +128,9 @@ SPEC-001, SPEC-002, SPEC-008, SPEC-012 (grupo e aplicar modelo), SPEC-018 (servi
 
 ## 17. Premissas e pontos não definidos
 
-1. Fronteira exata de "Esta semana" (domingo vs sábado; fuso).
-2. Definição precisa de "Para conferir" (prazo vencido na criação do evento vs na criação da tarefa).
-3. Atrasada automática ou só manual.
-4. Remoção de tarefa (hoje a tela ainda avisa que exclusão não está no fluxo).
-5. Limite de responsáveis, tamanho de anexo e tipos aceitos.
-6. Regra automática "Contratar X" sem vínculo explícito ao serviço.
-7. Comentários vs "perguntas" como tipos distintos ou um só fio.
-8. O que o casal pode fazer além de marcar feita (só bloco 11 decide a UI).
+1. Atrasada automática ou só manual.
+2. Remoção de tarefa (hoje a tela ainda avisa que exclusão não está no fluxo).
+3. Limite de responsáveis, tamanho de anexo e tipos aceitos.
+4. Regra automática "Contratar X" sem vínculo explícito ao serviço.
+5. Comentários vs "perguntas" como tipos distintos ou um só fio.
+6. O que o casal pode fazer além de marcar feita (só bloco 11 decide a UI).

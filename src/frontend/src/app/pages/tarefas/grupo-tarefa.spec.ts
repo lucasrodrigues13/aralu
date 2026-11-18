@@ -1,4 +1,4 @@
-import { filtrarTarefas, secoesPorPrazo, TarefaAgrupavel } from './grupo-tarefa';
+import { filtrarTarefas, ordenarPorPrazo, secoesPorPrazo, TarefaAgrupavel } from './grupo-tarefa';
 
 function tarefa(parcial: Partial<TarefaAgrupavel> & Pick<TarefaAgrupavel, 'titulo'>): TarefaAgrupavel {
   return {
@@ -46,5 +46,16 @@ describe('grupo-tarefa', () => {
     });
 
     expect(filtradas.map((item) => item.titulo)).toEqual(['Um']);
+  });
+
+  it('ordena a lista do evento pelo prazo e, sem prazo, pelo título', () => {
+    const lista = ordenarPorPrazo([
+      tarefa({ titulo: 'Z', prazo: null }),
+      tarefa({ titulo: 'B', prazo: '2026-11-20' }),
+      tarefa({ titulo: 'A', prazo: null }),
+      tarefa({ titulo: 'C', prazo: '2026-11-18' }),
+    ]);
+
+    expect(lista.map((item) => item.titulo)).toEqual(['C', 'B', 'A', 'Z']);
   });
 });

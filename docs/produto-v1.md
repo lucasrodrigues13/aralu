@@ -133,9 +133,9 @@ Substitui o dashboard atual (SPEC-007, RF-080 a RF-082).
 | Item | Estado | Fonte |
 |---|---|---|
 | Lista e quadro por situação; CRUD | Pronto | G (SPEC-003) |
-| Criar numa linha só: título; prazo e responsável opcionais | Ajustar | PDF, CF |
-| **Visão padrão em grupos**: Esta semana, Depois, Sem prazo, Para conferir (prazo já vencido quando o evento foi criado), Feitas | Novo | D, PDF, CF |
-| Situações atuais (pendente, em andamento, concluída, atrasada) como filtro e quadro | Pronto | D, G |
+| Criar pelo botão "Nova tarefa", em modal (título obrigatório; prazo e demais campos opcionais) | Pronto | D (SPEC-003 v3) |
+| Lista do evento em uma tabela, com filtro de situação. Grupos de prazo saíram dessa aba | Pronto | D (SPEC-003 v3) |
+| Situações (pendente, em andamento, concluída, atrasada) como filtro na aba do evento e como quadro na lista de todos os eventos | Pronto | D, G |
 | Responsáveis: ela, assistente, equipe ou casal; **mais de um** | Ajustar (hoje um só) | PDF, AV, D |
 | **Visibilidade** por tarefa: só eu / casal / compartilhada | Novo | D, IV |
 | **Prioridade** baixa / média / alta | Novo | D, IV |
@@ -364,7 +364,7 @@ Baseada no PDF (base → uso diário → diferencial), com o que já existe.
 1. Casca e navegação (celular e computador).
 2. Criação do evento curta e resumo em cartões.
 3. ~~Modelos: prazos legíveis, importar colando, salvar como modelo.~~ **Pronto** (SPEC-012 v2).
-4. Tarefas: grupos, vários responsáveis, visibilidade, prioridade e checklist. **Em código** (SPEC-003 v2). A seção 17 da spec continua sem decisão. O envio de anexo espera tipo e tamanho; a leitura só mostra a seção recolhida.
+4. Tarefas: lista do evento com "Nova tarefa" em modal, vários responsáveis, visibilidade, prioridade e checklist. **Em código** (SPEC-003 v3). A seção 17 da spec continua sem decisão. O envio de anexo espera tipo e tamanho; a leitura só mostra a seção recolhida.
 5. Tela Hoje.
 6. Dinheiro do evento: parcelas do casal, cobrar, recebi, Pix.
 7. Contrato do evento (um modelo, PDF, assinatura simulada).

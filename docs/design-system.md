@@ -88,7 +88,7 @@ Fonte **Geist** (`@fontsource-variable/geist`, família `Geist Variable`), reser
   - Grupos com rótulo (3.2) e itens de **36px**, raio 10px, padding 8px 12px, ícone 20px, gap 12px, texto 14px/500 em `--gd-sidebar-foreground` a 70%. Hover: fundo `--gd-sidebar-accent` a 50%. Ativo: fundo `--gd-sidebar-accent` e texto `--gd-sidebar-primary`.
   - Item ainda não disponível: 40% de opacidade e o selo "Em breve".
   - Rodapé: avatar com iniciais, e-mail e botão Sair.
-- **Barra superior** de 64px, fundo `--gd-background` a 80% com desfoque, borda inferior `--gd-border`, padding 0 24px. Esquerda: título da área. Direita: botão de tema e atalho principal ("Novo evento").
+- **Barra superior** de 64px, fundo `--gd-background` a 80% com desfoque, borda inferior `--gd-border`, padding 0 24px. Esquerda: título da área. Direita: botão de tema. "Novo evento" fica no cabeçalho da lista de eventos. No celular, o "+" da barra inferior abre o mesmo modal.
 - **Conteúdo** com padding 24px e largura total.
 
 ### 4.2. Celular (< 960px)

@@ -56,4 +56,12 @@ describe('CascaComponent', () => {
     expect(raiz.querySelector('[aria-label="Fechar menu"]')).toBeNull();
     expect(raiz.querySelector('mat-sidenav')?.classList.contains('mat-drawer-opened')).toBe(true);
   });
+
+  it('em tela larga não mostra Novo evento na barra superior', () => {
+    const raiz = montar(false).nativeElement as HTMLElement;
+    const topo = raiz.querySelector('.gd-topo');
+
+    expect(topo?.textContent).not.toContain('Novo evento');
+    expect(raiz.querySelector('.gd-barra-inferior [aria-label="Novo evento"]')).toBeTruthy();
+  });
 });

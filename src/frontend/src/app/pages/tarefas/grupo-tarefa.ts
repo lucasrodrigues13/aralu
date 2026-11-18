@@ -87,6 +87,10 @@ export function filtrarTarefas<T extends TarefaAgrupavel>(tarefas: T[], filtro: 
   });
 }
 
+export function ordenarPorPrazo<T extends TarefaAgrupavel>(tarefas: T[]): T[] {
+  return [...tarefas].sort(porPrazoETitulo);
+}
+
 function porPrazoETitulo(a: TarefaAgrupavel, b: TarefaAgrupavel): number {
   const prazoA = a.prazo?.slice(0, 10) ?? '';
   const prazoB = b.prazo?.slice(0, 10) ?? '';

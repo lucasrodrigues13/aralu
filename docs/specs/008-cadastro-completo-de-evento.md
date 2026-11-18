@@ -1,10 +1,10 @@
 # 008. Cadastro e resumo do evento
 
-**Status: aprovada (versão 2, 18/11/2026).** O código segue esta spec. A versão 1 está no histórico do Git. Fonte: [produto-v1.md](../produto-v1.md) 5.3, plano do cliente, Cerimonial Fácil, Ivola e Assessoria VIP.
+**Status: aprovada (versão 3, 18/11/2026).** A versão 2 está no histórico do Git. O código segue esta spec. Fonte: pedido de 18/11/2026 para tirar o "Novo evento" da barra superior; o restante segue [produto-v1.md](../produto-v1.md) 5.3.
 
 ## 1. Identificador e nome
 
-SPEC-008. Cadastro e resumo do evento.
+SPEC-008. Cadastro e resumo do evento (v3).
 
 ## 2. Objetivo
 
@@ -32,7 +32,7 @@ Usuário autenticado, SPEC-001. Modelo de evento **não** é pré-condição.
 
 ### 6.1. Criar
 
-1. Em qualquer tela, "Novo evento" (barra superior, botão "+" da barra inferior no celular ou cabeçalho da lista) abre o modal de criação.
+1. "Novo evento" no cabeçalho da lista de eventos abre o modal de criação. No celular, o "+" da barra inferior também abre. A barra superior fica com o título da área e o botão de tema; não há "Novo evento" ao lado do tema.
 2. O usuário escolhe o **tipo** em cartões: Casamento, 15 anos, Aniversário, Corporativo, Formatura.
 3. Abaixo do tipo aparecem os **pacotes**: os modelos de evento da conta daquele tipo, cada um num cartão com o nome do modelo e "N tarefas · N serviços". Há também o cartão "Começar vazio". Se o tipo tem um só modelo, ele já vem escolhido.
 4. O usuário informa o **nome**: no casamento, os dois nomes; nos outros tipos, um nome.
@@ -128,7 +128,7 @@ Resumo: os números da seção 8.4 e os alertas da 8.3, calculados no servidor n
 
 ## 12. Interface
 
-Modal largo (design-system 5.10). No celular, o modal sobe de baixo e os cartões de tipo ficam em duas colunas. O botão principal é "Criar evento". O resumo usa `.gd-numeros` para os cartões e `.gd-alerta` para os alertas.
+Modal largo (design-system 5.10). No celular, o modal sobe de baixo e os cartões de tipo ficam em duas colunas. O botão principal é "Criar evento". O resumo usa `.gd-numeros` para os cartões e `.gd-alerta` para os alertas. Há um só "Novo evento" no computador: o do cabeçalho da lista. O "+" do celular permanece.
 
 ## 13. Erros
 
@@ -147,10 +147,11 @@ Campo inválido fica no modal com a mensagem no campo. Falha ao gravar não cria
 9. Cada alerta e cada "Abrir" leva à tela certa.
 10. A edição em quatro abas continua gravando horários e endereço completo; CEP preenche o endereço.
 11. Outra conta não vê o evento nem o resumo.
+12. No computador, a barra superior não tem "Novo evento". O botão do cabeçalho da lista abre o modal. No celular, o "+" da barra inferior também abre.
 
 ## 15. Cenários de teste
 
-Criar só com tipo e nome. Criar casamento com um nome (erro). Criar com modelo e data; conferir prazos e serviços. Criar com "Começar vazio". Criar com cliente existente e com cliente novo; WhatsApp inválido. Resumo de evento sem nada (zeros, alerta "Evento sem data"). Resumo com tarefa atrasada, parcela vencida, parcela da semana, serviço sem contratado a 45 dias e convidados pendentes a 20 dias: conferir os três primeiros alertas. Isolamento entre contas.
+Criar só com tipo e nome. Criar casamento com um nome (erro). Criar com modelo e data; conferir prazos e serviços. Criar com "Começar vazio". Criar com cliente existente e com cliente novo; WhatsApp inválido. Resumo de evento sem nada (zeros, alerta "Evento sem data"). Resumo com tarefa atrasada, parcela vencida, parcela da semana, serviço sem contratado a 45 dias e convidados pendentes a 20 dias: conferir os três primeiros alertas. Isolamento entre contas. No computador, a barra superior só tem o tema; "Novo evento" aparece no cabeçalho da lista. No celular, o "+" abre o mesmo modal.
 
 ## 16. Dependências
 

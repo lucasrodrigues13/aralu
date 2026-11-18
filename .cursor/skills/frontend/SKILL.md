@@ -26,7 +26,7 @@ O build publicado é estático. O Caddy serve esse build e encaminha `/api`. Sem
 Siga `docs/design-system.md` em toda tela nova ou alterada.
 
 - Tokens `--gd-*` da versão 2 do design system, modo claro e escuro. A classe `escuro` no `html` liga o escuro. A escolha fica em `localStorage` (`gevents-tema`). Estilos globais só em `src/frontend/src/styles/` (tokens, material, base, casca, componentes, formulário, modal).
-- Casca: barra lateral escura de 260px, barra superior de 64px com título da área, tema e "Novo evento". Abaixo de 960px a barra lateral vira gaveta e aparece a barra inferior.
+- Casca: barra lateral escura de 260px, barra superior de 64px com título da área e tema. Abaixo de 960px a barra lateral vira gaveta e aparece a barra inferior. "Novo evento" fica no cabeçalho da lista; no celular, o "+" da barra inferior abre o mesmo modal.
 - Cabeçalho de lista: `.gd-cabecalho` com título, apoio e botão verde à direita (`.gd-cabecalho-acoes` para mais de um).
 - Tabela `.gd-grade` dentro de `.gd-painel`, com `.gd-barra` (abas `.gd-abas`, busca `.gd-busca`, filtros `.gd-filtros`). Situação em `.gd-status` (`ok`, `alerta`, `erro`, `info`, `neutro`). A última coluna é Ações, com Editar e Excluir. Excluir só chama a API quando o fluxo já tem remoção.
 - **Todo cadastro e toda edição abrem em modal**, de qualquer entidade, com as larguras de `shared/dialog.ts` e a estrutura título / descrição / conteúdo / ações. Não navegue para uma página só para um formulário.
