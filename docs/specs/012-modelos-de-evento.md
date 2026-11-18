@@ -1,6 +1,6 @@
 # 012. Modelos de evento
 
-**Status: aprovada.** O código segue esta spec. Fonte: [inventario-referencia.md](../inventario-referencia.md) §4 e §1.3. Aplicar o modelo na criação do evento permanece na SPEC-008.
+**Status: em revisão (versão 2, 18/11/2026).** Aguarda aprovação. Até lá, o código segue a versão 1 (histórico do Git). Fonte: [produto-v1.md](../produto-v1.md) 5.3 e 5.4, plano do cliente, Cerimonial Fácil e Ivola.
 
 ## 1. Identificador e nome
 
@@ -8,112 +8,165 @@ SPEC-012. Modelos de evento.
 
 ## 2. Objetivo
 
-O Organizer mantém a biblioteca de modelos de evento: listar, criar com Nome e Tipo, editar nas abas do editor, clonar e excluir. O modelo alimenta a criação do evento na SPEC-008.
+Deixar os modelos fáceis de montar e de reaproveitar. O prazo aparece como a pessoa fala ("6 semanas antes"). Um checklist que ela já tem pode ser colado. Um modelo pode ser aplicado num evento já criado. Um evento bem montado vira modelo.
 
 ## 3. Requisitos relacionados
 
-RF-053. Aplicação do modelo na criação do evento: SPEC-008 / RF-049.
+RF-053 (modelo de evento), RF-106 (modelos mais simples), RF-105 (salvar evento como modelo), RF-049 (criação do evento, SPEC-008 v2). RF-062 (refazer prazos ao mudar a data), só se a decisão 1 da seção 17 for aprovada.
 
-Fora: RF-079 (VIP Store / loja de modelos). Bibliotecas de briefing, roteiro, cronograma, inspiração e mensagem (SPEC-013 a SPEC-017, RF-054). Assistente (RF-045). Portal do cliente além das flags de permissão do modelo (RF-056).
+Fora: roteiro no modelo (RF-092, bloco 10), bibliotecas de briefing a mensagens (SPEC-013 a 017), loja de modelos (RF-079).
 
 ## 4. Atores e permissões
 
 | Ator | Pode |
 |---|---|
-| Organizer | CRUD completo dos modelos da própria conta: listar, criar, editar, clonar, excluir. |
-| Client | Não abre a biblioteca. As flags da aba Permissões do modelo definem o que o Client vê no evento depois da criação (RF-056); o Client não edita o modelo. |
-| Admin | Acessa e mantém modelos de qualquer conta. |
-| Visitante | Não acessa. |
-
-Assistente e fornecedor com login ficam fora deste corte.
+| Organizer | Tudo desta spec, nos modelos e eventos da própria conta. |
+| Assistant | O mesmo, quando a spec de assistente estiver implementada (RF-045). Até lá, só o Organizer. |
+| Outra conta | Não vê modelo nem evento. |
 
 ## 5. Pré-condições
 
-Conta autenticada, SPEC-001. A conta pode nascer sem modelo próprio; criar evento na SPEC-008 exige pelo menos um modelo disponível na conta.
+Usuário autenticado, SPEC-001. Para aplicar um modelo ou salvar como modelo, o evento precisa existir e estar em andamento.
 
 ## 6. Fluxo principal
 
-1. O Organizer abre a biblioteca de modelos de evento.
-2. A lista mostra os modelos da conta, cada um com nome e tipo.
-3. Cria um modelo informando Nome e Tipo e salva.
-4. Abre o editor do modelo.
-5. Nas abas, configura Checklist (serviços com tarefas, fornecedores, alinhamentos, comparativos e valor estimado), Tarefas, Briefings, Roteiros, Inspirações, RSVP e Mensagens, e Permissões.
-6. Salva as alterações.
-7. Pode clonar um modelo existente, gerando cópia editável na mesma conta.
-8. Pode excluir um modelo da conta, com confirmação.
+### 6.1. Biblioteca e editor
+
+1. A biblioteca lista os modelos da conta em tabela: nome, tipo, "N tarefas · N serviços" e ações (Editar, Clonar, Excluir).
+2. "Novo modelo" abre um modal com Nome e Tipo. Salvar abre o editor.
+3. O editor mantém as abas atuais (Checklist, Tarefas, Briefings, Roteiros, Inspirações, RSVP e Mensagens). A aba **Permissões sai** (seção 8.5).
+4. Na aba Tarefas, cada tarefa tem título, **grupo** (opcional) e **prazo**. A lista aparece agrupada por grupo e ordenada pelo prazo, do mais distante para o mais perto do evento.
+
+### 6.2. Prazo legível
+
+1. O prazo da tarefa é informado com um número e uma unidade: dias, semanas ou meses antes do evento. Também dá para escolher "No dia do evento" ou "Sem prazo".
+2. Em todo lugar, o prazo é exibido como a pessoa falaria (regras na seção 8.1).
+
+### 6.3. Importar colando
+
+1. Há dois caminhos: "Importar modelo" na biblioteca, que cria um modelo novo pedindo Nome e Tipo, e "Colar tarefas" no editor, que acrescenta tarefas ao modelo aberto.
+2. O modal tem uma caixa de texto grande e o botão "Enviar planilha" (.xlsx ou .csv).
+3. Ao colar ou enviar, aparece uma **prévia** em tabela (grupo, tarefa, prazo), com o total e as linhas ignoradas. Nada é gravado antes de "Importar".
+4. "Importar" grava e mostra o aviso "N tarefas importadas".
+
+### 6.4. Aplicar modelo num evento existente
+
+1. Na aba Tarefas do evento, ou no "Mais" do Resumo, a opção "Aplicar modelo" abre um modal com os modelos do mesmo tipo do evento.
+2. Escolhido o modelo, a prévia diz: "N tarefas e N serviços novos. M já existem no evento e serão ignorados."
+3. "Aplicar" acrescenta só o que é novo. Nada do evento é apagado ou alterado.
+
+### 6.5. Salvar evento como modelo
+
+1. No "Mais" do Resumo do evento, "Salvar como modelo" abre um modal com o Nome, sugerido como "Modelo — <nome do evento>".
+2. A prévia mostra quantas tarefas e quantos serviços vão para o modelo e quantas tarefas ficarão sem prazo.
+3. "Salvar" cria o modelo, do mesmo tipo do evento, e oferece "Abrir modelo".
 
 ## 7. Fluxos alternativos
 
-- Biblioteca sem modelo: lista vazia e ação de criar.
-- Nome ou Tipo ausentes na criação: não grava.
-- Modelo de outra conta: Organizer não vê; Admin sim.
-- Excluir modelo já usado em eventos existentes: o modelo some da biblioteca; eventos já criados mantêm os dados copiados na criação (não reaplicam o modelo).
-- Busca por nome na biblioteca: reduz a lista.
-- VIP Store / loja: fora (RF-079).
+- Colar texto sem nenhuma tarefa reconhecida: a prévia diz "Nenhuma tarefa encontrada" e "Importar" fica desligado.
+- Planilha sem a coluna Tarefa, ou com um formato que não seja .xlsx/.csv: erro claro e nada gravado.
+- Linha da planilha com prazo ilegível: a tarefa entra sem prazo e a prévia avisa na linha.
+- Aplicar modelo em evento sem data: as tarefas entram sem prazo, e a prévia avisa.
+- Aplicar o mesmo modelo duas vezes: na segunda, tudo já existe e nada muda (a prévia mostra 0 novos).
+- Salvar como modelo um evento sem data: todas as tarefas vão sem prazo, e a prévia avisa.
+- Tarefa do evento com prazo **depois** da data do evento: vai para o modelo como "No dia do evento" (seção 17, decisão 2).
+- Excluir um modelo já usado: os eventos criados com ele não mudam.
 
 ## 8. Regras de negócio
 
-- Tipos de modelo: 15 anos, casamento, aniversário, corporativo, formatura. RF-053.
-- Criar pede Nome e Tipo. RF-053 / inventário §4.
-- O editor tem as abas Checklist, Tarefas, Briefings, Roteiros, Inspirações, RSVP e Mensagens, e Permissões. RF-053.
-- Na Checklist, cada serviço lista tarefas, fornecedores, alinhamentos, comparativos e valor estimado. RF-053.
-- Clonar gera novo modelo na conta, com o mesmo conteúdo editável, sem alterar o original.
-- Excluir remove o modelo da biblioteca da conta. Não apaga eventos já criados.
-- Aplicar o modelo na criação do evento (tipo, serviços, tarefas) permanece na SPEC-008.
-- Modelos pertencem à conta do Organizer. Isolamento entre contas.
-- A aba Permissões configura flags no estilo RF-056 (o que o Client vê/edita no evento): gerais, planejamento, tarefas, serviços e fornecedores, convites. Detalhe fino de cada flag fora do miolo desta spec fica na seção 17 se ainda não fechado.
-- Prazo de tarefa no modelo pode ser relativo ("N dias antes"); no evento, a SPEC-003 continua com data concreta após a aplicação.
+### 8.1. Prazo
+
+- Continua gravado como **dias antes** do evento (inteiro, maior ou igual a 0), como hoje. Nulo é "Sem prazo"; 0 é "No dia do evento".
+- Ao digitar: 1 semana = 7 dias; 1 mês = 30 dias.
+- Ao exibir: múltiplo de 30 vira "N meses antes" ("1 mês antes"); senão, múltiplo de 7 vira "N semanas antes"; senão, "N dias antes". Exemplos: 180 → "6 meses antes", 42 → "6 semanas antes", 10 → "10 dias antes".
+- No evento, o prazo continua sendo uma data concreta: data do evento menos os dias (SPEC-008).
+
+### 8.2. Grupo
+
+- A tarefa do modelo ganha o campo **grupo**, um texto opcional (ex.: "Cerimônia", "Recepção", "Documentos").
+- Ao aplicar o modelo, o grupo é copiado para a tarefa do evento. Como o grupo aparece na lista de tarefas do evento fica com a SPEC-003 (bloco 4).
+
+### 8.3. Leitura do texto colado
+
+- Cada linha não vazia é uma tarefa, menos as linhas de título.
+- **Título de grupo** é a linha que termina com `:` ou que está toda em maiúsculas. As tarefas abaixo dela ficam nesse grupo até o próximo título.
+- Marcadores no começo da linha são removidos: `-`, `*`, `•`, `[ ]`, `[x]`, números como `1.` ou `1)`.
+- Prazo opcional no fim da linha, entre parênteses: `(30 dias)`, `(6 semanas)`, `(2 meses)`, `(no dia)`. Sem parênteses, a tarefa fica sem prazo.
+- Linhas repetidas no mesmo grupo entram uma vez só.
+- Título com mais de 200 caracteres é cortado em 200, com aviso na prévia.
+
+### 8.4. Planilha
+
+- Colunas, pela primeira linha (cabeçalho): **Tarefa** (obrigatória), **Grupo** e **Prazo** (opcionais). O Prazo segue o formato da seção 8.3, sem os parênteses ("6 semanas").
+- O sistema oferece "Baixar planilha padrão" com essas três colunas.
+
+### 8.5. Aplicar e salvar
+
+- Ao aplicar, "já existe" quer dizer mesmo título de tarefa, ou mesmo nome de serviço, sem diferenciar maiúsculas e acentos.
+- As tarefas aplicadas nascem pendentes e com o Organizer como responsável, como na criação.
+- Salvar como modelo leva: todas as tarefas do evento (feitas ou não), com título, grupo e prazo convertido em "dias antes"; e os serviços do evento, com nome e valor estimado. Não leva fornecedores, valores contratados, parcelas, convidados nem clientes.
+- A aba Permissões do modelo sai: as flags eram da conta `Client`, que deixou de existir (RF-024). O que o casal vê passa a ser escolhido no link do casal (RF-056, bloco 11). As colunas ficam no banco até o bloco 11 decidir o que fazer com elas.
 
 ## 9. Validações
 
-Nome obrigatório, sem só espaços. Tipo obrigatório, um dos cinco tipos. Valor estimado, se informado, maior ou igual a zero. Modelo inexistente ou de outra conta: não grava e não revela dado.
+Nome do modelo obrigatório, sem só espaços. Tipo é um dos cinco. Prazo: número inteiro de 0 a 999 na unidade escolhida. Grupo com até 80 caracteres. Planilha de até 2 MB e até 500 linhas. Modelo aplicado é da conta e do mesmo tipo do evento.
 
 ## 10. Estados
 
-Modelo cadastrado na conta. Sem máquina de situação adicional (não há "publicado" / "rascunho" separado além de existir ou não na biblioteca).
+Sem estados novos. O modelo existe ou não existe. A tarefa aplicada nasce pendente.
 
 ## 11. Dados necessários
 
-Criar: Nome, Tipo.
+Tarefa do modelo: título, grupo (novo), dias antes.
 
-Lista: nome, tipo.
+Tarefa do evento: grupo (novo), copiado do modelo.
 
-Checklist por serviço: nome do serviço, tarefas, fornecedores, alinhamentos, comparativos, valor estimado.
+Importar: texto colado ou arquivo; para modelo novo, nome e tipo.
 
-Demais abas: vínculos ou conteúdo de briefing, roteiro, inspiração, RSVP/mensagem, e grupos de permissão do Client.
-
-Clonar: origem do modelo. Excluir: identificador do modelo.
+Aplicar: evento e modelo. Salvar como modelo: evento e nome.
 
 ## 12. Interface
 
-Biblioteca com busca, botão Criar modelo e cards com nome e tipo. Formulário de criação com Nome e Tipo. Editor com Clonar modelo e as sete abas. Confirmação ao excluir. Sem VIP Store neste produto.
+Todos os fluxos em modal (design-system 5.10).
+- Prazo: um campo numérico e uma lista (dias / semanas / meses / no dia / sem prazo) na mesma linha.
+- Prévia da importação: tabela com rolagem dentro do modal (`.gd-grade`), e as linhas ignoradas em `.gd-alerta`.
+- Biblioteca: tabela com a coluna "Tarefas · Serviços".
 
 ## 13. Erros
 
-Campo inválido permanece no formulário. Modelo de outra conta não revela dado. Falha ao salvar mantém o conteúdo anterior. Exclusão sem confirmação não ocorre.
+Arquivo inválido ou grande demais: mensagem no modal, nada gravado. Falha ao importar, aplicar ou salvar como modelo: nada fica pela metade (tudo grava junto ou nada grava). Modelo ou evento de outra conta: indisponível, sem revelar dado.
 
 ## 14. Critérios de aceite
 
-1. A biblioteca lista só modelos da conta do Organizer (Admin vê a conta escolhida).
-2. Criar com Nome e Tipo grava o modelo; sem um dos dois, não grava.
-3. O editor mostra as abas Checklist, Tarefas, Briefings, Roteiros, Inspirações, RSVP e Mensagens, e Permissões.
-4. Na checklist, o serviço mostra tarefas, fornecedores, alinhamentos, comparativos e valor estimado.
-5. Clonar gera cópia editável na mesma conta.
-6. Excluir remove o modelo da biblioteca e não apaga eventos já criados.
-7. A criação do evento continua a da SPEC-008, consumindo o modelo.
-8. Outra conta não vê o modelo.
+1. Prazo de 42 dias aparece como "6 semanas antes"; 180 como "6 meses antes"; 0 como "No dia do evento".
+2. Informar "2 meses" grava 60 dias.
+3. Colar uma lista com títulos terminados em `:`, marcadores e prazos entre parênteses gera a prévia certa (grupo, tarefa, prazo) e só grava em "Importar".
+4. A planilha padrão, preenchida e enviada, importa as mesmas tarefas que o texto equivalente.
+5. Aplicar um modelo num evento acrescenta só tarefas e serviços novos; aplicar de novo não muda nada.
+6. Salvar como modelo um evento com data gera tarefas com "dias antes" iguais à distância entre o prazo e a data do evento.
+7. O grupo da tarefa do modelo chega à tarefa do evento.
+8. O editor de modelo não mostra mais a aba Permissões.
+9. Outra conta não vê, não aplica e não salva modelo de outra conta.
 
 ## 15. Cenários de teste
 
-Criar modelo Casamento com nome. Abrir checklist e gravar um serviço com valor estimado. Clonar e conferir dois itens na lista. Excluir a cópia. Criar evento pela SPEC-008 com o modelo restante. Conta B não vê o modelo da conta A.
+Unidade: conversão e exibição do prazo (0, 7, 10, 30, 42, 180, nulo); leitura do texto colado (títulos com `:` e em maiúsculas, marcadores, prazos, linhas vazias e repetidas); leitura da planilha (cabeçalho fora de ordem, sem coluna Tarefa).
+
+Integração: importar para modelo novo; colar no editor; aplicar duas vezes no mesmo evento; aplicar em evento sem data; salvar como modelo com e sem data; isolamento entre contas.
 
 ## 16. Dependências
 
-SPEC-001. SPEC-008 consome o modelo na criação. SPEC-003 para tarefas do evento após aplicar. SPEC-013 a SPEC-017 para o conteúdo das bibliotecas vinculadas nas abas. SPEC-018 para serviços/fornecedores usados na checklist.
+SPEC-008 v2 (criação e Resumo do evento, onde fica o "Mais"). SPEC-003 (tarefas do evento; o bloco 4 decide como mostrar o grupo). SPEC-018 (serviços do evento). Leitura de planilha: o mesmo leitor já usado na importação de convidados (SPEC-010).
 
 ## 17. Premissas e pontos não definidos
 
-- Lista fechada exata de rótulos de Tipo na UI se a referência divergir na capitalização.
-- Efeito de alterar um modelo sobre eventos futuros apenas (já definido: não altera eventos passados); reaplicar em evento existente fica fora.
-- Semântica fina de cada flag da aba Permissões frente a RF-056.
-- Ordenação manual da lista de modelos.
+Decisões para o usuário:
+
+1. **Refazer prazos ao mudar a data do evento (RF-062, pendência 6 do produto-v1).** Proposta: ao salvar uma data nova no Editar evento, um modal pergunta "Mover os prazos das tarefas não concluídas junto com a data?". "Mover" desloca cada prazo pelo mesmo número de dias; "Manter" não mexe. Se aprovado, entra nesta spec e o RF-062 vira Definido.
+2. **Tarefa com prazo depois do evento** (ex.: "pedir depoimento"). Proposta: na 1.0, guardar como "No dia do evento". Prazo "depois do evento" fica para quando o depoimento (RF-101) for especificado.
+3. **Mês = 30 dias** é uma aproximação. "6 meses antes" de 20/12 cai em 23/06, e não em 20/06. Proposta: aceitar, porque é simples e previsível.
+
+Pontos abertos menores:
+
+- O roteiro no modelo ("N momentos" no pacote) entra com RF-092 (bloco 10).
+- A ordem manual das tarefas dentro de um grupo continua fora; a ordenação é pelo prazo.
