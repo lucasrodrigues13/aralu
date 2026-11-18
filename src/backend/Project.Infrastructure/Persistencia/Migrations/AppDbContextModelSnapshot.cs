@@ -431,6 +431,100 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.ToTable("Grupos");
                 });
 
+            modelBuilder.Entity("Project.Domain.Dinheiro.LancamentoEvento", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Categoria")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<DateOnly>("Data")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Descricao")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("EventoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("Valor")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EventoId");
+
+                    b.ToTable("LancamentosEvento", (string)null);
+                });
+
+            modelBuilder.Entity("Project.Domain.Dinheiro.ParcelaCasal", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Entrada")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("EventoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Numero")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("Valor")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<DateOnly>("Vencimento")
+                        .HasColumnType("date");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EventoId");
+
+                    b.ToTable("ParcelasCasal", (string)null);
+                });
+
+            modelBuilder.Entity("Project.Domain.Dinheiro.RecebimentoParcela", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly>("Data")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Forma")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("ParcelaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Valor")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ParcelaId");
+
+                    b.ToTable("RecebimentosParcela", (string)null);
+                });
+
             modelBuilder.Entity("Project.Domain.Eventos.CompromissoAgenda", b =>
                 {
                     b.Property<Guid>("Id")
@@ -546,6 +640,10 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
                     b.Property<bool>("TransferAtivo")
                         .HasColumnType("boolean");
+
+                    b.Property<decimal?>("ValorContrato")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
 
                     b.HasKey("Id");
 
@@ -1824,6 +1922,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<string>("Celular")
                         .HasColumnType("text");
 
+                    b.Property<string>("ChavePix")
+                        .HasColumnType("text");
+
                     b.Property<string>("ContaId")
                         .IsRequired()
                         .HasColumnType("text");
@@ -2190,6 +2291,33 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
                 });
 
+            modelBuilder.Entity("Project.Domain.Dinheiro.LancamentoEvento", b =>
+                {
+                    b.HasOne("Project.Domain.Eventos.Evento", null)
+                        .WithMany()
+                        .HasForeignKey("EventoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Project.Domain.Dinheiro.ParcelaCasal", b =>
+                {
+                    b.HasOne("Project.Domain.Eventos.Evento", null)
+                        .WithMany()
+                        .HasForeignKey("EventoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Project.Domain.Dinheiro.RecebimentoParcela", b =>
+                {
+                    b.HasOne("Project.Domain.Dinheiro.ParcelaCasal", null)
+                        .WithMany("Recebimentos")
+                        .HasForeignKey("ParcelaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Project.Domain.Eventos.CompromissoAgenda", b =>
                 {
                     b.HasOne("Project.Domain.Eventos.Evento", null)
@@ -2526,6 +2654,11 @@ namespace Project.Infrastructure.Persistencia.Migrations
             modelBuilder.Entity("Project.Domain.Convidados.Convite", b =>
                 {
                     b.Navigation("Convidados");
+                });
+
+            modelBuilder.Entity("Project.Domain.Dinheiro.ParcelaCasal", b =>
+                {
+                    b.Navigation("Recebimentos");
                 });
 
             modelBuilder.Entity("Project.Domain.Eventos.Evento", b =>

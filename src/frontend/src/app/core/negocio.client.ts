@@ -19,6 +19,7 @@ export interface Perfil {
   nascimento: string | null;
   endereco: string | null;
   fotoId: string | null;
+  chavePix: string | null;
 }
 
 export interface ItemServicoModelo {

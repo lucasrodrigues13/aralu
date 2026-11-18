@@ -1,0 +1,342 @@
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { MatDialog } from '@angular/material/dialog';
+import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
+import { forkJoin } from 'rxjs';
+import {
+  DinheiroClient,
+  DinheiroEvento,
+  FORMAS_PAGAMENTO,
+  LancamentoEvento,
+  PagamentoFornecedor,
+  ParcelaCasal,
+  SITUACOES_PARCELA_CASAL,
+} from '../../core/dinheiro.client';
+import { mensagemDeErro } from '../../core/mensagem-erro';
+import { Cliente, NegocioClient } from '../../core/negocio.client';
+import { ToastService } from '../../core/toast.service';
+import { ConfirmaDialog } from '../../shared/confirma-dialog';
+import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
+import { GdDataPipe } from '../../shared/gd-data.pipe';
+import { GdDinheiroPipe } from '../../shared/gd-dinheiro.pipe';
+import { EventoAbasComponent } from '../eventos/evento-abas.component';
+import { linkWhatsapp, textoCobranca } from './cobranca';
+import { ChavePixDialog, ContratoCasalDialog, LancamentoDialog, ReceberDialog } from './dinheiro.dialogs';
+
+const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+
+/** Aba Dinheiro do evento (SPEC-029): o que ela recebe do casal e o que paga aos fornecedores. */
+@Component({
+  selector: 'app-evento-dinheiro',
+  imports: [RouterLink, MatButtonModule, MatIconModule, MatMenuModule, GdDataPipe, GdDinheiroPipe, EventoAbasComponent],
+  template: `
+    <a mat-button routerLink="/eventos"><mat-icon>arrow_back</mat-icon> Eventos</a>
+    <app-evento-abas [eventoId]="id" />
+    <header class="gd-cabecalho">
+      <div>
+        <h1>Dinheiro</h1>
+        <p>{{ nomeEvento() }} · o que você recebe do casal e o que paga aos fornecedores.</p>
+      </div>
+      <div class="gd-cabecalho-acoes">
+        <button mat-button class="gd-secundario" type="button" (click)="exportarBudget()"><mat-icon>download</mat-icon> Exportar orçamento</button>
+        <button mat-flat-button type="button" (click)="definirContrato()">
+          <mat-icon>{{ dados()?.parcelas?.length ? 'edit' : 'add' }}</mat-icon>
+          {{ dados()?.parcelas?.length ? 'Refazer parcelas' : 'Definir contrato' }}
+        </button>
+      </div>
+    </header>
+
+    @if (dados(); as d) {
+      <section class="gd-numeros">
+        <div class="gd-numero"><span>Contrato</span><strong>{{ (d.valorContrato ?? 0) | gdDinheiro }}</strong></div>
+        <div class="gd-numero"><span>Recebido</span><strong>{{ d.recebido | gdDinheiro }}</strong></div>
+        <div class="gd-numero"><span>Saldo</span><strong>{{ d.saldo | gdDinheiro }}</strong></div>
+      </section>
+
+      <section class="gd-painel">
+        <h2 class="titulo">Parcelas do casal</h2>
+        @if (d.parcelas.length === 0) {
+          <div class="gd-vazio vazio-acao">
+            <p>Informe o valor do contrato, a entrada e o número de parcelas para gerar as parcelas do casal.</p>
+            <button mat-flat-button type="button" (click)="definirContrato()"><mat-icon>add</mat-icon> Definir contrato</button>
+          </div>
+        } @else {
+          <div class="gd-tabela-rolagem">
+            <table class="gd-grade">
+              <thead>
+                <tr>
+                  <th>Parcela</th>
+                  <th>Vencimento</th>
+                  <th class="gd-direita">Valor</th>
+                  <th class="gd-direita">Recebido</th>
+                  <th>Situação</th>
+                  <th class="gd-acoes">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (parcela of d.parcelas; track parcela.id) {
+                  <tr>
+                    <td>
+                      {{ parcela.entrada ? 'Entrada' : 'Parcela ' + parcela.numero }}
+                      @if (parcela.recebimentos.length > 0) {
+                        <span class="gd-sub">{{ resumoRecebimentos(parcela) }}</span>
+                      }
+                    </td>
+                    <td>{{ parcela.vencimento | gdData }}</td>
+                    <td class="gd-direita valor">{{ parcela.valor | gdDinheiro }}</td>
+                    <td class="gd-direita">{{ parcela.recebido | gdDinheiro }}</td>
+                    <td><span class="gd-status" [class]="'gd-status ' + situacao(parcela).classe">{{ situacao(parcela).rotulo }}</span></td>
+                    <td class="gd-acoes">
+                      @if (parcela.situacao !== 'Recebida') {
+                        <button mat-stroked-button class="acao" type="button" (click)="cobrar(parcela)"><mat-icon>chat</mat-icon> Cobrar</button>
+                        <button mat-stroked-button class="acao" type="button" (click)="receber(parcela)">Recebi</button>
+                      }
+                      @if (parcela.recebimentos.length > 0) {
+                        <button mat-icon-button type="button" aria-label="Mais ações" [matMenuTriggerFor]="menu"><mat-icon>more_vert</mat-icon></button>
+                        <mat-menu #menu="matMenu" xPosition="before">
+                          <button mat-menu-item type="button" (click)="desfazer(parcela)"><mat-icon>undo</mat-icon> Desfazer último recebimento</button>
+                        </mat-menu>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </section>
+
+      <section class="gd-painel">
+        <h2 class="titulo">Pagamentos a fornecedores</h2>
+        @if (d.pagamentosFornecedores.length === 0) {
+          <p class="gd-vazio">Nenhuma parcela de fornecedor. Elas aparecem ao contratar um fornecedor na aba Fornecedores.</p>
+        } @else {
+          <div class="gd-tabela-rolagem">
+            <table class="gd-grade">
+              <thead>
+                <tr><th>Vencimento</th><th>Serviço</th><th>Fornecedor</th><th class="gd-direita">Valor</th><th>Situação</th></tr>
+              </thead>
+              @for (grupo of pagamentosPorMes(); track grupo.mes) {
+                <tbody>
+                  <tr class="mes"><td colspan="5">{{ grupo.mes }} · {{ grupo.total | gdDinheiro }}</td></tr>
+                  @for (pagamento of grupo.itens; track $index) {
+                    <tr>
+                      <td>{{ pagamento.vencimento | gdData }}</td>
+                      <td>{{ pagamento.servico }} <span class="gd-sub">{{ pagamento.entrada ? 'Entrada' : 'Parcela ' + pagamento.numero }}</span></td>
+                      <td>{{ pagamento.fornecedor ?? '—' }}</td>
+                      <td class="gd-direita valor">{{ pagamento.valor | gdDinheiro }}</td>
+                      <td><span class="gd-status" [class]="pagamento.situacao === 'Pago' ? 'gd-status ok' : 'gd-status alerta'">{{ pagamento.situacao === 'Pago' ? 'Pago' : 'Pendente' }}</span></td>
+                    </tr>
+                  }
+                </tbody>
+              }
+            </table>
+          </div>
+        }
+      </section>
+
+      <section class="gd-painel">
+        <div class="titulo-linha">
+          <h2 class="titulo">Despesas e entradas</h2>
+          <button mat-stroked-button type="button" (click)="lancamento()"><mat-icon>add</mat-icon> Adicionar</button>
+        </div>
+        @if (d.lancamentos.length === 0) {
+          <p class="gd-vazio">Nenhuma despesa ou entrada avulsa neste evento.</p>
+        } @else {
+          <div class="gd-tabela-rolagem">
+            <table class="gd-grade">
+              <thead>
+                <tr><th>Data</th><th>Tipo</th><th>Categoria</th><th>Descrição</th><th class="gd-direita">Valor</th><th class="gd-acoes">Ações</th></tr>
+              </thead>
+              <tbody>
+                @for (item of d.lancamentos; track item.id) {
+                  <tr>
+                    <td>{{ item.data | gdData }}</td>
+                    <td><span class="gd-status" [class]="item.tipo === 'Despesa' ? 'gd-status erro' : 'gd-status ok'">{{ item.tipo }}</span></td>
+                    <td>{{ item.categoria }}</td>
+                    <td>{{ item.descricao ?? '—' }}</td>
+                    <td class="gd-direita valor">{{ item.valor | gdDinheiro }}</td>
+                    <td class="gd-acoes">
+                      <button mat-icon-button type="button" aria-label="Editar" (click)="lancamento(item)"><mat-icon>edit</mat-icon></button>
+                      <button mat-icon-button type="button" aria-label="Excluir" (click)="excluirLancamento(item)"><mat-icon>delete</mat-icon></button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <p class="gd-sub totais">Despesas {{ d.despesas | gdDinheiro }} · Entradas {{ d.entradas | gdDinheiro }}</p>
+        }
+      </section>
+    }
+  `,
+  styles: `
+    .gd-painel { margin-bottom: 16px; }
+    .titulo { font-size: 16px; font-weight: 600; margin: 0 0 12px; }
+    .titulo-linha { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+    .titulo-linha .titulo { margin: 0; }
+    .vazio-acao { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
+    .vazio-acao p { margin: 0; }
+    .valor { font-weight: 600; white-space: nowrap; }
+    .acao { height: 32px; margin-left: 4px; }
+    .acao mat-icon { font-size: 16px; width: 16px; height: 16px; }
+    tr.mes td { font-size: 12px; font-weight: 600; text-transform: capitalize; color: var(--gd-muted-foreground); background: color-mix(in oklab, var(--gd-muted) 50%, transparent); }
+    .totais { margin-top: 12px; text-align: right; }
+  `,
+})
+export class EventoDinheiroPage implements OnInit {
+  private readonly dinheiro = inject(DinheiroClient);
+  private readonly negocio = inject(NegocioClient);
+  private readonly rota = inject(ActivatedRoute);
+  private readonly dialog = inject(MatDialog);
+  private readonly toast = inject(ToastService);
+  protected readonly dados = signal<DinheiroEvento | null>(null);
+  protected readonly nomeEvento = signal('');
+  private readonly clientes = signal<Cliente[]>([]);
+  protected id = '';
+
+  protected readonly pagamentosPorMes = computed(() => {
+    const grupos = new Map<string, { mes: string; total: number; itens: PagamentoFornecedor[] }>();
+    for (const pagamento of this.dados()?.pagamentosFornecedores ?? []) {
+      const [ano, mes] = pagamento.vencimento.slice(0, 7).split('-');
+      const chave = `${ano}-${mes}`;
+      const grupo = grupos.get(chave) ?? { mes: `${MESES[Number(mes) - 1]} de ${ano}`, total: 0, itens: [] };
+      grupo.total += pagamento.valor;
+      grupo.itens.push(pagamento);
+      grupos.set(chave, grupo);
+    }
+    return [...grupos.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([, grupo]) => grupo);
+  });
+
+  ngOnInit(): void {
+    this.id = this.rota.snapshot.paramMap.get('id') ?? '';
+    forkJoin({ evento: this.negocio.evento(this.id), clientes: this.negocio.clientesDoEvento(this.id) }).subscribe({
+      next: ({ evento, clientes }) => {
+        this.nomeEvento.set(evento.nome);
+        this.clientes.set(clientes);
+      },
+      error: () => this.clientes.set([]),
+    });
+    this.carregar();
+  }
+
+  protected situacao(parcela: ParcelaCasal) {
+    return SITUACOES_PARCELA_CASAL[parcela.situacao];
+  }
+
+  protected resumoRecebimentos(parcela: ParcelaCasal): string {
+    return parcela.recebimentos
+      .map((item) => `${FORMAS_PAGAMENTO.find((forma) => forma.valor === item.forma)?.rotulo ?? item.forma} em ${item.data.slice(8, 10)}/${item.data.slice(5, 7)}`)
+      .join(' · ');
+  }
+
+  protected definirContrato(): void {
+    const atual = this.dados();
+    if (atual?.parcelas.some((parcela) => parcela.recebimentos.length > 0)) {
+      this.toast.erro('Já há recebimentos. Desfaça os recebimentos antes de refazer as parcelas.');
+      return;
+    }
+    this.dialog.open(ContratoCasalDialog, { ...DIALOG, data: { valor: atual?.valorContrato ?? null } }).afterClosed().subscribe((pedido) => {
+      if (!pedido) return;
+      this.dinheiro.definirContrato(this.id, pedido).subscribe({
+        next: (dados) => {
+          this.dados.set(dados);
+          this.toast.sucesso('Parcelas do casal geradas.');
+        },
+        error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+      });
+    });
+  }
+
+  protected cobrar(parcela: ParcelaCasal): void {
+    const chave = this.dados()?.chavePix;
+    if (chave) {
+      this.abrirWhatsapp(parcela, chave);
+      return;
+    }
+    this.dialog.open(ChavePixDialog, DIALOG_PEQUENO).afterClosed().subscribe((digitada?: string) => {
+      if (digitada) this.abrirWhatsapp(parcela, digitada);
+    });
+  }
+
+  protected receber(parcela: ParcelaCasal): void {
+    this.dialog.open(ReceberDialog, { ...DIALOG_PEQUENO, data: parcela }).afterClosed().subscribe((pedido) => {
+      if (!pedido) return;
+      this.dinheiro.receber(this.id, parcela.id, pedido).subscribe({
+        next: (dados) => {
+          this.dados.set(dados);
+          this.toast.sucesso('Recebimento registrado.');
+        },
+        error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+      });
+    });
+  }
+
+  protected desfazer(parcela: ParcelaCasal): void {
+    this.dinheiro.desfazer(this.id, parcela.id).subscribe({
+      next: (dados) => {
+        this.dados.set(dados);
+        this.toast.sucesso('Último recebimento desfeito.');
+      },
+      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+    });
+  }
+
+  protected lancamento(item?: LancamentoEvento): void {
+    this.dialog.open(LancamentoDialog, { ...DIALOG, data: item ?? null }).afterClosed().subscribe((pedido) => {
+      if (!pedido) return;
+      this.dinheiro.salvarLancamento(this.id, item?.id ?? null, pedido).subscribe({
+        next: (dados) => {
+          this.dados.set(dados);
+          this.toast.sucesso(item ? 'Lançamento atualizado.' : 'Lançamento adicionado.');
+        },
+        error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+      });
+    });
+  }
+
+  protected excluirLancamento(item: LancamentoEvento): void {
+    this.dialog.open(ConfirmaDialog, {
+      ...DIALOG_PEQUENO,
+      data: { titulo: 'Excluir lançamento', texto: `Excluir "${item.categoria}"?`, confirmar: 'Excluir' },
+    }).afterClosed().subscribe((confirmou) => {
+      if (!confirmou) return;
+      this.dinheiro.excluirLancamento(this.id, item.id).subscribe({
+        next: (dados) => {
+          this.dados.set(dados);
+          this.toast.sucesso('Lançamento excluído.');
+        },
+        error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+      });
+    });
+  }
+
+  protected exportarBudget(): void {
+    this.dinheiro.planilhaBudget(this.id).subscribe({
+      next: (arquivo) => {
+        const url = URL.createObjectURL(arquivo);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `orcamento-${this.nomeEvento() || 'evento'}.xlsx`;
+        link.click();
+        URL.revokeObjectURL(url);
+      },
+      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+    });
+  }
+
+  private abrirWhatsapp(parcela: ParcelaCasal, chavePix: string): void {
+    const cliente = this.clientes()[0];
+    const texto = textoCobranca(parcela, cliente?.nome ?? '', chavePix);
+    window.open(linkWhatsapp(texto, cliente?.ddi ?? '55', cliente?.celular ?? ''), '_blank', 'noopener');
+  }
+
+  private carregar(): void {
+    this.dinheiro.obter(this.id).subscribe({
+      next: (dados) => this.dados.set(dados),
+      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+    });
+  }
+}

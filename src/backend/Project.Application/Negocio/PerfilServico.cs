@@ -11,7 +11,8 @@ public sealed record PerfilLeitura(
     string? Celular,
     DateOnly? Nascimento,
     string? Endereco,
-    Guid? FotoId);
+    Guid? FotoId,
+    string? ChavePix);
 
 public sealed record SalvarPerfil(
     string? NomeEmpresa,
@@ -19,7 +20,8 @@ public sealed record SalvarPerfil(
     string? Documento,
     string? Celular,
     DateOnly? Nascimento,
-    string? Endereco);
+    string? Endereco,
+    string? ChavePix = null);
 
 public sealed class PerfilServico(IDados dados)
 {
@@ -48,6 +50,7 @@ public sealed class PerfilServico(IDados dados)
         perfil.Celular = TextoLimpo(pedido.Celular);
         perfil.Nascimento = pedido.Nascimento;
         perfil.Endereco = TextoLimpo(pedido.Endereco);
+        perfil.ChavePix = TextoLimpo(pedido.ChavePix);
         await dados.SalvarPerfilAsync(perfil, ct);
         return Resultado<PerfilLeitura>.Sucesso(Ler(email, perfil));
     }
@@ -91,7 +94,8 @@ public sealed class PerfilServico(IDados dados)
         perfil?.Celular,
         perfil?.Nascimento,
         perfil?.Endereco,
-        perfil?.FotoId);
+        perfil?.FotoId,
+        perfil?.ChavePix);
 
     private static string? TextoLimpo(string? valor) => Domain.Comum.Texto.Limpo(valor);
 }

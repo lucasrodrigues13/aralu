@@ -20,5 +20,8 @@ public sealed class PerfilAssessoria
 
     public Guid? FotoId { get; set; }
 
+    /// <summary>Chave Pix usada no "Cobrar" (RF-088, SPEC-029).</summary>
+    public string? ChavePix { get; set; }
+
     public bool CapturaLeadRsvp { get; set; } = true;
 }

@@ -170,6 +170,16 @@ import { aplicarMascara } from '../../shared/mascaras';
               </mat-form-field>
             </mat-card-content>
           </mat-card>
+          <mat-card>
+            <mat-card-header><mat-card-title>Recebimentos</mat-card-title></mat-card-header>
+            <mat-card-content>
+              <mat-form-field appearance="outline">
+                <mat-label>Chave Pix</mat-label>
+                <input matInput formControlName="chavePix" maxlength="140" placeholder="CPF, CNPJ, e-mail, celular ou chave aleatória" />
+                <mat-hint>Vai junto na mensagem de "Cobrar" do Dinheiro do evento.</mat-hint>
+              </mat-form-field>
+            </mat-card-content>
+          </mat-card>
         </div>
         <div class="gd-coluna">
           <mat-card class="gd-foto-cartao">
@@ -224,6 +234,7 @@ export class PerfilPage implements OnInit {
     celular: '',
     nascimento: this.fb.control<Date | null>(null),
     endereco: '',
+    chavePix: '',
   });
 
   constructor() {
@@ -287,6 +298,7 @@ export class PerfilPage implements OnInit {
       celular: valor.celular ?? '',
       nascimento: deDataParaIso(valor.nascimento),
       endereco: valor.endereco ?? '',
+      chavePix: valor.chavePix ?? '',
     }).subscribe({
       next: (perfil) => {
         this.aplicar(perfil, false);
@@ -312,6 +324,7 @@ export class PerfilPage implements OnInit {
       celular: aplicarMascara(perfil.celular ?? '', 'celular'),
       nascimento: deIsoParaData(perfil.nascimento),
       endereco: perfil.endereco ?? '',
+      chavePix: perfil.chavePix ?? '',
     });
     if (buscarFoto) {
       this.carregarFoto(perfil.fotoId);

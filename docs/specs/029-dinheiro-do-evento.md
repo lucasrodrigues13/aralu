@@ -1,6 +1,6 @@
 # 029. Dinheiro do evento
 
-**Status: aprovada (18/11/2026).** O código deve seguir esta spec. Fonte: [produto-v1.md](../produto-v1.md) 5.9 e 5.1 (Pix), RF-095, RF-096, RF-097, RF-088. Os itens 2, 4 e 6 da seção 17 foram decididos em 18/11/2026.
+**Status: aprovada (18/11/2026).** O código deve seguir esta spec. Fonte: [produto-v1.md](../produto-v1.md) 5.9 e 5.1 (Pix), RF-095, RF-096, RF-097, RF-088. Os itens 2, 4 e 6 da seção 17 foram decididos em 18/11/2026. Implementada em 18/11/2026, exceto o envio de comprovantes (§17, item 7).
 
 ## 1. Identificador e nome
 
@@ -117,10 +117,10 @@ SPEC-008 (evento), SPEC-018 (fornecedores), RF-088 (Pix), SPEC-030 (contrato →
 
 ## 17. Premissas e pontos não definidos
 
-1. Regra exata de vencimentos das parcelas (dia fixo, meses corridos).
+1. Regra exata de vencimentos das parcelas. Implementado como na criação do evento: uma por mês a partir da 1ª, mesmo dia.
 2. ~~Fórmula do Resultado.~~ Decidido: vira **Saldo** = contrato − recebido.
-3. Formas de pagamento aceitas.
+3. Formas de pagamento aceitas. Implementado com Pix, Dinheiro, Cartão, Transferência, Boleto e Outro; ajustar se o usuário pedir.
 4. ~~Cobrar sem Pix.~~ Decidido: modal pede a chave Pix e ela vai na mensagem.
-5. Categorias padrão de despesa.
+5. Categorias padrão de despesa. Por ora a categoria é texto livre.
 6. ~~Valor do contrato aqui × no contrato.~~ Decidido: o valor mora aqui; o contrato (SPEC-030) lê pelos campos de mesclagem.
-7. Limites de arquivo de comprovante.
+7. Limites de arquivo de comprovante. Sem decisão, o envio de comprovante ainda não existe.

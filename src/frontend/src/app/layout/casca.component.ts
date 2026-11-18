@@ -136,6 +136,7 @@ export class CascaComponent {
         { rotulo: 'Tarefas', icone: 'task_alt', rota: '/tarefas' },
         { rotulo: 'Clientes', icone: 'group', rota: '/clientes' },
         { rotulo: 'Serviços e fornecedores', icone: 'storefront', rota: '/fornecedores' },
+        { rotulo: 'Pagamentos', icone: 'payments', rota: '/pagamentos' },
       ],
     },
     {

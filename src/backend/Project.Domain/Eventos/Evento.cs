@@ -29,6 +29,9 @@ public sealed class Evento
 
     public decimal? OrcamentoEstimado { get; set; }
 
+    /// <summary>Valor do contrato com o casal (SPEC-029). As parcelas do casal saem dele.</summary>
+    public decimal? ValorContrato { get; set; }
+
     public int? ConvidadosEstimados { get; set; }
 
     public TimeOnly? TempoFesta { get; set; }

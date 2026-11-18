@@ -10,6 +10,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
       <a [routerLink]="['/eventos', eventoId(), 'tarefas']" routerLinkActive="ativa">Tarefas</a>
       <a [routerLink]="['/eventos', eventoId(), 'convidados']" routerLinkActive="ativa">Convidados</a>
       <a [routerLink]="['/eventos', eventoId(), 'fornecedores']" routerLinkActive="ativa">Fornecedores</a>
+      <a [routerLink]="['/eventos', eventoId(), 'dinheiro']" routerLinkActive="ativa">Dinheiro</a>
     </nav>
   `,
   styles: `

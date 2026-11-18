@@ -96,6 +96,7 @@ public static class Mapa
 
         MapearBibliotecas(modelBuilder);
         MapearFornecedores(modelBuilder);
+        MapearDinheiro(modelBuilder);
         MapearFunil(modelBuilder);
     }
 
@@ -155,6 +156,33 @@ public static class Mapa
         inspiracao.HasMany(item => item.Itens).WithOne().HasForeignKey(item => item.GaleriaId).OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<ModeloMensagem>().HasIndex(item => item.ContaId);
+    }
+
+    private static void MapearDinheiro(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Evento>().Property(item => item.ValorContrato).HasPrecision(12, 2);
+
+        var parcela = modelBuilder.Entity<Project.Domain.Dinheiro.ParcelaCasal>();
+        parcela.ToTable("ParcelasCasal");
+        parcela.Property(item => item.Valor).HasPrecision(12, 2);
+        parcela.Ignore(item => item.Recebido);
+        parcela.Ignore(item => item.Saldo);
+        parcela.HasIndex(item => item.EventoId);
+        parcela.HasOne<Evento>().WithMany().HasForeignKey(item => item.EventoId).OnDelete(DeleteBehavior.Cascade);
+        parcela.HasMany(item => item.Recebimentos).WithOne().HasForeignKey(item => item.ParcelaId).OnDelete(DeleteBehavior.Cascade);
+
+        var recebimento = modelBuilder.Entity<Project.Domain.Dinheiro.RecebimentoParcela>();
+        recebimento.ToTable("RecebimentosParcela");
+        recebimento.Property(item => item.Valor).HasPrecision(12, 2);
+        recebimento.Property(item => item.Forma).HasConversion<string>();
+
+        var lancamento = modelBuilder.Entity<Project.Domain.Dinheiro.LancamentoEvento>();
+        lancamento.ToTable("LancamentosEvento");
+        lancamento.Property(item => item.Valor).HasPrecision(12, 2);
+        lancamento.Property(item => item.Tipo).HasConversion<string>();
+        lancamento.Property(item => item.Categoria).HasMaxLength(80);
+        lancamento.HasIndex(item => item.EventoId);
+        lancamento.HasOne<Evento>().WithMany().HasForeignKey(item => item.EventoId).OnDelete(DeleteBehavior.Cascade);
     }
 
     private static void MapearFornecedores(ModelBuilder modelBuilder)

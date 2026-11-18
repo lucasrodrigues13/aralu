@@ -1939,3 +1939,98 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261118233335_DinheiroDoEvento') THEN
+    ALTER TABLE "Perfis" ADD "ChavePix" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261118233335_DinheiroDoEvento') THEN
+    ALTER TABLE "Eventos" ADD "ValorContrato" numeric(12,2);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261118233335_DinheiroDoEvento') THEN
+    CREATE TABLE "LancamentosEvento" (
+        "Id" uuid NOT NULL,
+        "EventoId" uuid NOT NULL,
+        "Tipo" text NOT NULL,
+        "Categoria" character varying(80) NOT NULL,
+        "Descricao" text,
+        "Valor" numeric(12,2) NOT NULL,
+        "Data" date NOT NULL,
+        CONSTRAINT "PK_LancamentosEvento" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_LancamentosEvento_Eventos_EventoId" FOREIGN KEY ("EventoId") REFERENCES "Eventos" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261118233335_DinheiroDoEvento') THEN
+    CREATE TABLE "ParcelasCasal" (
+        "Id" uuid NOT NULL,
+        "EventoId" uuid NOT NULL,
+        "Numero" integer NOT NULL,
+        "Vencimento" date NOT NULL,
+        "Valor" numeric(12,2) NOT NULL,
+        "Entrada" boolean NOT NULL,
+        CONSTRAINT "PK_ParcelasCasal" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_ParcelasCasal_Eventos_EventoId" FOREIGN KEY ("EventoId") REFERENCES "Eventos" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261118233335_DinheiroDoEvento') THEN
+    CREATE TABLE "RecebimentosParcela" (
+        "Id" uuid NOT NULL,
+        "ParcelaId" uuid NOT NULL,
+        "Valor" numeric(12,2) NOT NULL,
+        "Forma" text NOT NULL,
+        "Data" date NOT NULL,
+        "CriadoEm" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_RecebimentosParcela" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_RecebimentosParcela_ParcelasCasal_ParcelaId" FOREIGN KEY ("ParcelaId") REFERENCES "ParcelasCasal" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261118233335_DinheiroDoEvento') THEN
+    CREATE INDEX "IX_LancamentosEvento_EventoId" ON "LancamentosEvento" ("EventoId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261118233335_DinheiroDoEvento') THEN
+    CREATE INDEX "IX_ParcelasCasal_EventoId" ON "ParcelasCasal" ("EventoId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261118233335_DinheiroDoEvento') THEN
+    CREATE INDEX "IX_RecebimentosParcela_ParcelaId" ON "RecebimentosParcela" ("ParcelaId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261118233335_DinheiroDoEvento') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261118233335_DinheiroDoEvento', '10.0.4');
+    END IF;
+END $EF$;
+COMMIT;
+
