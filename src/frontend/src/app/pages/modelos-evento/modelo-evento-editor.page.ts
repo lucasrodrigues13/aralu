@@ -2,7 +2,6 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
-import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -29,7 +28,7 @@ import { ImportarTarefasModeloDialog } from './importar-tarefas-modelo.dialog';
 @Component({
   selector: 'app-modelo-evento-editor',
   imports: [
-    ReactiveFormsModule, RouterLink, MatButtonModule, MatCheckboxModule, MatFormFieldModule, MatInputModule,
+    ReactiveFormsModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule,
     MatSelectModule, MatTabsModule, MatIconModule, CampoDinheiroComponent,
   ],
   template: `
@@ -179,15 +178,6 @@ import { ImportarTarefasModeloDialog } from './importar-tarefas-modelo.dialog';
               </mat-select>
             </mat-form-field>
             </div>
-          </div>
-        </mat-tab>
-        <mat-tab label="Permissões">
-          <div class="aba" formGroupName="permissoes">
-            <mat-checkbox formControlName="gerais">Gerais</mat-checkbox>
-            <mat-checkbox formControlName="planejamento">Planejamento</mat-checkbox>
-            <mat-checkbox formControlName="tarefas">Tarefas</mat-checkbox>
-            <mat-checkbox formControlName="servicosFornecedores">Serviços e fornecedores</mat-checkbox>
-            <mat-checkbox formControlName="convites">Convites</mat-checkbox>
           </div>
         </mat-tab>
       </mat-tab-group>
