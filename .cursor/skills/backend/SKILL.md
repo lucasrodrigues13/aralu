@@ -29,7 +29,7 @@ Os quatro projetos e a solution ficam em `src/backend/`. A solution é `src/back
 - A senha, a normalização do e-mail, o lockout, as roles e os tokens de confirmação e de redefinição continuam no Identity.
 - O JWT de acesso dura 8 horas, sem renovação, sem refresh e sem lista de revogação. Segredo, issuer, audience e prazo vêm de configuração. A assinatura fica na Infrastructure.
 - O logout não invalida o token no servidor.
-- Roles no token: `Admin`, `Organizer` e `Client`. Cadastro público cria `Organizer`. `Client` exige `OrganizerId` no `ApplicationUser`.
+- Roles no token: `Admin`, `Organizer` e `Assistant` (RF-024). Cadastro público cria `Organizer`. `Assistant` exige `OrganizerId` no `ApplicationUser`. A role `Client` ainda existe no código e sai quando a spec de assistente e link do casal for implementada; não crie código novo para ela.
 
 ## Erro
 

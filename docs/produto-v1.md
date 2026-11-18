@@ -328,7 +328,7 @@ Fica na 1.0 e ganha o que faltou (D).
 
 ## 7. Conflitos com requisitos já definidos
 
-Estes RFs e decisões estão **Definidos** em [requirements.md](requirements.md) e este documento os altera. Nada foi mudado lá. Ao aprovar este documento, cada linha vira uma edição em requirements.md.
+**Aplicado em 18/11/2026.** As linhas abaixo e os RFs novos já estão em [requirements.md](requirements.md) (seção 14, item 22). A assistente ganhou a role `Assistant`. A tabela fica como registro.
 
 | RF / decisão | Hoje | Passa a ser |
 |---|---|---|
@@ -347,7 +347,7 @@ Estes RFs e decisões estão **Definidos** em [requirements.md](requirements.md)
 | RF-049 / SPEC-008 Cadastro do evento | Modelo obrigatório; valor da assessoria logo após criar | Tipo + nome; valor depois (5.3) |
 | mvp-scope §3 | Menu igual à Assessoria VIP | Grupos da seção 4 |
 
-**RFs novos** (próximo livre: RF-087), sem ID ainda: marca, Pix, página pública, feed iCal, tela Hoje, colar lista de convidados, roteiro e cronograma no evento, briefing e inspirações no evento, cobrança e recebimento do casal, despesas do evento, contrato do evento com assinatura, link do casal (aprovações, código, depoimento), aniversários, resumo do dia, salvar como modelo, importar modelo colando.
+**RFs novos**, criados como RF-087 a RF-109 (requirements.md, seção 2.9): marca, Pix, página pública, feed iCal, tela Hoje, colar lista de convidados, roteiro e cronograma no evento, briefing e inspirações no evento, cobrança e recebimento do casal, despesas do evento, contrato do evento com assinatura, link do casal (aprovações, código, depoimento), aniversários, resumo do dia, salvar como modelo, importar modelo colando.
 
 ## 8. Specs
 
