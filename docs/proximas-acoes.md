@@ -22,7 +22,7 @@ Roteiro para continuar o trabalho em outra sessão. Siga na ordem. Na dúvida, p
 ## 3. Situação atual
 
 - Pronto: bloco 1 (casca e design system v2), bloco 2 (criação curta e resumo do evento) e a agenda em calendário.
-- Falta: blocos 3 a 17 da [seção 9 do produto-v1](produto-v1.md). Nenhum deles tem spec ainda.
+- Falta: blocos 3 a 17 da [seção 9 do produto-v1](produto-v1.md). Só o bloco 3 tem spec (SPEC-012 v2, aguardando aprovação).
 
 ## 4. Trabalho desta sessão: rascunhar specs
 
