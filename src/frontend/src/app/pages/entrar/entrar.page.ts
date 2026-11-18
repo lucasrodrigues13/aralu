@@ -65,7 +65,7 @@ export class EntrarPage {
       next: (sessao) => {
         this.auth.guardar(sessao);
         this.toast.sucesso('Login realizado.');
-        const destino = sessao.papeis.includes('Admin') ? '/admin' : '/painel';
+        const destino = sessao.papeis.includes('Admin') ? '/admin' : '/hoje';
         void this.router.navigateByUrl(destino);
       },
       error: (erro: unknown) => {

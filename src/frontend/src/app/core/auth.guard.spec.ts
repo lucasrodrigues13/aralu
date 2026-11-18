@@ -30,6 +30,6 @@ describe('guardas de conta', () => {
     const router = TestBed.inject(Router);
 
     expect(resultado).toBeInstanceOf(UrlTree);
-    expect(router.serializeUrl(resultado as UrlTree)).toBe('/painel');
+    expect(router.serializeUrl(resultado as UrlTree)).toBe('/hoje');
   });
 });

@@ -104,7 +104,7 @@ function telaEstreita(): boolean {
       </mat-sidenav-content>
     </mat-sidenav-container>
     <nav class="gd-barra-inferior" aria-label="Navegação rápida">
-      <a routerLink="/painel" routerLinkActive="ativo"><mat-icon>home</mat-icon>Início</a>
+      <a routerLink="/hoje" routerLinkActive="ativo"><mat-icon>home</mat-icon>Hoje</a>
       <a routerLink="/eventos" routerLinkActive="ativo"><mat-icon>celebration</mat-icon>Eventos</a>
       <button type="button" class="gd-novo" (click)="novoEvento()" aria-label="Novo evento"><mat-icon>add</mat-icon></button>
       <a routerLink="/pagamentos" routerLinkActive="ativo"><mat-icon>payments</mat-icon>Dinheiro</a>
@@ -125,7 +125,7 @@ export class CascaComponent {
     {
       rotulo: 'Principal',
       itens: [
-        { rotulo: 'Dashboards', icone: 'dashboard', rota: '/painel' },
+        { rotulo: 'Hoje', icone: 'today', rota: '/hoje' },
         { rotulo: 'Perfil', icone: 'apartment', rota: '/perfil' },
       ],
     },

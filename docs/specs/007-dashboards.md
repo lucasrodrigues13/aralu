@@ -1,6 +1,6 @@
 # 007. Tela Hoje
 
-**Status: aprovada (versão 2, 18/11/2026).** Substitui a SPEC-007 de dashboards. O código deve seguir esta spec. Fonte: [produto-v1.md](../produto-v1.md) 5.2, RF-080 a RF-082. Os itens 1 e 2 da seção 17 foram decididos em 18/11/2026.
+**Status: aprovada (versão 2, 18/11/2026).** Substitui a SPEC-007 de dashboards. O código deve seguir esta spec. Fonte: [produto-v1.md](../produto-v1.md) 5.2, RF-080 a RF-082. Os itens 1 e 2 da seção 17 foram decididos em 18/11/2026. Implementada em 18/11/2026 (rota `/hoje`), sem os cartões "Respostas de convidados" e "Retornos do funil" (§17, itens 5 e 7).
 
 ## 1. Identificador e nome
 
@@ -100,4 +100,6 @@ SPEC-001, casca (bloco 1), SPEC-002/008 (eventos), SPEC-003 (tarefas), SPEC-004/
 3. Destino dos cartões de cobrança antes do bloco 6 existir.
 4. Comportamento do cartão financeiro para Assistant sem permissão (ocultar vs zero).
 5. Definição de "respostas de convidados" no cartão (novas nas últimas 24h? pendentes totais?).
-6. Se o bloco "próximo evento" some quando não há data.
+6. Se o bloco "próximo evento" some quando não há data. Implementado: mostra "Nenhum evento com data marcada".
+7. "Retornos do funil" depende da data de retorno no cartão da oportunidade (bloco 16); o cartão entra junto.
+8. O checklist de configuração mostra só o que já existe (perfil, Pix, contrato). Marca, página pública e equipe entram com os blocos deles. "Pular" fica guardado no navegador.

@@ -32,7 +32,8 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () => import('./layout/casca.component').then((m) => m.CascaComponent),
     children: [
-      { path: 'painel', loadComponent: () => import('./pages/painel/painel.page').then((m) => m.PainelPage) },
+      { path: 'hoje', loadComponent: () => import('./pages/hoje/hoje.page').then((m) => m.HojePage) },
+      { path: 'painel', redirectTo: 'hoje', pathMatch: 'full' },
       { path: 'perfil', loadComponent: () => import('./pages/perfil/perfil.page').then((m) => m.PerfilPage) },
       { path: 'eventos', loadComponent: () => import('./pages/eventos/eventos.page').then((m) => m.EventosPage) },
       // Novo e Editar evento abrem em modal (docs/design-system.md, 1). As rotas antigas voltam para a lista ou para o evento.

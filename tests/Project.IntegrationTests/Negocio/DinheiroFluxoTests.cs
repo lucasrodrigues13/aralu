@@ -67,6 +67,27 @@ public class DinheiroFluxoTests
         Assert.Equal(200, (int)(await outra.GetAsync("/api/v1/pagamentos")).StatusCode);
     }
 
+    [Fact]
+    public async Task Hoje_conta_tarefas_de_hoje_e_mostra_o_proximo_evento()
+    {
+        var dono = await Entrar();
+        var outra = await Entrar();
+        var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
+        var evento = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new { tipo = "Casamento", primeiroNome = "Bia", segundoNome = "Leo", data = hoje.AddDays(10).ToString("yyyy-MM-dd") }));
+        var eventoId = evento.GetProperty("id").GetGuid();
+        await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/tarefas", new { titulo = "Ligar", prazo = hoje.ToString("yyyy-MM-dd") }));
+        await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/tarefas", new { titulo = "Atrasada", prazo = hoje.AddDays(-3).ToString("yyyy-MM-dd") }));
+
+        var painel = await Ler(await dono.GetAsync("/api/v1/hoje"));
+        Assert.Equal(1, painel.GetProperty("tarefasHoje").GetInt32());
+        Assert.Equal(1, painel.GetProperty("tarefasAtrasadas").GetInt32());
+        Assert.Equal(10, painel.GetProperty("proximoEvento").GetProperty("dias").GetInt32());
+
+        var alheio = await Ler(await outra.GetAsync("/api/v1/hoje"));
+        Assert.Equal(0, alheio.GetProperty("tarefasHoje").GetInt32());
+        Assert.Empty(alheio.GetProperty("carteira").EnumerateArray());
+    }
+
     private async Task<HttpClient> Entrar()
     {
         var email = $"pessoa-{Guid.NewGuid():N}@gevents.test";

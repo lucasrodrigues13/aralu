@@ -15,5 +15,5 @@ export const adminGuard: CanActivateFn = () => {
     return router.createUrlTree(['/entrar']);
   }
 
-  return auth.ehAdmin() ? true : router.createUrlTree(['/painel']);
+  return auth.ehAdmin() ? true : router.createUrlTree(['/hoje']);
 };

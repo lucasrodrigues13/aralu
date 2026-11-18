@@ -23,6 +23,8 @@ public static class DinheiroEndpoints
         api.MapDelete("/eventos/{id:guid}/dinheiro/lancamentos/{lancamentoId:guid}", ExcluirLancamento);
         api.MapGet("/eventos/{id:guid}/budget/planilha", PlanilhaBudget);
         api.MapGet("/pagamentos", Pagamentos);
+        api.MapGet("/hoje", (ClaimsPrincipal usuario, HojeServico servico, CancellationToken ct) =>
+            ComConta(usuario, async conta => Results.Ok(await servico.ObterAsync(conta, Hoje(), ct))));
     }
 
     private static Task<IResult> Obter(Guid id, ClaimsPrincipal usuario, DinheiroServico servico, CancellationToken ct) =>
