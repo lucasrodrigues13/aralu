@@ -542,8 +542,23 @@ public static class NegocioEndpoints
             return await De(servico.ObterAsync(conta, id, Hoje(), ct));
         });
 
-    private static Task<IResult> CriarEvento(SalvarEvento pedido, ClaimsPrincipal usuario, EventoServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.CriarAsync(conta, pedido, Hoje(), ct)));
+    private static Task<IResult> CriarEvento(
+        SalvarEvento pedido,
+        ClaimsPrincipal usuario,
+        EventoServico servico,
+        ContratoServico contratos,
+        CancellationToken ct) =>
+        ComConta(usuario, async conta =>
+        {
+            var resultado = await servico.CriarAsync(conta, pedido, Hoje(), ct);
+            if (resultado.Ok && pedido.ModeloId is Guid modeloId)
+            {
+                // SPEC-030 §6.3: o evento criado do modelo já vem com os contratos do modelo.
+                await contratos.CopiarDoModeloAsync(conta, resultado.Valor!.Id, modeloId, ct);
+            }
+
+            return resultado.Ok ? Results.Ok(resultado.Valor) : Falha(resultado.Falha!);
+        });
 
     private static Task<IResult> AtualizarEvento(Guid id, SalvarEvento pedido, ClaimsPrincipal usuario, EventoServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.AtualizarAsync(conta, id, pedido, Hoje(), ct)));

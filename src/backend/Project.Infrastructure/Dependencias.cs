@@ -53,6 +53,9 @@ public static class Dependencias
         services.AddScoped<PainelServico>();
         services.AddScoped<IDadosDinheiro, DadosDinheiroEf>();
         services.AddScoped<DinheiroServico>();
+        services.AddScoped<IDadosContrato, DadosContratoEf>();
+        services.AddScoped<ContratoServico>();
+        services.AddScoped<IEnvioEmail, MailKitEnvioEmail>();
         services.AddSingleton<IPlanilhaBudget, Eventos.PlanilhaBudgetExcel>();
         services.AddScoped<EventoServico>();
         services.AddScoped<TarefaServico>();

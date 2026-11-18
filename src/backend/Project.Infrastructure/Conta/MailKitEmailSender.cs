@@ -31,7 +31,7 @@ public sealed class MailKitEmailSender : IEmailSender<ApplicationUser>
         return EnviarAsync(email, "Redefina sua senha", "Foi gerado um código para redefinir sua senha.", CancellationToken.None);
     }
 
-    private async Task EnviarAsync(string email, string assunto, string texto, CancellationToken cancellationToken)
+    internal async Task EnviarAsync(string email, string assunto, string texto, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(_opcoes.Host) || string.IsNullOrWhiteSpace(_opcoes.Password) || string.IsNullOrWhiteSpace(_opcoes.From))
         {

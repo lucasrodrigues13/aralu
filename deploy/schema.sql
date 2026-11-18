@@ -2034,3 +2034,116 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261118234244_Contratos') THEN
+    CREATE TABLE "ContratosConta" (
+        "Id" uuid NOT NULL,
+        "ContaId" text NOT NULL,
+        "Nome" character varying(120) NOT NULL,
+        "Texto" text NOT NULL,
+        "CriadoEm" timestamp with time zone NOT NULL,
+        "AtualizadoEm" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_ContratosConta" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261118234244_Contratos') THEN
+    CREATE TABLE "ContratosDoEvento" (
+        "EventoId" uuid NOT NULL,
+        "ContratoId" uuid NOT NULL,
+        CONSTRAINT "PK_ContratosDoEvento" PRIMARY KEY ("EventoId", "ContratoId"),
+        CONSTRAINT "FK_ContratosDoEvento_ContratosConta_ContratoId" FOREIGN KEY ("ContratoId") REFERENCES "ContratosConta" ("Id") ON DELETE CASCADE,
+        CONSTRAINT "FK_ContratosDoEvento_Eventos_EventoId" FOREIGN KEY ("EventoId") REFERENCES "Eventos" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261118234244_Contratos') THEN
+    CREATE TABLE "ContratosDoModelo" (
+        "ModeloId" uuid NOT NULL,
+        "ContratoId" uuid NOT NULL,
+        CONSTRAINT "PK_ContratosDoModelo" PRIMARY KEY ("ModeloId", "ContratoId"),
+        CONSTRAINT "FK_ContratosDoModelo_ContratosConta_ContratoId" FOREIGN KEY ("ContratoId") REFERENCES "ContratosConta" ("Id") ON DELETE CASCADE,
+        CONSTRAINT "FK_ContratosDoModelo_Modelos_ModeloId" FOREIGN KEY ("ModeloId") REFERENCES "Modelos" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261118234244_Contratos') THEN
+    CREATE TABLE "LinksLeituraContrato" (
+        "Id" uuid NOT NULL,
+        "Token" character varying(100) NOT NULL,
+        "ContaId" text NOT NULL,
+        "EventoId" uuid NOT NULL,
+        "ContratoId" uuid NOT NULL,
+        "Email" text NOT NULL,
+        "CriadoEm" timestamp with time zone NOT NULL,
+        "ExpiraEm" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_LinksLeituraContrato" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_LinksLeituraContrato_ContratosConta_ContratoId" FOREIGN KEY ("ContratoId") REFERENCES "ContratosConta" ("Id") ON DELETE CASCADE,
+        CONSTRAINT "FK_LinksLeituraContrato_Eventos_EventoId" FOREIGN KEY ("EventoId") REFERENCES "Eventos" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261118234244_Contratos') THEN
+    CREATE INDEX "IX_ContratosConta_ContaId" ON "ContratosConta" ("ContaId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261118234244_Contratos') THEN
+    CREATE INDEX "IX_ContratosDoEvento_ContratoId" ON "ContratosDoEvento" ("ContratoId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261118234244_Contratos') THEN
+    CREATE INDEX "IX_ContratosDoModelo_ContratoId" ON "ContratosDoModelo" ("ContratoId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261118234244_Contratos') THEN
+    CREATE INDEX "IX_LinksLeituraContrato_ContratoId" ON "LinksLeituraContrato" ("ContratoId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261118234244_Contratos') THEN
+    CREATE INDEX "IX_LinksLeituraContrato_EventoId" ON "LinksLeituraContrato" ("EventoId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261118234244_Contratos') THEN
+    CREATE UNIQUE INDEX "IX_LinksLeituraContrato_Token" ON "LinksLeituraContrato" ("Token");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261118234244_Contratos') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261118234244_Contratos', '10.0.4');
+    END IF;
+END $EF$;
+COMMIT;
+

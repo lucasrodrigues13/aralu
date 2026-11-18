@@ -143,6 +143,7 @@ export class CascaComponent {
       rotulo: 'Modelos',
       itens: [
         { rotulo: 'Modelos de evento', icone: 'content_copy', rota: '/modelos-evento' },
+        { rotulo: 'Contratos', icone: 'gavel', rota: '/contratos' },
         { rotulo: 'Modelos de briefing', icone: 'quiz', rota: '/modelos-briefing' },
         { rotulo: 'Modelos de roteiro', icone: 'schedule', rota: '/modelos-roteiro' },
         { rotulo: 'Modelos de cronograma', icone: 'view_timeline', rota: '/modelos-cronograma' },

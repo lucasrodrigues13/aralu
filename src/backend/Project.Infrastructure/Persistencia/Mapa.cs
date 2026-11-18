@@ -97,6 +97,7 @@ public static class Mapa
         MapearBibliotecas(modelBuilder);
         MapearFornecedores(modelBuilder);
         MapearDinheiro(modelBuilder);
+        MapearContratos(modelBuilder);
         MapearFunil(modelBuilder);
     }
 
@@ -156,6 +157,34 @@ public static class Mapa
         inspiracao.HasMany(item => item.Itens).WithOne().HasForeignKey(item => item.GaleriaId).OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<ModeloMensagem>().HasIndex(item => item.ContaId);
+    }
+
+    private static void MapearContratos(ModelBuilder modelBuilder)
+    {
+        var contrato = modelBuilder.Entity<Project.Domain.Contratos.ContratoConta>();
+        contrato.ToTable("ContratosConta");
+        contrato.HasIndex(item => item.ContaId);
+        contrato.Property(item => item.Nome).HasMaxLength(120);
+
+        var doModelo = modelBuilder.Entity<Project.Domain.Contratos.ContratoDoModelo>();
+        doModelo.ToTable("ContratosDoModelo");
+        doModelo.HasKey(item => new { item.ModeloId, item.ContratoId });
+        doModelo.HasOne<ModeloEvento>().WithMany().HasForeignKey(item => item.ModeloId).OnDelete(DeleteBehavior.Cascade);
+        doModelo.HasOne<Project.Domain.Contratos.ContratoConta>().WithMany().HasForeignKey(item => item.ContratoId).OnDelete(DeleteBehavior.Cascade);
+
+        var doEvento = modelBuilder.Entity<Project.Domain.Contratos.ContratoDoEvento>();
+        doEvento.ToTable("ContratosDoEvento");
+        doEvento.HasKey(item => new { item.EventoId, item.ContratoId });
+        doEvento.HasOne<Evento>().WithMany().HasForeignKey(item => item.EventoId).OnDelete(DeleteBehavior.Cascade);
+        doEvento.HasOne<Project.Domain.Contratos.ContratoConta>().WithMany().HasForeignKey(item => item.ContratoId).OnDelete(DeleteBehavior.Cascade);
+
+        var link = modelBuilder.Entity<Project.Domain.Contratos.LinkLeituraContrato>();
+        link.ToTable("LinksLeituraContrato");
+        link.HasIndex(item => item.Token).IsUnique();
+        link.HasIndex(item => item.EventoId);
+        link.Property(item => item.Token).HasMaxLength(100);
+        link.HasOne<Evento>().WithMany().HasForeignKey(item => item.EventoId).OnDelete(DeleteBehavior.Cascade);
+        link.HasOne<Project.Domain.Contratos.ContratoConta>().WithMany().HasForeignKey(item => item.ContratoId).OnDelete(DeleteBehavior.Cascade);
     }
 
     private static void MapearDinheiro(ModelBuilder modelBuilder)

@@ -307,6 +307,111 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.ToTable("Vinculos");
                 });
 
+            modelBuilder.Entity("Project.Domain.Contratos.ContratoConta", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ContaId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<string>("Texto")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContaId");
+
+                    b.ToTable("ContratosConta", (string)null);
+                });
+
+            modelBuilder.Entity("Project.Domain.Contratos.ContratoDoEvento", b =>
+                {
+                    b.Property<Guid>("EventoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ContratoId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("EventoId", "ContratoId");
+
+                    b.HasIndex("ContratoId");
+
+                    b.ToTable("ContratosDoEvento", (string)null);
+                });
+
+            modelBuilder.Entity("Project.Domain.Contratos.ContratoDoModelo", b =>
+                {
+                    b.Property<Guid>("ModeloId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ContratoId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("ModeloId", "ContratoId");
+
+                    b.HasIndex("ContratoId");
+
+                    b.ToTable("ContratosDoModelo", (string)null);
+                });
+
+            modelBuilder.Entity("Project.Domain.Contratos.LinkLeituraContrato", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ContaId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("ContratoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("EventoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("ExpiraEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContratoId");
+
+                    b.HasIndex("EventoId");
+
+                    b.HasIndex("Token")
+                        .IsUnique();
+
+                    b.ToTable("LinksLeituraContrato", (string)null);
+                });
+
             modelBuilder.Entity("Project.Domain.Convidados.Convidado", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2258,6 +2363,51 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.HasOne("Project.Domain.Clientes.Cliente", null)
                         .WithMany("Vinculos")
                         .HasForeignKey("ClienteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Project.Domain.Eventos.Evento", null)
+                        .WithMany()
+                        .HasForeignKey("EventoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Project.Domain.Contratos.ContratoDoEvento", b =>
+                {
+                    b.HasOne("Project.Domain.Contratos.ContratoConta", null)
+                        .WithMany()
+                        .HasForeignKey("ContratoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Project.Domain.Eventos.Evento", null)
+                        .WithMany()
+                        .HasForeignKey("EventoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Project.Domain.Contratos.ContratoDoModelo", b =>
+                {
+                    b.HasOne("Project.Domain.Contratos.ContratoConta", null)
+                        .WithMany()
+                        .HasForeignKey("ContratoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Project.Domain.Eventos.ModeloEvento", null)
+                        .WithMany()
+                        .HasForeignKey("ModeloId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Project.Domain.Contratos.LinkLeituraContrato", b =>
+                {
+                    b.HasOne("Project.Domain.Contratos.ContratoConta", null)
+                        .WithMany()
+                        .HasForeignKey("ContratoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

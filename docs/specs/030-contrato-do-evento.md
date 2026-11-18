@@ -1,6 +1,6 @@
 # 030. Contratos
 
-**Status: aprovada (versão 2, 18/11/2026).** A versão 1 (um modelo único por conta, assinatura simulada) está no histórico do Git. O código deve seguir esta spec. Fonte: decisões do usuário em 18/11/2026; [produto-v1.md](../produto-v1.md) 5.10; RF-098.
+**Status: aprovada (versão 2, 18/11/2026).** A versão 1 (um modelo único por conta, assinatura simulada) está no histórico do Git. Implementada em 18/11/2026. Fonte: decisões do usuário em 18/11/2026; [produto-v1.md](../produto-v1.md) 5.10; RF-098.
 
 ## 1. Identificador e nome
 
@@ -32,7 +32,7 @@ Usuário autenticado como Admin ou Organizer (SPEC-001). Para o contrato do even
 
 ### 6.1. Tela Contratos (cadastro)
 
-1. Em Cadastros, a tela **Contratos** segue o padrão de lista (design-system 5.4 e 5.7): botão "Novo contrato" acima da tabela, tabela com nome e data de atualização, Editar e Excluir na última coluna.
+1. No menu (grupo Modelos), a tela **Contratos** segue o padrão de lista (design-system 5.4 e 5.7): botão "Novo contrato" acima da tabela, tabela com nome e data de atualização, Editar e Excluir na última coluna.
 2. "Novo contrato" e "Editar" abrem o modal largo com **Nome** e **Texto**. Ao lado do texto fica a lista de **campos de mesclagem**; clicar num campo insere a marca no cursor.
 3. "Ver como fica" mostra o texto com as marcas destacadas e preenchidas com valores de exemplo.
 4. A tela só aparece para Admin e Organizer.

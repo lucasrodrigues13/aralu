@@ -72,6 +72,8 @@ public sealed class FabricaApi : WebApplicationFactory<Program>
         {
             services.RemoveAll<IEmailSender<ApplicationUser>>();
             services.AddSingleton<IEmailSender<ApplicationUser>>(Email);
+            services.RemoveAll<Project.Application.Negocio.IEnvioEmail>();
+            services.AddSingleton<Project.Application.Negocio.IEnvioEmail>(Email);
             services.RemoveAll<IConsultaCep>();
             services.AddSingleton<IConsultaCep, CepDeTeste>();
         });

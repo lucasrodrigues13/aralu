@@ -168,6 +168,7 @@ app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));
 ContaEndpoints.Mapear(app);
 NegocioEndpoints.Mapear(app);
 DinheiroEndpoints.Mapear(app);
+ContratoEndpoints.Mapear(app);
 
 await using (var escopo = app.Services.CreateAsyncScope())
 {

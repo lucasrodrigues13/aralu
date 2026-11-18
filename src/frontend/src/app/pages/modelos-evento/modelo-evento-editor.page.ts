@@ -8,6 +8,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTabsModule } from '@angular/material/tabs';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { ContratoClient, ContratoResumo } from '../../core/contrato.client';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import {
   Briefing,
@@ -29,7 +31,7 @@ import { ImportarTarefasModeloDialog } from './importar-tarefas-modelo.dialog';
   selector: 'app-modelo-evento-editor',
   imports: [
     ReactiveFormsModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule,
-    MatSelectModule, MatTabsModule, MatIconModule, CampoDinheiroComponent,
+    MatSelectModule, MatTabsModule, MatIconModule, MatCheckboxModule, CampoDinheiroComponent,
   ],
   template: `
     <a mat-button routerLink="/modelos-evento">Voltar</a>
@@ -165,6 +167,22 @@ import { ImportarTarefasModeloDialog } from './importar-tarefas-modelo.dialog';
             </div>
           </div>
         </mat-tab>
+        <mat-tab label="Contratos">
+          <div class="aba">
+            <p class="gd-sub">Os contratos marcados entram nos eventos criados a partir deste modelo.</p>
+            @if (contratos().length === 0) {
+              <p class="gd-vazio">Nenhum contrato cadastrado. Cadastre em <a routerLink="/contratos">Contratos</a>.</p>
+            } @else {
+              <div class="lista-contratos">
+                @for (contrato of contratos(); track contrato.id) {
+                  <mat-checkbox [checked]="contratosDoModelo().has(contrato.id)" (change)="marcarContrato(contrato.id, $event.checked)">
+                    {{ contrato.nome }}
+                  </mat-checkbox>
+                }
+              </div>
+            }
+          </div>
+        </mat-tab>
         <mat-tab label="RSVP e Mensagens">
           <div class="aba">
             <div class="bloco bloco-curto">
@@ -197,6 +215,7 @@ import { ImportarTarefasModeloDialog } from './importar-tarefas-modelo.dialog';
     :host .formulario,
     :host mat-tab-group { min-width: 0; max-width: 100%; }
     .acoes { display: flex; gap: 8px; flex-wrap: wrap; }
+    .lista-contratos { display: flex; flex-direction: column; gap: 4px; margin-left: -8px; }
     .aba { padding: 16px 0; display: flex; flex-direction: column; gap: 12px; min-width: 0; max-width: 100%; }
     .bloco {
       box-sizing: border-box;
@@ -307,6 +326,9 @@ export class ModeloEventoEditorPage implements OnInit {
   protected readonly inspiracoes = signal<Inspiracao[]>([]);
   protected readonly mensagens = signal<MensagemModelo[]>([]);
   private readonly vinculosMap = signal<Record<string, string>>({});
+  private readonly contratoClient = inject(ContratoClient);
+  protected readonly contratos = signal<ContratoResumo[]>([]);
+  protected readonly contratosDoModelo = signal<ReadonlySet<string>>(new Set());
   private id = '';
 
   protected readonly form = this.fb.group({
@@ -341,6 +363,8 @@ export class ModeloEventoEditorPage implements OnInit {
     this.negocio.roteiros().subscribe({ next: (lista) => this.roteiros.set(lista) });
     this.negocio.inspiracoes().subscribe({ next: (lista) => this.inspiracoes.set(lista) });
     this.negocio.mensagens().subscribe({ next: (lista) => this.mensagens.set(lista) });
+    this.contratoClient.listar().subscribe({ next: (lista) => this.contratos.set(lista) });
+    this.contratoClient.doModelo(this.id).subscribe({ next: (ids) => this.contratosDoModelo.set(new Set(ids)) });
     this.negocio.modelo(this.id).subscribe({
       next: (modelo) => {
         this.form.patchValue({
@@ -436,6 +460,14 @@ export class ModeloEventoEditorPage implements OnInit {
     return exibirPrazo(prazoParaDias(qtd, raw.unidade));
   }
 
+  protected marcarContrato(id: string, marcado: boolean): void {
+    this.contratosDoModelo.update((atual) => {
+      const proximo = new Set(atual);
+      if (marcado) proximo.add(id); else proximo.delete(id);
+      return proximo;
+    });
+  }
+
   protected salvar(): void {
     const valor = this.form.getRawValue() as {
       nome: string | null;
@@ -464,7 +496,12 @@ export class ModeloEventoEditorPage implements OnInit {
       }),
       vinculos,
     }).subscribe({
-      next: () => this.toast.sucesso('Modelo salvo.'),
+      next: () => {
+        this.contratoClient.vincularAoModelo(this.id, [...this.contratosDoModelo()]).subscribe({
+          next: () => this.toast.sucesso('Modelo salvo.'),
+          error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+        });
+      },
       error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
     });
   }

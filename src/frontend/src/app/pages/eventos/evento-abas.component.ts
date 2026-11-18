@@ -11,6 +11,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
       <a [routerLink]="['/eventos', eventoId(), 'convidados']" routerLinkActive="ativa">Convidados</a>
       <a [routerLink]="['/eventos', eventoId(), 'fornecedores']" routerLinkActive="ativa">Fornecedores</a>
       <a [routerLink]="['/eventos', eventoId(), 'dinheiro']" routerLinkActive="ativa">Dinheiro</a>
+      <a [routerLink]="['/eventos', eventoId(), 'contratos']" routerLinkActive="ativa">Contratos</a>
     </nav>
   `,
   styles: `

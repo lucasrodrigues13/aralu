@@ -1,11 +1,12 @@
 using Microsoft.AspNetCore.Identity;
+using Project.Application.Negocio;
 using Project.Infrastructure.Conta;
 
 namespace Project.IntegrationTests.Suporte;
 
 public sealed record MensagemDeEmail(string Email, string Tipo, string Corpo);
 
-public sealed class EmailCapturado : IEmailSender<ApplicationUser>
+public sealed class EmailCapturado : IEmailSender<ApplicationUser>, IEnvioEmail
 {
     private readonly List<MensagemDeEmail> _mensagens = [];
 
@@ -37,6 +38,12 @@ public sealed class EmailCapturado : IEmailSender<ApplicationUser>
     public Task SendPasswordResetCodeAsync(ApplicationUser user, string email, string resetCode)
     {
         Registrar(email, "codigo", resetCode);
+        return Task.CompletedTask;
+    }
+
+    public Task EnviarAsync(string email, string assunto, string texto, CancellationToken ct)
+    {
+        Registrar(email, "texto", texto);
         return Task.CompletedTask;
     }
 

@@ -3,6 +3,7 @@ import { adminGuard, authGuard } from './core/auth.guard';
 
 export const routes: Routes = [
   { path: 'rsvp/:token', loadComponent: () => import('./pages/rsvp/rsvp.page').then((m) => m.RsvpPage) },
+  { path: 'contrato/:token', loadComponent: () => import('./pages/contratos/contrato-publico.page').then((m) => m.ContratoPublicoPage) },
   {
     path: 'lead/:contaId',
     loadComponent: () => import('./pages/lead-publico/lead-publico.page').then((m) => m.LeadPublicoPage),
@@ -40,6 +41,8 @@ export const routes: Routes = [
       { path: 'eventos/:id/editar', redirectTo: 'eventos/:id', pathMatch: 'full' },
       { path: 'eventos/:id/tarefas', loadComponent: () => import('./pages/tarefas/tarefas.page').then((m) => m.TarefasPage) },
       { path: 'eventos/:id/fornecedores', loadComponent: () => import('./pages/eventos/evento-fornecedores.page').then((m) => m.EventoFornecedoresPage) },
+      { path: 'eventos/:id/contratos', loadComponent: () => import('./pages/contratos/evento-contratos.page').then((m) => m.EventoContratosPage) },
+      { path: 'contratos', loadComponent: () => import('./pages/contratos/contratos.page').then((m) => m.ContratosPage) },
       { path: 'eventos/:id/dinheiro', loadComponent: () => import('./pages/dinheiro/evento-dinheiro.page').then((m) => m.EventoDinheiroPage) },
       { path: 'eventos/:id/convidados', loadComponent: () => import('./pages/convidados/convidados.page').then((m) => m.ConvidadosPage) },
       { path: 'tarefas', loadComponent: () => import('./pages/tarefas/tarefas.page').then((m) => m.TarefasPage) },
