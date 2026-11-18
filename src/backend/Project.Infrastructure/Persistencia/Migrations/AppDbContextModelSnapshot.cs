@@ -819,6 +819,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<int?>("DiasAntes")
                         .HasColumnType("integer");
 
+                    b.Property<string>("Grupo")
+                        .HasColumnType("text");
+
                     b.Property<Guid>("ModeloId")
                         .HasColumnType("uuid");
 
@@ -1863,6 +1866,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
                     b.Property<Guid>("EventoId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("Grupo")
+                        .HasColumnType("text");
 
                     b.Property<DateOnly?>("Prazo")
                         .HasColumnType("date");

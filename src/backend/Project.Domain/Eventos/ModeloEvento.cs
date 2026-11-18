@@ -67,6 +67,9 @@ public sealed class TarefaModelo
 
     public string Titulo { get; set; } = "";
 
+    /// <summary>Texto opcional (ex.: Cerimônia, Recepção). Até 80 caracteres (SPEC-012 §8.2).</summary>
+    public string? Grupo { get; set; }
+
     public int? DiasAntes { get; set; }
 }
 

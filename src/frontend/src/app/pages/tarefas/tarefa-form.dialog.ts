@@ -69,6 +69,7 @@ export class TarefaFormDialog {
     const pedido = {
       titulo: valor.titulo,
       descricao: valor.descricao,
+      grupo: this.dados.tarefa?.grupo ?? null,
       prazo: deDataParaIso(valor.prazo),
       situacao: valor.situacao,
     };

@@ -308,6 +308,7 @@ public sealed class EventoServico(IDados dados, IConsultaCep cep)
                 EventoId = evento.Id,
                 ContaId = contaId,
                 Titulo = tarefa.Titulo,
+                Grupo = tarefa.Grupo,
                 Prazo = prazo,
                 Situacao = SituacaoTarefa.Pendente,
                 ResponsavelContaId = contaId,

@@ -4,7 +4,7 @@ using Project.Domain.Tarefas;
 
 namespace Project.Application.Negocio;
 
-public sealed record SalvarTarefa(string? Titulo, string? Descricao, DateOnly? Prazo, SituacaoTarefa? Situacao);
+public sealed record SalvarTarefa(string? Titulo, string? Descricao, string? Grupo, DateOnly? Prazo, SituacaoTarefa? Situacao);
 
 public sealed record TarefaLeitura(
     Guid Id,
@@ -12,6 +12,7 @@ public sealed record TarefaLeitura(
     string Evento,
     string Titulo,
     string? Descricao,
+    string? Grupo,
     DateOnly? Prazo,
     SituacaoTarefa Situacao,
     string ResponsavelContaId);
@@ -62,6 +63,12 @@ public sealed class TarefaServico(IDados dados)
             return Resultado<TarefaLeitura>.Erro(Codigos.Validacao, "Informe o título.");
         }
 
+        var grupo = Domain.Comum.Texto.Limpo(pedido.Grupo);
+        if (grupo is { Length: > 80 })
+        {
+            return Resultado<TarefaLeitura>.Erro(Codigos.Validacao, "O grupo tem no máximo 80 caracteres.");
+        }
+
         var tarefa = new Tarefa
         {
             Id = Guid.NewGuid(),
@@ -69,6 +76,7 @@ public sealed class TarefaServico(IDados dados)
             ContaId = contaId,
             Titulo = titulo,
             Descricao = Domain.Comum.Texto.Limpo(pedido.Descricao),
+            Grupo = grupo,
             Prazo = pedido.Prazo,
             Situacao = SituacaoTarefa.Pendente,
             ResponsavelContaId = contaId,
@@ -103,8 +111,15 @@ public sealed class TarefaServico(IDados dados)
             return Resultado<TarefaLeitura>.Erro(Codigos.Validacao, "Escolha a situação da tarefa.");
         }
 
+        var grupo = Domain.Comum.Texto.Limpo(pedido.Grupo);
+        if (grupo is { Length: > 80 })
+        {
+            return Resultado<TarefaLeitura>.Erro(Codigos.Validacao, "O grupo tem no máximo 80 caracteres.");
+        }
+
         tarefa.Titulo = titulo;
         tarefa.Descricao = Domain.Comum.Texto.Limpo(pedido.Descricao);
+        tarefa.Grupo = grupo;
         tarefa.Prazo = pedido.Prazo;
         tarefa.Situacao = situacao;
         await dados.SalvarTarefaAsync(ct);
@@ -118,6 +133,7 @@ public sealed class TarefaServico(IDados dados)
         evento,
         tarefa.Titulo,
         tarefa.Descricao,
+        tarefa.Grupo,
         tarefa.Prazo,
         tarefa.Situacao,
         tarefa.ResponsavelContaId);

@@ -7,7 +7,7 @@ public sealed record ItemServicoModeloLeitura(Guid Id, TipoItemServicoModelo Tip
 
 public sealed record ServicoModeloLeitura(Guid Id, string Nome, decimal? ValorEstimado, IReadOnlyList<ItemServicoModeloLeitura> Itens);
 
-public sealed record TarefaModeloLeitura(Guid Id, string Titulo, int? DiasAntes);
+public sealed record TarefaModeloLeitura(Guid Id, string Titulo, string? Grupo, int? DiasAntes);
 
 public sealed record VinculoModeloLeitura(Guid Id, TipoVinculoModelo Tipo, Guid BibliotecaId);
 
@@ -33,7 +33,7 @@ public sealed record ItemServicoModeloPedido(TipoItemServicoModelo? Tipo, string
 
 public sealed record ServicoModeloPedido(string? Nome, decimal? ValorEstimado, IReadOnlyList<ItemServicoModeloPedido>? Itens);
 
-public sealed record TarefaModeloPedido(string? Titulo, int? DiasAntes);
+public sealed record TarefaModeloPedido(string? Titulo, string? Grupo, int? DiasAntes);
 
 public sealed record VinculoModeloPedido(TipoVinculoModelo? Tipo, Guid? BibliotecaId);
 
@@ -174,6 +174,7 @@ public sealed class ModeloServico(IDados dados)
                 Id = Guid.NewGuid(),
                 ModeloId = modeloId,
                 Titulo = Domain.Comum.Texto.Limpo(tarefa.Titulo)!,
+                Grupo = GrupoLimpo(tarefa.Grupo),
                 DiasAntes = tarefa.DiasAntes,
             });
         }
@@ -245,6 +246,7 @@ public sealed class ModeloServico(IDados dados)
                 Id = Guid.NewGuid(),
                 ModeloId = copia.Id,
                 Titulo = tarefa.Titulo,
+                Grupo = tarefa.Grupo,
                 DiasAntes = tarefa.DiasAntes,
             });
         }
@@ -311,6 +313,12 @@ public sealed class ModeloServico(IDados dados)
                 return "Informe o título da tarefa.";
             }
 
+            var grupo = Domain.Comum.Texto.Limpo(tarefa.Grupo);
+            if (grupo is { Length: > 80 })
+            {
+                return "O grupo tem no máximo 80 caracteres.";
+            }
+
             if (tarefa.DiasAntes is < 0)
             {
                 return "Use um prazo maior ou igual a zero.";
@@ -337,7 +345,7 @@ public sealed class ModeloServico(IDados dados)
             servico.Nome,
             servico.ValorEstimado,
             servico.Itens.Select(item => new ItemServicoModeloLeitura(item.Id, item.Tipo, item.Texto)).ToArray())).ToArray(),
-        modelo.Tarefas.Select(tarefa => new TarefaModeloLeitura(tarefa.Id, tarefa.Titulo, tarefa.DiasAntes)).ToArray(),
+        modelo.Tarefas.Select(tarefa => new TarefaModeloLeitura(tarefa.Id, tarefa.Titulo, tarefa.Grupo, tarefa.DiasAntes)).ToArray(),
         new PermissoesModeloLeitura(
             modelo.PermiteGerais,
             modelo.PermitePlanejamento,
@@ -348,4 +356,6 @@ public sealed class ModeloServico(IDados dados)
 
     private static IEnumerable<string> Nomes(IReadOnlyList<string>? valores) =>
         (valores ?? []).Select(Domain.Comum.Texto.Limpo).OfType<string>();
+
+    private static string? GrupoLimpo(string? valor) => Domain.Comum.Texto.Limpo(valor);
 }

@@ -1749,3 +1749,28 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261118200703_GrupoNasTarefas') THEN
+    ALTER TABLE "Tarefas" ADD "Grupo" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261118200703_GrupoNasTarefas') THEN
+    ALTER TABLE "TarefaModelo" ADD "Grupo" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261118200703_GrupoNasTarefas') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261118200703_GrupoNasTarefas', '10.0.4');
+    END IF;
+END $EF$;
+COMMIT;
+

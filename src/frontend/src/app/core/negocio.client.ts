@@ -37,6 +37,7 @@ export interface ServicoModelo {
 export interface TarefaModelo {
   id: string;
   titulo: string;
+  grupo: string | null;
   diasAntes: number | null;
 }
 
@@ -303,6 +304,7 @@ export interface Tarefa {
   evento: string;
   titulo: string;
   descricao: string | null;
+  grupo: string | null;
   prazo: string | null;
   situacao: string;
   responsavelContaId: string;

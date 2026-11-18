@@ -94,6 +94,7 @@ import { exibirPrazo, prazoDeDias, prazoParaDias, UNIDADES_PRAZO, UnidadePrazo }
               <div class="bloco" [formGroupName]="i">
                 <div class="linha linha-tarefa">
                   <mat-form-field appearance="outline" class="grow"><mat-label>Título</mat-label><input matInput formControlName="titulo" /></mat-form-field>
+                  <mat-form-field appearance="outline" class="grupo"><mat-label>Grupo</mat-label><input matInput formControlName="grupo" maxlength="80" /></mat-form-field>
                   <div class="prazo">
                     @if (mostraQuantidade(i)) {
                       <mat-form-field class="qtd" appearance="outline">
@@ -244,11 +245,12 @@ import { exibirPrazo, prazoDeDias, prazoParaDias, UNIDADES_PRAZO, UnidadePrazo }
     }
     .linha-tarefa {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(220px, 320px) auto;
+      grid-template-columns: minmax(0, 1.2fr) minmax(120px, 180px) minmax(220px, 300px) auto;
       width: 100%;
       max-width: 100%;
       min-width: 0;
     }
+    :host .linha-tarefa .grupo { width: 100%; }
     :host .linha-tarefa > * { min-width: 0; }
     :host .linha-tarefa mat-form-field {
       width: 100%;
@@ -365,7 +367,7 @@ export class ModeloEventoEditorPage implements OnInit {
         }
         this.tarefas.clear();
         for (const tarefa of modelo.tarefas) {
-          this.tarefas.push(this.novaTarefa(tarefa.titulo, tarefa.diasAntes));
+          this.tarefas.push(this.novaTarefa(tarefa.titulo, tarefa.grupo, tarefa.diasAntes));
         }
         const mapa: Record<string, string> = {};
         for (const vinculo of modelo.vinculos) {
@@ -410,7 +412,7 @@ export class ModeloEventoEditorPage implements OnInit {
   }
 
   protected adicionarTarefa(): void {
-    this.tarefas.push(this.novaTarefa('', null));
+    this.tarefas.push(this.novaTarefa('', null, null));
   }
 
   protected removerTarefa(indice: number): void {
@@ -437,7 +439,7 @@ export class ModeloEventoEditorPage implements OnInit {
       tipo: string | null;
       permissoes: Record<string, boolean>;
       servicos: { nome: string; valorEstimado: number | string | null; itens: { tipo: string; texto: string }[] }[];
-      tarefas: { titulo: string; quantidade: number | string | null; unidade: UnidadePrazo }[];
+      tarefas: { titulo: string; grupo: string | null; quantidade: number | string | null; unidade: UnidadePrazo }[];
     };
     const vinculos = Object.entries(this.vinculosMap()).map(([tipo, bibliotecaId]) => ({ tipo, bibliotecaId }));
     this.negocio.atualizarModelo(this.id, {
@@ -451,7 +453,11 @@ export class ModeloEventoEditorPage implements OnInit {
       })),
       tarefas: (valor.tarefas ?? []).map((tarefa) => {
         const qtd = tarefa.quantidade === '' || tarefa.quantidade == null ? null : Number(tarefa.quantidade);
-        return { titulo: tarefa.titulo, diasAntes: prazoParaDias(qtd, tarefa.unidade) };
+        return {
+          titulo: tarefa.titulo,
+          grupo: tarefa.grupo?.trim() || null,
+          diasAntes: prazoParaDias(qtd, tarefa.unidade),
+        };
       }),
       vinculos,
     }).subscribe({
@@ -496,10 +502,11 @@ export class ModeloEventoEditorPage implements OnInit {
     });
   }
 
-  private novaTarefa(titulo: string, diasAntes: number | null) {
+  private novaTarefa(titulo: string, grupo: string | null, diasAntes: number | null) {
     const decomposto = prazoDeDias(diasAntes);
     return this.fb.group({
       titulo: [titulo, Validators.required],
+      grupo: [grupo],
       quantidade: [decomposto.quantidade as number | null],
       unidade: [decomposto.unidade as UnidadePrazo],
     });
