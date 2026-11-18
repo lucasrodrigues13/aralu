@@ -1,102 +1,103 @@
-# 007. Dashboards
+# 007. Tela Hoje
 
-**Status: aprovada.** O código segue esta spec.
+**Status: rascunho (versão 2, bloco 5).** Substitui a SPEC-007 de dashboards quando o usuário aprovar. Fonte: [produto-v1.md](../produto-v1.md) 5.2, RF-080 a RF-082.
 
 ## 1. Identificador e nome
 
-SPEC-007. Dashboards.
+SPEC-007. Tela Hoje (substitui Dashboards).
 
 ## 2. Objetivo
 
-Depois do login, o Organizer vê a situação da própria conta. A tela mostra dashboards. O menu fica na lateral e não ocupa o miolo. Em tela estreita, até 959px, ele abre por cima da página, começa fechado e pode ser fechado de novo, para o miolo continuar visível.
+Depois do login, mostrar o que pede ação hoje — não uma grade de atalhos. Saudação, cartões de ação, próximo evento, carteira e números do funil.
 
 ## 3. Requisitos relacionados
 
-RF-080, RF-081 e RF-082. Estágios do funil vistos em RF-075. Situações de evento da SPEC-002. DA-044 para o layout.
+RF-080 (cartões de ação), RF-081 (próximo evento, carteira, checklist inicial), RF-082 (números do funil). Estágios do funil em RF-075. Pix e marca em RF-087/RF-088 (checklist).
 
 ## 4. Atores e permissões
 
-O `Organizer` vê só números e listas da própria conta. Outro `Organizer` não entra nessa conta. O convidado do RSVP não vê esta tela. Admin e Client ficam fora deste miolo neste corte.
+| Ator | Pode |
+|---|---|
+| Organizer | Vê a Hoje da própria conta. |
+| Assistant | Vê a Hoje com os eventos que a dona liberou; cartões financeiros só se "pode ver o financeiro" (RF-045). |
+| Outra conta / casal / convidado | Não vê. |
 
 ## 5. Pré-condições
 
-Organizer autenticado, SPEC-001. Evento vem da SPEC-002. Oportunidade do funil ainda não tem spec de cadastro. Enquanto isso, o dashboard do funil existe e mostra zero.
+Organizer ou Assistant autenticado (SPEC-001). A casca e a navegação (bloco 1) já existem.
 
 ## 6. Fluxo principal
 
-1. O login bem-sucedido abre esta tela.
-2. A barra lateral lista os módulos gerais da conta: dashboards, perfil, eventos, tarefas, clientes e os demais do corte. Convidado não entra nessa barra: a lista fica na aba do evento.
-3. O miolo mostra dois blocos.
-4. Eventos: quantidade em andamento, quantidade concluída e quantidade cancelada. Abaixo, os eventos em andamento, com nome e data, quando houver data.
-5. Funil: quantidade e valor em contato inicial, orçamento enviado, contratado e descartado.
-6. Clicar num evento em andamento abre esse evento. Clicar numa quantidade de evento abre a lista já filtrada por aquela situação.
+1. Login bem-sucedido abre **Hoje** (rota inicial).
+2. **Saudação** com a data de hoje e a frase "N coisas pedem você hoje". Se N = 0: "Nada pede você hoje".
+3. **Cartões de ação** (somando todos os eventos visíveis), cada um com número e link para a tela que resolve:
+   - Tarefas da semana e atrasadas → Tarefas (filtro adequado).
+   - Cobranças a fazer (atrasadas e próximos 7 dias) → Dinheiro / pagamentos do casal (quando o bloco 6 existir; até lá, destino na §17).
+   - Pagamentos a fornecedores da semana → Fornecedores / pagamentos.
+   - Respostas de convidados (pendências recentes — §17) → Convidados.
+   - Retornos do funil → Funil.
+4. **Próximo evento** com nome e contagem de dias (ou "É hoje").
+5. **Carteira** em tabela: casal (nome do evento), data, % de tarefas feitas, convidados que responderam, coluna **Atenção** (tarefas atrasadas e/ou respostas abaixo do esperado — limiar na §17).
+6. **Números do funil**: quantidade e valor por estágio (os quatro já usados hoje).
+7. Conta nova: **checklist de configuração** (contrato da conta, Pix, marca, página pública, equipe) com "pular" por item ou no conjunto. Some quando completo ou pulado.
 
 ## 7. Fluxos alternativos
 
-- Conta sem evento: as três quantidades ficam em zero e a lista de em andamento diz que não há evento.
-- Conta sem oportunidade: as quatro quantidades e os quatro valores ficam em zero.
-- Evento sem data: aparece pelo nome, sem data.
-- Não há cartão de atalho para "abrir o módulo" no miolo. O módulo continua alcançável pela lateral.
+- Conta sem eventos: cartões em zero; carteira vazia; saudação "Nada pede você hoje".
+- Sem próximo evento com data: o bloco do próximo evento não aparece ou diz que não há data (§17).
+- Assistant sem financeiro: cartões de cobrança/pagamento a fornecedor não aparecem ou aparecem vazios sem link (§17).
+- Checklist já completo: não mostra.
 
 ## 8. Regras de negócio
 
-- A tela inicial não repete o painel de menus da plataforma de referência.
-- Não existe situação "ativo" além de em andamento. Os exemplos descoberta, orçamento pendente, orçamento aprovado, contrato pendente e contrato assinado não foram vistos. Não entram.
-- Os estágios do funil são os quatro da conta de referência: contato inicial, orçamento enviado, contratado e descartado.
-- Quantidade é o número de oportunidades da conta naquele estágio. Valor é a soma dos valores informados nesse estágio. Oportunidade sem valor não soma. Essa regra de valor vazio não foi vista na referência e fica marcada na seção 17.
-- Cada coluna do funil na referência também mostrava valor. Por isso o valor entra, e não só a quantidade.
-- Os números não incluem outra conta.
+- A Hoje **não** é uma grade de atalhos dos módulos; o menu lateral/inferior leva aos módulos.
+- "N coisas pedem você hoje" soma os itens que entram nos cartões de ação (definição exata do que conta na §17).
+- Números isolam a conta; Assistant só vê o recorte liberado.
 - Esta tela não cria evento nem oportunidade.
 
 ## 9. Validações
 
-Não há formulário. Um identificador de evento na query, se um dia for usado por outra página, não vaza dado de outra conta.
+Não há formulário além de "pular" no checklist.
 
 ## 10. Estados
 
-A tela não tem estado próprio. Ela reflete a situação do evento e o estágio da oportunidade.
+Sem estado próprio; reflete eventos, tarefas, parcelas, convites e funil.
 
 ## 11. Dados necessários
 
-Eventos da conta, com situação, nome e data. Oportunidades da conta, com estágio e valor, quando o cadastro existir.
+Agregados do dia: contagens dos cartões; próximo evento; linhas da carteira; estágios do funil; itens do checklist (flags da conta).
 
 ## 12. Interface
 
-Referência visual: Angular Material, DA-044. Vale a estrutura: barra lateral, barra superior com a conta e cartões no miolo. Em tela estreita a lateral abre por cima, com botão para abrir e X para fechar, e também fecha ao toque fora ou ao escolher um item. A partir de 960px ela permanece aberta ao lado. Não valem a paleta de comando, o modo escuro, os gráficos nem os widgets de demonstração.
-
-Sem biblioteca de gráfico neste corte. Quantidade em cartão. Funil em quatro cartões, cada um com quantidade e valor. Lista simples dos eventos em andamento.
-
-Textos: Em andamento, Concluído, Cancelado, Contato inicial, Orçamento enviado, Contratado e Descartado.
+Miolo da casca. Cartões no padrão `.gd-numeros` / ação. Carteira em `.gd-grade`. Sem gráfico enquanto um RF não pedir série.
 
 ## 13. Erros
 
-Falha ao carregar mostra mensagem genérica e não mostra dado parcial de outra conta. Lista vazia não é erro.
+Falha ao carregar: mensagem genérica; não mistura dados de outra conta.
 
 ## 14. Critérios de aceite
 
-1. O login do `Organizer` abre esta tela, não uma grade de módulos.
-
-2. A lateral contém os módulos do corte e o miolo contém os dois dashboards.
-3. Com eventos nas três situações, cada cartão mostra a contagem da própria conta.
-4. A lista mostra só em andamento, com nome e data.
-5. O funil mostra os quatro estágios vistos, com quantidade e valor.
-6. Outra conta não altera nem aparece nesses números.
-7. Sem oportunidades, o funil mostra zero nos quatro estágios.
-8. Não aparecem estágios de contrato pendente, contrato assinado, descoberta ou orçamento aprovado.
-9. Em tela estreita, a barra lateral começa fechada. Abrir mostra o menu sobre a página. Fechar devolve a página inteira.
+1. Após o login, a rota inicial é Hoje com a saudação e a data.
+2. Com tarefas atrasadas, o cartão correspondente mostra o número e leva à lista filtrada.
+3. O próximo evento com data mostra a contagem de dias.
+4. A carteira lista os eventos em andamento com % de tarefas e Atenção.
+5. Os quatro estágios do funil aparecem com quantidade e valor.
+6. Conta nova vê o checklist; "pular" esconde o item.
+7. Outra conta não vê os números desta.
 
 ## 15. Cenários de teste
 
-Conta sem dados. Conta com um evento em cada situação e outro em andamento sem data. Duas contas com quantidades diferentes. Clique no evento em andamento abre a SPEC-002. Funil zerado antes de existir cadastro de oportunidade.
+Conta vazia. Conta com tarefa atrasada e cobrança vencida. Próximo evento amanhã e hoje. Assistant com e sem financeiro. Checklist completo vs incompleto. Isolamento entre contas.
 
 ## 16. Dependências
 
-SPEC-001 e SPEC-002. O valor e a quantidade do funil passam a mudar quando existir spec de oportunidade. Perfil, tarefa e cliente aparecem na lateral. Convite aparece na aba do evento.
+SPEC-001, casca (bloco 1), SPEC-002/008 (eventos), SPEC-003 (tarefas), SPEC-004/010 (convidados), funil (RF-075), bloco 6 (dinheiro) para cobranças, RF-087/088 e contrato da conta para o checklist.
 
 ## 17. Premissas e pontos não definidos
 
-- Cadastro, edição, descarte com motivo, formulário público e checagem de data do funil não estão especificados. O dashboard não os inventa.
-- Não está definido se o valor vazio entra como zero na soma.
-- Moeda e formato do valor não foram fechados. A referência mostra valor, sem a regra de arredondamento.
-- Ordem da lista de eventos em andamento não foi definida.
-- Não há série temporal nem gráfico neste corte.
+1. O que exatamente entra no "N" da saudação (soma dos cartões? só atrasados?).
+2. Limiar de "respostas abaixo do esperado" na coluna Atenção.
+3. Destino dos cartões de cobrança antes do bloco 6 existir.
+4. Comportamento do cartão financeiro para Assistant sem permissão (ocultar vs zero).
+5. Definição de "respostas de convidados" no cartão (novas nas últimas 24h? pendentes totais?).
+6. Se o bloco "próximo evento" some quando não há data.
