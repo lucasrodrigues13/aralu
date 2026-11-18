@@ -72,6 +72,7 @@ public static class Dependencias
             cliente.Timeout = TimeSpan.FromSeconds(8);
         });
         services.AddSingleton<IPlanilhaConvites, PlanilhaExcel>();
+        services.AddSingleton<IPlanilhaTarefasModelo, Eventos.PlanilhaTarefasExcel>();
         services.AddSingleton<IGeradorQr, GeradorQr>();
         services.AddScoped<IEmailSender<ApplicationUser>, MailKitEmailSender>();
         services.AddScoped<GarantiaDePapeis>();

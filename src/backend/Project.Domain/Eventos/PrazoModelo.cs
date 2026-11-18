@@ -1,12 +1,17 @@
+using System.Globalization;
+using System.Text.RegularExpressions;
+
 namespace Project.Domain.Eventos;
 
 /// <summary>
 /// Converte e exibe o prazo da tarefa do modelo (dias antes do evento).
 /// Mês = 30 dias; semana = 7 dias (SPEC-012 §8.1).
 /// </summary>
-public static class PrazoModelo
+public static partial class PrazoModelo
 {
     public const int MaximoNaUnidade = 999;
+
+    private static readonly Regex PrazoTexto = PrazoTextoRegex();
 
     public enum Unidade
     {
@@ -106,4 +111,53 @@ public static class PrazoModelo
 
         return (dias, Unidade.Dias);
     }
+
+    /// <summary>
+    /// Lê "30 dias", "6 semanas", "2 meses", "no dia" (com ou sem "antes" / "do evento").
+    /// Retorna false se o texto não for reconhecido.
+    /// </summary>
+    public static bool TentarLer(string? texto, out int? diasAntes)
+    {
+        diasAntes = null;
+        var limpo = texto?.Trim();
+        if (string.IsNullOrEmpty(limpo))
+        {
+            return false;
+        }
+
+        var normalizado = limpo.ToLowerInvariant()
+            .Replace("é", "e", StringComparison.Ordinal)
+            .Replace("ê", "e", StringComparison.Ordinal);
+
+        if (normalizado is "no dia" or "no dia do evento")
+        {
+            diasAntes = 0;
+            return true;
+        }
+
+        var match = PrazoTexto.Match(normalizado);
+        if (!match.Success)
+        {
+            return false;
+        }
+
+        if (!int.TryParse(match.Groups[1].Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var qtd)
+            || qtd is < 0 or > MaximoNaUnidade)
+        {
+            return false;
+        }
+
+        var unidade = match.Groups[2].Value;
+        diasAntes = unidade switch
+        {
+            "dia" or "dias" => ParaDias(qtd, Unidade.Dias),
+            "semana" or "semanas" => ParaDias(qtd, Unidade.Semanas),
+            "mes" or "meses" => ParaDias(qtd, Unidade.Meses),
+            _ => null,
+        };
+        return true;
+    }
+
+    [GeneratedRegex(@"^(\d+)\s*(dias?|semanas?|mes(?:es)?)(?:\s+antes)?$", RegexOptions.CultureInvariant)]
+    private static partial Regex PrazoTextoRegex();
 }
