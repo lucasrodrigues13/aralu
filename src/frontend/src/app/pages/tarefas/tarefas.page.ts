@@ -1,25 +1,35 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { EventoAbasComponent } from '../eventos/evento-abas.component';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
-import { AuthService } from '../../core/auth.service';
 import { mensagemDeErro } from '../../core/mensagem-erro';
-import { NegocioClient, SITUACOES_TAREFA, Tarefa } from '../../core/negocio.client';
+import { NegocioClient, PAPEIS_RESPONSAVEL_TAREFA, SITUACOES_TAREFA, Tarefa } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
+import { CampoDataComponent } from '../../shared/campo-data';
+import { deDataParaIso } from '../../shared/data';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { AplicarModeloDialog } from '../eventos/aplicar-modelo.dialog';
+import { colunasPorDia, filtrarTarefas, FiltroTarefasLista, secoesPorPrazo } from './grupo-tarefa';
 import { TarefaFormDialog } from './tarefa-form.dialog';
+import { TarefaLeituraDialog } from './tarefa-leitura.dialog';
 
 @Component({
   selector: 'app-tarefas',
-  imports: [RouterLink, MatCardModule, MatButtonModule, MatButtonToggleModule, MatIconModule, MatTableModule, GdDataPipe, EventoAbasComponent],
+  imports: [
+    RouterLink, ReactiveFormsModule, MatCardModule, MatButtonModule, MatButtonToggleModule, MatIconModule,
+    MatTableModule, MatFormFieldModule, MatInputModule, MatSelectModule, GdDataPipe, EventoAbasComponent, CampoDataComponent,
+  ],
   template: `
     @if (eventoId()) { <app-evento-abas [eventoId]="eventoId()" /> }
     <header class="gd-cabecalho">
@@ -27,15 +37,11 @@ import { TarefaFormDialog } from './tarefa-form.dialog';
         <h1>Tarefas</h1>
         <p>Pendências dos eventos da assessoria.</p>
       </div>
-      @if (eventoId()) {
+      @if (eventoId() && podeEditar()) {
         <div class="gd-cabecalho-acoes">
           <button mat-stroked-button type="button" (click)="aplicarModelo()">
             <mat-icon>playlist_add</mat-icon>
             Aplicar modelo
-          </button>
-          <button mat-flat-button type="button" (click)="abrir()">
-            <mat-icon>add</mat-icon>
-            Nova tarefa
           </button>
         </div>
       }
@@ -46,11 +52,98 @@ import { TarefaFormDialog } from './tarefa-form.dialog';
         <button mat-button class="gd-secundario gd-pequeno" type="button" (click)="somenteAtrasadas.set(false)">Ver todas</button>
       </div>
     }
+    @if (eventoId() && podeEditar()) {
+      <form class="linha-tarefa" [formGroup]="linha" (ngSubmit)="criarLinha()">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Título</mat-label>
+          <input matInput formControlName="titulo" />
+        </mat-form-field>
+        <app-campo-data rotulo="Prazo" formControlName="prazo" />
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Responsáveis</mat-label>
+          <mat-select formControlName="responsaveis" multiple>
+            @for (papel of papeis; track papel.valor) { <mat-option [value]="papel.valor">{{ papel.rotulo }}</mat-option> }
+          </mat-select>
+        </mat-form-field>
+        <button mat-flat-button type="submit">Adicionar</button>
+      </form>
+    }
+    <form class="gd-filtros" [formGroup]="filtro" (ngSubmit)="aplicarFiltro()">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>Situação</mat-label>
+        <mat-select formControlName="situacao">
+          <mat-option value="">Todas</mat-option>
+          @for (item of situacoes; track item.valor) { <mat-option [value]="item.valor">{{ item.rotulo }}</mat-option> }
+        </mat-select>
+      </mat-form-field>
+      @if (!eventoId()) {
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Evento</mat-label>
+          <mat-select formControlName="eventoId">
+            <mat-option value="">Todos</mat-option>
+            @for (evento of eventos(); track evento.id) { <mat-option [value]="evento.id">{{ evento.nome }}</mat-option> }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Responsável</mat-label>
+          <mat-select formControlName="responsavel">
+            <mat-option value="">Todos</mat-option>
+            @for (papel of papeis; track papel.valor) { <mat-option [value]="papel.valor">{{ papel.rotulo }}</mat-option> }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Serviço</mat-label>
+          <mat-select formControlName="servicoId">
+            <mat-option value="">Todos</mat-option>
+            @for (servico of servicos(); track servico.id) { <mat-option [value]="servico.id">{{ servico.nome }}</mat-option> }
+          </mat-select>
+        </mat-form-field>
+        <app-campo-data rotulo="Prazo de" formControlName="prazoDe" />
+        <app-campo-data rotulo="Prazo até" formControlName="prazoAte" />
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Tag</mat-label>
+          <input matInput formControlName="tag" />
+        </mat-form-field>
+      }
+      <button mat-stroked-button type="submit">Filtrar</button>
+      <button mat-stroked-button type="button" (click)="limparFiltros()">Limpar filtros</button>
+    </form>
     <mat-button-toggle-group [value]="visao()" (change)="visao.set($event.value)">
       <mat-button-toggle value="lista">Lista</mat-button-toggle>
-      @if (eventoId()) { <mat-button-toggle value="quadro">Quadro</mat-button-toggle> }
+      <mat-button-toggle value="situacao">Quadro por situação</mat-button-toggle>
+      <mat-button-toggle value="dia">Quadro por dia</mat-button-toggle>
     </mat-button-toggle-group>
-    @if (visao() === 'lista') {
+    @if (visao() === 'lista' && eventoId()) {
+      @if (secoes().length === 0) {
+        <p class="gd-vazio">Não há tarefa.</p>
+      } @else {
+        @for (secao of secoes(); track secao.id) {
+          <section class="gd-painel">
+            <h2>{{ secao.rotulo }}</h2>
+            <table class="gd-grade">
+              <tbody>
+                @for (tarefa of secao.tarefas; track tarefa.id) {
+                  <tr (click)="ler(tarefa)">
+                    <td>
+                      {{ tarefa.titulo }}
+                      @if (tarefa.grupo) { <span class="gd-sub">{{ tarefa.grupo }}</span> }
+                    </td>
+                    <td>{{ tarefa.prazo | gdData }}</td>
+                    <td>{{ nomesResponsaveis(tarefa) }}</td>
+                    <td class="gd-acoes">
+                      @if (tarefa.eventoEmAndamento) {
+                        <button mat-icon-button type="button" aria-label="Editar" (click)="$event.stopPropagation(); editar(tarefa)"><mat-icon>edit</mat-icon></button>
+                      }
+                      <button mat-icon-button type="button" aria-label="Excluir" (click)="$event.stopPropagation(); excluir()"><mat-icon>delete</mat-icon></button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </section>
+        }
+      }
+    } @else if (visao() === 'lista') {
       <section class="gd-painel">
         @if (visiveis().length === 0) {
           <p class="gd-vazio">Não há tarefa.</p>
@@ -60,18 +153,12 @@ import { TarefaFormDialog } from './tarefa-form.dialog';
               <th mat-header-cell *matHeaderCellDef>Tarefa</th>
               <td mat-cell *matCellDef="let tarefa">
                 {{ tarefa.titulo }}
-                @if (tarefa.descricao) { <span class="gd-sub">{{ tarefa.descricao }}</span> }
+                @if (tarefa.grupo) { <span class="gd-sub">{{ tarefa.grupo }}</span> }
               </td>
             </ng-container>
             <ng-container matColumnDef="evento">
               <th mat-header-cell *matHeaderCellDef>Evento</th>
-              <td mat-cell *matCellDef="let tarefa">
-                @if (eventoId()) {
-                  {{ tarefa.evento }}
-                } @else {
-                  <a [routerLink]="['/eventos', tarefa.eventoId, 'tarefas']">{{ tarefa.evento }}</a>
-                }
-              </td>
+              <td mat-cell *matCellDef="let tarefa"><a [routerLink]="['/eventos', tarefa.eventoId, 'tarefas']" (click)="$event.stopPropagation()">{{ tarefa.evento }}</a></td>
             </ng-container>
             <ng-container matColumnDef="prazo">
               <th mat-header-cell *matHeaderCellDef>Prazo</th>
@@ -82,56 +169,121 @@ import { TarefaFormDialog } from './tarefa-form.dialog';
               <td mat-cell *matCellDef="let tarefa"><span class="gd-status alerta">{{ rotulo(tarefa.situacao) }}</span></td>
             </ng-container>
             <ng-container matColumnDef="responsavel">
-              <th mat-header-cell *matHeaderCellDef>Responsável</th>
-              <td mat-cell *matCellDef="let tarefa">{{ email() }}</td>
+              <th mat-header-cell *matHeaderCellDef>Responsáveis</th>
+              <td mat-cell *matCellDef="let tarefa">{{ nomesResponsaveis(tarefa) }}</td>
             </ng-container>
             <ng-container matColumnDef="acoes">
               <th mat-header-cell *matHeaderCellDef class="gd-acoes">Ações</th>
-              <td mat-cell *matCellDef="let tarefa" class="gd-acoes">
-                @if (eventoId()) {
-                  <button mat-icon-button type="button" aria-label="Editar" (click)="abrir(tarefa)"><mat-icon>edit</mat-icon></button>
-                  <button mat-icon-button type="button" aria-label="Excluir" (click)="excluir()"><mat-icon>delete</mat-icon></button>
+              <td mat-cell *matCellDef="let tarefa" class="gd-acoes" (click)="$event.stopPropagation()">
+                @if (tarefa.eventoEmAndamento) {
+                  <button mat-icon-button type="button" aria-label="Editar" (click)="editar(tarefa)"><mat-icon>edit</mat-icon></button>
                 }
+                <button mat-icon-button type="button" aria-label="Excluir" (click)="excluir()"><mat-icon>delete</mat-icon></button>
               </td>
             </ng-container>
             <tr mat-header-row *matHeaderRowDef="colunas"></tr>
-            <tr mat-row *matRowDef="let row; columns: colunas"></tr>
+            <tr mat-row *matRowDef="let row; columns: colunas" (click)="ler(row)"></tr>
           </table>
         }
       </section>
+    } @else if (visao() === 'situacao') {
+      @if (visiveis().length === 0) {
+        <p class="gd-vazio">Não há tarefa.</p>
+      } @else {
+        <div class="quadro">
+          @for (coluna of situacoes; track coluna.valor) {
+            <section class="gd-painel">
+              <h2>{{ coluna.rotulo }}</h2>
+              @for (tarefa of daSituacao(coluna.valor); track tarefa.id) {
+                <button type="button" class="cartao" (click)="ler(tarefa)">{{ tarefa.titulo }} @if (tarefa.prazo) { — {{ tarefa.prazo | gdData }} }</button>
+              }
+            </section>
+          }
+        </div>
+      }
     } @else {
-      <div class="quadro">
-        @for (coluna of situacoes; track coluna.valor) {
-          <section class="gd-painel">
-            <h2>{{ coluna.rotulo }}</h2>
-            @for (tarefa of daColuna(coluna.valor); track tarefa.id) {
-              <mat-card><mat-card-content>{{ tarefa.titulo }} @if (tarefa.prazo) { — {{ tarefa.prazo | gdData }} }</mat-card-content></mat-card>
-            }
-          </section>
-        }
-      </div>
+      @if (porDia().length === 0) {
+        <p class="gd-vazio">Não há tarefa.</p>
+      } @else {
+        <div class="quadro">
+          @for (coluna of porDia(); track coluna.id) {
+            <section class="gd-painel">
+              <h2>{{ coluna.id === 'sem-prazo' ? coluna.rotulo : (coluna.rotulo | gdData) }}</h2>
+              @for (tarefa of coluna.tarefas; track tarefa.id) {
+                <button type="button" class="cartao" (click)="ler(tarefa)">{{ tarefa.titulo }}</button>
+              }
+            </section>
+          }
+        </div>
+      }
     }
   `,
-  styles: `.quadro { display: grid; grid-template-columns: repeat(4, minmax(160px, 1fr)); gap: 12px; margin-top: 16px; } mat-button-toggle-group { margin-bottom: 16px; }`,
+  styles: `
+    .quadro { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-top: 16px; }
+    mat-button-toggle-group, .gd-filtros, .linha-tarefa { margin-bottom: 16px; }
+    .linha-tarefa { display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 12px; align-items: start; }
+    .cartao { display: block; width: 100%; text-align: left; margin-top: 8px; padding: 8px 12px; border: 1px solid var(--gd-borda); border-radius: 8px; background: transparent; cursor: pointer; }
+    tr { cursor: pointer; }
+    @media (max-width: 800px) { .linha-tarefa { grid-template-columns: 1fr; } }
+  `,
 })
 export class TarefasPage implements OnInit {
   private readonly negocio = inject(NegocioClient);
   private readonly rota = inject(ActivatedRoute);
-  private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
   private readonly toast = inject(ToastService);
+  private readonly fb = inject(FormBuilder);
   protected readonly situacoes = SITUACOES_TAREFA;
+  protected readonly papeis = PAPEIS_RESPONSAVEL_TAREFA;
   protected readonly tarefas = signal<Tarefa[]>([]);
   protected readonly visao = signal('lista');
   protected readonly eventoId = signal('');
+  protected readonly podeEditar = signal(false);
   protected readonly somenteAtrasadas = signal(false);
-  protected readonly visiveis = computed(() => (this.somenteAtrasadas() ? this.tarefas().filter(atrasada) : this.tarefas()));
-  protected readonly email = this.auth.email.bind(this.auth);
+  protected readonly filtroAplicado = signal<FiltroTarefasLista>(filtroVazio());
+  protected readonly linha = this.fb.nonNullable.group({
+    titulo: '',
+    prazo: this.fb.control<Date | null>(null),
+    responsaveis: [[] as string[]],
+  });
+  protected readonly filtro = this.fb.nonNullable.group({
+    situacao: '',
+    eventoId: '',
+    responsavel: '',
+    servicoId: '',
+    tag: '',
+    prazoDe: this.fb.control<Date | null>(null),
+    prazoAte: this.fb.control<Date | null>(null),
+  });
+  protected readonly visiveis = computed(() => {
+    const base = this.somenteAtrasadas() ? this.tarefas().filter(atrasada) : this.tarefas();
+    return filtrarTarefas(base, this.filtroAplicado());
+  });
+  protected readonly secoes = computed(() => secoesPorPrazo(this.visiveis(), (situacao) => this.rotulo(situacao)));
+  protected readonly porDia = computed(() => colunasPorDia(this.visiveis()));
+  protected readonly eventos = computed(() => {
+    const vistos = new Map<string, string>();
+    for (const tarefa of this.tarefas()) vistos.set(tarefa.eventoId, tarefa.evento);
+    return [...vistos.entries()].map(([id, nome]) => ({ id, nome }));
+  });
+  protected readonly servicos = computed(() => {
+    const vistos = new Map<string, string>();
+    for (const tarefa of this.tarefas()) {
+      if (tarefa.servicoEventoId && tarefa.servico) vistos.set(tarefa.servicoEventoId, tarefa.servico);
+    }
+    return [...vistos.entries()].map(([id, nome]) => ({ id, nome }));
+  });
   protected readonly colunas = ['titulo', 'evento', 'prazo', 'situacao', 'responsavel', 'acoes'];
 
   ngOnInit(): void {
     this.eventoId.set(this.rota.snapshot.paramMap.get('id') ?? '');
     this.somenteAtrasadas.set(this.rota.snapshot.queryParamMap.get('filtro') === 'atrasadas');
+    if (this.eventoId()) {
+      this.negocio.evento(this.eventoId()).subscribe({
+        next: (evento) => this.podeEditar.set(evento.situacao === 'EmAndamento'),
+        error: () => this.podeEditar.set(false),
+      });
+    }
     this.carregar();
   }
 
@@ -139,15 +291,65 @@ export class TarefasPage implements OnInit {
     return this.situacoes.find((item) => item.valor === situacao)?.rotulo ?? situacao;
   }
 
-  protected daColuna(situacao: string): Tarefa[] {
-    return this.tarefas().filter((tarefa) => tarefa.situacao === situacao);
+  protected nomesResponsaveis(tarefa: Tarefa): string {
+    return tarefa.responsaveis
+      .map((item) => this.papeis.find((papel) => papel.valor === item.papel)?.rotulo ?? item.papel)
+      .join(', ');
   }
 
-  protected abrir(tarefa?: Tarefa): void {
-    this.dialog.open(TarefaFormDialog, { ...DIALOG, data: { eventoId: this.eventoId(), tarefa } }).afterClosed().subscribe((salvo) => {
-      if (salvo) {
+  protected daSituacao(situacao: string): Tarefa[] {
+    return this.visiveis().filter((tarefa) => tarefa.situacao === situacao);
+  }
+
+  protected aplicarFiltro(): void {
+    const valor = this.filtro.getRawValue();
+    this.filtroAplicado.set({
+      situacao: valor.situacao,
+      eventoId: valor.eventoId,
+      responsavel: valor.responsavel,
+      servicoId: valor.servicoId,
+      tag: valor.tag,
+      prazoDe: deDataParaIso(valor.prazoDe),
+      prazoAte: deDataParaIso(valor.prazoAte),
+    });
+  }
+
+  protected limparFiltros(): void {
+    this.filtro.reset({ situacao: '', eventoId: '', responsavel: '', servicoId: '', tag: '', prazoDe: null, prazoAte: null });
+    this.filtroAplicado.set(filtroVazio());
+  }
+
+  protected criarLinha(): void {
+    const valor = this.linha.getRawValue();
+    if (!valor.titulo.trim()) {
+      this.toast.erro('Informe o título.');
+      return;
+    }
+    const pedido = {
+      titulo: valor.titulo,
+      prazo: deDataParaIso(valor.prazo),
+      responsaveis: valor.responsaveis.length > 0 ? valor.responsaveis.map((papel) => ({ papel })) : null,
+    };
+    this.negocio.criarTarefa(this.eventoId(), pedido).subscribe({
+      next: () => {
+        this.toast.sucesso('Tarefa criada.');
+        this.linha.reset({ titulo: '', prazo: null, responsaveis: [] });
         this.carregar();
-      }
+      },
+      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+    });
+  }
+
+  protected ler(tarefa: Tarefa): void {
+    this.dialog.open(TarefaLeituraDialog, { ...DIALOG, data: tarefa }).afterClosed().subscribe((acao) => {
+      if (acao === 'editar') this.editar(tarefa);
+      if (acao === 'mudou') this.carregar();
+    });
+  }
+
+  protected editar(tarefa: Tarefa): void {
+    this.dialog.open(TarefaFormDialog, { ...DIALOG, data: { eventoId: tarefa.eventoId, tarefa } }).afterClosed().subscribe((salvo) => {
+      if (salvo) this.carregar();
     });
   }
 
@@ -185,6 +387,10 @@ export class TarefasPage implements OnInit {
       error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
     });
   }
+}
+
+function filtroVazio(): FiltroTarefasLista {
+  return { situacao: '', eventoId: '', responsavel: '', servicoId: '', tag: '', prazoDe: null, prazoAte: null };
 }
 
 /** Mesma regra do resumo do evento: não concluída e marcada como atrasada ou com prazo vencido. */

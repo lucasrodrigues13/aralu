@@ -1774,3 +1774,130 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261118210309_TarefasDoBloco4') THEN
+    ALTER TABLE "Tarefas" ADD "Prioridade" text NOT NULL DEFAULT 'Media';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261118210309_TarefasDoBloco4') THEN
+    ALTER TABLE "Tarefas" ADD "ServicoEventoId" uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261118210309_TarefasDoBloco4') THEN
+    ALTER TABLE "Tarefas" ADD "Visibilidade" text NOT NULL DEFAULT 'SoEu';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261118210309_TarefasDoBloco4') THEN
+    ALTER TABLE "Eventos" ADD "CriadoEm" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261118210309_TarefasDoBloco4') THEN
+    CREATE TABLE "ComentariosTarefa" (
+        "Id" uuid NOT NULL,
+        "TarefaId" uuid NOT NULL,
+        "AutorContaId" text NOT NULL,
+        "Texto" text NOT NULL,
+        "CriadoEm" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_ComentariosTarefa" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_ComentariosTarefa_Tarefas_TarefaId" FOREIGN KEY ("TarefaId") REFERENCES "Tarefas" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261118210309_TarefasDoBloco4') THEN
+    CREATE TABLE "ItensChecklistTarefa" (
+        "Id" uuid NOT NULL,
+        "TarefaId" uuid NOT NULL,
+        "Texto" text NOT NULL,
+        "Feito" boolean NOT NULL,
+        "Ordem" integer NOT NULL,
+        CONSTRAINT "PK_ItensChecklistTarefa" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_ItensChecklistTarefa_Tarefas_TarefaId" FOREIGN KEY ("TarefaId") REFERENCES "Tarefas" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261118210309_TarefasDoBloco4') THEN
+    CREATE TABLE "ResponsaveisTarefa" (
+        "Id" uuid NOT NULL,
+        "TarefaId" uuid NOT NULL,
+        "Papel" text NOT NULL,
+        "ReferenciaId" text,
+        CONSTRAINT "PK_ResponsaveisTarefa" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_ResponsaveisTarefa_Tarefas_TarefaId" FOREIGN KEY ("TarefaId") REFERENCES "Tarefas" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261118210309_TarefasDoBloco4') THEN
+    CREATE INDEX "IX_Tarefas_ServicoEventoId" ON "Tarefas" ("ServicoEventoId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261118210309_TarefasDoBloco4') THEN
+    CREATE INDEX "IX_ComentariosTarefa_TarefaId" ON "ComentariosTarefa" ("TarefaId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261118210309_TarefasDoBloco4') THEN
+    CREATE INDEX "IX_ItensChecklistTarefa_TarefaId" ON "ItensChecklistTarefa" ("TarefaId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261118210309_TarefasDoBloco4') THEN
+    CREATE INDEX "IX_ResponsaveisTarefa_TarefaId" ON "ResponsaveisTarefa" ("TarefaId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261118210309_TarefasDoBloco4') THEN
+    ALTER TABLE "Tarefas" ADD CONSTRAINT "FK_Tarefas_ServicoEvento_ServicoEventoId" FOREIGN KEY ("ServicoEventoId") REFERENCES "ServicoEvento" ("Id") ON DELETE SET NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261118210309_TarefasDoBloco4') THEN
+    INSERT INTO "ResponsaveisTarefa" ("Id", "TarefaId", "Papel", "ReferenciaId")
+    SELECT gen_random_uuid(), "Id", 'Organizer', "ResponsavelContaId"
+    FROM "Tarefas";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261118210309_TarefasDoBloco4') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261118210309_TarefasDoBloco4', '10.0.4');
+    END IF;
+END $EF$;
+COMMIT;
+

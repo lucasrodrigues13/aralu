@@ -364,7 +364,7 @@ Baseada no PDF (base → uso diário → diferencial), com o que já existe.
 1. Casca e navegação (celular e computador).
 2. Criação do evento curta e resumo em cartões.
 3. ~~Modelos: prazos legíveis, importar colando, salvar como modelo.~~ **Pronto** (SPEC-012 v2).
-4. Tarefas: grupos, vários responsáveis, visibilidade, prioridade, checklist e anexos.
+4. Tarefas: grupos, vários responsáveis, visibilidade, prioridade e checklist. **Em código** (SPEC-003 v2). A seção 17 da spec continua sem decisão. O envio de anexo espera tipo e tamanho; a leitura só mostra a seção recolhida.
 5. Tela Hoje.
 6. Dinheiro do evento: parcelas do casal, cobrar, recebi, Pix.
 7. Contrato do evento (um modelo, PDF, assinatura simulada).

@@ -199,6 +199,38 @@ public class NegocioFluxoTests
     }
 
     [Fact]
+    public async Task Tarefa_em_linha_agrupa_prioridade_e_dois_responsaveis()
+    {
+        var dono = await Entrar();
+        var outra = await Entrar();
+        var evento = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new { tipo = "Casamento", primeiroNome = "Lia", segundoNome = "Caio" }));
+        var eventoId = evento.GetProperty("id").GetGuid();
+        var hoje = DateOnly.FromDateTime(DateTime.UtcNow).ToString("yyyy-MM-dd");
+
+        var criada = await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/tarefas", new { titulo = "Ligar para o buffet" }));
+        Assert.Equal("Pendente", criada.GetProperty("situacao").GetString());
+        Assert.Equal("Media", criada.GetProperty("prioridade").GetString());
+        Assert.Equal("SemPrazo", criada.GetProperty("grupoPrazo").GetString());
+
+        var daSemana = await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/tarefas", new { titulo = "Esta semana", prazo = hoje }));
+        Assert.Equal("EstaSemana", daSemana.GetProperty("grupoPrazo").GetString());
+
+        var atualizada = await Ler(await dono.PutAsJsonAsync($"/api/v1/tarefas/{criada.GetProperty("id").GetGuid()}", new
+        {
+            titulo = "Ligar para o buffet",
+            situacao = "Concluida",
+            prioridade = "Alta",
+            responsaveis = new[] { new { papel = "Organizer" }, new { papel = "Casal" } },
+        }));
+        Assert.Equal("Feitas", atualizada.GetProperty("grupoPrazo").GetString());
+        Assert.Equal("Alta", atualizada.GetProperty("prioridade").GetString());
+        Assert.Equal(2, atualizada.GetProperty("responsaveis").GetArrayLength());
+
+        var alheias = await Ler(await outra.GetAsync("/api/v1/tarefas"));
+        Assert.DoesNotContain(alheias.EnumerateArray(), item => item.GetProperty("titulo").GetString() == "Ligar para o buffet");
+    }
+
+    [Fact]
     public async Task Convite_rsvp_transfer_e_planilha()
     {
         var dono = await Entrar();

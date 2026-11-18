@@ -76,6 +76,7 @@ public static class NegocioEndpoints
         api.MapPost("/eventos/{id:guid}/tarefas", CriarTarefa);
         api.MapGet("/tarefas", Tarefas);
         api.MapPut("/tarefas/{id:guid}", AtualizarTarefa);
+        api.MapPost("/tarefas/{id:guid}/comentarios", ComentarTarefa);
         api.MapGet("/clientes", Clientes).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapPost("/clientes", CriarCliente).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapPut("/clientes/{id:guid}", AtualizarCliente).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
@@ -605,7 +606,7 @@ public static class NegocioEndpoints
                 return bloqueio;
             }
 
-            return await De(servico.DoEventoAsync(conta, id, ct));
+            return await De(servico.DoEventoAsync(conta, id, Hoje(), ct));
         });
 
     private static Task<IResult> CriarTarefa(Guid id, SalvarTarefa pedido, ClaimsPrincipal usuario, TarefaServico servico, IDados dados, CancellationToken ct) =>
@@ -617,7 +618,7 @@ public static class NegocioEndpoints
                 return bloqueio;
             }
 
-            return await De(servico.CriarAsync(conta, id, pedido, ct));
+            return await De(servico.CriarAsync(conta, id, pedido, Hoje(), ct));
         });
 
     private static Task<IResult> Tarefas(ClaimsPrincipal usuario, TarefaServico servico, IDados dados, CancellationToken ct) =>
@@ -629,7 +630,7 @@ public static class NegocioEndpoints
                 return bloqueio;
             }
 
-            var lista = await servico.DaContaAsync(conta, ct);
+            var lista = await servico.DaContaAsync(conta, Hoje(), ct);
             if (!EhClient(usuario))
             {
                 return Results.Ok(lista);
@@ -663,7 +664,34 @@ public static class NegocioEndpoints
                 }
             }
 
-            return await De(servico.AtualizarAsync(conta, id, pedido, ct));
+            return await De(servico.AtualizarAsync(conta, id, pedido, Hoje(), ct));
+        });
+
+    private static Task<IResult> ComentarTarefa(Guid id, ComentarioPedido pedido, ClaimsPrincipal usuario, TarefaServico servico, IDados dados, CancellationToken ct) =>
+        ComConta(usuario, async conta =>
+        {
+            var bloqueio = await ExigirModuloAsync(usuario, conta, ModuloCliente.Tarefas, dados, ct);
+            if (bloqueio is not null)
+            {
+                return bloqueio;
+            }
+
+            if (EhClient(usuario))
+            {
+                var tarefa = await dados.ObterTarefaAsync(conta, id, ct);
+                if (tarefa is null)
+                {
+                    return Indisponivel();
+                }
+
+                var eventoOk = await ExigirEventoDoClientAsync(usuario, conta, tarefa.EventoId, dados, ct);
+                if (eventoOk is not null)
+                {
+                    return eventoOk;
+                }
+            }
+
+            return await De(servico.ComentarAsync(conta, id, pedido, Hoje(), ct));
         });
 
     private static Task<IResult> Clientes(ClaimsPrincipal usuario, ClienteServico servico, string? nome, CancellationToken ct) =>

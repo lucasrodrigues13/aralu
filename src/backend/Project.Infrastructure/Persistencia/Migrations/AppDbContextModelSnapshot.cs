@@ -477,6 +477,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<int?>("ConvidadosEstimados")
                         .HasColumnType("integer");
 
+                    b.Property<DateTimeOffset?>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateOnly?>("Data")
                         .HasColumnType("date");
 
@@ -1851,6 +1854,82 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.ToTable("Perfis");
                 });
 
+            modelBuilder.Entity("Project.Domain.Tarefas.ComentarioTarefa", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AutorContaId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("TarefaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Texto")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TarefaId");
+
+                    b.ToTable("ComentariosTarefa", (string)null);
+                });
+
+            modelBuilder.Entity("Project.Domain.Tarefas.ItemChecklistTarefa", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Feito")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("Ordem")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TarefaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Texto")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TarefaId");
+
+                    b.ToTable("ItensChecklistTarefa", (string)null);
+                });
+
+            modelBuilder.Entity("Project.Domain.Tarefas.ResponsavelTarefa", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Papel")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ReferenciaId")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("TarefaId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TarefaId");
+
+                    b.ToTable("ResponsaveisTarefa", (string)null);
+                });
+
             modelBuilder.Entity("Project.Domain.Tarefas.Tarefa", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1873,9 +1952,16 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<DateOnly?>("Prazo")
                         .HasColumnType("date");
 
+                    b.Property<string>("Prioridade")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("ResponsavelContaId")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<Guid?>("ServicoEventoId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Situacao")
                         .IsRequired()
@@ -1885,9 +1971,15 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("Visibilidade")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
                     b.HasIndex("EventoId");
+
+                    b.HasIndex("ServicoEventoId");
 
                     b.ToTable("Tarefas");
                 });
@@ -2382,6 +2474,33 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Project.Domain.Tarefas.ComentarioTarefa", b =>
+                {
+                    b.HasOne("Project.Domain.Tarefas.Tarefa", null)
+                        .WithMany("Comentarios")
+                        .HasForeignKey("TarefaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Project.Domain.Tarefas.ItemChecklistTarefa", b =>
+                {
+                    b.HasOne("Project.Domain.Tarefas.Tarefa", null)
+                        .WithMany("Checklist")
+                        .HasForeignKey("TarefaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Project.Domain.Tarefas.ResponsavelTarefa", b =>
+                {
+                    b.HasOne("Project.Domain.Tarefas.Tarefa", null)
+                        .WithMany("Responsaveis")
+                        .HasForeignKey("TarefaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Project.Domain.Tarefas.Tarefa", b =>
                 {
                     b.HasOne("Project.Domain.Eventos.Evento", null)
@@ -2389,6 +2508,11 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .HasForeignKey("EventoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("Project.Domain.Eventos.ServicoEvento", null)
+                        .WithMany()
+                        .HasForeignKey("ServicoEventoId")
+                        .OnDelete(DeleteBehavior.SetNull);
                 });
 
             modelBuilder.Entity("Project.Domain.Clientes.Cliente", b =>
@@ -2475,6 +2599,15 @@ namespace Project.Infrastructure.Persistencia.Migrations
             modelBuilder.Entity("Project.Domain.Modelos.SecaoRoteiro", b =>
                 {
                     b.Navigation("Itens");
+                });
+
+            modelBuilder.Entity("Project.Domain.Tarefas.Tarefa", b =>
+                {
+                    b.Navigation("Checklist");
+
+                    b.Navigation("Comentarios");
+
+                    b.Navigation("Responsaveis");
                 });
 #pragma warning restore 612, 618
         }

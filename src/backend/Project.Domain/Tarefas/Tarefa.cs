@@ -20,4 +20,16 @@ public sealed class Tarefa
     public SituacaoTarefa Situacao { get; set; } = SituacaoTarefa.Pendente;
 
     public string ResponsavelContaId { get; set; } = "";
+
+    public VisibilidadeTarefa Visibilidade { get; set; } = VisibilidadeTarefa.SoEu;
+
+    public PrioridadeTarefa Prioridade { get; set; } = PrioridadeTarefa.Media;
+
+    public Guid? ServicoEventoId { get; set; }
+
+    public List<ResponsavelTarefa> Responsaveis { get; set; } = [];
+
+    public List<ItemChecklistTarefa> Checklist { get; set; } = [];
+
+    public List<ComentarioTarefa> Comentarios { get; set; } = [];
 }

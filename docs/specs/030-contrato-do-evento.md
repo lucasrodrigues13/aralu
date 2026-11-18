@@ -1,6 +1,6 @@
 # 030. Contrato do evento
 
-**Status: rascunho (bloco 7).** Fonte: [produto-v1.md](../produto-v1.md) 5.10, RF-098. Assinatura simulada na 1.0 (pendência 1 do produto-v1).
+**Status: aprovada (18/11/2026).** O código deve seguir esta spec. Fonte: [produto-v1.md](../produto-v1.md) 5.10, RF-098. Assinatura simulada na 1.0 (pendência 1 do produto-v1). A seção 17 continua sem decisão.
 
 ## 1. Identificador e nome
 

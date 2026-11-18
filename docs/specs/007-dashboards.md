@@ -1,6 +1,6 @@
 # 007. Tela Hoje
 
-**Status: rascunho (versão 2, bloco 5).** Substitui a SPEC-007 de dashboards quando o usuário aprovar. Fonte: [produto-v1.md](../produto-v1.md) 5.2, RF-080 a RF-082.
+**Status: aprovada (versão 2, 18/11/2026).** Substitui a SPEC-007 de dashboards. O código deve seguir esta spec. Fonte: [produto-v1.md](../produto-v1.md) 5.2, RF-080 a RF-082. A seção 17 continua sem decisão.
 
 ## 1. Identificador e nome
 

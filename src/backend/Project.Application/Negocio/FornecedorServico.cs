@@ -391,6 +391,7 @@ public sealed class FornecedorServico(IDados dados)
         if (etapa == EtapaNegociacao.Contratado)
         {
             await dados.MarcarServicoContratadoAsync(servico.Id, true, servico.ValorContratado, ct);
+            await dados.ConcluirTarefasLigadasAsync(contaId, servico.Id, ct);
         }
 
         return await DetalheEventoAsync(contaId, eventoId, hoje, ct);
@@ -452,6 +453,7 @@ public sealed class FornecedorServico(IDados dados)
 
         await dados.AtualizarEtapaNegociacaoAsync(vinculo.Id, EtapaNegociacao.Contratado, valor, ct);
         await dados.MarcarServicoContratadoAsync(servico.Id, true, valor, ct);
+        await dados.ConcluirTarefasLigadasAsync(contaId, servico.Id, ct);
         await dados.SubstituirParcelasAsync(
             servico.Id,
             parcelas.Select(parcela => new ParcelaServico
@@ -521,6 +523,7 @@ public sealed class FornecedorServico(IDados dados)
         if (destino == EtapaNegociacao.Contratado)
         {
             await dados.MarcarServicoContratadoAsync(servico.Id, true, servico.ValorContratado, ct);
+            await dados.ConcluirTarefasLigadasAsync(contaId, servico.Id, ct);
         }
         else if (!servico.Fornecedores.Any(item => item.Id != vinculo.Id && item.Etapa == EtapaNegociacao.Contratado))
         {

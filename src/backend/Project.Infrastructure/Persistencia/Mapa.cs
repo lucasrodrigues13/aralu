@@ -58,7 +58,17 @@ public static class Mapa
 
         var tarefa = modelBuilder.Entity<Tarefa>();
         tarefa.Property(item => item.Situacao).HasConversion<string>();
+        tarefa.Property(item => item.Visibilidade).HasConversion<string>();
+        tarefa.Property(item => item.Prioridade).HasConversion<string>();
         tarefa.HasOne<Evento>().WithMany().HasForeignKey(item => item.EventoId).OnDelete(DeleteBehavior.Cascade);
+        tarefa.HasOne<ServicoEvento>().WithMany().HasForeignKey(item => item.ServicoEventoId).OnDelete(DeleteBehavior.SetNull);
+        tarefa.HasMany(item => item.Responsaveis).WithOne().HasForeignKey(item => item.TarefaId).OnDelete(DeleteBehavior.Cascade);
+        tarefa.HasMany(item => item.Checklist).WithOne().HasForeignKey(item => item.TarefaId).OnDelete(DeleteBehavior.Cascade);
+        tarefa.HasMany(item => item.Comentarios).WithOne().HasForeignKey(item => item.TarefaId).OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<ResponsavelTarefa>().Property(item => item.Papel).HasConversion<string>();
+        modelBuilder.Entity<ResponsavelTarefa>().ToTable("ResponsaveisTarefa");
+        modelBuilder.Entity<ItemChecklistTarefa>().ToTable("ItensChecklistTarefa");
+        modelBuilder.Entity<ComentarioTarefa>().ToTable("ComentariosTarefa");
 
         modelBuilder.Entity<Cliente>().Property(cliente => cliente.Papel).HasConversion<string>();
         modelBuilder.Entity<Cliente>().HasIndex(cliente => cliente.UsuarioId);

@@ -330,6 +330,24 @@ export interface EventoServico {
   }[];
 }
 
+export interface ResponsavelTarefa {
+  papel: string;
+  referenciaId: string | null;
+}
+
+export interface ItemChecklistTarefa {
+  id: string;
+  texto: string;
+  feito: boolean;
+}
+
+export interface ComentarioTarefa {
+  id: string;
+  autorContaId: string;
+  texto: string;
+  criadoEm: string;
+}
+
 export interface Tarefa {
   id: string;
   eventoId: string;
@@ -340,6 +358,16 @@ export interface Tarefa {
   prazo: string | null;
   situacao: string;
   responsavelContaId: string;
+  prioridade: string;
+  visibilidade: string;
+  servicoEventoId: string | null;
+  servico: string | null;
+  responsaveis: ResponsavelTarefa[];
+  checklist: ItemChecklistTarefa[];
+  comentarios: ComentarioTarefa[];
+  grupoPrazo: string | null;
+  eventoEmAndamento: boolean;
+  tags: string[];
 }
 
 export interface PermissoesCliente {
@@ -462,6 +490,23 @@ export const SITUACOES_TAREFA = [
   { valor: 'EmAndamento', rotulo: 'Em andamento' },
   { valor: 'Concluida', rotulo: 'Concluída' },
   { valor: 'Atrasada', rotulo: 'Atrasada' },
+];
+
+export const PRIORIDADES_TAREFA = [
+  { valor: 'Baixa', rotulo: 'Baixa' },
+  { valor: 'Media', rotulo: 'Média' },
+  { valor: 'Alta', rotulo: 'Alta' },
+];
+
+export const VISIBILIDADES_TAREFA = [
+  { valor: 'SoEu', rotulo: 'Só eu' },
+  { valor: 'Casal', rotulo: 'Casal' },
+  { valor: 'Compartilhada', rotulo: 'Compartilhada' },
+];
+
+export const PAPEIS_RESPONSAVEL_TAREFA = [
+  { valor: 'Organizer', rotulo: 'Eu' },
+  { valor: 'Casal', rotulo: 'Casal' },
 ];
 
 @Injectable({ providedIn: 'root' })
@@ -824,6 +869,10 @@ export class NegocioClient {
 
   atualizarTarefa(id: string, pedido: unknown) {
     return this.http.put<Tarefa>(`${this.base}/api/v1/tarefas/${id}`, pedido);
+  }
+
+  comentarTarefa(id: string, texto: string) {
+    return this.http.post<Tarefa>(`${this.base}/api/v1/tarefas/${id}/comentarios`, { texto });
   }
 
   clientes(nome = '') {

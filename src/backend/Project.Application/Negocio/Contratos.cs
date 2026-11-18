@@ -111,6 +111,18 @@ public interface IDados
 
     Task<Tarefa?> ObterTarefaAsync(string contaId, Guid id, CancellationToken ct);
 
+    Task<IReadOnlyDictionary<Guid, ContextoEvento>> ContextosEventoAsync(string contaId, IReadOnlyCollection<Guid> eventoIds, CancellationToken ct);
+
+    Task<IReadOnlyDictionary<Guid, string>> NomesDeServicosAsync(string contaId, IReadOnlyCollection<Guid> servicoIds, CancellationToken ct);
+
+    Task ConcluirTarefasLigadasAsync(string contaId, Guid servicoId, CancellationToken ct);
+
+    Task SubstituirResponsaveisAsync(Guid tarefaId, IReadOnlyList<ResponsavelTarefa> responsaveis, CancellationToken ct);
+
+    Task SubstituirChecklistAsync(Guid tarefaId, IReadOnlyList<ItemChecklistTarefa> itens, CancellationToken ct);
+
+    Task InserirComentarioAsync(ComentarioTarefa comentario, CancellationToken ct);
+
     Task InserirTarefaAsync(Tarefa tarefa, CancellationToken ct);
 
     Task SalvarTarefaAsync(CancellationToken ct);

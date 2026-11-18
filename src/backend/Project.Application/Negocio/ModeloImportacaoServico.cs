@@ -247,9 +247,10 @@ public sealed class ModeloImportacaoServico(IDados dados, IPlanilhaTarefasModelo
                 prazo = data.AddDays(-dias);
             }
 
+            var tarefaId = Guid.NewGuid();
             tarefasNovas.Add(new Tarefa
             {
-                Id = Guid.NewGuid(),
+                Id = tarefaId,
                 EventoId = evento.Id,
                 ContaId = contaId,
                 Titulo = tarefa.Titulo,
@@ -257,6 +258,7 @@ public sealed class ModeloImportacaoServico(IDados dados, IPlanilhaTarefasModelo
                 Prazo = prazo,
                 Situacao = SituacaoTarefa.Pendente,
                 ResponsavelContaId = contaId,
+                Responsaveis = [ResponsavelTarefa.Organizer(tarefaId, contaId)],
             });
             titulos.Add(Domain.Comum.Texto.ChaveComparacao(tarefa.Titulo));
         }

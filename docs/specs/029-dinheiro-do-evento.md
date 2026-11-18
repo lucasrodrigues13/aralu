@@ -1,6 +1,6 @@
 # 029. Dinheiro do evento
 
-**Status: rascunho (bloco 6).** Fonte: [produto-v1.md](../produto-v1.md) 5.9 e 5.1 (Pix), RF-095, RF-096, RF-097, RF-088.
+**Status: aprovada (18/11/2026).** O código deve seguir esta spec. Fonte: [produto-v1.md](../produto-v1.md) 5.9 e 5.1 (Pix), RF-095, RF-096, RF-097, RF-088. A seção 17 continua sem decisão.
 
 ## 1. Identificador e nome
 

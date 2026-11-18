@@ -22,7 +22,9 @@ Roteiro para continuar o trabalho em outra sessão. Siga na ordem. Na dúvida, p
 ## 3. Situação atual
 
 - Pronto: bloco 1 (casca e design system v2), bloco 2 (criação curta e resumo do evento), bloco 3 (modelos, SPEC-012 v2) e a agenda em calendário.
-- Falta: blocos 4 a 17 da [seção 9 do produto-v1](produto-v1.md).
+- Bloco 4 em código ([SPEC-003](specs/003-tarefas-do-evento.md) v2), exceto a seção 17. Anexos não sobem: tipo e tamanho seguem sem decisão.
+- Aprovadas em 18/11/2026, ainda sem código novo: bloco 5 ([SPEC-007](specs/007-dashboards.md) v2), bloco 6 ([SPEC-029](specs/029-dinheiro-do-evento.md)) e bloco 7 ([SPEC-030](specs/030-contrato-do-evento.md)). A seção 17 de cada uma continua sem decisão; não invente essas regras.
+- Falta spec: blocos 8 a 17 da [seção 9 do produto-v1](produto-v1.md).
 
 ## 4. Tarefa 1: implementar o bloco 3 (SPEC-012 v2)
 
@@ -87,10 +89,10 @@ dotnet tool run dotnet-ef migrations script --idempotent --project src/backend/P
 Atualize este arquivo: marque o que ficou pronto e anote as dúvidas para o usuário.
 
 - [x] Bloco 3 implementado (SPEC-012 v2 aprovada)
-- [x] SPEC-003 (bloco 4) — rascunho
-- [x] SPEC-007 (bloco 5) — rascunho
-- [x] SPEC-029 (bloco 6) — rascunho
-- [x] SPEC-030 (bloco 7) — rascunho
+- [x] SPEC-003 (bloco 4) — aprovada e implementada em 18/11/2026, exceto a seção 17 e o envio de anexo
+- [x] SPEC-007 (bloco 5) — aprovada em 18/11/2026
+- [x] SPEC-029 (bloco 6) — aprovada em 18/11/2026
+- [x] SPEC-030 (bloco 7) — aprovada em 18/11/2026
 
 Dúvidas para o usuário:
 

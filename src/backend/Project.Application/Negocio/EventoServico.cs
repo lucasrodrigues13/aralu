@@ -265,6 +265,7 @@ public sealed class EventoServico(IDados dados, IConsultaCep cep)
             SegundoNome = Domain.Comum.Texto.Limpo(pedido.SegundoNome),
             Tipo = tipoEvento,
             Situacao = SituacaoEvento.EmAndamento,
+            CriadoEm = DateTimeOffset.UtcNow,
             Data = pedido.Data,
             Hora = pedido.Hora,
             OrcamentoEstimado = pedido.OrcamentoEstimado,
@@ -304,9 +305,10 @@ public sealed class EventoServico(IDados dados, IConsultaCep cep)
                 prazo = data.AddDays(-dias);
             }
 
+            var tarefaId = Guid.NewGuid();
             return new Tarefa
             {
-                Id = Guid.NewGuid(),
+                Id = tarefaId,
                 EventoId = evento.Id,
                 ContaId = contaId,
                 Titulo = tarefa.Titulo,
@@ -314,6 +316,7 @@ public sealed class EventoServico(IDados dados, IConsultaCep cep)
                 Prazo = prazo,
                 Situacao = SituacaoTarefa.Pendente,
                 ResponsavelContaId = contaId,
+                Responsaveis = [ResponsavelTarefa.Organizer(tarefaId, contaId)],
             };
         }).ToArray();
 

@@ -366,7 +366,11 @@ public sealed class DadosEf(AppDbContext banco) : IDados
 
     public async Task<IReadOnlyList<Tarefa>> ListarTarefasAsync(string contaId, Guid? eventoId, CancellationToken ct)
     {
-        var consulta = banco.Tarefas.AsNoTracking().Where(tarefa => tarefa.ContaId == contaId);
+        var consulta = banco.Tarefas.AsNoTracking().AsSplitQuery()
+            .Include(tarefa => tarefa.Responsaveis)
+            .Include(tarefa => tarefa.Checklist)
+            .Include(tarefa => tarefa.Comentarios)
+            .Where(tarefa => tarefa.ContaId == contaId);
         if (eventoId is Guid id)
         {
             consulta = consulta.Where(tarefa => tarefa.EventoId == id);
@@ -377,6 +381,80 @@ public sealed class DadosEf(AppDbContext banco) : IDados
 
     public Task<Tarefa?> ObterTarefaAsync(string contaId, Guid id, CancellationToken ct) =>
         banco.Tarefas.FirstOrDefaultAsync(tarefa => tarefa.Id == id && tarefa.ContaId == contaId, ct);
+
+    public async Task SubstituirResponsaveisAsync(Guid tarefaId, IReadOnlyList<ResponsavelTarefa> responsaveis, CancellationToken ct)
+    {
+        await banco.Set<ResponsavelTarefa>().Where(item => item.TarefaId == tarefaId).ExecuteDeleteAsync(ct);
+        if (responsaveis.Count > 0)
+        {
+            banco.Set<ResponsavelTarefa>().AddRange(responsaveis);
+        }
+    }
+
+    public async Task SubstituirChecklistAsync(Guid tarefaId, IReadOnlyList<ItemChecklistTarefa> itens, CancellationToken ct)
+    {
+        await banco.Set<ItemChecklistTarefa>().Where(item => item.TarefaId == tarefaId).ExecuteDeleteAsync(ct);
+        if (itens.Count > 0)
+        {
+            banco.Set<ItemChecklistTarefa>().AddRange(itens);
+        }
+    }
+
+    public async Task InserirComentarioAsync(ComentarioTarefa comentario, CancellationToken ct)
+    {
+        banco.Set<ComentarioTarefa>().Add(comentario);
+        await banco.SaveChangesAsync(ct);
+    }
+
+    public async Task<IReadOnlyDictionary<Guid, ContextoEvento>> ContextosEventoAsync(
+        string contaId,
+        IReadOnlyCollection<Guid> eventoIds,
+        CancellationToken ct)
+    {
+        if (eventoIds.Count == 0)
+        {
+            return new Dictionary<Guid, ContextoEvento>();
+        }
+
+        var eventos = await banco.Eventos.AsNoTracking()
+            .Include(evento => evento.Tags)
+            .Where(evento => evento.ContaId == contaId && eventoIds.Contains(evento.Id))
+            .ToListAsync(ct);
+        return eventos.ToDictionary(
+            evento => evento.Id,
+            evento => new ContextoEvento(
+                evento.Nome,
+                evento.Situacao,
+                evento.CriadoEm,
+                evento.Tags.Select(tag => tag.Nome).ToArray()));
+    }
+
+    public async Task<IReadOnlyDictionary<Guid, string>> NomesDeServicosAsync(
+        string contaId,
+        IReadOnlyCollection<Guid> servicoIds,
+        CancellationToken ct)
+    {
+        if (servicoIds.Count == 0)
+        {
+            return new Dictionary<Guid, string>();
+        }
+
+        var servicos = await banco.Set<ServicoEvento>().AsNoTracking()
+            .Where(servico => servicoIds.Contains(servico.Id)
+                && banco.Eventos.Any(evento => evento.Id == servico.EventoId && evento.ContaId == contaId))
+            .Select(servico => new { servico.Id, servico.Nome })
+            .ToListAsync(ct);
+        return servicos.ToDictionary(servico => servico.Id, servico => servico.Nome);
+    }
+
+    public Task ConcluirTarefasLigadasAsync(string contaId, Guid servicoId, CancellationToken ct) =>
+        banco.Tarefas
+            .Where(tarefa => tarefa.ContaId == contaId
+                && tarefa.ServicoEventoId == servicoId
+                && tarefa.Situacao != SituacaoTarefa.Concluida)
+            .ExecuteUpdateAsync(
+                atualizacao => atualizacao.SetProperty(tarefa => tarefa.Situacao, SituacaoTarefa.Concluida),
+                ct);
 
     public async Task InserirTarefaAsync(Tarefa tarefa, CancellationToken ct)
     {

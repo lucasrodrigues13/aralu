@@ -1,6 +1,6 @@
 # 003. Tarefas do evento
 
-**Status: rascunho (versão 2, bloco 4).** Substitui a SPEC-003 aprovada antiga quando o usuário aprovar. Fonte: [produto-v1.md](../produto-v1.md) 5.5, RF-061; campo **grupo** já existe na tarefa (SPEC-012 v2).
+**Status: aprovada (versão 2, 18/11/2026).** Substitui a SPEC-003 anterior. O código segue esta spec, exceto a seção 17. Fonte: [produto-v1.md](../produto-v1.md) 5.5, RF-061; campo **grupo** já existe na tarefa (SPEC-012 v2).
 
 ## 1. Identificador e nome
 
