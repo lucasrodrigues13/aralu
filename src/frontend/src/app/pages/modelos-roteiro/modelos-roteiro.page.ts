@@ -12,7 +12,7 @@ import { ToastService } from '../../core/toast.service';
 import { CampoHoraComponent } from '../../shared/campo-hora';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { horaParaApi } from '../../shared/mascaras';
-import { DIALOG } from '../../shared/dialog';
+import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 
 @Component({
   selector: 'app-roteiro-editor-dialog',
@@ -20,7 +20,7 @@ import { DIALOG } from '../../shared/dialog';
   template: `
     <h2 mat-dialog-title>{{ dados ? 'Editar roteiro' : 'Novo roteiro' }}</h2>
     <mat-dialog-content>
-      <form class="formulario" [formGroup]="form">
+      <form class="gd-campos" [formGroup]="form">
         <mat-form-field appearance="outline"><mat-label>Nome</mat-label><input matInput formControlName="nome" /></mat-form-field>
         <div formArrayName="secoes">
           @for (secao of secoes.controls; track $index; let i = $index) {
@@ -226,7 +226,7 @@ export class ModelosRoteiroPage implements OnInit {
 
   protected excluir(item: Roteiro): void {
     this.dialog.open(ConfirmaDialog, {
-      ...DIALOG,
+      ...DIALOG_PEQUENO,
       data: { titulo: 'Excluir roteiro', texto: `Confirma a exclusão de "${item.nome}"?`, confirmar: 'Excluir' },
     }).afterClosed().subscribe((confirmou) => {
       if (!confirmou) {

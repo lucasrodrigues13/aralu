@@ -56,7 +56,7 @@ export function localPedido(valor: LocalFormValor): LocalFormValor {
     @if (titulo) {
       <h2>{{ titulo }}</h2>
     }
-    <div [formGroup]="grupo">
+    <div class="gd-campos duas" [formGroup]="grupo">
       <mat-form-field appearance="outline"><mat-label>Nome</mat-label><input matInput formControlName="nome" /></mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>CEP</mat-label>
@@ -72,7 +72,7 @@ export function localPedido(valor: LocalFormValor): LocalFormValor {
   `,
   styles: `
     :host { display: block; }
-    h2 { margin: 8px 0 0; font-size: 1rem; }
+    h2 { margin: 0 0 12px; font-size: 14px; font-weight: 600; }
   `,
 })
 export class LocalCamposComponent {

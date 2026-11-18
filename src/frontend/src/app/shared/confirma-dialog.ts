@@ -14,8 +14,8 @@ export interface ConfirmaDados {
   template: `
     <h2 mat-dialog-title>{{ dados.titulo }}</h2>
     <mat-dialog-content>{{ dados.texto }}</mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button mat-button type="button" (click)="ref.close(false)">Desistir</button>
+    <mat-dialog-actions>
+      <button mat-button type="button" (click)="ref.close(false)">Cancelar</button>
       <button mat-flat-button type="button" (click)="ref.close(true)">{{ dados.confirmar }}</button>
     </mat-dialog-actions>
   `,

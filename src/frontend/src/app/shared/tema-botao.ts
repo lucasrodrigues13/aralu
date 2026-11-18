@@ -1,11 +1,12 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { TemaService } from '../core/tema.service';
 
+/** Alterna claro/escuro. Fixo no canto nas telas públicas; dentro da barra superior na casca. */
 @Component({
   selector: 'app-tema',
-  host: { class: 'gd-tema-fixo' },
+  host: { '[class.gd-tema-fixo]': 'fixo()' },
   imports: [MatButtonModule, MatIconModule],
   template: `
     <button
@@ -19,5 +20,6 @@ import { TemaService } from '../core/tema.service';
   `,
 })
 export class TemaBotao {
+  readonly fixo = input(true);
   protected readonly tema = inject(TemaService);
 }

@@ -10,7 +10,7 @@ import { mensagemDeErro } from '../../core/mensagem-erro';
 import { MensagemModelo, NegocioClient } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
-import { DIALOG } from '../../shared/dialog';
+import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 
 @Component({
   selector: 'app-mensagem-editor-dialog',
@@ -18,7 +18,7 @@ import { DIALOG } from '../../shared/dialog';
   template: `
     <h2 mat-dialog-title>{{ dados ? 'Editar mensagem' : 'Novo modelo' }}</h2>
     <mat-dialog-content>
-      <form class="formulario" [formGroup]="form">
+      <form class="gd-campos" [formGroup]="form">
         <mat-form-field appearance="outline"><mat-label>Nome</mat-label><input matInput formControlName="nome" /></mat-form-field>
         <mat-form-field appearance="outline">
           <mat-label>Texto</mat-label>
@@ -182,7 +182,7 @@ export class ModelosMensagensPage implements OnInit {
 
   protected excluir(item: MensagemModelo): void {
     this.dialog.open(ConfirmaDialog, {
-      ...DIALOG,
+      ...DIALOG_PEQUENO,
       data: { titulo: 'Excluir mensagem', texto: `Confirma a exclusão de "${item.nome}"?`, confirmar: 'Excluir' },
     }).afterClosed().subscribe((confirmou) => {
       if (!confirmou) {

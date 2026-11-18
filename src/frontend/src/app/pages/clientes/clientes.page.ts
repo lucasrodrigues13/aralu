@@ -9,7 +9,7 @@ import { MatTableModule } from '@angular/material/table';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { Cliente, NegocioClient, ROTULO_PAPEL } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
-import { DIALOG } from '../../shared/dialog';
+import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { ClienteFormDialog } from './cliente-form.dialog';
 
@@ -114,7 +114,7 @@ export class ClientesPage implements OnInit {
 
   protected excluir(): void {
     this.dialog.open(ConfirmaDialog, {
-      ...DIALOG,
+      ...DIALOG_PEQUENO,
       data: { titulo: 'Excluir cliente', texto: 'Confirma a exclusão deste cliente?', confirmar: 'Excluir' },
     }).afterClosed().subscribe((confirmou) => {
       if (confirmou) {

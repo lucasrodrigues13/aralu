@@ -1,8 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -26,69 +25,54 @@ export interface EventoFormDados {
 @Component({
   selector: 'app-evento-form',
   imports: [
-    ReactiveFormsModule, RouterLink, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule,
+    ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule,
     MatSelectModule, MatCheckboxModule, MatTabsModule, MatDialogModule, CampoDataComponent, CampoHoraComponent,
     CampoDinheiroComponent, LocalCamposComponent,
   ],
   template: `
-    <div [class.gd-dialog-miolo]="!!dialogRef">
-    @if (dialogRef) {
-      <h1>Novo evento</h1>
-    } @else {
-      <a mat-button [routerLink]="editando() ? ['/eventos', id] : '/eventos'">Voltar</a>
-      <header class="gd-cabecalho">
-        <div>
-          <h1>{{ editando() ? 'Editar evento' : 'Novo evento' }}</h1>
-          <p>{{ editando() ? 'Informações, detalhes e locais do evento.' : 'Escolha o modelo e preencha os dados.' }}</p>
-        </div>
-      </header>
-    }
-    @if (!editando()) {
-      <mat-card>
-        <mat-card-header><mat-card-title>Modelo</mat-card-title></mat-card-header>
-        <mat-card-content>
-          <mat-form-field appearance="outline">
-            <mat-label>Modelo de evento</mat-label>
-            <mat-select [value]="modeloId()" (valueChange)="escolherModelo($event)">
-              @for (modelo of modelos(); track modelo.id) {
-                <mat-option [value]="modelo.id">{{ modelo.nome }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
-        </mat-card-content>
-      </mat-card>
-    }
-    @if (modeloId() || editando()) {
-      <form class="formulario" [formGroup]="formulario" (ngSubmit)="salvar()">
+    <h2 mat-dialog-title>{{ editando() ? 'Editar evento' : 'Novo evento' }}</h2>
+    <p class="gd-dialog-descricao">
+      {{ editando() ? 'Informações, detalhes e locais do evento.' : 'Escolha o modelo e preencha o essencial. O resto fica para depois.' }}
+    </p>
+    <mat-dialog-content>
+      <form id="evento-form" [formGroup]="formulario" (ngSubmit)="salvar()">
         @if (editando()) {
           <mat-tab-group>
             <mat-tab label="Informações gerais">
-              <label>Foto <input type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" (change)="escolherFoto($event)" /></label>
-              @if (tipo() === 'Casamento') {
-                <mat-form-field appearance="outline"><mat-label>Nome da noiva</mat-label><input matInput formControlName="primeiroNome" /></mat-form-field>
-                <mat-form-field appearance="outline"><mat-label>Nome do noivo</mat-label><input matInput formControlName="segundoNome" /></mat-form-field>
-              } @else {
-                <mat-form-field appearance="outline"><mat-label>Nome</mat-label><input matInput formControlName="primeiroNome" /></mat-form-field>
-              }
-              <app-campo-data rotulo="Data" formControlName="data" />
-              <app-campo-hora rotulo="Horário do convite" formControlName="hora" />
-              <app-campo-dinheiro rotulo="Orçamento" formControlName="orcamentoEstimado" />
-              <mat-form-field appearance="outline"><mat-label>Convidados estimados</mat-label><input matInput type="number" min="0" formControlName="convidadosEstimados" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>URL do site</mat-label><input matInput [value]="urlSite()" readonly /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Senha do site</mat-label><input matInput formControlName="senhaSite" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Tags</mat-label><input matInput formControlName="tags" placeholder="Assessoria completa" /></mat-form-field>
-              <mat-checkbox formControlName="notificarAssessor">Notificar assessor(a)</mat-checkbox>
-              <mat-checkbox formControlName="notificarAssistentes">Notificar assistentes</mat-checkbox>
-              <mat-checkbox formControlName="notificarClientes">Notificar clientes</mat-checkbox>
-              <mat-checkbox formControlName="salvarNaAgenda">Salvar na agenda</mat-checkbox>
-              @if (formulario.controls.salvarNaAgenda.value) { <p>O vínculo com o Google fica vazio.</p> }
+              <div class="gd-campos duas">
+                <label class="gd-arquivo inteiro">Foto
+                  <input type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" (change)="escolherFoto($event)" />
+                </label>
+                @if (tipo() === 'Casamento') {
+                  <mat-form-field><mat-label>Nome da noiva</mat-label><input matInput formControlName="primeiroNome" /></mat-form-field>
+                  <mat-form-field><mat-label>Nome do noivo</mat-label><input matInput formControlName="segundoNome" /></mat-form-field>
+                } @else {
+                  <mat-form-field class="inteiro"><mat-label>Nome</mat-label><input matInput formControlName="primeiroNome" /></mat-form-field>
+                }
+                <app-campo-data rotulo="Data" formControlName="data" />
+                <app-campo-hora rotulo="Horário do convite" formControlName="hora" />
+                <app-campo-dinheiro rotulo="Orçamento" formControlName="orcamentoEstimado" />
+                <mat-form-field><mat-label>Convidados estimados</mat-label><input matInput type="number" min="0" formControlName="convidadosEstimados" /></mat-form-field>
+                <mat-form-field><mat-label>URL do site</mat-label><input matInput [value]="urlSite()" readonly /></mat-form-field>
+                <mat-form-field><mat-label>Senha do site</mat-label><input matInput formControlName="senhaSite" /></mat-form-field>
+                <mat-form-field class="inteiro"><mat-label>Tags</mat-label><input matInput formControlName="tags" placeholder="Assessoria completa" /></mat-form-field>
+                <div class="inteiro gd-marcacoes">
+                  <mat-checkbox formControlName="notificarAssessor">Notificar assessor(a)</mat-checkbox>
+                  <mat-checkbox formControlName="notificarAssistentes">Notificar assistentes</mat-checkbox>
+                  <mat-checkbox formControlName="notificarClientes">Notificar clientes</mat-checkbox>
+                  <mat-checkbox formControlName="salvarNaAgenda">Salvar na agenda</mat-checkbox>
+                </div>
+                @if (formulario.controls.salvarNaAgenda.value) { <p class="gd-apoio inteiro">O vínculo com o Google fica vazio.</p> }
+              </div>
             </mat-tab>
-            <mat-tab label="Detalhes do evento">
-              <app-campo-hora rotulo="Tempo de festa" formControlName="tempoFesta" />
-              <app-campo-hora rotulo="Início da cerimônia" formControlName="inicioCerimonia" />
-              <app-campo-hora rotulo="Início da recepção" formControlName="inicioRecepcao" />
-              <mat-form-field appearance="outline"><mat-label>Padrinhos</mat-label><input matInput type="number" min="0" formControlName="quantidadePadrinhos" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Damas e pajens</mat-label><input matInput type="number" min="0" formControlName="quantidadeDamas" /></mat-form-field>
+            <mat-tab label="Detalhes">
+              <div class="gd-campos duas">
+                <app-campo-hora rotulo="Tempo de festa" formControlName="tempoFesta" />
+                <app-campo-hora rotulo="Início da cerimônia" formControlName="inicioCerimonia" />
+                <app-campo-hora rotulo="Início da recepção" formControlName="inicioRecepcao" />
+                <mat-form-field><mat-label>Padrinhos</mat-label><input matInput type="number" min="0" formControlName="quantidadePadrinhos" /></mat-form-field>
+                <mat-form-field><mat-label>Damas e pajens</mat-label><input matInput type="number" min="0" formControlName="quantidadeDamas" /></mat-form-field>
+              </div>
             </mat-tab>
             <mat-tab label="Cerimônia">
               <app-local-campos [grupo]="formulario.controls.cerimonia" />
@@ -98,46 +82,59 @@ export interface EventoFormDados {
             </mat-tab>
           </mat-tab-group>
         } @else {
-          <label>Foto <input type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" (change)="escolherFoto($event)" /></label>
-          @if (tipo() === 'Casamento') {
-            <mat-form-field appearance="outline"><mat-label>Nome da noiva</mat-label><input matInput formControlName="primeiroNome" /></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>Nome do noivo</mat-label><input matInput formControlName="segundoNome" /></mat-form-field>
-          } @else {
-            <mat-form-field appearance="outline"><mat-label>Nome</mat-label><input matInput formControlName="primeiroNome" /></mat-form-field>
-          }
-          <app-campo-data rotulo="Data" formControlName="data" />
-          <app-campo-hora rotulo="Horário do convite" formControlName="hora" />
-          <app-campo-dinheiro rotulo="Orçamento" formControlName="orcamentoEstimado" />
-          <mat-form-field appearance="outline"><mat-label>Convidados estimados</mat-label><input matInput type="number" min="0" formControlName="convidadosEstimados" /></mat-form-field>
-          <app-local-campos titulo="Local da cerimônia" [grupo]="formulario.controls.cerimonia" />
-          <app-local-campos titulo="Local da recepção" [grupo]="formulario.controls.recepcao" />
-          <mat-form-field appearance="outline"><mat-label>Tags</mat-label><input matInput formControlName="tags" placeholder="Assessoria completa" /></mat-form-field>
-          <mat-checkbox formControlName="notificarAssessor">Notificar assessor(a)</mat-checkbox>
-          <mat-checkbox formControlName="notificarAssistentes">Notificar assistentes</mat-checkbox>
-          <mat-checkbox formControlName="notificarClientes">Notificar clientes</mat-checkbox>
-          <mat-checkbox formControlName="salvarNaAgenda">Salvar na agenda</mat-checkbox>
-          @if (formulario.controls.salvarNaAgenda.value) { <p>O vínculo com o Google fica vazio.</p> }
-        }
-        <button mat-flat-button type="submit">Salvar</button>
-        @if (dialogRef) {
-          <button mat-button type="button" (click)="dialogRef.close()">Cancelar</button>
-        } @else if (editando()) {
-          <a mat-button [routerLink]="['/eventos', id]">Cancelar</a>
-        } @else {
-          <a mat-button routerLink="/eventos">Cancelar</a>
+          <div class="gd-campos duas">
+            <mat-form-field class="inteiro">
+              <mat-label>Modelo de evento</mat-label>
+              <mat-select [value]="modeloId()" (valueChange)="escolherModelo($event)" placeholder="Escolha o modelo">
+                @for (modelo of modelos(); track modelo.id) {
+                  <mat-option [value]="modelo.id">{{ modelo.nome }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            @if (modeloId()) {
+              @if (tipo() === 'Casamento') {
+                <mat-form-field><mat-label>Nome da noiva</mat-label><input matInput formControlName="primeiroNome" /></mat-form-field>
+                <mat-form-field><mat-label>Nome do noivo</mat-label><input matInput formControlName="segundoNome" /></mat-form-field>
+              } @else {
+                <mat-form-field class="inteiro"><mat-label>Nome</mat-label><input matInput formControlName="primeiroNome" /></mat-form-field>
+              }
+              <app-campo-data rotulo="Data" formControlName="data" />
+              <app-campo-hora rotulo="Horário do convite" formControlName="hora" />
+              <app-campo-dinheiro rotulo="Orçamento" formControlName="orcamentoEstimado" />
+              <mat-form-field><mat-label>Convidados estimados</mat-label><input matInput type="number" min="0" formControlName="convidadosEstimados" /></mat-form-field>
+              <div class="inteiro"><app-local-campos titulo="Local da cerimônia" [grupo]="formulario.controls.cerimonia" /></div>
+              <div class="inteiro"><app-local-campos titulo="Local da recepção" [grupo]="formulario.controls.recepcao" /></div>
+              <mat-form-field class="inteiro"><mat-label>Tags</mat-label><input matInput formControlName="tags" placeholder="Assessoria completa" /></mat-form-field>
+              <label class="gd-arquivo inteiro">Foto
+                <input type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" (change)="escolherFoto($event)" />
+              </label>
+              <div class="inteiro gd-marcacoes">
+                <mat-checkbox formControlName="notificarAssessor">Notificar assessor(a)</mat-checkbox>
+                <mat-checkbox formControlName="notificarAssistentes">Notificar assistentes</mat-checkbox>
+                <mat-checkbox formControlName="notificarClientes">Notificar clientes</mat-checkbox>
+                <mat-checkbox formControlName="salvarNaAgenda">Salvar na agenda</mat-checkbox>
+              </div>
+              @if (formulario.controls.salvarNaAgenda.value) { <p class="gd-apoio inteiro">O vínculo com o Google fica vazio.</p> }
+            }
+          </div>
         }
       </form>
-    }
-    </div>
+    </mat-dialog-content>
+    <mat-dialog-actions>
+      <button mat-button type="button" mat-dialog-close>Cancelar</button>
+      <button mat-flat-button type="submit" form="evento-form" [disabled]="!editando() && !modeloId()">
+        {{ editando() ? 'Salvar evento' : 'Criar evento' }}
+      </button>
+    </mat-dialog-actions>
   `,
 })
+/** Modal de novo evento e de edição do evento (todo cadastro abre em modal). */
 export class EventoFormPage implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly negocio = inject(NegocioClient);
-  private readonly rota = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly dadosDialogo = inject<EventoFormDados | null>(MAT_DIALOG_DATA, { optional: true });
-  protected readonly dialogRef = inject(MatDialogRef<EventoFormPage, string>, { optional: true });
+  private readonly dialogRef = inject(MatDialogRef<EventoFormPage, string>);
   private readonly toast = inject(ToastService);
   protected readonly modelos = signal<Modelo[]>([]);
   protected readonly modeloId = signal('');
@@ -170,7 +167,7 @@ export class EventoFormPage implements OnInit {
   });
 
   ngOnInit(): void {
-    this.id = this.dadosDialogo ? (this.dadosDialogo.id ?? '') : (this.rota.snapshot.paramMap.get('id') ?? '');
+    this.id = this.dadosDialogo?.id ?? '';
     this.editando.set(!!this.id);
     this.negocio.modelos().subscribe({
       next: (modelos) => this.modelos.set(modelos),
@@ -228,8 +225,10 @@ export class EventoFormPage implements OnInit {
       next: (evento) => {
         const seguir = () => {
           this.toast.sucesso(this.editando() ? 'Evento atualizado.' : 'Evento criado.');
-          this.dialogRef?.close();
-          void this.router.navigate(['/eventos', evento.id]);
+          this.dialogRef.close(evento.id);
+          if (!this.editando()) {
+            void this.router.navigate(['/eventos', evento.id]);
+          }
         };
         if (!this.foto) {
           seguir();

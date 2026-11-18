@@ -1,0 +1,210 @@
+// Angular Material reestilizado pelos tokens (DA-044). Nenhuma outra biblioteca de interface.
+@use '@angular/material' as mat;
+
+html {
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$green-palette,
+        tertiary: mat.$cyan-palette,
+      ),
+      typography: (
+        plain-family: ('Geist Variable', ui-sans-serif, system-ui, sans-serif),
+        brand-family: ('Geist Variable', ui-sans-serif, system-ui, sans-serif),
+      ),
+      density: 0,
+    )
+  );
+
+  // Sistema
+  --mat-sys-primary: var(--gd-primary);
+  --mat-sys-on-primary: var(--gd-primary-foreground);
+  --mat-sys-primary-container: color-mix(in oklab, var(--gd-primary) 15%, transparent);
+  --mat-sys-on-primary-container: var(--gd-primary);
+  --mat-sys-secondary-container: var(--gd-muted);
+  --mat-sys-on-secondary-container: var(--gd-foreground);
+  --mat-sys-surface: var(--gd-background);
+  --mat-sys-on-surface: var(--gd-foreground);
+  --mat-sys-on-surface-variant: var(--gd-muted-foreground);
+  --mat-sys-surface-container-lowest: var(--gd-card);
+  --mat-sys-surface-container-low: var(--gd-card);
+  --mat-sys-surface-container: var(--gd-popover);
+  --mat-sys-surface-container-high: var(--gd-card);
+  --mat-sys-surface-container-highest: var(--gd-muted);
+  --mat-sys-outline: var(--gd-input);
+  --mat-sys-outline-variant: var(--gd-border);
+  --mat-sys-error: var(--gd-destructive);
+
+  // Botões (5.2)
+  --mat-button-filled-container-height: 36px;
+  --mat-button-filled-container-shape: var(--gd-radius-botao);
+  --mat-button-filled-horizontal-padding: 12px;
+  --mat-button-filled-label-text-size: 14px;
+  --mat-button-filled-label-text-weight: 500;
+  --mat-button-filled-label-text-tracking: normal;
+  --mat-button-filled-icon-spacing: 6px;
+  --mat-button-outlined-container-height: 36px;
+  --mat-button-outlined-container-shape: var(--gd-radius-botao);
+  --mat-button-outlined-horizontal-padding: 12px;
+  --mat-button-outlined-label-text-size: 14px;
+  --mat-button-outlined-label-text-weight: 500;
+  --mat-button-outlined-label-text-tracking: normal;
+  --mat-button-outlined-label-text-color: var(--gd-foreground);
+  --mat-button-outlined-outline-color: var(--gd-border);
+  --mat-button-outlined-icon-spacing: 6px;
+  --mat-button-text-container-height: 36px;
+  --mat-button-text-container-shape: var(--gd-radius-botao);
+  --mat-button-text-horizontal-padding: 12px;
+  --mat-button-text-label-text-size: 14px;
+  --mat-button-text-label-text-weight: 500;
+  --mat-button-text-label-text-tracking: normal;
+  --mat-button-text-label-text-color: var(--gd-foreground);
+  --mat-button-text-icon-spacing: 6px;
+  --mat-button-protected-container-height: 36px;
+  --mat-button-protected-container-shape: var(--gd-radius-botao);
+  --mat-icon-button-container-shape: var(--gd-radius-botao);
+  --mat-icon-button-state-layer-size: 36px;
+  --mat-icon-button-icon-size: 20px;
+  --mat-icon-button-icon-color: var(--gd-muted-foreground);
+
+  // Campos (5.9)
+  --mat-form-field-container-height: 36px;
+  --mat-form-field-container-vertical-padding: 8px;
+  --mat-form-field-container-text-size: 14px;
+  --mat-form-field-container-text-line-height: 20px;
+  --mat-form-field-container-text-tracking: normal;
+  --mat-form-field-outlined-container-shape: var(--gd-radius-campo);
+  --mat-form-field-outlined-outline-color: var(--gd-input);
+  --mat-form-field-outlined-hover-outline-color: var(--gd-input);
+  --mat-form-field-outlined-focus-outline-color: var(--gd-ring);
+  --mat-form-field-outlined-focus-outline-width: 1px;
+  --mat-form-field-outlined-label-text-color: var(--gd-foreground);
+  --mat-form-field-outlined-hover-label-text-color: var(--gd-foreground);
+  --mat-form-field-outlined-focus-label-text-color: var(--gd-foreground);
+  --mat-form-field-outlined-label-text-size: 14px;
+  --mat-form-field-outlined-label-text-weight: 500;
+  --mat-form-field-outlined-label-text-tracking: normal;
+  --mat-form-field-outlined-input-text-color: var(--gd-foreground);
+  --mat-form-field-outlined-input-text-placeholder-color: var(--gd-muted-foreground);
+  --mat-form-field-subscript-text-size: 12px;
+  --mat-form-field-subscript-text-tracking: normal;
+  --mat-form-field-enabled-select-arrow-color: var(--gd-muted-foreground);
+
+  // Seleção, menu e opções
+  --mat-select-panel-background-color: var(--gd-popover);
+  --mat-select-trigger-text-size: 14px;
+  --mat-select-trigger-text-tracking: normal;
+  --mat-select-container-elevation-shadow: var(--gd-sombra-modal);
+  --mat-autocomplete-background-color: var(--gd-popover);
+  --mat-menu-container-color: var(--gd-popover);
+  --mat-menu-container-shape: var(--gd-radius-campo);
+  --mat-menu-item-label-text-size: 14px;
+  --mat-menu-item-label-text-tracking: normal;
+  --mat-option-label-text-size: 14px;
+  --mat-option-label-text-tracking: normal;
+  --mat-option-selected-state-layer-color: var(--gd-accent);
+  --mat-option-selected-state-label-text-color: var(--gd-foreground);
+
+  // Marcação e alternador
+  --mat-checkbox-label-text-size: 14px;
+  --mat-checkbox-label-text-tracking: normal;
+  --mat-checkbox-label-text-color: var(--gd-foreground);
+  --mat-slide-toggle-label-text-size: 14px;
+  --mat-slide-toggle-label-text-tracking: normal;
+
+  // Cartão (5.3)
+  --mat-card-elevated-container-color: var(--gd-card);
+  --mat-card-elevated-container-shape: var(--gd-radius-cartao);
+  --mat-card-elevated-container-elevation: var(--gd-sombra-cartao);
+  --mat-card-outlined-container-color: var(--gd-card);
+  --mat-card-outlined-container-shape: var(--gd-radius-cartao);
+  --mat-card-outlined-outline-color: var(--gd-border);
+  --mat-card-title-text-size: 16px;
+  --mat-card-title-text-weight: 600;
+  --mat-card-title-text-line-height: 24px;
+  --mat-card-subtitle-text-size: 12px;
+  --mat-card-subtitle-text-color: var(--gd-muted-foreground);
+
+  // Tabela (5.7)
+  --mat-table-background-color: transparent;
+  --mat-table-header-headline-color: var(--gd-muted-foreground);
+  --mat-table-header-headline-size: 12px;
+  --mat-table-header-headline-weight: 500;
+  --mat-table-header-headline-tracking: normal;
+  --mat-table-header-container-height: 40px;
+  --mat-table-row-item-label-text-color: var(--gd-foreground);
+  --mat-table-row-item-label-text-size: 14px;
+  --mat-table-row-item-label-text-tracking: normal;
+  --mat-table-row-item-container-height: 52px;
+  --mat-table-row-item-outline-color: color-mix(in oklab, var(--gd-border) 50%, transparent);
+
+  // Abas (5.5)
+  --mat-tab-divider-height: 0;
+  --mat-tab-container-height: 28px;
+  --mat-tab-label-text-size: 12px;
+  --mat-tab-label-text-weight: 500;
+  --mat-tab-label-text-tracking: normal;
+  --mat-tab-active-indicator-height: 0;
+  --mat-tab-active-label-text-color: var(--gd-foreground);
+  --mat-tab-active-hover-label-text-color: var(--gd-foreground);
+  --mat-tab-active-focus-label-text-color: var(--gd-foreground);
+  --mat-tab-inactive-label-text-color: var(--gd-muted-foreground);
+  --mat-tab-inactive-hover-label-text-color: var(--gd-foreground);
+  --mat-tab-inactive-focus-label-text-color: var(--gd-foreground);
+
+  // Alternância de botões
+  --mat-button-toggle-shape: var(--gd-radius-campo);
+  --mat-button-toggle-height: 28px;
+  --mat-button-toggle-label-text-size: 12px;
+  --mat-button-toggle-label-text-weight: 500;
+  --mat-button-toggle-divider-color: transparent;
+  --mat-button-toggle-background-color: transparent;
+  --mat-button-toggle-text-color: var(--gd-muted-foreground);
+  --mat-button-toggle-selected-state-background-color: var(--gd-background);
+  --mat-button-toggle-selected-state-text-color: var(--gd-foreground);
+
+  // Chips
+  --mat-chip-container-shape-radius: 9999px;
+  --mat-chip-label-text-size: 12px;
+  --mat-chip-label-text-weight: 500;
+  --mat-chip-outline-color: var(--gd-border);
+
+  // Modal (5.10)
+  --mat-dialog-container-color: var(--gd-card);
+  --mat-dialog-container-shape: var(--gd-radius-modal);
+  --mat-dialog-container-elevation-shadow: var(--gd-sombra-modal);
+  --mat-dialog-container-max-width: calc(100vw - 32px);
+  --mat-dialog-container-small-max-width: 100vw;
+  --mat-dialog-subhead-size: 16px;
+  --mat-dialog-subhead-weight: 700;
+  --mat-dialog-subhead-line-height: 24px;
+  --mat-dialog-subhead-tracking: normal;
+  --mat-dialog-subhead-color: var(--gd-foreground);
+  --mat-dialog-supporting-text-size: 14px;
+  --mat-dialog-supporting-text-line-height: 20px;
+  --mat-dialog-supporting-text-tracking: normal;
+  --mat-dialog-supporting-text-color: var(--gd-foreground);
+  --mat-dialog-headline-padding: 20px;
+  --mat-dialog-content-padding: 20px;
+  --mat-dialog-with-actions-content-padding: 20px;
+  --mat-dialog-actions-padding: 16px 20px 20px;
+  --mat-dialog-actions-alignment: flex-end;
+
+  // Aviso (5.14)
+  --mat-snack-bar-container-color: var(--gd-popover);
+  --mat-snack-bar-container-shape: var(--gd-radius-campo);
+  --mat-snack-bar-supporting-text-color: var(--gd-foreground);
+  --mat-snack-bar-supporting-text-size: 14px;
+  --mat-snack-bar-button-color: var(--gd-muted-foreground);
+
+  // Datas
+  --mat-datepicker-calendar-container-background-color: var(--gd-popover);
+  --mat-datepicker-calendar-container-shape: var(--gd-radius-cartao);
+
+  // Barra lateral do mat-sidenav fica transparente: quem pinta é a casca.
+  --mat-sidenav-container-background-color: var(--gd-sidebar);
+  --mat-sidenav-container-shape: 0;
+  --mat-sidenav-container-divider-color: transparent;
+  --mat-sidenav-content-background-color: var(--gd-background);
+  --mat-sidenav-scrim-color: rgb(0 0 0 / 0.4);
+}

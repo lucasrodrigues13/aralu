@@ -17,7 +17,7 @@ import {
 import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { CampoDinheiroComponent } from '../../shared/campo-dinheiro';
-import { DIALOG } from '../../shared/dialog';
+import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 
 type TipoModelo = 'servico' | 'orcamento' | 'contrato';
 
@@ -27,7 +27,7 @@ type TipoModelo = 'servico' | 'orcamento' | 'contrato';
   template: `
     <h2 mat-dialog-title>{{ dados.item ? 'Editar' : 'Novo' }} modelo</h2>
     <mat-dialog-content>
-      <form class="formulario" [formGroup]="form">
+      <form class="gd-campos" [formGroup]="form">
         <mat-form-field appearance="outline"><mat-label>Nome</mat-label><input matInput formControlName="nome" /></mat-form-field>
         @if (dados.tipo === 'servico') {
           <mat-form-field appearance="outline"><mat-label>Descrição</mat-label><textarea matInput rows="3" formControlName="descricao" maxlength="200"></textarea></mat-form-field>
@@ -211,7 +211,7 @@ export class ModelosFunilPage implements OnInit {
 
   protected excluir(item: { id: string; nome: string }): void {
     this.dialog.open(ConfirmaDialog, {
-      ...DIALOG,
+      ...DIALOG_PEQUENO,
       data: { titulo: 'Excluir modelo', texto: `Confirma a exclusão de "${item.nome}"?`, confirmar: 'Excluir' },
     }).afterClosed().subscribe((ok) => {
       if (!ok) return;

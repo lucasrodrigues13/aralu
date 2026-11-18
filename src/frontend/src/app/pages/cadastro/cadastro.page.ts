@@ -13,7 +13,7 @@ import { ToastService } from '../../core/toast.service';
   selector: 'app-cadastro',
   imports: [ReactiveFormsModule, RouterLink, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule],
   template: `
-    <section class="pagina-publica">
+    <section class="gd-publica">
       <mat-card>
         <mat-card-header>
           <mat-card-title>Criar conta</mat-card-title>

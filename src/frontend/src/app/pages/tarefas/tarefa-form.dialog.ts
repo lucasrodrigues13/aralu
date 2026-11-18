@@ -25,7 +25,7 @@ export interface TarefaFormDados {
   template: `
     <h2 mat-dialog-title>{{ dados.tarefa ? 'Editar tarefa' : 'Nova tarefa' }}</h2>
     <mat-dialog-content>
-      <form id="tarefa-form" class="gd-dialog-miolo" [formGroup]="formulario" (ngSubmit)="salvar()">
+      <form id="tarefa-form" class="gd-campos" [formGroup]="formulario" (ngSubmit)="salvar()">
         <mat-form-field appearance="outline"><mat-label>Título</mat-label><input matInput formControlName="titulo" /></mat-form-field>
         <mat-form-field appearance="outline"><mat-label>Descrição</mat-label><textarea matInput rows="2" formControlName="descricao"></textarea></mat-form-field>
         <app-campo-data rotulo="Prazo" formControlName="prazo" />

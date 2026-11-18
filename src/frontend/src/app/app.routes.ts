@@ -34,9 +34,10 @@ export const routes: Routes = [
       { path: 'painel', loadComponent: () => import('./pages/painel/painel.page').then((m) => m.PainelPage) },
       { path: 'perfil', loadComponent: () => import('./pages/perfil/perfil.page').then((m) => m.PerfilPage) },
       { path: 'eventos', loadComponent: () => import('./pages/eventos/eventos.page').then((m) => m.EventosPage) },
-      { path: 'eventos/novo', loadComponent: () => import('./pages/eventos/evento-form.page').then((m) => m.EventoFormPage) },
+      // Novo e Editar evento abrem em modal (docs/design-system.md, 1). As rotas antigas voltam para a lista ou para o evento.
+      { path: 'eventos/novo', redirectTo: 'eventos', pathMatch: 'full' },
       { path: 'eventos/:id', loadComponent: () => import('./pages/eventos/evento-home.page').then((m) => m.EventoHomePage) },
-      { path: 'eventos/:id/editar', loadComponent: () => import('./pages/eventos/evento-form.page').then((m) => m.EventoFormPage) },
+      { path: 'eventos/:id/editar', redirectTo: 'eventos/:id', pathMatch: 'full' },
       { path: 'eventos/:id/tarefas', loadComponent: () => import('./pages/tarefas/tarefas.page').then((m) => m.TarefasPage) },
       { path: 'eventos/:id/convidados', loadComponent: () => import('./pages/convidados/convidados.page').then((m) => m.ConvidadosPage) },
       { path: 'tarefas', loadComponent: () => import('./pages/tarefas/tarefas.page').then((m) => m.TarefasPage) },

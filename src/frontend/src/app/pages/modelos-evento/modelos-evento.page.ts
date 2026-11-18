@@ -12,7 +12,7 @@ import { mensagemDeErro } from '../../core/mensagem-erro';
 import { Modelo, NegocioClient, TIPOS } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
-import { DIALOG } from '../../shared/dialog';
+import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 
 @Component({
   selector: 'app-criar-modelo-dialog',
@@ -20,7 +20,7 @@ import { DIALOG } from '../../shared/dialog';
   template: `
     <h2 mat-dialog-title>Criar modelo</h2>
     <mat-dialog-content>
-      <form class="formulario" [formGroup]="form" (ngSubmit)="salvar()">
+      <form class="gd-campos" [formGroup]="form" (ngSubmit)="salvar()">
         <mat-form-field appearance="outline"><mat-label>Nome</mat-label><input matInput formControlName="nome" /></mat-form-field>
         <mat-form-field appearance="outline">
           <mat-label>Tipo</mat-label>
@@ -159,7 +159,7 @@ export class ModelosEventoPage implements OnInit {
 
   protected excluir(modelo: Modelo): void {
     this.dialog.open(ConfirmaDialog, {
-      ...DIALOG,
+      ...DIALOG_PEQUENO,
       data: { titulo: 'Excluir modelo', texto: `Confirma a exclusão de "${modelo.nome}"?`, confirmar: 'Excluir' },
     }).afterClosed().subscribe((confirmou) => {
       if (!confirmou) {

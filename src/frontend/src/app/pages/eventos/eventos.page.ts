@@ -18,7 +18,7 @@ import {
 } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { CampoDataComponent } from '../../shared/campo-data';
-import { DIALOG } from '../../shared/dialog';
+import { DIALOG, DIALOG_LARGO, DIALOG_PEQUENO } from '../../shared/dialog';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { deDataParaIso } from '../../shared/data';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
@@ -82,7 +82,7 @@ import { EventoFormPage } from './evento-form.page';
           }
         </div>
         @if (!ehEstatisticas()) {
-          <form class="filtros" [formGroup]="filtro" (ngSubmit)="carregar()">
+          <form class="gd-filtros" [formGroup]="filtro" (ngSubmit)="carregar()">
             <mat-form-field class="gd-busca" appearance="outline" subscriptSizing="dynamic">
               <mat-icon matIconPrefix>search</mat-icon>
               <input matInput formControlName="nome" placeholder="Nome" />
@@ -284,7 +284,7 @@ export class EventosPage implements OnInit {
   }
 
   protected abrir(): void {
-    this.dialog.open(EventoFormPage, { ...DIALOG, data: {} }).afterClosed().subscribe((salvo) => {
+    this.dialog.open(EventoFormPage, { ...DIALOG_LARGO, data: {} }).afterClosed().subscribe((salvo) => {
       if (salvo) {
         this.carregar();
         this.carregarEstatisticas();
@@ -293,12 +293,16 @@ export class EventosPage implements OnInit {
   }
 
   protected editar(id: string): void {
-    void this.router.navigate(['/eventos', id, 'editar']);
+    this.dialog.open(EventoFormPage, { ...DIALOG_LARGO, data: { id } }).afterClosed().subscribe((salvo) => {
+      if (salvo) {
+        this.carregar();
+      }
+    });
   }
 
   protected excluir(): void {
     this.dialog.open(ConfirmaDialog, {
-      ...DIALOG,
+      ...DIALOG_PEQUENO,
       data: { titulo: 'Excluir evento', texto: 'Confirma a exclusão deste evento?', confirmar: 'Excluir' },
     }).afterClosed().subscribe((confirmou) => {
       if (confirmou) {

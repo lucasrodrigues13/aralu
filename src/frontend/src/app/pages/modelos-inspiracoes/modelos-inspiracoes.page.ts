@@ -10,7 +10,7 @@ import { mensagemDeErro } from '../../core/mensagem-erro';
 import { Inspiracao, NegocioClient } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
-import { DIALOG } from '../../shared/dialog';
+import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 
 @Component({
   selector: 'app-inspiracao-editor-dialog',
@@ -18,7 +18,7 @@ import { DIALOG } from '../../shared/dialog';
   template: `
     <h2 mat-dialog-title>{{ dados ? 'Editar galeria' : 'Nova galeria' }}</h2>
     <mat-dialog-content>
-      <form class="formulario" [formGroup]="form">
+      <form class="gd-campos" [formGroup]="form">
         <mat-form-field appearance="outline"><mat-label>Nome</mat-label><input matInput formControlName="nome" /></mat-form-field>
         <div formArrayName="itens">
           @for (item of itens.controls; track $index; let i = $index) {
@@ -179,7 +179,7 @@ export class ModelosInspiracoesPage implements OnInit {
 
   protected excluir(item: Inspiracao): void {
     this.dialog.open(ConfirmaDialog, {
-      ...DIALOG,
+      ...DIALOG_PEQUENO,
       data: { titulo: 'Excluir galeria', texto: `Confirma a exclusão de "${item.nome}"?`, confirmar: 'Excluir' },
     }).afterClosed().subscribe((confirmou) => {
       if (!confirmou) {

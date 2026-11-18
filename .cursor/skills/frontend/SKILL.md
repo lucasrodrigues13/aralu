@@ -25,14 +25,14 @@ O build publicado é estático. O Caddy serve esse build e encaminha `/api`. Sem
 
 Siga `docs/design-system.md` em toda tela nova ou alterada.
 
-- Cores iguais às da demo, com modo claro e modo escuro. No modo claro o texto é preto. A classe `escuro` no `html` liga o escuro. A escolha fica em `localStorage` (`gevents-tema`).
-- Casca: barra lateral escura de 260px e barra superior de 64px. Item ativo em verde. Até 959px a barra abre por cima, começa fechada e fecha pelo X, pelo toque fora ou ao escolher um item.
-- Cabeçalho de lista: título, linha de apoio e botão verde à direita, no padrão de New Order.
-- Tabela dentro de `.gd-painel`, com abas em pílula e busca quando a tela já tem esses filtros. A última coluna é Ações, com Editar e Excluir. Excluir só chama a API quando o fluxo já tem remoção.
-- Novo e Editar de evento, cliente e tarefa são `MatDialog` (`gd-dialog`) sobre a tela aberta. O primeiro campo fica afastado do título. Novo convite abre painel modal sobre a lista. Não navegue para uma página só para esses formulários.
-- O aviso é o snackbar do Material, no canto superior direito e logo abaixo da barra, com X para fechar. Ele não cobre Sair.
-- Cartões de número do painel usam `.gd-numero`. Sem gráfico enquanto um requisito não pedir a série.
-- Formulário, tabela, diálogo, botão, campo e aviso continuam no Angular Material. O tema do Material aponta para os tokens `--gd-*`.
+- Tokens `--gd-*` da versão 2 do design system, modo claro e escuro. A classe `escuro` no `html` liga o escuro. A escolha fica em `localStorage` (`gevents-tema`). Estilos globais só em `src/frontend/src/styles/` (tokens, material, base, casca, componentes, formulário, modal).
+- Casca: barra lateral escura de 260px, barra superior de 64px com título da área, tema e "Novo evento". Abaixo de 960px a barra lateral vira gaveta e aparece a barra inferior.
+- Cabeçalho de lista: `.gd-cabecalho` com título, apoio e botão verde à direita (`.gd-cabecalho-acoes` para mais de um).
+- Tabela `.gd-grade` dentro de `.gd-painel`, com `.gd-barra` (abas `.gd-abas`, busca `.gd-busca`, filtros `.gd-filtros`). Situação em `.gd-status` (`ok`, `alerta`, `erro`, `info`, `neutro`). A última coluna é Ações, com Editar e Excluir. Excluir só chama a API quando o fluxo já tem remoção.
+- **Todo cadastro e toda edição abrem em modal**, de qualquer entidade, com as larguras de `shared/dialog.ts` e a estrutura título / descrição / conteúdo / ações. Não navegue para uma página só para um formulário.
+- Campos com rótulo acima, dentro de `.gd-campos` (`.duas` em duas colunas, `.inteiro` ocupa a linha).
+- O aviso é o snackbar do Material, no canto superior direito, logo abaixo da barra, com ícone e X para fechar.
+- Números em `.gd-numeros` / `.gd-numero`; vazio em `.gd-vazio`; alerta em `.gd-alerta`. Sem gráfico enquanto um requisito não pedir a série.
 
 ## Stack
 

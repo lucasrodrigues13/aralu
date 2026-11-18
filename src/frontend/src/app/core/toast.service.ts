@@ -21,7 +21,7 @@ export class ToastService {
     }
 
     this.snack.openFromComponent(ToastAviso, {
-      data: texto,
+      data: { mensagem: texto, erro: estilo === 'gd-toast-erro' },
       duration,
       horizontalPosition: 'end',
       verticalPosition: 'top',

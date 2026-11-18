@@ -9,7 +9,7 @@ import { ToastService } from '../../core/toast.service';
   selector: 'app-confirmar-email',
   imports: [RouterLink, MatCardModule],
   template: `
-    <section class="pagina-publica">
+    <section class="gd-publica">
       <mat-card>
         <mat-card-header>
           <mat-card-title>Confirmar e-mail</mat-card-title>

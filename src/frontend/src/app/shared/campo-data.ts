@@ -15,6 +15,7 @@ import { MatInputModule } from '@angular/material/input';
       multi: true,
     },
   ],
+  styles: `:host { display: block; width: 100%; }`,
   template: `
     <mat-form-field appearance="outline">
       <mat-label>{{ rotulo }}</mat-label>

@@ -22,7 +22,7 @@ import {
 import { ToastService } from '../../core/toast.service';
 import { CampoDinheiroComponent } from '../../shared/campo-dinheiro';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
-import { DIALOG } from '../../shared/dialog';
+import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 
 @Component({
   selector: 'app-modelo-evento-editor',
@@ -43,7 +43,7 @@ import { DIALOG } from '../../shared/dialog';
         <button mat-flat-button type="button" (click)="salvar()">Salvar</button>
       </div>
     </header>
-    <form class="formulario gd-painel-form" [formGroup]="form">
+    <form class="gd-campos gd-painel-form" [formGroup]="form">
       <mat-form-field appearance="outline"><mat-label>Nome</mat-label><input matInput formControlName="nome" /></mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>Tipo</mat-label>
@@ -430,7 +430,7 @@ export class ModeloEventoEditorPage implements OnInit {
 
   protected excluir(): void {
     this.dialog.open(ConfirmaDialog, {
-      ...DIALOG,
+      ...DIALOG_PEQUENO,
       data: { titulo: 'Excluir modelo', texto: 'Confirma a exclusão deste modelo?', confirmar: 'Excluir' },
     }).afterClosed().subscribe((confirmou) => {
       if (!confirmou) {

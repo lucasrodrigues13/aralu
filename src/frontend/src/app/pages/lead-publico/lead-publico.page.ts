@@ -13,7 +13,7 @@ import { ToastService } from '../../core/toast.service';
   selector: 'app-lead-publico',
   imports: [ReactiveFormsModule, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule],
   template: `
-    <section class="pagina-publica">
+    <section class="gd-publica">
       <mat-card>
         <mat-card-header>
           <mat-card-title>Solicitar orçamento</mat-card-title>
@@ -22,7 +22,7 @@ import { ToastService } from '../../core/toast.service';
           @if (enviado()) {
             <p>Recebemos o seu contato. Em breve a assessoria retorna.</p>
           } @else {
-            <form class="formulario" [formGroup]="form" (ngSubmit)="enviar()">
+            <form class="gd-campos" [formGroup]="form" (ngSubmit)="enviar()">
               <mat-form-field appearance="outline">
                 <mat-label>Nome da oportunidade</mat-label>
                 <input matInput formControlName="nome" />

@@ -11,7 +11,7 @@ import { mensagemDeErro } from '../../core/mensagem-erro';
 import { FornecedorResumo, NegocioClient, ServicoConta } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
-import { DIALOG } from '../../shared/dialog';
+import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { DIALOG_FORNECEDOR, FornecedorFormDialog } from './fornecedor-form.dialog';
 
 @Component({
@@ -187,7 +187,7 @@ export class FornecedoresPage implements OnInit {
 
   protected excluirFornecedor(item: FornecedorResumo): void {
     this.dialog.open(ConfirmaDialog, {
-      ...DIALOG,
+      ...DIALOG_PEQUENO,
       data: { titulo: 'Excluir fornecedor', texto: `Confirma a exclusão de "${item.nome}"?`, confirmar: 'Excluir' },
     }).afterClosed().subscribe((confirmou) => {
       if (!confirmou) {
@@ -209,7 +209,7 @@ export class FornecedoresPage implements OnInit {
 
   protected excluirServico(item: ServicoConta): void {
     this.dialog.open(ConfirmaDialog, {
-      ...DIALOG,
+      ...DIALOG_PEQUENO,
       data: { titulo: 'Excluir serviço', texto: `Confirma a exclusão de "${item.nome}"?`, confirmar: 'Excluir' },
     }).afterClosed().subscribe((confirmou) => {
       if (!confirmou) {

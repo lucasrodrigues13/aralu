@@ -1,19 +1,16 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, TemplateRef, viewChild } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
-import { MatDialog } from '@angular/material/dialog';
+import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
-import { MatTableModule } from '@angular/material/table';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { ToastService } from '../../core/toast.service';
-import { DIALOG } from '../../shared/dialog';
+import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { MascaraDirective } from '../../shared/mascara.directive';
 import { ListaConvites, NegocioClient } from '../../core/negocio.client';
@@ -22,13 +19,9 @@ import { EventoAbasComponent } from '../eventos/evento-abas.component';
 @Component({
   selector: 'app-convidados',
   imports: [
-    ReactiveFormsModule, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, EventoAbasComponent,
-    MatSelectModule, MatButtonToggleModule, MatCheckboxModule, MatIconModule, MatTableModule, MascaraDirective,
+    ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, EventoAbasComponent,
+    MatSelectModule, MatCheckboxModule, MatIconModule, MatDialogModule, MascaraDirective,
   ],
-  styles: `
-    .gd-modal { position: fixed; z-index: 40; top: 50%; left: 50%; transform: translate(-50%, -50%); width: min(640px, calc(100vw - 32px)); max-height: 90vh; overflow: auto; padding: 20px; }
-    .gd-backdrop { position: fixed; inset: 0; z-index: 35; }
-  `,
   template: `
     @if (!eventoId()) {
       <header class="gd-cabecalho">
@@ -44,92 +37,61 @@ import { EventoAbasComponent } from '../eventos/evento-abas.component';
           <h1>Convites e convidados</h1>
           <p>Lista do evento e o RSVP de cada convite.</p>
         </div>
-        <button mat-flat-button type="button" (click)="formularioConvite.set(true)">
-          <mat-icon>add</mat-icon>
-          Novo convite
-        </button>
+        <div class="gd-cabecalho-acoes">
+          <button mat-stroked-button type="button" (click)="baixarPlanilha()"><mat-icon>download</mat-icon> Planilha padrão</button>
+          <button mat-stroked-button type="button" (click)="arquivo.click()"><mat-icon>upload</mat-icon> Importar</button>
+          <input #arquivo type="file" accept=".xlsx,.xls" hidden (change)="importar($event)" />
+          <button mat-flat-button type="button" (click)="abrirConvite()"><mat-icon>add</mat-icon> Novo convite</button>
+        </div>
       </header>
-      <mat-button-toggle-group [value]="visao()" (change)="visao.set($event.value)">
-        <mat-button-toggle value="convite">Por convite</mat-button-toggle>
-        <mat-button-toggle value="convidado">Por convidado</mat-button-toggle>
-      </mat-button-toggle-group>
-      <form class="filtros" [formGroup]="filtro" (ngSubmit)="carregar()">
-        <mat-form-field appearance="outline"><mat-label>Busca</mat-label><input matInput formControlName="nome" /></mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Situação</mat-label>
-          <mat-select formControlName="situacao">
-            <mat-option value="">Todas</mat-option>
-            <mat-option value="Pendente">Pendente</mat-option>
-            <mat-option value="Confirmado">Confirmado</mat-option>
-            <mat-option value="NaoComparecera">Não comparecerá</mat-option>
-          </mat-select>
-        </mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>Telefone</mat-label><input matInput formControlName="telefone" gdMascara="celular" /></mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>Observação</mat-label><input matInput formControlName="observacao" /></mat-form-field>
-        <mat-checkbox formControlName="somenteConfirmados">Só confirmados</mat-checkbox>
-        <button mat-stroked-button type="submit">Filtrar</button>
-      </form>
-      <section>
-        <h2>Transfer do evento</h2>
-        <mat-checkbox [checked]="transferAtivo()" (change)="transferAtivo.set($event.checked)">Transfer ativo</mat-checkbox>
-        <mat-form-field appearance="outline"><mat-label>Locais, um por linha</mat-label><textarea matInput rows="2" [value]="locaisTexto()" (input)="locaisTexto.set(texto($event))"></textarea></mat-form-field>
-        <button mat-stroked-button type="button" (click)="salvarTransfer()">Salvar transfer</button>
-      </section>
-      <section>
-        <h2>Grupos</h2>
-        <mat-form-field appearance="outline"><mat-label>Novo grupo</mat-label><input matInput [value]="grupoNome()" (input)="grupoNome.set(texto($event))" /></mat-form-field>
-        <button mat-stroked-button type="button" (click)="criarGrupo()">Criar grupo</button>
-        <p>{{ grupos().map((grupo) => grupo.nome).join(', ') }}</p>
-      </section>
-      @if (formularioConvite()) {
-      <div class="gd-backdrop" (click)="formularioConvite.set(false)"></div>
-      <section class="gd-painel gd-modal" (click)="$event.stopPropagation()">
-      <form class="formulario" [formGroup]="convite" (ngSubmit)="criarConvite()">
-        <h2>Novo convite</h2>
-        <mat-form-field appearance="outline"><mat-label>Nome do convite</mat-label><input matInput formControlName="nome" /></mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Grupo</mat-label>
-          <mat-select formControlName="grupoId">
-            <mat-option value="">Nenhum</mat-option>
-            @for (grupo of grupos(); track grupo.id) { <mat-option [value]="grupo.id">{{ grupo.nome }}</mat-option> }
-          </mat-select>
-        </mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>Observação</mat-label><input matInput formControlName="observacao" /></mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>Nome do convidado</mat-label><input matInput formControlName="convidado" /></mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>DDI</mat-label><input matInput formControlName="ddi" /></mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>Celular</mat-label><input matInput formControlName="celular" gdMascara="celular" /></mat-form-field>
-        @if (transferAtivo()) {
-          <mat-checkbox formControlName="usaTransfer">Usa transfer</mat-checkbox>
-          @if (convite.controls.usaTransfer.value) {
-            <mat-form-field appearance="outline">
-              <mat-label>Origem</mat-label>
-              <mat-select formControlName="localOrigem">
-                @for (local of locais(); track local) { <mat-option [value]="local">{{ local }}</mat-option> }
+
+      @if (lista(); as dados) {
+        <section class="gd-numeros">
+          @for (item of dados.porSituacao; track item.rotulo) {
+            <div class="gd-numero">
+              <span>{{ item.rotulo }}</span>
+              <span class="gd-icone"><mat-icon>{{ iconeSituacao(item.rotulo) }}</mat-icon></span>
+              <strong>{{ item.quantidade }}</strong>
+            </div>
+          }
+        </section>
+      }
+
+      <section class="gd-painel">
+        <div class="gd-barra">
+          <div class="gd-abas">
+            <button type="button" [class.ativa]="visao() === 'convite'" (click)="visao.set('convite')">Por convite</button>
+            <button type="button" [class.ativa]="visao() === 'convidado'" (click)="visao.set('convidado')">Por convidado</button>
+          </div>
+          <form class="gd-filtros" [formGroup]="filtro" (ngSubmit)="carregar()">
+            <mat-form-field class="gd-busca">
+              <mat-icon matIconPrefix>search</mat-icon>
+              <input matInput formControlName="nome" placeholder="Buscar convite" />
+            </mat-form-field>
+            <mat-form-field>
+              <mat-select formControlName="situacao" placeholder="Situação">
+                <mat-option value="">Todas</mat-option>
+                <mat-option value="Pendente">Pendente</mat-option>
+                <mat-option value="Confirmado">Confirmado</mat-option>
+                <mat-option value="NaoComparecera">Não comparecerá</mat-option>
               </mat-select>
             </mat-form-field>
-          }
-        }
-        <button mat-flat-button type="submit">Salvar convite</button>
-        <button mat-button type="button" (click)="formularioConvite.set(false)">Cancelar</button>
-      </form>
-      </section>
-      }
-      <p>
-        <button mat-stroked-button type="button" (click)="baixarPlanilha()">Planilha padrão</button>
-        <label>Importar
-          <input type="file" accept=".xlsx,.xls" (change)="importar($event)" />
-        </label>
-      </p>
-      @if (lista(); as dados) {
-        <h2>Totais</h2>
-        <p>Situação: {{ dados.porSituacao.map((item) => item.rotulo + ' ' + item.quantidade).join(', ') }}</p>
-        <p>Faixa: {{ dados.porFaixa.map((item) => item.rotulo + ' ' + item.quantidade).join(', ') }}</p>
-        <p>Custo: {{ dados.porCusto.map((item) => item.rotulo + ' ' + item.quantidade).join(', ') }}</p>
-        @if (visao() === 'convite') {
-          <section class="gd-painel">
-            @if (dados.convites.length === 0) {
-              <p class="gd-vazio">Não há convite.</p>
-            } @else {
+            <mat-form-field><input matInput formControlName="telefone" gdMascara="celular" placeholder="Telefone" /></mat-form-field>
+            <mat-form-field><input matInput formControlName="observacao" placeholder="Observação" /></mat-form-field>
+            <mat-checkbox formControlName="somenteConfirmados">Só confirmados</mat-checkbox>
+            <button mat-stroked-button type="submit">Filtrar</button>
+          </form>
+        </div>
+
+        @if (lista(); as dados) {
+          @if (dados.convites.length === 0) {
+            <div class="gd-vazio">
+              <mat-icon>mail</mat-icon>
+              <strong>Nenhum convite</strong>
+              Crie o primeiro convite ou importe a planilha.
+            </div>
+          } @else if (visao() === 'convite') {
+            <div class="gd-tabela-rolagem">
               <table class="gd-grade">
                 <thead>
                   <tr>
@@ -143,26 +105,29 @@ import { EventoAbasComponent } from '../eventos/evento-abas.component';
                   @for (item of dados.convites; track item.id) {
                     <tr>
                       <td>
-                        {{ item.nome }}
+                        <strong>{{ item.nome }}</strong>
                         <span class="gd-sub">{{ item.grupo }} @if (item.acessada) { · acessada } @if (item.respondida) { · respondida }</span>
                       </td>
-                      <td>{{ item.telefone }}</td>
+                      <td>{{ item.telefone || '—' }}</td>
                       <td>
-                        @for (pessoa of item.convidados; track pessoa.id) {
-                          <span>
-                            {{ pessoa.nome }} — {{ pessoa.situacaoIcone }}
-                            @if (pessoa.principal) { <strong>Principal</strong> }
-                            @if (pessoa.celular) {
-                              <button mat-button type="button" (click)="principal(item.id, pessoa.id)">Usar este telefone</button>
-                            }
-                            <button mat-icon-button type="button" aria-label="Excluir convidado" (click)="excluirConvidado(pessoa.id)"><mat-icon>delete</mat-icon></button>
-                          </span>
-                        }
+                        <ul class="gd-lista gd-lista-densa">
+                          @for (pessoa of item.convidados; track pessoa.id) {
+                            <li>
+                              <span>{{ pessoa.nome }}</span>
+                              <span class="gd-status" [class]="classeSituacao(pessoa.situacaoTela)">{{ pessoa.situacaoTela }}</span>
+                              @if (pessoa.principal) { <span class="gd-status neutro">Principal</span> }
+                              @if (pessoa.celular && !pessoa.principal) {
+                                <button mat-button type="button" class="gd-pequeno" (click)="principal(item.id, pessoa.id)">Usar este telefone</button>
+                              }
+                              <button mat-icon-button type="button" aria-label="Excluir convidado" (click)="excluirConvidado(pessoa.id)"><mat-icon>delete</mat-icon></button>
+                            </li>
+                          }
+                        </ul>
                       </td>
                       <td class="gd-acoes">
-                        <button mat-button type="button" (click)="copiar(item.token)">Link</button>
-                        <button mat-button type="button" (click)="baixarQr(item.id)">QR</button>
-                        <button mat-button type="button" (click)="whatsapp(item.id)">WhatsApp</button>
+                        <button mat-icon-button type="button" aria-label="Copiar link de RSVP" (click)="copiar(item.token)"><mat-icon>link</mat-icon></button>
+                        <button mat-icon-button type="button" aria-label="Baixar QR Code" (click)="baixarQr(item.id)"><mat-icon>qr_code_2</mat-icon></button>
+                        <button mat-icon-button type="button" aria-label="Enviar pelo WhatsApp" (click)="whatsapp(item.id)"><mat-icon>chat</mat-icon></button>
                         <button mat-icon-button type="button" aria-label="Editar" (click)="semEdicao()"><mat-icon>edit</mat-icon></button>
                         <button mat-icon-button type="button" aria-label="Excluir" (click)="semExclusao('convite')"><mat-icon>delete</mat-icon></button>
                       </td>
@@ -170,17 +135,100 @@ import { EventoAbasComponent } from '../eventos/evento-abas.component';
                   }
                 </tbody>
               </table>
-            }
-          </section>
-        } @else {
-          @for (item of dados.convites; track item.id) {
-            @for (pessoa of item.convidados; track pessoa.id) {
-              <p>{{ pessoa.nome }} — {{ item.nome }} — {{ pessoa.situacaoTela }} — {{ pessoa.mesa }}</p>
-            }
+            </div>
+          } @else {
+            <div class="gd-tabela-rolagem">
+              <table class="gd-grade">
+                <thead>
+                  <tr><th>Convidado</th><th>Convite</th><th>Situação</th><th>Mesa</th></tr>
+                </thead>
+                <tbody>
+                  @for (item of dados.convites; track item.id) {
+                    @for (pessoa of item.convidados; track pessoa.id) {
+                      <tr>
+                        <td><strong>{{ pessoa.nome }}</strong></td>
+                        <td>{{ item.nome }}</td>
+                        <td><span class="gd-status" [class]="classeSituacao(pessoa.situacaoTela)">{{ pessoa.situacaoTela }}</span></td>
+                        <td>{{ pessoa.mesa || '—' }}</td>
+                      </tr>
+                    }
+                  }
+                </tbody>
+              </table>
+            </div>
           }
         }
-      }
+      </section>
+
+      <div class="gd-grade-cartoes">
+        @if (lista(); as dados) {
+          <section class="gd-painel">
+            <h2>Totais</h2>
+            <p>Por faixa etária e por custo.</p>
+            <ul class="gd-lista">
+              @for (item of dados.porFaixa; track item.rotulo) { <li><span class="gd-crescer">{{ item.rotulo }}</span><strong>{{ item.quantidade }}</strong></li> }
+              @for (item of dados.porCusto; track item.rotulo) { <li><span class="gd-crescer">{{ item.rotulo }}</span><strong>{{ item.quantidade }}</strong></li> }
+            </ul>
+          </section>
+        }
+        <section class="gd-painel">
+          <h2>Transfer do evento</h2>
+          <p>Locais de saída do transporte, um por linha.</p>
+          <div class="gd-campos">
+            <mat-checkbox [checked]="transferAtivo()" (change)="transferAtivo.set($event.checked)">Transfer ativo</mat-checkbox>
+            <mat-form-field><mat-label>Locais</mat-label><textarea matInput rows="3" [value]="locaisTexto()" (input)="locaisTexto.set(texto($event))"></textarea></mat-form-field>
+            <div class="gd-campos-acoes"><button mat-stroked-button type="button" (click)="salvarTransfer()">Salvar transfer</button></div>
+          </div>
+        </section>
+        <section class="gd-painel">
+          <h2>Grupos</h2>
+          <p>Grupos da conta, usados nos convites.</p>
+          <div class="gd-campos">
+            <div class="gd-chips">
+              @for (grupo of grupos(); track grupo.id) { <span class="gd-status neutro">{{ grupo.nome }}</span> }
+            </div>
+            <mat-form-field><mat-label>Novo grupo</mat-label><input matInput [value]="grupoNome()" (input)="grupoNome.set(texto($event))" /></mat-form-field>
+            <div class="gd-campos-acoes"><button mat-stroked-button type="button" (click)="criarGrupo()">Criar grupo</button></div>
+          </div>
+        </section>
+      </div>
     }
+
+    <ng-template #modalConvite>
+      <h2 mat-dialog-title>Novo convite</h2>
+      <p class="gd-dialog-descricao">O convite reúne a família; o telefone fica no convite.</p>
+      <mat-dialog-content>
+        <form id="convite-form" class="gd-campos duas" [formGroup]="convite" (ngSubmit)="criarConvite()">
+          <mat-form-field class="inteiro"><mat-label>Nome do convite</mat-label><input matInput formControlName="nome" placeholder="Ex.: Joana e família" /></mat-form-field>
+          <mat-form-field>
+            <mat-label>Grupo</mat-label>
+            <mat-select formControlName="grupoId">
+              <mat-option value="">Nenhum</mat-option>
+              @for (grupo of grupos(); track grupo.id) { <mat-option [value]="grupo.id">{{ grupo.nome }}</mat-option> }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field><mat-label>Observação</mat-label><input matInput formControlName="observacao" /></mat-form-field>
+          <mat-form-field class="inteiro"><mat-label>Nome do convidado</mat-label><input matInput formControlName="convidado" /></mat-form-field>
+          <mat-form-field><mat-label>DDI</mat-label><input matInput formControlName="ddi" /></mat-form-field>
+          <mat-form-field><mat-label>Celular</mat-label><input matInput formControlName="celular" gdMascara="celular" /></mat-form-field>
+          @if (transferAtivo()) {
+            <mat-checkbox class="inteiro" formControlName="usaTransfer">Usa transfer</mat-checkbox>
+            @if (convite.controls.usaTransfer.value) {
+              <mat-form-field class="inteiro">
+                <mat-label>Origem</mat-label>
+                <mat-select formControlName="localOrigem">
+                  @for (local of locais(); track local) { <mat-option [value]="local">{{ local }}</mat-option> }
+                </mat-select>
+              </mat-form-field>
+            }
+          }
+        </form>
+      </mat-dialog-content>
+      <mat-dialog-actions>
+        <button mat-button type="button" mat-dialog-close>Cancelar</button>
+        <button mat-flat-button type="submit" form="convite-form">Salvar convite</button>
+      </mat-dialog-actions>
+    </ng-template>
   `,
 })
 export class ConvidadosPage implements OnInit {
@@ -196,7 +244,8 @@ export class ConvidadosPage implements OnInit {
   protected readonly transferAtivo = signal(false);
   protected readonly locaisTexto = signal('');
   protected readonly grupoNome = signal('');
-  protected readonly formularioConvite = signal(false);
+  private readonly modalConvite = viewChild.required<TemplateRef<unknown>>('modalConvite');
+  private refConvite: MatDialogRef<unknown> | null = null;
   private readonly dialog = inject(MatDialog);
   protected readonly filtro = this.fb.nonNullable.group({
     nome: '', situacao: '', telefone: '', observacao: '', somenteConfirmados: false,
@@ -263,6 +312,25 @@ export class ConvidadosPage implements OnInit {
     });
   }
 
+  protected abrirConvite(): void {
+    this.convite.reset({ ddi: '+55', usaTransfer: false });
+    this.refConvite = this.dialog.open(this.modalConvite(), DIALOG);
+  }
+
+  protected iconeSituacao(rotulo: string): string {
+    const texto = rotulo.toLowerCase();
+    if (texto.startsWith('confirm')) return 'check_circle';
+    if (texto.startsWith('não') || texto.startsWith('nao')) return 'cancel';
+    return 'schedule';
+  }
+
+  protected classeSituacao(situacao: string): string {
+    const texto = (situacao ?? '').toLowerCase();
+    if (texto.startsWith('confirm')) return 'gd-status ok';
+    if (texto.startsWith('não') || texto.startsWith('nao') || texto.startsWith('cancel')) return 'gd-status erro';
+    return 'gd-status alerta';
+  }
+
   protected criarConvite(): void {
     const valor = this.convite.getRawValue();
     this.negocio.criarConvite(this.eventoId(), {
@@ -281,7 +349,7 @@ export class ConvidadosPage implements OnInit {
     }).subscribe({
       next: () => {
         this.convite.reset({ ddi: '+55', usaTransfer: false });
-        this.formularioConvite.set(false);
+        this.refConvite?.close();
         this.toast.sucesso('Convite criado.');
         this.carregar();
       },
@@ -334,7 +402,7 @@ export class ConvidadosPage implements OnInit {
 
   protected excluirConvidado(id: string): void {
     this.dialog.open(ConfirmaDialog, {
-      ...DIALOG,
+      ...DIALOG_PEQUENO,
       data: { titulo: 'Excluir convidado', texto: 'Confirma a exclusão deste convidado?', confirmar: 'Excluir' },
     }).afterClosed().subscribe((confirmou) => {
       if (!confirmou) {
@@ -356,7 +424,7 @@ export class ConvidadosPage implements OnInit {
 
   protected semExclusao(tipo: string): void {
     this.dialog.open(ConfirmaDialog, {
-      ...DIALOG,
+      ...DIALOG_PEQUENO,
       data: { titulo: 'Excluir', texto: `Confirma a exclusão deste ${tipo}?`, confirmar: 'Excluir' },
     }).afterClosed().subscribe((confirmou) => {
       if (confirmou) {

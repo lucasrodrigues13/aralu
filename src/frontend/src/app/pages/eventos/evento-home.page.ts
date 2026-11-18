@@ -26,7 +26,8 @@ import { CampoDataComponent } from '../../shared/campo-data';
 import { CampoDinheiroComponent } from '../../shared/campo-dinheiro';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { deDataParaIso } from '../../shared/data';
-import { DIALOG } from '../../shared/dialog';
+import { DIALOG, DIALOG_LARGO, DIALOG_PEQUENO } from '../../shared/dialog';
+import { EventoFormPage } from './evento-form.page';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { GdDinheiroPipe } from '../../shared/gd-dinheiro.pipe';
 import { GdHoraPipe } from '../../shared/gd-hora.pipe';
@@ -39,7 +40,7 @@ import { EventoAbasComponent } from './evento-abas.component';
   template: `
     <h2 mat-dialog-title>Contratar fornecedor</h2>
     <mat-dialog-content>
-      <form class="formulario" [formGroup]="form">
+      <form class="gd-campos" [formGroup]="form">
         <app-campo-dinheiro rotulo="Valor" formControlName="valor" />
         <mat-form-field appearance="outline"><mat-label>Parcelas</mat-label><input matInput type="number" min="1" formControlName="quantidadeParcelas" /></mat-form-field>
         <app-campo-data rotulo="Primeira parcela" formControlName="primeiraParcela" />
@@ -137,7 +138,7 @@ export class NomeServicoDialog {
   template: `
     <h2 mat-dialog-title>Subitens — {{ dados.nome }}</h2>
     <mat-dialog-content>
-      <form class="formulario" [formGroup]="form">
+      <form class="gd-campos" [formGroup]="form">
         <app-campo-dinheiro rotulo="Valor estimado (sem subitens)" formControlName="valorEstimado" />
         <div formArrayName="subitens">
           @for (ctrl of subitens.controls; track $index; let i = $index) {
@@ -692,7 +693,7 @@ export class EventoHomePage implements OnInit, OnDestroy {
 
   protected encerrar(acao: 'concluir' | 'cancelar'): void {
     const ref = this.dialog.open(ConfirmaDialog, {
-      ...DIALOG,
+      ...DIALOG_PEQUENO,
       data: {
         titulo: acao === 'concluir' ? 'Concluir evento' : 'Cancelar evento',
         texto: 'Confirma a mudança de situação?',
@@ -738,7 +739,11 @@ export class EventoHomePage implements OnInit, OnDestroy {
   }
 
   protected editar(): void {
-    void this.router.navigate(['/eventos', this.id, 'editar']);
+    this.dialog.open(EventoFormPage, { ...DIALOG_LARGO, data: { id: this.id } }).afterClosed().subscribe((salvo) => {
+      if (salvo) {
+        this.recarregar();
+      }
+    });
   }
 
   protected criarCliente(): void {

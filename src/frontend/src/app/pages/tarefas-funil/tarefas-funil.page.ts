@@ -13,7 +13,7 @@ import { ToastService } from '../../core/toast.service';
 import { CampoDataComponent } from '../../shared/campo-data';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { deDataParaIso, deIsoParaData } from '../../shared/data';
-import { DIALOG } from '../../shared/dialog';
+import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 
 @Component({
@@ -22,7 +22,7 @@ import { GdDataPipe } from '../../shared/gd-data.pipe';
   template: `
     <h2 mat-dialog-title>{{ dados ? 'Editar tarefa' : 'Nova tarefa' }}</h2>
     <mat-dialog-content>
-      <form class="formulario" [formGroup]="form">
+      <form class="gd-campos" [formGroup]="form">
         <mat-form-field appearance="outline"><mat-label>Título</mat-label><input matInput formControlName="titulo" /></mat-form-field>
         <mat-form-field appearance="outline">
           <mat-label>Oportunidade</mat-label>
@@ -180,7 +180,7 @@ export class TarefasFunilPage implements OnInit {
 
   protected excluir(item: TarefaFunil): void {
     this.dialog.open(ConfirmaDialog, {
-      ...DIALOG,
+      ...DIALOG_PEQUENO,
       data: { titulo: 'Excluir tarefa', texto: `Confirma a exclusão de "${item.titulo}"?`, confirmar: 'Excluir' },
     }).afterClosed().subscribe((ok) => {
       if (!ok) return;

@@ -13,7 +13,7 @@ import { ModeloOrcamentoFunil, NegocioClient, Oportunidade, OrcamentoFunil } fro
 import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { CampoDinheiroComponent } from '../../shared/campo-dinheiro';
-import { DIALOG } from '../../shared/dialog';
+import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 
 @Component({
@@ -22,7 +22,7 @@ import { GdDataPipe } from '../../shared/gd-data.pipe';
   template: `
     <h2 mat-dialog-title>{{ dados ? 'Editar orçamento' : 'Novo orçamento' }}</h2>
     <mat-dialog-content>
-      <form class="formulario" [formGroup]="form">
+      <form class="gd-campos" [formGroup]="form">
         @if (!dados) {
           <mat-form-field appearance="outline">
             <mat-label>Oportunidade</mat-label>
@@ -196,7 +196,7 @@ export class OrcamentosFunilPage implements OnInit {
 
   protected excluir(item: OrcamentoFunil): void {
     this.dialog.open(ConfirmaDialog, {
-      ...DIALOG,
+      ...DIALOG_PEQUENO,
       data: { titulo: 'Excluir orçamento', texto: 'Confirma a exclusão?', confirmar: 'Excluir' },
     }).afterClosed().subscribe((ok) => {
       if (!ok) return;

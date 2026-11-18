@@ -14,7 +14,7 @@ import { mensagemDeErro } from '../../core/mensagem-erro';
 import { Fornecedor, NegocioClient, ServicoConta } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { CampoDinheiroComponent } from '../../shared/campo-dinheiro';
-import { DIALOG } from '../../shared/dialog';
+import { DIALOG_LARGO } from '../../shared/dialog';
 import { MascaraDirective } from '../../shared/mascara.directive';
 import { TipoMascara, aplicarMascara } from '../../shared/mascaras';
 
@@ -34,13 +34,7 @@ const TIPOS_PIX = [
   { valor: 'Aleatoria', rotulo: 'Chave aleatória' },
 ];
 
-export const DIALOG_FORNECEDOR = {
-  ...DIALOG,
-  panelClass: ['gd-dialog', 'gd-dialog-largo'],
-  width: 'min(1120px, calc(100vw - 32px))',
-  maxWidth: 'min(1120px, calc(100vw - 32px))',
-  maxHeight: '90vh',
-};
+export const DIALOG_FORNECEDOR = DIALOG_LARGO;
 
 @Component({
   selector: 'app-fornecedor-form-dialog',
@@ -51,7 +45,7 @@ export const DIALOG_FORNECEDOR = {
   template: `
     <h2 mat-dialog-title>{{ dados ? 'Editar fornecedor' : 'Novo fornecedor' }}</h2>
     <mat-dialog-content>
-      <form class="formulario" [formGroup]="form">
+      <form class="gd-campos" [formGroup]="form">
         <mat-tab-group dynamicHeight>
           <mat-tab label="Dados">
             <div class="aba">

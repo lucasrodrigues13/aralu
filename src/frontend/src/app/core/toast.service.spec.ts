@@ -15,7 +15,7 @@ describe('ToastService', () => {
     expect(openFromComponent).toHaveBeenCalledWith(
       ToastAviso,
       expect.objectContaining({
-        data: 'Salvo.',
+        data: { mensagem: 'Salvo.', erro: false },
         verticalPosition: 'top',
         horizontalPosition: 'end',
         panelClass: ['gd-toast', 'gd-toast-sucesso'],

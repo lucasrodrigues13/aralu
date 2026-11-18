@@ -1,5 +1,7 @@
 # Escopo do MVP
 
+> **Em revisão (18/11/2026).** O escopo da versão 1.0 foi consolidado em [produto-v1.md](produto-v1.md). Quando aquele documento for aprovado, ele substitui este corte; até lá, este texto continua valendo para o que já está em código.
+
 **Status: aprovado.** Vale o comportamento das specs **001 a 028**. O que a spec deixou de fora continua fora. Peças de marketplace (RF-079), assistente (RF-045), login de fornecedor (RF-060) e financeiro da empresa (RF-076) ficam fora deste corte. A fonte é [brief.md](brief.md), [inventario-referencia.md](inventario-referencia.md) e a seção 2.7 de [requirements.md](requirements.md).
 
 ## 1. Objetivo

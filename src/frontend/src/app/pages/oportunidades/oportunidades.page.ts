@@ -20,7 +20,7 @@ import { CampoDataComponent } from '../../shared/campo-data';
 import { CampoDinheiroComponent } from '../../shared/campo-dinheiro';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { deDataParaIso, deIsoParaData } from '../../shared/data';
-import { DIALOG } from '../../shared/dialog';
+import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { GdDinheiroPipe } from '../../shared/gd-dinheiro.pipe';
 import { grupoLocal, localPedido, LocalCamposComponent } from '../../shared/local-campos';
 
@@ -40,7 +40,7 @@ import { grupoLocal, localPedido, LocalCamposComponent } from '../../shared/loca
   template: `
     <h2 mat-dialog-title>{{ dados ? 'Editar oportunidade' : 'Nova oportunidade' }}</h2>
     <mat-dialog-content>
-      <form class="formulario" [formGroup]="form">
+      <form class="gd-campos" [formGroup]="form">
         <h3>Sobre a oportunidade</h3>
         <mat-form-field appearance="outline"><mat-label>Nome</mat-label><input matInput formControlName="nome" /></mat-form-field>
         <mat-form-field appearance="outline">
@@ -263,7 +263,7 @@ export class OportunidadeDialog implements OnInit {
       </div>
     </header>
     <section class="gd-painel">
-      <form class="gd-barra filtros" [formGroup]="filtros" (ngSubmit)="carregar()">
+      <form class="gd-barra gd-filtros" [formGroup]="filtros" (ngSubmit)="carregar()">
         <mat-form-field class="gd-busca" appearance="outline" subscriptSizing="dynamic">
           <mat-icon matIconPrefix>search</mat-icon>
           <input matInput formControlName="nome" placeholder="Buscar por nome" />
@@ -382,7 +382,7 @@ export class OportunidadesPage implements OnInit {
 
   protected excluir(item: Oportunidade): void {
     this.dialog.open(ConfirmaDialog, {
-      ...DIALOG,
+      ...DIALOG_PEQUENO,
       data: { titulo: 'Excluir oportunidade', texto: `Confirma a exclusão de "${item.nome}"?`, confirmar: 'Excluir' },
     }).afterClosed().subscribe((confirmou) => {
       if (!confirmou) return;

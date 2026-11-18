@@ -13,7 +13,7 @@ import { ToastService } from '../../core/toast.service';
   selector: 'app-rsvp',
   imports: [ReactiveFormsModule, MatCardModule, MatButtonModule, MatRadioModule, MatCheckboxModule],
   template: `
-    <section class="pagina-publica">
+    <section class="gd-publica">
       <mat-card>
         <mat-card-header><mat-card-title>{{ titulo() || 'Confirmação de presença' }}</mat-card-title></mat-card-header>
         <mat-card-content>

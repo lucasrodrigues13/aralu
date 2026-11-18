@@ -13,7 +13,7 @@ import { ToastService } from '../../core/toast.service';
   selector: 'app-esqueci-senha',
   imports: [ReactiveFormsModule, RouterLink, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule],
   template: `
-    <section class="pagina-publica">
+    <section class="gd-publica">
       <mat-card>
         <mat-card-header>
           <mat-card-title>Esqueci a senha</mat-card-title>

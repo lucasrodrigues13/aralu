@@ -10,7 +10,7 @@ import { mensagemDeErro } from '../../core/mensagem-erro';
 import { Briefing, NegocioClient } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
-import { DIALOG } from '../../shared/dialog';
+import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 
 @Component({
@@ -20,9 +20,9 @@ import { GdDataPipe } from '../../shared/gd-data.pipe';
     <h2 mat-dialog-title>{{ dados ? 'Editar briefing' : 'Novo briefing' }}</h2>
     <mat-dialog-content>
       @if (avisoPadrao()) {
-        <p class="aviso">Modelo padrão: clone antes de editar.</p>
+        <p class="gd-alerta info">Modelo padrão: clone antes de editar.</p>
       }
-      <form class="formulario" [formGroup]="form">
+      <form class="gd-campos" [formGroup]="form">
         <mat-form-field appearance="outline"><mat-label>Nome</mat-label><input matInput formControlName="nome" [readonly]="avisoPadrao()" /></mat-form-field>
         <mat-form-field appearance="outline"><mat-label>Origem</mat-label><input matInput formControlName="origem" [readonly]="avisoPadrao()" /></mat-form-field>
         <div formArrayName="secoes">
@@ -260,7 +260,7 @@ export class ModelosBriefingPage implements OnInit {
 
   protected excluir(item: Briefing): void {
     this.dialog.open(ConfirmaDialog, {
-      ...DIALOG,
+      ...DIALOG_PEQUENO,
       data: { titulo: 'Excluir briefing', texto: `Confirma a exclusão de "${item.nome}"?`, confirmar: 'Excluir' },
     }).afterClosed().subscribe((confirmou) => {
       if (!confirmou) {

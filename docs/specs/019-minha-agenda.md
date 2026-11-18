@@ -26,8 +26,8 @@ Conta autenticada, SPEC-001. Evento com data marcado para a agenda pela SPEC-008
 
 1. O Organizer abre Minha agenda.
 2. A tela oferece as vistas Mês, Semana, Dia e Lista, além de anterior, próxima e Hoje.
-3. O Organizer cria um compromisso com descrição e data e salva.
-4. O compromisso aparece nas vistas do período correspondente.
+3. O Organizer cria um compromisso com descrição, data e hora opcional e salva. Pode criar pelo botão "Novo compromisso" ou pelo "+" no canto de um dia da vista Mês, que abre o modal com a data desse dia.
+4. O compromisso aparece nas vistas do período correspondente. Clicar num item abre o modal de resumo: evento mostra nome, tipo, data e hora, situação, locais, convidados e tarefas, com "Abrir evento"; compromisso mostra descrição, data e hora, com Editar e Excluir.
 5. O Organizer edita descrição ou data e salva de novo.
 6. O Organizer exclui o compromisso; ele some da agenda.
 
@@ -60,11 +60,11 @@ Compromisso existente ou excluído. Não há situação intermediária de confir
 
 ## 11. Dados necessários
 
-Descrição, data e, quando vier da SPEC-008, vínculo com o evento da conta. Hora é opcional quando a origem do evento a informar.
+Descrição, data, hora opcional e, quando vier da SPEC-008, vínculo com o evento da conta. O compromisso é uma marcação genérica da agenda (reunião, visita, prova); não tem tipo próprio.
 
 ## 12. Interface
 
-Tela sem submenu. Comandos anterior, próxima e Hoje. Vistas Mês, Semana, Dia e Lista. Inclusão, edição e exclusão do compromisso. Angular Material, DA-044. Sem o comando de integrar Google neste corte.
+Tela sem submenu. Comandos anterior, próxima e Hoje. Vistas Mês, Semana, Dia e Lista. A vista Mês é a grade do calendário (design-system 5.16): domingo a sábado, semanas completas, até 3 itens por dia e "+ N mais", que abre a vista Dia; cor do item por tipo (evento ou compromisso) com legenda; "+" no canto superior direito de cada dia. Semana, Dia e Lista mostram os itens em lista. Inclusão, edição e resumo em modal. Angular Material, DA-044. Sem o comando de integrar Google neste corte.
 
 ## 13. Erros
 
@@ -80,6 +80,8 @@ Data ou descrição inválida indica o campo. Item de outra conta fica indispon�
 6. Evento marcado na SPEC-008 aparece no período correspondente.
 7. Outra conta não vê o compromisso.
 8. Integração Google e confirmação por link não aparecem neste corte.
+9. O "+" de um dia da vista Mês abre o modal de novo compromisso com a data desse dia preenchida.
+10. Clicar num item abre o modal de resumo; no compromisso, Editar e Excluir partem desse modal; no evento, "Abrir evento" leva à home do evento.
 
 ## 15. Cenários de teste
 
@@ -91,4 +93,4 @@ SPEC-001 e SPEC-008. SPEC-007 não depende desta tela.
 
 ## 17. Premissas e pontos não definidos
 
-Formato de hora quando o compromisso não veio de evento. Texto exato do período vazio.
+Texto exato do período vazio. Calendário mensal, "+" por dia e modal de resumo pedidos pelo usuário em 18/11/2026.

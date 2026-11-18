@@ -130,7 +130,7 @@ import { aplicarMascara } from '../../shared/mascaras';
         <p>Dados da assessoria.</p>
       </div>
     </header>
-    <form class="formulario" [formGroup]="formulario" (ngSubmit)="salvar()">
+    <form class="gd-campos" [formGroup]="formulario" (ngSubmit)="salvar()">
       <div class="gd-edicao">
         <div class="gd-coluna">
           <mat-card>

@@ -25,7 +25,7 @@ import { aplicarMascara } from '../../shared/mascaras';
   template: `
     <h2 mat-dialog-title>{{ dados ? 'Editar cliente' : 'Novo cliente' }}</h2>
     <mat-dialog-content>
-      <form id="cliente-form" class="gd-dialog-miolo" [formGroup]="formulario" (ngSubmit)="salvar()">
+      <form id="cliente-form" class="gd-campos" [formGroup]="formulario" (ngSubmit)="salvar()">
         <mat-tab-group>
           <mat-tab label="Dados pessoais">
             <mat-form-field appearance="outline"><mat-label>Nome completo</mat-label><input matInput formControlName="nome" /></mat-form-field>
@@ -85,7 +85,7 @@ import { aplicarMascara } from '../../shared/mascaras';
   `,
   styles: `
     .gd-flags { display: grid; gap: 0.35rem; margin-top: 1rem; }
-    .gd-apoio { margin: 0.75rem 0 0; color: var(--gd-texto-suave, #667); font-size: 0.875rem; }
+    .gd-apoio { margin: 12px 0 0; }
     mat-slide-toggle { display: block; margin-top: 0.5rem; }
   `,
 })

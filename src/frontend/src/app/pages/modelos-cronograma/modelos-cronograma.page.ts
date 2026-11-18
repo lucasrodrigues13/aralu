@@ -14,7 +14,7 @@ import { CampoHoraComponent } from '../../shared/campo-hora';
 import { horaParaApi } from '../../shared/mascaras';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { deDataParaIso, deIsoParaData } from '../../shared/data';
-import { DIALOG } from '../../shared/dialog';
+import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 
 @Component({
   selector: 'app-cronograma-editor-dialog',
@@ -25,7 +25,7 @@ import { DIALOG } from '../../shared/dialog';
   template: `
     <h2 mat-dialog-title>{{ dados ? 'Editar cronograma' : 'Novo cronograma' }}</h2>
     <mat-dialog-content>
-      <form class="formulario" [formGroup]="form">
+      <form class="gd-campos" [formGroup]="form">
         <mat-form-field appearance="outline"><mat-label>Título</mat-label><input matInput formControlName="titulo" /></mat-form-field>
         <mat-form-field appearance="outline"><mat-label>Descrição</mat-label><textarea matInput rows="2" formControlName="descricao"></textarea></mat-form-field>
         <div formArrayName="itens">
@@ -224,7 +224,7 @@ export class ModelosCronogramaPage implements OnInit {
 
   protected excluir(item: Cronograma): void {
     this.dialog.open(ConfirmaDialog, {
-      ...DIALOG,
+      ...DIALOG_PEQUENO,
       data: { titulo: 'Excluir cronograma', texto: `Confirma a exclusão de "${item.titulo}"?`, confirmar: 'Excluir' },
     }).afterClosed().subscribe((confirmou) => {
       if (!confirmou) {

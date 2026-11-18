@@ -11,7 +11,7 @@ import { AuthService } from '../../core/auth.service';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { NegocioClient, SITUACOES_TAREFA, Tarefa } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
-import { DIALOG } from '../../shared/dialog';
+import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { TarefaFormDialog } from './tarefa-form.dialog';
@@ -137,7 +137,7 @@ export class TarefasPage implements OnInit {
 
   protected excluir(): void {
     this.dialog.open(ConfirmaDialog, {
-      ...DIALOG,
+      ...DIALOG_PEQUENO,
       data: { titulo: 'Excluir tarefa', texto: 'Confirma a exclusão desta tarefa?', confirmar: 'Excluir' },
     }).afterClosed().subscribe((confirmou) => {
       if (confirmou) {
