@@ -41,7 +41,9 @@ public sealed record SalvarEvento(
     TipoEvento? Tipo = null,
     Guid? ClienteId = null,
     ClienteRapido? ClienteNovo = null,
-    string? Local = null);
+    string? Local = null,
+    /// <summary>Na edição: true move prazos das tarefas não concluídas; false mantém (SPEC-012 §6.6).</summary>
+    bool? MoverPrazos = null);
 
 /// <summary>Cliente criado junto com o evento: só nome e WhatsApp (SPEC-008 v2).</summary>
 public sealed record ClienteRapido(string? Nome, string? WhatsApp);
@@ -381,6 +383,31 @@ public sealed class EventoServico(IDados dados, IConsultaCep cep)
         if (!recepcao.Ok)
         {
             return Resultado<EventoDetalhe>.Erro(recepcao.Falha!.Codigo, recepcao.Falha.Mensagem);
+        }
+
+        var dataAnterior = evento.Data;
+        if (dataAnterior is DateOnly antiga
+            && pedido.Data is DateOnly nova
+            && antiga != nova
+            && pedido.MoverPrazos == true)
+        {
+            var delta = nova.DayNumber - antiga.DayNumber;
+            var tarefas = await dados.ListarTarefasAsync(contaId, id, ct);
+            foreach (var tarefa in tarefas)
+            {
+                if (tarefa.Situacao == SituacaoTarefa.Concluida || tarefa.Prazo is null)
+                {
+                    continue;
+                }
+
+                var obtida = await dados.ObterTarefaAsync(contaId, tarefa.Id, ct);
+                if (obtida?.Prazo is DateOnly prazo)
+                {
+                    obtida.Prazo = prazo.AddDays(delta);
+                }
+            }
+
+            await dados.SalvarTarefaAsync(ct);
         }
 
         evento.Nome = nome;

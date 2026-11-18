@@ -6,7 +6,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTabsModule } from '@angular/material/tabs';
-import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatDialog, MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { NegocioClient } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
@@ -14,8 +14,10 @@ import { CampoDataComponent } from '../../shared/campo-data';
 import { CampoDinheiroComponent } from '../../shared/campo-dinheiro';
 import { CampoHoraComponent } from '../../shared/campo-hora';
 import { deDataParaIso, deIsoParaData } from '../../shared/data';
+import { DIALOG_PEQUENO } from '../../shared/dialog';
 import { grupoLocal, localPedido, LocalCamposComponent } from '../../shared/local-campos';
 import { aplicarMascara, horaParaApi } from '../../shared/mascaras';
+import { MoverPrazosDialog } from './mover-prazos.dialog';
 
 export interface EventoFormDados {
   id?: string;
@@ -92,10 +94,12 @@ export class EventoFormPage implements OnInit {
   private readonly dadosDialogo = inject<EventoFormDados | null>(MAT_DIALOG_DATA, { optional: true });
   private readonly dialogRef = inject(MatDialogRef<EventoFormPage, string>);
   private readonly toast = inject(ToastService);
+  private readonly dialog = inject(MatDialog);
   protected readonly tipo = signal('');
   protected readonly urlSite = signal('');
   private foto: File | null = null;
   protected id = '';
+  private dataOriginal: string | null = null;
 
   protected readonly formulario = this.fb.group({
     primeiroNome: '',
@@ -126,6 +130,7 @@ export class EventoFormPage implements OnInit {
         next: (evento) => {
           this.tipo.set(evento.tipo);
           this.urlSite.set(evento.urlSite ?? '');
+          this.dataOriginal = evento.data ? evento.data.slice(0, 10) : null;
           this.formulario.patchValue({
             primeiroNome: evento.primeiroNome ?? '',
             segundoNome: evento.segundoNome ?? '',
@@ -159,7 +164,33 @@ export class EventoFormPage implements OnInit {
   }
 
   protected salvar(): void {
-    const pedido = this.pedido();
+    const dataNova = deDataParaIso(this.formulario.controls.data.value);
+    const dataMudou = this.dataOriginal != null && dataNova != null && this.dataOriginal !== dataNova;
+    if (!dataMudou) {
+      this.gravar(null);
+      return;
+    }
+
+    this.negocio.tarefasDoEvento(this.id).subscribe({
+      next: (tarefas) => {
+        const afetadas = tarefas.some((t) => t.situacao !== 'Concluida' && !!t.prazo);
+        if (!afetadas) {
+          this.gravar(null);
+          return;
+        }
+        this.dialog.open(MoverPrazosDialog, { ...DIALOG_PEQUENO }).afterClosed().subscribe((mover) => {
+          if (mover === undefined) {
+            return;
+          }
+          this.gravar(!!mover);
+        });
+      },
+      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+    });
+  }
+
+  private gravar(moverPrazos: boolean | null): void {
+    const pedido = { ...this.pedido(), moverPrazos };
     this.negocio.atualizarEvento(this.id, pedido).subscribe({
       next: (evento) => {
         const seguir = () => {
