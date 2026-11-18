@@ -22,6 +22,31 @@ public static class Mascaras
 
     public static string? Cnpj(string? valor) => Mascara(valor, 14, "{0}.{1}.{2}/{3}-{4}", [2, 3, 3, 4, 2]);
 
+    /// <summary>
+    /// Celular brasileiro com DDD: aceita 10 ou 11 dígitos (com ou sem o 55 na frente)
+    /// e devolve "(DD) 9XXXX-XXXX" ou "(DD) XXXX-XXXX". Vazio quando não fecha; nulo quando não veio.
+    /// </summary>
+    public static string? Celular(string? valor)
+    {
+        var digitos = SoDigitos(valor);
+        if (digitos is null)
+        {
+            return null;
+        }
+
+        if (digitos.Length is 12 or 13 && digitos.StartsWith("55", StringComparison.Ordinal))
+        {
+            digitos = digitos[2..];
+        }
+
+        return digitos.Length switch
+        {
+            11 => $"({digitos[..2]}) {digitos[2..7]}-{digitos[7..]}",
+            10 => $"({digitos[..2]}) {digitos[2..6]}-{digitos[6..]}",
+            _ => "",
+        };
+    }
+
     public static string? SoDigitos(string? valor)
     {
         var texto = valor?.Trim();

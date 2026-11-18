@@ -9,7 +9,7 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 import { filter, map } from 'rxjs';
 import { AuthService } from '../core/auth.service';
 import { ContaClient } from '../core/conta.client';
-import { EventoFormPage } from '../pages/eventos/evento-form.page';
+import { NovoEventoDialog } from '../pages/eventos/novo-evento.dialog';
 import { DIALOG_LARGO } from '../shared/dialog';
 import { TemaBotao } from '../shared/tema-botao';
 
@@ -220,7 +220,7 @@ export class CascaComponent {
   }
 
   protected novoEvento(): void {
-    this.dialog.open(EventoFormPage, { ...DIALOG_LARGO, data: {} });
+    this.dialog.open(NovoEventoDialog, DIALOG_LARGO);
   }
 
   protected sair(): void {

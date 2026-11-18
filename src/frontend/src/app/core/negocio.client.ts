@@ -321,7 +321,7 @@ export interface PermissoesCliente {
 export interface Cliente {
   id: string;
   nome: string;
-  papel: string;
+  papel: string | null;
   nascimento: string | null;
   email: string;
   ddi: string;
@@ -709,6 +709,10 @@ export class NegocioClient {
 
   atualizarEvento(id: string, pedido: unknown) {
     return this.http.put<EventoDetalhe>(`${this.base}/api/v1/eventos/${id}`, pedido);
+  }
+
+  resumoEvento(id: string) {
+    return this.http.get<ResumoEvento>(`${this.base}/api/v1/eventos/${id}/resumo`);
   }
 
   concluir(id: string) {
@@ -1254,3 +1258,31 @@ export const TIPOS_TAREFA_FUNIL = [
   { valor: 'Email', rotulo: 'E-mail' },
   { valor: 'Tarefa', rotulo: 'Tarefa' },
 ];
+
+/** Para onde o alerta do resumo leva (SPEC-008 v2, 8.3). */
+export type DestinoAlerta = 'TarefasAtrasadas' | 'Fornecedores' | 'ConvidadosPendentes' | 'Editar';
+
+export interface AlertaEvento {
+  codigo: string;
+  quantidade: number;
+  texto: string;
+  destino: DestinoAlerta;
+}
+
+export interface ResumoEvento {
+  tarefasConcluidas: number;
+  tarefas: number;
+  tarefasAtrasadas: number;
+  convidadosConfirmados: number;
+  convidadosPendentes: number;
+  convidadosRecusados: number;
+  convidados: number;
+  servicosContratados: number;
+  servicos: number;
+  servicosSemFornecedor: number;
+  orcamentoEstimado: number | null;
+  valorContratado: number;
+  valorPago: number;
+  cliente: { id: string; nome: string; ddi: string; celular: string } | null;
+  alertas: AlertaEvento[];
+}

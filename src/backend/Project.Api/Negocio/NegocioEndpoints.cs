@@ -52,6 +52,7 @@ public static class NegocioEndpoints
         api.MapPost("/eventos/{id:guid}/servicos/{servicoId:guid}/fornecedores/{vinculoId:guid}/voltar", VoltarEtapa).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapPost("/eventos/{id:guid}/servicos/{servicoId:guid}/fornecedores/{vinculoId:guid}/contratar", ContratarFornecedor).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapGet("/eventos/{id:guid}/budget", Budget).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
+        api.MapGet("/eventos/{id:guid}/resumo", ResumoEvento).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapGet("/eventos", Eventos);
         api.MapGet("/eventos/{id:guid}", Evento);
         api.MapPost("/eventos", CriarEvento).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
@@ -447,6 +448,9 @@ public static class NegocioEndpoints
 
     private static Task<IResult> Cancelar(Guid id, ClaimsPrincipal usuario, EventoServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.EncerrarAsync(conta, id, SituacaoEvento.Cancelado, Hoje(), ct)));
+
+    private static Task<IResult> ResumoEvento(Guid id, ClaimsPrincipal usuario, EventoServico servico, CancellationToken ct) =>
+        ComConta(usuario, conta => De(servico.ResumoAsync(conta, id, Hoje(), ct)));
 
     private static Task<IResult> Assessoria(Guid id, AssessoriaPedido pedido, ClaimsPrincipal usuario, EventoServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.DefinirAssessoriaAsync(conta, id, pedido, Hoje(), ct)));

@@ -240,3 +240,87 @@
   border-color: var(--gd-ring);
   box-shadow: var(--gd-anel-foco);
 }
+
+// Escolha em cartões (5.18): tipo e pacote do evento
+.gd-grupo-opcoes {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.gd-grupo-opcoes > .gd-rotulo {
+  padding: 0;
+}
+
+.gd-obrigatorio {
+  color: var(--gd-destructive);
+}
+
+.gd-opcoes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  gap: 8px;
+}
+
+.gd-opcoes.largas {
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+}
+
+.gd-opcao {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 4px;
+  min-height: 64px;
+  padding: 10px 12px;
+  border: 1px solid var(--gd-border);
+  border-radius: var(--gd-radius-campo);
+  background: var(--gd-card);
+  color: var(--gd-foreground);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s, background-color 0.15s, box-shadow 0.15s;
+}
+
+.gd-opcao:hover {
+  background: color-mix(in oklab, var(--gd-muted) 50%, var(--gd-card));
+}
+
+.gd-opcao:focus-visible {
+  outline: none;
+  box-shadow: var(--gd-anel-foco);
+}
+
+.gd-opcao.ativa {
+  border-color: var(--gd-primary);
+  background: color-mix(in oklab, var(--gd-primary) 8%, var(--gd-card));
+  box-shadow: inset 0 0 0 1px var(--gd-primary);
+}
+
+.gd-opcao .mat-icon {
+  width: 20px;
+  height: 20px;
+  font-size: 20px;
+  color: var(--gd-muted-foreground);
+}
+
+.gd-opcao.ativa .mat-icon {
+  color: var(--gd-primary);
+}
+
+.gd-opcao .gd-sub {
+  font-size: 12px;
+  font-weight: 400;
+}
+
+@media (max-width: 639px) {
+  .gd-opcoes,
+  .gd-opcoes.largas {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

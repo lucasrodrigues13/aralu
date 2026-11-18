@@ -98,7 +98,7 @@ export class ClienteFormDialog {
   protected readonly papeis = PAPEIS;
   protected readonly formulario = this.fb.nonNullable.group({
     nome: [this.dados?.nome ?? '', Validators.required],
-    papel: [this.dados?.papel ?? 'Noiva', Validators.required],
+    papel: [this.dados ? (this.dados.papel ?? '') : 'Noiva', Validators.required],
     nascimento: this.fb.control<Date | null>(deIsoParaData(this.dados?.nascimento)),
     email: [this.dados?.email ?? '', Validators.required],
     ddi: this.dados?.ddi ?? '+55',
@@ -133,8 +133,8 @@ export class ClienteFormDialog {
     }),
   });
 
-  protected rotulo(papel: string): string {
-    return ROTULO_PAPEL[papel] ?? papel;
+  protected rotulo(papel: string | null): string {
+    return papel ? (ROTULO_PAPEL[papel] ?? papel) : 'Sem papel';
   }
 
   protected completarCep(): void {

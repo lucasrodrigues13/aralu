@@ -8,7 +8,7 @@ public sealed class Cliente
 
     public string Nome { get; set; } = "";
 
-    public PapelCliente Papel { get; set; }
+    public PapelCliente? Papel { get; set; }
 
     public DateOnly? Nascimento { get; set; }
 

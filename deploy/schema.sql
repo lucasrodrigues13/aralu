@@ -1724,3 +1724,28 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261118192817_CriacaoCurtaDoEvento') THEN
+    ALTER TABLE "Eventos" ALTER COLUMN "ModeloId" DROP NOT NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261118192817_CriacaoCurtaDoEvento') THEN
+    ALTER TABLE "Clientes" ALTER COLUMN "Papel" DROP NOT NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261118192817_CriacaoCurtaDoEvento') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261118192817_CriacaoCurtaDoEvento', '10.0.4');
+    END IF;
+END $EF$;
+COMMIT;
+

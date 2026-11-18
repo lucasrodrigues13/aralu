@@ -247,7 +247,6 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Papel")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<bool>("PermiteAnexos")
@@ -493,7 +492,7 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<TimeOnly?>("InicioRecepcao")
                         .HasColumnType("time without time zone");
 
-                    b.Property<Guid>("ModeloId")
+                    b.Property<Guid?>("ModeloId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("Nome")

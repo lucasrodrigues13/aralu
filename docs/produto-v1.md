@@ -106,11 +106,11 @@ Substitui o dashboard atual (SPEC-007, RF-080 a RF-082).
 |---|---|---|
 | Lista com abas em andamento / concluído / cancelado, busca, filtros, tags, cartão | Pronto | G (SPEC-002, 008) |
 | Visão em tabela além de cartões; status de atenção automático pela data | Novo | PDF, IV |
-| Excluir/cancelar fora do cartão, dentro de Dados ou "Mais" | Ajustar | PDF |
-| **Criar em uma tela**: obrigatório tipo e nome do casal; data, horário, convidados e local opcionais; cliente na mesma tela (existente ou novo com nome e WhatsApp); data digitável | Ajustar (hoje exige modelo e mais campos) | PDF, CF, IV, G (SPEC-008) |
+| Excluir/cancelar fora do cartão, dentro de Dados ou "Mais" | Pronto no Resumo ("Mais"); na lista, com a SPEC-002 | PDF |
+| **Criar em uma tela**: obrigatório tipo e nome do casal; data, horário, convidados e local opcionais; cliente na mesma tela (existente ou novo com nome e WhatsApp); data digitável | Pronto (SPEC-008 v2) | PDF, CF, IV, G (SPEC-008) |
 | Pacote (assessoria completa, parcial, final) escolhe o modelo de tarefas e roteiro; o cartão do tipo mostra "N tarefas · N momentos" | Ajustar | PDF, CF |
-| Valor da assessoria e parcelas **depois**, no Dinheiro do evento, não no passo de criação | Ajustar (hoje é passo obrigatório após criar) | PDF, G |
-| Resumo do evento em cartões (tarefas, dinheiro, convidados, fornecedores, roteiro, equipe, casal, notas) com alertas acionáveis no topo | Ajustar (substitui a home atual) | PDF, CF, WP, AV |
+| Valor da assessoria e parcelas **depois**, no Dinheiro do evento, não no passo de criação | Pronto na criação (SPEC-008 v2); o Dinheiro do evento vem no bloco 6 | PDF, G |
+| Resumo do evento em cartões (tarefas, dinheiro, convidados, fornecedores, roteiro, equipe, casal, notas) com alertas acionáveis no topo | Pronto para tarefas, convidados, fornecedores, orçamento e cliente (SPEC-008 v2); os outros cartões entram com seus blocos | PDF, CF, WP, AV |
 | Dados do evento: detalhes, cerimônia e recepção com CEP, horários, padrinhos, damas | Pronto | G (SPEC-008) |
 | Estatísticas e rankings | Pronto | G (SPEC-011) |
 | Salvar evento como modelo (tarefas com "dias antes" e roteiro) | Novo | CF, IV |

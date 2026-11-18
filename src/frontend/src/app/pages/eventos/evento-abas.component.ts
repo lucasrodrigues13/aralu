@@ -6,9 +6,10 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
   imports: [RouterLink, RouterLinkActive],
   template: `
     <nav class="gd-abas" aria-label="Seções do evento">
-      <a [routerLink]="['/eventos', eventoId()]" routerLinkActive="ativa" [routerLinkActiveOptions]="{ exact: true }">Início</a>
-      <a [routerLink]="['/eventos', eventoId(), 'convidados']" routerLinkActive="ativa">Convidados</a>
+      <a [routerLink]="['/eventos', eventoId()]" routerLinkActive="ativa" [routerLinkActiveOptions]="{ exact: true }">Resumo</a>
       <a [routerLink]="['/eventos', eventoId(), 'tarefas']" routerLinkActive="ativa">Tarefas</a>
+      <a [routerLink]="['/eventos', eventoId(), 'convidados']" routerLinkActive="ativa">Convidados</a>
+      <a [routerLink]="['/eventos', eventoId(), 'fornecedores']" routerLinkActive="ativa">Fornecedores</a>
     </nav>
   `,
   styles: `

@@ -225,6 +225,15 @@ Medido na tela Calendar da demo.
 
 `<dl>` usado nos modais de resumo. Rótulo (`dt`) 12px/500 `--gd-muted-foreground`, valor (`dd`) 14px. Uma coluna; duas a partir de 640px.
 
+### 5.18. Escolha em cartões — `.gd-opcoes` / `.gd-opcao`
+
+Para escolher uma opção entre poucas, com ícone ou com uma linha de apoio (tipo e pacote do evento). Botões dentro de `fieldset.gd-grupo-opcoes` com `legend.gd-rotulo`.
+
+- Grade `auto-fill` com mínimo de 112px (`.largas`: 180px); duas colunas abaixo de 640px.
+- Cartão: altura mínima 64px, padding 10px 12px, borda `--gd-border`, raio 10px, fundo `--gd-card`, texto 14px/500. Hover em `--gd-muted` a 50%.
+- Escolhido (`.ativa`, com `aria-pressed="true"`): borda e anel interno de 1px `--gd-primary`, fundo primário a 8%, ícone na cor primária.
+- Ícone 20px `--gd-muted-foreground`; apoio em `.gd-sub` 12px.
+
 ## 6. Telas públicas
 
 Login, cadastro, confirmação, senha, RSVP e lead: cartão central de até 420px sobre `--gd-background`, com a marca acima, título 24px/700, apoio 14px muted, campos e botão primário em largura total. Botão de tema fixo no canto.

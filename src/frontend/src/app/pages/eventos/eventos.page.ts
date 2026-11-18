@@ -23,6 +23,7 @@ import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { deDataParaIso } from '../../shared/data';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { EventoFormPage } from './evento-form.page';
+import { NovoEventoDialog } from './novo-evento.dialog';
 
 @Component({
   selector: 'app-eventos',
@@ -284,7 +285,7 @@ export class EventosPage implements OnInit {
   }
 
   protected abrir(): void {
-    this.dialog.open(EventoFormPage, { ...DIALOG_LARGO, data: {} }).afterClosed().subscribe((salvo) => {
+    this.dialog.open(NovoEventoDialog, DIALOG_LARGO).afterClosed().subscribe((salvo) => {
       if (salvo) {
         this.carregar();
         this.carregarEstatisticas();

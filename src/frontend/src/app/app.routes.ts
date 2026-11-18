@@ -39,6 +39,7 @@ export const routes: Routes = [
       { path: 'eventos/:id', loadComponent: () => import('./pages/eventos/evento-home.page').then((m) => m.EventoHomePage) },
       { path: 'eventos/:id/editar', redirectTo: 'eventos/:id', pathMatch: 'full' },
       { path: 'eventos/:id/tarefas', loadComponent: () => import('./pages/tarefas/tarefas.page').then((m) => m.TarefasPage) },
+      { path: 'eventos/:id/fornecedores', loadComponent: () => import('./pages/eventos/evento-fornecedores.page').then((m) => m.EventoFornecedoresPage) },
       { path: 'eventos/:id/convidados', loadComponent: () => import('./pages/convidados/convidados.page').then((m) => m.ConvidadosPage) },
       { path: 'tarefas', loadComponent: () => import('./pages/tarefas/tarefas.page').then((m) => m.TarefasPage) },
       { path: 'clientes', loadComponent: () => import('./pages/clientes/clientes.page').then((m) => m.ClientesPage) },

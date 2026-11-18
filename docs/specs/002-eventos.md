@@ -1,6 +1,6 @@
 # 002. Eventos
 
-**Status: aprovada.** O código segue esta spec.
+**Status: aprovada.** O código segue esta spec. Desde 18/11/2026, a criação do evento e a primeira aba (Resumo) seguem a [SPEC-008 v2](008-cadastro-completo-de-evento.md), que prevalece sobre as seções 6 e 12 daqui no que se sobrepõe.
 
 ## 1. Identificador e nome
 

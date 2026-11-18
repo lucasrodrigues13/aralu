@@ -104,6 +104,53 @@ public class NegocioFluxoTests
     }
 
     [Fact]
+    public async Task Criacao_curta_sem_modelo_com_cliente_novo_e_resumo()
+    {
+        var dono = await Entrar();
+        var outra = await Entrar();
+
+        var semTipo = await dono.PostAsJsonAsync("/api/v1/eventos", new { primeiroNome = "Ana", segundoNome = "Bruno" });
+        Assert.Equal(HttpStatusCode.BadRequest, semTipo.StatusCode);
+
+        var whatsappRuim = await dono.PostAsJsonAsync("/api/v1/eventos", new
+        {
+            tipo = "Aniversario",
+            primeiroNome = "Helena",
+            clienteNovo = new { nome = "Marta", whatsApp = "9999" },
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, whatsappRuim.StatusCode);
+
+        var criado = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new
+        {
+            tipo = "Casamento",
+            primeiroNome = "Ana",
+            segundoNome = "Bruno",
+            data = "2027-06-20",
+            local = "Espaço Jardim",
+            clienteNovo = new { nome = "Ana Souza", whatsApp = "31999990001" },
+        }));
+        var eventoId = criado.GetProperty("id").GetGuid();
+        Assert.Equal("Ana & Bruno", criado.GetProperty("nome").GetString());
+        Assert.Equal("Espaço Jardim", criado.GetProperty("recepcao").GetProperty("nome").GetString());
+        Assert.Empty(criado.GetProperty("servicos").EnumerateArray());
+        Assert.True(criado.GetProperty("salvarNaAgenda").GetBoolean());
+
+        var agenda = await Ler(await dono.GetAsync("/api/v1/agenda?de=2027-06-01&ate=2027-06-30"));
+        Assert.Contains(agenda.EnumerateArray(), item => item.GetProperty("eventoId").GetGuid() == eventoId);
+
+        var resumo = await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/resumo"));
+        Assert.Equal("Ana Souza", resumo.GetProperty("cliente").GetProperty("nome").GetString());
+        Assert.Equal("(31) 99999-0001", resumo.GetProperty("cliente").GetProperty("celular").GetString());
+        Assert.Equal(0, resumo.GetProperty("tarefas").GetInt32());
+        Assert.Equal(HttpStatusCode.NotFound, (await outra.GetAsync($"/api/v1/eventos/{eventoId}/resumo")).StatusCode);
+
+        var semData = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new { tipo = "Formatura", primeiroNome = "Turma 2027" }));
+        var resumoSemData = await Ler(await dono.GetAsync($"/api/v1/eventos/{semData.GetProperty("id").GetGuid()}/resumo"));
+        Assert.Equal("sem-data", resumoSemData.GetProperty("alertas")[0].GetProperty("codigo").GetString());
+        Assert.False(semData.GetProperty("salvarNaAgenda").GetBoolean());
+    }
+
+    [Fact]
     public async Task Perfil_clientes_e_tarefas_ficam_na_conta()
     {
         var dono = await Entrar();

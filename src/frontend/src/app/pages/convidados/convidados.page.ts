@@ -257,6 +257,8 @@ export class ConvidadosPage implements OnInit {
   ngOnInit(): void {
     const id = this.rota.snapshot.paramMap.get('id') ?? '';
     this.eventoId.set(id);
+    const situacao = this.rota.snapshot.queryParamMap.get('situacao');
+    if (situacao) this.filtro.patchValue({ situacao });
     if (!id) {
       return;
     }

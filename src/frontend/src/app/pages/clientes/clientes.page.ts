@@ -95,8 +95,8 @@ export class ClientesPage implements OnInit {
     this.carregar();
   }
 
-  protected rotulo(papel: string): string {
-    return ROTULO_PAPEL[papel] ?? papel;
+  protected rotulo(papel: string | null): string {
+    return papel ? (ROTULO_PAPEL[papel] ?? papel) : 'Sem papel';
   }
 
   protected buscar(evento: Event): void {

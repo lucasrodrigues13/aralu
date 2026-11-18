@@ -8,7 +8,7 @@ public sealed class Evento
 
     public string ContaId { get; set; } = "";
 
-    public Guid ModeloId { get; set; }
+    public Guid? ModeloId { get; set; }
 
     public string Nome { get; set; } = "";
 

@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { EventoAbasComponent } from '../eventos/evento-abas.component';
 import { MatButtonModule } from '@angular/material/button';
@@ -33,16 +33,22 @@ import { TarefaFormDialog } from './tarefa-form.dialog';
         </button>
       }
     </header>
+    @if (somenteAtrasadas()) {
+      <div class="gd-alerta alerta">
+        <span class="gd-crescer"><strong>Mostrando só as tarefas atrasadas.</strong></span>
+        <button mat-button class="gd-secundario gd-pequeno" type="button" (click)="somenteAtrasadas.set(false)">Ver todas</button>
+      </div>
+    }
     <mat-button-toggle-group [value]="visao()" (change)="visao.set($event.value)">
       <mat-button-toggle value="lista">Lista</mat-button-toggle>
       @if (eventoId()) { <mat-button-toggle value="quadro">Quadro</mat-button-toggle> }
     </mat-button-toggle-group>
     @if (visao() === 'lista') {
       <section class="gd-painel">
-        @if (tarefas().length === 0) {
+        @if (visiveis().length === 0) {
           <p class="gd-vazio">Não há tarefa.</p>
         } @else {
-          <table class="gd-grade" mat-table [dataSource]="tarefas()">
+          <table class="gd-grade" mat-table [dataSource]="visiveis()">
             <ng-container matColumnDef="titulo">
               <th mat-header-cell *matHeaderCellDef>Tarefa</th>
               <td mat-cell *matCellDef="let tarefa">
@@ -111,11 +117,14 @@ export class TarefasPage implements OnInit {
   protected readonly tarefas = signal<Tarefa[]>([]);
   protected readonly visao = signal('lista');
   protected readonly eventoId = signal('');
+  protected readonly somenteAtrasadas = signal(false);
+  protected readonly visiveis = computed(() => (this.somenteAtrasadas() ? this.tarefas().filter(atrasada) : this.tarefas()));
   protected readonly email = this.auth.email.bind(this.auth);
   protected readonly colunas = ['titulo', 'evento', 'prazo', 'situacao', 'responsavel', 'acoes'];
 
   ngOnInit(): void {
     this.eventoId.set(this.rota.snapshot.paramMap.get('id') ?? '');
+    this.somenteAtrasadas.set(this.rota.snapshot.queryParamMap.get('filtro') === 'atrasadas');
     this.carregar();
   }
 
@@ -153,4 +162,13 @@ export class TarefasPage implements OnInit {
       error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
     });
   }
+}
+
+/** Mesma regra do resumo do evento: não concluída e marcada como atrasada ou com prazo vencido. */
+function atrasada(tarefa: Tarefa): boolean {
+  if (tarefa.situacao === 'Concluida') return false;
+  if (tarefa.situacao === 'Atrasada') return true;
+  const hoje = new Date();
+  const iso = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`;
+  return !!tarefa.prazo && tarefa.prazo.slice(0, 10) < iso;
 }

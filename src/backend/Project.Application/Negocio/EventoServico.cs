@@ -38,8 +38,13 @@ public sealed record SalvarEvento(
     int? QuantidadePadrinhos,
     int? QuantidadeDamas,
     string? SenhaSite,
-    bool CadastrarCliente,
-    NovoCliente? Cliente);
+    TipoEvento? Tipo = null,
+    Guid? ClienteId = null,
+    ClienteRapido? ClienteNovo = null,
+    string? Local = null);
+
+/// <summary>Cliente criado junto com o evento: só nome e WhatsApp (SPEC-008 v2).</summary>
+public sealed record ClienteRapido(string? Nome, string? WhatsApp);
 
 public sealed record AssessoriaPedido(
     decimal? ValorTotal,
@@ -136,7 +141,7 @@ public sealed record EventoResumo(
     int ConvidadosConfirmados,
     int Convidados);
 
-public sealed class EventoServico(IDados dados, IConsultaCep cep, ClienteServico clientes)
+public sealed class EventoServico(IDados dados, IConsultaCep cep)
 {
     public async Task<IReadOnlyList<EventoResumo>> ListarAsync(
         string contaId,
@@ -172,21 +177,31 @@ public sealed class EventoServico(IDados dados, IConsultaCep cep, ClienteServico
 
     public async Task<Resultado<EventoDetalhe>> CriarAsync(string contaId, SalvarEvento pedido, DateOnly hoje, CancellationToken ct)
     {
-        if (pedido.ModeloId is not Guid modeloId)
+        ModeloEvento? modelo = null;
+        if (pedido.ModeloId is Guid modeloId)
         {
-            return Resultado<EventoDetalhe>.Erro(Codigos.Validacao, "Escolha um modelo.");
+            modelo = await dados.ObterModeloAsync(contaId, modeloId, ct);
+            if (modelo is null)
+            {
+                return Resultado<EventoDetalhe>.Erro(Codigos.Validacao, "Escolha um modelo da conta.");
+            }
         }
 
-        var modelo = await dados.ObterModeloAsync(contaId, modeloId, ct);
-        if (modelo is null)
+        var tipo = pedido.Tipo ?? modelo?.Tipo;
+        if (tipo is not TipoEvento tipoEvento || !Enum.IsDefined(tipoEvento))
         {
-            return Resultado<EventoDetalhe>.Erro(Codigos.Validacao, "Escolha um modelo.");
+            return Resultado<EventoDetalhe>.Erro(Codigos.Validacao, "Escolha o tipo do evento.");
         }
 
-        var nome = NomeDoEvento.Montar(modelo.Tipo, pedido.PrimeiroNome, pedido.SegundoNome);
+        if (modelo is not null && modelo.Tipo != tipoEvento)
+        {
+            return Resultado<EventoDetalhe>.Erro(Codigos.Validacao, "O modelo escolhido é de outro tipo de evento.");
+        }
+
+        var nome = NomeDoEvento.Montar(tipoEvento, pedido.PrimeiroNome, pedido.SegundoNome);
         if (nome is null)
         {
-            var mensagem = modelo.Tipo == TipoEvento.Casamento
+            var mensagem = tipoEvento == TipoEvento.Casamento
                 ? "Informe os dois nomes do casamento."
                 : "Informe o nome.";
             return Resultado<EventoDetalhe>.Erro(Codigos.Validacao, mensagem);
@@ -210,45 +225,43 @@ public sealed class EventoServico(IDados dados, IConsultaCep cep, ClienteServico
             return Resultado<EventoDetalhe>.Erro(recepcao.Falha!.Codigo, recepcao.Falha.Mensagem);
         }
 
-        Cliente? cliente = null;
-        if (pedido.CadastrarCliente)
+        Cliente? clienteExistente = null;
+        Cliente? clienteNovo = null;
+        if (pedido.ClienteId is Guid clienteId)
         {
-            var montado = ClienteServico.Montar(contaId, pedido.Cliente, hoje);
+            clienteExistente = await dados.ObterClienteAsync(contaId, clienteId, ct);
+            if (clienteExistente is null)
+            {
+                return Resultado<EventoDetalhe>.Erro(Codigos.Validacao, "Escolha um cliente da conta.");
+            }
+        }
+        else if (pedido.ClienteNovo is not null)
+        {
+            var montado = MontarClienteRapido(contaId, pedido.ClienteNovo);
             if (!montado.Ok)
             {
                 return Resultado<EventoDetalhe>.Erro(montado.Falha!.Codigo, montado.Falha.Mensagem);
             }
 
-            cliente = montado.Valor;
-            if (cliente!.Cep is not null)
-            {
-                var enderecoCliente = await cep.ConsultarAsync(Mascaras.SoDigitos(cliente.Cep)!, ct);
-                if (enderecoCliente is not null)
-                {
-                    cliente.Pais = enderecoCliente.Pais;
-                    cliente.Endereco = enderecoCliente.Endereco;
-                    cliente.Estado = enderecoCliente.Estado;
-                    cliente.Cidade = enderecoCliente.Cidade;
-                    cliente.Bairro = enderecoCliente.Bairro;
-                }
-            }
+            clienteNovo = montado.Valor;
+        }
 
-            var acesso = await clientes.AplicarAcessoAsync(contaId, cliente, pedido.Cliente?.AcessoPlataforma == true, ct);
-            if (!acesso.Ok)
-            {
-                return Resultado<EventoDetalhe>.Erro(acesso.Falha!.Codigo, acesso.Falha.Mensagem);
-            }
+        // O local da criação curta vai para o nome do local da recepção (SPEC-008 v2, 8.1).
+        var local = Domain.Comum.Texto.Limpo(pedido.Local);
+        if (local is not null && recepcao.Valor!.Nome is null)
+        {
+            recepcao.Valor.Nome = local;
         }
 
         var evento = new Evento
         {
             Id = Guid.NewGuid(),
             ContaId = contaId,
-            ModeloId = modelo.Id,
+            ModeloId = modelo?.Id,
             Nome = nome,
             PrimeiroNome = Domain.Comum.Texto.Limpo(pedido.PrimeiroNome),
             SegundoNome = Domain.Comum.Texto.Limpo(pedido.SegundoNome),
-            Tipo = modelo.Tipo,
+            Tipo = tipoEvento,
             Situacao = SituacaoEvento.EmAndamento,
             Data = pedido.Data,
             Hora = pedido.Hora,
@@ -259,7 +272,8 @@ public sealed class EventoServico(IDados dados, IConsultaCep cep, ClienteServico
             NotificarAssessor = pedido.NotificarAssessor ?? true,
             NotificarAssistentes = pedido.NotificarAssistentes ?? true,
             NotificarClientes = pedido.NotificarClientes ?? true,
-            SalvarNaAgenda = pedido.SalvarNaAgenda ?? false,
+            // Evento com data entra na agenda (SPEC-008 v2, 8.1); a edição pode tirar.
+            SalvarNaAgenda = pedido.SalvarNaAgenda ?? pedido.Data is not null,
             TempoFesta = pedido.TempoFesta,
             InicioCerimonia = pedido.InicioCerimonia,
             InicioRecepcao = pedido.InicioRecepcao,
@@ -268,7 +282,7 @@ public sealed class EventoServico(IDados dados, IConsultaCep cep, ClienteServico
         };
 
         var ordem = 0;
-        foreach (var servico in modelo.Servicos)
+        foreach (var servico in modelo?.Servicos ?? [])
         {
             evento.Servicos.Add(new ServicoEvento
             {
@@ -280,7 +294,7 @@ public sealed class EventoServico(IDados dados, IConsultaCep cep, ClienteServico
             });
         }
 
-        var tarefas = modelo.Tarefas.Select(tarefa =>
+        var tarefas = (modelo?.Tarefas ?? []).Select(tarefa =>
         {
             DateOnly? prazo = null;
             if (tarefa.DiasAntes is int dias && evento.Data is DateOnly data)
@@ -300,7 +314,7 @@ public sealed class EventoServico(IDados dados, IConsultaCep cep, ClienteServico
             };
         }).ToArray();
 
-        var agenda = evento.SalvarNaAgenda
+        var agenda = evento.SalvarNaAgenda && evento.Data is not null
             ? new CompromissoAgenda
             {
                 Id = Guid.NewGuid(),
@@ -312,12 +326,13 @@ public sealed class EventoServico(IDados dados, IConsultaCep cep, ClienteServico
             }
             : null;
 
+        var cliente = clienteExistente ?? clienteNovo;
         if (cliente is not null)
         {
             cliente.Vinculos.Add(new VinculoCliente { ClienteId = cliente.Id, EventoId = evento.Id });
         }
 
-        await dados.InserirEventoAsync(evento, tarefas, agenda, cliente, ct);
+        await dados.InserirEventoAsync(evento, tarefas, agenda, clienteNovo, ct);
         await dados.SubstituirTagsAsync(evento, LimparTags(pedido.Tags), ct);
         return Resultado<EventoDetalhe>.Sucesso(await DetalheAsync(contaId, evento, hoje, ct));
     }
@@ -568,6 +583,53 @@ public sealed class EventoServico(IDados dados, IConsultaCep cep, ClienteServico
         }
 
         return Resultado<LocalEvento>.Sucesso(local);
+    }
+
+    /// <summary>Resumo do evento em cartões e alertas (SPEC-008 v2, 6.2).</summary>
+    public async Task<Resultado<ResumoEvento>> ResumoAsync(string contaId, Guid id, DateOnly hoje, CancellationToken ct)
+    {
+        var evento = await dados.ObterEventoAsync(contaId, id, ct);
+        if (evento is null)
+        {
+            return Resultado<ResumoEvento>.Erro(Codigos.Indisponivel, "Indisponível.");
+        }
+
+        var tarefas = await dados.ListarTarefasAsync(contaId, evento.Id, ct);
+        var convites = await dados.ListarConvitesAsync(contaId, evento.Id, ct);
+        var clientesDoEvento = await dados.ClientesDoEventoAsync(contaId, evento.Id, ct);
+        return Resultado<ResumoEvento>.Sucesso(ResumoDoEvento.Calcular(
+            contaId,
+            evento,
+            tarefas,
+            convites.SelectMany(convite => convite.Convidados).Select(convidado => convidado.Situacao).ToArray(),
+            clientesDoEvento.FirstOrDefault(),
+            hoje));
+    }
+
+    /// <summary>Valida e monta o cliente da criação curta: nome e WhatsApp com DDD.</summary>
+    public static Resultado<Cliente> MontarClienteRapido(string contaId, ClienteRapido pedido)
+    {
+        var nome = Domain.Comum.Texto.Limpo(pedido.Nome);
+        if (nome is null)
+        {
+            return Resultado<Cliente>.Erro(Codigos.Validacao, "Informe o nome do cliente.");
+        }
+
+        var whatsapp = Mascaras.Celular(pedido.WhatsApp);
+        if (string.IsNullOrEmpty(whatsapp))
+        {
+            return Resultado<Cliente>.Erro(Codigos.Validacao, "Informe o WhatsApp com DDD.");
+        }
+
+        return Resultado<Cliente>.Sucesso(new Cliente
+        {
+            Id = Guid.NewGuid(),
+            ContaId = contaId,
+            Nome = nome,
+            Papel = null,
+            Ddi = "+55",
+            Celular = whatsapp,
+        });
     }
 
     private Task<EventoDetalhe> DetalheAsync(string contaId, Evento evento, DateOnly hoje, CancellationToken ct) =>

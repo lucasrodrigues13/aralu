@@ -53,7 +53,7 @@ public sealed record PermissoesClienteLeitura(
 public sealed record ClienteLeitura(
     Guid Id,
     string Nome,
-    PapelCliente Papel,
+    PapelCliente? Papel,
     DateOnly? Nascimento,
     string Email,
     string Ddi,
