@@ -21,8 +21,8 @@ Roteiro para continuar o trabalho em outra sessão. Siga na ordem. Na dúvida, p
 
 ## 3. Situação atual
 
-- Pronto: bloco 1 (casca e design system v2), bloco 2 (criação curta e resumo do evento) e a agenda em calendário.
-- Falta: blocos 3 a 17 da [seção 9 do produto-v1](produto-v1.md). O bloco 3 tem spec **aprovada** (SPEC-012 v2) e está pronto para implementar.
+- Pronto: bloco 1 (casca e design system v2), bloco 2 (criação curta e resumo do evento), bloco 3 (modelos, SPEC-012 v2) e a agenda em calendário.
+- Falta: blocos 4 a 17 da [seção 9 do produto-v1](produto-v1.md).
 
 ## 4. Tarefa 1: implementar o bloco 3 (SPEC-012 v2)
 
@@ -86,7 +86,7 @@ dotnet tool run dotnet-ef migrations script --idempotent --project src/backend/P
 
 Atualize este arquivo: marque o que ficou pronto e anote as dúvidas para o usuário.
 
-- [ ] Bloco 3 implementado (SPEC-012 v2 aprovada)
+- [x] Bloco 3 implementado (SPEC-012 v2 aprovada)
 - [ ] SPEC-003 (bloco 4)
 - [ ] SPEC-007 (bloco 5)
 - [ ] SPEC-029 (bloco 6)

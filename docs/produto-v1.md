@@ -113,7 +113,7 @@ Substitui o dashboard atual (SPEC-007, RF-080 a RF-082).
 | Resumo do evento em cartões (tarefas, dinheiro, convidados, fornecedores, roteiro, equipe, casal, notas) com alertas acionáveis no topo | Pronto para tarefas, convidados, fornecedores, orçamento e cliente (SPEC-008 v2); os outros cartões entram com seus blocos | PDF, CF, WP, AV |
 | Dados do evento: detalhes, cerimônia e recepção com CEP, horários, padrinhos, damas | Pronto | G (SPEC-008) |
 | Estatísticas e rankings | Pronto | G (SPEC-011) |
-| Salvar evento como modelo (tarefas com "dias antes" e roteiro) | Novo | CF, IV |
+| Salvar evento como modelo (tarefas com "dias antes"; roteiro no bloco 10) | Pronto (tarefas e serviços) | G (SPEC-012 v2), CF, IV |
 | Observações gerais do evento com modelos de observação | Novo | AV |
 | Notificações por e-mail do evento (assessora, assistentes, casal) | Pendente | AV |
 
@@ -121,10 +121,10 @@ Substitui o dashboard atual (SPEC-007, RF-080 a RF-082).
 
 | Item | Estado | Fonte |
 |---|---|---|
-| Modelo de evento com serviços, tarefas e prazos em "dias antes" da data do evento | Pronto | G (SPEC-012) |
-| Prazo exibido como "N semanas antes" / "6 meses antes" | Ajustar | PDF, IV |
-| Importar modelo colando uma lista ou planilha (linha = tarefa, título = grupo) | Novo | PDF, CF |
-| Aplicar modelo num evento existente | Novo | IV |
+| Modelo de evento com serviços, tarefas e prazos em "dias antes" da data do evento | Pronto | G (SPEC-012 v2) |
+| Prazo exibido como "N semanas antes" / "6 meses antes" | Pronto | G (SPEC-012 v2) |
+| Importar modelo colando uma lista ou planilha (linha = tarefa, título = grupo) | Pronto | G (SPEC-012 v2) |
+| Aplicar modelo num evento existente | Pronto | G (SPEC-012 v2) |
 | Bibliotecas de briefing, roteiro, cronograma, inspirações, mensagens | Pronto | G (SPEC-013 a 017) |
 | Modelos de briefing compartilhados com o funil (origem gestão de eventos / funil) | Ajustar | AV |
 
@@ -144,7 +144,7 @@ Substitui o dashboard atual (SPEC-007, RF-080 a RF-082).
 | Tarefa ligada a um serviço; contratar o fornecedor fecha "Contratar X" | Novo | PDF, AV |
 | Tocar abre leitura, não edição | Ajustar | PDF |
 | Tarefas de todos os eventos com filtros (situação, responsável, prazo, evento, serviço, tags) e visões lista / quadro por situação / quadro por dia | Ajustar (hoje sem filtros e sem quadro por dia) | AV |
-| Redatar prazos quando a data do evento muda | Novo (SPEC-012 v2, 6.6) | AV |
+| Redatar prazos quando a data do evento muda | Pronto (SPEC-012 v2, 6.6) | G, AV |
 
 ### 5.6. Fornecedores e serviços
 
@@ -363,7 +363,7 @@ Baseada no PDF (base → uso diário → diferencial), com o que já existe.
 
 1. Casca e navegação (celular e computador).
 2. Criação do evento curta e resumo em cartões.
-3. Modelos: prazos legíveis, importar colando, salvar como modelo.
+3. ~~Modelos: prazos legíveis, importar colando, salvar como modelo.~~ **Pronto** (SPEC-012 v2).
 4. Tarefas: grupos, vários responsáveis, visibilidade, prioridade, checklist e anexos.
 5. Tela Hoje.
 6. Dinheiro do evento: parcelas do casal, cobrar, recebi, Pix.
