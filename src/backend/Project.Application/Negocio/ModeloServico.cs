@@ -310,6 +310,11 @@ public sealed class ModeloServico(IDados dados)
             {
                 return "Informe o título da tarefa.";
             }
+
+            if (tarefa.DiasAntes is < 0)
+            {
+                return "Use um prazo maior ou igual a zero.";
+            }
         }
 
         foreach (var vinculo in pedido.Vinculos ?? [])

@@ -23,6 +23,7 @@ import { ToastService } from '../../core/toast.service';
 import { CampoDinheiroComponent } from '../../shared/campo-dinheiro';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
+import { exibirPrazo, prazoDeDias, prazoParaDias, UNIDADES_PRAZO, UnidadePrazo } from '../../shared/prazo-modelo';
 
 @Component({
   selector: 'app-modelo-evento-editor',
@@ -93,9 +94,25 @@ import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
               <div class="bloco" [formGroupName]="i">
                 <div class="linha linha-tarefa">
                   <mat-form-field appearance="outline" class="grow"><mat-label>Título</mat-label><input matInput formControlName="titulo" /></mat-form-field>
-                  <mat-form-field class="curto" appearance="outline"><mat-label>Dias antes</mat-label><input matInput type="number" formControlName="diasAntes" /></mat-form-field>
+                  <div class="prazo">
+                    @if (mostraQuantidade(i)) {
+                      <mat-form-field class="qtd" appearance="outline">
+                        <mat-label>Prazo</mat-label>
+                        <input matInput type="number" min="0" max="999" formControlName="quantidade" />
+                      </mat-form-field>
+                    }
+                    <mat-form-field class="unidade" appearance="outline">
+                      <mat-label>{{ mostraQuantidade(i) ? 'Unidade' : 'Prazo' }}</mat-label>
+                      <mat-select formControlName="unidade">
+                        @for (u of unidadesPrazo; track u.valor) {
+                          <mat-option [value]="u.valor">{{ u.rotulo }}</mat-option>
+                        }
+                      </mat-select>
+                    </mat-form-field>
+                  </div>
                   <button mat-icon-button type="button" (click)="removerTarefa(i)"><mat-icon>delete</mat-icon></button>
                 </div>
+                <p class="prazo-legivel">{{ textoPrazo(i) }}</p>
               </div>
             }
             <button mat-stroked-button type="button" class="acao-esquerda" (click)="adicionarTarefa()">Adicionar tarefa</button>
@@ -227,17 +244,30 @@ import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
     }
     .linha-tarefa {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 220px auto;
+      grid-template-columns: minmax(0, 1fr) minmax(220px, 320px) auto;
       width: 100%;
       max-width: 100%;
       min-width: 0;
     }
     :host .linha-tarefa > * { min-width: 0; }
-    :host .linha-tarefa mat-form-field,
-    :host .linha-tarefa .curto {
+    :host .linha-tarefa mat-form-field {
       width: 100%;
       min-width: 0;
       max-width: 100%;
+    }
+    .prazo {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+      min-width: 0;
+    }
+    :host .prazo .qtd { flex: 0 0 96px; width: 96px; }
+    :host .prazo .unidade { flex: 1 1 0; min-width: 0; }
+    .prazo-legivel {
+      margin: 0 0 0 0;
+      padding-left: 2px;
+      font-size: 0.85rem;
+      color: var(--gd-muted, #6b7280);
     }
     .linha-servico {
       display: grid;
@@ -277,6 +307,7 @@ export class ModeloEventoEditorPage implements OnInit {
   private readonly toast = inject(ToastService);
   protected readonly tipos = TIPOS;
   protected readonly tiposItem = TIPOS_ITEM_CHECKLIST;
+  protected readonly unidadesPrazo = UNIDADES_PRAZO;
   protected readonly briefings = signal<Briefing[]>([]);
   protected readonly roteiros = signal<Roteiro[]>([]);
   protected readonly inspiracoes = signal<Inspiracao[]>([]);
@@ -334,10 +365,7 @@ export class ModeloEventoEditorPage implements OnInit {
         }
         this.tarefas.clear();
         for (const tarefa of modelo.tarefas) {
-          this.tarefas.push(this.fb.group({
-            titulo: [tarefa.titulo, Validators.required],
-            diasAntes: [tarefa.diasAntes],
-          }));
+          this.tarefas.push(this.novaTarefa(tarefa.titulo, tarefa.diasAntes));
         }
         const mapa: Record<string, string> = {};
         for (const vinculo of modelo.vinculos) {
@@ -382,11 +410,25 @@ export class ModeloEventoEditorPage implements OnInit {
   }
 
   protected adicionarTarefa(): void {
-    this.tarefas.push(this.fb.group({ titulo: ['', Validators.required], diasAntes: [null as number | null] }));
+    this.tarefas.push(this.novaTarefa('', null));
   }
 
   protected removerTarefa(indice: number): void {
     this.tarefas.removeAt(indice);
+  }
+
+  protected mostraQuantidade(indice: number): boolean {
+    const unidade = this.tarefas.at(indice).get('unidade')?.value as UnidadePrazo;
+    return unidade === 'dias' || unidade === 'semanas' || unidade === 'meses';
+  }
+
+  protected textoPrazo(indice: number): string {
+    const raw = this.tarefas.at(indice).getRawValue() as {
+      quantidade: number | string | null;
+      unidade: UnidadePrazo;
+    };
+    const qtd = raw.quantidade === '' || raw.quantidade == null ? null : Number(raw.quantidade);
+    return exibirPrazo(prazoParaDias(qtd, raw.unidade));
   }
 
   protected salvar(): void {
@@ -395,7 +437,7 @@ export class ModeloEventoEditorPage implements OnInit {
       tipo: string | null;
       permissoes: Record<string, boolean>;
       servicos: { nome: string; valorEstimado: number | string | null; itens: { tipo: string; texto: string }[] }[];
-      tarefas: { titulo: string; diasAntes: number | string | null }[];
+      tarefas: { titulo: string; quantidade: number | string | null; unidade: UnidadePrazo }[];
     };
     const vinculos = Object.entries(this.vinculosMap()).map(([tipo, bibliotecaId]) => ({ tipo, bibliotecaId }));
     this.negocio.atualizarModelo(this.id, {
@@ -407,10 +449,10 @@ export class ModeloEventoEditorPage implements OnInit {
         valorEstimado: typeof servico.valorEstimado === 'number' ? servico.valorEstimado : null,
         itens: (servico.itens ?? []).filter((item) => item.texto?.trim()),
       })),
-      tarefas: (valor.tarefas ?? []).map((tarefa) => ({
-        titulo: tarefa.titulo,
-        diasAntes: tarefa.diasAntes === '' || tarefa.diasAntes == null ? null : Number(tarefa.diasAntes),
-      })),
+      tarefas: (valor.tarefas ?? []).map((tarefa) => {
+        const qtd = tarefa.quantidade === '' || tarefa.quantidade == null ? null : Number(tarefa.quantidade);
+        return { titulo: tarefa.titulo, diasAntes: prazoParaDias(qtd, tarefa.unidade) };
+      }),
       vinculos,
     }).subscribe({
       next: () => this.toast.sucesso('Modelo salvo.'),
@@ -451,6 +493,15 @@ export class ModeloEventoEditorPage implements OnInit {
       nome: [nome, Validators.required],
       valorEstimado: [valorEstimado as number | null],
       itens: this.fb.array([]),
+    });
+  }
+
+  private novaTarefa(titulo: string, diasAntes: number | null) {
+    const decomposto = prazoDeDias(diasAntes);
+    return this.fb.group({
+      titulo: [titulo, Validators.required],
+      quantidade: [decomposto.quantidade as number | null],
+      unidade: [decomposto.unidade as UnidadePrazo],
     });
   }
 }
