@@ -64,6 +64,8 @@ Pendente, em andamento, concluída e atrasada aparecem na coluna da tabela e no 
 ### 6.6. Checklist, anexos e serviço
 
 - Checklist e anexos ficam **recolhidos** na leitura até alguém expandir.
+- Na tabela (aba do evento e lista geral), a tarefa com checklist mostra uma seta à esquerda e o progresso (feitos / total, sem contar os cancelados). A seta expande a checklist logo abaixo da linha.
+- Na checklist expandida (tabela ou leitura), cada item pode ser marcado como **feito** ou **cancelado**. Cancelado fica riscado, não conta no progresso e pode ser restaurado. Um item não é feito e cancelado ao mesmo tempo. Cada marcação grava na hora, sem abrir o modal de edição, e só vale com o evento em andamento.
 - Tarefa pode ligar-se a um serviço do evento. Ao marcar o fornecedor como Contratado (RF-059), a tarefa cujo título for "Contratar {nome do serviço}" (ou o vínculo explícito) passa a concluída — regra exata na §17 se não houver vínculo explícito.
 
 ### 6.7. Todos os eventos
@@ -97,7 +99,7 @@ Pendente → qualquer das quatro; concluída pode voltar. Sem estado "arquivada"
 
 ## 11. Dados necessários
 
-Título; descrição opcional; prazo; situação; grupo (texto); responsáveis (lista); visibilidade; prioridade; checklist (itens com feito/não); anexos; comentários; serviço do evento opcional; evento; conta.
+Título; descrição opcional; prazo; situação; grupo (texto); responsáveis (lista); visibilidade; prioridade; checklist (itens com feito, cancelado ou pendente); anexos; comentários; serviço do evento opcional; evento; conta.
 
 ## 12. Interface
 
@@ -114,7 +116,7 @@ Validação no campo, dentro do modal. Outra conta: indisponível. Falha ao grav
 3. Tocar a linha abre leitura; Editar, na coluna de ações, abre o modal de edição. "Nova tarefa" não abre a leitura.
 4. Dá para marcar dois responsáveis e prioridade alta.
 5. Visibilidade "só eu" não aparece no link do casal (quando o bloco 11 existir).
-6. Checklist e anexos começam recolhidos.
+6. Checklist e anexos começam recolhidos. Na tabela, a seta da tarefa expande a checklist abaixo da linha; marcar um item como feito ou cancelado (riscado) grava na hora.
 7. Filtros da lista geral isolam por evento e situação.
 8. Outra conta não vê as tarefas.
 
@@ -127,6 +129,8 @@ Abrir "Nova tarefa" e fechar sem salvar (nada é criado). Criar só com título 
 SPEC-001, SPEC-002, SPEC-008, SPEC-012 (grupo e aplicar modelo), SPEC-018 (serviço). Bloco 11 (link do casal) para a parte do casal. Spec de assistente e equipe para responsáveis além da dona.
 
 ## 17. Premissas e pontos não definidos
+
+Decidido em 18/11/2026: as visões "Esta semana" e "Para conferir" ficam descartadas. A lista do evento continua como a §6.2 descreve (uma tabela só).
 
 1. Atrasada automática ou só manual.
 2. Remoção de tarefa (hoje a tela ainda avisa que exclusão não está no fluxo).

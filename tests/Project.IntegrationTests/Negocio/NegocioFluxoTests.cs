@@ -231,6 +231,37 @@ public class NegocioFluxoTests
     }
 
     [Fact]
+    public async Task Item_da_checklist_e_marcado_feito_cancelado_ou_pendente()
+    {
+        var dono = await Entrar();
+        var outra = await Entrar();
+        var evento = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new { tipo = "Casamento", primeiroNome = "Rui", segundoNome = "Eva" }));
+        var eventoId = evento.GetProperty("id").GetGuid();
+        var tarefa = await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/tarefas", new
+        {
+            titulo = "Montar lista",
+            checklist = new[] { new { texto = "Padrinhos", feito = false }, new { texto = "Pajens", feito = false } },
+        }));
+        var tarefaId = tarefa.GetProperty("id").GetGuid();
+        var itens = tarefa.GetProperty("checklist");
+        var primeiro = itens[0].GetProperty("id").GetGuid();
+        var segundo = itens[1].GetProperty("id").GetGuid();
+
+        var feito = await Ler(await dono.PutAsJsonAsync($"/api/v1/tarefas/{tarefaId}/checklist/{primeiro}", new { feito = true, cancelado = false }));
+        Assert.True(feito.GetProperty("checklist")[0].GetProperty("feito").GetBoolean());
+
+        var cancelado = await Ler(await dono.PutAsJsonAsync($"/api/v1/tarefas/{tarefaId}/checklist/{segundo}", new { feito = false, cancelado = true }));
+        Assert.True(cancelado.GetProperty("checklist")[1].GetProperty("cancelado").GetBoolean());
+        Assert.True(cancelado.GetProperty("checklist")[0].GetProperty("feito").GetBoolean());
+
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PutAsJsonAsync($"/api/v1/tarefas/{tarefaId}/checklist/{segundo}", new { feito = true, cancelado = true })).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await outra.PutAsJsonAsync($"/api/v1/tarefas/{tarefaId}/checklist/{segundo}", new { feito = true, cancelado = false })).StatusCode);
+
+        var pendente = await Ler(await dono.PutAsJsonAsync($"/api/v1/tarefas/{tarefaId}/checklist/{segundo}", new { feito = false, cancelado = false }));
+        Assert.False(pendente.GetProperty("checklist")[1].GetProperty("cancelado").GetBoolean());
+    }
+
+    [Fact]
     public async Task Convite_rsvp_transfer_e_planilha()
     {
         var dono = await Entrar();

@@ -324,3 +324,71 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+// Caixa de marcação (5.9): 16px, borda fina, cantos de 4px, preenchida na cor primária.
+.mat-mdc-checkbox .mdc-checkbox .mdc-checkbox__background {
+  width: 16px;
+  height: 16px;
+  border-width: 1px;
+  border-radius: 4px;
+  top: calc((var(--mat-checkbox-state-layer-size, 40px) - 16px) / 2);
+  left: calc((var(--mat-checkbox-state-layer-size, 40px) - 16px) / 2);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
+}
+
+.mat-mdc-checkbox .mdc-checkbox__checkmark {
+  inset: 1px;
+  width: 12px;
+}
+
+.mat-mdc-checkbox .mdc-checkbox__checkmark-path {
+  stroke-width: 3.5px !important;
+}
+
+.mat-mdc-checkbox .mdc-checkbox__native-control:focus-visible ~ .mdc-checkbox__background {
+  outline: 3px solid color-mix(in oklch, var(--gd-ring) 40%, transparent);
+  outline-offset: 1px;
+}
+
+.mat-mdc-checkbox .mdc-form-field > label {
+  padding-left: 2px;
+}
+
+// Lista editável (checklist, subitens): item na linha, marcação à esquerda e remover à direita.
+.gd-lista-itens {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gd-lista-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.gd-lista-item > .mat-mdc-checkbox {
+  margin-top: 6px;
+  margin-left: -8px;
+  flex-shrink: 0;
+}
+
+.gd-lista-item > .mat-mdc-form-field {
+  flex: 1;
+  min-width: 0;
+}
+
+.gd-lista-item > .mat-mdc-icon-button {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--gd-muted-foreground);
+}
+
+.gd-lista-item > .mat-mdc-icon-button:hover {
+  color: var(--gd-destructive);
+}
+
+.gd-lista-item.cancelado input {
+  text-decoration: line-through;
+  color: var(--gd-muted-foreground);
+}

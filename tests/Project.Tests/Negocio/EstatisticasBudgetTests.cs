@@ -55,10 +55,10 @@ public class EstatisticasBudgetTests
     [Fact]
     public void Negociacao_avanca_e_volta_uma_etapa()
     {
-        Assert.True(NegociacaoRegras.PodeAvancar(EtapaNegociacao.Recomendado));
-        Assert.Equal(EtapaNegociacao.OrcamentoSolicitado, NegociacaoRegras.Avancar(EtapaNegociacao.Recomendado));
+        Assert.True(NegociacaoRegras.PodeAvancar(EtapaNegociacao.Orcamento));
+        Assert.Equal(EtapaNegociacao.Contratado, NegociacaoRegras.Avancar(EtapaNegociacao.Orcamento));
         Assert.Null(NegociacaoRegras.Avancar(EtapaNegociacao.Contratado));
-        Assert.Equal(EtapaNegociacao.OrcamentoRecebido, NegociacaoRegras.Voltar(EtapaNegociacao.Contratado));
-        Assert.Null(NegociacaoRegras.Voltar(EtapaNegociacao.Recomendado));
+        Assert.Equal(EtapaNegociacao.Orcamento, NegociacaoRegras.Voltar(EtapaNegociacao.Contratado));
+        Assert.Null(NegociacaoRegras.Voltar(EtapaNegociacao.Orcamento));
     }
 }

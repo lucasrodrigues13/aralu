@@ -45,14 +45,14 @@ Conta autenticada, SPEC-001. Para ações no evento: evento da mesma conta, SPEC
 
 1. Na home, cada serviço mostra fornecedores na trilha de negociação, tarefas e valores (estimado / contratado).
 2. O Organizer adiciona fornecedor ao serviço (recomendando ou contratando) a partir do catálogo da conta ou criando novo.
-3. No hub do fornecedor no evento, conduz a negociação: Recomendado → Orçamento solicitado → Orçamento recebido → Contratado (RF-059). Pode voltar uma etapa.
+3. No evento, conduz a negociação em duas etapas: Orçamento → Contratado (RF-059). O fornecedor entra em Orçamento; Contratar leva a Contratado e pode voltar para Orçamento.
 4. Em Contratado, informa valor, gera parcelas (RF-068) e segue o bloco de pagamentos.
 5. No Planejamento de budget (§1.9): vê Budget, Estimado, Contratado, custo por convidado e prova real; edita valor estimado por serviço; adiciona subitens (descrição, quantidade, valor unitário).
 
 ## 7. Fluxos alternativos
 
 - Cadastro incompleto: fornecedor aparece como incompleto até preencher os dados mínimos da conta; sem RF-060, o Organizer completa os dados.
-- Contratar direto: pula para Contratado sem passar pelas etapas intermediárias; valor pode ser informado depois no hub.
+- Contratar direto: o fornecedor recém-adicionado em Orçamento já pode ser contratado, com valor e parcelas.
 - Descartar fornecedor / descartar orçamento: remove da trilha ou volta etapa, conforme a ação do hub.
 - Serviço sem fornecedor: valor contratado vazio; estimado editável.
 - Com subitens: o valor estimado do serviço passa a ser a soma dos subitens.
@@ -68,7 +68,7 @@ Conta autenticada, SPEC-001. Para ações no evento: evento da mesma conta, SPEC
 - Formulário do fornecedor tem oito abas: Dados, Redes sociais, Endereço, Dados bancários, Orçamentos, Diferencial, Inf. gerais, Portfólio. RF-057 / inventário §1.11.
 - Orçamentos genéricos do fornecedor e Diferencial podem ser marcados como visíveis ao Client; Inf. gerais e Portfólio são restritos ao Organizer (e Admin).
 - No evento, cada serviço tem fornecedores, tarefas e valores; a home compara estimado e contratado. RF-058.
-- Etapas de negociação no hub: Recomendado, Orçamento solicitado, Orçamento recebido, Contratado. Solicitar contrato é ação do contratado, não uma quinta coluna da trilha. RF-059.
+- Etapas de negociação: Orçamento e Contratado. Solicitar contrato é ação do contratado, não uma terceira etapa. RF-059.
 - Planejamento de budget: Budget = estimado do evento; Estimado = soma dos estimados dos serviços; Contratado = soma dos contratados; Prova real = Estimado + Contratado; custo por convidado = (Estimado + Contratado) / convidados estimados quando houver convidados. Inventário §1.9.
 - Subitens detalham o serviço; com subitens, o estimado do serviço é a soma deles.
 - Parcelas do contratado seguem RF-068 / inventário §1.12.
@@ -83,7 +83,7 @@ Nome do fornecedor obrigatório. Pelo menos um serviço oferecido. E-mail, se in
 
 Cadastro do fornecedor na conta: completo ou incompleto (e, se a UI mantiver, dados solicitados só como rótulo interno do Organizer — sem portal do fornecedor).
 
-Negociação no evento: Recomendado, Orçamento solicitado, Orçamento recebido, Contratado.
+Negociação no evento: Orçamento, Contratado.
 
 Parcela: Pendente ou Pago (RF-068).
 
@@ -131,7 +131,7 @@ Catálogo `/suppliers` (ou equivalente): lista, busca, filtros, contagens, abas 
 
 Formulário de fornecedor com oito abas e Salvar.
 
-Home do evento: linha de serviço com trilha de quatro etapas, estimado/contratado, gerenciar fornecedores.
+Aba Fornecedores do evento: tabela Serviço / Fornecedor / Etapa / Valor / Ações, botão Adicionar fornecedor acima da tabela (modal que vincula um fornecedor do cadastro a um serviço do evento) e filtros à direita.
 
 Hub do fornecedor no evento: painel lateral e abas Orçamento (funil), Observações, Anexos, Alinhamentos, Portfólio (Chat sem contraparte logada fica opcional/omitido neste corte).
 
@@ -146,7 +146,7 @@ Campo inválido permanece no formulário. Falha ao salvar mantém o anterior. Re
 1. O Organizer cria fornecedor com nome e serviço; sem um dos dois, não grava.
 2. O formulário expõe as oito abas e grava os campos da seção 11.
 3. A lista de serviços da conta permite criar serviço por nome.
-4. No evento, a trilha mostra Recomendado → Orçamento solicitado → Orçamento recebido → Contratado, com avanço e retorno de uma etapa.
+4. No evento, o fornecedor entra em Orçamento, vai a Contratado e pode voltar para Orçamento.
 5. Contratar define a etapa Contratado; o hub aceita valor e geração de parcelas.
 6. Planejamento de budget mostra Budget, Estimado, Contratado, prova real e permite editar estimado e subitens; com subitens, o estimado do serviço é a soma deles.
 7. Client não acessa o catálogo da conta; só vê o que as flags e a visibilidade permitirem no evento.
@@ -155,7 +155,7 @@ Campo inválido permanece no formulário. Falha ao salvar mantém o anterior. Re
 
 ## 15. Cenários de teste
 
-Criar fornecedor "Banda Teste" com serviço Banda. Adicionar ao evento como Recomendado, avançar até Contratado com valor e parcelas. Editar estimado e um subitem no budget. Criar serviço personalizado na conta e marcar no evento. Conta B não vê o fornecedor. Tentar gravar fornecedor sem nome: falha.
+Criar fornecedor "Banda Teste" com serviço Banda. Adicionar ao evento em Orçamento, contratar com valor e parcelas, voltar para Orçamento e contratar de novo. Editar estimado e um subitem no budget. Criar serviço personalizado na conta e marcar no evento. Conta B não vê o fornecedor. Tentar gravar fornecedor sem nome: falha.
 
 ## 16. Dependências
 

@@ -239,9 +239,7 @@ export interface BudgetEvento {
 }
 
 export const ETAPAS_NEGOCIACAO = [
-  { valor: 'Recomendado', rotulo: 'Recomendado' },
-  { valor: 'OrcamentoSolicitado', rotulo: 'Orçamento solicitado' },
-  { valor: 'OrcamentoRecebido', rotulo: 'Orçamento recebido' },
+  { valor: 'Orcamento', rotulo: 'Orçamento' },
   { valor: 'Contratado', rotulo: 'Contratado' },
 ];
 
@@ -339,6 +337,7 @@ export interface ItemChecklistTarefa {
   id: string;
   texto: string;
   feito: boolean;
+  cancelado: boolean;
 }
 
 export interface ComentarioTarefa {
@@ -764,7 +763,7 @@ export class NegocioClient {
   }
 
   adicionarServicoEvento(eventoId: string, nome: string) {
-    return this.http.post(`${this.base}/api/v1/eventos/${eventoId}/servicos`, { nome });
+    return this.http.post<EventoDetalhe>(`${this.base}/api/v1/eventos/${eventoId}/servicos`, { nome });
   }
 
   atualizarEstimado(eventoId: string, servicoId: string, pedido: unknown) {
@@ -869,6 +868,10 @@ export class NegocioClient {
 
   atualizarTarefa(id: string, pedido: unknown) {
     return this.http.put<Tarefa>(`${this.base}/api/v1/tarefas/${id}`, pedido);
+  }
+
+  marcarItemChecklist(id: string, itemId: string, pedido: { feito: boolean; cancelado: boolean }) {
+    return this.http.put<Tarefa>(`${this.base}/api/v1/tarefas/${id}/checklist/${itemId}`, pedido);
   }
 
   comentarTarefa(id: string, texto: string) {

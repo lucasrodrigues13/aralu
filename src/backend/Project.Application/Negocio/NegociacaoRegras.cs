@@ -7,7 +7,7 @@ public static class NegociacaoRegras
 {
     public static bool PodeAvancar(EtapaNegociacao etapa) => etapa < EtapaNegociacao.Contratado;
 
-    public static bool PodeVoltar(EtapaNegociacao etapa) => etapa > EtapaNegociacao.Recomendado;
+    public static bool PodeVoltar(EtapaNegociacao etapa) => etapa > EtapaNegociacao.Orcamento;
 
     public static EtapaNegociacao? Avancar(EtapaNegociacao etapa) =>
         PodeAvancar(etapa) ? etapa + 1 : null;

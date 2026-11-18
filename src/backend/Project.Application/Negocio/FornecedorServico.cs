@@ -369,7 +369,7 @@ public sealed class FornecedorServico(IDados dados)
             return Resultado<EventoDetalhe>.Erro(Codigos.Validacao, "Escolha um fornecedor.");
         }
 
-        var etapa = pedido.Etapa ?? EtapaNegociacao.Recomendado;
+        var etapa = pedido.Etapa ?? EtapaNegociacao.Orcamento;
         if (!Enum.IsDefined(etapa))
         {
             return Resultado<EventoDetalhe>.Erro(Codigos.Validacao, "Informe a etapa da negociação.");

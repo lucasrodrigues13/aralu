@@ -1,6 +1,6 @@
 # 007. Tela Hoje
 
-**Status: aprovada (versão 2, 18/11/2026).** Substitui a SPEC-007 de dashboards. O código deve seguir esta spec. Fonte: [produto-v1.md](../produto-v1.md) 5.2, RF-080 a RF-082. A seção 17 continua sem decisão.
+**Status: aprovada (versão 2, 18/11/2026).** Substitui a SPEC-007 de dashboards. O código deve seguir esta spec. Fonte: [produto-v1.md](../produto-v1.md) 5.2, RF-080 a RF-082. Os itens 1 e 2 da seção 17 foram decididos em 18/11/2026.
 
 ## 1. Identificador e nome
 
@@ -29,7 +29,7 @@ Organizer ou Assistant autenticado (SPEC-001). A casca e a navegação (bloco 1)
 ## 6. Fluxo principal
 
 1. Login bem-sucedido abre **Hoje** (rota inicial).
-2. **Saudação** com a data de hoje e a frase "N coisas pedem você hoje". Se N = 0: "Nada pede você hoje".
+2. **Saudação** com a data de hoje e a frase "N tarefas pedem você hoje" ("1 tarefa pede você hoje"). Se N = 0: "Nada pede você hoje". N é o total de tarefas ativas (não concluídas) com prazo hoje, somando todos os eventos visíveis.
 3. **Cartões de ação** (somando todos os eventos visíveis), cada um com número e link para a tela que resolve:
    - Tarefas da semana e atrasadas → Tarefas (filtro adequado).
    - Cobranças a fazer (atrasadas e próximos 7 dias) → Dinheiro / pagamentos do casal (quando o bloco 6 existir; até lá, destino na §17).
@@ -37,7 +37,7 @@ Organizer ou Assistant autenticado (SPEC-001). A casca e a navegação (bloco 1)
    - Respostas de convidados (pendências recentes — §17) → Convidados.
    - Retornos do funil → Funil.
 4. **Próximo evento** com nome e contagem de dias (ou "É hoje").
-5. **Carteira** em tabela: casal (nome do evento), data, % de tarefas feitas, convidados que responderam, coluna **Atenção** (tarefas atrasadas e/ou respostas abaixo do esperado — limiar na §17).
+5. **Carteira** em tabela: casal (nome do evento), data, % de tarefas feitas, convidados que responderam, coluna **Atenção** (tarefas atrasadas e/ou respostas abaixo do esperado). "Respostas abaixo do esperado": faltam menos de 2 meses para o evento e 50% ou mais dos convidados ainda não responderam.
 6. **Números do funil**: quantidade e valor por estágio (os quatro já usados hoje).
 7. Conta nova: **checklist de configuração** (contrato da conta, Pix, marca, página pública, equipe) com "pular" por item ou no conjunto. Some quando completo ou pulado.
 
@@ -51,7 +51,7 @@ Organizer ou Assistant autenticado (SPEC-001). A casca e a navegação (bloco 1)
 ## 8. Regras de negócio
 
 - A Hoje **não** é uma grade de atalhos dos módulos; o menu lateral/inferior leva aos módulos.
-- "N coisas pedem você hoje" soma os itens que entram nos cartões de ação (definição exata do que conta na §17).
+- "N tarefas pedem você hoje" conta só as tarefas ativas com prazo hoje, de qualquer evento da conta. Os cartões de ação não entram nessa soma.
 - Números isolam a conta; Assistant só vê o recorte liberado.
 - Esta tela não cria evento nem oportunidade.
 
@@ -95,8 +95,8 @@ SPEC-001, casca (bloco 1), SPEC-002/008 (eventos), SPEC-003 (tarefas), SPEC-004/
 
 ## 17. Premissas e pontos não definidos
 
-1. O que exatamente entra no "N" da saudação (soma dos cartões? só atrasados?).
-2. Limiar de "respostas abaixo do esperado" na coluna Atenção.
+1. ~~O que entra no "N" da saudação.~~ Decidido: tarefas ativas com prazo hoje, de todos os eventos (§6, item 2).
+2. ~~Limiar de "respostas abaixo do esperado".~~ Decidido: menos de 2 meses para o evento e 50% ou mais dos convidados sem resposta (§6, item 5).
 3. Destino dos cartões de cobrança antes do bloco 6 existir.
 4. Comportamento do cartão financeiro para Assistant sem permissão (ocultar vs zero).
 5. Definição de "respostas de convidados" no cartão (novas nas últimas 24h? pendentes totais?).

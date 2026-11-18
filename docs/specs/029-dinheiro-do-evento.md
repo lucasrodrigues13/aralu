@@ -1,6 +1,6 @@
 # 029. Dinheiro do evento
 
-**Status: aprovada (18/11/2026).** O código deve seguir esta spec. Fonte: [produto-v1.md](../produto-v1.md) 5.9 e 5.1 (Pix), RF-095, RF-096, RF-097, RF-088. A seção 17 continua sem decisão.
+**Status: aprovada (18/11/2026).** O código deve seguir esta spec. Fonte: [produto-v1.md](../produto-v1.md) 5.9 e 5.1 (Pix), RF-095, RF-096, RF-097, RF-088. Os itens 2, 4 e 6 da seção 17 foram decididos em 18/11/2026.
 
 ## 1. Identificador e nome
 
@@ -27,7 +27,7 @@ Fora: cobrança automática sem aprovação; financeiro da empresa (RF-076, outr
 
 ## 5. Pré-condições
 
-Evento da conta. Chave Pix da conta cadastrada para "Cobrar" completo (RF-088); sem Pix, o fluxo avisa (§17).
+Evento da conta. A chave Pix fica no Perfil da assessoria (campo "Chave Pix", RF-088). Sem chave cadastrada, "Cobrar" pede a chave na hora (§6.2).
 
 ## 6. Fluxo principal
 
@@ -39,7 +39,7 @@ Evento da conta. Chave Pix da conta cadastrada para "Cobrar" completo (RF-088); 
 
 ### 6.2. Cobrar
 
-1. Em uma parcela a receber, "Cobrar" abre o WhatsApp (link `wa.me`) com texto pronto e dados do Pix da conta.
+1. Em uma parcela a receber, "Cobrar" abre o WhatsApp (link `wa.me`) com texto pronto e a chave Pix do Perfil. Se o Perfil não tem chave Pix, "Cobrar" abre antes um modal com o campo "Chave Pix"; a chave digitada vai na mensagem.
 2. O texto muda se é lembrete, se vence hoje ou se está atrasada.
 3. A plataforma **não envia** a mensagem sozinha.
 
@@ -50,7 +50,7 @@ Evento da conta. Chave Pix da conta cadastrada para "Cobrar" completo (RF-088); 
 
 ### 6.4. Totais
 
-Sempre visíveis: **Contrato**, **Recebido**, **A receber**, **Resultado** (recebido do casal menos o que já foi pago a fornecedores e despesas do evento — fórmula na §17).
+Sempre visíveis: **Contrato**, **Recebido** e **Saldo**. Saldo = valor do contrato − recebido (o que falta o casal quitar). "Resultado" e "A receber" saem: o Saldo cobre os dois.
 
 ### 6.5. Pagamentos a fornecedores
 
@@ -65,7 +65,7 @@ Continuam os da SPEC-018 (parcelas do serviço). Nesta aba aparecem por mês e p
 ## 7. Fluxos alternativos
 
 - Sem valor de contrato: não gera parcelas.
-- Cobrar sem Pix cadastrado: avisa e oferece o texto sem chave, ou bloqueia (§17).
+- Cobrar sem Pix cadastrado: o modal pede a chave Pix e ela vai na mensagem.
 - Recebi maior que o saldo da parcela: não grava.
 - Desfazer sem recebimento: ação indisponível.
 - Assistant sem financeiro: aba/rotas indisponíveis.
@@ -75,7 +75,8 @@ Continuam os da SPEC-018 (parcelas do serviço). Nesta aba aparecem por mês e p
 - Parcelas do casal ≠ parcelas a fornecedores.
 - Sem cobrança automática.
 - O passo de valor da assessoria na criação (SPEC-008) deixa de ser usado; o valor mora aqui (e/ou no contrato, SPEC-030).
-- Resultado do evento alimenta o olhar do evento; o caixa da empresa é RF-076.
+- O Saldo é do evento; o caixa da empresa é RF-076.
+- O valor do contrato e as parcelas moram aqui. O contrato do evento (SPEC-030) só lê esses dados pelos campos de mesclagem.
 
 ## 9. Validações
 
@@ -102,13 +103,13 @@ Validação no campo. Outra conta: indisponível. Falha ao gravar recebimento n�
 1. Informar valor, entrada e N parcelas gera as parcelas corretas.
 2. Cobrar abre WhatsApp com texto distinto para atrasada / vence hoje / lembrete.
 3. Recebi parcial atualiza saldo; Desfazer reverte.
-4. Totais Contrato, Recebido, A receber e Resultado batem com os lançamentos.
+4. Totais Contrato, Recebido e Saldo batem com os lançamentos.
 5. Assistant sem permissão financeira não acessa.
 6. Outra conta não vê.
 
 ## 15. Cenários de teste
 
-Gerar parcelas com e sem entrada. Cobrar nos três textos. Recebi total e parcial + Desfazer. Totais. Isolamento. Sem Pix.
+Gerar parcelas com e sem entrada. Cobrar nos três textos. Recebi total e parcial + Desfazer. Totais (Saldo). Isolamento. Cobrar sem Pix no Perfil (pede a chave).
 
 ## 16. Dependências
 
@@ -117,9 +118,9 @@ SPEC-008 (evento), SPEC-018 (fornecedores), RF-088 (Pix), SPEC-030 (contrato →
 ## 17. Premissas e pontos não definidos
 
 1. Regra exata de vencimentos das parcelas (dia fixo, meses corridos).
-2. Fórmula do Resultado (o que entra e o que sai).
+2. ~~Fórmula do Resultado.~~ Decidido: vira **Saldo** = contrato − recebido.
 3. Formas de pagamento aceitas.
-4. Cobrar sem Pix: bloquear ou seguir sem chave.
+4. ~~Cobrar sem Pix.~~ Decidido: modal pede a chave Pix e ela vai na mensagem.
 5. Categorias padrão de despesa.
-6. Se o valor do contrato nesta tela é o mesmo do modelo de contrato (SPEC-030) ou pode divergir.
+6. ~~Valor do contrato aqui × no contrato.~~ Decidido: o valor mora aqui; o contrato (SPEC-030) lê pelos campos de mesclagem.
 7. Limites de arquivo de comprovante.

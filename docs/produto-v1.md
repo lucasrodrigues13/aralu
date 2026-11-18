@@ -195,7 +195,7 @@ Separar o que **ela recebe** do casal do que **ela paga** aos fornecedores (IV, 
 | Valor do contrato, entrada e nº de parcelas geram todas as parcelas do casal | Ajustar (hoje é o serviço "Assessoria" no passo de criação) | PDF, CF, G |
 | **Cobrar**: abre o WhatsApp com mensagem e Pix; texto muda se é lembrete, se vence hoje ou se atrasou | Novo | PDF, CF |
 | **Recebi**: valor, forma e data; aceita parcial; **Desfazer** | Novo | PDF, CF |
-| Totais Contrato, Recebido, A receber, Resultado | Novo | CF |
+| Totais Contrato, Recebido e Saldo (contrato − recebido; decidido em 18/11/2026) | Novo | CF |
 | Parcelas a fornecedores com entrada, forma, juros, comprovante, pago por | Pronto | G (SPEC-018) |
 | Pagamentos do evento por mês e por fornecedor; pagamentos de todos os eventos | Novo | AV |
 | Despesas e entradas do evento por categoria | Novo | CF |
@@ -207,12 +207,12 @@ Separar o que **ela recebe** do casal do que **ela paga** aos fornecedores (IV, 
 
 | Item | Estado | Fonte |
 |---|---|---|
-| Modelo de contrato da conta com campos: nome do cerimonial, CPF/CNPJ dela, nome/CPF/endereço/WhatsApp/e-mail do cliente, título, tipo, data, horário, local, convidados, valor, lista de parcelas, data de hoje | Novo | PDF, CF |
+| Tela **Contratos** (Admin e Organizer) com vários contratos e campos de mesclagem: dados do contratante, da contratada, do evento, valor e parcelas (SPEC-030 v2, 18/11/2026) | Novo | PDF, CF, usuário |
 | "Ver como fica" com os campos destacados | Novo | PDF, CF |
-| **Um modelo de contrato só** para a conta (decidido em 18/11/2026) | Novo | PDF, CF |
-| Contrato preenchido por evento para baixar em PDF | Novo | PDF, CF |
-| **Assinatura eletrônica**: na 1.0 é simulada. "Assinar" marca o contrato como assinado e mostra um aviso, sem serviço externo. A integração entra quando o serviço for escolhido | Novo (simulada) | D |
-| Parcelas do contrato vão para o Dinheiro do evento | Novo | PDF |
+| Aba Contratos no modelo de evento: vincula contratos ao modelo; o evento criado do modelo já vem com eles | Novo | usuário |
+| Aba Contratos no evento: ler e imprimir preenchido; enviar ao casal por e-mail um link de leitura sem login que expira | Novo | usuário |
+| **Assinatura eletrônica**: fora até escolher a plataforma (pendência 1). Sem simulação | Pendente | D, usuário |
+| Valor e parcelas moram no Dinheiro do evento; o contrato só lê | Novo | PDF |
 | Modelos de contrato do funil (SPEC-028) | Pronto | G |
 
 ### 5.11. Link do casal
@@ -381,7 +381,7 @@ Baseada no PDF (base → uso diário → diferencial), com o que já existe.
 
 ## 10. Pendências
 
-1. Serviço de assinatura eletrônica (5.10). Até a escolha, a assinatura é simulada.
+1. Serviço de assinatura eletrônica (5.10). Até a escolha, não há assinatura (SPEC-030 v2, §17).
 2. Pedir a lista de convidados ao casal pelo link (5.7).
 3. Mural de recados da equipe (5.15).
 4. Caixa global de anexos (5.19).

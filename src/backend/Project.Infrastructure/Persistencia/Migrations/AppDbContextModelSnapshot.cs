@@ -1887,6 +1887,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("Cancelado")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("Feito")
                         .HasColumnType("boolean");
 

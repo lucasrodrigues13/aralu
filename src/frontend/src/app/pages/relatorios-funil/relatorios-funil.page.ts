@@ -20,7 +20,7 @@ import { deDataParaIso } from '../../shared/data';
       <button mat-stroked-button type="button" (click)="exportar()"><mat-icon>download</mat-icon> Exportar</button>
     </header>
     <section class="gd-painel">
-      <form class="gd-barra" [formGroup]="periodo" (ngSubmit)="carregar()">
+      <form class="gd-barra gd-filtros" [formGroup]="periodo" (ngSubmit)="carregar()">
         <app-campo-data formControlName="inicio" rotulo="Início" />
         <app-campo-data formControlName="fim" rotulo="Fim" />
         <button mat-flat-button type="submit">Atualizar</button>

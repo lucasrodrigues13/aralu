@@ -6,7 +6,9 @@ namespace Project.Application.Negocio;
 
 public sealed record ResponsavelPedido(PapelResponsavel Papel);
 
-public sealed record ItemChecklistPedido(string? Texto, bool Feito);
+public sealed record ItemChecklistPedido(string? Texto, bool Feito, bool Cancelado = false);
+
+public sealed record MarcarItemChecklist(bool Feito, bool Cancelado);
 
 public sealed record SalvarTarefa(
     string? Titulo,
@@ -25,7 +27,7 @@ public sealed record ComentarioPedido(string? Texto);
 
 public sealed record ResponsavelLeitura(PapelResponsavel Papel, string? ReferenciaId);
 
-public sealed record ItemChecklistLeitura(Guid Id, string Texto, bool Feito);
+public sealed record ItemChecklistLeitura(Guid Id, string Texto, bool Feito, bool Cancelado);
 
 public sealed record ComentarioLeitura(Guid Id, string AutorContaId, string Texto, DateTimeOffset CriadoEm);
 
@@ -265,6 +267,41 @@ public sealed class TarefaServico(IDados dados)
         return Resultado<TarefaLeitura>.Sucesso(await LerUmaAsync(contaId, tarefa, hoje, ct));
     }
 
+    /// <summary>Marca um item da checklist como feito, cancelado (riscado) ou pendente, sem regravar a tarefa.</summary>
+    public async Task<Resultado<TarefaLeitura>> MarcarItemChecklistAsync(
+        string contaId,
+        Guid id,
+        Guid itemId,
+        MarcarItemChecklist pedido,
+        DateOnly hoje,
+        CancellationToken ct)
+    {
+        var tarefa = await dados.ObterTarefaAsync(contaId, id, ct);
+        if (tarefa is null)
+        {
+            return Resultado<TarefaLeitura>.Erro(Codigos.Indisponivel, "Indisponível.");
+        }
+
+        var situacaoEvento = await dados.SituacaoDoEventoAsync(contaId, tarefa.EventoId, ct);
+        if (situacaoEvento != SituacaoEvento.EmAndamento)
+        {
+            return Resultado<TarefaLeitura>.Erro(Codigos.Validacao, "O evento não está em andamento.");
+        }
+
+        if (pedido.Feito && pedido.Cancelado)
+        {
+            return Resultado<TarefaLeitura>.Erro(Codigos.Validacao, "O item não pode estar feito e cancelado ao mesmo tempo.");
+        }
+
+        if (!await dados.MarcarItemChecklistAsync(tarefa.Id, itemId, pedido.Feito, pedido.Cancelado, ct))
+        {
+            return Resultado<TarefaLeitura>.Erro(Codigos.Indisponivel, "Indisponível.");
+        }
+
+        var atual = (await dados.ListarTarefasAsync(contaId, tarefa.EventoId, ct)).Single(item => item.Id == tarefa.Id);
+        return Resultado<TarefaLeitura>.Sucesso(await LerUmaAsync(contaId, atual, hoje, ct));
+    }
+
     private async Task<IReadOnlyList<TarefaLeitura>> LerListaAsync(string contaId, IReadOnlyList<Tarefa> tarefas, DateOnly hoje, CancellationToken ct)
     {
         var ids = tarefas.Select(tarefa => tarefa.EventoId).Distinct().ToArray();
@@ -321,7 +358,7 @@ public sealed class TarefaServico(IDados dados)
             responsaveis,
             tarefa.Checklist
                 .OrderBy(item => item.Ordem)
-                .Select(item => new ItemChecklistLeitura(item.Id, item.Texto, item.Feito))
+                .Select(item => new ItemChecklistLeitura(item.Id, item.Texto, item.Feito, item.Cancelado))
                 .ToArray(),
             tarefa.Comentarios
                 .OrderBy(item => item.CriadoEm)
@@ -369,7 +406,8 @@ public sealed class TarefaServico(IDados dados)
             Id = Guid.NewGuid(),
             TarefaId = tarefa.Id,
             Texto = Domain.Comum.Texto.Limpo(pedido.Texto) ?? "",
-            Feito = pedido.Feito,
+            Feito = pedido.Feito && !pedido.Cancelado,
+            Cancelado = pedido.Cancelado,
             Ordem = ordem++,
         }).ToList();
     }

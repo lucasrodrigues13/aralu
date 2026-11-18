@@ -121,6 +121,8 @@ public interface IDados
 
     Task SubstituirChecklistAsync(Guid tarefaId, IReadOnlyList<ItemChecklistTarefa> itens, CancellationToken ct);
 
+    Task<bool> MarcarItemChecklistAsync(Guid tarefaId, Guid itemId, bool feito, bool cancelado, CancellationToken ct);
+
     Task InserirComentarioAsync(ComentarioTarefa comentario, CancellationToken ct);
 
     Task InserirTarefaAsync(Tarefa tarefa, CancellationToken ct);

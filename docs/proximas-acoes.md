@@ -16,7 +16,7 @@ Roteiro para continuar o trabalho em outra sessão. Siga na ordem. Na dúvida, p
 - Nunca renumere RF. O próximo RF livre é o **RF-110**.
 - Não altere RF nem decisão marcada como Definido sem pedido do usuário.
 - Não crie nem edite nada na Assessoria VIP nem em outro site de referência.
-- Não faça commit na `main`. A branch atual é `produto-v1-design-system`.
+- Commits na `main` estão liberados enquanto o produto não for para produção (decisão de 18/11/2026). O versionamento de verdade começa no lançamento.
 - Não faça push nem abra PR sem o usuário pedir.
 
 ## 3. Situação atual
@@ -94,9 +94,9 @@ Atualize este arquivo: marque o que ficou pronto e anote as dúvidas para o usu�
 - [x] SPEC-029 (bloco 6) — aprovada em 18/11/2026
 - [x] SPEC-030 (bloco 7) — aprovada em 18/11/2026
 
+Respondidas em 18/11/2026 (registradas nas specs): "Esta semana"/"Para conferir" descartadas; "N" da Hoje = tarefas ativas com prazo hoje; respostas abaixo do esperado = menos de 2 meses e 50% sem resposta; Resultado vira Saldo; cobrar sem Pix pede a chave; contratos viram tela própria com campos de mesclagem (SPEC-030 v2).
+
 Dúvidas para o usuário:
 
-- SPEC-003 §17: fronteira de "Esta semana", definição de "Para conferir", atrasada automática, exclusão de tarefa.
-- SPEC-007 §17: o que conta no "N" da saudação e limiar de "respostas abaixo do esperado".
-- SPEC-029 §17: fórmula do Resultado e cobrar sem Pix.
-- SPEC-030 §17: sintaxe dos campos do modelo e se o casal assina pelo link na 1.0.
+- SPEC-003 §17: atrasada automática, exclusão de tarefa.
+- SPEC-030 §17: plataforma de assinatura eletrônica (pendência).

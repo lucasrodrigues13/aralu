@@ -10,5 +10,8 @@ public sealed class ItemChecklistTarefa
 
     public bool Feito { get; set; }
 
+    /// <summary>Item descartado: continua na lista, riscado. Não conta como feito.</summary>
+    public bool Cancelado { get; set; }
+
     public int Ordem { get; set; }
 }

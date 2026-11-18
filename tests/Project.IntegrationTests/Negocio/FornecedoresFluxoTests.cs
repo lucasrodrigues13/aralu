@@ -54,13 +54,16 @@ public class FornecedoresFluxoTests
 
         var comFornecedor = await Ler(await dono.PostAsJsonAsync(
             $"/api/v1/eventos/{eventoId}/servicos/{servicoId}/fornecedores",
-            new { fornecedorId, etapa = "Recomendado" }));
+            new { fornecedorId, etapa = "Orcamento" }));
         var vinculoId = comFornecedor.GetProperty("servicos").EnumerateArray()
             .Single(item => item.GetProperty("id").GetGuid() == servicoId)
             .GetProperty("fornecedores").EnumerateArray().Single().GetProperty("id").GetGuid();
 
         await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/servicos/{servicoId}/fornecedores/{vinculoId}/avancar", new { }));
-        await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/servicos/{servicoId}/fornecedores/{vinculoId}/avancar", new { }));
+        var voltou = await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/servicos/{servicoId}/fornecedores/{vinculoId}/voltar", new { }));
+        Assert.Equal("Orcamento", voltou.GetProperty("servicos").EnumerateArray()
+            .Single(item => item.GetProperty("id").GetGuid() == servicoId)
+            .GetProperty("fornecedores")[0].GetProperty("etapa").GetString());
         var contratado = await Ler(await dono.PostAsJsonAsync(
             $"/api/v1/eventos/{eventoId}/servicos/{servicoId}/fornecedores/{vinculoId}/contratar",
             new

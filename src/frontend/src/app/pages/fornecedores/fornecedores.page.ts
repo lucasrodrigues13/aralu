@@ -108,7 +108,7 @@ export class NovoServicoDialog {
         </mat-tab>
         <mat-tab label="Serviços da conta">
           <div class="gd-barra">
-            <button mat-stroked-button type="button" (click)="criarServico()"><mat-icon>add</mat-icon> Adicionar serviço</button>
+            <button mat-stroked-button class="gd-barra-inicio" type="button" (click)="criarServico()"><mat-icon>add</mat-icon> Adicionar serviço</button>
             <mat-form-field class="gd-busca" appearance="outline" subscriptSizing="dynamic">
               <mat-icon matIconPrefix>search</mat-icon>
               <input matInput placeholder="Buscar" [value]="buscaServ()" (input)="buscarServ($event)" />

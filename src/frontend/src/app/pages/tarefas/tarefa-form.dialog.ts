@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, ElementRef, inject, OnInit, signal } from '@angular/core';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -36,7 +36,11 @@ export interface TarefaFormDados {
     <p class="gd-dialog-descricao">Título, prazo, responsáveis e os detalhes da tarefa.</p>
     <mat-dialog-content>
       <form id="tarefa-form" class="gd-campos" [formGroup]="formulario" (ngSubmit)="salvar()">
-        <mat-form-field class="inteiro" appearance="outline"><mat-label>Título</mat-label><input matInput formControlName="titulo" /></mat-form-field>
+        <mat-form-field class="inteiro" appearance="outline">
+          <mat-label>Título</mat-label>
+          <input matInput formControlName="titulo" required />
+          @if (formulario.controls.titulo.invalid) { <mat-error>Informe o título.</mat-error> }
+        </mat-form-field>
         <mat-form-field class="inteiro" appearance="outline"><mat-label>Descrição</mat-label><textarea matInput rows="2" formControlName="descricao"></textarea></mat-form-field>
         <div class="gd-campos duas">
           <app-campo-data rotulo="Prazo" formControlName="prazo" />
@@ -50,9 +54,10 @@ export interface TarefaFormDados {
           }
           <mat-form-field appearance="outline">
             <mat-label>Responsáveis</mat-label>
-            <mat-select formControlName="responsaveis" multiple>
+            <mat-select formControlName="responsaveis" multiple required>
               @for (papel of papeis; track papel.valor) { <mat-option [value]="papel.valor">{{ papel.rotulo }}</mat-option> }
             </mat-select>
+            @if (formulario.controls.responsaveis.hasError('required')) { <mat-error>Informe ao menos um responsável.</mat-error> }
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>Prioridade</mat-label>
@@ -77,18 +82,24 @@ export interface TarefaFormDados {
             </mat-select>
           </mat-form-field>
         }
-        <div class="inteiro" formArrayName="checklist">
-          <p>Checklist</p>
-          @for (item of checklist.controls; track $index) {
-            <div class="gd-campos duas" [formGroupName]="$index">
-              <mat-form-field appearance="outline"><mat-label>Item</mat-label><input matInput formControlName="texto" /></mat-form-field>
-              <mat-checkbox formControlName="feito">Feito</mat-checkbox>
+        <div class="inteiro gd-lista-itens" formArrayName="checklist">
+          <span class="gd-rotulo">Checklist</span>
+          @for (item of checklist.controls; track item; let i = $index) {
+            <div class="gd-lista-item" [class.cancelado]="item.get('cancelado')?.value" [formGroupName]="i">
+              <mat-checkbox formControlName="feito" [attr.aria-label]="'Marcar item ' + (i + 1) + ' como feito'" />
+              <mat-form-field appearance="outline">
+                <input matInput formControlName="texto" placeholder="Descreva o item" required [attr.aria-label]="'Item ' + (i + 1)" />
+                @if (item.get('texto')?.invalid) { <mat-error>Preencha ou remova o item.</mat-error> }
+              </mat-form-field>
+              <button mat-icon-button type="button" aria-label="Remover item" (click)="removerItem(i)"><mat-icon>delete</mat-icon></button>
             </div>
           }
-          <button mat-stroked-button type="button" (click)="adicionarItem()">
-            <mat-icon>add</mat-icon>
-            Item
-          </button>
+          <div>
+            <button mat-stroked-button type="button" (click)="adicionarItem()">
+              <mat-icon>add</mat-icon>
+              Adicionar item
+            </button>
+          </div>
         </div>
       </form>
     </mat-dialog-content>
@@ -104,22 +115,23 @@ export class TarefaFormDialog implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly negocio = inject(NegocioClient);
   private readonly toast = inject(ToastService);
+  private readonly elemento = inject<ElementRef<HTMLElement>>(ElementRef);
   protected readonly situacoes = SITUACOES_TAREFA;
   protected readonly prioridades = PRIORIDADES_TAREFA;
   protected readonly visibilidades = VISIBILIDADES_TAREFA;
   protected readonly papeis = PAPEIS_RESPONSAVEL_TAREFA;
   protected readonly servicos = signal<{ id: string; nome: string }[]>([]);
   protected readonly formulario = this.fb.nonNullable.group({
-    titulo: [this.dados.tarefa?.titulo ?? '', Validators.required],
+    titulo: [this.dados.tarefa?.titulo ?? '', [Validators.required, Validators.pattern(/\S/)]],
     descricao: this.dados.tarefa?.descricao ?? '',
     prazo: this.fb.control<Date | null>(deIsoParaData(this.dados.tarefa?.prazo)),
     situacao: this.dados.tarefa?.situacao ?? 'Pendente',
-    responsaveis: [this.dados.tarefa?.responsaveis.map((item) => item.papel) ?? ['Organizer'] as string[]],
+    responsaveis: [this.dados.tarefa?.responsaveis.map((item) => item.papel) ?? ['Organizer'] as string[], Validators.required],
     prioridade: this.dados.tarefa?.prioridade ?? 'Media',
     visibilidade: this.dados.tarefa?.visibilidade ?? 'SoEu',
     grupo: this.dados.tarefa?.grupo ?? '',
     servicoEventoId: this.dados.tarefa?.servicoEventoId ?? '',
-    checklist: this.fb.array((this.dados.tarefa?.checklist ?? []).map((item) => this.item(item.texto, item.feito))),
+    checklist: this.fb.array((this.dados.tarefa?.checklist ?? []).map((item) => this.item(item.texto, item.feito, item.cancelado))),
   });
 
   protected get checklist(): FormArray {
@@ -136,20 +148,25 @@ export class TarefaFormDialog implements OnInit {
   }
 
   protected adicionarItem(): void {
-    this.checklist.push(this.item('', false));
+    this.checklist.push(this.item('', false, false));
+    setTimeout(() => {
+      const campos = this.elemento.nativeElement.querySelectorAll<HTMLInputElement>('.gd-lista-item input');
+      campos[campos.length - 1]?.focus();
+    });
+  }
+
+  protected removerItem(indice: number): void {
+    this.checklist.removeAt(indice);
   }
 
   protected salvar(): void {
-    if (this.formulario.invalid || this.checklist.controls.some((item) => !item.getRawValue().texto.trim())) {
+    if (this.formulario.invalid) {
       this.formulario.markAllAsTouched();
-      this.toast.erro('Confira os campos obrigatórios.');
+      this.toast.erro('Confira os campos obrigatórios destacados.');
+      setTimeout(() => this.focarPrimeiroInvalido());
       return;
     }
     const valor = this.formulario.getRawValue();
-    if (valor.responsaveis.length === 0) {
-      this.toast.erro('Informe ao menos um responsável.');
-      return;
-    }
     const pedido = {
       titulo: valor.titulo,
       descricao: valor.descricao,
@@ -161,7 +178,7 @@ export class TarefaFormDialog implements OnInit {
       servicoEventoId: valor.servicoEventoId || null,
       atualizarServico: true,
       responsaveis: valor.responsaveis.map((papel) => ({ papel })),
-      checklist: valor.checklist.map((item) => ({ texto: item.texto, feito: item.feito })),
+      checklist: valor.checklist.map((item) => ({ texto: item.texto.trim(), feito: item.feito, cancelado: item.cancelado })),
     };
     const destino = this.dados.tarefa
       ? this.negocio.atualizarTarefa(this.dados.tarefa.id, pedido)
@@ -175,7 +192,12 @@ export class TarefaFormDialog implements OnInit {
     });
   }
 
-  private item(texto: string, feito: boolean) {
-    return this.fb.nonNullable.group({ texto, feito });
+  private focarPrimeiroInvalido(): void {
+    const campo = this.elemento.nativeElement.querySelector<HTMLElement>('input.ng-invalid, textarea.ng-invalid, .mat-mdc-select.ng-invalid');
+    campo?.focus();
+  }
+
+  private item(texto: string, feito: boolean, cancelado: boolean) {
+    return this.fb.nonNullable.group({ texto: [texto, [Validators.required, Validators.pattern(/\S/)]], feito, cancelado });
   }
 }

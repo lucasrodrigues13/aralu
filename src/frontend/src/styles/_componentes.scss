@@ -159,20 +159,31 @@
 }
 
 // 5.4 Barra de lista e filtros
+// Filtros ficam à direita e crescem para a esquerda; abas (ou .gd-barra-inicio) ficam à esquerda.
 .gd-barra {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 12px;
   margin-bottom: 16px;
+}
+
+.gd-barra > .gd-abas,
+.gd-barra > .gd-barra-inicio {
+  margin-right: auto;
 }
 
 .gd-filtros {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
-  gap: 12px;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.gd-barra > .gd-filtros {
+  flex: 1 1 auto;
 }
 
 .gd-filtros .mat-mdc-form-field {

@@ -400,6 +400,13 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         }
     }
 
+    public async Task<bool> MarcarItemChecklistAsync(Guid tarefaId, Guid itemId, bool feito, bool cancelado, CancellationToken ct) =>
+        await banco.Set<ItemChecklistTarefa>()
+            .Where(item => item.Id == itemId && item.TarefaId == tarefaId)
+            .ExecuteUpdateAsync(
+                set => set.SetProperty(item => item.Feito, feito).SetProperty(item => item.Cancelado, cancelado),
+                ct) > 0;
+
     public async Task InserirComentarioAsync(ComentarioTarefa comentario, CancellationToken ct)
     {
         banco.Set<ComentarioTarefa>().Add(comentario);

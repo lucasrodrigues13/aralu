@@ -77,6 +77,7 @@ public static class NegocioEndpoints
         api.MapGet("/tarefas", Tarefas);
         api.MapPut("/tarefas/{id:guid}", AtualizarTarefa);
         api.MapPost("/tarefas/{id:guid}/comentarios", ComentarTarefa);
+        api.MapPut("/tarefas/{id:guid}/checklist/{itemId:guid}", MarcarItemChecklist);
         api.MapGet("/clientes", Clientes).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapPost("/clientes", CriarCliente).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapPut("/clientes/{id:guid}", AtualizarCliente).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
@@ -692,6 +693,40 @@ public static class NegocioEndpoints
             }
 
             return await De(servico.ComentarAsync(conta, id, pedido, Hoje(), ct));
+        });
+
+    private static Task<IResult> MarcarItemChecklist(
+        Guid id,
+        Guid itemId,
+        MarcarItemChecklist pedido,
+        ClaimsPrincipal usuario,
+        TarefaServico servico,
+        IDados dados,
+        CancellationToken ct) =>
+        ComConta(usuario, async conta =>
+        {
+            var bloqueio = await ExigirModuloAsync(usuario, conta, ModuloCliente.Tarefas, dados, ct);
+            if (bloqueio is not null)
+            {
+                return bloqueio;
+            }
+
+            if (EhClient(usuario))
+            {
+                var tarefa = await dados.ObterTarefaAsync(conta, id, ct);
+                if (tarefa is null)
+                {
+                    return Indisponivel();
+                }
+
+                var eventoOk = await ExigirEventoDoClientAsync(usuario, conta, tarefa.EventoId, dados, ct);
+                if (eventoOk is not null)
+                {
+                    return eventoOk;
+                }
+            }
+
+            return await De(servico.MarcarItemChecklistAsync(conta, id, itemId, pedido, Hoje(), ct));
         });
 
     private static Task<IResult> Clientes(ClaimsPrincipal usuario, ClienteServico servico, string? nome, CancellationToken ct) =>

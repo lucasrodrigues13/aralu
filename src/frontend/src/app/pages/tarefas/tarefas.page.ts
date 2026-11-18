@@ -23,12 +23,14 @@ import { AplicarModeloDialog } from '../eventos/aplicar-modelo.dialog';
 import { colunasPorDia, filtrarTarefas, FiltroTarefasLista, ordenarPorPrazo } from './grupo-tarefa';
 import { TarefaFormDialog } from './tarefa-form.dialog';
 import { TarefaLeituraDialog } from './tarefa-leitura.dialog';
+import { ChecklistTarefaComponent, progressoChecklist } from './checklist-tarefa';
 
 @Component({
   selector: 'app-tarefas',
   imports: [
     RouterLink, ReactiveFormsModule, MatCardModule, MatButtonModule, MatButtonToggleModule, MatIconModule,
     MatTableModule, MatFormFieldModule, MatInputModule, MatSelectModule, GdDataPipe, EventoAbasComponent, CampoDataComponent,
+    ChecklistTarefaComponent,
   ],
   template: `
     @if (eventoId()) { <app-evento-abas [eventoId]="eventoId()" /> }
@@ -72,12 +74,45 @@ import { TarefaLeituraDialog } from './tarefa-leitura.dialog';
         @if (listaDoEvento().length === 0) {
           <p class="gd-vazio">Não há tarefa para mostrar.</p>
         } @else {
-          <table class="gd-grade" mat-table [dataSource]="listaDoEvento()">
+          <table class="gd-grade" mat-table [dataSource]="listaDoEvento()" multiTemplateDataRows>
+            <ng-container matColumnDef="expandir">
+              <th mat-header-cell *matHeaderCellDef class="coluna-expandir"><span class="gd-sr">Checklist</span></th>
+              <td mat-cell *matCellDef="let tarefa" class="coluna-expandir" (click)="$event.stopPropagation()">
+                @if (tarefa.checklist.length > 0) {
+                  <button
+                    mat-icon-button
+                    type="button"
+                    class="seta"
+                    [class.aberta]="aberta(tarefa)"
+                    [attr.aria-expanded]="aberta(tarefa)"
+                    [attr.aria-label]="(aberta(tarefa) ? 'Recolher' : 'Expandir') + ' checklist de ' + tarefa.titulo"
+                    (click)="alternar(tarefa)"
+                  >
+                    <mat-icon>chevron_right</mat-icon>
+                  </button>
+                }
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="detalhe">
+              <td mat-cell *matCellDef="let tarefa" class="detalhe" [attr.colspan]="colunasEvento.length">
+                @if (aberta(tarefa)) {
+                  <app-checklist-tarefa [tarefa]="tarefa" [editavel]="tarefa.eventoEmAndamento" (mudou)="atualizar($event)" />
+                }
+              </td>
+            </ng-container>
             <ng-container matColumnDef="titulo">
               <th mat-header-cell *matHeaderCellDef>Tarefa</th>
               <td mat-cell *matCellDef="let tarefa">
                 {{ tarefa.titulo }}
-                @if (tarefa.grupo) { <span class="gd-sub">{{ tarefa.grupo }}</span> }
+                @if (tarefa.grupo || tarefa.checklist.length > 0) {
+                  <span class="gd-sub">
+                    {{ tarefa.grupo }}
+                    @if (tarefa.checklist.length > 0) {
+                      @if (tarefa.grupo) { · }
+                      <span class="progresso"><mat-icon>checklist</mat-icon>{{ progresso(tarefa).feitos }}/{{ progresso(tarefa).total }}</span>
+                    }
+                  </span>
+                }
               </td>
             </ng-container>
             <ng-container matColumnDef="prazo">
@@ -102,7 +137,8 @@ import { TarefaLeituraDialog } from './tarefa-leitura.dialog';
               </td>
             </ng-container>
             <tr mat-header-row *matHeaderRowDef="colunasEvento"></tr>
-            <tr mat-row *matRowDef="let row; columns: colunasEvento" (click)="ler(row)"></tr>
+            <tr mat-row *matRowDef="let row; columns: colunasEvento" [class.com-detalhe]="aberta(row)" (click)="ler(row)"></tr>
+            <tr mat-row *matRowDef="let row; columns: ['detalhe']" class="linha-detalhe" [class.fechada]="!aberta(row)"></tr>
           </table>
         }
       </section>
@@ -155,12 +191,45 @@ import { TarefaLeituraDialog } from './tarefa-leitura.dialog';
         @if (visiveis().length === 0) {
           <p class="gd-vazio">Não há tarefa.</p>
         } @else {
-          <table class="gd-grade" mat-table [dataSource]="visiveis()">
+          <table class="gd-grade" mat-table [dataSource]="visiveis()" multiTemplateDataRows>
+            <ng-container matColumnDef="expandir">
+              <th mat-header-cell *matHeaderCellDef class="coluna-expandir"><span class="gd-sr">Checklist</span></th>
+              <td mat-cell *matCellDef="let tarefa" class="coluna-expandir" (click)="$event.stopPropagation()">
+                @if (tarefa.checklist.length > 0) {
+                  <button
+                    mat-icon-button
+                    type="button"
+                    class="seta"
+                    [class.aberta]="aberta(tarefa)"
+                    [attr.aria-expanded]="aberta(tarefa)"
+                    [attr.aria-label]="(aberta(tarefa) ? 'Recolher' : 'Expandir') + ' checklist de ' + tarefa.titulo"
+                    (click)="alternar(tarefa)"
+                  >
+                    <mat-icon>chevron_right</mat-icon>
+                  </button>
+                }
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="detalhe">
+              <td mat-cell *matCellDef="let tarefa" class="detalhe" [attr.colspan]="colunas.length">
+                @if (aberta(tarefa)) {
+                  <app-checklist-tarefa [tarefa]="tarefa" [editavel]="tarefa.eventoEmAndamento" (mudou)="atualizar($event)" />
+                }
+              </td>
+            </ng-container>
             <ng-container matColumnDef="titulo">
               <th mat-header-cell *matHeaderCellDef>Tarefa</th>
               <td mat-cell *matCellDef="let tarefa">
                 {{ tarefa.titulo }}
-                @if (tarefa.grupo) { <span class="gd-sub">{{ tarefa.grupo }}</span> }
+                @if (tarefa.grupo || tarefa.checklist.length > 0) {
+                  <span class="gd-sub">
+                    {{ tarefa.grupo }}
+                    @if (tarefa.checklist.length > 0) {
+                      @if (tarefa.grupo) { · }
+                      <span class="progresso"><mat-icon>checklist</mat-icon>{{ progresso(tarefa).feitos }}/{{ progresso(tarefa).total }}</span>
+                    }
+                  </span>
+                }
               </td>
             </ng-container>
             <ng-container matColumnDef="evento">
@@ -189,7 +258,8 @@ import { TarefaLeituraDialog } from './tarefa-leitura.dialog';
               </td>
             </ng-container>
             <tr mat-header-row *matHeaderRowDef="colunas"></tr>
-            <tr mat-row *matRowDef="let row; columns: colunas" (click)="ler(row)"></tr>
+            <tr mat-row *matRowDef="let row; columns: colunas" [class.com-detalhe]="aberta(row)" (click)="ler(row)"></tr>
+            <tr mat-row *matRowDef="let row; columns: ['detalhe']" class="linha-detalhe" [class.fechada]="!aberta(row)"></tr>
           </table>
         }
       </section>
@@ -231,6 +301,18 @@ import { TarefaLeituraDialog } from './tarefa-leitura.dialog';
     mat-button-toggle-group, .gd-filtros { margin-bottom: 16px; }
     .cartao { display: block; width: 100%; text-align: left; margin-top: 8px; padding: 8px 12px; border: 1px solid var(--gd-borda); border-radius: 8px; background: transparent; cursor: pointer; }
     tr { cursor: pointer; }
+    .coluna-expandir { width: 40px; padding-right: 0 !important; }
+    .seta { width: 32px; height: 32px; padding: 4px; color: var(--gd-muted-foreground); }
+    .seta mat-icon { transition: transform 0.15s; }
+    .seta.aberta mat-icon { transform: rotate(90deg); }
+    .progresso { display: inline-flex; align-items: center; gap: 2px; vertical-align: middle; }
+    .progresso mat-icon { font-size: 14px; width: 14px; height: 14px; }
+    tr.com-detalhe td { border-bottom-color: transparent !important; }
+    tr.linha-detalhe { cursor: default; }
+    tr.linha-detalhe.fechada { display: none; }
+    tr.linha-detalhe:hover td { background: transparent !important; }
+    td.detalhe { padding: 0 0 12px 40px !important; }
+    .gd-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   `,
 })
 export class TarefasPage implements OnInit {
@@ -274,8 +356,11 @@ export class TarefasPage implements OnInit {
     }
     return [...vistos.entries()].map(([id, nome]) => ({ id, nome }));
   });
-  protected readonly colunas = ['titulo', 'evento', 'prazo', 'situacao', 'responsavel', 'acoes'];
-  protected readonly colunasEvento = ['titulo', 'prazo', 'situacao', 'responsavel', 'acoes'];
+  protected readonly colunas = ['expandir', 'titulo', 'evento', 'prazo', 'situacao', 'responsavel', 'acoes'];
+  protected readonly colunasEvento = ['expandir', 'titulo', 'prazo', 'situacao', 'responsavel', 'acoes'];
+  /** Tarefas com a checklist aberta na lista. */
+  private readonly abertas = signal<ReadonlySet<string>>(new Set());
+  protected readonly progresso = progressoChecklist;
 
   ngOnInit(): void {
     this.eventoId.set(this.rota.snapshot.paramMap.get('id') ?? '');
@@ -304,6 +389,22 @@ export class TarefasPage implements OnInit {
     return tarefa.responsaveis
       .map((item) => this.papeis.find((papel) => papel.valor === item.papel)?.rotulo ?? item.papel)
       .join(', ');
+  }
+
+  protected aberta(tarefa: Tarefa): boolean {
+    return this.abertas().has(tarefa.id);
+  }
+
+  protected alternar(tarefa: Tarefa): void {
+    this.abertas.update((atual) => {
+      const proximo = new Set(atual);
+      if (!proximo.delete(tarefa.id)) proximo.add(tarefa.id);
+      return proximo;
+    });
+  }
+
+  protected atualizar(tarefa: Tarefa): void {
+    this.tarefas.update((lista) => lista.map((item) => (item.id === tarefa.id ? tarefa : item)));
   }
 
   protected daSituacao(situacao: string): Tarefa[] {

@@ -16,12 +16,13 @@ import {
 } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
+import { ChecklistTarefaComponent } from './checklist-tarefa';
 
 export type AcaoLeitura = 'editar' | 'mudou' | false;
 
 @Component({
   selector: 'app-tarefa-leitura',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, GdDataPipe],
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, GdDataPipe, ChecklistTarefaComponent],
   template: `
     <h2 mat-dialog-title>{{ tarefa().titulo }}</h2>
     <p class="gd-dialog-descricao">{{ tarefa().evento }}</p>
@@ -45,11 +46,7 @@ export type AcaoLeitura = 'editar' | 'mudou' | false;
         @if (tarefa().checklist.length === 0) {
           <p class="gd-vazio">Nenhum item.</p>
         } @else {
-          <ul>
-            @for (item of tarefa().checklist; track item.id) {
-              <li>{{ item.feito ? 'Feito' : 'A fazer' }} — {{ item.texto }}</li>
-            }
-          </ul>
+          <app-checklist-tarefa [tarefa]="tarefa()" [editavel]="tarefa().eventoEmAndamento" (mudou)="checklistMudou($event)" />
         }
       }
 
@@ -129,6 +126,11 @@ export class TarefaLeituraDialog {
       },
       error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
     });
+  }
+
+  protected checklistMudou(tarefa: Tarefa): void {
+    this.tarefa.set(tarefa);
+    this.mudou = true;
   }
 
   protected fechar(): void {

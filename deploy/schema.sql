@@ -1901,3 +1901,41 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261118223633_EtapasOrcamentoContratado') THEN
+    UPDATE "FornecedorNoServico"
+    SET "Etapa" = 'Orcamento'
+    WHERE "Etapa" IN ('Recomendado', 'OrcamentoSolicitado', 'OrcamentoRecebido');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261118223633_EtapasOrcamentoContratado') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261118223633_EtapasOrcamentoContratado', '10.0.4');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261118223940_ChecklistItemCancelado') THEN
+    ALTER TABLE "ItensChecklistTarefa" ADD "Cancelado" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261118223940_ChecklistItemCancelado') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261118223940_ChecklistItemCancelado', '10.0.4');
+    END IF;
+END $EF$;
+COMMIT;
+
