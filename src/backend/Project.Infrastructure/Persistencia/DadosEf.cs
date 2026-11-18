@@ -49,6 +49,17 @@ public sealed class DadosEf(AppDbContext banco) : IDados
 
     public Task AtualizarModeloAsync(CancellationToken ct) => banco.SaveChangesAsync(ct);
 
+    public async Task AcrescentarTarefasModeloAsync(IReadOnlyList<TarefaModelo> tarefas, CancellationToken ct)
+    {
+        if (tarefas.Count == 0)
+        {
+            return;
+        }
+
+        banco.Set<TarefaModelo>().AddRange(tarefas);
+        await banco.SaveChangesAsync(ct);
+    }
+
     public async Task RemoverModeloAsync(ModeloEvento modelo, CancellationToken ct)
     {
         banco.Modelos.Remove(modelo);
@@ -374,6 +385,27 @@ public sealed class DadosEf(AppDbContext banco) : IDados
     }
 
     public Task SalvarTarefaAsync(CancellationToken ct) => banco.SaveChangesAsync(ct);
+
+    public async Task AcrescentarTarefasEServicosAsync(
+        IReadOnlyList<Tarefa> tarefas,
+        IReadOnlyList<ServicoEvento> servicos,
+        CancellationToken ct)
+    {
+        if (tarefas.Count > 0)
+        {
+            banco.Tarefas.AddRange(tarefas);
+        }
+
+        if (servicos.Count > 0)
+        {
+            banco.Set<ServicoEvento>().AddRange(servicos);
+        }
+
+        if (tarefas.Count > 0 || servicos.Count > 0)
+        {
+            await banco.SaveChangesAsync(ct);
+        }
+    }
 
     public async Task<string?> NomeDoEventoAsync(string contaId, Guid eventoId, CancellationToken ct) =>
         await banco.Eventos.AsNoTracking()

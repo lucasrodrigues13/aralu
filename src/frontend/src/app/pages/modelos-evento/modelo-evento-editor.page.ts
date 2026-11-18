@@ -22,8 +22,9 @@ import {
 import { ToastService } from '../../core/toast.service';
 import { CampoDinheiroComponent } from '../../shared/campo-dinheiro';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
-import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
+import { DIALOG_LARGO, DIALOG_PEQUENO } from '../../shared/dialog';
 import { exibirPrazo, prazoDeDias, prazoParaDias, UNIDADES_PRAZO, UnidadePrazo } from '../../shared/prazo-modelo';
+import { ImportarTarefasModeloDialog } from './importar-tarefas-modelo.dialog';
 
 @Component({
   selector: 'app-modelo-evento-editor',
@@ -39,6 +40,7 @@ import { exibirPrazo, prazoDeDias, prazoParaDias, UNIDADES_PRAZO, UnidadePrazo }
         <p>Configure checklist, tarefas e vínculos.</p>
       </div>
       <div class="acoes">
+        <button mat-stroked-button type="button" (click)="colarTarefas()"><mat-icon>content_paste</mat-icon> Colar tarefas</button>
         <button mat-stroked-button type="button" (click)="clonar()"><mat-icon>content_copy</mat-icon> Clonar</button>
         <button mat-stroked-button type="button" (click)="excluir()"><mat-icon>delete</mat-icon> Excluir</button>
         <button mat-flat-button type="button" (click)="salvar()">Salvar</button>
@@ -413,6 +415,17 @@ export class ModeloEventoEditorPage implements OnInit {
 
   protected adicionarTarefa(): void {
     this.tarefas.push(this.novaTarefa('', null, null));
+  }
+
+  protected colarTarefas(): void {
+    this.dialog.open(ImportarTarefasModeloDialog, {
+      ...DIALOG_LARGO,
+      data: { modeloId: this.id, tipoPadrao: this.form.controls.tipo.value },
+    }).afterClosed().subscribe((ok) => {
+      if (ok) {
+        this.ngOnInit();
+      }
+    });
   }
 
   protected removerTarefa(indice: number): void {

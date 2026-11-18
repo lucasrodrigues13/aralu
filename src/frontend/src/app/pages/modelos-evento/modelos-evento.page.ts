@@ -12,7 +12,8 @@ import { mensagemDeErro } from '../../core/mensagem-erro';
 import { Modelo, NegocioClient, TIPOS } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
-import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
+import { DIALOG, DIALOG_LARGO, DIALOG_PEQUENO } from '../../shared/dialog';
+import { ImportarTarefasModeloDialog } from './importar-tarefas-modelo.dialog';
 
 @Component({
   selector: 'app-criar-modelo-dialog',
@@ -74,10 +75,16 @@ export class CriarModeloDialog {
         <h1>Modelos de evento</h1>
         <p>Biblioteca de modelos para criar eventos.</p>
       </div>
-      <button mat-flat-button type="button" (click)="criar()">
-        <mat-icon>add</mat-icon>
-        Novo Modelo de Evento
-      </button>
+      <div class="gd-cabecalho-acoes">
+        <button mat-stroked-button type="button" (click)="importar()">
+          <mat-icon>upload</mat-icon>
+          Importar modelo
+        </button>
+        <button mat-flat-button type="button" (click)="criar()">
+          <mat-icon>add</mat-icon>
+          Novo Modelo de Evento
+        </button>
+      </div>
     </header>
     <section class="gd-painel">
       <div class="gd-barra">
@@ -101,6 +108,10 @@ export class CriarModeloDialog {
             <th mat-header-cell *matHeaderCellDef>Tipo</th>
             <td mat-cell *matCellDef="let m">{{ rotuloTipo(m.tipo) }}</td>
           </ng-container>
+          <ng-container matColumnDef="pacote">
+            <th mat-header-cell *matHeaderCellDef>Tarefas · Serviços</th>
+            <td mat-cell *matCellDef="let m">{{ m.tarefas.length }} tarefas · {{ m.servicos.length }} serviços</td>
+          </ng-container>
           <ng-container matColumnDef="acoes">
             <th mat-header-cell *matHeaderCellDef class="gd-acoes">Ações</th>
             <td mat-cell *matCellDef="let m" class="gd-acoes">
@@ -123,7 +134,7 @@ export class ModelosEventoPage implements OnInit {
   private readonly router = inject(Router);
   protected readonly modelos = signal<Modelo[]>([]);
   protected readonly busca = signal('');
-  protected readonly colunas = ['nome', 'tipo', 'acoes'];
+  protected readonly colunas = ['nome', 'tipo', 'pacote', 'acoes'];
   protected readonly tipos = TIPOS;
 
   ngOnInit(): void {
@@ -143,6 +154,16 @@ export class ModelosEventoPage implements OnInit {
     this.dialog.open(CriarModeloDialog, { ...DIALOG, width: 'min(480px, calc(100vw - 32px))' }).afterClosed().subscribe((modelo) => {
       if (modelo) {
         void this.router.navigate(['/modelos-evento', modelo.id]);
+      }
+    });
+  }
+
+  protected importar(): void {
+    this.dialog.open(ImportarTarefasModeloDialog, { ...DIALOG_LARGO, data: {} }).afterClosed().subscribe((modelo) => {
+      if (modelo && typeof modelo === 'object' && 'id' in modelo) {
+        void this.router.navigate(['/modelos-evento', modelo.id]);
+      } else {
+        this.carregar();
       }
     });
   }

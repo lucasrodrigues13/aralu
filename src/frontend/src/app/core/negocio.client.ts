@@ -41,6 +41,38 @@ export interface TarefaModelo {
   diasAntes: number | null;
 }
 
+export interface PreviaTarefaImportada {
+  titulo: string;
+  grupo: string | null;
+  diasAntes: number | null;
+  prazoLegivel: string | null;
+  aviso: string | null;
+}
+
+export interface PreviaImportacaoTarefas {
+  tarefas: PreviaTarefaImportada[];
+  linhasIgnoradas: string[];
+  total: number;
+}
+
+export interface PreviaAplicarModelo {
+  tarefasNovas: number;
+  servicosNovos: number;
+  tarefasExistentes: number;
+  servicosExistentes: number;
+  eventoSemData: boolean;
+  resumo: string;
+}
+
+export interface PreviaSalvarComoModelo {
+  nomeSugerido: string;
+  tarefas: number;
+  servicos: number;
+  tarefasSemPrazo: number;
+  eventoSemData: boolean;
+  resumo: string;
+}
+
 export interface VinculoModelo {
   id: string;
   tipo: string;
@@ -486,6 +518,41 @@ export class NegocioClient {
 
   clonarModelo(id: string) {
     return this.http.post<Modelo>(`${this.base}/api/v1/modelos/${id}/clonar`, {});
+  }
+
+  previaImportarTarefasModelo(dados: FormData | { texto: string }, modeloId?: string) {
+    const url = modeloId
+      ? `${this.base}/api/v1/modelos/${modeloId}/tarefas/importar/previa`
+      : `${this.base}/api/v1/modelos/importar/previa`;
+    return this.http.post<PreviaImportacaoTarefas>(url, dados);
+  }
+
+  importarModeloNovo(dados: FormData) {
+    return this.http.post<Modelo>(`${this.base}/api/v1/modelos/importar`, dados);
+  }
+
+  importarTarefasModelo(modeloId: string, dados: FormData) {
+    return this.http.post<Modelo>(`${this.base}/api/v1/modelos/${modeloId}/tarefas/importar`, dados);
+  }
+
+  planilhaTarefasModelo() {
+    return this.http.get(`${this.base}/api/v1/modelos/tarefas/planilha`, { responseType: 'blob' });
+  }
+
+  previaAplicarModelo(eventoId: string, modeloId: string) {
+    return this.http.post<PreviaAplicarModelo>(`${this.base}/api/v1/eventos/${eventoId}/aplicar-modelo/previa`, { modeloId });
+  }
+
+  aplicarModelo(eventoId: string, modeloId: string) {
+    return this.http.post<PreviaAplicarModelo>(`${this.base}/api/v1/eventos/${eventoId}/aplicar-modelo`, { modeloId });
+  }
+
+  previaSalvarComoModelo(eventoId: string, nome?: string) {
+    return this.http.post<PreviaSalvarComoModelo>(`${this.base}/api/v1/eventos/${eventoId}/salvar-como-modelo/previa`, { nome: nome ?? null });
+  }
+
+  salvarComoModelo(eventoId: string, nome: string) {
+    return this.http.post<Modelo>(`${this.base}/api/v1/eventos/${eventoId}/salvar-como-modelo`, { nome });
   }
 
   estatisticas() {

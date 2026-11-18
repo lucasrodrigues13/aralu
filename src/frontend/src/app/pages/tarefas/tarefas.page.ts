@@ -14,6 +14,7 @@ import { ToastService } from '../../core/toast.service';
 import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
+import { AplicarModeloDialog } from '../eventos/aplicar-modelo.dialog';
 import { TarefaFormDialog } from './tarefa-form.dialog';
 
 @Component({
@@ -27,10 +28,16 @@ import { TarefaFormDialog } from './tarefa-form.dialog';
         <p>Pendências dos eventos da assessoria.</p>
       </div>
       @if (eventoId()) {
-        <button mat-flat-button type="button" (click)="abrir()">
-          <mat-icon>add</mat-icon>
-          Nova tarefa
-        </button>
+        <div class="gd-cabecalho-acoes">
+          <button mat-stroked-button type="button" (click)="aplicarModelo()">
+            <mat-icon>playlist_add</mat-icon>
+            Aplicar modelo
+          </button>
+          <button mat-flat-button type="button" (click)="abrir()">
+            <mat-icon>add</mat-icon>
+            Nova tarefa
+          </button>
+        </div>
       }
     </header>
     @if (somenteAtrasadas()) {
@@ -141,6 +148,22 @@ export class TarefasPage implements OnInit {
       if (salvo) {
         this.carregar();
       }
+    });
+  }
+
+  protected aplicarModelo(): void {
+    const eventoId = this.eventoId();
+    if (!eventoId) return;
+    this.negocio.evento(eventoId).subscribe({
+      next: (evento) => {
+        this.dialog.open(AplicarModeloDialog, {
+          ...DIALOG,
+          data: { eventoId, tipo: evento.tipo },
+        }).afterClosed().subscribe((ok) => {
+          if (ok) this.carregar();
+        });
+      },
+      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
     });
   }
 

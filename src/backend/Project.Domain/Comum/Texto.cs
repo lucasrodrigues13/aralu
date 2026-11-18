@@ -1,3 +1,6 @@
+using System.Globalization;
+using System.Text;
+
 namespace Project.Domain.Comum;
 
 public static class Texto
@@ -10,6 +13,27 @@ public static class Texto
         }
 
         return valor.Trim();
+    }
+
+    /// <summary>Comparação sem diferenciar maiúsculas e acentos (SPEC-012 §8.5).</summary>
+    public static string ChaveComparacao(string? valor)
+    {
+        if (string.IsNullOrWhiteSpace(valor))
+        {
+            return "";
+        }
+
+        var formD = valor.Trim().Normalize(NormalizationForm.FormD);
+        var sb = new StringBuilder(formD.Length);
+        foreach (var c in formD)
+        {
+            if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+            {
+                sb.Append(char.ToLowerInvariant(c));
+            }
+        }
+
+        return sb.ToString().Normalize(NormalizationForm.FormC);
     }
 
     public static bool Vazio(string? valor) => string.IsNullOrWhiteSpace(valor);

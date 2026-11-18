@@ -16,7 +16,9 @@ import { GdDinheiroPipe } from '../../shared/gd-dinheiro.pipe';
 import { GdHoraPipe } from '../../shared/gd-hora.pipe';
 import { ClienteFormDialog } from '../clientes/cliente-form.dialog';
 import { EventoAbasComponent } from './evento-abas.component';
+import { AplicarModeloDialog } from './aplicar-modelo.dialog';
 import { EventoFormPage } from './evento-form.page';
+import { SalvarComoModeloDialog } from './salvar-como-modelo.dialog';
 
 /** Clientes do evento: vincular existente, cadastrar novo ou desvincular. */
 @Component({
@@ -160,6 +162,8 @@ export class ClientesEventoDialog implements OnInit {
               <button mat-menu-item type="button" (click)="removerFoto()"><mat-icon>hide_image</mat-icon> Remover foto</button>
             }
             @if (atual.situacao === 'EmAndamento') {
+              <button mat-menu-item type="button" (click)="aplicarModelo()"><mat-icon>playlist_add</mat-icon> Aplicar modelo</button>
+              <button mat-menu-item type="button" (click)="salvarComoModelo()"><mat-icon>save_as</mat-icon> Salvar como modelo</button>
               <button mat-menu-item type="button" (click)="encerrar('concluir')"><mat-icon>task_alt</mat-icon> Concluir evento</button>
               <button mat-menu-item type="button" (click)="encerrar('cancelar')"><mat-icon>block</mat-icon> Cancelar evento</button>
             }
@@ -371,6 +375,26 @@ export class EventoHomePage implements OnInit, OnDestroy {
   protected editar(): void {
     this.dialog.open(EventoFormPage, { ...DIALOG_LARGO, data: { id: this.id } }).afterClosed().subscribe((salvo) => {
       if (salvo) this.recarregar();
+    });
+  }
+
+  protected aplicarModelo(): void {
+    const atual = this.evento();
+    if (!atual) return;
+    this.dialog.open(AplicarModeloDialog, {
+      ...DIALOG,
+      data: { eventoId: this.id, tipo: atual.tipo },
+    }).afterClosed().subscribe((ok) => {
+      if (ok) this.recarregar();
+    });
+  }
+
+  protected salvarComoModelo(): void {
+    const atual = this.evento();
+    if (!atual) return;
+    this.dialog.open(SalvarComoModeloDialog, {
+      ...DIALOG,
+      data: { eventoId: this.id, nomeEvento: atual.nome },
     });
   }
 

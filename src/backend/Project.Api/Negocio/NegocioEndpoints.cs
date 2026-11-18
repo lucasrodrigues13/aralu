@@ -31,6 +31,15 @@ public static class NegocioEndpoints
         api.MapPut("/modelos/{id:guid}", AtualizarModelo).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapDelete("/modelos/{id:guid}", ExcluirModelo).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapPost("/modelos/{id:guid}/clonar", ClonarModelo).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
+        api.MapGet("/modelos/tarefas/planilha", PlanilhaTarefasModeloPadrao).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
+        api.MapPost("/modelos/importar/previa", PreviaImportarModelo).RequireAuthorization(policy => policy.RequireRole(SoOrganizer)).DisableAntiforgery();
+        api.MapPost("/modelos/importar", ImportarModeloNovo).RequireAuthorization(policy => policy.RequireRole(SoOrganizer)).DisableAntiforgery();
+        api.MapPost("/modelos/{id:guid}/tarefas/importar/previa", PreviaImportarTarefasModelo).RequireAuthorization(policy => policy.RequireRole(SoOrganizer)).DisableAntiforgery();
+        api.MapPost("/modelos/{id:guid}/tarefas/importar", ImportarTarefasModelo).RequireAuthorization(policy => policy.RequireRole(SoOrganizer)).DisableAntiforgery();
+        api.MapPost("/eventos/{id:guid}/aplicar-modelo/previa", PreviaAplicarModelo).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
+        api.MapPost("/eventos/{id:guid}/aplicar-modelo", AplicarModelo).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
+        api.MapPost("/eventos/{id:guid}/salvar-como-modelo/previa", PreviaSalvarComoModelo).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
+        api.MapPost("/eventos/{id:guid}/salvar-como-modelo", SalvarComoModelo).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapGet("/eventos/estatisticas", Estatisticas).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         MapearBiblioteca(api, "/modelos-briefing", Briefings, CriarBriefing, Briefing, AtualizarBriefing, ExcluirBriefing, ClonarBriefing);
         MapearBiblioteca(api, "/modelos-roteiro", Roteiros, CriarRoteiro, Roteiro, AtualizarRoteiro, ExcluirRoteiro, ClonarRoteiro);
@@ -205,6 +214,100 @@ public static class NegocioEndpoints
 
     private static Task<IResult> ClonarModelo(Guid id, ClaimsPrincipal usuario, ModeloServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.ClonarAsync(conta, id, ct)));
+
+    private static IResult PlanilhaTarefasModeloPadrao(ModeloImportacaoServico servico) =>
+        Results.File(
+            servico.PlanilhaPadrao(),
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "tarefas-modelo.xlsx");
+
+    private static Task<IResult> PreviaImportarModelo(
+        HttpRequest request, ClaimsPrincipal usuario, ModeloImportacaoServico servico, CancellationToken ct) =>
+        ComConta(usuario, async _ => await PreviaImportacaoAsync(request, servico, ct));
+
+    private static Task<IResult> ImportarModeloNovo(
+        HttpRequest request, ClaimsPrincipal usuario, ModeloImportacaoServico servico, CancellationToken ct) =>
+        ComConta(usuario, async conta =>
+        {
+            var form = await request.ReadFormAsync(ct);
+            var nome = form["nome"].ToString();
+            if (!Enum.TryParse<TipoEvento>(form["tipo"].ToString(), ignoreCase: true, out var tipo))
+            {
+                return Validacao("Informe o tipo do modelo.");
+            }
+
+            var texto = form["texto"].ToString();
+            var arquivo = form.Files.GetFile("arquivo");
+            if (arquivo is not null)
+            {
+                await using var fluxo = arquivo.OpenReadStream();
+                return await De(servico.ImportarNovoAsync(conta, nome, tipo, texto, fluxo, arquivo.FileName, ct));
+            }
+
+            return await De(servico.ImportarNovoAsync(conta, nome, tipo, texto, null, null, ct));
+        });
+
+    private static Task<IResult> PreviaImportarTarefasModelo(
+        Guid id, HttpRequest request, ClaimsPrincipal usuario, ModeloImportacaoServico servico, CancellationToken ct) =>
+        ComConta(usuario, async _ => await PreviaImportacaoAsync(request, servico, ct));
+
+    private static Task<IResult> ImportarTarefasModelo(
+        Guid id, HttpRequest request, ClaimsPrincipal usuario, ModeloImportacaoServico servico, CancellationToken ct) =>
+        ComConta(usuario, async conta =>
+        {
+            if (request.HasFormContentType)
+            {
+                var form = await request.ReadFormAsync(ct);
+                var texto = form["texto"].ToString();
+                var arquivo = form.Files.GetFile("arquivo");
+                if (arquivo is not null)
+                {
+                    await using var fluxo = arquivo.OpenReadStream();
+                    return await De(servico.ImportarNoModeloAsync(conta, id, texto, fluxo, arquivo.FileName, ct));
+                }
+
+                return await De(servico.ImportarNoModeloAsync(conta, id, texto, null, null, ct));
+            }
+
+            var pedido = await request.ReadFromJsonAsync<ImportarTextoPedido>(cancellationToken: ct);
+            return await De(servico.ImportarNoModeloAsync(conta, id, pedido?.Texto, null, null, ct));
+        });
+
+    private static Task<IResult> PreviaAplicarModelo(
+        Guid id, AplicarModeloPedido pedido, ClaimsPrincipal usuario, ModeloImportacaoServico servico, CancellationToken ct) =>
+        ComConta(usuario, conta => De(servico.PreviaAplicarAsync(conta, id, pedido.ModeloId, ct)));
+
+    private static Task<IResult> AplicarModelo(
+        Guid id, AplicarModeloPedido pedido, ClaimsPrincipal usuario, ModeloImportacaoServico servico, CancellationToken ct) =>
+        ComConta(usuario, conta => De(servico.AplicarAsync(conta, id, pedido.ModeloId, ct)));
+
+    private static Task<IResult> PreviaSalvarComoModelo(
+        Guid id, SalvarComoModeloPedido? pedido, ClaimsPrincipal usuario, ModeloImportacaoServico servico, CancellationToken ct) =>
+        ComConta(usuario, conta => De(servico.PreviaSalvarComoModeloAsync(conta, id, pedido?.Nome, ct)));
+
+    private static Task<IResult> SalvarComoModelo(
+        Guid id, SalvarComoModeloPedido pedido, ClaimsPrincipal usuario, ModeloImportacaoServico servico, CancellationToken ct) =>
+        ComConta(usuario, conta => De(servico.SalvarComoModeloAsync(conta, id, pedido.Nome, ct)));
+
+    private static async Task<IResult> PreviaImportacaoAsync(
+        HttpRequest request, ModeloImportacaoServico servico, CancellationToken ct)
+    {
+        if (request.HasFormContentType)
+        {
+            var form = await request.ReadFormAsync(ct);
+            var arquivo = form.Files.GetFile("arquivo");
+            if (arquivo is not null)
+            {
+                await using var fluxo = arquivo.OpenReadStream();
+                return await De(Task.FromResult(servico.PreviaArquivo(fluxo, arquivo.FileName)));
+            }
+
+            return Results.Ok(servico.PreviaTexto(form["texto"].ToString()));
+        }
+
+        var pedido = await request.ReadFromJsonAsync<ImportarTextoPedido>(cancellationToken: ct);
+        return Results.Ok(servico.PreviaTexto(pedido?.Texto));
+    }
 
     private static Task<IResult> Estatisticas(ClaimsPrincipal usuario, EstatisticasServico servico, CancellationToken ct) =>
         ComConta(usuario, async conta => Results.Ok(await servico.ObterAsync(conta, DateTimeOffset.UtcNow, ct)));
@@ -1376,3 +1479,9 @@ public sealed record PrincipalPedido(Guid ConvidadoId);
 public sealed record RespostasPedido(IReadOnlyList<RespostaRsvp>? Respostas, bool? PretendeRealizarEvento);
 
 public sealed record EnviarOrcamentoPedido(bool? MoverParaOrcamentoEnviado);
+
+public sealed record ImportarTextoPedido(string? Texto);
+
+public sealed record AplicarModeloPedido(Guid ModeloId);
+
+public sealed record SalvarComoModeloPedido(string? Nome);

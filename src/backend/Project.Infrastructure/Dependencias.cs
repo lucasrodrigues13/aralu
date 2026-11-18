@@ -42,6 +42,7 @@ public static class Dependencias
         services.AddScoped<IDados, DadosEf>();
         services.AddScoped<PerfilServico>();
         services.AddScoped<ModeloServico>();
+        services.AddScoped<ModeloImportacaoServico>();
         services.AddScoped<EstatisticasServico>();
         services.AddScoped<BriefingServico>();
         services.AddScoped<RoteiroServico>();

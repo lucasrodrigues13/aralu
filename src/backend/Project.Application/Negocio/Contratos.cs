@@ -64,6 +64,8 @@ public interface IDados
 
     Task AtualizarModeloAsync(CancellationToken ct);
 
+    Task AcrescentarTarefasModeloAsync(IReadOnlyList<TarefaModelo> tarefas, CancellationToken ct);
+
     Task RemoverModeloAsync(ModeloEvento modelo, CancellationToken ct);
 
     Task<IReadOnlyList<EventoLinha>> ListarEventosAsync(string contaId, FiltroEventos filtro, CancellationToken ct);
@@ -112,6 +114,12 @@ public interface IDados
     Task InserirTarefaAsync(Tarefa tarefa, CancellationToken ct);
 
     Task SalvarTarefaAsync(CancellationToken ct);
+
+    /// <summary>Acrescenta tarefas e serviços do evento num único SaveChanges (SPEC-012).</summary>
+    Task AcrescentarTarefasEServicosAsync(
+        IReadOnlyList<Tarefa> tarefas,
+        IReadOnlyList<ServicoEvento> servicos,
+        CancellationToken ct);
 
     Task<string?> NomeDoEventoAsync(string contaId, Guid eventoId, CancellationToken ct);
 
