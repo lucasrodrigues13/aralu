@@ -1,6 +1,6 @@
 # 012. Modelos de evento
 
-**Status: em revisão (versão 2, 18/11/2026).** Aguarda aprovação. Até lá, o código segue a versão 1 (histórico do Git). Fonte: [produto-v1.md](../produto-v1.md) 5.3 e 5.4, plano do cliente, Cerimonial Fácil e Ivola.
+**Status: aprovada (versão 2, 18/11/2026).** O código deve seguir esta spec; a versão 1 está no histórico do Git. Fonte: [produto-v1.md](../produto-v1.md) 5.3 e 5.4, plano do cliente, Cerimonial Fácil e Ivola.
 
 ## 1. Identificador e nome
 
@@ -12,7 +12,7 @@ Deixar os modelos fáceis de montar e de reaproveitar. O prazo aparece como a pe
 
 ## 3. Requisitos relacionados
 
-RF-053 (modelo de evento), RF-106 (modelos mais simples), RF-105 (salvar evento como modelo), RF-049 (criação do evento, SPEC-008 v2). RF-062 (refazer prazos ao mudar a data), só se a decisão 1 da seção 17 for aprovada.
+RF-053 (modelo de evento), RF-106 (modelos mais simples), RF-105 (salvar evento como modelo), RF-049 (criação do evento, SPEC-008 v2). RF-062 (refazer prazos ao mudar a data, seção 6.6).
 
 Fora: roteiro no modelo (RF-092, bloco 10), bibliotecas de briefing a mensagens (SPEC-013 a 017), loja de modelos (RF-079).
 
@@ -60,6 +60,12 @@ Usuário autenticado, SPEC-001. Para aplicar um modelo ou salvar como modelo, o 
 1. No "Mais" do Resumo do evento, "Salvar como modelo" abre um modal com o Nome, sugerido como "Modelo — <nome do evento>".
 2. A prévia mostra quantas tarefas e quantos serviços vão para o modelo e quantas tarefas ficarão sem prazo.
 3. "Salvar" cria o modelo, do mesmo tipo do evento, e oferece "Abrir modelo".
+
+### 6.6. Mudar a data do evento
+
+1. Ao salvar no Editar evento uma data diferente da anterior, e havendo tarefas não concluídas com prazo, um modal pergunta: "Mover os prazos das tarefas não concluídas junto com a data?".
+2. "Mover" soma a cada um desses prazos a mesma diferença em dias entre a data nova e a antiga. "Manter" não mexe em nenhum prazo.
+3. Tarefas concluídas e tarefas sem prazo nunca mudam. Evento que passa a não ter data não abre o modal.
 
 ## 7. Fluxos alternativos
 
@@ -147,6 +153,7 @@ Arquivo inválido ou grande demais: mensagem no modal, nada gravado. Falha ao im
 7. O grupo da tarefa do modelo chega à tarefa do evento.
 8. O editor de modelo não mostra mais a aba Permissões.
 9. Outra conta não vê, não aplica e não salva modelo de outra conta.
+10. Mudar a data do evento em +10 dias e escolher "Mover" desloca em +10 dias só os prazos das tarefas não concluídas; "Manter" não desloca nada.
 
 ## 15. Cenários de teste
 
@@ -160,11 +167,11 @@ SPEC-008 v2 (criação e Resumo do evento, onde fica o "Mais"). SPEC-003 (tarefa
 
 ## 17. Premissas e pontos não definidos
 
-Decisões para o usuário:
+Decisões aprovadas pelo usuário em 18/11/2026:
 
-1. **Refazer prazos ao mudar a data do evento (RF-062, pendência 6 do produto-v1).** Proposta: ao salvar uma data nova no Editar evento, um modal pergunta "Mover os prazos das tarefas não concluídas junto com a data?". "Mover" desloca cada prazo pelo mesmo número de dias; "Manter" não mexe. Se aprovado, entra nesta spec e o RF-062 vira Definido.
-2. **Tarefa com prazo depois do evento** (ex.: "pedir depoimento"). Proposta: na 1.0, guardar como "No dia do evento". Prazo "depois do evento" fica para quando o depoimento (RF-101) for especificado.
-3. **Mês = 30 dias** é uma aproximação. "6 meses antes" de 20/12 cai em 23/06, e não em 20/06. Proposta: aceitar, porque é simples e previsível.
+1. **Refazer prazos ao mudar a data do evento (RF-062, pendência 6 do produto-v1).** Decidido: ao salvar uma data nova no Editar evento, um modal pergunta "Mover os prazos das tarefas não concluídas junto com a data?". "Mover" desloca cada prazo pelo mesmo número de dias; "Manter" não mexe. Fluxo na seção 6.6; o RF-062 passou a Definido.
+2. **Tarefa com prazo depois do evento** (ex.: "pedir depoimento"). Decidido: na 1.0, guardar como "No dia do evento". Prazo "depois do evento" fica para quando o depoimento (RF-101) for especificado.
+3. **Mês = 30 dias** é uma aproximação. "6 meses antes" de 20/12 cai em 23/06, e não em 20/06. Decidido: aceitar, porque é simples e previsível.
 
 Pontos abertos menores:
 

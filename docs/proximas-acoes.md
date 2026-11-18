@@ -22,15 +22,29 @@ Roteiro para continuar o trabalho em outra sessão. Siga na ordem. Na dúvida, p
 ## 3. Situação atual
 
 - Pronto: bloco 1 (casca e design system v2), bloco 2 (criação curta e resumo do evento) e a agenda em calendário.
-- Falta: blocos 3 a 17 da [seção 9 do produto-v1](produto-v1.md). Só o bloco 3 tem spec (SPEC-012 v2, aguardando aprovação).
+- Falta: blocos 3 a 17 da [seção 9 do produto-v1](produto-v1.md). O bloco 3 tem spec **aprovada** (SPEC-012 v2) e está pronto para implementar.
 
-## 4. Trabalho desta sessão: rascunhar specs
+## 4. Tarefa 1: implementar o bloco 3 (SPEC-012 v2)
 
-Para cada bloco abaixo, escreva ou revise a spec com **Status: rascunho**. Não implemente código.
+Spec aprovada: [docs/specs/012-modelos-de-evento.md](specs/012-modelos-de-evento.md). Implemente exatamente o que está nela, na ordem abaixo. Rode os testes da seção 6 a cada passo e faça um commit por passo.
+
+1. Prazo legível (seção 8.1): conversão e exibição de "dias antes", com teste de unidade no backend ou no frontend.
+2. Campo "grupo" na tarefa do modelo e na tarefa do evento (8.2): migration, cópia na criação do evento, `deploy/schema.sql` gerado de novo.
+3. Leitura do texto colado e da planilha (8.3 e 8.4), com testes de unidade dos exemplos da spec.
+4. Modais de importar (6.3), aplicar modelo (6.4) e salvar como modelo (6.5), com teste de integração.
+5. Pergunta ao mudar a data do evento (6.6).
+6. Tirar a aba Permissões do editor de modelo (8.5). Não apague as colunas do banco.
+7. Confira na tela (`docker compose up -d --build migrate api` e `npm --prefix src/frontend run start`) e marque o bloco 3 como pronto no [produto-v1](produto-v1.md).
+
+Se algo da spec não fechar com o código, pare e anote em "Dúvidas para o usuário".
+
+## 5. Tarefa 2: rascunhar specs
+
+Depois da tarefa 1. Para cada bloco abaixo, escreva ou revise a spec com **Status: rascunho**. Não implemente código dessas specs.
 
 | Bloco | O que fazer | Fonte no produto-v1 |
 |---|---|---|
-| 3. Modelos | **Já feito** (aguarda aprovação do usuário). Não mexa. | — |
+| 3. Modelos | Spec aprovada; é a tarefa 1. | — |
 | 4. Tarefas | Revisar [SPEC-003](specs/003-tarefas-do-evento.md). Leia antes a SPEC-012 v2: ela cria o campo "grupo" na tarefa do evento | 5.5 |
 | 5. Tela Hoje | Reescrever [SPEC-007](specs/007-dashboards.md) | 5.2 |
 | 6. Dinheiro do evento | Criar `specs/029-dinheiro-do-evento.md` | 5.9 e 5.1 (Pix) |
@@ -44,7 +58,7 @@ Como fazer cada uma:
 4. Atores: `Organizer` e `Assistant`. A role `Client` não existe mais; o casal usa o link (RF-056).
 5. Ao terminar cada spec, faça um commit só com ela: `docs: rascunho da SPEC-0XX`.
 
-## 5. Se o usuário aprovar uma spec e pedir código
+## 6. Como implementar e testar
 
 Siga a skill [.cursor/skills/frontend/SKILL.md](../.cursor/skills/frontend/SKILL.md) e a de backend em `.cursor/skills/backend/`. Antes de dizer que terminou, rode:
 
@@ -68,11 +82,11 @@ Migration nova exige também gerar o script de deploy de novo:
 dotnet tool run dotnet-ef migrations script --idempotent --project src/backend/Project.Infrastructure --startup-project src/backend/Project.Api -o deploy/schema.sql
 ```
 
-## 6. Ao encerrar a sessão
+## 7. Ao encerrar a sessão
 
 Atualize este arquivo: marque o que ficou pronto e anote as dúvidas para o usuário.
 
-- [x] SPEC-012 (bloco 3): escrita na sessão principal, aguarda aprovação. Não mexer.
+- [ ] Bloco 3 implementado (SPEC-012 v2 aprovada)
 - [ ] SPEC-003 (bloco 4)
 - [ ] SPEC-007 (bloco 5)
 - [ ] SPEC-029 (bloco 6)

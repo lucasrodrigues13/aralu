@@ -129,7 +129,7 @@ Ator “Assessoria” na referência corresponde ao `Organizer` neste produto. S
 | RF-059 | Negociação | Duas etapas por fornecedor no serviço: Orçamento → Contratado. No contratado, valor e horário de chegada no evento. | Organizer, Assistant | Substitui a trilha de quatro etapas. Contratar o fornecedor conclui a tarefa ligada ao serviço, RF-061. SPEC-018. | RF-058 | Definido |
 | RF-060 | Link do fornecedor | Fornecedor completa dados / orçamento / contrato sem conta da assessoria. | Fornecedor | Fora deste corte. | RF-057, RF-059 | Observado (fora do corte) |
 | RF-061 | Tarefas | Criação numa linha (título; prazo e responsáveis opcionais). Visão padrão em grupos: Esta semana, Depois, Sem prazo, Para conferir (prazo já vencido quando o evento foi criado) e Feitas; situações como filtro e quadro. Vários responsáveis (dona, assistente, equipe ou casal), visibilidade (só eu, casal, compartilhada), prioridade (baixa, média, alta), checklist, anexos, comentários e vínculo com serviço. Tarefas de todos os eventos com filtros e visões lista, quadro por situação e quadro por dia. | Organizer, Assistant, casal pelo link | Tocar abre leitura; editar é ação separada. O casal só vê e marca tarefas com visibilidade "casal" ou "compartilhada", RF-056. SPEC-003. | RF-049, RF-058 | Definido |
-| RF-062 | Redatar tarefas | Recalcular prazos ao mudar a data do evento. | Organizer | Não fechado em spec aprovada. | RF-049, RF-061 | Observado |
+| RF-062 | Redatar tarefas | Ao mudar a data do evento, perguntar se os prazos das tarefas não concluídas se movem junto (mesma diferença em dias). | Organizer, Assistant | SPEC-012 v2, seção 6.6. Concluídas e sem prazo não mudam. | RF-049, RF-061 | Definido |
 | RF-063 | Convites e convidados | Convite, convidados, grupos, transfer, importação. | Organizer | SPEC-004 e SPEC-010. | RF-049 | Definido |
 | RF-064 | RSVP por link | Link por convite; histórico. | Convidado, Organizer | SPEC-004 e SPEC-010. | RF-063 | Definido |
 | RF-065 | RSVP automático | Disparos automáticos em volume. | Organizer | Fora do canal Gmail atual; não fechado. | RF-064, RNF-020 | Observado |
@@ -698,7 +698,7 @@ Itens já fechados saíram desta lista. O rastro está na seção 15.
 
 O catálogo está nas seções 2.7 a 2.9, RF-044 a RF-109. O escopo da 1.0 está em [produto-v1.md](produto-v1.md) e o código segue as specs aprovadas. Roles fechadas: `Admin`, `Organizer` e `Assistant` (RF-024, RF-040, RF-045); o casal usa link sem senha (RF-056).
 
-Permanecem fora ou Observados: RF-060 (login de fornecedor), RF-079 (marketplace), RF-046, RF-047, RF-052, RF-062 (redatar prazos, pendência 6 do produto-v1), RF-065, RF-067 (check-in, 1.1) e RF-073 global (pendência 4 do produto-v1). As pendências da seção 10 do produto-v1 seguem abertas.
+Permanecem fora ou Observados: RF-060 (login de fornecedor), RF-079 (marketplace), RF-046, RF-047, RF-052, RF-065, RF-067 (check-in, 1.1) e RF-073 global (pendência 4 do produto-v1). As pendências da seção 10 do produto-v1 seguem abertas.
 
 ## 13. Atividades futuras
 

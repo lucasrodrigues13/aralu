@@ -144,7 +144,7 @@ Substitui o dashboard atual (SPEC-007, RF-080 a RF-082).
 | Tarefa ligada a um serviço; contratar o fornecedor fecha "Contratar X" | Novo | PDF, AV |
 | Tocar abre leitura, não edição | Ajustar | PDF |
 | Tarefas de todos os eventos com filtros (situação, responsável, prazo, evento, serviço, tags) e visões lista / quadro por situação / quadro por dia | Ajustar (hoje sem filtros e sem quadro por dia) | AV |
-| Redatar prazos quando a data do evento muda | Pendente (RF-062) | AV |
+| Redatar prazos quando a data do evento muda | Novo (SPEC-012 v2, 6.6) | AV |
 
 ### 5.6. Fornecedores e serviços
 
@@ -386,5 +386,5 @@ Baseada no PDF (base → uso diário → diferencial), com o que já existe.
 3. Mural de recados da equipe (5.15).
 4. Caixa global de anexos (5.19).
 5. Notificações por e-mail do evento (5.3).
-6. Redatar prazos ao mudar a data do evento (5.5).
+6. ~~Redatar prazos ao mudar a data do evento (5.5).~~ Decidido na SPEC-012 v2, seção 6.6.
 7. Grupos exatos do menu lateral (seção 4).
