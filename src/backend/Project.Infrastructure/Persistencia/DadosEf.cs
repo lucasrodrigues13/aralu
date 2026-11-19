@@ -370,6 +370,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
             .Include(tarefa => tarefa.Responsaveis)
             .Include(tarefa => tarefa.Checklist)
             .Include(tarefa => tarefa.Comentarios)
+            .Include(tarefa => tarefa.Anexos)
             .Where(tarefa => tarefa.ContaId == contaId);
         if (eventoId is Guid id)
         {
@@ -406,6 +407,25 @@ public sealed class DadosEf(AppDbContext banco) : IDados
             .ExecuteUpdateAsync(
                 set => set.SetProperty(item => item.Feito, feito).SetProperty(item => item.Cancelado, cancelado),
                 ct) > 0;
+
+    public async Task InserirAnexoTarefaAsync(AnexoTarefa anexo, CancellationToken ct)
+    {
+        banco.Set<AnexoTarefa>().Add(anexo);
+        await banco.SaveChangesAsync(ct);
+    }
+
+    public async Task<Guid?> RemoverAnexoTarefaAsync(Guid tarefaId, Guid anexoId, CancellationToken ct)
+    {
+        var anexo = await banco.Set<AnexoTarefa>().FirstOrDefaultAsync(item => item.Id == anexoId && item.TarefaId == tarefaId, ct);
+        if (anexo is null)
+        {
+            return null;
+        }
+
+        banco.Set<AnexoTarefa>().Remove(anexo);
+        await banco.SaveChangesAsync(ct);
+        return anexo.ArquivoId;
+    }
 
     public async Task InserirComentarioAsync(ComentarioTarefa comentario, CancellationToken ct)
     {

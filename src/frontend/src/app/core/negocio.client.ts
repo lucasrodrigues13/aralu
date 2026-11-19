@@ -348,6 +348,14 @@ export interface ComentarioTarefa {
   criadoEm: string;
 }
 
+export interface AnexoTarefa {
+  id: string;
+  arquivoId: string;
+  nome: string;
+  tipoConteudo: string;
+  enviadoEm: string;
+}
+
 export interface Tarefa {
   id: string;
   eventoId: string;
@@ -365,6 +373,7 @@ export interface Tarefa {
   responsaveis: ResponsavelTarefa[];
   checklist: ItemChecklistTarefa[];
   comentarios: ComentarioTarefa[];
+  anexos: AnexoTarefa[];
   grupoPrazo: string | null;
   eventoEmAndamento: boolean;
   tags: string[];
@@ -873,6 +882,16 @@ export class NegocioClient {
 
   marcarItemChecklist(id: string, itemId: string, pedido: { feito: boolean; cancelado: boolean }) {
     return this.http.put<Tarefa>(`${this.base}/api/v1/tarefas/${id}/checklist/${itemId}`, pedido);
+  }
+
+  anexarTarefa(id: string, arquivo: File) {
+    const dados = new FormData();
+    dados.append('arquivo', arquivo);
+    return this.http.post<Tarefa>(`${this.base}/api/v1/tarefas/${id}/anexos`, dados);
+  }
+
+  removerAnexoTarefa(id: string, anexoId: string) {
+    return this.http.delete<Tarefa>(`${this.base}/api/v1/tarefas/${id}/anexos/${anexoId}`);
   }
 
   comentarTarefa(id: string, texto: string) {

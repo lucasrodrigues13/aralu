@@ -262,6 +262,35 @@ public class NegocioFluxoTests
     }
 
     [Fact]
+    public async Task Anexo_da_tarefa_aceita_pdf_recusa_outro_tipo_e_remove()
+    {
+        var dono = await Entrar();
+        var outra = await Entrar();
+        var evento = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new { tipo = "Casamento", primeiroNome = "Ivo", segundoNome = "Lu" }));
+        var eventoId = evento.GetProperty("id").GetGuid();
+        var tarefa = await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/tarefas", new { titulo = "Contratar buffet" }));
+        var tarefaId = tarefa.GetProperty("id").GetGuid();
+
+        using var texto = new MultipartFormDataContent { { new ByteArrayContent(System.Text.Encoding.UTF8.GetBytes("oi")), "arquivo", "nota.txt" } };
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PostAsync($"/api/v1/tarefas/{tarefaId}/anexos", texto)).StatusCode);
+
+        using var pdf = new MultipartFormDataContent { { new ByteArrayContent(System.Text.Encoding.ASCII.GetBytes("%PDF-1.4\n%%EOF")), "arquivo", "orcamento.pdf" } };
+        var comAnexo = await Ler(await dono.PostAsync($"/api/v1/tarefas/{tarefaId}/anexos", pdf));
+        var anexo = comAnexo.GetProperty("anexos")[0];
+        Assert.Equal("orcamento.pdf", anexo.GetProperty("nome").GetString());
+
+        using var alheio = new MultipartFormDataContent { { new ByteArrayContent(System.Text.Encoding.ASCII.GetBytes("%PDF-1.4\n%%EOF")), "arquivo", "x.pdf" } };
+        Assert.Equal(HttpStatusCode.NotFound, (await outra.PostAsync($"/api/v1/tarefas/{tarefaId}/anexos", alheio)).StatusCode);
+
+        var lista = await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/tarefas"));
+        Assert.Equal(1, lista[0].GetProperty("anexos").GetArrayLength());
+
+        var semAnexo = await Ler(await dono.DeleteAsync($"/api/v1/tarefas/{tarefaId}/anexos/{anexo.GetProperty("id").GetGuid()}"));
+        Assert.Empty(semAnexo.GetProperty("anexos").EnumerateArray());
+        Assert.Equal(HttpStatusCode.NotFound, (await dono.GetAsync($"/api/v1/arquivos/{anexo.GetProperty("arquivoId").GetGuid()}")).StatusCode);
+    }
+
+    [Fact]
     public async Task Convite_rsvp_transfer_e_planilha()
     {
         var dono = await Entrar();

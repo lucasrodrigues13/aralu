@@ -29,6 +29,8 @@ public sealed record ResponsavelLeitura(PapelResponsavel Papel, string? Referenc
 
 public sealed record ItemChecklistLeitura(Guid Id, string Texto, bool Feito, bool Cancelado);
 
+public sealed record AnexoTarefaLeitura(Guid Id, Guid ArquivoId, string Nome, string TipoConteudo, DateTimeOffset EnviadoEm);
+
 public sealed record ComentarioLeitura(Guid Id, string AutorContaId, string Texto, DateTimeOffset CriadoEm);
 
 public sealed record TarefaLeitura(
@@ -48,14 +50,82 @@ public sealed record TarefaLeitura(
     IReadOnlyList<ResponsavelLeitura> Responsaveis,
     IReadOnlyList<ItemChecklistLeitura> Checklist,
     IReadOnlyList<ComentarioLeitura> Comentarios,
+    IReadOnlyList<AnexoTarefaLeitura> Anexos,
     GrupoPrazo? GrupoPrazo,
     bool EventoEmAndamento,
     IReadOnlyList<string> Tags);
 
 public sealed record ContextoEvento(string Nome, SituacaoEvento Situacao, DateTimeOffset? CriadoEm, IReadOnlyList<string> Tags);
 
-public sealed class TarefaServico(IDados dados)
+public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo armazenamento)
 {
+    /// <summary>Anexa um arquivo à tarefa (SPEC-003 §6.6): JPG, JPEG, PNG ou PDF até 5 MB, fotos reduzidas.</summary>
+    public async Task<Resultado<TarefaLeitura>> AnexarAsync(
+        string contaId,
+        Guid id,
+        Stream conteudo,
+        string? nomeArquivo,
+        DateOnly hoje,
+        CancellationToken ct)
+    {
+        var tarefa = await dados.ObterTarefaAsync(contaId, id, ct);
+        if (tarefa is null)
+        {
+            return Resultado<TarefaLeitura>.Erro(Codigos.Indisponivel, "Indisponível.");
+        }
+
+        if (await dados.SituacaoDoEventoAsync(contaId, tarefa.EventoId, ct) != SituacaoEvento.EmAndamento)
+        {
+            return Resultado<TarefaLeitura>.Erro(Codigos.Validacao, "O evento não está em andamento.");
+        }
+
+        var guardado = await armazenamento.GuardarDocumentoAsync(conteudo, nomeArquivo, contaId, ct);
+        if (!guardado.Ok)
+        {
+            return Resultado<TarefaLeitura>.Erro(guardado.Falha!.Codigo, guardado.Falha.Mensagem);
+        }
+
+        await dados.InserirAnexoTarefaAsync(new AnexoTarefa
+        {
+            Id = Guid.NewGuid(),
+            TarefaId = tarefa.Id,
+            ArquivoId = guardado.Valor!.Id,
+            Nome = guardado.Valor.NomeOriginal,
+            TipoConteudo = guardado.Valor.TipoConteudo,
+            EnviadoEm = DateTimeOffset.UtcNow,
+        }, ct);
+        return Resultado<TarefaLeitura>.Sucesso(await RelerAsync(contaId, tarefa, hoje, ct));
+    }
+
+    public async Task<Resultado<TarefaLeitura>> RemoverAnexoAsync(string contaId, Guid id, Guid anexoId, DateOnly hoje, CancellationToken ct)
+    {
+        var tarefa = await dados.ObterTarefaAsync(contaId, id, ct);
+        if (tarefa is null)
+        {
+            return Resultado<TarefaLeitura>.Erro(Codigos.Indisponivel, "Indisponível.");
+        }
+
+        if (await dados.SituacaoDoEventoAsync(contaId, tarefa.EventoId, ct) != SituacaoEvento.EmAndamento)
+        {
+            return Resultado<TarefaLeitura>.Erro(Codigos.Validacao, "O evento não está em andamento.");
+        }
+
+        var arquivoId = await dados.RemoverAnexoTarefaAsync(tarefa.Id, anexoId, ct);
+        if (arquivoId is not Guid removido)
+        {
+            return Resultado<TarefaLeitura>.Erro(Codigos.Indisponivel, "Indisponível.");
+        }
+
+        await armazenamento.DescartarAsync(removido, ct);
+        return Resultado<TarefaLeitura>.Sucesso(await RelerAsync(contaId, tarefa, hoje, ct));
+    }
+
+    private async Task<TarefaLeitura> RelerAsync(string contaId, Tarefa tarefa, DateOnly hoje, CancellationToken ct)
+    {
+        var atual = (await dados.ListarTarefasAsync(contaId, tarefa.EventoId, ct)).Single(item => item.Id == tarefa.Id);
+        return await LerUmaAsync(contaId, atual, hoje, ct);
+    }
+
     public async Task<Resultado<IReadOnlyList<TarefaLeitura>>> DoEventoAsync(string contaId, Guid eventoId, DateOnly hoje, CancellationToken ct)
     {
         if (!await dados.EventoDaContaAsync(contaId, eventoId, ct))
@@ -363,6 +433,10 @@ public sealed class TarefaServico(IDados dados)
             tarefa.Comentarios
                 .OrderBy(item => item.CriadoEm)
                 .Select(item => new ComentarioLeitura(item.Id, item.AutorContaId, item.Texto, item.CriadoEm))
+                .ToArray(),
+            tarefa.Anexos
+                .OrderBy(item => item.EnviadoEm)
+                .Select(item => new AnexoTarefaLeitura(item.Id, item.ArquivoId, item.Nome, item.TipoConteudo, item.EnviadoEm))
                 .ToArray(),
             GruposDePrazo.Classificar(tarefa.Situacao, tarefa.Prazo, criadoEm, hoje),
             contexto?.Situacao == SituacaoEvento.EmAndamento,

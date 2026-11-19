@@ -2094,6 +2094,36 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.ToTable("Perfis");
                 });
 
+            modelBuilder.Entity("Project.Domain.Tarefas.AnexoTarefa", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ArquivoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("EnviadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("TarefaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("TipoConteudo")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TarefaId");
+
+                    b.ToTable("AnexosTarefa", (string)null);
+                });
+
             modelBuilder.Entity("Project.Domain.Tarefas.ComentarioTarefa", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2798,6 +2828,15 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Project.Domain.Tarefas.AnexoTarefa", b =>
+                {
+                    b.HasOne("Project.Domain.Tarefas.Tarefa", null)
+                        .WithMany("Anexos")
+                        .HasForeignKey("TarefaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Project.Domain.Tarefas.ComentarioTarefa", b =>
                 {
                     b.HasOne("Project.Domain.Tarefas.Tarefa", null)
@@ -2932,6 +2971,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
             modelBuilder.Entity("Project.Domain.Tarefas.Tarefa", b =>
                 {
+                    b.Navigation("Anexos");
+
                     b.Navigation("Checklist");
 
                     b.Navigation("Comentarios");

@@ -78,6 +78,8 @@ public static class NegocioEndpoints
         api.MapPut("/tarefas/{id:guid}", AtualizarTarefa);
         api.MapPost("/tarefas/{id:guid}/comentarios", ComentarTarefa);
         api.MapPut("/tarefas/{id:guid}/checklist/{itemId:guid}", MarcarItemChecklist);
+        api.MapPost("/tarefas/{id:guid}/anexos", AnexarTarefa).RequireAuthorization(policy => policy.RequireRole(SoOrganizer)).DisableAntiforgery();
+        api.MapDelete("/tarefas/{id:guid}/anexos/{anexoId:guid}", RemoverAnexoTarefa).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapGet("/clientes", Clientes).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapPost("/clientes", CriarCliente).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapPut("/clientes/{id:guid}", AtualizarCliente).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
@@ -709,6 +711,29 @@ public static class NegocioEndpoints
 
             return await De(servico.ComentarAsync(conta, id, pedido, Hoje(), ct));
         });
+
+    private static Task<IResult> AnexarTarefa(Guid id, HttpRequest request, ClaimsPrincipal usuario, TarefaServico servico, CancellationToken ct) =>
+        ComConta(usuario, async conta =>
+        {
+            const string invalido = "O arquivo não foi aceito. Use JPG, JPEG, PNG ou PDF de até 5 MB.";
+            if (!request.HasFormContentType)
+            {
+                return Validacao(invalido);
+            }
+
+            var formulario = await request.ReadFormAsync(ct);
+            var arquivo = formulario.Files.GetFile("arquivo");
+            if (arquivo is null || arquivo.Length == 0 || arquivo.Length > 5 * 1024 * 1024)
+            {
+                return Validacao(invalido);
+            }
+
+            await using var fluxo = arquivo.OpenReadStream();
+            return await De(servico.AnexarAsync(conta, id, fluxo, arquivo.FileName, Hoje(), ct));
+        });
+
+    private static Task<IResult> RemoverAnexoTarefa(Guid id, Guid anexoId, ClaimsPrincipal usuario, TarefaServico servico, CancellationToken ct) =>
+        ComConta(usuario, conta => De(servico.RemoverAnexoAsync(conta, id, anexoId, Hoje(), ct)));
 
     private static Task<IResult> MarcarItemChecklist(
         Guid id,

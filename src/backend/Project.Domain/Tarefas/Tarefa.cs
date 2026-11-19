@@ -32,4 +32,6 @@ public sealed class Tarefa
     public List<ItemChecklistTarefa> Checklist { get; set; } = [];
 
     public List<ComentarioTarefa> Comentarios { get; set; } = [];
+
+    public List<AnexoTarefa> Anexos { get; set; } = [];
 }

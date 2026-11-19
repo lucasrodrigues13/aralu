@@ -123,6 +123,11 @@ public interface IDados
 
     Task<bool> MarcarItemChecklistAsync(Guid tarefaId, Guid itemId, bool feito, bool cancelado, CancellationToken ct);
 
+    Task InserirAnexoTarefaAsync(AnexoTarefa anexo, CancellationToken ct);
+
+    /// <summary>Remove o anexo da tarefa e devolve o arquivo dele, ou null se não existir.</summary>
+    Task<Guid?> RemoverAnexoTarefaAsync(Guid tarefaId, Guid anexoId, CancellationToken ct);
+
     Task InserirComentarioAsync(ComentarioTarefa comentario, CancellationToken ct);
 
     Task InserirTarefaAsync(Tarefa tarefa, CancellationToken ct);

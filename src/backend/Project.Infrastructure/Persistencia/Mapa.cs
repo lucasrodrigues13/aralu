@@ -65,6 +65,8 @@ public static class Mapa
         tarefa.HasMany(item => item.Responsaveis).WithOne().HasForeignKey(item => item.TarefaId).OnDelete(DeleteBehavior.Cascade);
         tarefa.HasMany(item => item.Checklist).WithOne().HasForeignKey(item => item.TarefaId).OnDelete(DeleteBehavior.Cascade);
         tarefa.HasMany(item => item.Comentarios).WithOne().HasForeignKey(item => item.TarefaId).OnDelete(DeleteBehavior.Cascade);
+        tarefa.HasMany(item => item.Anexos).WithOne().HasForeignKey(item => item.TarefaId).OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<AnexoTarefa>().ToTable("AnexosTarefa");
         modelBuilder.Entity<ResponsavelTarefa>().Property(item => item.Papel).HasConversion<string>();
         modelBuilder.Entity<ResponsavelTarefa>().ToTable("ResponsaveisTarefa");
         modelBuilder.Entity<ItemChecklistTarefa>().ToTable("ItensChecklistTarefa");

@@ -364,7 +364,7 @@ Baseada no PDF (base → uso diário → diferencial), com o que já existe.
 1. Casca e navegação (celular e computador).
 2. Criação do evento curta e resumo em cartões.
 3. ~~Modelos: prazos legíveis, importar colando, salvar como modelo.~~ **Pronto** (SPEC-012 v2).
-4. Tarefas: lista do evento com "Nova tarefa" em modal, vários responsáveis, visibilidade, prioridade e checklist. **Em código** (SPEC-003 v3). A seção 17 da spec continua sem decisão. O envio de anexo espera tipo e tamanho; a leitura só mostra a seção recolhida.
+4. Tarefas: lista do evento com "Nova tarefa" em modal, vários responsáveis, visibilidade, prioridade e checklist. **Em código** (SPEC-003 v3). A seção 17 da spec continua sem decisão. Anexos: JPG, PNG ou PDF até 5 MB, fotos reduzidas.
 5. ~~Tela Hoje.~~ **Pronto** (SPEC-007 v2).
 6. ~~Dinheiro do evento: parcelas do casal, cobrar, recebi, Pix.~~ **Pronto** (SPEC-029), menos comprovantes.
 7. ~~Contratos: cadastro com campos de mesclagem, vínculo ao modelo, leitura por link.~~ **Pronto** (SPEC-030 v2). Assinatura pendente.

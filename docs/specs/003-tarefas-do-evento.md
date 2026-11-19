@@ -67,6 +67,7 @@ Pendente, em andamento, concluída e atrasada aparecem na coluna da tabela e no 
 ### 6.6. Checklist, anexos e serviço
 
 - Checklist e anexos ficam **recolhidos** na leitura até alguém expandir.
+- Anexos (decidido em 18/11/2026): JPG, JPEG, PNG ou PDF de até 5 MB cada, a mesma regra dos comprovantes (SPEC-029 §6.6). Fotos são reduzidas ao guardar (lado maior até 2000 px) sem perder a leitura. Anexar e remover ficam na leitura da tarefa, com o evento em andamento.
 - Na tabela (aba do evento e lista geral), a tarefa com checklist mostra uma seta à esquerda e o progresso (feitos / total, sem contar os cancelados). A seta expande a checklist logo abaixo da linha.
 - Na checklist expandida (tabela ou leitura), cada item pode ser marcado como **feito** ou **cancelado**. Cancelado fica riscado, não conta no progresso e pode ser restaurado. Um item não é feito e cancelado ao mesmo tempo. Cada marcação grava na hora, sem abrir o modal de edição, e só vale com o evento em andamento.
 - Tarefa pode ligar-se a um serviço do evento. Ao marcar o fornecedor como Contratado (RF-059), a tarefa cujo título for "Contratar {nome do serviço}" (ou o vínculo explícito) passa a concluída — regra exata na §17 se não houver vínculo explícito.
@@ -94,7 +95,7 @@ Lista de tarefas de todos os eventos da conta, com filtros: situação, respons�
 
 ## 9. Validações
 
-Título obrigatório. Prazo, se houver, data válida. Prioridade e visibilidade nos enums. Até N responsáveis (limite na §17). Anexo: tipos e tamanho na §17.
+Título obrigatório. Prazo, se houver, data válida. Prioridade e visibilidade nos enums. Até N responsáveis (limite na §17). Anexo: JPG, JPEG, PNG ou PDF até 5 MB.
 
 ## 10. Estados
 
@@ -137,7 +138,7 @@ Decidido em 18/11/2026: as visões "Esta semana" e "Para conferir" ficam descart
 
 1. Atrasada automática ou só manual.
 2. Remoção de tarefa (hoje a tela ainda avisa que exclusão não está no fluxo).
-3. Limite de responsáveis, tamanho de anexo e tipos aceitos.
+3. Limite de responsáveis. (Anexo decidido: JPG, JPEG, PNG ou PDF até 5 MB, §6.6.)
 4. Regra automática "Contratar X" sem vínculo explícito ao serviço.
 5. Comentários vs "perguntas" como tipos distintos ou um só fio.
 6. O que o casal pode fazer além de marcar feita (só bloco 11 decide a UI).

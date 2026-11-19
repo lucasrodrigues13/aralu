@@ -2182,3 +2182,37 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261119003826_AnexosDaTarefa') THEN
+    CREATE TABLE "AnexosTarefa" (
+        "Id" uuid NOT NULL,
+        "TarefaId" uuid NOT NULL,
+        "ArquivoId" uuid NOT NULL,
+        "Nome" text NOT NULL,
+        "TipoConteudo" text NOT NULL,
+        "EnviadoEm" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_AnexosTarefa" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_AnexosTarefa_Tarefas_TarefaId" FOREIGN KEY ("TarefaId") REFERENCES "Tarefas" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261119003826_AnexosDaTarefa') THEN
+    CREATE INDEX "IX_AnexosTarefa_TarefaId" ON "AnexosTarefa" ("TarefaId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261119003826_AnexosDaTarefa') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261119003826_AnexosDaTarefa', '10.0.4');
+    END IF;
+END $EF$;
+COMMIT;
+

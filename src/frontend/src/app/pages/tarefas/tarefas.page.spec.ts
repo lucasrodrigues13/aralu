@@ -23,6 +23,7 @@ function tarefa(parcial: Partial<Tarefa> & Pick<Tarefa, 'id' | 'titulo'>): Taref
     responsaveis: [{ papel: 'Organizer', referenciaId: 'conta' }],
     checklist: [],
     comentarios: [],
+    anexos: [],
     grupoPrazo: null,
     eventoEmAndamento: true,
     tags: [],
