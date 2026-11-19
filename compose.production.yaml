@@ -89,8 +89,9 @@ services:
     environment:
       SITE_ADDRESS: :80
     ports:
-      - "80:80"
-      - "443:443"
+      # As portas 80/443 da VPS são do proxy em /opt/proxy (repo jm-reboques-lp, infra/proxy).
+      # O frontend só escuta no loopback; o proxy repassa o tráfego HTTP para cá.
+      - "127.0.0.1:8081:80"
     volumes:
       - caddy_data:/data
       - caddy_config:/config
