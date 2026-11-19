@@ -22,6 +22,8 @@ public static class DinheiroEndpoints
         api.MapPut("/eventos/{id:guid}/dinheiro/lancamentos/{lancamentoId:guid}", AtualizarLancamento);
         api.MapDelete("/eventos/{id:guid}/dinheiro/lancamentos/{lancamentoId:guid}", ExcluirLancamento);
         api.MapGet("/eventos/{id:guid}/budget/planilha", PlanilhaBudget);
+        api.MapPost("/eventos/{id:guid}/dinheiro/comprovantes", EnviarComprovante).DisableAntiforgery();
+        api.MapDelete("/eventos/{id:guid}/dinheiro/comprovantes/{comprovanteId:guid}", ExcluirComprovante);
         api.MapGet("/pagamentos", Pagamentos);
         api.MapGet("/hoje", (ClaimsPrincipal usuario, HojeServico servico, CancellationToken ct) =>
             ComConta(usuario, async conta => Results.Ok(await servico.ObterAsync(conta, Hoje(), ct))));
@@ -47,6 +49,29 @@ public static class DinheiroEndpoints
 
     private static Task<IResult> ExcluirLancamento(Guid id, Guid lancamentoId, ClaimsPrincipal usuario, DinheiroServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.ExcluirLancamentoAsync(conta, id, lancamentoId, Hoje(), ct)));
+
+    private static Task<IResult> EnviarComprovante(Guid id, HttpRequest request, ClaimsPrincipal usuario, DinheiroServico servico, CancellationToken ct) =>
+        ComConta(usuario, async conta =>
+        {
+            const string invalido = "O arquivo não foi aceito. Use JPG, JPEG, PNG ou PDF de até 5 MB.";
+            if (!request.HasFormContentType)
+            {
+                return Falha(new Falha(Codigos.Validacao, invalido));
+            }
+
+            var formulario = await request.ReadFormAsync(ct);
+            var arquivo = formulario.Files.GetFile("arquivo");
+            if (arquivo is null || arquivo.Length == 0 || arquivo.Length > 5 * 1024 * 1024)
+            {
+                return Falha(new Falha(Codigos.Validacao, invalido));
+            }
+
+            await using var fluxo = arquivo.OpenReadStream();
+            return await De(servico.EnviarComprovanteAsync(conta, id, fluxo, arquivo.FileName, formulario["descricao"].ToString(), Hoje(), ct));
+        });
+
+    private static Task<IResult> ExcluirComprovante(Guid id, Guid comprovanteId, ClaimsPrincipal usuario, DinheiroServico servico, CancellationToken ct) =>
+        ComConta(usuario, conta => De(servico.ExcluirComprovanteAsync(conta, id, comprovanteId, Hoje(), ct)));
 
     private static Task<IResult> Pagamentos(ClaimsPrincipal usuario, DinheiroServico servico, CancellationToken ct) =>
         ComConta(usuario, async conta => Results.Ok(await servico.PagamentosAsync(conta, ct)));

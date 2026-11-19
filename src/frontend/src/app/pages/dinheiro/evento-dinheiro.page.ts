@@ -9,6 +9,7 @@ import {
   DinheiroClient,
   DinheiroEvento,
   FORMAS_PAGAMENTO,
+  ComprovanteEvento,
   LancamentoEvento,
   PagamentoFornecedor,
   ParcelaCasal,
@@ -24,6 +25,7 @@ import { GdDinheiroPipe } from '../../shared/gd-dinheiro.pipe';
 import { EventoAbasComponent } from '../eventos/evento-abas.component';
 import { linkWhatsapp, textoCobranca } from './cobranca';
 import { ChavePixDialog, ContratoCasalDialog, LancamentoDialog, ReceberDialog } from './dinheiro.dialogs';
+import { ComprovanteDialog } from './comprovante.dialog';
 
 const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
 
@@ -170,6 +172,33 @@ const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julh
           <p class="gd-sub totais">Despesas {{ d.despesas | gdDinheiro }} · Entradas {{ d.entradas | gdDinheiro }}</p>
         }
       </section>
+
+      <section class="gd-painel">
+        <div class="titulo-linha">
+          <h2 class="titulo">Comprovantes e documentos</h2>
+          <button mat-stroked-button type="button" (click)="enviarComprovante()"><mat-icon>upload_file</mat-icon> Enviar comprovante</button>
+        </div>
+        @if (d.comprovantes.length === 0) {
+          <p class="gd-vazio">Nenhum comprovante. Aceita JPG, JPEG, PNG ou PDF de até 5 MB.</p>
+        } @else {
+          <table class="gd-grade">
+            <thead><tr><th>Arquivo</th><th>Descrição</th><th>Enviado em</th><th class="gd-acoes">Ações</th></tr></thead>
+            <tbody>
+              @for (item of d.comprovantes; track item.id) {
+                <tr>
+                  <td><mat-icon class="tipo">{{ item.tipoConteudo === 'application/pdf' ? 'picture_as_pdf' : 'image' }}</mat-icon> {{ item.nome }}</td>
+                  <td>{{ item.descricao ?? '—' }}</td>
+                  <td>{{ item.enviadoEm | gdData }}</td>
+                  <td class="gd-acoes">
+                    <button mat-icon-button type="button" aria-label="Abrir" (click)="abrirComprovante(item)"><mat-icon>open_in_new</mat-icon></button>
+                    <button mat-icon-button type="button" aria-label="Excluir" (click)="excluirComprovante(item)"><mat-icon>delete</mat-icon></button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </section>
     }
   `,
   styles: `
@@ -184,6 +213,7 @@ const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julh
     .acao mat-icon { font-size: 16px; width: 16px; height: 16px; }
     tr.mes td { font-size: 12px; font-weight: 600; text-transform: capitalize; color: var(--gd-muted-foreground); background: color-mix(in oklab, var(--gd-muted) 50%, transparent); }
     .totais { margin-top: 12px; text-align: right; }
+    mat-icon.tipo { font-size: 18px; width: 18px; height: 18px; vertical-align: middle; color: var(--gd-muted-foreground); margin-right: 4px; }
   `,
 })
 export class EventoDinheiroPage implements OnInit {
@@ -307,6 +337,50 @@ export class EventoDinheiroPage implements OnInit {
         next: (dados) => {
           this.dados.set(dados);
           this.toast.sucesso('Lançamento excluído.');
+        },
+        error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+      });
+    });
+  }
+
+  protected enviarComprovante(): void {
+    this.dialog.open(ComprovanteDialog, DIALOG_PEQUENO).afterClosed().subscribe((envio) => {
+      if (!envio) return;
+      this.dinheiro.enviarComprovante(this.id, envio.arquivo, envio.descricao).subscribe({
+        next: (dados) => {
+          this.dados.set(dados);
+          this.toast.sucesso('Comprovante enviado.');
+        },
+        error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+      });
+    });
+  }
+
+  protected abrirComprovante(item: ComprovanteEvento): void {
+    const janela = window.open('', '_blank');
+    this.dinheiro.baixarArquivo(item.arquivoId).subscribe({
+      next: (arquivo) => {
+        const url = URL.createObjectURL(arquivo);
+        if (janela) janela.location.href = url; else window.open(url, '_blank');
+        setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      },
+      error: (erro: unknown) => {
+        janela?.close();
+        this.toast.erro(mensagemDeErro(erro));
+      },
+    });
+  }
+
+  protected excluirComprovante(item: ComprovanteEvento): void {
+    this.dialog.open(ConfirmaDialog, {
+      ...DIALOG_PEQUENO,
+      data: { titulo: 'Excluir comprovante', texto: `Excluir "${item.nome}"? O arquivo é apagado.`, confirmar: 'Excluir' },
+    }).afterClosed().subscribe((confirmou) => {
+      if (!confirmou) return;
+      this.dinheiro.excluirComprovante(this.id, item.id).subscribe({
+        next: (dados) => {
+          this.dados.set(dados);
+          this.toast.sucesso('Comprovante excluído.');
         },
         error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
       });

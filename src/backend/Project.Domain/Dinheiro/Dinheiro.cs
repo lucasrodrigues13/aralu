@@ -75,6 +75,24 @@ public sealed class LancamentoEvento
     public DateOnly Data { get; set; }
 }
 
+/// <summary>Comprovante ou documento do evento (SPEC-029 §6.6). O arquivo fica no armazenamento da conta.</summary>
+public sealed class ComprovanteEvento
+{
+    public Guid Id { get; set; }
+
+    public Guid EventoId { get; set; }
+
+    public Guid ArquivoId { get; set; }
+
+    public string Nome { get; set; } = "";
+
+    public string TipoConteudo { get; set; } = "";
+
+    public string? Descricao { get; set; }
+
+    public DateTimeOffset EnviadoEm { get; set; }
+}
+
 public enum SituacaoParcelaCasal
 {
     AReceber,

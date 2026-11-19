@@ -65,6 +65,32 @@ export interface PagamentoFornecedor {
   situacao: string;
 }
 
+export interface ComprovanteEvento {
+  id: string;
+  arquivoId: string;
+  nome: string;
+  tipoConteudo: string;
+  descricao: string | null;
+  enviadoEm: string;
+}
+
+/** Comprovantes aceitos (SPEC-029 §6.6). */
+export const TIPOS_COMPROVANTE = ['image/jpeg', 'image/png', 'application/pdf'];
+export const EXTENSOES_COMPROVANTE = ['.jpg', '.jpeg', '.png', '.pdf'];
+export const TAMANHO_MAXIMO_COMPROVANTE = 5 * 1024 * 1024;
+
+/** Confere tipo e tamanho antes de enviar; o servidor confere de novo. */
+export function validarComprovante(arquivo: { name: string; size: number }): string | null {
+  const nome = arquivo.name.toLowerCase();
+  if (!EXTENSOES_COMPROVANTE.some((extensao) => nome.endsWith(extensao))) {
+    return 'Use um arquivo JPG, JPEG, PNG ou PDF.';
+  }
+  if (arquivo.size > TAMANHO_MAXIMO_COMPROVANTE) {
+    return 'O arquivo passa de 5 MB.';
+  }
+  return null;
+}
+
 export interface DinheiroEvento {
   valorContrato: number | null;
   recebido: number;
@@ -75,6 +101,7 @@ export interface DinheiroEvento {
   parcelas: ParcelaCasal[];
   pagamentosFornecedores: PagamentoFornecedor[];
   lancamentos: LancamentoEvento[];
+  comprovantes: ComprovanteEvento[];
 }
 
 export interface DefinirContratoCasal {
@@ -120,6 +147,21 @@ export class DinheiroClient {
 
   planilhaBudget(eventoId: string) {
     return this.http.get(`${this.base}/api/v1/eventos/${eventoId}/budget/planilha`, { responseType: 'blob' });
+  }
+
+  enviarComprovante(eventoId: string, arquivo: File, descricao: string) {
+    const dados = new FormData();
+    dados.append('arquivo', arquivo);
+    if (descricao.trim()) dados.append('descricao', descricao.trim());
+    return this.http.post<DinheiroEvento>(`${this.base}/api/v1/eventos/${eventoId}/dinheiro/comprovantes`, dados);
+  }
+
+  excluirComprovante(eventoId: string, id: string) {
+    return this.http.delete<DinheiroEvento>(`${this.base}/api/v1/eventos/${eventoId}/dinheiro/comprovantes/${id}`);
+  }
+
+  baixarArquivo(arquivoId: string) {
+    return this.http.get(`${this.base}/api/v1/arquivos/${arquivoId}`, { responseType: 'blob' });
   }
 
   pagamentos() {

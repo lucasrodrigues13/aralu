@@ -1,6 +1,6 @@
 # 007. Tela Hoje
 
-**Status: aprovada (versão 2, 18/11/2026).** Substitui a SPEC-007 de dashboards. O código deve seguir esta spec. Fonte: [produto-v1.md](../produto-v1.md) 5.2, RF-080 a RF-082. Os itens 1 e 2 da seção 17 foram decididos em 18/11/2026. Implementada em 18/11/2026 (rota `/hoje`), sem os cartões "Respostas de convidados" e "Retornos do funil" (§17, itens 5 e 7).
+**Status: aprovada (versão 2, 18/11/2026).** Substitui a SPEC-007 de dashboards. O código deve seguir esta spec. Fonte: [produto-v1.md](../produto-v1.md) 5.2, RF-080 a RF-082. Os itens 1 e 2 da seção 17 foram decididos em 18/11/2026. Implementada em 18/11/2026 (rota `/hoje`), sem o cartão "Retornos do funil" (§17, item 7).
 
 ## 1. Identificador e nome
 
@@ -34,7 +34,7 @@ Organizer ou Assistant autenticado (SPEC-001). A casca e a navegação (bloco 1)
    - Tarefas da semana e atrasadas → Tarefas (filtro adequado).
    - Cobranças a fazer (atrasadas e próximos 7 dias) → Dinheiro / pagamentos do casal (quando o bloco 6 existir; até lá, destino na §17).
    - Pagamentos a fornecedores da semana → Fornecedores / pagamentos.
-   - Respostas de convidados (pendências recentes — §17) → Convidados.
+   - Respostas de convidados: quantos convidados ainda não responderam, quantos confirmaram (sim) e quantos não vão (não), somando os eventos em andamento.
    - Retornos do funil → Funil.
 4. **Próximo evento** com nome e contagem de dias (ou "É hoje").
 5. **Carteira** em tabela: casal (nome do evento), data, % de tarefas feitas, convidados que responderam, coluna **Atenção** (tarefas atrasadas e/ou respostas abaixo do esperado). "Respostas abaixo do esperado": faltam menos de 2 meses para o evento e 50% ou mais dos convidados ainda não responderam.
@@ -99,7 +99,7 @@ SPEC-001, casca (bloco 1), SPEC-002/008 (eventos), SPEC-003 (tarefas), SPEC-004/
 2. ~~Limiar de "respostas abaixo do esperado".~~ Decidido: menos de 2 meses para o evento e 50% ou mais dos convidados sem resposta (§6, item 5).
 3. Destino dos cartões de cobrança antes do bloco 6 existir.
 4. Comportamento do cartão financeiro para Assistant sem permissão (ocultar vs zero).
-5. Definição de "respostas de convidados" no cartão (novas nas últimas 24h? pendentes totais?).
+5. ~~Definição de "respostas de convidados".~~ Decidido: pendentes, sim e não (§6, item 3).
 6. Se o bloco "próximo evento" some quando não há data. Implementado: mostra "Nenhum evento com data marcada".
-7. "Retornos do funil" depende da data de retorno no cartão da oportunidade (bloco 16); o cartão entra junto.
+7. "Retornos do funil" só entra quando o funil (bloco 16) ganhar a data de retorno. Decidido em 18/11/2026.
 8. O checklist de configuração mostra só o que já existe (perfil, Pix, contrato). Marca, página pública e equipe entram com os blocos deles. "Pular" fica guardado no navegador.

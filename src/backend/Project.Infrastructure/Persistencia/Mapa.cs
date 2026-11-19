@@ -212,6 +212,12 @@ public static class Mapa
         lancamento.Property(item => item.Categoria).HasMaxLength(80);
         lancamento.HasIndex(item => item.EventoId);
         lancamento.HasOne<Evento>().WithMany().HasForeignKey(item => item.EventoId).OnDelete(DeleteBehavior.Cascade);
+
+        var comprovante = modelBuilder.Entity<Project.Domain.Dinheiro.ComprovanteEvento>();
+        comprovante.ToTable("ComprovantesEvento");
+        comprovante.HasIndex(item => item.EventoId);
+        comprovante.Property(item => item.Descricao).HasMaxLength(200);
+        comprovante.HasOne<Evento>().WithMany().HasForeignKey(item => item.EventoId).OnDelete(DeleteBehavior.Cascade);
     }
 
     private static void MapearFornecedores(ModelBuilder modelBuilder)

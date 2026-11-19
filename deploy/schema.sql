@@ -2147,3 +2147,38 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261119001916_ComprovantesDoEvento') THEN
+    CREATE TABLE "ComprovantesEvento" (
+        "Id" uuid NOT NULL,
+        "EventoId" uuid NOT NULL,
+        "ArquivoId" uuid NOT NULL,
+        "Nome" text NOT NULL,
+        "TipoConteudo" text NOT NULL,
+        "Descricao" character varying(200),
+        "EnviadoEm" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_ComprovantesEvento" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_ComprovantesEvento_Eventos_EventoId" FOREIGN KEY ("EventoId") REFERENCES "Eventos" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261119001916_ComprovantesDoEvento') THEN
+    CREATE INDEX "IX_ComprovantesEvento_EventoId" ON "ComprovantesEvento" ("EventoId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261119001916_ComprovantesDoEvento') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261119001916_ComprovantesDoEvento', '10.0.4');
+    END IF;
+END $EF$;
+COMMIT;
+

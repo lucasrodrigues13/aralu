@@ -121,5 +121,26 @@ public sealed class DadosDinheiroEf(AppDbContext banco) : IDadosDinheiro
     public Task<string?> ChavePixAsync(string contaId, CancellationToken ct) =>
         banco.Perfis.Where(perfil => perfil.ContaId == contaId).Select(perfil => perfil.ChavePix).FirstOrDefaultAsync(ct);
 
+    public async Task<IReadOnlyList<ComprovanteEvento>> ComprovantesAsync(Guid eventoId, CancellationToken ct) =>
+        await banco.Set<ComprovanteEvento>().Where(item => item.EventoId == eventoId).ToListAsync(ct);
+
+    public Task<ComprovanteEvento?> ObterComprovanteAsync(string contaId, Guid eventoId, Guid id, CancellationToken ct) =>
+        banco.Set<ComprovanteEvento>()
+            .Where(item => item.Id == id && item.EventoId == eventoId)
+            .Where(item => banco.Eventos.Any(evento => evento.Id == item.EventoId && evento.ContaId == contaId))
+            .FirstOrDefaultAsync(ct);
+
+    public Task InserirComprovanteAsync(ComprovanteEvento comprovante, CancellationToken ct)
+    {
+        banco.Set<ComprovanteEvento>().Add(comprovante);
+        return Task.CompletedTask;
+    }
+
+    public Task RemoverComprovanteAsync(ComprovanteEvento comprovante, CancellationToken ct)
+    {
+        banco.Set<ComprovanteEvento>().Remove(comprovante);
+        return Task.CompletedTask;
+    }
+
     public Task SalvarAsync(CancellationToken ct) => banco.SaveChangesAsync(ct);
 }

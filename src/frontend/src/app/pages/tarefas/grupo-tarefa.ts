@@ -99,3 +99,59 @@ function porPrazoETitulo(a: TarefaAgrupavel, b: TarefaAgrupavel): number {
   if (!prazoA && prazoB) return 1;
   return a.titulo.localeCompare(b.titulo, 'pt');
 }
+
+const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+
+function plural(n: number, um: string, varios: string): string {
+  return `${n} ${n === 1 ? um : varios}`;
+}
+
+function diasEntre(de: string, ate: string): number {
+  const [a1, m1, d1] = de.split('-').map(Number);
+  const [a2, m2, d2] = ate.split('-').map(Number);
+  return Math.round((Date.UTC(a2, m2 - 1, d2) - Date.UTC(a1, m1 - 1, d1)) / 86_400_000);
+}
+
+/** Meses completos entre o prazo e o evento (prazo + N meses ainda não passa do evento). */
+function mesesCompletos(prazo: string, evento: string): number {
+  const [a1, m1, d1] = prazo.split('-').map(Number);
+  const [a2, m2, d2] = evento.split('-').map(Number);
+  let meses = (a2 - a1) * 12 + (m2 - m1);
+  if (d1 > d2) meses--;
+  return meses;
+}
+
+/** Grupo da tarefa pela distância do prazo até o evento (SPEC-003 §6.2). Ordem maior = mais longe do evento. */
+export function grupoAteEvento(prazo: string | null, dataEvento: string | null): { id: string; rotulo: string; ordem: number } {
+  if (!prazo) return { id: 'sem-prazo', rotulo: 'Sem prazo', ordem: -1_000_000 };
+  const dia = prazo.slice(0, 10);
+  if (!dataEvento) {
+    const [ano, mes] = dia.split('-').map(Number);
+    return { id: `mes-${dia.slice(0, 7)}`, rotulo: `${MESES[mes - 1]} de ${ano}`, ordem: -(ano * 12 + mes) };
+  }
+  const evento = dataEvento.slice(0, 10);
+  const dias = diasEntre(dia, evento);
+  if (dias < 0) return { id: 'depois', rotulo: 'Depois do evento', ordem: -1 };
+  if (dias === 0) return { id: 'no-dia', rotulo: 'No dia do evento', ordem: 0 };
+  const meses = mesesCompletos(dia, evento);
+  if (meses >= 1) return { id: `meses-${meses}`, rotulo: `${plural(meses, 'mês', 'meses')} antes`, ordem: 3000 + meses };
+  if (dias >= 7) {
+    const semanas = Math.floor(dias / 7);
+    return { id: `semanas-${semanas}`, rotulo: `${plural(semanas, 'semana', 'semanas')} antes`, ordem: 2000 + semanas };
+  }
+  return { id: `dias-${dias}`, rotulo: `${plural(dias, 'dia', 'dias')} antes`, ordem: 1000 + dias };
+}
+
+/** Seções da aba Tarefas do evento: do mais longe para o mais perto do evento, "Sem prazo" no fim. */
+export function secoesAteEvento<T extends TarefaAgrupavel>(tarefas: T[], dataEvento: string | null): SecaoTarefas<T>[] {
+  const grupos = new Map<string, { rotulo: string; ordem: number; tarefas: T[] }>();
+  for (const tarefa of tarefas) {
+    const grupo = grupoAteEvento(tarefa.prazo, dataEvento);
+    const atual = grupos.get(grupo.id) ?? { rotulo: grupo.rotulo, ordem: grupo.ordem, tarefas: [] };
+    atual.tarefas.push(tarefa);
+    grupos.set(grupo.id, atual);
+  }
+  return [...grupos.entries()]
+    .sort(([, a], [, b]) => b.ordem - a.ordem)
+    .map(([id, grupo]) => ({ id, rotulo: grupo.rotulo, tarefas: grupo.tarefas.sort(porPrazoETitulo) }));
+}

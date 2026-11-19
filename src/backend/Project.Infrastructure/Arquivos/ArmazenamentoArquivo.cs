@@ -20,13 +20,30 @@ public sealed class ArmazenamentoArquivo(
     ILogger<ArmazenamentoArquivo> logs) : IArmazenamentoArquivo
 {
     private const string Mensagem = "A imagem não foi aceita. Use JPG, PNG ou WebP de até 5 MB.";
+    private const string MensagemDocumento = "O arquivo não foi aceito. Use JPG, JPEG, PNG ou PDF de até 5 MB.";
 
-    public async Task<Resultado<ArquivoGuardado>> GuardarImagemAsync(
+    public Task<Resultado<ArquivoGuardado>> GuardarImagemAsync(
         Stream conteudo,
         string? nomeOriginal,
         string contaId,
+        CancellationToken ct) =>
+        GuardarAsync(conteudo, nomeOriginal, contaId, documento: false, ct);
+
+    public Task<Resultado<ArquivoGuardado>> GuardarDocumentoAsync(
+        Stream conteudo,
+        string? nomeOriginal,
+        string contaId,
+        CancellationToken ct) =>
+        GuardarAsync(conteudo, nomeOriginal, contaId, documento: true, ct);
+
+    private async Task<Resultado<ArquivoGuardado>> GuardarAsync(
+        Stream conteudo,
+        string? nomeOriginal,
+        string contaId,
+        bool documento,
         CancellationToken ct)
     {
+        var mensagem = documento ? MensagemDocumento : Mensagem;
         var raiz = Raiz();
         var tempDir = Path.Combine(raiz, "temp");
         Directory.CreateDirectory(tempDir);
@@ -44,7 +61,7 @@ public sealed class ArmazenamentoArquivo(
                     total += lidos;
                     if (total > opcoes.Value.MaxImageBytes)
                     {
-                        return Resultado<ArquivoGuardado>.Erro(Codigos.Validacao, Mensagem);
+                        return Resultado<ArquivoGuardado>.Erro(Codigos.Validacao, mensagem);
                     }
 
                     await destino.WriteAsync(buffer.AsMemory(0, lidos), ct);
@@ -53,22 +70,30 @@ public sealed class ArmazenamentoArquivo(
 
             if (total == 0)
             {
-                return Resultado<ArquivoGuardado>.Erro(Codigos.Validacao, Mensagem);
+                return Resultado<ArquivoGuardado>.Erro(Codigos.Validacao, mensagem);
             }
 
             var tipo = Detectar(temp);
-            if (tipo is null || !ExtensaoConfere(nomeOriginal, tipo.Value.Extensao))
+            var aceito = tipo is not null && (documento ? tipo.Value.Extensao is ".jpg" or ".png" or ".pdf" : tipo.Value.Extensao is not ".pdf");
+            if (!aceito || !ExtensaoConfere(nomeOriginal, tipo!.Value.Extensao))
             {
-                return Resultado<ArquivoGuardado>.Erro(Codigos.Validacao, Mensagem);
+                return Resultado<ArquivoGuardado>.Erro(Codigos.Validacao, mensagem);
+            }
+
+            if (documento && tipo.Value.Extensao is ".jpg" or ".png"
+                && ReducaoImagem.Reduzir(temp, tipo.Value.Extensao == ".jpg") is byte[] reduzida)
+            {
+                await File.WriteAllBytesAsync(temp, reduzida, ct);
+                total = reduzida.Length;
             }
 
             var agora = DateTime.UtcNow;
             var nomeFisico = $"{Guid.NewGuid():N}{tipo.Value.Extensao}";
-            var relativo = Path.Combine("images", agora.Year.ToString("0000"), agora.Month.ToString("00"), nomeFisico);
+            var relativo = Path.Combine(documento ? "documentos" : "images", agora.Year.ToString("0000"), agora.Month.ToString("00"), nomeFisico);
             final = Path.GetFullPath(Path.Combine(raiz, relativo));
             if (!final.StartsWith(raiz, StringComparison.OrdinalIgnoreCase))
             {
-                return Resultado<ArquivoGuardado>.Erro(Codigos.Validacao, Mensagem);
+                return Resultado<ArquivoGuardado>.Erro(Codigos.Validacao, mensagem);
             }
 
             Directory.CreateDirectory(Path.GetDirectoryName(final)!);
@@ -163,6 +188,11 @@ public sealed class ArmazenamentoArquivo(
         if (lidos >= 8 && cabecalho[0] == 0x89 && cabecalho[1] == 0x50 && cabecalho[2] == 0x4E && cabecalho[3] == 0x47)
         {
             return (".png", "image/png");
+        }
+
+        if (lidos >= 5 && cabecalho[0] == (byte)'%' && cabecalho[1] == (byte)'P' && cabecalho[2] == (byte)'D' && cabecalho[3] == (byte)'F' && cabecalho[4] == (byte)'-')
+        {
+            return (".pdf", "application/pdf");
         }
 
         if (lidos >= 12

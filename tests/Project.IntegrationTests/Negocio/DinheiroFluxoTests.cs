@@ -88,6 +88,40 @@ public class DinheiroFluxoTests
         Assert.Empty(alheio.GetProperty("carteira").EnumerateArray());
     }
 
+    [Fact]
+    public async Task Comprovante_aceita_pdf_recusa_outro_tipo_e_exclui()
+    {
+        var dono = await Entrar();
+        var outra = await Entrar();
+        var evento = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new { tipo = "Casamento", primeiroNome = "Gil", segundoNome = "Ana" }));
+        var eventoId = evento.GetProperty("id").GetGuid();
+
+        using var texto = new MultipartFormDataContent { { new ByteArrayContent(System.Text.Encoding.UTF8.GetBytes("oi")), "arquivo", "nota.txt" } };
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PostAsync($"/api/v1/eventos/{eventoId}/dinheiro/comprovantes", texto)).StatusCode);
+
+        var grande = new byte[5 * 1024 * 1024 + 10];
+        System.Text.Encoding.ASCII.GetBytes("%PDF-1.4").CopyTo(grande, 0);
+        using var excesso = new MultipartFormDataContent { { new ByteArrayContent(grande), "arquivo", "grande.pdf" } };
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PostAsync($"/api/v1/eventos/{eventoId}/dinheiro/comprovantes", excesso)).StatusCode);
+
+        using var pdf = new MultipartFormDataContent
+        {
+            { new ByteArrayContent(System.Text.Encoding.ASCII.GetBytes("%PDF-1.4\n%%EOF")), "arquivo", "recibo.pdf" },
+            { new StringContent("Sinal do buffet"), "descricao" },
+        };
+        var comPdf = await Ler(await dono.PostAsync($"/api/v1/eventos/{eventoId}/dinheiro/comprovantes", pdf));
+        var comprovante = comPdf.GetProperty("comprovantes")[0];
+        Assert.Equal("recibo.pdf", comprovante.GetProperty("nome").GetString());
+        Assert.Equal("application/pdf", comprovante.GetProperty("tipoConteudo").GetString());
+
+        var arquivoId = comprovante.GetProperty("arquivoId").GetGuid();
+        Assert.Equal(HttpStatusCode.OK, (await dono.GetAsync($"/api/v1/arquivos/{arquivoId}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await outra.GetAsync($"/api/v1/arquivos/{arquivoId}")).StatusCode);
+
+        var semComprovante = await Ler(await dono.DeleteAsync($"/api/v1/eventos/{eventoId}/dinheiro/comprovantes/{comprovante.GetProperty("id").GetGuid()}"));
+        Assert.Empty(semComprovante.GetProperty("comprovantes").EnumerateArray());
+    }
+
     private async Task<HttpClient> Entrar()
     {
         var email = $"pessoa-{Guid.NewGuid():N}@gevents.test";

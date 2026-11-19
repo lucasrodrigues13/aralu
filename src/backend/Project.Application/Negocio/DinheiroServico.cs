@@ -32,6 +32,8 @@ public sealed record ParcelaCasalLeitura(
     TipoCobranca Cobranca,
     IReadOnlyList<RecebimentoLeitura> Recebimentos);
 
+public sealed record ComprovanteLeitura(Guid Id, Guid ArquivoId, string Nome, string TipoConteudo, string? Descricao, DateTimeOffset EnviadoEm);
+
 public sealed record LancamentoLeitura(Guid Id, TipoLancamento Tipo, string Categoria, string? Descricao, decimal Valor, DateOnly Data);
 
 public sealed record PagamentoFornecedorLeitura(
@@ -55,7 +57,8 @@ public sealed record DinheiroEventoLeitura(
     string? ChavePix,
     IReadOnlyList<ParcelaCasalLeitura> Parcelas,
     IReadOnlyList<PagamentoFornecedorLeitura> PagamentosFornecedores,
-    IReadOnlyList<LancamentoLeitura> Lancamentos);
+    IReadOnlyList<LancamentoLeitura> Lancamentos,
+    IReadOnlyList<ComprovanteLeitura> Comprovantes);
 
 /// <summary>Linha do budget para a planilha (SPEC-029 §6.6).</summary>
 public sealed record LinhaPlanilhaBudget(string Servico, decimal Estimado, decimal Contratado);
@@ -92,12 +95,82 @@ public interface IDadosDinheiro
 
     Task<string?> ChavePixAsync(string contaId, CancellationToken ct);
 
+    Task<IReadOnlyList<ComprovanteEvento>> ComprovantesAsync(Guid eventoId, CancellationToken ct);
+
+    Task<ComprovanteEvento?> ObterComprovanteAsync(string contaId, Guid eventoId, Guid id, CancellationToken ct);
+
+    Task InserirComprovanteAsync(ComprovanteEvento comprovante, CancellationToken ct);
+
+    Task RemoverComprovanteAsync(ComprovanteEvento comprovante, CancellationToken ct);
+
     Task SalvarAsync(CancellationToken ct);
 }
 
 /// <summary>Dinheiro do evento: parcelas do casal, cobrar, recebi, despesas e pagamentos (SPEC-029).</summary>
-public sealed class DinheiroServico(IDadosDinheiro dados, IPlanilhaBudget planilha)
+public sealed class DinheiroServico(IDadosDinheiro dados, IPlanilhaBudget planilha, Arquivos.IArmazenamentoArquivo armazenamento)
 {
+    public async Task<Resultado<DinheiroEventoLeitura>> EnviarComprovanteAsync(
+        string contaId,
+        Guid eventoId,
+        Stream conteudo,
+        string? nomeArquivo,
+        string? descricao,
+        DateOnly hoje,
+        CancellationToken ct)
+    {
+        var evento = await dados.ObterEventoAsync(contaId, eventoId, ct);
+        if (evento is null)
+        {
+            return Resultado<DinheiroEventoLeitura>.Erro(Codigos.Indisponivel, "Indisponível.");
+        }
+
+        var texto = Domain.Comum.Texto.Limpo(descricao);
+        if (texto is { Length: > 200 })
+        {
+            return Resultado<DinheiroEventoLeitura>.Erro(Codigos.Validacao, "A descrição tem no máximo 200 caracteres.");
+        }
+
+        var guardado = await armazenamento.GuardarDocumentoAsync(conteudo, nomeArquivo, contaId, ct);
+        if (!guardado.Ok)
+        {
+            return Resultado<DinheiroEventoLeitura>.Erro(guardado.Falha!.Codigo, guardado.Falha.Mensagem);
+        }
+
+        var arquivo = guardado.Valor!;
+        await dados.InserirComprovanteAsync(new ComprovanteEvento
+        {
+            Id = Guid.NewGuid(),
+            EventoId = eventoId,
+            ArquivoId = arquivo.Id,
+            Nome = arquivo.NomeOriginal,
+            TipoConteudo = arquivo.TipoConteudo,
+            Descricao = texto,
+            EnviadoEm = DateTimeOffset.UtcNow,
+        }, ct);
+        await dados.SalvarAsync(ct);
+        return Resultado<DinheiroEventoLeitura>.Sucesso(await LerAsync(contaId, evento, hoje, ct));
+    }
+
+    public async Task<Resultado<DinheiroEventoLeitura>> ExcluirComprovanteAsync(
+        string contaId,
+        Guid eventoId,
+        Guid id,
+        DateOnly hoje,
+        CancellationToken ct)
+    {
+        var evento = await dados.ObterEventoAsync(contaId, eventoId, ct);
+        var comprovante = evento is null ? null : await dados.ObterComprovanteAsync(contaId, eventoId, id, ct);
+        if (evento is null || comprovante is null)
+        {
+            return Resultado<DinheiroEventoLeitura>.Erro(Codigos.Indisponivel, "Indisponível.");
+        }
+
+        await dados.RemoverComprovanteAsync(comprovante, ct);
+        await dados.SalvarAsync(ct);
+        await armazenamento.DescartarAsync(comprovante.ArquivoId, ct);
+        return Resultado<DinheiroEventoLeitura>.Sucesso(await LerAsync(contaId, evento, hoje, ct));
+    }
+
     public async Task<Resultado<DinheiroEventoLeitura>> ObterAsync(string contaId, Guid eventoId, DateOnly hoje, CancellationToken ct)
     {
         var evento = await dados.ObterEventoAsync(contaId, eventoId, ct);
@@ -354,6 +427,7 @@ public sealed class DinheiroServico(IDadosDinheiro dados, IPlanilhaBudget planil
         var parcelas = await dados.ParcelasAsync(evento.Id, ct);
         var lancamentos = await dados.LancamentosAsync(evento.Id, ct);
         var pagamentos = await dados.PagamentosFornecedoresAsync(contaId, evento.Id, ct);
+        var comprovantes = await dados.ComprovantesAsync(evento.Id, ct);
         var recebido = parcelas.Sum(parcela => parcela.Recebido);
         var contrato = evento.ValorContrato;
         return new DinheiroEventoLeitura(
@@ -384,6 +458,10 @@ public sealed class DinheiroServico(IDadosDinheiro dados, IPlanilhaBudget planil
             lancamentos
                 .OrderByDescending(item => item.Data)
                 .Select(item => new LancamentoLeitura(item.Id, item.Tipo, item.Categoria, item.Descricao, item.Valor, item.Data))
+                .ToArray(),
+            comprovantes
+                .OrderByDescending(item => item.EnviadoEm)
+                .Select(item => new ComprovanteLeitura(item.Id, item.ArquivoId, item.Nome, item.TipoConteudo, item.Descricao, item.EnviadoEm))
                 .ToArray());
     }
 

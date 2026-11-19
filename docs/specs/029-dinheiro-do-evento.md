@@ -1,6 +1,6 @@
 # 029. Dinheiro do evento
 
-**Status: aprovada (18/11/2026).** O código deve seguir esta spec. Fonte: [produto-v1.md](../produto-v1.md) 5.9 e 5.1 (Pix), RF-095, RF-096, RF-097, RF-088. Os itens 2, 4 e 6 da seção 17 foram decididos em 18/11/2026. Implementada em 18/11/2026, exceto o envio de comprovantes (§17, item 7).
+**Status: aprovada (18/11/2026).** O código deve seguir esta spec. Fonte: [produto-v1.md](../produto-v1.md) 5.9 e 5.1 (Pix), RF-095, RF-096, RF-097, RF-088. Os itens 2, 4 e 6 da seção 17 foram decididos em 18/11/2026. Implementada em 18/11/2026. Comprovantes decididos em 18/11/2026 (§6.6).
 
 ## 1. Identificador e nome
 
@@ -59,7 +59,7 @@ Continuam os da SPEC-018 (parcelas do serviço). Nesta aba aparecem por mês e p
 ### 6.6. Despesas, comprovantes e budget
 
 - Despesas e entradas do evento por categoria.
-- Comprovantes/documentos do evento (upload no volume).
+- Comprovantes/documentos do evento (upload no volume): JPG, JPEG, PNG ou PDF de até **5 MB** cada. Imagens são reduzidas ao guardar (lado maior até 2000 px, recompressão) para economizar disco sem perder a leitura; PDF fica como veio.
 - Budget estimado/contratado com **exportação para Excel** (RF-097).
 
 ## 7. Fluxos alternativos
@@ -123,4 +123,4 @@ SPEC-008 (evento), SPEC-018 (fornecedores), RF-088 (Pix), SPEC-030 (contrato →
 4. ~~Cobrar sem Pix.~~ Decidido: modal pede a chave Pix e ela vai na mensagem.
 5. Categorias padrão de despesa. Por ora a categoria é texto livre.
 6. ~~Valor do contrato aqui × no contrato.~~ Decidido: o valor mora aqui; o contrato (SPEC-030) lê pelos campos de mesclagem.
-7. Limites de arquivo de comprovante. Sem decisão, o envio de comprovante ainda não existe.
+7. ~~Limites de arquivo de comprovante.~~ Decidido: JPG, JPEG, PNG e PDF até 5 MB; imagens reduzidas sem perder a leitura (§6.6).

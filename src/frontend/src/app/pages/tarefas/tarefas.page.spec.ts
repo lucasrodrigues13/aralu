@@ -50,7 +50,7 @@ function montar(situacaoEvento: string, tarefas: Tarefa[], dialogo: Pick<MatDial
       {
         provide: NegocioClient,
         useValue: {
-          evento: () => of({ situacao: situacaoEvento, tipo: 'Casamento', servicos: [] }),
+          evento: () => of({ situacao: situacaoEvento, tipo: 'Casamento', servicos: [], data: '2026-12-21' }),
           tarefasDoEvento: () => of(tarefas),
         },
       },
@@ -66,20 +66,22 @@ function montar(situacaoEvento: string, tarefas: Tarefa[], dialogo: Pick<MatDial
 describe('TarefasPage na aba do evento', () => {
   afterEach(() => TestBed.resetTestingModule());
 
-  it('mostra uma tabela com Nova tarefa e sem grupos de prazo', () => {
+  it('agrupa as tarefas pela distância até o evento', () => {
     const fixture = montar('EmAndamento', [
       tarefa({ id: '1', titulo: 'Depois', prazo: '2026-12-01', grupo: 'Cerimônia' }),
       tarefa({ id: '2', titulo: 'Antes', prazo: '2026-11-18' }),
     ]);
     const raiz = fixture.nativeElement as HTMLElement;
-    const titulos = [...raiz.querySelectorAll('td.mat-column-titulo')].map((celula) => celula.textContent ?? '');
+    const grupos = [...raiz.querySelectorAll('.nome-grupo')].map((item) => item.textContent?.trim());
+    const linhas = [...raiz.querySelectorAll('tr.linha-tarefa')].map((linha) => linha.textContent ?? '');
 
     expect(raiz.textContent).toContain('Nova tarefa');
-    expect(raiz.textContent).not.toContain('Esta semana');
+    expect(raiz.textContent).toContain('2 tarefas encontradas');
     expect(raiz.querySelector('mat-button-toggle-group')).toBeNull();
-    expect(titulos[0]).toContain('Antes');
-    expect(titulos[1]).toContain('Depois');
-    expect(titulos[1]).toContain('Cerimônia');
+    expect(grupos).toEqual(['1 mês antes', '2 semanas antes']);
+    expect(linhas[0]).toContain('Antes');
+    expect(linhas[1]).toContain('Depois');
+    expect(linhas[1]).toContain('Cerimônia');
   });
 
   it('não mostra Nova tarefa quando o evento não está em andamento', () => {

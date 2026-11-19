@@ -15,6 +15,7 @@ export interface Hoje {
   tarefasAtrasadas: number;
   tarefasSemana: number;
   cobrancas: { eventoId: string; evento: string; parcela: string; vencimento: string; saldo: number; atrasada: boolean }[];
+  respostasConvidados: { pendentes: number; sim: number; nao: number };
   pagamentosSemana: number;
   valorPagamentosSemana: number;
   proximoEvento: { id: string; nome: string; data: string; dias: number } | null;
@@ -96,6 +97,12 @@ function lerPulados(): string[] {
           <span class="gd-icone"><mat-icon>request_quote</mat-icon></span>
           <strong [class.alerta]="d.cobrancas.length > 0">{{ d.cobrancas.length }}</strong>
           <small>atrasadas e próximos 7 dias</small>
+        </a>
+        <a class="gd-numero" routerLink="/eventos">
+          <span>Respostas de convidados</span>
+          <span class="gd-icone"><mat-icon>how_to_reg</mat-icon></span>
+          <strong>{{ d.respostasConvidados.pendentes }}</strong>
+          <small>sem resposta · {{ d.respostasConvidados.sim }} sim · {{ d.respostasConvidados.nao }} não</small>
         </a>
         <a class="gd-numero" routerLink="/pagamentos">
           <span>Pagar a fornecedores</span>

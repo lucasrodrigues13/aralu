@@ -15,6 +15,13 @@ public interface IArmazenamentoArquivo
         string contaId,
         CancellationToken ct);
 
+    /// <summary>Comprovante ou documento: JPG, JPEG, PNG ou PDF até 5 MB; imagens são reduzidas (SPEC-029 §6.6).</summary>
+    Task<Comum.Resultado<ArquivoGuardado>> GuardarDocumentoAsync(
+        Stream conteudo,
+        string? nomeOriginal,
+        string contaId,
+        CancellationToken ct);
+
     Task<ArquivoAberto?> AbrirAsync(Guid id, string contaId, CancellationToken ct);
 
     Task DescartarAsync(Guid id, CancellationToken ct);

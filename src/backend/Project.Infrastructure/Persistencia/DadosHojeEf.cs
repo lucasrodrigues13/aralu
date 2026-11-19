@@ -33,7 +33,9 @@ public sealed class DadosHojeEf(AppDbContext banco) : IDadosHoje
             .Select(grupo => new ConvidadosEventoDado(
                 grupo.Key,
                 grupo.Count(),
-                grupo.Count(item => item.Situacao == SituacaoConvidado.Pendente)))
+                grupo.Count(item => item.Situacao == SituacaoConvidado.Pendente),
+                grupo.Count(item => item.Situacao == SituacaoConvidado.Confirmado),
+                grupo.Count(item => item.Situacao == SituacaoConvidado.NaoComparecera)))
             .ToListAsync(ct);
 
     public async Task<IReadOnlyList<ParcelaHojeDado>> CobrancasAsync(string contaId, IReadOnlyCollection<Guid> eventoIds, DateOnly ate, CancellationToken ct)

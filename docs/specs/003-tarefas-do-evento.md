@@ -40,11 +40,14 @@ Usuário autenticado (SPEC-001) ou link do casal (quando o bloco 11 existir). Ev
 
 ### 6.2. Lista do evento
 
-A aba Tarefas do evento é uma lista no padrão da lista de eventos: cabeçalho, painel e uma tabela. Não há seções por prazo (Esta semana, Depois, Sem prazo, Para conferir, Feitas) nem troca de visão para quadro.
+A aba Tarefas do evento é uma lista no padrão da lista de eventos: cabeçalho, painel e uma tabela, com as linhas **agrupadas pela distância do prazo até a data do evento** (como a lista de tarefas da Assessoria VIP, decidido em 18/11/2026):
 
-A tabela mostra título, prazo, situação, responsáveis e, quando houver, o grupo de texto (Cerimônia, Recepção…). A última coluna traz Editar e Excluir. Ordenação pelo prazo (mais perto primeiro); sem prazo, por título.
+- "N meses antes" (meses completos até o evento), "N semanas antes", "N dias antes", "No dia do evento", "Depois do evento" e "Sem prazo", nessa ordem (do mais longe para o mais perto do evento).
+- Evento sem data: os grupos são o mês do prazo ("novembro de 2026") e "Sem prazo".
+- Cada grupo tem um cabeçalho com o nome em caixa alta e a contagem ("3 tarefas"); clicar no cabeçalho recolhe ou abre o grupo.
+- A linha mostra um ponto colorido da situação, o título (com grupo de texto e progresso da checklist), o prazo, o serviço ligado e os responsáveis. A última coluna traz Editar e Excluir. Dentro do grupo, ordem pelo prazo e depois pelo título.
 
-A barra da lista tem o filtro de situação (pendente, em andamento, concluída, atrasada e todas).
+A barra da lista, à direita, tem a busca pelo título e os filtros de situação, responsável, serviço e "só com checklist", e mostra quantas tarefas foram encontradas. Não há troca de visão para quadro na aba do evento.
 
 ### 6.3. Situações
 
@@ -112,7 +115,7 @@ Validação no campo, dentro do modal. Outra conta: indisponível. Falha ao grav
 ## 14. Critérios de aceite
 
 1. "Nova tarefa" abre o modal sobre a lista. Salvar só com título gera tarefa pendente na tabela.
-2. A aba do evento mostra uma tabela só, com título, prazo, situação e responsáveis. Não há grupos de prazo nem quadro.
+2. A aba do evento mostra a tabela agrupada por distância até o evento ("2 meses antes", "1 mês antes"…), com contagem e grupo recolhível. Não há quadro.
 3. Tocar a linha abre leitura; Editar, na coluna de ações, abre o modal de edição. "Nova tarefa" não abre a leitura.
 4. Dá para marcar dois responsáveis e prioridade alta.
 5. Visibilidade "só eu" não aparece no link do casal (quando o bloco 11 existir).
@@ -130,7 +133,7 @@ SPEC-001, SPEC-002, SPEC-008, SPEC-012 (grupo e aplicar modelo), SPEC-018 (servi
 
 ## 17. Premissas e pontos não definidos
 
-Decidido em 18/11/2026: as visões "Esta semana" e "Para conferir" ficam descartadas. A lista do evento continua como a §6.2 descreve (uma tabela só).
+Decidido em 18/11/2026: as visões "Esta semana" e "Para conferir" ficam descartadas. A lista do evento agrupa por distância até o evento (§6.2).
 
 1. Atrasada automática ou só manual.
 2. Remoção de tarefa (hoje a tela ainda avisa que exclusão não está no fluxo).

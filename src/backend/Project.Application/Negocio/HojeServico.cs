@@ -7,7 +7,10 @@ public sealed record TarefaHojeDado(Guid EventoId, DateOnly? Prazo, SituacaoTare
 
 public sealed record EventoHojeDado(Guid Id, string Nome, DateOnly? Data);
 
-public sealed record ConvidadosEventoDado(Guid EventoId, int Total, int Pendentes);
+public sealed record ConvidadosEventoDado(Guid EventoId, int Total, int Pendentes, int Confirmados = 0, int NaoVao = 0);
+
+/// <summary>Cartão "Respostas de convidados" (SPEC-007 §6.3): pendentes, sim e não.</summary>
+public sealed record RespostasConvidadosHoje(int Pendentes, int Sim, int Nao);
 
 public sealed record ParcelaHojeDado(Guid EventoId, string Evento, int Numero, bool Entrada, DateOnly Vencimento, decimal Saldo);
 
@@ -50,6 +53,7 @@ public sealed record HojeLeitura(
     int TarefasAtrasadas,
     int TarefasSemana,
     IReadOnlyList<CobrancaHoje> Cobrancas,
+    RespostasConvidadosHoje RespostasConvidados,
     int PagamentosSemana,
     decimal ValorPagamentosSemana,
     ProximoEventoHoje? ProximoEvento,
@@ -133,6 +137,10 @@ public sealed class HojeServico(IDadosHoje dados, PainelServico painel)
                     item.Saldo,
                     item.Vencimento < hoje))
                 .ToArray(),
+            new RespostasConvidadosHoje(
+                convidados.Values.Sum(item => item.Pendentes),
+                convidados.Values.Sum(item => item.Confirmados),
+                convidados.Values.Sum(item => item.NaoVao)),
             pagamentos.Count,
             pagamentos.Sum(item => item.Valor),
             proximo,
