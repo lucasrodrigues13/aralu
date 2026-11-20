@@ -91,7 +91,7 @@ Fora do menu deste corte: assistentes, financeiro da empresa, VIP Pay / Casar.co
 
 - Specs 001–028 estão **aprovadas**; implementação segue a spec, sem plano técnico separado.
 - Pendências explícitas em cada spec §17 não bloqueiam o restante do CRUD fechado.
-- Canal de e-mail continua Gmail SMTP; disparo em massa (RSVP automático) fora.
+- Canal de e-mail continua SMTP, agora o Outlook (Microsoft 365); disparo em massa (RSVP automático) fora.
 - Sem backup nesta versão.
 
 ## 9. Conclusão

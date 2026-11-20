@@ -132,7 +132,7 @@ Ator “Assessoria” na referência corresponde ao `Organizer` neste produto. S
 | RF-062 | Redatar tarefas | Ao mudar a data do evento, perguntar se os prazos das tarefas não concluídas se movem junto (mesma diferença em dias). | Organizer, Assistant | SPEC-012 v2, seção 6.6. Concluídas e sem prazo não mudam. | RF-049, RF-061 | Definido |
 | RF-063 | Convites e convidados | Convite, convidados, grupos, transfer, importação. | Organizer | SPEC-004 e SPEC-010. | RF-049 | Definido |
 | RF-064 | RSVP por link | Link por convite; histórico. | Convidado, Organizer | SPEC-004 e SPEC-010. | RF-063 | Definido |
-| RF-065 | RSVP automático | Disparos automáticos em volume. | Organizer | Fora do canal Gmail atual; não fechado. | RF-064, RNF-020 | Observado |
+| RF-065 | RSVP automático | Disparos automáticos em volume. | Organizer | Fora do canal SMTP atual; não fechado. | RF-064, RNF-020 | Observado |
 | RF-066 | Mesas | Lista de mesas do evento com nome, lugares e observação; convidados atribuídos; lugares livres e ocupados; filtros "sem mesa" e "só confirmados". | Organizer, Assistant | Lista, sem planta desenhada (planta fica para a 1.1). Substitui o campo solto de mesa da SPEC-010. | RF-063 | Definido |
 | RF-067 | Checklist de presença | Portaria / check-in. | Organizer | Não fechado em spec 001–028. | RF-063 | Observado |
 | RF-068 | Parcelas do evento | Parcelas por serviço e fornecedor. | Organizer | SPEC-018 (hub e parcelas). | RF-058 | Definido |
@@ -211,7 +211,7 @@ Vindos de [produto-v1.md](produto-v1.md) em 18/11/2026. O "Onde" aponta a seçã
 | RNF-017 | A criação do administrador inicial é idempotente e não registra segredo em log, conforme RF-030 e RF-033. | Definido |
 | RNF-018 | Esta versão não implementa backup, ferramenta nem rotina de cópia. Backup e restauração passam a ser obrigatórios antes de dados reais em produção. Até lá, perda de disco significa perda do banco e dos arquivos. | Definido |
 | RNF-019 | Testes unitários rodam em todo pull request. Testes de integração rodam no pipeline de validação, com PostgreSQL descartável, antes da aprovação do deploy. Falha em teste obrigatório interrompe o pipeline. Não há meta percentual de cobertura nem teste de navegador nesta versão. | Definido |
-| RNF-020 | O e-mail transacional de confirmação e de recuperação sai por SMTP do Gmail, com MailKit, na Infrastructure. | Definido |
+| RNF-020 | O e-mail transacional de confirmação e de recuperação sai por SMTP do Outlook (Microsoft 365), com MailKit, na Infrastructure. | Definido |
 | RNF-021 | Ao exceder o rate limit, a resposta é HTTP 429. Quando o middleware puder, a resposta inclui `Retry-After`. | Definido |
 | RNF-022 | O rate limiting desta versão é em memória e vale para uma instância. Os limites ficam no `appsettings.json` e mudam sem recompilar. Não há Redis nem outro armazenamento distribuído de contagem. | Definido |
 | RNF-023 | O IP usado no rate limiting é o do cliente, lido atrás do Caddy. A aplicação só confia em proxies configurados de forma explícita. | Definido |
@@ -251,7 +251,7 @@ Não há cookie de autenticação. DA-019 registra isso.
 | DA-018 | A primeira versão não usa microsserviço, barramento de mensagens, fila de e-mail nem cache distribuído. | Definido |
 | DA-019 | Não há cookie de autenticação, então `SameSite` não se aplica. O cliente guarda o JWT em `sessionStorage` e envia `Authorization: Bearer`. | Definido |
 | DA-020 | Lockout do Identity: 5 falhas e bloqueio de 15 minutos. | Definido |
-| DA-021 | E-mail transacional por SMTP do Gmail, biblioteca MailKit, implementação na Infrastructure, registrada no contrato de e-mail do Identity. Os casos de uso não conhecem o Gmail. | Definido |
+| DA-021 | E-mail transacional por SMTP do Outlook (Microsoft 365), biblioteca MailKit, implementação na Infrastructure, registrada no contrato de e-mail do Identity. Os casos de uso não conhecem o Outlook. | Definido |
 | DA-022 | O envio de e-mail acontece na requisição. Esta versão não cria fila nem worker para isso. | Definido |
 | DA-023 | Deploy com Docker Compose na VPS única. Serviços: API ASP.NET Core, PostgreSQL e Caddy. O Caddy publica o build estático do Angular e encaminha `/api` para a API. Sem processo Node, sem SSR e sem service worker. | Definido |
 | DA-024 | O Caddy é o reverse proxy, emite e renova o HTTPS e redireciona HTTP para HTTPS. | Definido |
@@ -272,7 +272,7 @@ Não há cookie de autenticação. DA-019 registra isso.
 | DA-039 | Limites iniciais: imagem 5 MB, documento 10 MB, até 5 arquivos e 50 MB por requisição. Formatos: PDF, JPG/JPEG, PNG e WebP. | Definido |
 | DA-040 | Upload usa `IFormFile` e o pipeline nativo do ASP.NET Core. Sem streaming próprio e sem job de limpeza. A gravação evita carregar o arquivo inteiro em um array na memória. | Definido |
 | DA-041 | Esta versão não inclui antivírus. O risco de malware fica registrado e precisa ser reavaliado antes de liberar upload de usuário não confiável. | Definido |
-| DA-042 | Testes com xUnit. Integração HTTP com `WebApplicationFactory`. PostgreSQL real com Testcontainers e Npgsql. O provider InMemory não valida o comportamento do PostgreSQL. E-mail de teste substitui o Gmail. | Definido |
+| DA-042 | Testes com xUnit. Integração HTTP com `WebApplicationFactory`. PostgreSQL real com Testcontainers e Npgsql. O provider InMemory não valida o comportamento do PostgreSQL. E-mail de teste substitui o SMTP real. | Definido |
 | DA-043 | Confirmação de e-mail vale 24 horas e recuperação de senha vale 1 hora. Prazos diferentes usam providers de token do próprio Identity, sem criptografia própria. | Definido |
 | DA-044 | A interface usa Angular Material em `src/frontend/`, com componentes standalone. O visual segue `docs/design-system.md` (versão 2), medido na demo pública https://apex-angular.dashboardpack.com: as cores são as da demo, com modo claro e escuro; no modo claro o texto principal é o quase preto da demo (`--gd-foreground`) e rótulo de campo nunca usa o cinza de apoio; a casca, os cartões, as tabelas, os campos e os modais seguem esse documento. O código do template pago não entra no repositório. A casca autenticada tem barra lateral, barra superior e a área principal; abaixo de 960px a barra lateral vira gaveta e aparece a barra inferior. As telas do produto são só as das specs, com textos em português. Formulário, tabela, diálogo e aviso usam o Material. O aviso fica no canto superior, abaixo da barra, e tem fechar. Todo cadastro e toda edição, de qualquer entidade, abrem em modal sobre a tela atual; só Perfil, Ajustes, telas de detalhe e telas públicas são página. O miolo do dashboard continua em cartões e lista. Gráfico não entra enquanto um RF não pedir a série. | Definido |
 
@@ -290,7 +290,7 @@ Não há cookie de autenticação. DA-019 registra isso.
 | Contas | ASP.NET Core Identity | Definido |
 | Sessão | JWT de acesso, 8 horas, sem refresh | Definido |
 | Autorização | Roles `Admin`, `Organizer` e `Assistant` | Definido |
-| E-mail | Gmail SMTP + MailKit | Definido |
+| E-mail | Outlook (Microsoft 365) SMTP + MailKit | Definido |
 | Arquitetura | Clean Architecture simplificada | Definido |
 | Execução | API e frontend estático na mesma VPS | Definido |
 | Hospedagem | Uma VPS, Docker Compose | Definido |
@@ -490,23 +490,23 @@ Restrições já fechadas:
 
 Definido em DA-021, DA-022, RF-036 e RNF-020.
 
-Servidor inicial: `smtp.gmail.com`, porta `587`, STARTTLS. A autenticação usa senha de aplicativo do Google, gerada uma vez. A aplicação não abre login interativo no Google em tempo de execução. O MailKit usa as credenciais já configuradas.
+Servidor: `smtp.office365.com`, porta `587`, STARTTLS, com a caixa business da plataforma no Microsoft 365 (Outlook). A autenticação usa usuário e senha da caixa (SMTP AUTH), configurados uma vez. A aplicação não abre login interativo em tempo de execução. O MailKit usa as credenciais já configuradas.
 
 Não haverá servidor SMTP próprio nem relay autenticado por IP fixo.
 
 O contrato consumido pelo Identity no .NET 10 é `IEmailSender<TUser>`, em `Microsoft.AspNetCore.Identity`. A Infrastructure implementa esse contrato com MailKit e o registra na composição. Não será criada outra abstração de e-mail na Application, e o pacote de UI padrão do Identity não entra só para obter o `IEmailSender` não genérico. Esse contrato do framework cobre confirmação de cadastro e recuperação de senha. Ele não é uma caixa de saída genérica do domínio.
 
-Trocar o Gmail por outro SMTP no futuro altera a configuração e, se a API do provedor mudar, a implementação na Infrastructure. Os casos de uso e os endpoints permanecem.
+Trocar o Outlook por outro SMTP no futuro altera a configuração e, se a API do provedor mudar, a implementação na Infrastructure. Os casos de uso e os endpoints permanecem.
 
 Configuração não sensível no `appsettings.json`. O arquivo versionado guarda placeholder, não a caixa real:
 
 ```json
 {
   "Email": {
-    "Host": "smtp.gmail.com",
+    "Host": "smtp.office365.com",
     "Port": 587,
-    "Username": "seuemail@gmail.com",
-    "FromAddress": "seuemail@gmail.com",
+    "Username": "contato@seudominio.com",
+    "FromAddress": "contato@seudominio.com",
     "FromName": "Minha Aplicação",
     "UseStartTls": true
   }
@@ -515,24 +515,23 @@ Configuração não sensível no `appsettings.json`. O arquivo versionado guarda
 
 A senha fica em `Email__Password`, em User Secrets no desenvolvimento, ou em arquivo protegido fora do repositório. O binding usa Options e `IConfiguration`. Endereço e nome reais de produção podem ser sobrescritos pelas variáveis `Email__Username`, `Email__FromAddress` e `Email__FromName`.
 
-Limites publicados pelo Google para o SMTP do Gmail, em janela móvel de cerca de 24 horas:
+Limites publicados pela Microsoft para o SMTP AUTH do Exchange Online (confirmar no tenant, pois a Microsoft pode alterá-los):
 
-| Conta | Mensagens |
+| Limite | Valor |
 |---|---|
-| Gmail pessoal, ou Workspace em teste | até 500 |
-| Google Workspace pago | até 2.000 |
+| Mensagens por minuto, por caixa | 30 |
+| Destinatários por dia, por caixa | 10.000 |
 
 Outras restrições que acompanham essa escolha:
 
-- A senha de aplicativo exige verificação em duas etapas na conta Google. A senha normal da conta não autentica no SMTP.
-- Pelo SMTP, cada mensagem aceita até cerca de 100 destinatários. Confirmação e recuperação desta versão usam um destinatário.
-- Estourar o limite faz o Google recusar o envio por um período que pode chegar a 24 horas.
+- O SMTP AUTH precisa estar habilitado na caixa (Centro de administração do Exchange, "Aplicativos de email" da caixa). Security defaults ou acesso condicional podem bloqueá-lo.
+- A Microsoft está retirando a autenticação básica (usuário e senha) do SMTP AUTH no Exchange Online. Se o tenant passar a bloqueá-la, a saída é OAuth2 (XOAUTH2, que o MailKit suporta), o que exige mudança na Infrastructure.
+- O remetente efetivo é a conta autenticada. `Email__From` deve ser essa caixa ou um alias dela.
 - O limite é da caixa, compartilhado com outros clientes que usem a mesma conta.
-- Mensagem considerada suspeita pode ser filtrada ou rejeitada.
-- O remetente efetivo tende a ser a conta autenticada.
+- Mensagem considerada suspeita pode ser filtrada ou rejeitada. Configure SPF, DKIM e DMARC no domínio.
 - Este canal não serve para disparo em massa, como RSVP para centenas de convidados.
 
-Fontes: [limites de envio do Gmail](https://support.google.com/mail/answer/22839) e [SMTP do Gmail](https://developers.google.com/workspace/gmail/imap/imap-smtp).
+Fonte: [limites do Exchange Online](https://learn.microsoft.com/exchange/mail-flow-best-practices/how-to-set-up-a-multifunction-device-or-application-to-send-email-using-microsoft-365-or-office-365).
 
 ### 8.6. Rate limiting
 
@@ -662,11 +661,11 @@ Definido em DA-042, DA-002 e RNF-019.
 | Unitária | `tests/Project.Tests` | Regra de negócio, invariante, value object, validação e serviço de aplicação com lógica. Também os casos de erro. |
 | Integração | `tests/Project.IntegrationTests` | Mapeamento do EF Core, consulta, constraint, migration, fluxo HTTP da API, autenticação, autorização e arquivo. |
 
-A suíte unitária não acessa banco, rede nem Gmail, e cabe em todo pull request. Não se cria teste só para aparecer em métrica de cobertura. Não há percentual obrigatório. O foco é autenticação, autorização, persistência e arquivo.
+A suíte unitária não acessa banco, rede nem SMTP, e cabe em todo pull request. Não se cria teste só para aparecer em métrica de cobertura. Não há percentual obrigatório. O foco é autenticação, autorização, persistência e arquivo.
 
 A suíte de integração sobe PostgreSQL com Testcontainers e usa Npgsql. O banco é descartável e não aponta para desenvolvimento nem produção. `WebApplicationFactory` exercita o HTTP sem um servidor à parte. O provider InMemory do EF Core não substitui esses cenários.
 
-Autenticação que a integração precisa cobrir: cadastro válido (role `Organizer`), e-mail duplicado, login válido e inválido, confirmação de e-mail, recuperação de senha, bloqueio após as tentativas, página administrativa negada ao `Organizer` e ao `Client`, página administrativa permitida ao `Admin` e bootstrap idempotente das três roles. O `IEmailSender<TUser>` dos testes é uma implementação local. Nenhum teste envia mensagem pelo Gmail.
+Autenticação que a integração precisa cobrir: cadastro válido (role `Organizer`), e-mail duplicado, login válido e inválido, confirmação de e-mail, recuperação de senha, bloqueio após as tentativas, página administrativa negada ao `Organizer` e ao `Client`, página administrativa permitida ao `Admin` e bootstrap idempotente das três roles. O `IEmailSender<TUser>` dos testes é uma implementação local. Nenhum teste envia mensagem por SMTP real.
 
 Arquivo que a integração precisa cobrir: upload válido, extensão recusada, arquivo acima do limite, arquivo vazio, assinatura incompatível, tentativa de path traversal, acesso sem autorização, falha ao gravar o metadado e limpeza do temporário quando o fluxo quebra. O diretório usado é temporário e exclusivo do teste.
 
@@ -705,7 +704,7 @@ Permanecem fora ou Observados: RF-060 (login de fornecedor), RF-079 (marketplace
 Não são pendências desta etapa e não entram na implementação agora.
 
 - Estratégia de backup e restauração, obrigatória antes de dados reais em produção, RNF-018 e DA-033.
-- Troca do Gmail por outro SMTP quando o volume passar dos limites da seção 8.5. A troca fica na Infrastructure.
+- Troca do Outlook por outro SMTP quando o volume passar dos limites da seção 8.5. A troca fica na Infrastructure.
 - Verificação antimalware, antes de liberar upload de usuário não confiável, DA-041.
 - Migração do volume local para object storage, se o disco da VPS deixar de ser suficiente.
 - Autenticação multifator.
@@ -720,7 +719,7 @@ Não são pendências desta etapa e não entram na implementação agora.
 Decisões anteriores que este texto altera ou que precisam de cuidado:
 
 1. **Lockout.** DA-020 deixou de ser a proposta de 5 minutos e passou a ser 15 minutos, definido.
-2. **E-mail.** DP-010 estava aberto e bloqueava o primeiro acesso. O canal agora é Gmail SMTP. O cadastro continua dependente desse envio, e a caixa tem o teto da seção 8.5.
+2. **E-mail.** DP-010 estava aberto e bloqueava o primeiro acesso. O canal agora é Outlook (Microsoft 365) SMTP. O cadastro continua dependente desse envio, e a caixa tem o teto da seção 8.5.
 3. **Backup.** A pendência de escolher a rotina foi substituída pela decisão de não ter backup nesta versão. O risco de perda total permanece e fica explícito em RNF-018.
 4. **Migrations.** A proposta de comando explícito virou DA-032. `Database.Migrate()` na subida deixa de ser opção.
 5. **Cookie.** A duração de 8 horas chegou a ser fechada em DA-029 como cookie com sliding expiration. Essa forma foi substituída pelo JWT. O registro da troca está no item 17.
@@ -753,7 +752,7 @@ Decisões anteriores que este texto altera ou que precisam de cuidado:
 | DP-007 | DA-022, e-mail na requisição, sem fila |
 | DP-008 | DA-032, migration explícita no deploy |
 | DP-009 | DA-027, DA-026 e RNF-001, segredos e volumes |
-| DP-010 | DA-021 e RNF-020, Gmail SMTP com MailKit |
+| DP-010 | DA-021 e RNF-020, Outlook SMTP com MailKit |
 | DP-011 | DA-030, limites da seção 8.6 |
 | DP-012 | DA-028, senha mínima de 8 |
 | DP-014 | DA-029, duração de 8 horas. A forma deixou de ser cookie com sliding expiration e passou a ser JWT sem renovação. Ver seção 14, item 17. |
