@@ -418,13 +418,13 @@ export function textoDias(dias: number): string {
     <div class="quadro grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
       @for (estagio of estagios; track estagio) {
         <section class="coluna" [id]="ancora(estagio)" [style.--cor-estagio]="'var(--color-' + cor(estagio) + ')'">
-          <header class="flex items-center justify-between gap-2 mb-4">
-            <div class="flex items-center gap-2 min-w-0">
+          <header class="mb-4">
+            <div class="flex items-center gap-2">
               <mat-icon [class]="'text-' + cor(estagio)">{{ icone(estagio) }}</mat-icon>
-              <h3 class="text-base font-semibold truncate">{{ estagio }}</h3>
-              <span class="contador" [class]="'bg-light-' + cor(estagio) + ' text-' + cor(estagio)">{{ resumo(estagio).qtd }}</span>
+              <h3 class="text-base font-semibold">{{ estagio }}</h3>
+              <span class="contador ml-auto" [class]="'bg-light-' + cor(estagio) + ' text-' + cor(estagio)">{{ resumo(estagio).qtd }}</span>
             </div>
-            <span class="text-sm font-semibold whitespace-nowrap">{{ resumo(estagio).valor | gdDinheiro }}</span>
+            <span class="block text-sm text-muted mt-1">{{ resumo(estagio).valor | gdDinheiro }} no total</span>
           </header>
 
           @for (item of daColuna(estagio); track item.id) {

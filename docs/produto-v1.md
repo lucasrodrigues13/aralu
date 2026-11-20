@@ -250,6 +250,8 @@ Fica na 1.0 e ganha o que faltou (D).
 | Item | Estado | Fonte |
 |---|---|---|
 | Oportunidades, RSVP, contratos, orçamentos, tarefas comerciais, relatórios, modelos de serviço/orçamento/contrato | Pronto | G (SPEC-020 a 028) |
+| Quadro em cartões no molde da Hoje (totais por estágio, lead com valor, evento, contato, origem e dias no estágio) | Pronto (20/11/2026) | Usuário (SPEC-020 v2) |
+| Lead vira cliente no fim do funil (cadastro de cliente pré-preenchido; lead vai para Contratado) | Pronto (20/11/2026) | Usuário (SPEC-020 v2) |
 | Estágios configuráveis (nome, cor, ordem); contratado e descartado fixos | Ajustar | AV |
 | Arrastar o cartão entre colunas | Novo | AV |
 | Rótulo do estágio: **"Orçamento enviado"** (decidido em 18/11/2026) | Ajustar | AV, G |
@@ -376,7 +378,7 @@ Baseada no PDF (base → uso diário → diferencial), com o que já existe.
 13. Equipe, equipe do dia e assistente.
 14. Financeiro da empresa e relatórios.
 15. Agenda completa e feed iCal.
-16. Funil: estágios, arrastar, proposta por link.
+16. Funil: estágios, arrastar, proposta por link. Quadro em cartões e lead → cliente **prontos** em 20/11/2026 (SPEC-020 v2); o resto do bloco ainda sem spec.
 17. Aniversários, página pública, briefing e inspirações no evento, demais itens da Assessoria VIP.
 
 ## 10. Pendências

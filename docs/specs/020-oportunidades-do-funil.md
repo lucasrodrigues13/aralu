@@ -1,6 +1,6 @@
 # 020. Oportunidades do funil
 
-**Status: aprovada.** O código segue esta spec.
+**Status: aprovada (versão 2, 20/11/2026).** O código segue esta spec. A versão 1 está no histórico do Git. Fonte da v2: pedido do usuário de 20/11/2026 para o quadro seguir o molde da tela Hoje, com leads em cartões, e para o lead virar cliente no fim do funil (seções 6.1, 6.2 e 8.1). Estágios configuráveis, arrastar, data de retorno, origem em lista fechada, aviso de contato repetido e proposta por link (RF-075) continuam para o bloco 16.
 
 ## 1. Identificador e nome
 
@@ -33,6 +33,24 @@ Conta autenticada, SPEC-001. O dashboard da SPEC-007 reflete as mesmas oportunid
 7. Exporta a lista filtrada da conta.
 8. Exclui a oportunidade quando não precisar mais dela.
 
+### 6.1. Quadro em cartões (v2)
+
+1. No topo, título com "N leads em aberto · valor em negociação" (soma de Contato inicial e Orçamento enviado) e as ações Link do lead, Exportar e Nova oportunidade.
+2. Abaixo, um cartão por estágio no padrão dos cartões da Hoje (ícone, nome, quantidade e valor), com cor fixa: Contato inicial azul (info), Orçamento enviado amarelo (warning), Contratado verde (success), Descartado vermelho (error). Tocar leva à coluna.
+3. Filtros em cartão próprio, com "Limpar" quando há filtro.
+4. Quatro colunas (uma por linha no celular). Cada lead é um cartão com: nome; valor da proposta ou "Sem valor"; tipo e data prevista; convidados; primeiro contato com telefone e atalho para o WhatsApp; origem; motivo, no descartado; há quantos dias está no estágio.
+5. Tocar no cartão abre a edição. O menu do cartão traz Editar, Mover para cada outro estágio, Virar cliente (se ainda não virou) e Excluir.
+6. Ação rápida no pé do cartão: em Contato inicial, "Orçamento enviado →"; em Orçamento enviado e Contratado, "Virar cliente"; lead que já virou cliente mostra o selo "Cliente", que leva a Clientes.
+7. Mover para Descartado abre modal pedindo o motivo.
+
+### 6.2. Lead vira cliente (v2)
+
+1. O Organizer toca em "Virar cliente".
+2. Abre o modal de novo cliente (SPEC-009) já preenchido com o primeiro contato do lead: nome, e-mail, celular, cidade e UF, e a observação "Veio do funil: {oportunidade} (origem: {fonte})".
+3. Ele completa o que faltar (e-mail e celular são obrigatórios no cliente) e salva.
+4. O cliente é criado, a oportunidade guarda o vínculo com ele e vai para Contratado (sai do descarte, se vier de lá).
+5. Cancelar o modal não muda nada.
+
 ## 7. Fluxos alternativos
 
 - Conta sem oportunidade: as quatro colunas ficam em 0 e R$ 0,00.
@@ -54,6 +72,13 @@ Conta autenticada, SPEC-001. O dashboard da SPEC-007 reflete as mesmas oportunid
 - Responsável, neste corte sem assistente, é a própria conta do Organizer ou outro identificador interno da mesma conta; não há atribuição a outra conta.
 - Exportação cobre as oportunidades da conta no filtro atual.
 - RF-079 e peças da loja/vitrine/MeLink ficam fora.
+
+### 8.1. Vínculo com o cliente (v2)
+
+- A oportunidade tem um cliente opcional (`ClienteId`), da mesma conta. Vincular coloca a oportunidade em Contratado e limpa o motivo de descarte.
+- Cliente de outra conta ou inexistente: não grava.
+- O vínculo não cria evento. Criar o evento a partir do lead fica para o bloco 16.
+- Excluir o cliente depois não apaga a oportunidade.
 
 ## 9. Validações
 
@@ -88,6 +113,9 @@ Campo inválido indica o campo. Descarte sem motivo não grava. Item de outra co
 7. Filtro e exportação não incluem outra conta.
 8. Lead pelo formulário público nasce em Contato inicial.
 9. Não há coluna além dos quatro estágios nem tela de gerenciar estágios.
+10. (v2) Os cartões de estágio no topo mostram quantidade e valor iguais aos das colunas.
+11. (v2) "Virar cliente" cria o cliente com os dados do contato, liga a oportunidade a ele e a leva para Contratado com o selo "Cliente".
+12. (v2) Vincular cliente de outra conta, ou sem informar o cliente, não grava.
 
 ## 15. Cenários de teste
 
@@ -100,3 +128,5 @@ SPEC-001, SPEC-007 e SPEC-019 para a checagem de data. SPEC-026 para serviço/pr
 ## 17. Premissas e pontos não definidos
 
 Lista fechada de motivos de descarte. Se a checagem de data um dia passar a bloquear em vez de só avisar.
+
+(v2) Se "Virar cliente" deve também criar o evento já com tipo, data, convidados e locais do lead. Se um lead pode virar mais de um cliente (o casal: noiva e noivo). Por ora, um cliente por oportunidade.
