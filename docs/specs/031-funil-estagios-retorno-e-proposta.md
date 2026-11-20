@@ -1,6 +1,6 @@
 # 031. Funil: estágios, retorno e proposta por link
 
-**Status: rascunho (20/11/2026).** Não é para programar até o usuário aprovar. Fonte: [produto-v1.md](../produto-v1.md) §5.13 (o que ainda não está pronto) e RF-075. Completa a SPEC-020 v2 (quadro em cartões e lead que vira cliente). Os pontos que pedem decisão do usuário estão numerados na §17, cada um com uma sugestão.
+**Status: aprovada (20/11/2026).** O código segue esta spec, em quatro partes (§17, ponto 1). Fonte: [produto-v1.md](../produto-v1.md) §5.13 (o que ainda não está pronto) e RF-075. Completa a SPEC-020 v2 (quadro em cartões e lead que vira cliente). O usuário aprovou em 20/11/2026 todas as sugestões da §17, que agora são decisões.
 
 ## 1. Identificador e nome
 
@@ -211,9 +211,9 @@ Conta autenticada (SPEC-001). O quadro da SPEC-020 v2 já está no ar.
 
 ## 17. Premissas e pontos não definidos
 
-Cada ponto traz uma sugestão entre parênteses.
+Decididos em 20/11/2026: o usuário aprovou todas as sugestões. A decisão de cada ponto está entre parênteses.
 
-1. **Dividir a spec?** (Sugestão: entregar em três partes, nesta ordem: A = estágios e arrastar; B = retorno, origem e contato repetido; C = proposta por link. Ajustes do formulário, tarefas e briefing ficam para uma parte D.)
+1. **Dividir a spec?** (Decidido: entregar em quatro partes, nesta ordem: A = estágios e arrastar; B = retorno, origem e contato repetido; C = proposta por link; D = ajustes do formulário, tarefas com vários responsáveis e briefing no funil. A parte D espera as assistentes, RF-045, para os vários responsáveis.)
 2. **Quem gerencia estágios?** (Só a dona.)
 3. **Nome dos estágios fixos:** Contratado e Descartado podem ser renomeados? (Não; só a cor muda.)
 4. **Limite de estágios abertos.** (Oito.)

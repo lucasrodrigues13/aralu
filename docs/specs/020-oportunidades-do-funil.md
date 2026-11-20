@@ -129,4 +129,4 @@ SPEC-001, SPEC-007 e SPEC-019 para a checagem de data. SPEC-026 para serviço/pr
 
 Lista fechada de motivos de descarte. Se a checagem de data um dia passar a bloquear em vez de só avisar.
 
-(v2) Se "Virar cliente" deve também criar o evento já com tipo, data, convidados e locais do lead. Se um lead pode virar mais de um cliente (o casal: noiva e noivo). Por ora, um cliente por oportunidade.
+(v2) Se "Virar cliente" deve também criar o evento já com tipo, data, convidados e locais do lead. Se um lead pode virar mais de um cliente (o casal: noiva e noivo). Por ora, um cliente por oportunidade. Decidido na SPEC-031 §17 (pontos 13 e 14): "Virar cliente" também cria o evento, com opção de desmarcar; um cliente por oportunidade; motivos de descarte em lista fechada (Preço, Data indisponível, Fechou com outra assessoria, Desistiu do evento, Sem resposta, Outro).

@@ -378,7 +378,7 @@ Baseada no PDF (base → uso diário → diferencial), com o que já existe.
 13. Equipe, equipe do dia e assistente.
 14. Financeiro da empresa e relatórios.
 15. Agenda completa e feed iCal.
-16. Funil: estágios, arrastar, proposta por link. Quadro em cartões e lead → cliente **prontos** em 20/11/2026 (SPEC-020 v2); o resto do bloco está na SPEC-031 (rascunho, 20/11/2026), aguardando aprovação.
+16. Funil: estágios, arrastar, proposta por link. Quadro em cartões e lead → cliente **prontos** em 20/11/2026 (SPEC-020 v2); o resto do bloco está na SPEC-031, aprovada em 20/11/2026, em quatro partes (A estágios e arrastar; B retorno, origem e contato repetido; C proposta por link; D ajustes do formulário).
 17. Aniversários, página pública, briefing e inspirações no evento, demais itens da Assessoria VIP.
 
 ## 10. Pendências
