@@ -1,246 +1,157 @@
 # Design system
 
-**Versão 2, 18/11/2026.** Recomeçado do zero a partir da demo pública [Apex Dashboard (Angular)](https://apex-angular.dashboardpack.com), medida nas telas [Dashboard](https://apex-angular.dashboardpack.com/dashboard), [Orders](https://apex-angular.dashboardpack.com/orders), [Forms](https://apex-angular.dashboardpack.com/forms), [Components](https://apex-angular.dashboardpack.com/ui/components) e no modal "New event" de [Calendar](https://apex-angular.dashboardpack.com/calendar), nos modos claro e escuro. A versão anterior foi descartada.
+**Versão 4, 20/11/2026.** O frontend usa o [TailwindAdmin Angular (free)](https://github.com/Tailwind-Admin/free-tailwind-admin-dashboard-template), pasta `tailwind-admin-angular-free`, por inteiro: a mesma base (Tailwind v4 + Angular Material com os overrides do template) e os mesmos padrões de tela dos exemplos dele (Forms, Tables, Badges, Chips, Lists, Menu, Tooltips, Sample page, Dashboard e Login). As cores são as da marca **aralu**. As versões 2 e 3, desenhadas a partir da demo do Apex Dashboard, foram removidas: não há mais classes `gd-*` nem tokens `--gd-*`.
 
-A demo é feita com spartan-ng e Tailwind. O gevents **não** usa essas bibliotecas nem copia código do template: os valores medidos viram tokens CSS, e os componentes continuam sendo Angular Material (DA-044), reestilizados por esses tokens.
-
-Implementação: `src/frontend/src/styles.scss` e as partes em `src/frontend/src/styles/`.
+Antes de criar um componente, procure o exemplo equivalente no template (`package/src/app/pages/ui-components`, `components` e `layouts`) e copie a marcação. Só o que o template não tem fica em `styles/_aralu.scss`.
 
 ## 1. Regras gerais
 
-1. **Todo cadastro e toda edição abrem em modal** sobre a tela atual. A rota não muda. Vale para evento, cliente, fornecedor, tarefa, convite, convidado, modelo, compromisso, oportunidade, contrato, orçamento e qualquer entidade nova. Ficam como página só: Perfil e Ajustes da conta, telas de detalhe com conteúdo próprio (home do evento, editor de modelo) e telas públicas.
+1. **Todo cadastro e toda edição abrem em modal** sobre a tela atual. A rota não muda. Ficam como página só: Perfil e Ajustes da conta, telas de detalhe com conteúdo próprio (home do evento, editor de modelo) e telas públicas.
 2. Excluir, cancelar e outras ações destrutivas pedem confirmação em modal pequeno.
-3. Uma cor primária (verde). Cor de estado só para estado (sucesso, alerta, erro).
-4. Modo claro e modo escuro, com os mesmos componentes. A barra lateral é escura nos dois.
+3. Uma cor primária (petróleo da marca). O dourado é a cor secundária, usada só como destaque. Cor de estado só para estado.
+4. Modo claro e modo escuro, com os mesmos componentes.
 5. Texto em português, frase curta. Botão diz a ação ("Salvar evento", "Novo convite").
 6. Nada de gráfico decorativo sem dado real.
 
-## 2. Tema
+## 2. Onde fica
 
-- A classe `escuro` no `<html>` liga o modo escuro; sem ela vale o claro.
-- Escolha salva em `localStorage`, chave `gevents-tema` (`claro` / `escuro`). Sem escolha salva, segue `prefers-color-scheme`.
-- O botão de tema fica na barra superior da casca. Nas telas públicas fica fixo no canto superior direito.
-
-## 3. Tokens
-
-### 3.1. Cor
-
-Valores em `oklch`, medidos na demo.
-
-| Token | Uso | Claro | Escuro |
-|---|---|---|---|
-| `--gd-background` | Fundo da página | `oklch(0.985 0.002 230)` | `oklch(0.075 0 0)` |
-| `--gd-foreground` | Texto principal | `oklch(0.155 0.015 230)` | `oklch(0.922 0.005 230)` |
-| `--gd-card` | Cartão, modal | `oklch(1 0 0)` | `oklch(0.19 0 0)` |
-| `--gd-popover` | Menu, lista suspensa | `oklch(1 0 0)` | `oklch(0.21 0 0)` |
-| `--gd-primary` | Ação principal, item ativo, link | `oklch(0.55 0.19 160)` | `oklch(0.55 0.19 160)` |
-| `--gd-primary-foreground` | Texto sobre o primário | `oklch(1 0 0)` | `oklch(1 0 0)` |
-| `--gd-secondary` | Botão secundário | `oklch(0.96 0.005 230)` | `oklch(0.235 0 0)` |
-| `--gd-muted` | Superfície discreta (abas, campo) | `oklch(0.96 0.005 230)` | `oklch(0.235 0 0)` |
-| `--gd-muted-foreground` | Texto de apoio, cabeçalho de tabela | `oklch(0.556 0.015 230)` | `oklch(0.556 0.015 230)` |
-| `--gd-accent` | Hover de item | `oklch(0.96 0.005 230)` | `oklch(0.235 0 0)` |
-| `--gd-border` | Bordas e divisórias | `oklch(0.895 0.005 230)` | `oklch(0.28 0 0)` |
-| `--gd-input` | Borda de campo | `oklch(0.86 0.005 230)` | `oklch(0.28 0 0)` |
-| `--gd-ring` | Foco | `oklch(0.55 0.19 160)` | `oklch(0.55 0.19 160)` |
-| `--gd-success` | Sucesso, concluído, confirmado | `oklch(0.62 0.17 145)` | igual |
-| `--gd-warning` | Pendente, atenção | `oklch(0.75 0.175 75)` | igual |
-| `--gd-destructive` | Erro, cancelado, excluir | `oklch(0.577 0.245 27.325)` | igual |
-| `--gd-info` | Informação, em andamento | `oklch(0.6 0.16 250)` | `oklch(0.62 0.16 250)` |
-| `--gd-sidebar` | Fundo da barra lateral | `oklch(0.14 0.015 170)` | `oklch(0.11 0 0)` |
-| `--gd-sidebar-foreground` | Texto da barra | `oklch(0.87 0.005 230)` | `oklch(0.9 0.005 230)` |
-| `--gd-sidebar-accent` | Item ativo / hover | `oklch(0.2 0.015 170)` | `oklch(0.2 0 0)` |
-| `--gd-sidebar-primary` | Texto do item ativo | `oklch(0.6 0.175 160)` | `oklch(0.65 0.19 160)` |
-| `--gd-sidebar-border` | Divisórias da barra | `oklch(0.22 0.015 170)` | `oklch(0.26 0 0)` |
-
-Tons de estado em fundo usam a própria cor a **15%** (badge) ou **5%** com borda a 30% (alerta), via `color-mix`.
-
-### 3.2. Tipografia
-
-Fonte **Geist** (`@fontsource-variable/geist`, família `Geist Variable`), reserva `ui-sans-serif, system-ui, sans-serif`. Ícones: Material Symbols do Angular Material, 18px em botão e 20px na barra lateral.
-
-| Papel | Tamanho / peso / entrelinha | Extra |
-|---|---|---|
-| Título da página (`h1`) | 24px / 700 / 32px | `letter-spacing: -0.6px` |
-| Número de destaque | 24px / 700 / 32px | `letter-spacing: -0.6px` |
-| Título de cartão | 16px / 600 / 24px | |
-| Título de modal | 16px / 700 / 24px | |
-| Corpo, célula, campo | 14px / 400 / 20px | |
-| Rótulo de campo, botão, item de menu | 14px / 500 / 20px | |
-| Apoio, descrição | 14px / 400 em `--gd-muted-foreground` (12px dentro de cartão e modal) | |
-| Cabeçalho de tabela, rótulo de número | 12px / 500 / 16px, `--gd-muted-foreground` | |
-| Badge | 12px / 500 | |
-| Grupo da barra lateral | 10px / 600, caixa alta, `letter-spacing: 1px`, 30% de opacidade | |
-
-### 3.3. Espaço, raio, sombra
-
-- Grade de 4px. Respiro da página: **24px** (16px até 639px). Distância entre blocos: 24px. Entre campos: 16px.
-- Raios: campo **10px**, botão **8px**, aba ativa 8px, cartão **14px**, modal **18px**, badge em pílula.
-- Cartão: anel de 1px `--gd-foreground` a 10% + sombra `0 1px 2px rgb(0 0 0 / 0.05)`. Sem sombra grande.
-- Modal: sombra `0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)`.
-- Foco: anel de 3px `--gd-ring` a 50% e borda `--gd-ring`.
-
-## 4. Casca
-
-### 4.1. Computador (≥ 960px)
-
-- **Barra lateral** fixa, 260px, fundo `--gd-sidebar`.
-  - Marca no topo (64px): selo verde 32px raio 10px + nome "gevents" 14px/700 e linha de apoio 10px.
-  - Grupos com rótulo (3.2) e itens de **36px**, raio 10px, padding 8px 12px, ícone 20px, gap 12px, texto 14px/500 em `--gd-sidebar-foreground` a 70%. Hover: fundo `--gd-sidebar-accent` a 50%. Ativo: fundo `--gd-sidebar-accent` e texto `--gd-sidebar-primary`.
-  - Item ainda não disponível: 40% de opacidade e o selo "Em breve".
-  - Rodapé: avatar com iniciais, e-mail e botão Sair.
-- **Barra superior** de 64px, fundo `--gd-background` a 80% com desfoque, borda inferior `--gd-border`, padding 0 24px. Esquerda: título da área. Direita: botão de tema. "Novo evento" fica no cabeçalho da lista de eventos. No celular, o "+" da barra inferior abre o mesmo modal.
-- **Conteúdo** com padding 24px e largura total.
-
-### 4.2. Celular (< 960px)
-
-- A barra lateral vira gaveta por cima (85% da largura, máx. 300px), aberta por "Mais" ou pelo botão de menu; fecha pelo X, por toque fora ou ao escolher um item.
-- **Barra inferior** fixa de 64px com cinco itens: **Hoje · Eventos · + Novo · Dinheiro · Mais** ([produto-v1.md](produto-v1.md), seção 4). "+ Novo" é um botão verde redondo de 44px no centro e abre o modal de novo evento. O conteúdo ganha 80px de respiro embaixo. Enquanto a tela Hoje e o grupo Dinheiro não existem, os itens mostram "Início" (Dashboards) e "Dinheiro" (Pagamentos).
-- Barra superior de 56px.
-
-## 5. Componentes
-
-### 5.1. Cabeçalho de página — `.gd-cabecalho`
-
-Título (`h1`), linha de apoio (`p`, 14px muted, 4px abaixo) e, à direita, a ação principal. Até 639px a ação desce para baixo do título. Margem inferior 24px.
-
-### 5.2. Botões (Material)
-
-| Variante | Material | Visual |
-|---|---|---|
-| Primário | `mat-flat-button` | Fundo `--gd-primary`, texto branco |
-| Secundário | `mat-flat-button class="gd-secundario"` | Fundo `--gd-secondary`, texto `--gd-foreground` |
-| Contorno | `mat-stroked-button` | Borda `--gd-border`, fundo transparente |
-| Fantasma | `mat-button` | Sem fundo; hover `--gd-accent` |
-| Perigo | `mat-flat-button class="gd-perigo"` | Fundo `--gd-destructive` a 20%, texto `--gd-destructive` |
-| Ícone | `mat-icon-button` | 36px, raio 8px |
-
-Altura **36px** (32px com `.gd-pequeno`, 40px com `.gd-grande`), raio 8px, padding 0 12px, 14px/500, ícone 18px com gap 6px. Desabilitado: 50% de opacidade.
-
-### 5.3. Cartão — `.gd-painel` ou `mat-card`
-
-Fundo `--gd-card`, raio 14px, anel e sombra de 3.3, padding 24px. Cabeçalho do cartão: título 16px/600 e apoio 12px muted, 4px entre eles, 20px antes do conteúdo. `.gd-painel` com tabela tem padding lateral 24px e a tabela ocupa a largura toda.
-
-### 5.4. Barra de lista — `.gd-barra`
-
-Linha no topo do cartão: abas à esquerda, busca e filtros à direita, margem inferior 16px. Quebra em telas estreitas.
-
-### 5.5. Abas segmentadas — `.gd-abas`
-
-Trilho `--gd-muted`, raio 10px, padding 2px, gap 4px. Aba 28px, padding 6px 12px, 12px/500, texto muted. Ativa (`.ativa`): fundo `--gd-background`, texto `--gd-foreground`, sombra pequena. Usadas para filtro de situação e para navegar entre seções do evento. `mat-tab-group` dentro de modais segue o mesmo desenho.
-
-### 5.6. Busca — `.gd-busca`
-
-Campo de 36px e largura até 320px, ícone de lupa à esquerda (padding-left 36px), placeholder "Buscar…".
-
-### 5.7. Tabela — `table.gd-grade` ou `mat-table`
-
-- Cabeçalho: 12px/500 muted, sem fundo, padding-bottom 12px, borda inferior `--gd-border`.
-- Linha: 14px, padding 12px por célula, gap de 16px entre colunas, borda inferior `--gd-border` a 50%, hover `--gd-muted` a 50%.
-- Primeira coluna pode ter link em `--gd-primary` 14px/500.
-- Pessoa: avatar de iniciais 32px + nome 14px/500 + e-mail 12px muted.
-- Valores alinhados à direita, 14px/600.
-- Última coluna **Ações** (`.gd-acoes`), à direita: botões de ícone Editar (`edit`) e Excluir (`delete`). Editar abre o modal de edição.
-- Em telas estreitas a tabela rola na horizontal dentro do cartão.
-
-### 5.8. Badge de situação — `.gd-status`
-
-Pílula, altura 22px, padding 2px 10px, 12px/500. Variantes: `.ok` (`--gd-success`), `.alerta` (`--gd-warning`), `.erro` (`--gd-destructive`), `.info` (`--gd-info`), `.neutro` (`--gd-muted` + texto foreground). Fundo da própria cor a 15%, texto na cor cheia.
-
-| Situação | Variante |
+| Arquivo | O que tem |
 |---|---|
-| Concluído, confirmado, contratado, pago, assinado | `ok` |
+| `src/globals.css` | `@import "tailwindcss"`, `@theme` do template (cores `primary`, `secondary`, `error`, `success`, `warning`, `info`, `light-*`, `border`, sombras) e as classes `text-*`, `bg-*`, `bg-light-*` |
+| `src/styles/tailwindadmin/` | Cópia de `assets/scss` do template: `_variables`, `override-component/*` (overrides do Material), `theme-variables/*` (claro e escuro), `layouts/*` (sidebar e topbar) e `_container` |
+| `src/styles/_aralu.scss` | Só o que o template não traz: logo, barra inferior do celular, tabela HTML no desenho do `mat-table`, calendário da agenda, modal e aviso |
+| `src/app/shared/status.ts` | Classes da etiqueta de situação (`STATUS.sucesso`, `alerta`, `erro`, `info`, `primario`, `neutro`) |
+| `.postcssrc.json` | Plugin `@tailwindcss/postcss` |
+
+## 3. Tema e cores
+
+- `TemaService` põe `light-theme` ou `dark-theme` no `<html>`, como o template. Escolha salva em `localStorage` (`gevents-tema`); sem escolha, segue `prefers-color-scheme`.
+- Marca: petróleo `#104c5b` (primária), dourado `#c9a24c` (secundária), creme `#f6f3ec` (`--mat-sys-surface-bright`, o `bg-light` do template). No escuro a primária clareia para `#3a8c9f` e o fundo vai para `#172429`.
+- Estados do template: sucesso `#13deb9`, alerta `#ffae1f`, info `#539bff`, erro `rgb(250 137 107)`.
+- Fonte **DM Sans** (`@fontsource-variable/dm-sans`), a mesma do template. Ícones: Material Symbols.
+- Raio `--mat-sys-corner-small` = 7px em campo, botão, cartão e menu. Sombra de cartão `--mat-sys-level1`.
+
+## 4. Casca (layout "full" do template)
+
+- `mat-sidenav-container.mainWrapper` com `mat-sidenav.sidebarNav` (270px, borda direita) e `mat-sidenav-content.contentWrapper`.
+- Barra lateral: `.branding` com a assinatura aralu, `mat-nav-list.sidebar-list` com `div[mat-subheader]` por grupo e `a[mat-list-item].menu-list-item` por item. Ativo: `.activeMenu` (fundo primário, texto branco). Item ainda não disponível: `.disabled`. Rodapé no bloco `bg-light-primary` do template, com as iniciais, o e-mail e Sair.
+- Topo: `mat-toolbar.topbar` (70px) com menu (celular), tema e o botão de perfil com `mat-menu` (Perfil, Minha conta, Sair).
+- Conteúdo: `main.pageWrapper` (padding 24px).
+- Celular (< 960px): a barra lateral vira gaveta por cima e aparece a barra inferior fixa (Hoje · Eventos · + · Dinheiro · Mais), definida em `_aralu.scss`.
+
+## 5. Padrões de tela
+
+### 5.1. Página de lista
+
+Um cartão do exemplo **Forms/Tables**: cabeçalho `div.p-6` com `mat-card-title` + `mat-card-subtitle` à esquerda e a ação principal (`mat-flat-button`) à direita; corpo em `mat-card-content.border-t.border-border`.
+
+```html
+<mat-card class="cardWithShadow">
+  <div class="p-6 flex flex-wrap items-center justify-between gap-4">
+    <div>
+      <mat-card-title class="mb-0">Eventos</mat-card-title>
+      <mat-card-subtitle>Acompanhe os eventos da assessoria.</mat-card-subtitle>
+    </div>
+    <button mat-flat-button><mat-icon>add</mat-icon> Novo evento</button>
+  </div>
+  <mat-card-content class="border-t border-border"> filtros + tabela </mat-card-content>
+</mat-card>
+```
+
+Seções secundárias da mesma tela usam o mesmo formato. Blocos dentro de um cartão usam o cartão interno do template: `mat-card.border!.border-border!.shadow-none` com título em `div.p-4`.
+
+### 5.2. Campo de formulário (exemplo Forms)
+
+**O rótulo fica sempre acima da caixa**, fora do `mat-form-field`. Placeholder só com exemplo do que preencher.
+
+```html
+<div class="campo">
+  <mat-label class="font-semibold mb-2 block">Nome</mat-label>
+  <mat-form-field appearance="outline" class="w-full">
+    <input matInput aria-label="Nome" placeholder="Ex.: Casamento Ana e Pedro" />
+  </mat-form-field>
+</div>
+```
+
+- Caixa de 37px (override do template). Texto, seleção, data, hora e valor têm a mesma altura; botões também (37px).
+- Formulário em grade do Tailwind: `grid grid-cols-12 gap-x-6 gap-y-4` com `col-span-*`, ou `grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4` nos modais.
+- `app-campo-data`, `app-campo-hora` e `app-campo-dinheiro` seguem o mesmo formato (rótulo pelo atributo `rotulo`).
+- O controle recebe `aria-label` com o texto do rótulo.
+
+### 5.3. Barra de filtros
+
+`form.flex.flex-wrap.items-end.gap-4.mb-6`. Todo campo tem rótulo acima. Larguras: busca `sm:w-64` (com lupa `matIconPrefix`), seleção e texto `sm:w-48` (ou menores quando o conteúdo é curto), data `sm:w-40`. Botões no fim: **Filtrar** (`mat-flat-button`) e **Limpar** (`mat-stroked-button`). Como tudo tem 37px e `items-end`, as caixas e os botões ficam alinhados pela base.
+
+### 5.4. Abas
+
+- **Filtro dentro da tela** (situação, visão): `mat-button-toggle-group` com o override do template (raio 7px), sem o visto (`hideSingleSelectionIndicator` em `app.config.ts`), opção escolhida em fundo primário.
+- **Seções** (evento, cadastro com abas): `mat-tab-group` ou `nav[mat-tab-nav-bar]` do Material, alinhadas à esquerda (`MAT_TABS_CONFIG`). As seções do evento ficam num cartão com o botão voltar (`app-evento-abas`).
+
+### 5.5. Tabela (exemplo Tables)
+
+- `table[mat-table].min-w-full` dentro de `div.relative.overflow-auto`. Cabeçalho 14px/600; primeira e última colunas rentes ao cartão.
+- Listas montadas à mão usam `table.tabela`, com o mesmo desenho do `mat-table`.
+- Texto de apoio na célula: `span.block.text-xs.text-muted`. Valores: `.valor` alinhado à direita (`text-end!`).
+- Ações na última coluna (`text-end! whitespace-nowrap`): `mat-icon-button` Editar e Excluir, ou `mat-stroked-button` para a ação da linha e `mat-menu` (`class="cardWithShadow"`) para o resto.
+
+### 5.6. Etiqueta de situação (exemplo Tables / Badges)
+
+`span` com `STATUS.<tipo>`: `rounded font-semibold px-2 py-1 text-xs` + `bg-light-<cor> text-<cor>`.
+
+| Situação | `STATUS` |
+|---|---|
+| Concluído, confirmado, contratado, pago, recebido | `sucesso` |
 | Pendente, a vencer, orçamento, atenção | `alerta` |
-| Cancelado, recusado, atrasado, descartado | `erro` |
-| Em andamento, enviado | `info` |
-| Rascunho, sem situação | `neutro` |
+| Cancelado, recusado, atrasado, sem fornecedor | `erro` |
+| Em andamento, enviado, parcial | `info` |
+| Evento, item da marca | `primario` |
+| A receber, sem situação | `neutro` |
 
-### 5.9. Campo de formulário (Material)
+### 5.7. Número de destaque (exemplo Dashboard › top-cards)
 
-Padrão global: `appearance="outline"`, **rótulo sempre acima do campo**, mensagens de ajuda/erro abaixo só quando existem.
+`mat-card.shadow-none.text-center.mb-0!.bg-light-<cor>` com ícone, título `h4.text-sm.font-semibold.text-<cor>` e valor `h6.text-xl.font-semibold.text-<cor>`. Em grade `grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-6 mb-6`. Quando leva a outra tela, o cartão fica dentro de um `a` e ganha `card-hover`.
 
-- Rótulo: 14px/500 `--gd-foreground`, 6px acima da caixa.
-- Caixa: altura **36px**, raio 10px, borda 1px `--gd-input`, fundo `--gd-muted` a 40% (dentro de modal: `--gd-background`), padding 0 12px, texto 14px. Área de texto: padding 8px 12px, altura mínima 78px.
-- Foco: borda `--gd-ring` e anel de 3px a 50%.
-- Erro: borda e texto de ajuda em `--gd-destructive`. Ajuda: 12px muted.
-- Seleção (`mat-select`), data e hora usam a mesma caixa. Lista suspensa: fundo `--gd-popover`, raio 10px, borda `--gd-border`, opção de 32px.
-- Caixa de marcação e alternador: 16px, cor `--gd-primary`. Texto ao lado 14px.
-- Grade de formulário (`.gd-campos`): uma coluna; com `.duas` vira duas colunas a partir de 640px (`.inteiro` ocupa a linha toda); gap 16px. Marcações lado a lado em `.gd-marcacoes`. Envio de arquivo em `label.gd-arquivo` com o botão do navegador estilizado como botão de contorno.
-- Na barra de filtros (`.gd-filtros`) os campos têm 180px (busca 260px) e podem dispensar o rótulo, usando só o placeholder.
+### 5.8. Alerta e estado vazio
 
-### 5.10. Modal (MatDialog) — `.gd-dialog`
+- Alerta: `div.flex.items-center.gap-3.rounded.p-4.mb-6.bg-light-<cor>.text-<cor>` com ícone, texto e, se houver, um `mat-stroked-button`.
+- Vazio: `p.text-center.text-muted.py-10`; com ação, `div.flex.flex-col.items-center.gap-3` e o `mat-flat-button`.
 
-Estrutura obrigatória:
+### 5.9. Escolha entre opções
+
+- Poucas opções com ícone (tipo do evento): `mat-chip-listbox` com `mat-chip-option` e `mat-icon[matChipAvatar]` (exemplo Chips).
+- Opção com linha de apoio (pacote): `mat-selection-list [multiple]="false"` com `matListItemTitle` e `matListItemLine` (exemplo Lists › single selection), dentro de um cartão interno.
+
+### 5.10. Modal
 
 ```html
 <h2 mat-dialog-title>Novo cliente</h2>
-<p class="gd-dialog-descricao">Dados de contato e endereço.</p>   <!-- opcional -->
-<mat-dialog-content> … campos … </mat-dialog-content>
-<mat-dialog-actions> <button mat-button>Cancelar</button> <button mat-flat-button>Salvar cliente</button> </mat-dialog-actions>
+<p class="text-muted text-sm px-6 -mt-2 mb-4">Descrição opcional.</p>
+<mat-dialog-content> campos </mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-stroked-button mat-dialog-close>Cancelar</button>
+  <button mat-flat-button>Salvar cliente</button>
+</mat-dialog-actions>
 ```
 
-- Superfície `--gd-card`, raio **18px**, sombra de 3.3, sem borda.
-- Fundo da página: preto a 40% com desfoque de 8px.
-- **Cabeçalho**: padding 20px, título 16px/700, descrição 12px muted logo abaixo, linha `--gd-border` separando do corpo. Fecha por Cancelar, Esc ou toque fora.
-- **Corpo**: padding 20px, rola sozinho; altura máxima 90% da janela.
-- **Rodapé**: padding 16px 20px 20px, borda superior `--gd-border`, botões à direita: Cancelar (fantasma) e a ação primária.
-- Larguras: `DIALOG` (padrão) **560px**; `DIALOG_PEQUENO` **448px** (confirmação, campo único); `DIALOG_LARGO` **840px** (cadastros com abas). Sempre `min(largura, 100vw - 32px)`.
-- Abas dentro do modal (`mat-tab-group`) usam o desenho de 5.5, logo abaixo do cabeçalho.
-- No celular (< 640px), o modal ocupa a largura toda, encostado embaixo, com raio só no topo.
-- Confirmação: título com a pergunta, uma frase de consequência, botões "Cancelar" e a ação (`gd-perigo` quando destrói).
+Override de dialog do template (raio 7px, título 18px/600, padding 20px 24px). `panelClass: 'aralu-dialog'` separa corpo e rodapé com linha. Larguras em `shared/dialog.ts`: 560px (padrão), 448px (confirmação) e 840px (com abas). No celular o modal encosta embaixo.
 
-### 5.11. Número de destaque — `.gd-numeros` / `.gd-numero`
+### 5.11. Aviso (toast)
 
-Grade de cartões (mín. 220px cada, gap 16px). Cartão: rótulo 12px/500 muted, valor 24px/700, apoio 12px muted, ícone em quadrado de 36px raio 10px com o primário a 15%.
+`MatSnackBar` com `panelClass: 'aralu-toast'`: superfície do cartão com sombra `level1`, ícone na cor do tipo e X para fechar, abaixo da topbar.
 
-### 5.12. Estado vazio — `.gd-vazio`
+### 5.12. Calendário da agenda
 
-Centralizado, padding 48px 24px: ícone 40px em círculo `--gd-muted`, título 14px/600, frase 14px muted e, se couber, um botão de ação.
+Grade de 7 colunas em `.calendario` (`_aralu.scss`), dia de hoje em círculo primário, eventos em `bg-light-primary` e compromissos em `bg-light-info`. Navegação com `mat-icon-button`, "Hoje" em `mat-stroked-button` e vistas em `mat-button-toggle-group`.
 
-### 5.13. Alerta — `.gd-alerta`
+## 6. Telas públicas (exemplo Login)
 
-Bloco com borda e raio 10px, padding 16px, ícone + título 14px/600 + texto 14px. Variantes `.ok`, `.alerta`, `.erro`, `.info`: fundo da cor a 5%, borda a 30%. Sem variante: fundo `--gd-muted` a 30% e borda `--gd-border`.
-
-### 5.14. Aviso (toast)
-
-`MatSnackBar` no canto superior direito, 16px da borda lateral e 72px do topo (logo abaixo da barra superior, sem cobrir o tema nem a ação principal — requirements, seção 14, itens 20 e 21). Superfície `--gd-popover`, borda `--gd-border`, raio 10px, sombra do modal, padding 12px 16px, 14px, largura até 360px. Ícone à esquerda na cor do tipo (sucesso, erro). Botão X "Fechar aviso". Some sozinho (4s sucesso, 6s erro).
-
-### 5.15. Avatar — `.gd-avatar`
-
-Círculo 32px (24px em lista densa), fundo primário a 15%, iniciais 12px/600 na cor primária.
-
-### 5.16. Calendário do mês — `.gd-calendario`
-
-Medido na tela Calendar da demo.
-
-- Topo `.gd-calendario-topo`: setas anterior/próximo em volta do título do mês (18px/600), e à direita "Hoje" (botão secundário pequeno) e as vistas em abas segmentadas.
-- Grade de 7 colunas, domingo a sábado, com semanas completas. Linhas de 1px feitas com `gap` sobre fundo `--gd-border`, borda de 1px e raio 10px.
-- Cabeça dos dias: 11px/500, `--gd-muted-foreground`, fundo `--gd-muted` a 40%.
-- Dia: altura mínima 110px, padding 6px 8px, fundo `--gd-card`, hover em `--gd-muted` a 40%. Número num círculo de 24px, 11px/600. Hoje: círculo `--gd-primary` com texto `--gd-primary-foreground`. Dia de outro mês: número a 40%.
-- Botão "+" no canto superior direito de cada dia, 24px, ícone de 16px: meio apagado e aceso no hover do dia; sempre aceso no celular e em tela de toque. Abre o modal de criação com a data do dia.
-- Item: 10px/500, padding 2px 6px, raio 6px, uma linha com reticências, hora antes do texto a 70%. Cor pelo tipo, fundo da cor a 15%: evento `--gd-primary`, compromisso `--gd-info`. Até 3 por dia; o resto vira "+ N mais", que abre a vista do dia. Clicar no item abre o modal de resumo.
-- Legenda abaixo da grade: bolinha de 10px e texto 12px `--gd-muted-foreground`.
-- Abaixo de 640px: dia com 72px de altura, "+" abaixo do número e item sem hora.
-
-### 5.17. Resumo em pares — `.gd-resumo`
-
-`<dl>` usado nos modais de resumo. Rótulo (`dt`) 12px/500 `--gd-muted-foreground`, valor (`dd`) 14px. Uma coluna; duas a partir de 640px.
-
-### 5.18. Escolha em cartões — `.gd-opcoes` / `.gd-opcao`
-
-Para escolher uma opção entre poucas, com ícone ou com uma linha de apoio (tipo e pacote do evento). Botões dentro de `fieldset.gd-grupo-opcoes` com `legend.gd-rotulo`.
-
-- Grade `auto-fill` com mínimo de 112px (`.largas`: 180px); duas colunas abaixo de 640px.
-- Cartão: altura mínima 64px, padding 10px 12px, borda `--gd-border`, raio 10px, fundo `--gd-card`, texto 14px/500. Hover em `--gd-muted` a 50%.
-- Escolhido (`.ativa`, com `aria-pressed="true"`): borda e anel interno de 1px `--gd-primary`, fundo primário a 8%, ícone na cor primária.
-- Ícone 20px `--gd-muted-foreground`; apoio em `.gd-sub` 12px.
-
-## 6. Telas públicas
-
-Login, cadastro, confirmação, senha, RSVP e lead: cartão central de até 420px sobre `--gd-background`, com a marca acima, título 24px/700, apoio 14px muted, campos e botão primário em largura total. Botão de tema fixo no canto.
+- **Login**: cartão do `side-login` do template, até 960px, em duas colunas: formulário à esquerda (assinatura aralu, título, campos com rótulo acima, links e "Criar conta") e painel petróleo com o ícone da marca à direita (`.painel-marca`). Abaixo de `lg` só o formulário.
+- Cadastro, confirmação, senha, reenvio, RSVP e lead: cartão de até 440px centralizado sobre `bg-light`, formulário em `grid gap-4` e botão principal em largura total. A assinatura aralu aparece nas telas de conta; RSVP e lead não a mostram, porque são vistas pelos clientes da assessoria.
+- Botão de tema fixo no canto (`.tema-fixo`).
+- **Marca** (`public/`): `marca/aralu.svg` (assinatura petróleo), `marca/aralu-claro.svg` (assinatura creme), `marca/aralu-icone.svg` (ícone), `favicon.svg`, `favicon.ico`, `apple-touch-icon.png`, `icon-192.png`, `icon-512.png` e `site.webmanifest`. Vetorizados do PDF "Assinatura com brilho (celebração)", que só tinha imagem. `app-marca` troca a assinatura para a versão creme no modo escuro.
 
 ## 7. Acessibilidade
 
-- Contraste mínimo AA para texto; `--gd-muted-foreground` só em texto de apoio, nunca em rótulo de campo.
-- Todo botão de ícone tem `aria-label`.
-- Foco visível em todo controle (anel de 5.9).
-- Alvo de toque mínimo de 36px; 44px na barra inferior.
+- Contraste mínimo AA para texto; `text-muted` só em texto de apoio.
+- Todo botão de ícone tem `aria-label`; todo controle tem `aria-label` com o texto do rótulo.
+- Alvo de toque mínimo de 37px; 44px na barra inferior.

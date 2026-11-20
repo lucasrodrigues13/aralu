@@ -1,5 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -18,29 +19,41 @@ import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 
 @Component({
   selector: 'app-cronograma-editor-dialog',
-  imports: [
-    ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule,
-    CampoDataComponent, CampoHoraComponent,
-  ],
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, CampoDataComponent, CampoHoraComponent],
   template: `
     <h2 mat-dialog-title>{{ dados ? 'Editar cronograma' : 'Novo cronograma' }}</h2>
     <mat-dialog-content>
-      <form class="gd-campos" [formGroup]="form">
-        <mat-form-field appearance="outline"><mat-label>Título</mat-label><input matInput formControlName="titulo" /></mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>Descrição</mat-label><textarea matInput rows="2" formControlName="descricao"></textarea></mat-form-field>
+      <form class="grid grid-cols-1 gap-4" [formGroup]="form">
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Título</mat-label>
+          <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Título'" matInput formControlName="titulo" /></mat-form-field>
+        </div>
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Descrição</mat-label>
+          <mat-form-field appearance="outline" class="w-full"><textarea [attr.aria-label]="'Descrição'" matInput rows="2" formControlName="descricao"></textarea></mat-form-field>
+        </div>
         <div formArrayName="itens">
           @for (item of itens.controls; track $index; let i = $index) {
             <div class="bloco" [formGroupName]="i">
               <div class="linha">
-                <mat-form-field appearance="outline" class="grow"><mat-label>Rótulo</mat-label><input matInput formControlName="rotulo" /></mat-form-field>
+                <div class="campo grow">
+                  <mat-label class="font-semibold mb-2 block">Rótulo</mat-label>
+                  <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Rótulo'" matInput formControlName="rotulo" /></mat-form-field>
+                </div>
                 <button mat-icon-button type="button" (click)="removerItem(i)"><mat-icon>delete</mat-icon></button>
               </div>
               <div class="linha">
                 <app-campo-data rotulo="Data" formControlName="data" />
                 <app-campo-hora rotulo="Hora" formControlName="hora" />
               </div>
-              <mat-form-field appearance="outline" class="grow"><mat-label>Responsável</mat-label><input matInput formControlName="responsavel" /></mat-form-field>
-              <mat-form-field appearance="outline" class="grow"><mat-label>Recado fornecedores</mat-label><input matInput formControlName="recadoFornecedores" /></mat-form-field>
+              <div class="campo grow">
+                <mat-label class="font-semibold mb-2 block">Responsável</mat-label>
+                <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Responsável'" matInput formControlName="responsavel" /></mat-form-field>
+              </div>
+              <div class="campo grow">
+                <mat-label class="font-semibold mb-2 block">Recado fornecedores</mat-label>
+                <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Recado fornecedores'" matInput formControlName="recadoFornecedores" /></mat-form-field>
+              </div>
             </div>
           }
         </div>
@@ -48,12 +61,12 @@ import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button type="button" (click)="ref.close()">Cancelar</button>
+      <button mat-stroked-button type="button" (click)="ref.close()">Cancelar</button>
       <button mat-flat-button type="button" (click)="salvar()">Salvar</button>
     </mat-dialog-actions>
   `,
   styles: `
-    .bloco { border: 1px solid var(--gd-borda, #e0e0e0); border-radius: 8px; padding: 12px; margin: 8px 0; }
+    .bloco { border: 1px solid var(--mat-sys-outline-variant); border-radius: 8px; padding: 12px; margin: 8px 0; }
     .linha { display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; }
     .grow { flex: 1; min-width: 160px; }
   `,
@@ -138,40 +151,43 @@ export class CronogramaEditorDialog {
 
 @Component({
   selector: 'app-modelos-cronograma',
-  imports: [MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule],
+  imports: [MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule],
   template: `
-    <header class="gd-cabecalho">
+    <mat-card class="cardWithShadow">
+      <div class="p-6 flex flex-wrap items-center justify-between gap-4">
       <div>
-        <h1>Modelos de cronograma</h1>
-        <p>Biblioteca de cronogramas da conta.</p>
+        <mat-card-title class="mb-0">Modelos de cronograma</mat-card-title>
+        <mat-card-subtitle>Biblioteca de cronogramas da conta.</mat-card-subtitle>
       </div>
       <button mat-flat-button type="button" (click)="abrir()">
         <mat-icon>add</mat-icon>
         Novo Modelo de Cronograma
       </button>
-    </header>
-    <section class="gd-painel">
-      <div class="gd-barra">
-        <span></span>
-        <mat-form-field class="gd-busca" appearance="outline" subscriptSizing="dynamic">
+    </div>
+      <mat-card-content class="border-t border-border">
+      <div class="flex flex-wrap items-end justify-between gap-4 mb-6">
+        <div class="campo w-full sm:w-64">
+          <mat-label class="font-semibold mb-2 block">Buscar</mat-label>
+          <mat-form-field appearance="outline" class="w-full">
           <mat-icon matIconPrefix>search</mat-icon>
-          <input matInput placeholder="Buscar" [value]="busca()" (input)="buscar($event)" />
+          <input matInput aria-label="Buscar" placeholder="Buscar" [value]="busca()" (input)="buscar($event)" />
         </mat-form-field>
+        </div>
       </div>
       @if (lista().length === 0) {
-        <p class="gd-vazio">Não há modelo de cronograma.</p>
+        <p class="text-center text-muted py-10">Não há modelo de cronograma.</p>
       } @else {
-        <table class="gd-grade" mat-table [dataSource]="lista()">
+        <table mat-table class="min-w-full" [dataSource]="lista()">
           <ng-container matColumnDef="titulo">
             <th mat-header-cell *matHeaderCellDef>Título</th>
             <td mat-cell *matCellDef="let item">
               {{ item.titulo }}
-              @if (item.descricao) { <span class="gd-sub">{{ item.descricao }}</span> }
+              @if (item.descricao) { <span class="block text-xs text-muted">{{ item.descricao }}</span> }
             </td>
           </ng-container>
           <ng-container matColumnDef="acoes">
-            <th mat-header-cell *matHeaderCellDef class="gd-acoes">Ações</th>
-            <td mat-cell *matCellDef="let item" class="gd-acoes">
+            <th mat-header-cell *matHeaderCellDef class="text-end! whitespace-nowrap">Ações</th>
+            <td mat-cell *matCellDef="let item" class="text-end! whitespace-nowrap">
               <button mat-icon-button type="button" aria-label="Editar" (click)="abrir(item)"><mat-icon>edit</mat-icon></button>
               <button mat-icon-button type="button" aria-label="Clonar" (click)="clonar(item)"><mat-icon>content_copy</mat-icon></button>
               <button mat-icon-button type="button" aria-label="Excluir" (click)="excluir(item)"><mat-icon>delete</mat-icon></button>
@@ -181,7 +197,8 @@ export class CronogramaEditorDialog {
           <tr mat-row *matRowDef="let row; columns: colunas"></tr>
         </table>
       }
-    </section>
+    </mat-card-content>
+    </mat-card>
   `,
 })
 export class ModelosCronogramaPage implements OnInit {

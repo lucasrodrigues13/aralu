@@ -294,6 +294,9 @@ public interface IDados
 
     Task<bool> TemCompromissoNaDataAsync(string contaId, DateOnly data, CancellationToken ct);
 
+    /// <summary>Tarefas de evento e do funil com prazo no período, para o calendário.</summary>
+    Task<IReadOnlyList<TarefaNaAgenda>> ListarTarefasDaAgendaAsync(string contaId, DateOnly? de, DateOnly? ate, CancellationToken ct);
+
     Task<IReadOnlyList<Oportunidade>> ListarOportunidadesAsync(
         string contaId,
         FiltroOportunidades filtro,

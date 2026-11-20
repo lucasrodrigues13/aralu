@@ -4,19 +4,19 @@ import { MatCardModule } from '@angular/material/card';
 import { ContaClient } from '../../core/conta.client';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { ToastService } from '../../core/toast.service';
+import { Marca } from '../../shared/marca';
 
 @Component({
   selector: 'app-confirmar-email',
-  imports: [RouterLink, MatCardModule],
+  imports: [RouterLink, MatCardModule, Marca],
   template: `
-    <section class="gd-publica">
-      <mat-card>
-        <mat-card-header>
-          <mat-card-title>Confirmar e-mail</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
+    <section class="flex min-h-screen w-full items-center justify-center p-4 bg-light">
+      <mat-card class="cardWithShadow w-full max-w-[440px] mb-0!">
+        <div class="px-6 pt-8"><app-marca [altura]="40" /></div>
+        <div class="px-6 pt-6"><h3 class="text-xl font-semibold">Confirmar e-mail</h3></div>
+        <mat-card-content class="pt-6!">
           <p role="status">{{ status() }}</p>
-          <p><a routerLink="/entrar">Ir para o login</a></p>
+          <p class="text-center mt-6"><a class="text-primary font-semibold no-underline" routerLink="/entrar">Ir para o login</a></p>
         </mat-card-content>
       </mat-card>
     </section>

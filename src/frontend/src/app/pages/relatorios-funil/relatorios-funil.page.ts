@@ -1,5 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -13,16 +14,17 @@ import { deDataParaIso } from '../../shared/data';
 
 @Component({
   selector: 'app-relatorios-funil',
-  imports: [ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatTableModule, CampoDataComponent, GdDinheiroPipe],
+  imports: [MatCardModule, ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatTableModule, CampoDataComponent, GdDinheiroPipe],
   template: `
-    <header class="gd-cabecalho">
-      <div><h1>Relatórios do funil</h1><p>Catálogo de métricas comerciais da conta.</p></div>
+    <mat-card class="cardWithShadow">
+      <div class="p-6 flex flex-wrap items-center justify-between gap-4">
+      <div><mat-card-title class="mb-0">Relatórios do funil</mat-card-title><mat-card-subtitle>Catálogo de métricas comerciais da conta.</mat-card-subtitle></div>
       <button mat-stroked-button type="button" (click)="exportar()"><mat-icon>download</mat-icon> Exportar</button>
-    </header>
-    <section class="gd-painel">
-      <form class="gd-barra gd-filtros" [formGroup]="periodo" (ngSubmit)="carregar()">
-        <app-campo-data formControlName="inicio" rotulo="Início" />
-        <app-campo-data formControlName="fim" rotulo="Fim" />
+    </div>
+      <mat-card-content class="border-t border-border">
+      <form class="flex flex-wrap items-end gap-4 mb-6" [formGroup]="periodo" (ngSubmit)="carregar()">
+        <app-campo-data class="w-full sm:w-40" formControlName="inicio" rotulo="Início" />
+        <app-campo-data class="w-full sm:w-40" formControlName="fim" rotulo="Fim" />
         <button mat-flat-button type="submit">Atualizar</button>
       </form>
       @if (dados(); as catalogo) {
@@ -31,9 +33,9 @@ import { deDataParaIso } from '../../shared/data';
             <article>
               <h2>{{ bloco.titulo }}</h2>
               @if (bloco.linhas.length === 0) {
-                <p class="gd-vazio">Sem movimento no período.</p>
+                <p class="text-center text-muted py-10">Sem movimento no período.</p>
               } @else {
-                <table class="gd-grade" mat-table [dataSource]="bloco.linhas">
+                <table mat-table class="min-w-full" [dataSource]="bloco.linhas">
                   <ng-container matColumnDef="chave">
                     <th mat-header-cell *matHeaderCellDef>Item</th>
                     <td mat-cell *matCellDef="let item">{{ item.chave }}</td>
@@ -54,19 +56,20 @@ import { deDataParaIso } from '../../shared/data';
           }
           <article>
             <h2>Oportunidades de RSVP</h2>
-            <div class="gd-numeros">
-              <div class="gd-numero"><span>Visualizações</span><strong>{{ catalogo.oportunidadesRsvp.visualizacoes }}</strong></div>
-              <div class="gd-numero"><span>Cliques</span><strong>{{ catalogo.oportunidadesRsvp.cliquesBotao }}</strong></div>
-              <div class="gd-numero"><span>Contatados</span><strong>{{ catalogo.oportunidadesRsvp.contatados }}</strong></div>
-              <div class="gd-numero"><span>Descartados</span><strong>{{ catalogo.oportunidadesRsvp.descartados }}</strong></div>
-              <div class="gd-numero"><span>Geradas</span><strong>{{ catalogo.oportunidadesRsvp.geradas }}</strong></div>
-              <div class="gd-numero"><span>Conversão %</span><strong>{{ catalogo.oportunidadesRsvp.conversao }}</strong></div>
-              <div class="gd-numero"><span>Conversões anteriores</span><strong>{{ catalogo.oportunidadesRsvp.conversoesAnteriores }}</strong></div>
+            <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 mb-6">
+              <div><mat-card class="shadow-none text-center mb-0! h-full bg-light-primary"><mat-card-content><h4 class="text-sm font-semibold text-primary">Visualizações</h4><h6 class="text-xl font-semibold text-primary mt-2!">{{ catalogo.oportunidadesRsvp.visualizacoes }}</h6></mat-card-content></mat-card></div>
+              <div><mat-card class="shadow-none text-center mb-0! h-full bg-light-primary"><mat-card-content><h4 class="text-sm font-semibold text-primary">Cliques</h4><h6 class="text-xl font-semibold text-primary mt-2!">{{ catalogo.oportunidadesRsvp.cliquesBotao }}</h6></mat-card-content></mat-card></div>
+              <div><mat-card class="shadow-none text-center mb-0! h-full bg-light-primary"><mat-card-content><h4 class="text-sm font-semibold text-primary">Contatados</h4><h6 class="text-xl font-semibold text-primary mt-2!">{{ catalogo.oportunidadesRsvp.contatados }}</h6></mat-card-content></mat-card></div>
+              <div><mat-card class="shadow-none text-center mb-0! h-full bg-light-primary"><mat-card-content><h4 class="text-sm font-semibold text-primary">Descartados</h4><h6 class="text-xl font-semibold text-primary mt-2!">{{ catalogo.oportunidadesRsvp.descartados }}</h6></mat-card-content></mat-card></div>
+              <div><mat-card class="shadow-none text-center mb-0! h-full bg-light-primary"><mat-card-content><h4 class="text-sm font-semibold text-primary">Geradas</h4><h6 class="text-xl font-semibold text-primary mt-2!">{{ catalogo.oportunidadesRsvp.geradas }}</h6></mat-card-content></mat-card></div>
+              <div><mat-card class="shadow-none text-center mb-0! h-full bg-light-primary"><mat-card-content><h4 class="text-sm font-semibold text-primary">Conversão %</h4><h6 class="text-xl font-semibold text-primary mt-2!">{{ catalogo.oportunidadesRsvp.conversao }}</h6></mat-card-content></mat-card></div>
+              <div><mat-card class="shadow-none text-center mb-0! h-full bg-light-primary"><mat-card-content><h4 class="text-sm font-semibold text-primary">Conversões anteriores</h4><h6 class="text-xl font-semibold text-primary mt-2!">{{ catalogo.oportunidadesRsvp.conversoesAnteriores }}</h6></mat-card-content></mat-card></div>
             </div>
           </article>
         </div>
       }
-    </section>
+    </mat-card-content>
+    </mat-card>
   `,
   styles: `
     .catalogo { display: grid; gap: 16px; }

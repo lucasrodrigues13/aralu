@@ -1,3 +1,4 @@
+import { STATUS } from '../shared/status';
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { API_BASE_URL } from './api-base-url';
@@ -17,10 +18,10 @@ export const FORMAS_PAGAMENTO: { valor: FormaPagamento; rotulo: string }[] = [
 ];
 
 export const SITUACOES_PARCELA_CASAL: Record<SituacaoParcelaCasal, { rotulo: string; classe: string }> = {
-  AReceber: { rotulo: 'A receber', classe: 'neutro' },
-  Parcial: { rotulo: 'Parcial', classe: 'info' },
-  Recebida: { rotulo: 'Recebida', classe: 'ok' },
-  Atrasada: { rotulo: 'Atrasada', classe: 'erro' },
+  AReceber: { rotulo: 'A receber', classe: STATUS.neutro },
+  Parcial: { rotulo: 'Parcial', classe: STATUS.info },
+  Recebida: { rotulo: 'Recebida', classe: STATUS.sucesso },
+  Atrasada: { rotulo: 'Atrasada', classe: STATUS.erro },
 };
 
 export interface RecebimentoParcela {

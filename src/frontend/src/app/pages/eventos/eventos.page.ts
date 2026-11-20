@@ -2,6 +2,8 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -22,214 +24,248 @@ import { DIALOG, DIALOG_LARGO, DIALOG_PEQUENO } from '../../shared/dialog';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { deDataParaIso } from '../../shared/data';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
+import { STATUS } from '../../shared/status';
 import { EventoFormPage } from './evento-form.page';
 import { NovoEventoDialog } from './novo-evento.dialog';
 
 @Component({
   selector: 'app-eventos',
-  imports: [
-    ReactiveFormsModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule,
-    MatIconModule, MatTableModule, CampoDataComponent, GdDataPipe,
-  ],
+  imports: [ReactiveFormsModule, RouterLink, MatButtonModule, MatButtonToggleModule, MatCardModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, MatTableModule, CampoDataComponent, GdDataPipe],
   template: `
-    <header class="gd-cabecalho">
-      <div>
-        <h1>Eventos</h1>
-        <p>Acompanhe os eventos da assessoria.</p>
-      </div>
-      <button mat-flat-button type="button" (click)="abrir()">
-        <mat-icon>add</mat-icon>
-        Novo evento
-      </button>
-    </header>
-
     @if (estatisticas(); as stats) {
-      <section class="gd-numeros resumo">
-        <a class="gd-numero" routerLink="/pagamentos">
-          <span>{{ stats.resumo.rotuloPagamentos }}</span>
-          <span class="gd-icone"><mat-icon>payments</mat-icon></span>
-          <strong>—</strong>
+      <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-6 mb-6">
+        <a routerLink="/pagamentos" class="no-underline">
+          <mat-card class="shadow-none text-center mb-0! bg-light-primary card-hover">
+            <mat-card-content>
+              <mat-icon class="text-primary">payments</mat-icon>
+              <h4 class="text-sm font-semibold text-primary mt-2!">{{ stats.resumo.rotuloPagamentos }}</h4>
+              <h6 class="text-xl font-semibold text-primary mt-2!">—</h6>
+            </mat-card-content>
+          </mat-card>
         </a>
-        <a class="gd-numero" routerLink="/tarefas" [queryParams]="{ semana: 1 }">
-          <span>{{ stats.resumo.rotuloTarefas }}</span>
-          <span class="gd-icone"><mat-icon>task_alt</mat-icon></span>
-          <strong>{{ stats.resumo.tarefasSemana }}</strong>
-          <small>{{ stats.resumo.contadorTarefas }}</small>
+        <a routerLink="/tarefas" [queryParams]="{ semana: 1 }" class="no-underline">
+          <mat-card class="shadow-none text-center mb-0! bg-light-warning card-hover">
+            <mat-card-content>
+              <mat-icon class="text-warning">task_alt</mat-icon>
+              <h4 class="text-sm font-semibold text-warning mt-2!">{{ stats.resumo.rotuloTarefas }}</h4>
+              <h6 class="text-xl font-semibold text-warning mt-2!">{{ stats.resumo.tarefasSemana }}</h6>
+              <span class="text-xs text-warning">{{ stats.resumo.contadorTarefas }}</span>
+            </mat-card-content>
+          </mat-card>
         </a>
-        <a class="gd-numero" routerLink="/anexos">
-          <span>{{ stats.resumo.rotuloAnexos }}</span>
-          <span class="gd-icone"><mat-icon>attach_file</mat-icon></span>
-          <strong>—</strong>
+        <a routerLink="/anexos" class="no-underline">
+          <mat-card class="shadow-none text-center mb-0! bg-light-info card-hover">
+            <mat-card-content>
+              <mat-icon class="text-info">attach_file</mat-icon>
+              <h4 class="text-sm font-semibold text-info mt-2!">{{ stats.resumo.rotuloAnexos }}</h4>
+              <h6 class="text-xl font-semibold text-info mt-2!">—</h6>
+            </mat-card-content>
+          </mat-card>
         </a>
-        <a class="gd-numero" routerLink="/equipe">
-          <span>{{ stats.resumo.rotuloEquipe }}</span>
-          <span class="gd-icone"><mat-icon>groups</mat-icon></span>
-          <strong>—</strong>
+        <a routerLink="/equipe" class="no-underline">
+          <mat-card class="shadow-none text-center mb-0! bg-light-secondary card-hover">
+            <mat-card-content>
+              <mat-icon class="text-secondary">groups</mat-icon>
+              <h4 class="text-sm font-semibold text-secondary mt-2!">{{ stats.resumo.rotuloEquipe }}</h4>
+              <h6 class="text-xl font-semibold text-secondary mt-2!">—</h6>
+            </mat-card-content>
+          </mat-card>
         </a>
-        <a class="gd-numero" routerLink="/aniversarios">
-          <span>{{ stats.resumo.rotuloAniversarios }}</span>
-          <span class="gd-icone"><mat-icon>cake</mat-icon></span>
-          <strong>{{ stats.resumo.aniversariosHoje }}</strong>
-          <small>{{ stats.resumo.contadorAniversarios }}</small>
+        <a routerLink="/aniversarios" class="no-underline">
+          <mat-card class="shadow-none text-center mb-0! bg-light-success card-hover">
+            <mat-card-content>
+              <mat-icon class="text-success">cake</mat-icon>
+              <h4 class="text-sm font-semibold text-success mt-2!">{{ stats.resumo.rotuloAniversarios }}</h4>
+              <h6 class="text-xl font-semibold text-success mt-2!">{{ stats.resumo.aniversariosHoje }}</h6>
+              <span class="text-xs text-success">{{ stats.resumo.contadorAniversarios }}</span>
+            </mat-card-content>
+          </mat-card>
         </a>
-      </section>
+      </div>
     }
 
-    <section class="gd-painel">
-      <div class="gd-barra">
-        <div class="gd-abas">
-          @for (aba of abas; track aba.valor; let indice = $index) {
-            <button type="button" [class.ativa]="indice === abaAtual()" (click)="trocarAba(indice)">{{ aba.rotulo }}</button>
-          }
+    <mat-card class="cardWithShadow">
+      <div class="p-6 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <mat-card-title class="mb-0">Eventos</mat-card-title>
+          <mat-card-subtitle>Acompanhe os eventos da assessoria.</mat-card-subtitle>
         </div>
+        <button mat-flat-button type="button" (click)="abrir()">
+          <mat-icon>add</mat-icon>
+          Novo evento
+        </button>
+      </div>
+      <mat-card-content class="border-t border-border">
+        <mat-button-toggle-group
+          [value]="abaAtual()"
+          (change)="trocarAba($event.value)"
+          aria-label="Situação dos eventos"
+          class="mb-6"
+        >
+          @for (aba of abas; track aba.valor; let indice = $index) {
+            <mat-button-toggle [value]="indice">{{ aba.rotulo }}</mat-button-toggle>
+          }
+        </mat-button-toggle-group>
+
         @if (!ehEstatisticas()) {
-          <form class="gd-filtros" [formGroup]="filtro" (ngSubmit)="carregar()">
-            <mat-form-field class="gd-busca" appearance="outline" subscriptSizing="dynamic">
-              <mat-icon matIconPrefix>search</mat-icon>
-              <input matInput formControlName="nome" placeholder="Nome" />
-            </mat-form-field>
-            <mat-form-field appearance="outline" subscriptSizing="dynamic">
-              <mat-label>Tipo</mat-label>
-              <mat-select formControlName="tipo">
-                <mat-option value="">Todos</mat-option>
-                @for (tipo of tipos; track tipo.valor) { <mat-option [value]="tipo.valor">{{ tipo.rotulo }}</mat-option> }
-              </mat-select>
-            </mat-form-field>
-            <app-campo-data rotulo="De" formControlName="de" />
-            <app-campo-data rotulo="Até" formControlName="ate" />
-            <mat-form-field appearance="outline" subscriptSizing="dynamic"><mat-label>Tag</mat-label><input matInput formControlName="tag" /></mat-form-field>
-            <button mat-stroked-button type="submit">Filtrar</button>
-            <button mat-stroked-button type="button" (click)="limparFiltros()">Limpar filtros</button>
+          <form class="flex flex-wrap items-end gap-4 mb-6" [formGroup]="filtro" (ngSubmit)="carregar()">
+            <div class="campo w-full sm:w-64">
+              <mat-label class="font-semibold mb-2 block">Nome</mat-label>
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-icon matIconPrefix>search</mat-icon>
+                <input [attr.aria-label]="'Nome'" matInput formControlName="nome" placeholder="Ex.: Casamento Ana e Pedro" />
+              </mat-form-field>
+            </div>
+            <div class="campo w-full sm:w-44">
+              <mat-label class="font-semibold mb-2 block">Tipo</mat-label>
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-select [attr.aria-label]="'Tipo'" formControlName="tipo">
+                  <mat-option value="">Todos</mat-option>
+                  @for (tipo of tipos; track tipo.valor) { <mat-option [value]="tipo.valor">{{ tipo.rotulo }}</mat-option> }
+                </mat-select>
+              </mat-form-field>
+            </div>
+            <app-campo-data class="w-full sm:w-40" rotulo="De" formControlName="de" />
+            <app-campo-data class="w-full sm:w-40" rotulo="Até" formControlName="ate" />
+            <div class="campo w-full sm:w-36">
+              <mat-label class="font-semibold mb-2 block">Tag</mat-label>
+              <mat-form-field appearance="outline" class="w-full">
+                <input [attr.aria-label]="'Tag'" matInput formControlName="tag" placeholder="Ex.: VIP" />
+              </mat-form-field>
+            </div>
+            <div class="flex gap-2">
+              <button mat-flat-button type="submit">Filtrar</button>
+              <button mat-stroked-button type="button" (click)="limparFiltros()">Limpar</button>
+            </div>
           </form>
         }
-      </div>
 
-      @if (ehEstatisticas()) {
-        @if (estatisticas(); as stats) {
-          <div class="stats">
-            <p class="total">Total de eventos: <strong>{{ stats.total }}</strong></p>
-            <div class="gd-numeros">
+        @if (ehEstatisticas()) {
+          @if (estatisticas(); as stats) {
+            <p class="mb-4">Total de eventos: <strong>{{ stats.total }}</strong></p>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
               @for (item of stats.situacoes; track item.situacao) {
-                <div class="gd-numero">
-                  <span>{{ rotuloSituacao(item.situacao) }}</span>
-                  <strong>{{ item.quantidade }}</strong>
-                  <small>{{ item.percentual }}%</small>
-                </div>
+                <mat-card class="shadow-none text-center mb-0! bg-light-primary">
+                  <mat-card-content>
+                    <h4 class="text-sm font-semibold text-primary">{{ rotuloSituacao(item.situacao) }}</h4>
+                    <h6 class="text-xl font-semibold text-primary mt-2!">{{ item.quantidade }}</h6>
+                    <span class="text-xs text-primary">{{ item.percentual }}%</span>
+                  </mat-card-content>
+                </mat-card>
               }
             </div>
-            <h2>Eventos por mês (ano atual)</h2>
-            <div class="barras">
-              @for (mes of stats.eventosPorMes; track mes.mes) {
-                <div class="barra-item">
-                  <div class="barra" [style.height.%]="altura(mes.quantidade, stats.eventosPorMes)"></div>
-                  <span>{{ meses[mes.mes - 1] }}</span>
-                  <small>{{ mes.quantidade }}</small>
+            <mat-card class="border! border-border! shadow-none">
+              <div class="p-4"><mat-card-title>Eventos por mês (ano atual)</mat-card-title></div>
+              <mat-card-content class="border-t border-border">
+                <div class="flex gap-2 items-end h-36">
+                  @for (mes of stats.eventosPorMes; track mes.mes) {
+                    <div class="flex-1 flex flex-col items-center justify-end gap-1 h-full text-xs">
+                      <div class="w-full max-w-7 min-h-1 bg-primary rounded-t" [style.height.%]="altura(mes.quantidade, stats.eventosPorMes)"></div>
+                      <span class="text-muted">{{ meses[mes.mes - 1] }}</span>
+                      <span class="font-semibold">{{ mes.quantidade }}</span>
+                    </div>
+                  }
                 </div>
-              }
+              </mat-card-content>
+            </mat-card>
+            <div class="grid grid-cols-12 gap-6">
+              <mat-card class="border! border-border! shadow-none mb-0! col-span-12 lg:col-span-4">
+                <div class="p-4"><mat-card-title>Ranking de orçamento</mat-card-title></div>
+                <mat-card-content class="border-t border-border">
+                  @if (stats.rankingOrcamento.length === 0) {
+                    <p class="text-center text-muted py-6">Sem dados.</p>
+                  } @else {
+                    <table mat-table [dataSource]="stats.rankingOrcamento" class="min-w-full">
+                      <ng-container matColumnDef="posicao"><th mat-header-cell *matHeaderCellDef class="font-semibold text-sm pl-0!">#</th><td mat-cell *matCellDef="let r" class="pl-0!">{{ r.posicao }}</td></ng-container>
+                      <ng-container matColumnDef="servico"><th mat-header-cell *matHeaderCellDef class="font-semibold text-sm">Serviço</th><td mat-cell *matCellDef="let r">{{ r.servico }}</td></ng-container>
+                      <ng-container matColumnDef="percentual"><th mat-header-cell *matHeaderCellDef class="font-semibold text-sm text-end!">%</th><td mat-cell *matCellDef="let r" class="text-end!">{{ r.percentual }}%</td></ng-container>
+                      <tr mat-header-row *matHeaderRowDef="colsOrc"></tr>
+                      <tr mat-row *matRowDef="let row; columns: colsOrc"></tr>
+                    </table>
+                  }
+                </mat-card-content>
+              </mat-card>
+              <mat-card class="border! border-border! shadow-none mb-0! col-span-12 lg:col-span-4">
+                <div class="p-4"><mat-card-title>Fornecedores mais contratados</mat-card-title></div>
+                <mat-card-content class="border-t border-border">
+                  @if (stats.rankingFornecedores.length === 0) {
+                    <p class="text-center text-muted py-6">Sem dados.</p>
+                  } @else {
+                    <table mat-table [dataSource]="stats.rankingFornecedores" class="min-w-full">
+                      <ng-container matColumnDef="posicao"><th mat-header-cell *matHeaderCellDef class="font-semibold text-sm pl-0!">#</th><td mat-cell *matCellDef="let r" class="pl-0!">{{ r.posicao }}</td></ng-container>
+                      <ng-container matColumnDef="fornecedor"><th mat-header-cell *matHeaderCellDef class="font-semibold text-sm">Fornecedor</th><td mat-cell *matCellDef="let r">{{ r.fornecedor }}</td></ng-container>
+                      <ng-container matColumnDef="quantidade"><th mat-header-cell *matHeaderCellDef class="font-semibold text-sm text-end!">Qtd</th><td mat-cell *matCellDef="let r" class="text-end!">{{ r.quantidade }}</td></ng-container>
+                      <tr mat-header-row *matHeaderRowDef="colsForn"></tr>
+                      <tr mat-row *matRowDef="let row; columns: colsForn"></tr>
+                    </table>
+                  }
+                </mat-card-content>
+              </mat-card>
+              <mat-card class="border! border-border! shadow-none mb-0! col-span-12 lg:col-span-4">
+                <div class="p-4"><mat-card-title>Serviços mais utilizados</mat-card-title></div>
+                <mat-card-content class="border-t border-border">
+                  @if (stats.rankingServicos.length === 0) {
+                    <p class="text-center text-muted py-6">Sem dados.</p>
+                  } @else {
+                    <table mat-table [dataSource]="stats.rankingServicos" class="min-w-full">
+                      <ng-container matColumnDef="posicao"><th mat-header-cell *matHeaderCellDef class="font-semibold text-sm pl-0!">#</th><td mat-cell *matCellDef="let r" class="pl-0!">{{ r.posicao }}</td></ng-container>
+                      <ng-container matColumnDef="servico"><th mat-header-cell *matHeaderCellDef class="font-semibold text-sm">Serviço</th><td mat-cell *matCellDef="let r">{{ r.servico }}</td></ng-container>
+                      <ng-container matColumnDef="quantidade"><th mat-header-cell *matHeaderCellDef class="font-semibold text-sm text-end!">Qtd</th><td mat-cell *matCellDef="let r" class="text-end!">{{ r.quantidade }}</td></ng-container>
+                      <tr mat-header-row *matHeaderRowDef="colsServ"></tr>
+                      <tr mat-row *matRowDef="let row; columns: colsServ"></tr>
+                    </table>
+                  }
+                </mat-card-content>
+              </mat-card>
             </div>
-            <div class="rankings">
-              <div>
-                <h3>Ranking de orçamento</h3>
-                @if (stats.rankingOrcamento.length === 0) {
-                  <p class="gd-vazio">Sem dados.</p>
-                } @else {
-                  <table class="gd-grade" mat-table [dataSource]="stats.rankingOrcamento">
-                    <ng-container matColumnDef="posicao"><th mat-header-cell *matHeaderCellDef>#</th><td mat-cell *matCellDef="let r">{{ r.posicao }}</td></ng-container>
-                    <ng-container matColumnDef="servico"><th mat-header-cell *matHeaderCellDef>Serviço</th><td mat-cell *matCellDef="let r">{{ r.servico }}</td></ng-container>
-                    <ng-container matColumnDef="percentual"><th mat-header-cell *matHeaderCellDef>%</th><td mat-cell *matCellDef="let r">{{ r.percentual }}%</td></ng-container>
-                    <tr mat-header-row *matHeaderRowDef="colsOrc"></tr>
-                    <tr mat-row *matRowDef="let row; columns: colsOrc"></tr>
-                  </table>
-                }
-              </div>
-              <div>
-                <h3>Fornecedores mais contratados</h3>
-                @if (stats.rankingFornecedores.length === 0) {
-                  <p class="gd-vazio">Sem dados.</p>
-                } @else {
-                  <table class="gd-grade" mat-table [dataSource]="stats.rankingFornecedores">
-                    <ng-container matColumnDef="posicao"><th mat-header-cell *matHeaderCellDef>#</th><td mat-cell *matCellDef="let r">{{ r.posicao }}</td></ng-container>
-                    <ng-container matColumnDef="fornecedor"><th mat-header-cell *matHeaderCellDef>Fornecedor</th><td mat-cell *matCellDef="let r">{{ r.fornecedor }}</td></ng-container>
-                    <ng-container matColumnDef="quantidade"><th mat-header-cell *matHeaderCellDef>Qtd</th><td mat-cell *matCellDef="let r">{{ r.quantidade }}</td></ng-container>
-                    <tr mat-header-row *matHeaderRowDef="colsForn"></tr>
-                    <tr mat-row *matRowDef="let row; columns: colsForn"></tr>
-                  </table>
-                }
-              </div>
-              <div>
-                <h3>Serviços mais utilizados</h3>
-                @if (stats.rankingServicos.length === 0) {
-                  <p class="gd-vazio">Sem dados.</p>
-                } @else {
-                  <table class="gd-grade" mat-table [dataSource]="stats.rankingServicos">
-                    <ng-container matColumnDef="posicao"><th mat-header-cell *matHeaderCellDef>#</th><td mat-cell *matCellDef="let r">{{ r.posicao }}</td></ng-container>
-                    <ng-container matColumnDef="servico"><th mat-header-cell *matHeaderCellDef>Serviço</th><td mat-cell *matCellDef="let r">{{ r.servico }}</td></ng-container>
-                    <ng-container matColumnDef="quantidade"><th mat-header-cell *matHeaderCellDef>Qtd</th><td mat-cell *matCellDef="let r">{{ r.quantidade }}</td></ng-container>
-                    <tr mat-header-row *matHeaderRowDef="colsServ"></tr>
-                    <tr mat-row *matRowDef="let row; columns: colsServ"></tr>
-                  </table>
-                }
-              </div>
-            </div>
+          }
+        } @else if (eventos().length === 0) {
+          <p class="text-center text-muted py-10">Não há evento para mostrar.</p>
+        } @else {
+          <div class="relative overflow-auto">
+            <table mat-table [dataSource]="eventos()" class="min-w-full">
+              <ng-container matColumnDef="nome">
+                <th mat-header-cell *matHeaderCellDef class="font-semibold text-sm pl-0!">Evento</th>
+                <td mat-cell *matCellDef="let evento" class="pl-0! whitespace-nowrap">
+                  <a class="text-sm font-semibold no-underline" [routerLink]="['/eventos', evento.id]">{{ evento.nome }}</a>
+                  <span class="block text-xs text-muted">{{ rotuloTipo(evento.tipo) }}</span>
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="data">
+                <th mat-header-cell *matHeaderCellDef class="font-semibold text-sm">Data</th>
+                <td mat-cell *matCellDef="let evento" class="whitespace-nowrap">
+                  {{ evento.data | gdData }}
+                  @if (evento.diasRestantes !== null && evento.diasRestantes >= 0) {
+                    <span class="block text-xs text-muted">Faltam {{ evento.diasRestantes }} dias</span>
+                  }
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="situacao">
+                <th mat-header-cell *matHeaderCellDef class="font-semibold text-sm">Situação</th>
+                <td mat-cell *matCellDef="let evento" class="whitespace-nowrap"><span [class]="classe(evento.situacao)">{{ rotuloSituacao(evento.situacao) }}</span></td>
+              </ng-container>
+              <ng-container matColumnDef="tarefas">
+                <th mat-header-cell *matHeaderCellDef class="font-semibold text-sm">Tarefas</th>
+                <td mat-cell *matCellDef="let evento" class="whitespace-nowrap">{{ evento.tarefasConcluidas }} de {{ evento.tarefas }}</td>
+              </ng-container>
+              <ng-container matColumnDef="convidados">
+                <th mat-header-cell *matHeaderCellDef class="font-semibold text-sm">Convidados</th>
+                <td mat-cell *matCellDef="let evento" class="whitespace-nowrap">{{ evento.convidadosConfirmados }} de {{ evento.convidados }}</td>
+              </ng-container>
+              <ng-container matColumnDef="acoes">
+                <th mat-header-cell *matHeaderCellDef class="font-semibold text-sm text-end! pr-0!">Ações</th>
+                <td mat-cell *matCellDef="let evento" class="text-end! whitespace-nowrap pr-0!">
+                  <button mat-icon-button type="button" aria-label="Editar" (click)="editar(evento.id)"><mat-icon>edit</mat-icon></button>
+                  <button mat-icon-button type="button" aria-label="Excluir" (click)="excluir()"><mat-icon>delete</mat-icon></button>
+                </td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="colunas"></tr>
+              <tr mat-row *matRowDef="let row; columns: colunas"></tr>
+            </table>
           </div>
         }
-      } @else if (eventos().length === 0) {
-        <p class="gd-vazio">Não há evento para mostrar.</p>
-      } @else {
-        <table class="gd-grade" mat-table [dataSource]="eventos()">
-          <ng-container matColumnDef="nome">
-            <th mat-header-cell *matHeaderCellDef>Evento</th>
-            <td mat-cell *matCellDef="let evento">
-              <a [routerLink]="['/eventos', evento.id]">{{ evento.nome }}</a>
-              <span class="gd-sub">{{ rotuloTipo(evento.tipo) }}</span>
-            </td>
-          </ng-container>
-          <ng-container matColumnDef="data">
-            <th mat-header-cell *matHeaderCellDef>Data</th>
-            <td mat-cell *matCellDef="let evento">
-              {{ evento.data | gdData }}
-              @if (evento.diasRestantes !== null && evento.diasRestantes >= 0) {
-                <span class="gd-sub">Faltam {{ evento.diasRestantes }} dias</span>
-              }
-            </td>
-          </ng-container>
-          <ng-container matColumnDef="situacao">
-            <th mat-header-cell *matHeaderCellDef>Situação</th>
-            <td mat-cell *matCellDef="let evento"><span [class]="classe(evento.situacao)">{{ rotuloSituacao(evento.situacao) }}</span></td>
-          </ng-container>
-          <ng-container matColumnDef="tarefas">
-            <th mat-header-cell *matHeaderCellDef>Tarefas</th>
-            <td mat-cell *matCellDef="let evento">{{ evento.tarefasConcluidas }} de {{ evento.tarefas }}</td>
-          </ng-container>
-          <ng-container matColumnDef="convidados">
-            <th mat-header-cell *matHeaderCellDef>Convidados</th>
-            <td mat-cell *matCellDef="let evento">{{ evento.convidadosConfirmados }} de {{ evento.convidados }}</td>
-          </ng-container>
-          <ng-container matColumnDef="acoes">
-            <th mat-header-cell *matHeaderCellDef class="gd-acoes">Ações</th>
-            <td mat-cell *matCellDef="let evento" class="gd-acoes">
-              <button mat-icon-button type="button" aria-label="Editar" (click)="editar(evento.id)"><mat-icon>edit</mat-icon></button>
-              <button mat-icon-button type="button" aria-label="Excluir" (click)="excluir()"><mat-icon>delete</mat-icon></button>
-            </td>
-          </ng-container>
-          <tr mat-header-row *matHeaderRowDef="colunas"></tr>
-          <tr mat-row *matRowDef="let row; columns: colunas"></tr>
-        </table>
-      }
-    </section>
-  `,
-  styles: `
-    .resumo { margin-bottom: 16px; }
-    .filtros { flex-direction: row; align-items: center; flex-wrap: wrap; }
-    .filtros mat-form-field:not(.gd-busca), .filtros app-campo-data { width: 140px; }
-    .filtros .gd-busca { width: 220px; }
-    .filtros app-campo-data { display: block; }
-    .stats .total { margin: 8px 0 16px; }
-    .barras { display: flex; gap: 8px; align-items: flex-end; height: 140px; margin: 16px 0 24px; }
-    .barra-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
-    .barra { width: 100%; max-width: 28px; min-height: 4px; background: var(--gd-primaria, #2ecc71); border-radius: 4px 4px 0 0; }
-    .rankings { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
-    .rankings h3 { margin: 0 0 8px; font-size: 0.95rem; }
+      </mat-card-content>
+    </mat-card>
   `,
 })
 export class EventosPage implements OnInit {
@@ -354,11 +390,11 @@ export class EventosPage implements OnInit {
 
   protected classe(situacao: string): string {
     if (situacao === 'Concluido') {
-      return 'gd-status ok';
+      return STATUS.sucesso;
     }
     if (situacao === 'Cancelado') {
-      return 'gd-status erro';
+      return STATUS.erro;
     }
-    return 'gd-status alerta';
+    return STATUS.alerta;
   }
 }

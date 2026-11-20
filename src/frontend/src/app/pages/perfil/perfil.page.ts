@@ -15,201 +15,112 @@ import { aplicarMascara } from '../../shared/mascaras';
 
 @Component({
   selector: 'app-perfil',
-  imports: [
-    ReactiveFormsModule, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatIconModule,
-    MascaraDirective, CampoDataComponent,
-  ],
-  styles: `
-    .gd-edicao {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) 280px;
-      gap: 16px;
-      align-items: start;
-    }
-
-    .gd-coluna {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .gd-grade {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-
-    app-campo-data {
-      display: block;
-      min-width: 0;
-    }
-
-    .gd-largo {
-      grid-column: 1 / -1;
-    }
-
-    .gd-foto-cartao {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-      padding: 28px 16px;
-    }
-
-    .gd-foto {
-      position: relative;
-      width: 112px;
-      height: 112px;
-      border-radius: 50%;
-      overflow: hidden;
-    }
-
-    .gd-foto img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-
-    .gd-foto-acoes {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
-      background: color-mix(in oklch, oklch(0.075 0 0) 55%, transparent);
-      opacity: 0;
-    }
-
-    .gd-foto:hover .gd-foto-acoes,
-    .gd-foto:focus-within .gd-foto-acoes {
-      opacity: 1;
-    }
-
-    .gd-foto-acoes button {
-      color: #fff;
-      min-width: 0;
-      line-height: 28px;
-      padding: 0 8px;
-    }
-
-    .gd-foto-nome {
-      margin: 0;
-      font-weight: 700;
-      text-align: center;
-    }
-
-    .gd-acoes {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .gd-acoes button {
-      width: 100%;
-    }
-
-    @media (max-width: 959px) {
-      .gd-edicao {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    @media (max-width: 720px) {
-      .gd-grade {
-        grid-template-columns: 1fr;
-      }
-    }
-  `,
+  imports: [ReactiveFormsModule, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatIconModule, MascaraDirective, CampoDataComponent],
   template: `
-    <header class="gd-cabecalho">
-      <div>
-        <h1>{{ titulo() }}</h1>
-        <p>Dados da assessoria.</p>
-      </div>
-    </header>
-    <form class="gd-campos" [formGroup]="formulario" (ngSubmit)="salvar()">
-      <div class="gd-edicao">
-        <div class="gd-coluna">
-          <mat-card>
-            <mat-card-header><mat-card-title>Identidade</mat-card-title></mat-card-header>
-            <mat-card-content>
-              <div class="gd-grade">
-                <mat-form-field appearance="outline">
-                  <mat-label>Nome da empresa</mat-label>
-                  <input matInput formControlName="nomeEmpresa" />
-                </mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>Responsável</mat-label>
-                  <input matInput formControlName="responsavel" />
-                </mat-form-field>
-                <mat-form-field appearance="outline" class="gd-largo">
-                  <mat-label>E-mail</mat-label>
-                  <input matInput [value]="email" readonly />
-                </mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>CPF ou CNPJ</mat-label>
-                  <input matInput formControlName="documento" gdMascara="documento" />
-                </mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>Celular</mat-label>
-                  <input matInput formControlName="celular" gdMascara="celular" />
-                </mat-form-field>
-                <app-campo-data class="gd-largo" rotulo="Nascimento" formControlName="nascimento" />
+    <form [formGroup]="formulario" (ngSubmit)="salvar()">
+      <div class="grid grid-cols-12 gap-6 items-start">
+        <div class="col-span-12 lg:col-span-8">
+          <mat-card class="cardWithShadow">
+            <div class="p-6">
+              <mat-card-title class="mb-0">{{ titulo() }}</mat-card-title>
+              <mat-card-subtitle>Dados da assessoria.</mat-card-subtitle>
+            </div>
+            <mat-card-content class="border-t border-border">
+              <div class="grid grid-cols-12 gap-x-6 gap-y-4">
+                <div class="campo col-span-12 md:col-span-6">
+                  <mat-label class="font-semibold mb-2 block">Nome da empresa</mat-label>
+                  <mat-form-field appearance="outline" class="w-full">
+                    <input aria-label="Nome da empresa" matInput formControlName="nomeEmpresa" placeholder="Ex.: Aralu Assessoria" />
+                  </mat-form-field>
+                </div>
+                <div class="campo col-span-12 md:col-span-6">
+                  <mat-label class="font-semibold mb-2 block">Responsável</mat-label>
+                  <mat-form-field appearance="outline" class="w-full">
+                    <input aria-label="Responsável" matInput formControlName="responsavel" />
+                  </mat-form-field>
+                </div>
+                <div class="campo col-span-12">
+                  <mat-label class="font-semibold mb-2 block">E-mail</mat-label>
+                  <mat-form-field appearance="outline" class="w-full">
+                    <input aria-label="E-mail" matInput [value]="email" readonly />
+                  </mat-form-field>
+                </div>
+                <div class="campo col-span-12 md:col-span-6">
+                  <mat-label class="font-semibold mb-2 block">CPF ou CNPJ</mat-label>
+                  <mat-form-field appearance="outline" class="w-full">
+                    <input aria-label="CPF ou CNPJ" matInput formControlName="documento" gdMascara="documento" />
+                  </mat-form-field>
+                </div>
+                <div class="campo col-span-12 md:col-span-6">
+                  <mat-label class="font-semibold mb-2 block">Celular</mat-label>
+                  <mat-form-field appearance="outline" class="w-full">
+                    <input aria-label="Celular" matInput formControlName="celular" gdMascara="celular" placeholder="(11) 90000-0000" />
+                  </mat-form-field>
+                </div>
+                <app-campo-data class="col-span-12 md:col-span-6" rotulo="Nascimento" formControlName="nascimento" />
               </div>
             </mat-card-content>
           </mat-card>
-          <mat-card>
-            <mat-card-header><mat-card-title>Endereço</mat-card-title></mat-card-header>
-            <mat-card-content>
-              <mat-form-field appearance="outline">
-                <mat-label>Endereço</mat-label>
-                <textarea matInput rows="4" formControlName="endereco"></textarea>
-              </mat-form-field>
+
+          <mat-card class="cardWithShadow">
+            <div class="p-6"><mat-card-title class="mb-0">Endereço</mat-card-title></div>
+            <mat-card-content class="border-t border-border">
+              <div class="campo">
+                <mat-label class="font-semibold mb-2 block">Endereço</mat-label>
+                <mat-form-field appearance="outline" class="w-full">
+                  <textarea aria-label="Endereço" matInput rows="4" formControlName="endereco"></textarea>
+                </mat-form-field>
+              </div>
             </mat-card-content>
           </mat-card>
-          <mat-card>
-            <mat-card-header><mat-card-title>Recebimentos</mat-card-title></mat-card-header>
-            <mat-card-content>
-              <mat-form-field appearance="outline">
-                <mat-label>Chave Pix</mat-label>
-                <input matInput formControlName="chavePix" maxlength="140" placeholder="CPF, CNPJ, e-mail, celular ou chave aleatória" />
-                <mat-hint>Vai junto na mensagem de "Cobrar" do Dinheiro do evento.</mat-hint>
-              </mat-form-field>
+
+          <mat-card class="cardWithShadow">
+            <div class="p-6"><mat-card-title class="mb-0">Recebimentos</mat-card-title></div>
+            <mat-card-content class="border-t border-border">
+              <div class="campo">
+                <mat-label class="font-semibold mb-2 block">Chave Pix</mat-label>
+                <mat-form-field appearance="outline" class="w-full">
+                  <input aria-label="Chave Pix" matInput formControlName="chavePix" maxlength="140" placeholder="CPF, CNPJ, e-mail, celular ou chave aleatória" />
+                  <mat-hint>Vai junto na mensagem de "Cobrar" do Dinheiro do evento.</mat-hint>
+                </mat-form-field>
+              </div>
             </mat-card-content>
           </mat-card>
         </div>
-        <div class="gd-coluna">
-          <mat-card class="gd-foto-cartao">
-            @if (preview()) {
-              <div class="gd-foto">
-                <img [src]="preview()" alt="Foto do perfil" />
-                <div class="gd-foto-acoes">
-                  <button mat-button type="button" (click)="escolherFoto()">Alterar</button>
-                  <button mat-button type="button" (click)="removerFoto()">Remover</button>
+
+        <div class="col-span-12 lg:col-span-4">
+          <mat-card class="cardWithShadow">
+            <mat-card-content class="flex flex-col items-center gap-4 text-center">
+              @if (preview()) {
+                <div class="relative size-28 rounded-full overflow-hidden group">
+                  <img [src]="preview()" alt="Foto do perfil" class="size-full object-cover" />
+                  <div class="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/55 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100">
+                    <button mat-button class="text-white!" type="button" (click)="escolherFoto()">Alterar</button>
+                    <button mat-button class="text-white!" type="button" (click)="removerFoto()">Remover</button>
+                  </div>
                 </div>
-              </div>
-              @if (nomeCurto()) {
-                <p class="gd-foto-nome">{{ nomeCurto() }}</p>
+                @if (nomeCurto()) {
+                  <h5 class="text-base font-semibold">{{ nomeCurto() }}</h5>
+                }
+              } @else {
+                <span class="size-28 rounded-full bg-light-primary text-primary flex items-center justify-center">
+                  <mat-icon class="text-5xl! size-12!">apartment</mat-icon>
+                </span>
+                <button mat-stroked-button type="button" (click)="escolherFoto()">Enviar foto</button>
               }
-            } @else {
-              <button mat-stroked-button type="button" (click)="escolherFoto()">Enviar foto</button>
-            }
-            <input
-              #arquivo
-              hidden
-              type="file"
-              accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
-              (change)="enviarFoto($event)"
-            />
+              <input
+                #arquivo
+                hidden
+                type="file"
+                accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+                (change)="enviarFoto($event)"
+              />
+            </mat-card-content>
           </mat-card>
-          <mat-card>
-            <mat-card-header><mat-card-title>Ações</mat-card-title></mat-card-header>
-            <mat-card-content class="gd-acoes">
-              <button mat-flat-button type="submit">Salvar</button>
-              <button mat-stroked-button type="button" (click)="cancelar()">Cancelar</button>
+          <mat-card class="cardWithShadow">
+            <mat-card-content class="flex flex-col gap-3">
+              <button mat-flat-button type="submit" class="w-full">Salvar</button>
+              <button mat-stroked-button type="button" class="w-full" (click)="cancelar()">Cancelar</button>
             </mat-card-content>
           </mat-card>
         </div>

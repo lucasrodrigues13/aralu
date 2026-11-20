@@ -16,8 +16,9 @@ import { aplicarDinheiro, dinheiroParaNumero, numeroParaDinheiro } from './masca
     },
   ],
   template: `
-    <mat-form-field appearance="outline">
-      <mat-label>{{ rotulo }}</mat-label>
+    <div class="campo">
+      <mat-label class="font-semibold mb-2 block">{{ rotulo }}</mat-label>
+      <mat-form-field appearance="outline" class="w-full">
       <span matTextPrefix>R$&nbsp;</span>
       <input
         matInput
@@ -27,8 +28,9 @@ import { aplicarDinheiro, dinheiroParaNumero, numeroParaDinheiro } from './masca
         (blur)="tocado()"
       />
     </mat-form-field>
+    </div>
   `,
-  styles: `:host { display: block; width: 100%; }`,
+  styles: `:host { display: block; min-width: 0; }`,
 })
 export class CampoDinheiroComponent implements ControlValueAccessor {
   @Input() rotulo = 'Valor';

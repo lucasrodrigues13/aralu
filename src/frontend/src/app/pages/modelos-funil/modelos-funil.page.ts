@@ -1,5 +1,6 @@
 import { Component, inject, Input, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -27,27 +28,42 @@ type TipoModelo = 'servico' | 'orcamento' | 'contrato';
   template: `
     <h2 mat-dialog-title>{{ dados.item ? 'Editar' : 'Novo' }} modelo</h2>
     <mat-dialog-content>
-      <form class="gd-campos" [formGroup]="form">
-        <mat-form-field appearance="outline"><mat-label>Nome</mat-label><input matInput formControlName="nome" /></mat-form-field>
+      <form class="grid grid-cols-1 gap-4" [formGroup]="form">
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Nome</mat-label>
+          <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Nome'" matInput formControlName="nome" /></mat-form-field>
+        </div>
         @if (dados.tipo === 'servico') {
-          <mat-form-field appearance="outline"><mat-label>Descrição</mat-label><textarea matInput rows="3" formControlName="descricao" maxlength="200"></textarea></mat-form-field>
+          <div class="campo">
+            <mat-label class="font-semibold mb-2 block">Descrição</mat-label>
+            <mat-form-field appearance="outline" class="w-full"><textarea [attr.aria-label]="'Descrição'" matInput rows="3" formControlName="descricao" maxlength="200"></textarea></mat-form-field>
+          </div>
           <app-campo-dinheiro rotulo="Valor" formControlName="valor" />
         } @else {
-          <mat-form-field appearance="outline"><mat-label>Texto</mat-label><textarea matInput rows="8" formControlName="texto" #area></textarea></mat-form-field>
+          <div class="campo">
+            <mat-label class="font-semibold mb-2 block">Texto</mat-label>
+            <mat-form-field appearance="outline" class="w-full"><textarea [attr.aria-label]="'Texto'" matInput rows="8" formControlName="texto" #area></textarea></mat-form-field>
+          </div>
           <div class="params">
             @for (p of parametros; track p) {
               <button mat-stroked-button type="button" (click)="inserir(p, area)">{{ p }}</button>
             }
           </div>
           @if (dados.tipo === 'orcamento') {
-            <mat-form-field appearance="outline"><mat-label>Cor primária</mat-label><input matInput formControlName="corPrimaria" placeholder="#112233" /></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>Cor secundária</mat-label><input matInput formControlName="corSecundaria" placeholder="#aabbcc" /></mat-form-field>
+            <div class="campo">
+              <mat-label class="font-semibold mb-2 block">Cor primária</mat-label>
+              <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Cor primária'" matInput formControlName="corPrimaria" placeholder="#112233" /></mat-form-field>
+            </div>
+            <div class="campo">
+              <mat-label class="font-semibold mb-2 block">Cor secundária</mat-label>
+              <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Cor secundária'" matInput formControlName="corSecundaria" placeholder="#aabbcc" /></mat-form-field>
+            </div>
           }
         }
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button type="button" (click)="ref.close()">Cancelar</button>
+      <button mat-stroked-button type="button" (click)="ref.close()">Cancelar</button>
       <button mat-flat-button type="button" (click)="salvar()">Salvar</button>
     </mat-dialog-actions>
   `,
@@ -107,38 +123,41 @@ export class ModeloFunilDialog {
 
 @Component({
   selector: 'app-modelos-funil',
-  imports: [MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule],
+  imports: [MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule],
   template: `
-    <header class="gd-cabecalho">
+    <mat-card class="cardWithShadow">
+      <div class="p-6 flex flex-wrap items-center justify-between gap-4">
       <div>
-        <h1>{{ titulo }}</h1>
-        <p>{{ apoio }}</p>
+        <mat-card-title class="mb-0">{{ titulo }}</mat-card-title>
+        <mat-card-subtitle>{{ apoio }}</mat-card-subtitle>
       </div>
       <button mat-flat-button type="button" (click)="abrir()"><mat-icon>add</mat-icon> {{ rotuloNovo }}</button>
-    </header>
-    <section class="gd-painel">
-      <div class="gd-barra">
-        <span></span>
-        <mat-form-field class="gd-busca" appearance="outline" subscriptSizing="dynamic">
+    </div>
+      <mat-card-content class="border-t border-border">
+      <div class="flex flex-wrap items-end justify-between gap-4 mb-6">
+        <div class="campo w-full sm:w-64">
+          <mat-label class="font-semibold mb-2 block">Buscar</mat-label>
+          <mat-form-field appearance="outline" class="w-full">
           <mat-icon matIconPrefix>search</mat-icon>
-          <input matInput placeholder="Buscar por nome" [value]="busca()" (input)="buscar($event)" />
+          <input matInput aria-label="Buscar" placeholder="Buscar por nome" [value]="busca()" (input)="buscar($event)" />
         </mat-form-field>
+        </div>
       </div>
       @if (lista().length === 0) {
-        <p class="gd-vazio">{{ vazio }}</p>
+        <p class="text-center text-muted py-10">{{ vazio }}</p>
       } @else {
-        <table class="gd-grade" mat-table [dataSource]="lista()">
+        <table mat-table class="min-w-full" [dataSource]="lista()">
           <ng-container matColumnDef="nome">
             <th mat-header-cell *matHeaderCellDef>Nome</th>
             <td mat-cell *matCellDef="let item">{{ item.nome }}</td>
           </ng-container>
           <ng-container matColumnDef="detalhe">
             <th mat-header-cell *matHeaderCellDef>Detalhe</th>
-            <td mat-cell *matCellDef="let item"><span class="gd-sub">{{ detalhe(item) }}</span></td>
+            <td mat-cell *matCellDef="let item"><span class="block text-xs text-muted">{{ detalhe(item) }}</span></td>
           </ng-container>
           <ng-container matColumnDef="acoes">
-            <th mat-header-cell *matHeaderCellDef class="gd-acoes">Ações</th>
-            <td mat-cell *matCellDef="let item" class="gd-acoes">
+            <th mat-header-cell *matHeaderCellDef class="text-end! whitespace-nowrap">Ações</th>
+            <td mat-cell *matCellDef="let item" class="text-end! whitespace-nowrap">
               <button mat-icon-button type="button" (click)="abrir(item)"><mat-icon>edit</mat-icon></button>
               <button mat-icon-button type="button" (click)="excluir(item)"><mat-icon>delete</mat-icon></button>
             </td>
@@ -147,7 +166,8 @@ export class ModeloFunilDialog {
           <tr mat-row *matRowDef="let row; columns: colunas"></tr>
         </table>
       }
-    </section>
+    </mat-card-content>
+    </mat-card>
   `,
 })
 export class ModelosFunilPage implements OnInit {

@@ -1,5 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -20,23 +21,38 @@ import { GdDataPipe } from '../../shared/gd-data.pipe';
     <h2 mat-dialog-title>{{ dados ? 'Editar briefing' : 'Novo briefing' }}</h2>
     <mat-dialog-content>
       @if (avisoPadrao()) {
-        <p class="gd-alerta info">Modelo padrão: clone antes de editar.</p>
+        <p class="flex gap-3 rounded p-4 mb-4 bg-light-info text-info">Modelo padrão: clone antes de editar.</p>
       }
-      <form class="gd-campos" [formGroup]="form">
-        <mat-form-field appearance="outline"><mat-label>Nome</mat-label><input matInput formControlName="nome" [readonly]="avisoPadrao()" /></mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>Origem</mat-label><input matInput formControlName="origem" [readonly]="avisoPadrao()" /></mat-form-field>
+      <form class="grid grid-cols-1 gap-4" [formGroup]="form">
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Nome</mat-label>
+          <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Nome'" matInput formControlName="nome" [readonly]="avisoPadrao()" /></mat-form-field>
+        </div>
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Origem</mat-label>
+          <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Origem'" matInput formControlName="origem" [readonly]="avisoPadrao()" /></mat-form-field>
+        </div>
         <div formArrayName="secoes">
           @for (secao of secoes.controls; track $index; let i = $index) {
             <div class="bloco" [formGroupName]="i">
               <div class="linha">
-                <mat-form-field appearance="outline" class="grow"><mat-label>Seção</mat-label><input matInput formControlName="titulo" [readonly]="avisoPadrao()" /></mat-form-field>
+                <div class="campo grow">
+                  <mat-label class="font-semibold mb-2 block">Seção</mat-label>
+                  <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Seção'" matInput formControlName="titulo" [readonly]="avisoPadrao()" /></mat-form-field>
+                </div>
                 <button mat-icon-button type="button" (click)="removerSecao(i)" [disabled]="avisoPadrao()"><mat-icon>delete</mat-icon></button>
               </div>
-              <mat-form-field appearance="outline" class="grow"><mat-label>Descrição</mat-label><textarea matInput rows="2" formControlName="descricao" [readonly]="avisoPadrao()"></textarea></mat-form-field>
+              <div class="campo grow">
+                <mat-label class="font-semibold mb-2 block">Descrição</mat-label>
+                <mat-form-field appearance="outline" class="w-full"><textarea [attr.aria-label]="'Descrição'" matInput rows="2" formControlName="descricao" [readonly]="avisoPadrao()"></textarea></mat-form-field>
+              </div>
               <div formArrayName="perguntas">
                 @for (p of perguntasDe(i).controls; track $index; let j = $index) {
                   <div class="linha" [formGroupName]="j">
-                    <mat-form-field appearance="outline" class="grow"><mat-label>Pergunta (texto curto)</mat-label><input matInput formControlName="enunciado" [readonly]="avisoPadrao()" /></mat-form-field>
+                    <div class="campo grow">
+                      <mat-label class="font-semibold mb-2 block">Pergunta (texto curto)</mat-label>
+                      <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Pergunta (texto curto)'" matInput formControlName="enunciado" [readonly]="avisoPadrao()" /></mat-form-field>
+                    </div>
                     <button mat-icon-button type="button" (click)="removerPergunta(i, j)" [disabled]="avisoPadrao()"><mat-icon>close</mat-icon></button>
                   </div>
                 }
@@ -49,7 +65,7 @@ import { GdDataPipe } from '../../shared/gd-data.pipe';
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button type="button" (click)="ref.close()">Cancelar</button>
+      <button mat-stroked-button type="button" (click)="ref.close()">Cancelar</button>
       @if (avisoPadrao()) {
         <button mat-flat-button type="button" (click)="clonar()">Clonar</button>
       } @else {
@@ -58,8 +74,8 @@ import { GdDataPipe } from '../../shared/gd-data.pipe';
     </mat-dialog-actions>
   `,
   styles: `
-    .aviso { color: var(--gd-alerta, #c47f00); margin-bottom: 12px; }
-    .bloco { border: 1px solid var(--gd-borda, #e0e0e0); border-radius: 8px; padding: 12px; margin: 8px 0; }
+    .aviso { color: var(--warning-color); margin-bottom: 12px; }
+    .bloco { border: 1px solid var(--mat-sys-outline-variant); border-radius: 8px; padding: 12px; margin: 8px 0; }
     .linha { display: flex; gap: 8px; align-items: flex-start; }
     .grow { flex: 1; }
   `,
@@ -165,35 +181,38 @@ export class BriefingEditorDialog {
 
 @Component({
   selector: 'app-modelos-briefing',
-  imports: [MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, GdDataPipe],
+  imports: [MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, GdDataPipe],
   template: `
-    <header class="gd-cabecalho">
+    <mat-card class="cardWithShadow">
+      <div class="p-6 flex flex-wrap items-center justify-between gap-4">
       <div>
-        <h1>Modelos de briefing</h1>
-        <p>Biblioteca de questionários para eventos.</p>
+        <mat-card-title class="mb-0">Modelos de briefing</mat-card-title>
+        <mat-card-subtitle>Biblioteca de questionários para eventos.</mat-card-subtitle>
       </div>
       <button mat-flat-button type="button" (click)="abrir()">
         <mat-icon>add</mat-icon>
         Novo Modelo de Briefing
       </button>
-    </header>
-    <section class="gd-painel">
-      <div class="gd-barra">
-        <span></span>
-        <mat-form-field class="gd-busca" appearance="outline" subscriptSizing="dynamic">
+    </div>
+      <mat-card-content class="border-t border-border">
+      <div class="flex flex-wrap items-end justify-between gap-4 mb-6">
+        <div class="campo w-full sm:w-64">
+          <mat-label class="font-semibold mb-2 block">Buscar</mat-label>
+          <mat-form-field appearance="outline" class="w-full">
           <mat-icon matIconPrefix>search</mat-icon>
-          <input matInput placeholder="Buscar por nome" [value]="busca()" (input)="buscar($event)" />
+          <input matInput aria-label="Buscar" placeholder="Buscar por nome" [value]="busca()" (input)="buscar($event)" />
         </mat-form-field>
+        </div>
       </div>
       @if (lista().length === 0) {
-        <p class="gd-vazio">Não há modelo de briefing.</p>
+        <p class="text-center text-muted py-10">Não há modelo de briefing.</p>
       } @else {
-        <table class="gd-grade" mat-table [dataSource]="lista()">
+        <table mat-table class="min-w-full" [dataSource]="lista()">
           <ng-container matColumnDef="nome">
             <th mat-header-cell *matHeaderCellDef>Nome</th>
             <td mat-cell *matCellDef="let item">
               {{ item.nome }}
-              @if (item.padrao) { <span class="gd-sub">Padrão</span> }
+              @if (item.padrao) { <span class="block text-xs text-muted">Padrão</span> }
             </td>
           </ng-container>
           <ng-container matColumnDef="origem">
@@ -205,8 +224,8 @@ export class BriefingEditorDialog {
             <td mat-cell *matCellDef="let item">{{ item.criadoEm | gdData }}</td>
           </ng-container>
           <ng-container matColumnDef="acoes">
-            <th mat-header-cell *matHeaderCellDef class="gd-acoes">Ações</th>
-            <td mat-cell *matCellDef="let item" class="gd-acoes">
+            <th mat-header-cell *matHeaderCellDef class="text-end! whitespace-nowrap">Ações</th>
+            <td mat-cell *matCellDef="let item" class="text-end! whitespace-nowrap">
               <button mat-icon-button type="button" aria-label="Editar" (click)="abrir(item)"><mat-icon>edit</mat-icon></button>
               <button mat-icon-button type="button" aria-label="Clonar" (click)="clonar(item)"><mat-icon>content_copy</mat-icon></button>
               <button mat-icon-button type="button" aria-label="Excluir" (click)="excluir(item)" [disabled]="item.padrao"><mat-icon>delete</mat-icon></button>
@@ -216,7 +235,8 @@ export class BriefingEditorDialog {
           <tr mat-row *matRowDef="let row; columns: colunas"></tr>
         </table>
       }
-    </section>
+    </mat-card-content>
+    </mat-card>
   `,
 })
 export class ModelosBriefingPage implements OnInit {

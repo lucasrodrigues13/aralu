@@ -1,5 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -18,12 +19,18 @@ import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
   template: `
     <h2 mat-dialog-title>{{ dados ? 'Editar galeria' : 'Nova galeria' }}</h2>
     <mat-dialog-content>
-      <form class="gd-campos" [formGroup]="form">
-        <mat-form-field appearance="outline"><mat-label>Nome</mat-label><input matInput formControlName="nome" /></mat-form-field>
+      <form class="grid grid-cols-1 gap-4" [formGroup]="form">
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Nome</mat-label>
+          <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Nome'" matInput formControlName="nome" /></mat-form-field>
+        </div>
         <div formArrayName="itens">
           @for (item of itens.controls; track $index; let i = $index) {
             <div class="linha" [formGroupName]="i">
-              <mat-form-field appearance="outline" class="grow"><mat-label>URL</mat-label><input matInput formControlName="url" /></mat-form-field>
+              <div class="campo grow">
+                <mat-label class="font-semibold mb-2 block">URL</mat-label>
+                <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'URL'" matInput formControlName="url" /></mat-form-field>
+              </div>
               <button mat-icon-button type="button" (click)="removerItem(i)"><mat-icon>close</mat-icon></button>
             </div>
           }
@@ -32,7 +39,7 @@ import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button type="button" (click)="ref.close()">Cancelar</button>
+      <button mat-stroked-button type="button" (click)="ref.close()">Cancelar</button>
       <button mat-flat-button type="button" (click)="salvar()">Salvar</button>
     </mat-dialog-actions>
   `,
@@ -93,40 +100,43 @@ export class InspiracaoEditorDialog {
 
 @Component({
   selector: 'app-modelos-inspiracoes',
-  imports: [MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule],
+  imports: [MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule],
   template: `
-    <header class="gd-cabecalho">
+    <mat-card class="cardWithShadow">
+      <div class="p-6 flex flex-wrap items-center justify-between gap-4">
       <div>
-        <h1>Modelos de inspirações</h1>
-        <p>Galerias de referência para eventos.</p>
+        <mat-card-title class="mb-0">Modelos de inspirações</mat-card-title>
+        <mat-card-subtitle>Galerias de referência para eventos.</mat-card-subtitle>
       </div>
       <button mat-flat-button type="button" (click)="abrir()">
         <mat-icon>add</mat-icon>
         Novo Modelo de Inspirações
       </button>
-    </header>
-    <section class="gd-painel">
-      <div class="gd-barra">
-        <span></span>
-        <mat-form-field class="gd-busca" appearance="outline" subscriptSizing="dynamic">
+    </div>
+      <mat-card-content class="border-t border-border">
+      <div class="flex flex-wrap items-end justify-between gap-4 mb-6">
+        <div class="campo w-full sm:w-64">
+          <mat-label class="font-semibold mb-2 block">Buscar</mat-label>
+          <mat-form-field appearance="outline" class="w-full">
           <mat-icon matIconPrefix>search</mat-icon>
-          <input matInput placeholder="Buscar por nome" [value]="busca()" (input)="buscar($event)" />
+          <input matInput aria-label="Buscar" placeholder="Buscar por nome" [value]="busca()" (input)="buscar($event)" />
         </mat-form-field>
+        </div>
       </div>
       @if (lista().length === 0) {
-        <p class="gd-vazio">Sem galerias cadastradas</p>
+        <p class="text-center text-muted py-10">Sem galerias cadastradas</p>
       } @else {
-        <table class="gd-grade" mat-table [dataSource]="lista()">
+        <table mat-table class="min-w-full" [dataSource]="lista()">
           <ng-container matColumnDef="nome">
             <th mat-header-cell *matHeaderCellDef>Nome</th>
             <td mat-cell *matCellDef="let item">
               {{ item.nome }}
-              <span class="gd-sub">{{ item.itens.length }} item(ns)</span>
+              <span class="block text-xs text-muted">{{ item.itens.length }} item(ns)</span>
             </td>
           </ng-container>
           <ng-container matColumnDef="acoes">
-            <th mat-header-cell *matHeaderCellDef class="gd-acoes">Ações</th>
-            <td mat-cell *matCellDef="let item" class="gd-acoes">
+            <th mat-header-cell *matHeaderCellDef class="text-end! whitespace-nowrap">Ações</th>
+            <td mat-cell *matCellDef="let item" class="text-end! whitespace-nowrap">
               <button mat-icon-button type="button" aria-label="Editar" (click)="abrir(item)"><mat-icon>edit</mat-icon></button>
               <button mat-icon-button type="button" aria-label="Clonar" (click)="clonar(item)"><mat-icon>content_copy</mat-icon></button>
               <button mat-icon-button type="button" aria-label="Excluir" (click)="excluir(item)"><mat-icon>delete</mat-icon></button>
@@ -136,7 +146,8 @@ export class InspiracaoEditorDialog {
           <tr mat-row *matRowDef="let row; columns: colunas"></tr>
         </table>
       }
-    </section>
+    </mat-card-content>
+    </mat-card>
   `,
 })
 export class ModelosInspiracoesPage implements OnInit {

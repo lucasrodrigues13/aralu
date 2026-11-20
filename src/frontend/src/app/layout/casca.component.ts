@@ -1,17 +1,20 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
+import { MatListModule } from '@angular/material/list';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatSidenavModule } from '@angular/material/sidenav';
-import { filter, map } from 'rxjs';
+import { MatToolbarModule } from '@angular/material/toolbar';
 import { AuthService } from '../core/auth.service';
 import { ContaClient } from '../core/conta.client';
+import { TemaService } from '../core/tema.service';
 import { NovoEventoDialog } from '../pages/eventos/novo-evento.dialog';
 import { DIALOG_LARGO } from '../shared/dialog';
-import { TemaBotao } from '../shared/tema-botao';
+import { Marca } from '../shared/marca';
 
 interface ItemMenu {
   rotulo: string;
@@ -29,84 +32,136 @@ function telaEstreita(): boolean {
   return typeof matchMedia === 'function' && matchMedia('(max-width: 959px)').matches;
 }
 
-/** Casca autenticada (docs/design-system.md, seção 4). */
+/**
+ * Casca autenticada no layout "full" do TailwindAdmin: mat-sidenav `sidebarNav` com `sidebar-list`,
+ * mat-toolbar `topbar` e `pageWrapper` (docs/design-system.md, seção 4).
+ */
 @Component({
   selector: 'app-casca',
-  host: { class: 'gd-casca' },
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, MatSidenavModule, MatButtonModule, MatIconModule, TemaBotao],
+  host: { class: 'block h-full' },
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, MatSidenavModule, MatListModule, MatToolbarModule, MatMenuModule, MatButtonModule, MatIconModule, Marca],
   template: `
-    <mat-sidenav-container>
+    <mat-sidenav-container class="mainWrapper" autosize>
       <mat-sidenav
-        class="gd-sidebar"
+        class="sidebarNav"
         [mode]="estreito() ? 'over' : 'side'"
         [opened]="!estreito() || menuAberto()"
         (closedStart)="menuAberto.set(false)"
       >
-        <div class="gd-marca">
-          <span class="gd-marca-selo">G</span>
-          <span class="gd-marca-nome">
-            <strong>gevents</strong>
-            <small>Cerimonial</small>
-          </span>
-          @if (estreito()) {
-            <button mat-icon-button type="button" (click)="fecharMenu()" aria-label="Fechar menu">
-              <mat-icon>close</mat-icon>
-            </button>
-          }
-        </div>
-        <nav class="gd-menu" aria-label="Menu principal">
-          @for (grupo of grupos; track grupo.rotulo) {
-            <div class="gd-grupo">{{ grupo.rotulo }}</div>
-            @for (item of grupo.itens; track item.rotulo) {
-              @if (item.rota && !item.emBreve) {
-                <a class="gd-item" [routerLink]="item.rota" routerLinkActive="ativo" (click)="fecharMenu()">
-                  <mat-icon>{{ item.icone }}</mat-icon>
-                  <span>{{ item.rotulo }}</span>
-                </a>
-              } @else {
-                <span class="gd-item gd-item-breve" title="Em breve" aria-disabled="true">
-                  <mat-icon>{{ item.icone }}</mat-icon>
-                  <span>{{ item.rotulo }}</span>
-                  <small>Em breve</small>
-                </span>
-              }
+        <div class="flex flex-col h-full">
+          <div class="flex items-center justify-between">
+            <div class="branding">
+              <a routerLink="/hoje" (click)="fecharMenu()" aria-label="aralu, ir para Hoje" class="inline-flex">
+                <app-marca [altura]="36" />
+              </a>
+            </div>
+            @if (estreito()) {
+              <button mat-icon-button type="button" class="mr-3" (click)="fecharMenu()" aria-label="Fechar menu">
+                <mat-icon>close</mat-icon>
+              </button>
             }
-          }
-          @if (auth.ehAdmin()) {
-            <div class="gd-grupo">Sistema</div>
-            <a class="gd-item" routerLink="/admin" routerLinkActive="ativo" (click)="fecharMenu()">
-              <mat-icon>admin_panel_settings</mat-icon>
-              <span>Administração</span>
-            </a>
-          }
-        </nav>
-        <div class="gd-usuario">
-          <span class="gd-avatar">{{ iniciais() }}</span>
-          <span [title]="auth.email()">{{ auth.email() }}</span>
-          <button mat-icon-button type="button" (click)="sair()" aria-label="Sair">
-            <mat-icon>logout</mat-icon>
-          </button>
+          </div>
+          <div class="flex-1 overflow-y-auto">
+            <mat-nav-list class="sidebar-list" aria-label="Menu principal">
+              @for (grupo of grupos; track grupo.rotulo) {
+                <div mat-subheader class="nav-caption">{{ grupo.rotulo }}</div>
+                @for (item of grupo.itens; track item.rotulo) {
+                  @if (item.rota && !item.emBreve) {
+                    <a
+                      mat-list-item
+                      class="menu-list-item"
+                      [routerLink]="item.rota"
+                      routerLinkActive="activeMenu"
+                      (click)="fecharMenu()"
+                    >
+                      <mat-icon matListItemIcon>{{ item.icone }}</mat-icon>
+                      <span class="hide-menu">{{ item.rotulo }}</span>
+                    </a>
+                  } @else {
+                    <mat-list-item class="menu-list-item disabled" title="Em breve" aria-disabled="true">
+                      <mat-icon matListItemIcon>{{ item.icone }}</mat-icon>
+                      <span class="hide-menu">{{ item.rotulo }}</span>
+                    </mat-list-item>
+                  }
+                }
+              }
+              @if (auth.ehAdmin()) {
+                <div mat-subheader class="nav-caption">Sistema</div>
+                <a mat-list-item class="menu-list-item" routerLink="/admin" routerLinkActive="activeMenu" (click)="fecharMenu()">
+                  <mat-icon matListItemIcon>admin_panel_settings</mat-icon>
+                  <span class="hide-menu">Administração</span>
+                </a>
+              }
+            </mat-nav-list>
+          </div>
+          <div class="p-6">
+            <div class="bg-light-primary flex items-center gap-3 rounded p-4">
+              <span class="rounded-full bg-primary text-white size-10 shrink-0 flex items-center justify-center text-sm font-semibold">
+                {{ iniciais() }}
+              </span>
+              <div class="min-w-0 flex-1">
+                <span class="block text-xs text-muted">Conectado como</span>
+                <span class="block text-sm font-semibold truncate" [title]="auth.email()">{{ auth.email() }}</span>
+              </div>
+              <button mat-icon-button type="button" (click)="sair()" aria-label="Sair">
+                <mat-icon>logout</mat-icon>
+              </button>
+            </div>
+          </div>
         </div>
       </mat-sidenav>
-      <mat-sidenav-content>
-        <header class="gd-topo">
+
+      <mat-sidenav-content class="contentWrapper">
+        <mat-toolbar class="topbar gap-2">
           @if (estreito()) {
-            <button mat-icon-button type="button" (click)="menuAberto.set(true)" aria-label="Abrir menu">
+            <button mat-icon-button type="button" (click)="menuAberto.set(true)" aria-label="Abrir menu" class="flex justify-center">
               <mat-icon>menu</mat-icon>
             </button>
           }
-          <span class="gd-topo-titulo">{{ titulo() }}</span>
-          <app-tema [fixo]="false" />
-        </header>
-        <main class="gd-conteudo">
+          <span class="flex-auto"></span>
+          <button
+            mat-icon-button
+            type="button"
+            class="flex justify-center"
+            (click)="tema.alternar()"
+            [attr.aria-label]="tema.escuro() ? 'Usar modo claro' : 'Usar modo escuro'"
+          >
+            <mat-icon>{{ tema.escuro() ? 'light_mode' : 'dark_mode' }}</mat-icon>
+          </button>
+          <button
+            mat-icon-button
+            type="button"
+            [matMenuTriggerFor]="perfilMenu"
+            aria-label="Menu da conta"
+            class="flex! items-center justify-center"
+          >
+            <span class="rounded-full bg-light-primary text-primary size-9 flex items-center justify-center text-xs font-semibold">
+              {{ iniciais() }}
+            </span>
+          </button>
+          <mat-menu #perfilMenu="matMenu" class="cardWithShadow">
+            <div class="px-4 py-3">
+              <span class="block text-xs text-muted">Conectado como</span>
+              <span class="block text-sm font-semibold">{{ auth.email() }}</span>
+            </div>
+            <a mat-menu-item routerLink="/perfil"><mat-icon>apartment</mat-icon>Perfil da assessoria</a>
+            <a mat-menu-item routerLink="/conta"><mat-icon>manage_accounts</mat-icon>Minha conta</a>
+            <div class="px-3 mt-3 mb-2">
+              <button mat-stroked-button type="button" class="w-full" (click)="sair()">Sair</button>
+            </div>
+          </mat-menu>
+        </mat-toolbar>
+
+        <main class="pageWrapper">
           <router-outlet />
         </main>
       </mat-sidenav-content>
     </mat-sidenav-container>
-    <nav class="gd-barra-inferior" aria-label="Navegação rápida">
+
+    <nav class="barra-inferior" aria-label="Navegação rápida">
       <a routerLink="/hoje" routerLinkActive="ativo"><mat-icon>home</mat-icon>Hoje</a>
       <a routerLink="/eventos" routerLinkActive="ativo"><mat-icon>celebration</mat-icon>Eventos</a>
-      <button type="button" class="gd-novo" (click)="novoEvento()" aria-label="Novo evento"><mat-icon>add</mat-icon></button>
+      <button type="button" class="novo" (click)="novoEvento()" aria-label="Novo evento"><mat-icon>add</mat-icon></button>
       <a routerLink="/pagamentos" routerLinkActive="ativo"><mat-icon>payments</mat-icon>Dinheiro</a>
       <button type="button" (click)="menuAberto.set(true)" aria-label="Mais opções"><mat-icon>menu</mat-icon>Mais</button>
     </nav>
@@ -114,6 +169,7 @@ function telaEstreita(): boolean {
 })
 export class CascaComponent {
   protected readonly auth = inject(AuthService);
+  protected readonly tema = inject(TemaService);
   private readonly conta = inject(ContaClient);
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
@@ -170,30 +226,6 @@ export class CascaComponent {
       ],
     },
   ];
-
-  private readonly url = toSignal(
-    this.router.events.pipe(
-      filter((evento) => evento instanceof NavigationEnd),
-      map(() => this.router.url),
-    ),
-    { initialValue: this.router.url },
-  );
-
-  /** Título da área na barra superior: o item do menu que casa com a rota. */
-  protected readonly titulo = computed(() => {
-    const url = this.url().split('?')[0];
-    let melhor = '';
-    let rotulo = 'gevents';
-    for (const grupo of this.grupos) {
-      for (const item of grupo.itens) {
-        if (item.rota && (url === item.rota || url.startsWith(item.rota + '/')) && item.rota.length > melhor.length) {
-          melhor = item.rota;
-          rotulo = item.rotulo;
-        }
-      }
-    }
-    return rotulo;
-  });
 
   protected readonly iniciais = computed(() => (this.auth.email() ?? '').slice(0, 2).toUpperCase());
 

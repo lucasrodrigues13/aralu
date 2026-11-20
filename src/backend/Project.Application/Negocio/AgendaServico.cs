@@ -9,12 +9,27 @@ public sealed record CompromissoLeitura(
     DateOnly Data,
     TimeOnly? Hora,
     Guid? EventoId,
-    bool DeEvento);
+    bool DeEvento,
+    string Origem = "compromisso",
+    bool Concluida = false,
+    Guid? OportunidadeId = null,
+    string? Contexto = null);
+
+/// <summary>Tarefa (de evento ou do funil) com prazo, exibida no calendário.</summary>
+public sealed record TarefaNaAgenda(
+    Guid Id,
+    string Titulo,
+    DateOnly Prazo,
+    bool Concluida,
+    Guid? EventoId,
+    Guid? OportunidadeId,
+    string? Contexto);
 
 public sealed record SalvarCompromisso(string? Descricao, DateOnly? Data, TimeOnly? Hora);
 
 public sealed class AgendaServico(IDados dados)
 {
+    /// <summary>Compromissos e todas as tarefas com prazo no período (tarefas entram como itens só de leitura).</summary>
     public async Task<IReadOnlyList<CompromissoLeitura>> ListarAsync(
         string contaId,
         DateOnly? de,
@@ -22,7 +37,21 @@ public sealed class AgendaServico(IDados dados)
         CancellationToken ct)
     {
         var itens = await dados.ListarCompromissosAsync(contaId, de, ate, ct);
-        return itens.Select(Ler).ToArray();
+        var tarefas = await dados.ListarTarefasDaAgendaAsync(contaId, de, ate, ct);
+        return itens.Select(Ler)
+            .Concat(tarefas.Select(tarefa => new CompromissoLeitura(
+                tarefa.Id,
+                tarefa.Titulo,
+                tarefa.Prazo,
+                null,
+                tarefa.EventoId,
+                false,
+                tarefa.EventoId is not null ? "tarefa" : "tarefaFunil",
+                tarefa.Concluida,
+                tarefa.OportunidadeId,
+                tarefa.Contexto)))
+            .OrderBy(item => item.Data)
+            .ToArray();
     }
 
     public async Task<Resultado<CompromissoLeitura>> CriarAsync(string contaId, SalvarCompromisso pedido, CancellationToken ct)

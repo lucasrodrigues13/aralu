@@ -1,5 +1,6 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -9,72 +10,93 @@ import { mensagemDeErro } from '../../core/mensagem-erro';
 import { ToastService } from '../../core/toast.service';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { GdDinheiroPipe } from '../../shared/gd-dinheiro.pipe';
+import { STATUS } from '../../shared/status';
 
 /** Pagamentos a fornecedores de todos os eventos (SPEC-029 §6.5, RF-097). */
 @Component({
   selector: 'app-pagamentos',
-  imports: [RouterLink, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, GdDataPipe, GdDinheiroPipe],
+  imports: [MatCardModule, RouterLink, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, GdDataPipe, GdDinheiroPipe],
   template: `
-    <header class="gd-cabecalho">
-      <div>
-        <h1>Pagamentos</h1>
-        <p>Parcelas a fornecedores de todos os eventos.</p>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+      <mat-card class="shadow-none text-center mb-0! h-full bg-light-warning">
+        <mat-card-content>
+          <mat-icon class="text-warning">schedule</mat-icon>
+          <h4 class="text-sm font-semibold text-warning mt-2!">Pendente</h4>
+          <h6 class="text-xl font-semibold text-warning mt-2!">{{ totalPendente() | gdDinheiro }}</h6>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="shadow-none text-center mb-0! h-full bg-light-success">
+        <mat-card-content>
+          <mat-icon class="text-success">check_circle</mat-icon>
+          <h4 class="text-sm font-semibold text-success mt-2!">Pago</h4>
+          <h6 class="text-xl font-semibold text-success mt-2!">{{ totalPago() | gdDinheiro }}</h6>
+        </mat-card-content>
+      </mat-card>
+    </div>
+    <mat-card class="cardWithShadow">
+      <div class="p-6">
+        <mat-card-title class="mb-0">Pagamentos</mat-card-title>
+        <mat-card-subtitle>Parcelas a fornecedores de todos os eventos.</mat-card-subtitle>
       </div>
-    </header>
-    <section class="gd-numeros">
-      <div class="gd-numero"><span>Pendente</span><strong>{{ totalPendente() | gdDinheiro }}</strong></div>
-      <div class="gd-numero"><span>Pago</span><strong>{{ totalPago() | gdDinheiro }}</strong></div>
-    </section>
-    <section class="gd-painel">
-      <div class="gd-barra">
-        <div class="gd-filtros">
-          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-card-content class="border-t border-border">
+        <div class="flex flex-wrap items-end gap-4 mb-6">
+          <div class="campo w-full sm:w-48">
+            <mat-label class="font-semibold mb-2 block">Situação</mat-label>
+            <mat-form-field appearance="outline" class="w-full">
             <mat-select [value]="situacao()" (valueChange)="situacao.set($event)" aria-label="Situação">
-              <mat-option value="">Todas as situações</mat-option>
+              <mat-option value="">Todas</mat-option>
               <mat-option value="Pendente">Pendentes</mat-option>
               <mat-option value="Pago">Pagas</mat-option>
             </mat-select>
           </mat-form-field>
-          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          </div>
+          <div class="campo w-full sm:w-48">
+            <mat-label class="font-semibold mb-2 block">Evento</mat-label>
+            <mat-form-field appearance="outline" class="w-full">
             <mat-select [value]="evento()" (valueChange)="evento.set($event)" aria-label="Evento">
-              <mat-option value="">Todos os eventos</mat-option>
+              <mat-option value="">Todos</mat-option>
               @for (item of eventos(); track item.id) { <mat-option [value]="item.id">{{ item.nome }}</mat-option> }
             </mat-select>
           </mat-form-field>
-          <mat-form-field class="gd-busca" appearance="outline" subscriptSizing="dynamic">
+          </div>
+          <div class="campo w-full sm:w-64">
+            <mat-label class="font-semibold mb-2 block">Buscar</mat-label>
+            <mat-form-field appearance="outline" class="w-full">
             <mat-icon matIconPrefix>search</mat-icon>
-            <input matInput placeholder="Buscar serviço ou fornecedor" [value]="busca()" (input)="busca.set($any($event.target).value)" />
+            <input matInput aria-label="Buscar" placeholder="Buscar serviço ou fornecedor" [value]="busca()" (input)="busca.set($any($event.target).value)" />
           </mat-form-field>
+          </div>
         </div>
-      </div>
       @if (visiveis().length === 0) {
-        <p class="gd-vazio">Nenhum pagamento para mostrar.</p>
+        <p class="text-center text-muted py-10">Nenhum pagamento para mostrar.</p>
       } @else {
-        <div class="gd-tabela-rolagem">
-          <table class="gd-grade">
+        <div class="relative overflow-auto">
+          <table class="tabela">
             <thead>
-              <tr><th>Vencimento</th><th>Evento</th><th>Serviço</th><th>Fornecedor</th><th class="gd-direita">Valor</th><th>Situação</th></tr>
+              <tr><th>Vencimento</th><th>Evento</th><th>Serviço</th><th>Fornecedor</th><th class="text-end!">Valor</th><th>Situação</th></tr>
             </thead>
             <tbody>
               @for (item of visiveis(); track $index) {
                 <tr>
                   <td>{{ item.vencimento | gdData }}</td>
                   <td><a [routerLink]="['/eventos', item.eventoId, 'dinheiro']">{{ item.evento }}</a></td>
-                  <td>{{ item.servico }} <span class="gd-sub">{{ item.entrada ? 'Entrada' : 'Parcela ' + item.numero }}</span></td>
+                  <td>{{ item.servico }} <span class="block text-xs text-muted">{{ item.entrada ? 'Entrada' : 'Parcela ' + item.numero }}</span></td>
                   <td>{{ item.fornecedor ?? '—' }}</td>
-                  <td class="gd-direita valor">{{ item.valor | gdDinheiro }}</td>
-                  <td><span [class]="item.situacao === 'Pago' ? 'gd-status ok' : 'gd-status alerta'">{{ item.situacao === 'Pago' ? 'Pago' : 'Pendente' }}</span></td>
+                  <td class="text-end! valor">{{ item.valor | gdDinheiro }}</td>
+                  <td><span [class]="item.situacao === 'Pago' ? status.sucesso : status.alerta">{{ item.situacao === 'Pago' ? 'Pago' : 'Pendente' }}</span></td>
                 </tr>
               }
             </tbody>
           </table>
         </div>
       }
-    </section>
+      </mat-card-content>
+    </mat-card>
   `,
   styles: `.valor { font-weight: 600; white-space: nowrap; }`,
 })
 export class PagamentosPage implements OnInit {
+  protected readonly status = STATUS;
   private readonly dinheiro = inject(DinheiroClient);
   private readonly toast = inject(ToastService);
   private readonly lista = signal<PagamentoFornecedor[]>([]);

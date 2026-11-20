@@ -1,5 +1,8 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatListModule } from '@angular/material/list';
+import { MatCardModule } from '@angular/material/card';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -30,79 +33,76 @@ const NOVO_CLIENTE = '__novo__';
 /** Criação curta do evento num modal só (SPEC-008 v2, 6.1). */
 @Component({
   selector: 'app-novo-evento',
-  imports: [
-    ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule,
-    MatIconModule, MatAutocompleteModule, CampoDataComponent, CampoHoraComponent, MascaraDirective,
-  ],
+  imports: [MatChipsModule, MatListModule, MatCardModule, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatAutocompleteModule, CampoDataComponent, CampoHoraComponent, MascaraDirective],
   template: `
     <h2 mat-dialog-title>Novo evento</h2>
-    <p class="gd-dialog-descricao">Só o tipo e o nome são obrigatórios. O resto pode ficar para depois.</p>
+    <p class="text-muted text-sm px-6 -mt-2 mb-4">Só o tipo e o nome são obrigatórios. O resto pode ficar para depois.</p>
     <mat-dialog-content>
-      <form id="novo-evento-form" class="gd-campos duas" [formGroup]="form" (ngSubmit)="criar()">
-        <fieldset class="inteiro gd-grupo-opcoes">
-          <legend class="gd-rotulo">Tipo do evento <span class="gd-obrigatorio">*</span></legend>
-          <div class="gd-opcoes">
+      <form id="novo-evento-form" class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4" [formGroup]="form" (ngSubmit)="criar()">
+        <div class="sm:col-span-2">
+          <mat-label class="font-semibold mb-2 block">Tipo do evento <span class="text-error">*</span></mat-label>
+          <mat-chip-listbox [value]="tipo()" (change)="$event.value && escolherTipo($event.value)" aria-label="Tipo do evento">
             @for (opcao of tipos; track opcao.valor) {
-              <button
-                type="button"
-                class="gd-opcao"
-                [class.ativa]="tipo() === opcao.valor"
-                [attr.aria-pressed]="tipo() === opcao.valor"
-                (click)="escolherTipo(opcao.valor)"
-              >
-                <mat-icon>{{ icone(opcao.valor) }}</mat-icon>
-                <span>{{ opcao.rotulo }}</span>
-              </button>
+              <mat-chip-option class="text-sm" [value]="opcao.valor">
+                <mat-icon matChipAvatar>{{ icone(opcao.valor) }}</mat-icon>
+                {{ opcao.rotulo }}
+              </mat-chip-option>
             }
-          </div>
-        </fieldset>
+          </mat-chip-listbox>
+        </div>
 
         @if (tipo()) {
-          <fieldset class="inteiro gd-grupo-opcoes">
-            <legend class="gd-rotulo">Pacote</legend>
-            <div class="gd-opcoes largas">
-              @for (modelo of modelosDoTipo(); track modelo.id) {
-                <button
-                  type="button"
-                  class="gd-opcao"
-                  [class.ativa]="modeloId() === modelo.id"
-                  [attr.aria-pressed]="modeloId() === modelo.id"
-                  (click)="modeloId.set(modelo.id)"
-                >
-                  <strong>{{ modelo.nome }}</strong>
-                  <span class="gd-sub">{{ contagem(modelo) }}</span>
-                </button>
-              }
-              <button
-                type="button"
-                class="gd-opcao"
-                [class.ativa]="modeloId() === ''"
-                [attr.aria-pressed]="modeloId() === ''"
-                (click)="modeloId.set('')"
-              >
-                <strong>Começar vazio</strong>
-                <span class="gd-sub">Sem tarefas nem serviços</span>
-              </button>
-            </div>
+          <div class="sm:col-span-2">
+            <mat-label class="font-semibold mb-2 block">Pacote</mat-label>
+            <mat-card class="border! border-border! shadow-none mb-0!">
+              <mat-selection-list [multiple]="false" (selectionChange)="modeloId.set($event.options[0].value)" aria-label="Pacote">
+                @for (modelo of modelosDoTipo(); track modelo.id) {
+                  <mat-list-option [value]="modelo.id" [selected]="modeloId() === modelo.id">
+                    <span matListItemTitle class="font-semibold">{{ modelo.nome }}</span>
+                    <span matListItemLine>{{ contagem(modelo) }}</span>
+                  </mat-list-option>
+                }
+                <mat-list-option value="" [selected]="modeloId() === ''">
+                  <span matListItemTitle class="font-semibold">Começar vazio</span>
+                  <span matListItemLine>Sem tarefas nem serviços</span>
+                </mat-list-option>
+              </mat-selection-list>
+            </mat-card>
             @if (modelosDoTipo().length === 0) {
-              <p class="gd-apoio">Crie modelos em Modelos de evento para já começar com tarefas e serviços.</p>
+              <p class="text-sm text-muted mt-2">Crie modelos em Modelos de evento para já começar com tarefas e serviços.</p>
             }
-          </fieldset>
+          </div>
 
           @if (tipo() === 'Casamento') {
-            <mat-form-field><mat-label>Nome da noiva</mat-label><input matInput formControlName="primeiroNome" required /></mat-form-field>
-            <mat-form-field><mat-label>Nome do noivo</mat-label><input matInput formControlName="segundoNome" required /></mat-form-field>
+            <div class="campo">
+              <mat-label class="font-semibold mb-2 block">Nome da noiva</mat-label>
+              <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Nome da noiva'" matInput formControlName="primeiroNome" required /></mat-form-field>
+            </div>
+            <div class="campo">
+              <mat-label class="font-semibold mb-2 block">Nome do noivo</mat-label>
+              <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Nome do noivo'" matInput formControlName="segundoNome" required /></mat-form-field>
+            </div>
           } @else {
-            <mat-form-field class="inteiro"><mat-label>{{ rotuloNome() }}</mat-label><input matInput formControlName="primeiroNome" required /></mat-form-field>
+            <div class="campo sm:col-span-2">
+              <mat-label class="font-semibold mb-2 block">{{ rotuloNome() }}</mat-label>
+              <mat-form-field appearance="outline" class="w-full"><input matInput formControlName="primeiroNome" required /></mat-form-field>
+            </div>
           }
           <app-campo-data rotulo="Data" formControlName="data" />
           <app-campo-hora rotulo="Horário" formControlName="hora" />
-          <mat-form-field><mat-label>Convidados estimados</mat-label><input matInput type="number" min="0" formControlName="convidados" /></mat-form-field>
-          <mat-form-field><mat-label>Local</mat-label><input matInput formControlName="local" placeholder="Nome do espaço" /></mat-form-field>
+          <div class="campo">
+            <mat-label class="font-semibold mb-2 block">Convidados estimados</mat-label>
+            <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Convidados estimados'" matInput type="number" min="0" formControlName="convidados" /></mat-form-field>
+          </div>
+          <div class="campo">
+            <mat-label class="font-semibold mb-2 block">Local</mat-label>
+            <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Local'" matInput formControlName="local" placeholder="Nome do espaço" /></mat-form-field>
+          </div>
 
-          <mat-form-field class="inteiro">
-            <mat-label>Cliente</mat-label>
-            <input
+          <div class="campo sm:col-span-2">
+            <mat-label class="font-semibold mb-2 block">Cliente</mat-label>
+            <mat-form-field appearance="outline" class="w-full">
+            <input [attr.aria-label]="'Cliente'"
               matInput
               formControlName="buscaCliente"
               [matAutocomplete]="listaClientes"
@@ -110,7 +110,7 @@ const NOVO_CLIENTE = '__novo__';
             />
             <mat-autocomplete #listaClientes="matAutocomplete" (optionSelected)="escolherCliente($event.option.value)">
               @for (cliente of clientesFiltrados(); track cliente.id) {
-                <mat-option [value]="cliente.id">{{ cliente.nome }} <span class="gd-sub">· {{ cliente.celular }}</span></mat-option>
+                <mat-option [value]="cliente.id">{{ cliente.nome }} <span class="block text-xs text-muted">· {{ cliente.celular }}</span></mat-option>
               }
               <mat-option [value]="novoCliente">
                 <mat-icon>person_add</mat-icon> Cadastrar novo{{ busca() ? ': ' + busca() : '' }}
@@ -120,18 +120,24 @@ const NOVO_CLIENTE = '__novo__';
               <mat-hint>Vinculado: {{ cliente.nome }}</mat-hint>
             }
           </mat-form-field>
+          </div>
           @if (cadastrandoCliente()) {
-            <mat-form-field><mat-label>Nome do cliente</mat-label><input matInput formControlName="clienteNome" required /></mat-form-field>
-            <mat-form-field>
-              <mat-label>WhatsApp</mat-label>
-              <input matInput formControlName="clienteWhatsApp" gdMascara="celular" inputmode="tel" placeholder="(00) 00000-0000" required />
+            <div class="campo">
+              <mat-label class="font-semibold mb-2 block">Nome do cliente</mat-label>
+              <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Nome do cliente'" matInput formControlName="clienteNome" required /></mat-form-field>
+            </div>
+            <div class="campo">
+              <mat-label class="font-semibold mb-2 block">WhatsApp</mat-label>
+              <mat-form-field appearance="outline" class="w-full">
+              <input [attr.aria-label]="'WhatsApp'" matInput formControlName="clienteWhatsApp" gdMascara="celular" inputmode="tel" placeholder="(00) 00000-0000" required />
             </mat-form-field>
+            </div>
           }
         }
       </form>
     </mat-dialog-content>
     <mat-dialog-actions>
-      <button mat-button class="gd-secundario" type="button" mat-dialog-close>Cancelar</button>
+      <button mat-stroked-button type="button" mat-dialog-close>Cancelar</button>
       <button mat-flat-button type="submit" form="novo-evento-form" [disabled]="!tipo() || salvando()">Criar evento</button>
     </mat-dialog-actions>
   `,

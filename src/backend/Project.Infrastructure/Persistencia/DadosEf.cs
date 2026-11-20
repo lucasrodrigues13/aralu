@@ -1021,6 +1021,52 @@ public sealed class DadosEf(AppDbContext banco) : IDados
 
     public Task SalvarNegocioAsync(CancellationToken ct) => banco.SaveChangesAsync(ct);
 
+    public async Task<IReadOnlyList<TarefaNaAgenda>> ListarTarefasDaAgendaAsync(
+        string contaId,
+        DateOnly? de,
+        DateOnly? ate,
+        CancellationToken ct)
+    {
+        var doEvento = banco.Tarefas.AsNoTracking().Where(item => item.ContaId == contaId && item.Prazo != null);
+        var doFunil = banco.TarefasFunil.AsNoTracking().Where(item => item.ContaId == contaId);
+        if (de is DateOnly inicio)
+        {
+            doEvento = doEvento.Where(item => item.Prazo >= inicio);
+            doFunil = doFunil.Where(item => item.Prazo >= inicio);
+        }
+
+        if (ate is DateOnly fim)
+        {
+            doEvento = doEvento.Where(item => item.Prazo <= fim);
+            doFunil = doFunil.Where(item => item.Prazo <= fim);
+        }
+
+        var eventos = await (
+            from tarefa in doEvento
+            join evento in banco.Eventos.AsNoTracking() on tarefa.EventoId equals evento.Id
+            select new TarefaNaAgenda(
+                tarefa.Id,
+                tarefa.Titulo,
+                tarefa.Prazo!.Value,
+                tarefa.Situacao == SituacaoTarefa.Concluida,
+                tarefa.EventoId,
+                null,
+                evento.Nome)).ToListAsync(ct);
+        var funil = await (
+            from tarefa in doFunil
+            join oportunidade in banco.Oportunidades.AsNoTracking() on tarefa.OportunidadeId equals oportunidade.Id into ops
+            from oportunidade in ops.DefaultIfEmpty()
+            select new TarefaNaAgenda(
+                tarefa.Id,
+                tarefa.Titulo,
+                tarefa.Prazo,
+                tarefa.Completa,
+                null,
+                tarefa.OportunidadeId,
+                oportunidade == null ? null : oportunidade.Nome)).ToListAsync(ct);
+        return [.. eventos, .. funil];
+    }
+
     public async Task<IReadOnlyList<CompromissoAgenda>> ListarCompromissosAsync(
         string contaId,
         DateOnly? de,

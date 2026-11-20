@@ -8,33 +8,39 @@ import { MatInputModule } from '@angular/material/input';
 import { ContaClient } from '../../core/conta.client';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { ToastService } from '../../core/toast.service';
+import { Marca } from '../../shared/marca';
 
 @Component({
   selector: 'app-cadastro',
-  imports: [ReactiveFormsModule, RouterLink, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule],
+  imports: [ReactiveFormsModule, RouterLink, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule, Marca],
   template: `
-    <section class="gd-publica">
-      <mat-card>
-        <mat-card-header>
-          <mat-card-title>Criar conta</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <form [formGroup]="formulario" (ngSubmit)="enviar()">
-            <mat-form-field appearance="outline">
-              <mat-label>E-mail</mat-label>
-              <input matInput type="email" formControlName="email" autocomplete="username" />
+    <section class="flex min-h-screen w-full items-center justify-center p-4 bg-light">
+      <mat-card class="cardWithShadow w-full max-w-[440px] mb-0!">
+        <div class="px-6 pt-8"><app-marca [altura]="40" /></div>
+        <div class="px-6 pt-6"><h3 class="text-xl font-semibold">Criar conta</h3></div>
+        <mat-card-content class="pt-6!">
+          <form class="grid grid-cols-1 gap-4" [formGroup]="formulario" (ngSubmit)="enviar()">
+            <div class="campo">
+              <mat-label class="font-semibold mb-2 block">E-mail</mat-label>
+              <mat-form-field appearance="outline" class="w-full">
+              <input [attr.aria-label]="'E-mail'" matInput type="email" formControlName="email" autocomplete="username" />
             </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>Senha</mat-label>
-              <input matInput type="password" formControlName="senha" autocomplete="new-password" />
+            </div>
+            <div class="campo">
+              <mat-label class="font-semibold mb-2 block">Senha</mat-label>
+              <mat-form-field appearance="outline" class="w-full">
+              <input [attr.aria-label]="'Senha'" matInput type="password" formControlName="senha" autocomplete="new-password" />
             </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>Confirme a senha</mat-label>
-              <input matInput type="password" formControlName="confirmacao" autocomplete="new-password" />
+            </div>
+            <div class="campo">
+              <mat-label class="font-semibold mb-2 block">Confirme a senha</mat-label>
+              <mat-form-field appearance="outline" class="w-full">
+              <input [attr.aria-label]="'Confirme a senha'" matInput type="password" formControlName="confirmacao" autocomplete="new-password" />
             </mat-form-field>
-            <button mat-flat-button type="submit" [disabled]="formulario.invalid || enviando()">Cadastrar</button>
+            </div>
+            <button mat-flat-button class="w-full" type="submit" [disabled]="formulario.invalid || enviando()">Cadastrar</button>
           </form>
-          <p><a routerLink="/entrar">Já tenho conta</a></p>
+          <p class="text-center mt-6"><a class="text-primary font-semibold no-underline" routerLink="/entrar">Já tenho conta</a></p>
         </mat-card-content>
       </mat-card>
     </section>

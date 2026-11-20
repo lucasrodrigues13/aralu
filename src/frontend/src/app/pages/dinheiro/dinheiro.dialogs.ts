@@ -24,49 +24,53 @@ const BASE = [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFiel
 /** Valor do contrato com o casal, entrada e parcelas (SPEC-029 §6.1). */
 @Component({
   selector: 'app-contrato-casal-dialog',
-  imports: [...BASE, MatCheckboxModule, CampoDataComponent, CampoDinheiroComponent],
+  imports: [MatFormFieldModule, ...BASE, MatCheckboxModule, CampoDataComponent, CampoDinheiroComponent],
   template: `
     <h2 mat-dialog-title>Contrato com o casal</h2>
-    <p class="gd-dialog-descricao">Valor, entrada e parcelas. As parcelas do casal são geradas de novo ao salvar.</p>
+    <p class="text-muted text-sm px-6 -mt-2 mb-4">Valor, entrada e parcelas. As parcelas do casal são geradas de novo ao salvar.</p>
     <mat-dialog-content>
-      <form id="contrato-casal" class="gd-campos duas" [formGroup]="form" (ngSubmit)="salvar()">
+      <form id="contrato-casal" class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4" [formGroup]="form" (ngSubmit)="salvar()">
         <app-campo-dinheiro rotulo="Valor do contrato" formControlName="valor" />
-        <mat-form-field appearance="outline">
-          <mat-label>Número de parcelas</mat-label>
-          <input matInput type="number" min="1" max="120" formControlName="quantidadeParcelas" required />
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Número de parcelas</mat-label>
+          <mat-form-field appearance="outline" class="w-full">
+          <input [attr.aria-label]="'Número de parcelas'" matInput type="number" min="1" max="120" formControlName="quantidadeParcelas" required />
           @if (form.controls.quantidadeParcelas.invalid) { <mat-error>De 1 a 120.</mat-error> }
         </mat-form-field>
+        </div>
         <app-campo-data rotulo="Vencimento da 1ª parcela" formControlName="primeiraParcela" />
-        <span></span>
-        <mat-checkbox class="inteiro" formControlName="comEntrada">Tem entrada</mat-checkbox>
+        <mat-checkbox class="sm:col-span-2" formControlName="comEntrada">Tem entrada</mat-checkbox>
         @if (form.controls.comEntrada.value) {
-          <mat-form-field appearance="outline">
-            <mat-label>Entrada em</mat-label>
-            <mat-select formControlName="baseEntrada">
+          <div class="campo">
+            <mat-label class="font-semibold mb-2 block">Entrada em</mat-label>
+            <mat-form-field appearance="outline" class="w-full">
+            <mat-select [attr.aria-label]="'Entrada em'" formControlName="baseEntrada">
               <mat-option value="Valor">Valor (R$)</mat-option>
               <mat-option value="Porcentagem">Porcentagem (%)</mat-option>
             </mat-select>
           </mat-form-field>
+          </div>
           @if (form.controls.baseEntrada.value === 'Porcentagem') {
-            <mat-form-field appearance="outline">
-              <mat-label>Entrada (%)</mat-label>
-              <input matInput type="number" min="1" max="100" formControlName="valorEntrada" />
+            <div class="campo">
+              <mat-label class="font-semibold mb-2 block">Entrada (%)</mat-label>
+              <mat-form-field appearance="outline" class="w-full">
+              <input [attr.aria-label]="'Entrada (%)'" matInput type="number" min="1" max="100" formControlName="valorEntrada" />
               <span matTextSuffix>%</span>
             </mat-form-field>
+            </div>
           } @else {
             <app-campo-dinheiro rotulo="Valor da entrada" formControlName="valorEntrada" />
           }
           <app-campo-data rotulo="Data da entrada" formControlName="dataEntrada" />
         }
       </form>
-      @if (erro) { <p class="gd-erro-texto">{{ erro }}</p> }
+      @if (erro) { <p class="text-error text-xs">{{ erro }}</p> }
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button type="button" (click)="ref.close()">Cancelar</button>
+      <button mat-stroked-button type="button" (click)="ref.close()">Cancelar</button>
       <button mat-flat-button type="submit" form="contrato-casal">Gerar parcelas</button>
     </mat-dialog-actions>
   `,
-  styles: `.gd-erro-texto { color: var(--gd-destructive); font-size: 13px; margin: 8px 0 0; }`,
 })
 export class ContratoCasalDialog {
   protected readonly ref = inject(MatDialogRef<ContratoCasalDialog, DefinirContratoCasal>);
@@ -109,31 +113,32 @@ export class ContratoCasalDialog {
 /** "Recebi": valor (aceita parcial), forma e data (SPEC-029 §6.3). */
 @Component({
   selector: 'app-receber-dialog',
-  imports: [...BASE, CampoDataComponent, CampoDinheiroComponent, GdDinheiroPipe],
+  imports: [MatFormFieldModule, ...BASE, CampoDataComponent, CampoDinheiroComponent, GdDinheiroPipe],
   template: `
     <h2 mat-dialog-title>Recebi</h2>
-    <p class="gd-dialog-descricao">
+    <p class="text-muted text-sm px-6 -mt-2 mb-4">
       {{ dados.entrada ? 'Entrada' : 'Parcela ' + dados.numero }} · falta receber {{ dados.saldo | gdDinheiro }}.
     </p>
     <mat-dialog-content>
-      <form id="receber" class="gd-campos" [formGroup]="form" (ngSubmit)="salvar()">
+      <form id="receber" class="grid grid-cols-1 gap-4" [formGroup]="form" (ngSubmit)="salvar()">
         <app-campo-dinheiro rotulo="Valor recebido" formControlName="valor" />
-        <mat-form-field appearance="outline">
-          <mat-label>Forma de pagamento</mat-label>
-          <mat-select formControlName="forma">
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Forma de pagamento</mat-label>
+          <mat-form-field appearance="outline" class="w-full">
+          <mat-select [attr.aria-label]="'Forma de pagamento'" formControlName="forma">
             @for (forma of formas; track forma.valor) { <mat-option [value]="forma.valor">{{ forma.rotulo }}</mat-option> }
           </mat-select>
         </mat-form-field>
+        </div>
         <app-campo-data rotulo="Data do recebimento" formControlName="data" />
       </form>
-      @if (erro) { <p class="gd-erro-texto">{{ erro }}</p> }
+      @if (erro) { <p class="text-error text-xs">{{ erro }}</p> }
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button type="button" (click)="ref.close()">Cancelar</button>
+      <button mat-stroked-button type="button" (click)="ref.close()">Cancelar</button>
       <button mat-flat-button type="submit" form="receber">Registrar</button>
     </mat-dialog-actions>
   `,
-  styles: `.gd-erro-texto { color: var(--gd-destructive); font-size: 13px; margin: 8px 0 0; }`,
 })
 export class ReceberDialog {
   protected readonly dados = inject<ParcelaCasal>(MAT_DIALOG_DATA);
@@ -164,22 +169,24 @@ export class ReceberDialog {
 /** Pede a chave Pix quando o Perfil não tem (SPEC-029 §6.2). */
 @Component({
   selector: 'app-chave-pix-dialog',
-  imports: [...BASE],
+  imports: [MatFormFieldModule, ...BASE],
   template: `
     <h2 mat-dialog-title>Chave Pix</h2>
-    <p class="gd-dialog-descricao">Seu Perfil ainda não tem chave Pix. Informe a chave que vai na mensagem de cobrança.</p>
+    <p class="text-muted text-sm px-6 -mt-2 mb-4">Seu Perfil ainda não tem chave Pix. Informe a chave que vai na mensagem de cobrança.</p>
     <mat-dialog-content>
-      <form id="chave-pix" class="gd-campos" (ngSubmit)="ok()">
-        <mat-form-field appearance="outline">
-          <mat-label>Chave Pix</mat-label>
-          <input matInput [formControl]="chave" maxlength="140" required />
+      <form id="chave-pix" class="grid grid-cols-1 gap-4" (ngSubmit)="ok()">
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Chave Pix</mat-label>
+          <mat-form-field appearance="outline" class="w-full">
+          <input [attr.aria-label]="'Chave Pix'" matInput [formControl]="chave" maxlength="140" required />
           @if (chave.invalid && chave.touched) { <mat-error>Informe a chave Pix.</mat-error> }
           <mat-hint>Para não pedir de novo, cadastre a chave no Perfil.</mat-hint>
         </mat-form-field>
+        </div>
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button type="button" (click)="ref.close()">Cancelar</button>
+      <button mat-stroked-button type="button" (click)="ref.close()">Cancelar</button>
       <button mat-flat-button type="submit" form="chave-pix">Abrir WhatsApp</button>
     </mat-dialog-actions>
   `,
@@ -200,39 +207,44 @@ export class ChavePixDialog {
 /** Despesa ou entrada avulsa do evento (SPEC-029 §6.6). */
 @Component({
   selector: 'app-lancamento-dialog',
-  imports: [...BASE, CampoDataComponent, CampoDinheiroComponent],
+  imports: [MatFormFieldModule, ...BASE, CampoDataComponent, CampoDinheiroComponent],
   template: `
     <h2 mat-dialog-title>{{ dados ? 'Editar lançamento' : 'Novo lançamento' }}</h2>
-    <p class="gd-dialog-descricao">Despesa ou entrada do evento, por categoria.</p>
+    <p class="text-muted text-sm px-6 -mt-2 mb-4">Despesa ou entrada do evento, por categoria.</p>
     <mat-dialog-content>
-      <form id="lancamento" class="gd-campos duas" [formGroup]="form" (ngSubmit)="salvar()">
-        <mat-form-field appearance="outline">
-          <mat-label>Tipo</mat-label>
-          <mat-select formControlName="tipo">
+      <form id="lancamento" class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4" [formGroup]="form" (ngSubmit)="salvar()">
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Tipo</mat-label>
+          <mat-form-field appearance="outline" class="w-full">
+          <mat-select [attr.aria-label]="'Tipo'" formControlName="tipo">
             <mat-option value="Despesa">Despesa</mat-option>
             <mat-option value="Entrada">Entrada</mat-option>
           </mat-select>
         </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Categoria</mat-label>
-          <input matInput formControlName="categoria" maxlength="80" required placeholder="Ex.: Transporte, Alimentação" />
+        </div>
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Categoria</mat-label>
+          <mat-form-field appearance="outline" class="w-full">
+          <input [attr.aria-label]="'Categoria'" matInput formControlName="categoria" maxlength="80" required placeholder="Ex.: Transporte, Alimentação" />
           @if (form.controls.categoria.invalid) { <mat-error>Informe a categoria.</mat-error> }
         </mat-form-field>
+        </div>
         <app-campo-dinheiro rotulo="Valor" formControlName="valor" />
         <app-campo-data rotulo="Data" formControlName="data" />
-        <mat-form-field class="inteiro" appearance="outline">
-          <mat-label>Descrição</mat-label>
-          <input matInput formControlName="descricao" maxlength="200" />
+        <div class="campo sm:col-span-2">
+          <mat-label class="font-semibold mb-2 block">Descrição</mat-label>
+          <mat-form-field appearance="outline" class="w-full">
+          <input [attr.aria-label]="'Descrição'" matInput formControlName="descricao" maxlength="200" />
         </mat-form-field>
+        </div>
       </form>
-      @if (erro) { <p class="gd-erro-texto">{{ erro }}</p> }
+      @if (erro) { <p class="text-error text-xs">{{ erro }}</p> }
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button type="button" (click)="ref.close()">Cancelar</button>
+      <button mat-stroked-button type="button" (click)="ref.close()">Cancelar</button>
       <button mat-flat-button type="submit" form="lancamento">Salvar</button>
     </mat-dialog-actions>
   `,
-  styles: `.gd-erro-texto { color: var(--gd-destructive); font-size: 13px; margin: 8px 0 0; }`,
 })
 export class LancamentoDialog {
   protected readonly dados = inject<LancamentoEvento | null>(MAT_DIALOG_DATA);

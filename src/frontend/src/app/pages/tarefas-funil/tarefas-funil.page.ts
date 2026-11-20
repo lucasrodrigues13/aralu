@@ -1,5 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -22,27 +24,40 @@ import { GdDataPipe } from '../../shared/gd-data.pipe';
   template: `
     <h2 mat-dialog-title>{{ dados ? 'Editar tarefa' : 'Nova tarefa' }}</h2>
     <mat-dialog-content>
-      <form class="gd-campos" [formGroup]="form">
-        <mat-form-field appearance="outline"><mat-label>Título</mat-label><input matInput formControlName="titulo" /></mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Oportunidade</mat-label>
-          <mat-select formControlName="oportunidadeId">
+      <form class="grid grid-cols-1 gap-4" [formGroup]="form">
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Título</mat-label>
+          <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Título'" matInput formControlName="titulo" /></mat-form-field>
+        </div>
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Oportunidade</mat-label>
+          <mat-form-field appearance="outline" class="w-full">
+          <mat-select [attr.aria-label]="'Oportunidade'" formControlName="oportunidadeId">
             @for (o of oportunidades(); track o.id) { <mat-option [value]="o.id">{{ o.nome }}</mat-option> }
           </mat-select>
         </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Tipo</mat-label>
-          <mat-select formControlName="tipo">
+        </div>
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Tipo</mat-label>
+          <mat-form-field appearance="outline" class="w-full">
+          <mat-select [attr.aria-label]="'Tipo'" formControlName="tipo">
             @for (t of tipos; track t.valor) { <mat-option [value]="t.valor">{{ t.rotulo }}</mat-option> }
           </mat-select>
         </mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>Responsável</mat-label><input matInput formControlName="responsavel" /></mat-form-field>
+        </div>
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Responsável</mat-label>
+          <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Responsável'" matInput formControlName="responsavel" /></mat-form-field>
+        </div>
         <app-campo-data formControlName="prazo" rotulo="Prazo" />
-        <mat-form-field appearance="outline"><mat-label>Observação</mat-label><textarea matInput rows="3" formControlName="observacao"></textarea></mat-form-field>
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Observação</mat-label>
+          <mat-form-field appearance="outline" class="w-full"><textarea [attr.aria-label]="'Observação'" matInput rows="3" formControlName="observacao"></textarea></mat-form-field>
+        </div>
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button type="button" (click)="ref.close()">Cancelar</button>
+      <button mat-stroked-button type="button" (click)="ref.close()">Cancelar</button>
       <button mat-flat-button type="button" (click)="salvar()">Salvar</button>
     </mat-dialog-actions>
   `,
@@ -91,33 +106,36 @@ export class TarefaFunilDialog implements OnInit {
 
 @Component({
   selector: 'app-tarefas-funil',
-  imports: [MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatSelectModule, GdDataPipe],
+  imports: [MatButtonToggleModule, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatSelectModule, GdDataPipe],
   template: `
-    <header class="gd-cabecalho">
-      <div><h1>Tarefas do funil</h1><p>Reuniões, ligações, e-mails e tarefas comerciais.</p></div>
+    <mat-card class="cardWithShadow">
+      <div class="p-6 flex flex-wrap items-center justify-between gap-4">
+      <div><mat-card-title class="mb-0">Tarefas do funil</mat-card-title><mat-card-subtitle>Reuniões, ligações, e-mails e tarefas comerciais.</mat-card-subtitle></div>
       <button mat-flat-button type="button" (click)="abrir()"><mat-icon>add</mat-icon> Adicionar tarefa</button>
-    </header>
-    <section class="gd-painel">
-      <div class="gd-barra">
-        <div class="gd-abas">
-          <button type="button" [class.ativa]="completa() === false" (click)="completa.set(false); carregar()">Incompletas</button>
-          <button type="button" [class.ativa]="completa() === true" (click)="completa.set(true); carregar()">Completas</button>
-        </div>
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>Tipo</mat-label>
-          <mat-select [value]="tipo()" (selectionChange)="tipo.set($event.value); carregar()">
+    </div>
+      <mat-card-content class="border-t border-border">
+      <div class="flex flex-wrap items-end justify-between gap-4 mb-6">
+        <mat-button-toggle-group [value]="completa()" (change)="completa.set($event.value); carregar()" aria-label="Situação das tarefas">
+          <mat-button-toggle [value]="false">Incompletas</mat-button-toggle>
+          <mat-button-toggle [value]="true">Completas</mat-button-toggle>
+        </mat-button-toggle-group>
+        <div class="campo w-full sm:w-48">
+          <mat-label class="font-semibold mb-2 block">Tipo</mat-label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
+          <mat-select [attr.aria-label]="'Tipo'" [value]="tipo()" (selectionChange)="tipo.set($event.value); carregar()">
             <mat-option value="">Todos</mat-option>
             @for (t of tipos; track t.valor) { <mat-option [value]="t.valor">{{ t.rotulo }}</mat-option> }
           </mat-select>
         </mat-form-field>
+        </div>
       </div>
       @if (lista().length === 0) {
-        <p class="gd-vazio">Não há tarefa.</p>
+        <p class="text-center text-muted py-10">Não há tarefa.</p>
       } @else {
-        <table class="gd-grade" mat-table [dataSource]="lista()">
+        <table mat-table class="min-w-full" [dataSource]="lista()">
           <ng-container matColumnDef="titulo">
             <th mat-header-cell *matHeaderCellDef>Título</th>
-            <td mat-cell *matCellDef="let item">{{ item.titulo }}<span class="gd-sub">{{ item.oportunidadeNome }}</span></td>
+            <td mat-cell *matCellDef="let item">{{ item.titulo }}<span class="block text-xs text-muted">{{ item.oportunidadeNome }}</span></td>
           </ng-container>
           <ng-container matColumnDef="tipo">
             <th mat-header-cell *matHeaderCellDef>Tipo</th>
@@ -128,8 +146,8 @@ export class TarefaFunilDialog implements OnInit {
             <td mat-cell *matCellDef="let item">{{ item.prazo | gdData }}</td>
           </ng-container>
           <ng-container matColumnDef="acoes">
-            <th mat-header-cell *matHeaderCellDef class="gd-acoes">Ações</th>
-            <td mat-cell *matCellDef="let item" class="gd-acoes">
+            <th mat-header-cell *matHeaderCellDef class="text-end! whitespace-nowrap">Ações</th>
+            <td mat-cell *matCellDef="let item" class="text-end! whitespace-nowrap">
               <button mat-icon-button type="button" (click)="abrir(item)"><mat-icon>edit</mat-icon></button>
               @if (!item.completa) {
                 <button mat-icon-button type="button" (click)="concluir(item)"><mat-icon>check</mat-icon></button>
@@ -143,7 +161,8 @@ export class TarefaFunilDialog implements OnInit {
           <tr mat-row *matRowDef="let row; columns: colunas"></tr>
         </table>
       }
-    </section>
+    </mat-card-content>
+    </mat-card>
   `,
 })
 export class TarefasFunilPage implements OnInit {

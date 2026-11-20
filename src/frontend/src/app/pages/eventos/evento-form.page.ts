@@ -25,51 +25,74 @@ export interface EventoFormDados {
 
 @Component({
   selector: 'app-evento-form',
-  imports: [
-    ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule,
-    MatSelectModule, MatCheckboxModule, MatTabsModule, MatDialogModule, CampoDataComponent, CampoHoraComponent,
-    CampoDinheiroComponent, LocalCamposComponent,
-  ],
+  imports: [ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule, MatTabsModule, MatDialogModule, CampoDataComponent, CampoHoraComponent, CampoDinheiroComponent, LocalCamposComponent],
   template: `
     <h2 mat-dialog-title>Editar evento</h2>
-    <p class="gd-dialog-descricao">Informações, detalhes e locais do evento.</p>
+    <p class="text-muted text-sm px-6 -mt-2 mb-4">Informações, detalhes e locais do evento.</p>
     <mat-dialog-content>
       <form id="evento-form" [formGroup]="formulario" (ngSubmit)="salvar()">
           <mat-tab-group>
             <mat-tab label="Informações gerais">
-              <div class="gd-campos duas">
-                <label class="gd-arquivo inteiro">Foto
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+                <label class="arquivo flex flex-col gap-2 font-semibold sm:col-span-2">Foto
                   <input type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" (change)="escolherFoto($event)" />
                 </label>
                 @if (tipo() === 'Casamento') {
-                  <mat-form-field><mat-label>Nome da noiva</mat-label><input matInput formControlName="primeiroNome" /></mat-form-field>
-                  <mat-form-field><mat-label>Nome do noivo</mat-label><input matInput formControlName="segundoNome" /></mat-form-field>
+                  <div class="campo">
+                    <mat-label class="font-semibold mb-2 block">Nome da noiva</mat-label>
+                    <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Nome da noiva'" matInput formControlName="primeiroNome" /></mat-form-field>
+                  </div>
+                  <div class="campo">
+                    <mat-label class="font-semibold mb-2 block">Nome do noivo</mat-label>
+                    <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Nome do noivo'" matInput formControlName="segundoNome" /></mat-form-field>
+                  </div>
                 } @else {
-                  <mat-form-field class="inteiro"><mat-label>Nome</mat-label><input matInput formControlName="primeiroNome" /></mat-form-field>
+                  <div class="campo sm:col-span-2">
+                    <mat-label class="font-semibold mb-2 block">Nome</mat-label>
+                    <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Nome'" matInput formControlName="primeiroNome" /></mat-form-field>
+                  </div>
                 }
                 <app-campo-data rotulo="Data" formControlName="data" />
                 <app-campo-hora rotulo="Horário do convite" formControlName="hora" />
                 <app-campo-dinheiro rotulo="Orçamento" formControlName="orcamentoEstimado" />
-                <mat-form-field><mat-label>Convidados estimados</mat-label><input matInput type="number" min="0" formControlName="convidadosEstimados" /></mat-form-field>
-                <mat-form-field><mat-label>URL do site</mat-label><input matInput [value]="urlSite()" readonly /></mat-form-field>
-                <mat-form-field><mat-label>Senha do site</mat-label><input matInput formControlName="senhaSite" /></mat-form-field>
-                <mat-form-field class="inteiro"><mat-label>Tags</mat-label><input matInput formControlName="tags" placeholder="Assessoria completa" /></mat-form-field>
-                <div class="inteiro gd-marcacoes">
+                <div class="campo">
+                  <mat-label class="font-semibold mb-2 block">Convidados estimados</mat-label>
+                  <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Convidados estimados'" matInput type="number" min="0" formControlName="convidadosEstimados" /></mat-form-field>
+                </div>
+                <div class="campo">
+                  <mat-label class="font-semibold mb-2 block">URL do site</mat-label>
+                  <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'URL do site'" matInput [value]="urlSite()" readonly /></mat-form-field>
+                </div>
+                <div class="campo">
+                  <mat-label class="font-semibold mb-2 block">Senha do site</mat-label>
+                  <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Senha do site'" matInput formControlName="senhaSite" /></mat-form-field>
+                </div>
+                <div class="campo sm:col-span-2">
+                  <mat-label class="font-semibold mb-2 block">Tags</mat-label>
+                  <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Tags'" matInput formControlName="tags" placeholder="Assessoria completa" /></mat-form-field>
+                </div>
+                <div class="sm:col-span-2 flex flex-wrap gap-x-4 gap-y-1">
                   <mat-checkbox formControlName="notificarAssessor">Notificar assessor(a)</mat-checkbox>
                   <mat-checkbox formControlName="notificarAssistentes">Notificar assistentes</mat-checkbox>
                   <mat-checkbox formControlName="notificarClientes">Notificar clientes</mat-checkbox>
                   <mat-checkbox formControlName="salvarNaAgenda">Salvar na agenda</mat-checkbox>
                 </div>
-                @if (formulario.controls.salvarNaAgenda.value) { <p class="gd-apoio inteiro">O vínculo com o Google fica vazio.</p> }
+                @if (formulario.controls.salvarNaAgenda.value) { <p class="text-muted sm:col-span-2">O vínculo com o Google fica vazio.</p> }
               </div>
             </mat-tab>
             <mat-tab label="Detalhes">
-              <div class="gd-campos duas">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
                 <app-campo-hora rotulo="Tempo de festa" formControlName="tempoFesta" />
                 <app-campo-hora rotulo="Início da cerimônia" formControlName="inicioCerimonia" />
                 <app-campo-hora rotulo="Início da recepção" formControlName="inicioRecepcao" />
-                <mat-form-field><mat-label>Padrinhos</mat-label><input matInput type="number" min="0" formControlName="quantidadePadrinhos" /></mat-form-field>
-                <mat-form-field><mat-label>Damas e pajens</mat-label><input matInput type="number" min="0" formControlName="quantidadeDamas" /></mat-form-field>
+                <div class="campo">
+                  <mat-label class="font-semibold mb-2 block">Padrinhos</mat-label>
+                  <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Padrinhos'" matInput type="number" min="0" formControlName="quantidadePadrinhos" /></mat-form-field>
+                </div>
+                <div class="campo">
+                  <mat-label class="font-semibold mb-2 block">Damas e pajens</mat-label>
+                  <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Damas e pajens'" matInput type="number" min="0" formControlName="quantidadeDamas" /></mat-form-field>
+                </div>
               </div>
             </mat-tab>
             <mat-tab label="Cerimônia">
@@ -82,7 +105,7 @@ export interface EventoFormDados {
       </form>
     </mat-dialog-content>
     <mat-dialog-actions>
-      <button mat-button class="gd-secundario" type="button" mat-dialog-close>Cancelar</button>
+      <button mat-stroked-button type="button" mat-dialog-close>Cancelar</button>
       <button mat-flat-button type="submit" form="evento-form">Salvar evento</button>
     </mat-dialog-actions>
   `,

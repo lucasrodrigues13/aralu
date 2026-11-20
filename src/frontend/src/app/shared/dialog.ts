@@ -1,7 +1,6 @@
-// Larguras de modal do design system (docs/design-system.md, 5.10).
+// Larguras de modal (docs/design-system.md).
 const BASE = {
-  panelClass: 'gd-dialog',
-  backdropClass: 'gd-backdrop',
+  panelClass: 'aralu-dialog',
   maxWidth: 'calc(100vw - 32px)',
   maxHeight: '90vh',
   autoFocus: 'first-tabbable' as const,

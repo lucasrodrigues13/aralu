@@ -13,25 +13,26 @@ import { validarComprovante } from '../../core/dinheiro.client';
   imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule],
   template: `
     <h2 mat-dialog-title>Enviar comprovante</h2>
-    <p class="gd-dialog-descricao">JPG, JPEG, PNG ou PDF de até 5 MB. Fotos são reduzidas ao guardar, sem perder a leitura.</p>
+    <p class="text-muted text-sm px-6 -mt-2 mb-4">JPG, JPEG, PNG ou PDF de até 5 MB. Fotos são reduzidas ao guardar, sem perder a leitura.</p>
     <mat-dialog-content>
-      <form id="comprovante" class="gd-campos" (ngSubmit)="enviar()">
-        <label class="gd-arquivo">
+      <form id="comprovante" class="grid grid-cols-1 gap-4" (ngSubmit)="enviar()">
+        <label class="arquivo flex flex-col gap-2 font-semibold">
           <input type="file" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf" (change)="escolher($event)" />
         </label>
-        @if (erro()) { <p class="gd-erro-texto">{{ erro() }}</p> }
-        <mat-form-field appearance="outline">
-          <mat-label>Descrição</mat-label>
-          <input matInput [formControl]="descricao" maxlength="200" placeholder="Ex.: Sinal do buffet" />
+        @if (erro()) { <p class="text-error text-xs">{{ erro() }}</p> }
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Descrição</mat-label>
+          <mat-form-field appearance="outline" class="w-full">
+          <input [attr.aria-label]="'Descrição'" matInput [formControl]="descricao" maxlength="200" placeholder="Ex.: Sinal do buffet" />
         </mat-form-field>
+        </div>
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button type="button" (click)="ref.close()">Cancelar</button>
+      <button mat-stroked-button type="button" (click)="ref.close()">Cancelar</button>
       <button mat-flat-button type="submit" form="comprovante" [disabled]="!arquivo()">Enviar</button>
     </mat-dialog-actions>
   `,
-  styles: `.gd-erro-texto { color: var(--gd-destructive); font-size: 13px; margin: 0; }`,
 })
 export class ComprovanteDialog {
   protected readonly ref = inject(MatDialogRef<ComprovanteDialog, { arquivo: File; descricao: string }>);

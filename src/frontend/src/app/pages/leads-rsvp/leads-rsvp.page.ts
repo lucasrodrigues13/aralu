@@ -1,4 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
+import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -11,26 +12,29 @@ import { GdDataPipe } from '../../shared/gd-data.pipe';
 
 @Component({
   selector: 'app-leads-rsvp',
-  imports: [MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, GdDataPipe],
+  imports: [MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, GdDataPipe],
   template: `
-    <header class="gd-cabecalho">
+    <mat-card class="cardWithShadow">
+      <div class="p-6 flex flex-wrap items-center justify-between gap-4">
       <div>
-        <h1>Oportunidades de RSVP</h1>
-        <p>Leads com intenção de realizar evento nos próximos dois anos.</p>
+        <mat-card-title class="mb-0">Oportunidades de RSVP</mat-card-title>
+        <mat-card-subtitle>Leads com intenção de realizar evento nos próximos dois anos.</mat-card-subtitle>
       </div>
-    </header>
-    <section class="gd-painel">
-      <div class="gd-barra">
-        <span></span>
-        <mat-form-field class="gd-busca" appearance="outline" subscriptSizing="dynamic">
+    </div>
+      <mat-card-content class="border-t border-border">
+      <div class="flex flex-wrap items-end justify-between gap-4 mb-6">
+        <div class="campo w-full sm:w-64">
+          <mat-label class="font-semibold mb-2 block">Buscar</mat-label>
+          <mat-form-field appearance="outline" class="w-full">
           <mat-icon matIconPrefix>search</mat-icon>
-          <input matInput placeholder="Buscar por convite ou evento" [value]="busca()" (input)="buscar($event)" />
+          <input matInput aria-label="Buscar" placeholder="Buscar por convite ou evento" [value]="busca()" (input)="buscar($event)" />
         </mat-form-field>
+        </div>
       </div>
       @if (lista().length === 0) {
-        <p class="gd-vazio">Não há lead de RSVP.</p>
+        <p class="text-center text-muted py-10">Não há lead de RSVP.</p>
       } @else {
-        <table class="gd-grade" mat-table [dataSource]="lista()">
+        <table mat-table class="min-w-full" [dataSource]="lista()">
           <ng-container matColumnDef="convite">
             <th mat-header-cell *matHeaderCellDef>Convite</th>
             <td mat-cell *matCellDef="let item">{{ item.convite }}</td>
@@ -44,8 +48,8 @@ import { GdDataPipe } from '../../shared/gd-data.pipe';
             <td mat-cell *matCellDef="let item">{{ item.criadoEm | gdData }}</td>
           </ng-container>
           <ng-container matColumnDef="acoes">
-            <th mat-header-cell *matHeaderCellDef class="gd-acoes">Ações</th>
-            <td mat-cell *matCellDef="let item" class="gd-acoes">
+            <th mat-header-cell *matHeaderCellDef class="text-end! whitespace-nowrap">Ações</th>
+            <td mat-cell *matCellDef="let item" class="text-end! whitespace-nowrap">
               <button mat-icon-button type="button" aria-label="Gerar oportunidade" (click)="gerar(item)"><mat-icon>trending_up</mat-icon></button>
               <button mat-icon-button type="button" aria-label="Contatar" (click)="contatar(item)"><mat-icon>phone</mat-icon></button>
               <button mat-icon-button type="button" aria-label="Descartar" (click)="descartar(item)"><mat-icon>delete</mat-icon></button>
@@ -55,7 +59,8 @@ import { GdDataPipe } from '../../shared/gd-data.pipe';
           <tr mat-row *matRowDef="let row; columns: colunas"></tr>
         </table>
       }
-    </section>
+    </mat-card-content>
+    </mat-card>
   `,
 })
 export class LeadsRsvpPage implements OnInit {

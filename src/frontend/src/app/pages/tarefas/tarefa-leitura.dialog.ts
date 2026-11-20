@@ -27,7 +27,7 @@ export type AcaoLeitura = 'editar' | 'mudou' | false;
   imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, GdDataPipe, ChecklistTarefaComponent],
   template: `
     <h2 mat-dialog-title>{{ tarefa().titulo }}</h2>
-    <p class="gd-dialog-descricao">{{ tarefa().evento }}</p>
+    <p class="text-muted text-sm px-6 -mt-2 mb-4">{{ tarefa().evento }}</p>
     <mat-dialog-content>
       <dl class="leitura">
         <div><dt>Prazo</dt><dd>{{ tarefa().prazo | gdData }}</dd></div>
@@ -46,7 +46,7 @@ export type AcaoLeitura = 'editar' | 'mudou' | false;
       </button>
       @if (checklistAberto()) {
         @if (tarefa().checklist.length === 0) {
-          <p class="gd-vazio">Nenhum item.</p>
+          <p class="text-center text-muted py-10">Nenhum item.</p>
         } @else {
           <app-checklist-tarefa [tarefa]="tarefa()" [editavel]="tarefa().eventoEmAndamento" (mudou)="checklistMudou($event)" />
         }
@@ -58,14 +58,14 @@ export type AcaoLeitura = 'editar' | 'mudou' | false;
       </button>
       @if (anexosAberto()) {
         @if (tarefa().anexos.length === 0) {
-          <p class="gd-vazio">Nenhum anexo.</p>
+          <p class="text-center text-muted py-10">Nenhum anexo.</p>
         } @else {
           <ul class="anexos">
             @for (anexo of tarefa().anexos; track anexo.id) {
               <li>
                 <mat-icon>{{ anexo.tipoConteudo === 'application/pdf' ? 'picture_as_pdf' : 'image' }}</mat-icon>
                 <button type="button" class="nome-anexo" (click)="abrirAnexo(anexo)">{{ anexo.nome }}</button>
-                <span class="gd-sub">{{ anexo.enviadoEm | gdData }}</span>
+                <span class="block text-xs text-muted">{{ anexo.enviadoEm | gdData }}</span>
                 @if (tarefa().eventoEmAndamento) {
                   <button mat-icon-button type="button" [attr.aria-label]="'Remover ' + anexo.nome" (click)="removerAnexo(anexo)"><mat-icon>delete</mat-icon></button>
                 }
@@ -78,13 +78,13 @@ export type AcaoLeitura = 'editar' | 'mudou' | false;
             <input type="file" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf" (change)="anexar($event)" [disabled]="enviando()" />
             <span><mat-icon>attach_file</mat-icon> {{ enviando() ? 'Enviando…' : 'Anexar arquivo' }}</span>
           </label>
-          <p class="gd-sub">JPG, JPEG, PNG ou PDF de até 5 MB. Fotos são reduzidas sem perder a leitura.</p>
+          <p class="block text-xs text-muted">JPG, JPEG, PNG ou PDF de até 5 MB. Fotos são reduzidas sem perder a leitura.</p>
         }
       }
 
       <h3>Comentários</h3>
       @if (tarefa().comentarios.length === 0) {
-        <p class="gd-vazio">Nenhum comentário.</p>
+        <p class="text-center text-muted py-10">Nenhum comentário.</p>
       } @else {
         <ul>
           @for (comentario of tarefa().comentarios; track comentario.id) {
@@ -93,23 +93,25 @@ export type AcaoLeitura = 'editar' | 'mudou' | false;
         </ul>
       }
       @if (tarefa().eventoEmAndamento) {
-        <form class="gd-campos" [formGroup]="comentario" (ngSubmit)="comentar()">
-          <mat-form-field class="inteiro" appearance="outline">
-            <mat-label>Comentário</mat-label>
-            <textarea matInput rows="2" formControlName="texto"></textarea>
+        <form class="grid grid-cols-1 gap-4" [formGroup]="comentario" (ngSubmit)="comentar()">
+          <div class="campo sm:col-span-2">
+            <mat-label class="font-semibold mb-2 block">Comentário</mat-label>
+            <mat-form-field appearance="outline" class="w-full">
+            <textarea [attr.aria-label]="'Comentário'" matInput rows="2" formControlName="texto"></textarea>
           </mat-form-field>
+          </div>
           <button mat-stroked-button type="submit">Comentar</button>
         </form>
       }
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button type="button" (click)="fechar()">Fechar</button>
+      <button mat-stroked-button type="button" (click)="fechar()">Fechar</button>
       @if (tarefa().eventoEmAndamento) {
         <button mat-flat-button type="button" (click)="ref.close('editar')">Editar</button>
       }
     </mat-dialog-actions>
   `,
-  styles: `.anexos { list-style: none; margin: 0 0 8px; padding: 0; } .anexos li { display: flex; align-items: center; gap: 8px; } .anexos mat-icon { color: var(--gd-muted-foreground); font-size: 18px; width: 18px; height: 18px; } .nome-anexo { border: 0; background: none; padding: 0; color: var(--gd-primary); cursor: pointer; font: inherit; text-align: left; } .enviar-anexo { display: inline-flex; position: relative; cursor: pointer; } .enviar-anexo input { position: absolute; inset: 0; opacity: 0; cursor: pointer; } .enviar-anexo span { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border: 1px solid var(--gd-border); border-radius: var(--gd-radius-botao); font-size: 14px; } .leitura { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; } dt { color: var(--gd-texto-suave); } dd { margin: 0; }`,
+  styles: `.anexos { list-style: none; margin: 0 0 8px; padding: 0; } .anexos li { display: flex; align-items: center; gap: 8px; } .anexos mat-icon { color: var(--mat-sys-surface-container-lowest); font-size: 18px; width: 18px; height: 18px; } .nome-anexo { border: 0; background: none; padding: 0; color: var(--mat-sys-primary); cursor: pointer; font: inherit; text-align: left; } .enviar-anexo { display: inline-flex; position: relative; cursor: pointer; } .enviar-anexo input { position: absolute; inset: 0; opacity: 0; cursor: pointer; } .enviar-anexo span { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border: 1px solid var(--mat-sys-outline-variant); border-radius: var(--mat-sys-corner-small); font-size: 14px; } .leitura { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; } dt { color: var(--mat-sys-surface-container-lowest); } dd { margin: 0; }`,
 })
 export class TarefaLeituraDialog {
   private readonly dados = inject<Tarefa>(MAT_DIALOG_DATA);

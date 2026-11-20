@@ -13,18 +13,18 @@ import { ToastService } from '../../core/toast.service';
   selector: 'app-rsvp',
   imports: [ReactiveFormsModule, MatCardModule, MatButtonModule, MatRadioModule, MatCheckboxModule],
   template: `
-    <section class="gd-publica">
-      <mat-card>
-        <mat-card-header><mat-card-title>{{ titulo() || 'Confirmação de presença' }}</mat-card-title></mat-card-header>
-        <mat-card-content>
+    <section class="flex min-h-screen w-full items-center justify-center p-4 bg-light">
+      <mat-card class="cardWithShadow w-full max-w-[440px] mb-0!">
+        <div class="px-6 pt-6"><h3 class="text-xl font-semibold">{{ titulo() || 'Confirmação de presença' }}</h3></div>
+        <mat-card-content class="pt-6!">
           @if (convidados().length === 0 && carregado()) {
             <p>Não há quem responder.</p>
           }
-          <form [formGroup]="formulario" (ngSubmit)="enviar()">
+          <form class="grid grid-cols-1 gap-4" [formGroup]="formulario" (ngSubmit)="enviar()">
             @for (pessoa of convidados(); track pessoa.id) {
-              <fieldset>
-                <legend>{{ pessoa.nome }}</legend>
-                <mat-radio-group [formControlName]="pessoa.id">
+              <fieldset class="border border-border rounded p-4">
+                <legend class="font-semibold px-1">{{ pessoa.nome }}</legend>
+                <mat-radio-group class="flex flex-wrap gap-4" [formControlName]="pessoa.id">
                   <mat-radio-button value="Confirmado">Confirmado</mat-radio-button>
                   <mat-radio-button value="NaoComparecera">Não comparecerá</mat-radio-button>
                 </mat-radio-group>
@@ -34,7 +34,7 @@ import { ToastService } from '../../core/toast.service';
               <mat-checkbox formControlName="pretendeRealizarEvento">
                 Pretendo realizar um evento nos próximos dois anos
               </mat-checkbox>
-              <button mat-flat-button type="submit">Enviar</button>
+              <button mat-flat-button class="w-full" type="submit">Enviar</button>
             }
           </form>
         </mat-card-content>

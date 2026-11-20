@@ -9,34 +9,52 @@ import { AuthService } from '../../core/auth.service';
 import { ContaClient } from '../../core/conta.client';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { ToastService } from '../../core/toast.service';
+import { Marca } from '../../shared/marca';
 
 @Component({
   selector: 'app-entrar',
-  imports: [ReactiveFormsModule, RouterLink, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule],
+  imports: [ReactiveFormsModule, RouterLink, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule, Marca],
   template: `
-    <section class="gd-publica">
-      <mat-card>
-        <mat-card-header>
-          <mat-card-title>Entrar</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <form [formGroup]="formulario" (ngSubmit)="enviar()">
-            <mat-form-field appearance="outline">
-              <mat-label>E-mail</mat-label>
-              <input matInput type="email" formControlName="email" autocomplete="username" />
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>Senha</mat-label>
-              <input matInput type="password" formControlName="senha" autocomplete="current-password" />
-            </mat-form-field>
-            <button mat-flat-button type="submit" [disabled]="formulario.invalid || enviando()">Entrar</button>
-          </form>
-          <p><a routerLink="/esqueci-senha">Esqueci a senha</a></p>
-          <p><a routerLink="/reenviar-confirmacao">Reenviar confirmação de e-mail</a></p>
-          <p><a routerLink="/cadastro">Criar conta</a></p>
-        </mat-card-content>
+    <div class="flex min-h-screen w-full items-center justify-center p-4 bg-light">
+      <mat-card class="cardWithShadow overflow-hidden w-full max-w-[960px] mb-0!">
+        <div class="grid grid-cols-12">
+          <div class="lg:col-span-6 col-span-12 flex items-stretch">
+            <div class="w-full p-10 flex flex-col justify-center">
+              <app-marca [altura]="44" />
+              <h3 class="text-2xl font-semibold mt-8!">Entrar</h3>
+              <p class="text-muted mt-1">Acesse sua conta para organizar seus eventos.</p>
+
+              <form class="mt-8" [formGroup]="formulario" (ngSubmit)="enviar()">
+                <mat-label class="text-sm font-semibold mb-2 block">E-mail</mat-label>
+                <mat-form-field appearance="outline" class="w-full mb-4">
+                  <input aria-label="E-mail" matInput type="email" formControlName="email" autocomplete="username" placeholder="voce@assessoria.com.br" />
+                </mat-form-field>
+
+                <mat-label class="text-sm font-semibold mb-2 block">Senha</mat-label>
+                <mat-form-field appearance="outline" class="w-full mb-4">
+                  <input aria-label="Senha" matInput type="password" formControlName="senha" autocomplete="current-password" />
+                </mat-form-field>
+
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                  <a routerLink="/reenviar-confirmacao" class="text-primary font-semibold no-underline text-sm">Reenviar confirmação</a>
+                  <a routerLink="/esqueci-senha" class="text-primary font-semibold no-underline text-sm">Esqueci a senha</a>
+                </div>
+                <button mat-flat-button type="submit" class="w-full" [disabled]="formulario.invalid || enviando()">Entrar</button>
+              </form>
+              <span class="block font-medium text-center mt-6">
+                Ainda não tem conta?
+                <a routerLink="/cadastro" class="no-underline text-primary font-semibold text-sm">Criar conta</a>
+              </span>
+            </div>
+          </div>
+          <div class="lg:col-span-6 col-span-12 relative hidden lg:flex flex-col items-center justify-center gap-7 p-10 text-center painel-marca" aria-hidden="true">
+            <app-marca [icone]="true" [altura]="120" />
+            <h4 class="text-2xl font-semibold max-w-xs">Cada detalhe do seu evento em um só lugar</h4>
+            <p class="max-w-sm opacity-75">Tarefas, convidados, contratos e pagamentos organizados, do primeiro contato ao grande dia.</p>
+          </div>
+        </div>
       </mat-card>
-    </section>
+    </div>
   `,
 })
 export class EntrarPage {

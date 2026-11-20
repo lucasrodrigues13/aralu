@@ -1,5 +1,6 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatDialog, MatDialogModule, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
@@ -27,23 +28,27 @@ export interface CompromissoDialogDados {
   imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, CampoDataComponent],
   template: `
     <h2 mat-dialog-title>{{ item ? 'Editar compromisso' : 'Novo compromisso' }}</h2>
-    <p class="gd-dialog-descricao">Reunião, visita, prova ou qualquer marcação da sua agenda.</p>
+    <p class="text-muted text-sm px-6 -mt-2 mb-4">Reunião, visita, prova ou qualquer marcação da sua agenda.</p>
     <mat-dialog-content>
-      <form id="compromisso-form" class="gd-campos duas" [formGroup]="form" (ngSubmit)="salvar()">
-        <mat-form-field class="inteiro">
-          <mat-label>Descrição</mat-label>
-          <input matInput formControlName="descricao" maxlength="200" />
+      <form id="compromisso-form" class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4" [formGroup]="form" (ngSubmit)="salvar()">
+        <div class="campo sm:col-span-2">
+          <mat-label class="font-semibold mb-2 block">Descrição</mat-label>
+          <mat-form-field appearance="outline" class="w-full">
+          <input [attr.aria-label]="'Descrição'" matInput formControlName="descricao" maxlength="200" />
         </mat-form-field>
+        </div>
         <app-campo-data formControlName="data" rotulo="Data" />
-        <mat-form-field>
-          <mat-label>Hora</mat-label>
-          <input matInput type="time" formControlName="hora" />
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Hora</mat-label>
+          <mat-form-field appearance="outline" class="w-full">
+          <input [attr.aria-label]="'Hora'" matInput type="time" formControlName="hora" />
           <mat-hint>Opcional</mat-hint>
         </mat-form-field>
+        </div>
       </form>
     </mat-dialog-content>
     <mat-dialog-actions>
-      <button mat-button class="gd-secundario" type="button" mat-dialog-close>Cancelar</button>
+      <button mat-stroked-button type="button" mat-dialog-close>Cancelar</button>
       <button mat-flat-button type="submit" form="compromisso-form" [disabled]="salvando()">Salvar</button>
     </mat-dialog-actions>
   `,
@@ -96,12 +101,12 @@ export type AcaoResumo = 'editar' | 'excluir' | undefined;
   template: `
     @if (item.deEvento) {
       <h2 mat-dialog-title>{{ evento()?.nome ?? item.descricao }}</h2>
-      <p class="gd-dialog-descricao">Evento{{ evento()?.tipo ? ' · ' + evento()!.tipo : '' }}</p>
+      <p class="text-muted text-sm px-6 -mt-2 mb-4">Evento{{ evento()?.tipo ? ' · ' + evento()!.tipo : '' }}</p>
       <mat-dialog-content>
         @if (carregando()) {
-          <p class="gd-apoio">Carregando…</p>
+          <p class="text-muted">Carregando…</p>
         } @else if (evento(); as e) {
-          <dl class="gd-resumo">
+          <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 m-0 [&_dt]:text-xs [&_dt]:font-semibold [&_dt]:text-muted [&_dd]:m-0 [&_dd]:mt-0.5">
             <div><dt>Data</dt><dd>{{ e.data | gdData }}{{ e.hora ? ' às ' + e.hora.slice(0, 5) : '' }}</dd></div>
             <div><dt>Situação</dt><dd>{{ e.situacao }}{{ e.diasRestantes !== null && e.diasRestantes >= 0 ? ' · faltam ' + e.diasRestantes + ' dias' : '' }}</dd></div>
             <div><dt>Cerimônia</dt><dd>{{ local(e.cerimonia) }}</dd></div>
@@ -110,26 +115,26 @@ export type AcaoResumo = 'editar' | 'excluir' | undefined;
             <div><dt>Tarefas</dt><dd>{{ e.tarefasConcluidas }} feitas de {{ e.tarefas }}</dd></div>
           </dl>
         } @else {
-          <p class="gd-apoio">Não foi possível carregar o evento.</p>
+          <p class="text-muted">Não foi possível carregar o evento.</p>
         }
       </mat-dialog-content>
       <mat-dialog-actions>
-        <button mat-button class="gd-secundario" type="button" mat-dialog-close>Fechar</button>
+        <button mat-stroked-button type="button" mat-dialog-close>Fechar</button>
         <button mat-flat-button type="button" (click)="abrirEvento()">Abrir evento</button>
       </mat-dialog-actions>
     } @else {
       <h2 mat-dialog-title>{{ item.descricao }}</h2>
-      <p class="gd-dialog-descricao">Compromisso</p>
+      <p class="text-muted text-sm px-6 -mt-2 mb-4">Compromisso</p>
       <mat-dialog-content>
-        <dl class="gd-resumo">
+        <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 m-0 [&_dt]:text-xs [&_dt]:font-semibold [&_dt]:text-muted [&_dd]:m-0 [&_dd]:mt-0.5">
           <div><dt>Data</dt><dd>{{ item.data | gdData }}</dd></div>
           <div><dt>Hora</dt><dd>{{ item.hora ? item.hora.slice(0, 5) : 'Sem hora' }}</dd></div>
         </dl>
       </mat-dialog-content>
       <mat-dialog-actions>
-        <button mat-button class="gd-perigo" type="button" (click)="ref.close('excluir')">Excluir</button>
-        <span class="gd-crescer"></span>
-        <button mat-button class="gd-secundario" type="button" mat-dialog-close>Fechar</button>
+        <button mat-button class="text-error" type="button" (click)="ref.close('excluir')">Excluir</button>
+        <span class="flex-1 min-w-0"></span>
+        <button mat-stroked-button type="button" mat-dialog-close>Fechar</button>
         <button mat-flat-button type="button" (click)="ref.close('editar')">Editar</button>
       </mat-dialog-actions>
     }
@@ -181,24 +186,25 @@ const MAX_NO_DIA = 3;
 
 @Component({
   selector: 'app-agenda',
-  imports: [MatButtonModule, MatButtonToggleModule, MatIconModule, GdDataPipe],
+  imports: [MatCardModule, MatButtonModule, MatButtonToggleModule, MatIconModule, GdDataPipe],
   template: `
-    <header class="gd-cabecalho">
+    <mat-card class="cardWithShadow">
+      <div class="p-6 flex flex-wrap items-center justify-between gap-4">
       <div>
-        <h1>Minha agenda</h1>
-        <p>Eventos e compromissos da conta.</p>
+        <mat-card-title class="mb-0">Minha agenda</mat-card-title>
+        <mat-card-subtitle>Eventos, compromissos e tarefas da conta.</mat-card-subtitle>
       </div>
       <button mat-flat-button type="button" (click)="novo()"><mat-icon>add</mat-icon> Novo compromisso</button>
-    </header>
-    <section class="gd-painel">
-      <div class="gd-calendario-topo">
-        <div class="gd-calendario-nav">
+    </div>
+      <mat-card-content class="border-t border-border">
+      <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div class="flex items-center gap-2">
           <button mat-icon-button type="button" aria-label="Período anterior" (click)="navegar(-1)"><mat-icon>chevron_left</mat-icon></button>
-          <h2>{{ rotuloPeriodo() }}</h2>
+          <h4 class="text-lg font-semibold min-w-40 text-center first-letter:uppercase">{{ rotuloPeriodo() }}</h4>
           <button mat-icon-button type="button" aria-label="Próximo período" (click)="navegar(1)"><mat-icon>chevron_right</mat-icon></button>
         </div>
-        <div class="gd-calendario-nav">
-          <button mat-button class="gd-secundario gd-pequeno" type="button" (click)="hoje()">Hoje</button>
+        <div class="flex flex-wrap items-center gap-2">
+          <button mat-stroked-button type="button" (click)="hoje()">Hoje</button>
           <mat-button-toggle-group [value]="vista()" (change)="mudarVista($event.value)" aria-label="Vista da agenda">
             <mat-button-toggle value="mes">Mês</mat-button-toggle>
             <mat-button-toggle value="semana">Semana</mat-button-toggle>
@@ -209,17 +215,17 @@ const MAX_NO_DIA = 3;
       </div>
 
       @if (vista() === 'mes') {
-        <div class="gd-calendario" role="grid" [attr.aria-label]="rotuloPeriodo()">
+        <div class="calendario" role="grid" [attr.aria-label]="rotuloPeriodo()">
           @for (nome of diasDaSemana; track nome) {
-            <div class="gd-calendario-cabeca" role="columnheader">{{ nome }}</div>
+            <div class="calendario-cabeca" role="columnheader">{{ nome }}</div>
           }
           @for (dia of grade(); track dia.iso) {
-            <div class="gd-calendario-dia" role="gridcell" [class.fora]="!dia.doMes" [class.hoje]="dia.hoje">
-              <div class="gd-calendario-dia-topo">
-                <span class="gd-calendario-numero">{{ dia.numero }}</span>
+            <div class="calendario-dia" role="gridcell" [class.fora]="!dia.doMes" [class.hoje]="dia.hoje">
+              <div class="calendario-dia-topo">
+                <span class="calendario-numero">{{ dia.numero }}</span>
                 <button
                   type="button"
-                  class="gd-calendario-mais"
+                  class="calendario-mais"
                   [attr.aria-label]="'Novo compromisso em ' + (dia.iso | gdData)"
                   (click)="novo(dia.iso)"
                 >
@@ -229,70 +235,66 @@ const MAX_NO_DIA = 3;
               @for (item of dia.itens.slice(0, maxNoDia); track item.id) {
                 <button
                   type="button"
-                  class="gd-calendario-item"
+                  class="calendario-item"
                   [class.evento]="item.deEvento"
-                  [title]="item.descricao"
+                  [class.tarefa]="item.origem !== 'compromisso'"
+                  [class.concluida]="item.concluida"
+                  [title]="item.contexto ? item.descricao + ' · ' + item.contexto : item.descricao"
                   (click)="resumo(item)"
                 >
                   @if (item.hora) {
-                    <span class="gd-calendario-hora">{{ item.hora.slice(0, 5) }}</span>
+                    <span class="calendario-hora">{{ item.hora.slice(0, 5) }}</span>
+                  }
+                  @if (item.origem !== 'compromisso') {
+                    <mat-icon class="calendario-hora !w-3 !h-3 !text-[12px] align-middle">{{ item.concluida ? 'check_circle' : 'task_alt' }}</mat-icon>
                   }
                   {{ item.descricao }}
                 </button>
               }
               @if (dia.itens.length > maxNoDia) {
-                <button type="button" class="gd-calendario-resto" (click)="verDia(dia.iso)">
+                <button type="button" class="calendario-resto" (click)="verDia(dia.iso)">
                   + {{ dia.itens.length - maxNoDia }} mais
                 </button>
               }
             </div>
           }
         </div>
-        <div class="gd-calendario-legenda">
-          <span><i class="evento"></i> Evento</span>
-          <span><i></i> Compromisso</span>
+        <div class="calendario-legenda flex flex-wrap gap-4 mt-4 text-sm text-muted">
+          <span class="inline-flex items-center gap-2"><i class="evento"></i> Evento</span>
+          <span class="inline-flex items-center gap-2"><i></i> Compromisso</span>
+          <span class="inline-flex items-center gap-2"><i class="tarefa"></i> Tarefa</span>
         </div>
       } @else if (itens().length === 0) {
-        <p class="gd-vazio">Nada marcado neste período.</p>
+        <p class="text-center text-muted py-10">Nada marcado neste período.</p>
       } @else {
-        <ul class="gd-lista">
+        <ul class="list-none p-0 m-0 divide-y divide-border [&>li]:flex [&>li]:items-center [&>li]:gap-3 [&>li]:py-3">
           @for (item of ordenados(); track item.id) {
             <li>
-              <button type="button" class="gd-agenda-linha" (click)="resumo(item)">
-                <span class="gd-status" [class.ok]="item.deEvento" [class.info]="!item.deEvento">
-                  {{ item.deEvento ? 'Evento' : 'Compromisso' }}
+              <button type="button" class="flex w-full items-center gap-3 text-left border-0 bg-transparent p-0 cursor-pointer text-inherit" (click)="resumo(item)">
+                <span
+                  class="agenda-etiqueta inline-block rounded font-semibold px-2 py-1 text-xs whitespace-nowrap"
+                  [class.tarefa]="item.origem !== 'compromisso'"
+                  [class.evento]="item.deEvento"
+                >
+                  {{ item.origem !== 'compromisso' ? (item.concluida ? 'Tarefa feita' : 'Tarefa') : item.deEvento ? 'Evento' : 'Compromisso' }}
                 </span>
-                <span class="gd-crescer">
-                  <strong>{{ item.descricao }}</strong>
-                  <span class="gd-sub">{{ item.data | gdData }}{{ item.hora ? ' · ' + item.hora.slice(0, 5) : '' }}</span>
+                <span class="flex-1 min-w-0">
+                  <strong [class.line-through]="item.concluida">{{ item.descricao }}</strong>
+                  <span class="block text-xs text-muted">{{ item.data | gdData }}{{ item.hora ? ' · ' + item.hora.slice(0, 5) : '' }}{{ item.contexto ? ' · ' + item.contexto : '' }}</span>
                 </span>
               </button>
             </li>
           }
         </ul>
       }
-    </section>
-  `,
-  styles: `
-    .gd-agenda-linha {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      width: 100%;
-      padding: 12px 0;
-      border: 0;
-      background: none;
-      color: inherit;
-      font: inherit;
-      text-align: left;
-      cursor: pointer;
-    }
-    .gd-agenda-linha .gd-crescer { display: flex; flex-direction: column; }
+    </mat-card-content>
+    </mat-card>
   `,
 })
 export class AgendaPage implements OnInit {
   private readonly negocio = inject(NegocioClient);
   private readonly dialog = inject(MatDialog);
+  private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
   protected readonly diasDaSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
   protected readonly maxNoDia = MAX_NO_DIA;
@@ -340,6 +342,14 @@ export class AgendaPage implements OnInit {
   }
 
   protected resumo(item: CompromissoAgenda): void {
+    if (item.origem === 'tarefa') {
+      void this.router.navigate(['/eventos', item.eventoId, 'tarefas']);
+      return;
+    }
+    if (item.origem === 'tarefaFunil') {
+      void this.router.navigate(['/tarefas-funil']);
+      return;
+    }
     this.dialog
       .open<ResumoAgendaDialog, CompromissoAgenda, AcaoResumo>(ResumoAgendaDialog, { ...DIALOG, data: item })
       .afterClosed()
@@ -384,6 +394,9 @@ export class AgendaPage implements OnInit {
 function compararItens(a: CompromissoAgenda, b: CompromissoAgenda): number {
   if (a.data !== b.data) return a.data < b.data ? -1 : 1;
   if (a.deEvento !== b.deEvento) return a.deEvento ? -1 : 1;
+  const ta = a.origem !== 'compromisso';
+  const tb = b.origem !== 'compromisso';
+  if (ta !== tb) return ta ? 1 : -1;
   return (a.hora ?? '99').localeCompare(b.hora ?? '99');
 }
 

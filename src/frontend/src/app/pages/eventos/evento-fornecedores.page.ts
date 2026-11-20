@@ -1,6 +1,7 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialog, MatDialogModule, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
@@ -32,28 +33,34 @@ import { VincularFornecedorDados, VincularFornecedorDialog, VincularFornecedorPe
   imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule, CampoDataComponent, CampoDinheiroComponent],
   template: `
     <h2 mat-dialog-title>Contratar fornecedor</h2>
-    <p class="gd-dialog-descricao">{{ dados.fornecedor }} · {{ dados.servico }}. Valor e parcelas do contrato.</p>
+    <p class="text-muted text-sm px-6 -mt-2 mb-4">{{ dados.fornecedor }} · {{ dados.servico }}. Valor e parcelas do contrato.</p>
     <mat-dialog-content>
-      <form class="gd-campos duas" [formGroup]="form">
+      <form class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4" [formGroup]="form">
         <app-campo-dinheiro rotulo="Valor" formControlName="valor" />
-        <mat-form-field appearance="outline"><mat-label>Parcelas</mat-label><input matInput type="number" min="1" formControlName="quantidadeParcelas" /></mat-form-field>
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Parcelas</mat-label>
+          <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Parcelas'" matInput type="number" min="1" formControlName="quantidadeParcelas" /></mat-form-field>
+        </div>
         <app-campo-data rotulo="Primeira parcela" formControlName="primeiraParcela" />
-        <span></span>
-        <mat-checkbox class="inteiro" formControlName="comEntrada">Incluir entrada</mat-checkbox>
+        <mat-checkbox class="sm:col-span-2" formControlName="comEntrada">Incluir entrada</mat-checkbox>
         @if (form.controls.comEntrada.value) {
-          <mat-form-field appearance="outline">
-            <mat-label>Base</mat-label>
-            <mat-select formControlName="baseEntrada">
+          <div class="campo">
+            <mat-label class="font-semibold mb-2 block">Base</mat-label>
+            <mat-form-field appearance="outline" class="w-full">
+            <mat-select [attr.aria-label]="'Base'" formControlName="baseEntrada">
               <mat-option value="Valor">Valor</mat-option>
               <mat-option value="Porcentagem">Porcentagem</mat-option>
             </mat-select>
           </mat-form-field>
+          </div>
           @if (form.controls.baseEntrada.value === 'Porcentagem') {
-            <mat-form-field appearance="outline">
-              <mat-label>Valor de entrada</mat-label>
-              <input matInput type="number" min="0" formControlName="valorEntrada" />
+            <div class="campo">
+              <mat-label class="font-semibold mb-2 block">Valor de entrada</mat-label>
+              <mat-form-field appearance="outline" class="w-full">
+              <input [attr.aria-label]="'Valor de entrada'" matInput type="number" min="0" formControlName="valorEntrada" />
               <span matTextSuffix>%</span>
             </mat-form-field>
+            </div>
           } @else {
             <app-campo-dinheiro rotulo="Valor de entrada" formControlName="valorEntrada" />
           }
@@ -62,7 +69,7 @@ import { VincularFornecedorDados, VincularFornecedorDialog, VincularFornecedorPe
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button type="button" (click)="ref.close()">Cancelar</button>
+      <button mat-stroked-button type="button" (click)="ref.close()">Cancelar</button>
       <button mat-flat-button type="button" (click)="confirmar()">Contratar</button>
     </mat-dialog-actions>
   `,
@@ -107,13 +114,15 @@ export class ContratarDialog {
   template: `
     <h2 mat-dialog-title>Adicionar serviço</h2>
     <mat-dialog-content>
-      <mat-form-field appearance="outline" class="cheia">
-        <mat-label>Nome do serviço</mat-label>
-        <input matInput [formControl]="nome" />
+      <div class="campo cheia">
+        <mat-label class="font-semibold mb-2 block">Nome do serviço</mat-label>
+        <mat-form-field appearance="outline" class="w-full">
+        <input [attr.aria-label]="'Nome do serviço'" matInput [formControl]="nome" />
       </mat-form-field>
+      </div>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button type="button" (click)="ref.close()">Cancelar</button>
+      <button mat-stroked-button type="button" (click)="ref.close()">Cancelar</button>
       <button mat-flat-button type="button" (click)="ok()">Adicionar</button>
     </mat-dialog-actions>
   `,
@@ -140,30 +149,32 @@ export class NomeServicoDialog {
   template: `
     <h2 mat-dialog-title>Subitens — {{ dados.nome }}</h2>
     <mat-dialog-content>
-      <form class="gd-campos" [formGroup]="form">
+      <form class="grid grid-cols-1 gap-4" [formGroup]="form">
         <app-campo-dinheiro rotulo="Valor estimado (sem subitens)" formControlName="valorEstimado" />
         <div formArrayName="subitens">
           @for (ctrl of subitens.controls; track $index; let i = $index) {
-            <div class="linha" [formGroupName]="i">
-              <mat-form-field appearance="outline"><mat-label>Descrição</mat-label><input matInput formControlName="descricao" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Qtd</mat-label><input matInput type="number" min="1" formControlName="quantidade" /></mat-form-field>
+            <div class="grid grid-cols-1 sm:grid-cols-[1fr_88px_160px_auto] gap-3 items-end mb-3" [formGroupName]="i">
+              <div class="campo">
+                <mat-label class="font-semibold mb-2 block">Descrição</mat-label>
+                <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Descrição'" matInput formControlName="descricao" /></mat-form-field>
+              </div>
+              <div class="campo">
+                <mat-label class="font-semibold mb-2 block">Qtd</mat-label>
+                <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Qtd'" matInput type="number" min="1" formControlName="quantidade" /></mat-form-field>
+              </div>
               <app-campo-dinheiro rotulo="Unitário" formControlName="valorUnitario" />
               <button mat-icon-button type="button" aria-label="Remover" (click)="remover(i)"><mat-icon>delete</mat-icon></button>
             </div>
           }
         </div>
         <button mat-stroked-button type="button" (click)="adicionar()"><mat-icon>add</mat-icon> Subitem</button>
-        <p class="gd-sub">Com subitens, o estimado do serviço vira a soma (quantidade × unitário).</p>
+        <p class="block text-xs text-muted">Com subitens, o estimado do serviço vira a soma (quantidade × unitário).</p>
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button type="button" (click)="ref.close()">Cancelar</button>
+      <button mat-stroked-button type="button" (click)="ref.close()">Cancelar</button>
       <button mat-flat-button type="button" (click)="salvar()">Salvar</button>
     </mat-dialog-actions>
-  `,
-  styles: `
-    .linha { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
-    .linha mat-form-field { flex: 1; min-width: 120px; }
   `,
 })
 export class SubitensDialog {
@@ -214,21 +225,21 @@ export class SubitensDialog {
 
 @Component({
   selector: 'app-budget-dialog',
-  imports: [MatDialogModule, MatButtonModule, GdDinheiroPipe],
+  imports: [MatCardModule, MatDialogModule, MatButtonModule, GdDinheiroPipe],
   template: `
     <h2 mat-dialog-title>Planejamento de orçamento</h2>
     <mat-dialog-content>
       @if (budget) {
-        <div class="gd-numeros">
-          <div class="gd-numero"><span>Orçamento</span><strong>{{ budget.budget | gdDinheiro }}</strong></div>
-          <div class="gd-numero"><span>Estimado</span><strong>{{ budget.estimado | gdDinheiro }}</strong></div>
-          <div class="gd-numero"><span>Contratado</span><strong>{{ budget.contratado | gdDinheiro }}</strong></div>
-          <div class="gd-numero"><span>Prova real</span><strong>{{ budget.provaReal | gdDinheiro }}</strong></div>
+        <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 mb-6">
+          <div><mat-card class="shadow-none text-center mb-0! h-full bg-light-primary"><mat-card-content><h4 class="text-sm font-semibold text-primary">Orçamento</h4><h6 class="text-xl font-semibold text-primary mt-2!">{{ budget.budget | gdDinheiro }}</h6></mat-card-content></mat-card></div>
+          <div><mat-card class="shadow-none text-center mb-0! h-full bg-light-primary"><mat-card-content><h4 class="text-sm font-semibold text-primary">Estimado</h4><h6 class="text-xl font-semibold text-primary mt-2!">{{ budget.estimado | gdDinheiro }}</h6></mat-card-content></mat-card></div>
+          <div><mat-card class="shadow-none text-center mb-0! h-full bg-light-primary"><mat-card-content><h4 class="text-sm font-semibold text-primary">Contratado</h4><h6 class="text-xl font-semibold text-primary mt-2!">{{ budget.contratado | gdDinheiro }}</h6></mat-card-content></mat-card></div>
+          <div><mat-card class="shadow-none text-center mb-0! h-full bg-light-primary"><mat-card-content><h4 class="text-sm font-semibold text-primary">Prova real</h4><h6 class="text-xl font-semibold text-primary mt-2!">{{ budget.provaReal | gdDinheiro }}</h6></mat-card-content></mat-card></div>
           @if (budget.custoPorConvidado !== null) {
-            <div class="gd-numero"><span>Por convidado</span><strong>{{ budget.custoPorConvidado | gdDinheiro }}</strong></div>
+            <div><mat-card class="shadow-none text-center mb-0! h-full bg-light-primary"><mat-card-content><h4 class="text-sm font-semibold text-primary">Por convidado</h4><h6 class="text-xl font-semibold text-primary mt-2!">{{ budget.custoPorConvidado | gdDinheiro }}</h6></mat-card-content></mat-card></div>
           }
         </div>
-        <table class="gd-grade">
+        <table class="tabela">
           <thead><tr><th>Serviço</th><th>Estimado</th><th>Contratado</th></tr></thead>
           <tbody>
             @for (s of budget.servicos; track s.id) {
@@ -243,7 +254,7 @@ export class SubitensDialog {
       }
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button type="button" mat-dialog-close>Fechar</button>
+      <button mat-stroked-button type="button" mat-dialog-close>Fechar</button>
     </mat-dialog-actions>
   `,
 })
@@ -271,59 +282,60 @@ const CLASSE_ETAPA: Record<string, string> = {
 /** Aba Fornecedores do evento: serviços, negociação, parcelas e orçamento (SPEC-018; SPEC-008 v2, 8.2). */
 @Component({
   selector: 'app-evento-fornecedores',
-  imports: [
-    RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, MatMenuModule,
-    GdDinheiroPipe, EventoAbasComponent,
-  ],
+  imports: [MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, MatMenuModule, GdDinheiroPipe, EventoAbasComponent],
   template: `
-    <a mat-button routerLink="/eventos"><mat-icon>arrow_back</mat-icon> Eventos</a>
     <app-evento-abas [eventoId]="id" />
-    <header class="gd-cabecalho">
+    <mat-card class="cardWithShadow">
+    <div class="p-6 flex flex-wrap items-center justify-between gap-4">
       <div>
-        <h1>Fornecedores</h1>
-        <p>{{ evento()?.nome }} · serviços, negociação e pagamentos.</p>
+        <mat-card-title class="mb-0">Fornecedores</mat-card-title>
+        <mat-card-subtitle>{{ evento()?.nome }} · serviços, negociação e pagamentos.</mat-card-subtitle>
       </div>
-      <div class="gd-cabecalho-acoes">
-        <button mat-button class="gd-secundario" type="button" (click)="abrirBudget()"><mat-icon>request_quote</mat-icon> Orçamento</button>
-        <button mat-button class="gd-secundario" type="button" (click)="adicionarServico()"><mat-icon>playlist_add</mat-icon> Adicionar serviço</button>
+      <div class="flex flex-wrap gap-2">
+        <button mat-stroked-button type="button" (click)="abrirBudget()"><mat-icon>request_quote</mat-icon> Orçamento</button>
+        <button mat-stroked-button type="button" (click)="adicionarServico()"><mat-icon>playlist_add</mat-icon> Adicionar serviço</button>
         <button mat-flat-button type="button" (click)="vincular()"><mat-icon>add</mat-icon> Adicionar fornecedor</button>
       </div>
-    </header>
+    </div>
+    <mat-card-content class="border-t border-border">
     @if (evento(); as atual) {
-      <section class="gd-painel">
-        <div class="gd-barra">
-          <div class="gd-filtros">
-            <mat-form-field appearance="outline" subscriptSizing="dynamic">
-              <mat-select [value]="etapa()" (valueChange)="etapa.set($event)" aria-label="Etapa">
-                <mat-option value="">Todas as etapas</mat-option>
-                @for (item of etapas; track item.valor) { <mat-option [value]="item.valor">{{ item.rotulo }}</mat-option> }
-                <mat-option [value]="semFornecedor">Sem fornecedor</mat-option>
-              </mat-select>
-            </mat-form-field>
-            <mat-form-field class="gd-busca" appearance="outline" subscriptSizing="dynamic">
+          <div class="flex flex-wrap items-end gap-4 mb-6">
+            <div class="campo w-full sm:w-64">
+              <mat-label class="font-semibold mb-2 block">Buscar</mat-label>
+              <mat-form-field appearance="outline" class="w-full">
               <mat-icon matIconPrefix>search</mat-icon>
-              <input matInput placeholder="Buscar serviço ou fornecedor" [value]="busca()" (input)="buscar($event)" />
+              <input matInput aria-label="Buscar" placeholder="Serviço ou fornecedor" [value]="busca()" (input)="buscar($event)" />
             </mat-form-field>
+            </div>
+            <div class="campo w-full sm:w-48">
+              <mat-label class="font-semibold mb-2 block">Etapa</mat-label>
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-select [value]="etapa()" (valueChange)="etapa.set($event)" aria-label="Etapa">
+                  <mat-option value="">Todas</mat-option>
+                  @for (item of etapas; track item.valor) { <mat-option [value]="item.valor">{{ item.rotulo }}</mat-option> }
+                  <mat-option [value]="semFornecedor">Sem fornecedor</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
           </div>
-        </div>
 
         @if (atual.servicos.length === 0) {
-          <div class="gd-vazio vazio-acao">
+          <div class="flex flex-col items-center gap-3 text-center text-muted py-10">
             <p>Nenhum fornecedor neste evento ainda.</p>
             <button mat-flat-button type="button" (click)="vincular()"><mat-icon>add</mat-icon> Adicionar fornecedor</button>
           </div>
         } @else if (linhas().length === 0) {
-          <p class="gd-vazio">Nada encontrado com esses filtros.</p>
+          <p class="text-center text-muted py-10">Nada encontrado com esses filtros.</p>
         } @else {
-          <div class="gd-tabela-rolagem">
-            <table class="gd-grade">
+          <div class="relative overflow-auto">
+            <table class="tabela">
               <thead>
                 <tr>
                   <th>Serviço</th>
                   <th>Fornecedor</th>
                   <th>Etapa</th>
-                  <th class="gd-direita">Valor</th>
-                  <th class="gd-acoes">Ações</th>
+                  <th class="text-end!">Valor</th>
+                  <th class="text-end! whitespace-nowrap">Ações</th>
                 </tr>
               </thead>
               <tbody>
@@ -332,7 +344,7 @@ const CLASSE_ETAPA: Record<string, string> = {
                     @if (linha.primeira) {
                       <td class="servico" [attr.rowspan]="linha.linhasDoServico">
                         <span class="nome">{{ linha.servico.nome }}</span>
-                        <span class="gd-sub">
+                        <span class="block text-xs text-muted">
                           Estimado {{ linha.servico.valorEstimado | gdDinheiro }}
                           @if (linha.servico.contratado) { · Contratado {{ linha.servico.valorContratado | gdDinheiro }} }
                         </span>
@@ -345,19 +357,19 @@ const CLASSE_ETAPA: Record<string, string> = {
                     @if (linha.vinculo; as vinculo) {
                       <td>
                         <span class="nome">{{ vinculo.fornecedor }}</span>
-                        @if (vinculo.observacoes) { <span class="gd-sub">{{ vinculo.observacoes }}</span> }
+                        @if (vinculo.observacoes) { <span class="block text-xs text-muted">{{ vinculo.observacoes }}</span> }
                       </td>
                       <td><span [class]="classeEtapa(vinculo.etapa)">{{ rotuloEtapa(vinculo.etapa) }}</span></td>
-                      <td class="gd-direita valor">
+                      <td class="text-end! valor">
                         @if (vinculo.etapa === 'Contratado') {
                           {{ linha.servico.valorContratado | gdDinheiro }}
                         } @else if (vinculo.valorOrcamento !== null) {
                           {{ vinculo.valorOrcamento | gdDinheiro }}
                         } @else {
-                          <span class="gd-sub">—</span>
+                          <span class="block text-xs text-muted">—</span>
                         }
                       </td>
-                      <td class="gd-acoes">
+                      <td class="text-end! whitespace-nowrap">
                         @if (vinculo.etapa === 'Contratado') {
                           <button mat-icon-button type="button" aria-label="Mais ações" [matMenuTriggerFor]="menu"><mat-icon>more_vert</mat-icon></button>
                           <mat-menu #menu="matMenu" xPosition="before">
@@ -370,10 +382,10 @@ const CLASSE_ETAPA: Record<string, string> = {
                         }
                       </td>
                     } @else {
-                      <td><span class="gd-sub">Nenhum fornecedor</span></td>
-                      <td><span class="gd-status neutro">Sem fornecedor</span></td>
-                      <td class="gd-direita"><span class="gd-sub">—</span></td>
-                      <td class="gd-acoes">
+                      <td><span class="block text-xs text-muted">Nenhum fornecedor</span></td>
+                      <td><span class="inline-block rounded font-semibold px-2 py-1 text-xs whitespace-nowrap bg-light-error text-error">Sem fornecedor</span></td>
+                      <td class="text-end!"><span class="block text-xs text-muted">—</span></td>
+                      <td class="text-end! whitespace-nowrap">
                         <button mat-stroked-button class="contratar" type="button" (click)="vincular(linha.servico)">Vincular</button>
                       </td>
                     }
@@ -383,19 +395,17 @@ const CLASSE_ETAPA: Record<string, string> = {
             </table>
           </div>
         }
-      </section>
     }
+    </mat-card-content>
+    </mat-card>
   `,
   styles: `
-    .vazio-acao { display: flex; flex-direction: column; align-items: center; gap: 12px; }
-    .vazio-acao p { margin: 0; }
     .nome { display: block; font-weight: 500; }
     td.servico { vertical-align: top; min-width: 200px; }
     .servico-acoes { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0 0 -12px; }
-    .servico-acoes button { height: 28px; font-size: 12px; color: var(--gd-muted-foreground); }
+    .servico-acoes button { height: 28px; font-size: 12px; color: var(--mat-sys-surface-container-lowest); }
     .servico-acoes mat-icon { font-size: 16px; width: 16px; height: 16px; }
     .valor { font-weight: 600; white-space: nowrap; }
-    .contratar { height: 32px; margin-right: 4px; }
     /* A célula do serviço ocupa várias linhas: o hover pinta só a linha do fornecedor. */
     tbody tr:hover td.servico { background: transparent !important; }
   `,
@@ -451,7 +461,7 @@ export class EventoFornecedoresPage implements OnInit {
   }
 
   protected classeEtapa(etapa: string): string {
-    return `gd-status ${CLASSE_ETAPA[etapa] ?? 'neutro'}`;
+    return `inline-block rounded font-semibold px-2 py-1 text-xs whitespace-nowrap ${CLASSE_ETAPA[etapa] ?? 'neutro'}`;
   }
 
   protected vincular(servico?: EventoServico): void {

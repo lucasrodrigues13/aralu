@@ -6,7 +6,7 @@ import { TemaService } from '../core/tema.service';
 /** Alterna claro/escuro. Fixo no canto nas telas públicas; dentro da barra superior na casca. */
 @Component({
   selector: 'app-tema',
-  host: { '[class.gd-tema-fixo]': 'fixo()' },
+  host: { '[class.tema-fixo]': 'fixo()' },
   imports: [MatButtonModule, MatIconModule],
   template: `
     <button

@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -21,20 +22,25 @@ import { ImportarTarefasModeloDialog } from './importar-tarefas-modelo.dialog';
   template: `
     <h2 mat-dialog-title>Criar modelo</h2>
     <mat-dialog-content>
-      <form class="gd-campos" [formGroup]="form" (ngSubmit)="salvar()">
-        <mat-form-field appearance="outline"><mat-label>Nome</mat-label><input matInput formControlName="nome" /></mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Tipo</mat-label>
-          <mat-select formControlName="tipo">
+      <form class="grid grid-cols-1 gap-4" [formGroup]="form" (ngSubmit)="salvar()">
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Nome</mat-label>
+          <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Nome'" matInput formControlName="nome" /></mat-form-field>
+        </div>
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Tipo</mat-label>
+          <mat-form-field appearance="outline" class="w-full">
+          <mat-select [attr.aria-label]="'Tipo'" formControlName="tipo">
             @for (tipo of tipos; track tipo.valor) {
               <mat-option [value]="tipo.valor">{{ tipo.rotulo }}</mat-option>
             }
           </mat-select>
         </mat-form-field>
+        </div>
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button type="button" (click)="ref.close()">Cancelar</button>
+      <button mat-stroked-button type="button" (click)="ref.close()">Cancelar</button>
       <button mat-flat-button type="button" (click)="salvar()">Criar</button>
     </mat-dialog-actions>
   `,
@@ -68,14 +74,15 @@ export class CriarModeloDialog {
 
 @Component({
   selector: 'app-modelos-evento',
-  imports: [RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule],
+  imports: [MatCardModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule],
   template: `
-    <header class="gd-cabecalho">
+    <mat-card class="cardWithShadow">
+      <div class="p-6 flex flex-wrap items-center justify-between gap-4">
       <div>
-        <h1>Modelos de evento</h1>
-        <p>Biblioteca de modelos para criar eventos.</p>
+        <mat-card-title class="mb-0">Modelos de evento</mat-card-title>
+        <mat-card-subtitle>Biblioteca de modelos para criar eventos.</mat-card-subtitle>
       </div>
-      <div class="gd-cabecalho-acoes">
+      <div class="flex flex-wrap gap-2">
         <button mat-stroked-button type="button" (click)="importar()">
           <mat-icon>upload</mat-icon>
           Importar modelo
@@ -85,19 +92,21 @@ export class CriarModeloDialog {
           Novo Modelo de Evento
         </button>
       </div>
-    </header>
-    <section class="gd-painel">
-      <div class="gd-barra">
-        <span></span>
-        <mat-form-field class="gd-busca" appearance="outline" subscriptSizing="dynamic">
+    </div>
+      <mat-card-content class="border-t border-border">
+      <div class="flex flex-wrap items-end justify-between gap-4 mb-6">
+        <div class="campo w-full sm:w-64">
+          <mat-label class="font-semibold mb-2 block">Buscar</mat-label>
+          <mat-form-field appearance="outline" class="w-full">
           <mat-icon matIconPrefix>search</mat-icon>
-          <input matInput placeholder="Buscar por nome" [value]="busca()" (input)="buscar($event)" />
+          <input matInput aria-label="Buscar" placeholder="Buscar por nome" [value]="busca()" (input)="buscar($event)" />
         </mat-form-field>
+        </div>
       </div>
       @if (modelos().length === 0) {
-        <p class="gd-vazio">Não há modelo cadastrado.</p>
+        <p class="text-center text-muted py-10">Não há modelo cadastrado.</p>
       } @else {
-        <table class="gd-grade" mat-table [dataSource]="modelos()">
+        <table mat-table class="min-w-full" [dataSource]="modelos()">
           <ng-container matColumnDef="nome">
             <th mat-header-cell *matHeaderCellDef>Nome</th>
             <td mat-cell *matCellDef="let m">
@@ -113,8 +122,8 @@ export class CriarModeloDialog {
             <td mat-cell *matCellDef="let m">{{ m.tarefas.length }} tarefas · {{ m.servicos.length }} serviços</td>
           </ng-container>
           <ng-container matColumnDef="acoes">
-            <th mat-header-cell *matHeaderCellDef class="gd-acoes">Ações</th>
-            <td mat-cell *matCellDef="let m" class="gd-acoes">
+            <th mat-header-cell *matHeaderCellDef class="text-end! whitespace-nowrap">Ações</th>
+            <td mat-cell *matCellDef="let m" class="text-end! whitespace-nowrap">
               <a mat-icon-button aria-label="Editar" [routerLink]="['/modelos-evento', m.id]"><mat-icon>edit</mat-icon></a>
               <button mat-icon-button type="button" aria-label="Clonar" (click)="clonar(m)"><mat-icon>content_copy</mat-icon></button>
               <button mat-icon-button type="button" aria-label="Excluir" (click)="excluir(m)"><mat-icon>delete</mat-icon></button>
@@ -124,7 +133,8 @@ export class CriarModeloDialog {
           <tr mat-row *matRowDef="let row; columns: colunas"></tr>
         </table>
       }
-    </section>
+    </mat-card-content>
+    </mat-card>
   `,
 })
 export class ModelosEventoPage implements OnInit {

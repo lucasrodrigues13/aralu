@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -29,287 +30,201 @@ import { ImportarTarefasModeloDialog } from './importar-tarefas-modelo.dialog';
 
 @Component({
   selector: 'app-modelo-evento-editor',
-  imports: [
-    ReactiveFormsModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule,
-    MatSelectModule, MatTabsModule, MatIconModule, MatCheckboxModule, CampoDinheiroComponent,
-  ],
+  imports: [MatCardModule, ReactiveFormsModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatTabsModule, MatIconModule, MatCheckboxModule, CampoDinheiroComponent],
   template: `
-    <a mat-button routerLink="/modelos-evento">Voltar</a>
-    <header class="gd-cabecalho">
-      <div>
-        <h1>Editar modelo</h1>
-        <p>Configure checklist, tarefas e vínculos.</p>
+    <mat-card class="cardWithShadow">
+      <div class="p-6 flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-2">
+          <a mat-icon-button routerLink="/modelos-evento" aria-label="Voltar para modelos de evento"><mat-icon>arrow_back</mat-icon></a>
+          <div>
+            <mat-card-title class="mb-0">Editar modelo</mat-card-title>
+            <mat-card-subtitle>Configure checklist, tarefas e vínculos.</mat-card-subtitle>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button mat-stroked-button type="button" (click)="colarTarefas()"><mat-icon>content_paste</mat-icon> Colar tarefas</button>
+          <button mat-stroked-button type="button" (click)="clonar()"><mat-icon>content_copy</mat-icon> Clonar</button>
+          <button mat-stroked-button type="button" (click)="excluir()"><mat-icon>delete</mat-icon> Excluir</button>
+          <button mat-flat-button type="button" (click)="salvar()">Salvar</button>
+        </div>
       </div>
-      <div class="acoes">
-        <button mat-stroked-button type="button" (click)="colarTarefas()"><mat-icon>content_paste</mat-icon> Colar tarefas</button>
-        <button mat-stroked-button type="button" (click)="clonar()"><mat-icon>content_copy</mat-icon> Clonar</button>
-        <button mat-stroked-button type="button" (click)="excluir()"><mat-icon>delete</mat-icon> Excluir</button>
-        <button mat-flat-button type="button" (click)="salvar()">Salvar</button>
-      </div>
-    </header>
-    <form class="gd-campos gd-painel-form" [formGroup]="form">
-      <mat-form-field appearance="outline"><mat-label>Nome</mat-label><input matInput formControlName="nome" /></mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Tipo</mat-label>
-        <mat-select formControlName="tipo">
-          @for (tipo of tipos; track tipo.valor) {
-            <mat-option [value]="tipo.valor">{{ tipo.rotulo }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-      <mat-tab-group>
-        <mat-tab label="Checklist">
-          <div formArrayName="servicos" class="aba">
-            @for (servico of servicos.controls; track $index; let i = $index) {
-              <div class="bloco" [formGroupName]="i">
-                <div class="linha linha-servico">
-                  <mat-form-field appearance="outline"><mat-label>Serviço</mat-label><input matInput formControlName="nome" /></mat-form-field>
-                  <app-campo-dinheiro rotulo="Valor estimado" formControlName="valorEstimado" />
-                </div>
-                <div formArrayName="itens" class="itens">
-                  @for (item of itensDe(i).controls; track $index; let j = $index) {
-                    <div class="linha" [formGroupName]="j">
-                      <mat-form-field class="curto" appearance="outline">
-                        <mat-label>Tipo</mat-label>
-                        <mat-select formControlName="tipo">
-                          @for (t of tiposItem; track t.valor) {
-                            <mat-option [value]="t.valor">{{ t.rotulo }}</mat-option>
+      <mat-card-content class="border-t border-border">
+        <form [formGroup]="form">
+          <div class="grid grid-cols-12 gap-x-6 gap-y-4 mb-2">
+            <div class="campo col-span-12 md:col-span-8">
+              <mat-label class="font-semibold mb-2 block">Nome</mat-label>
+              <mat-form-field appearance="outline" class="w-full"><input aria-label="Nome" matInput formControlName="nome" /></mat-form-field>
+            </div>
+            <div class="campo col-span-12 md:col-span-4">
+              <mat-label class="font-semibold mb-2 block">Tipo</mat-label>
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-select aria-label="Tipo" formControlName="tipo">
+                  @for (tipo of tipos; track tipo.valor) {
+                    <mat-option [value]="tipo.valor">{{ tipo.rotulo }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            </div>
+          </div>
+          <mat-tab-group>
+            <mat-tab label="Checklist">
+              <div formArrayName="servicos" class="flex flex-col gap-4">
+                @for (servico of servicos.controls; track $index; let i = $index) {
+                  <mat-card class="border! border-border! shadow-none mb-0!" [formGroupName]="i">
+                    <mat-card-content>
+                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+                        <div class="campo">
+                          <mat-label class="font-semibold mb-2 block">Serviço</mat-label>
+                          <mat-form-field appearance="outline" class="w-full"><input aria-label="Serviço" matInput formControlName="nome" /></mat-form-field>
+                        </div>
+                        <app-campo-dinheiro rotulo="Valor estimado" formControlName="valorEstimado" />
+                      </div>
+                      <div formArrayName="itens" class="divide-y divide-border">
+                        @for (item of itensDe(i).controls; track $index; let j = $index) {
+                          <div class="grid grid-cols-1 sm:grid-cols-[220px_1fr_auto] gap-4 items-end py-4" [formGroupName]="j">
+                            <div class="campo">
+                              <mat-label class="font-semibold mb-2 block">Tipo</mat-label>
+                              <mat-form-field appearance="outline" class="w-full">
+                                <mat-select aria-label="Tipo" formControlName="tipo">
+                                  @for (t of tiposItem; track t.valor) {
+                                    <mat-option [value]="t.valor">{{ t.rotulo }}</mat-option>
+                                  }
+                                </mat-select>
+                              </mat-form-field>
+                            </div>
+                            <div class="campo">
+                              <mat-label class="font-semibold mb-2 block">Texto</mat-label>
+                              <mat-form-field appearance="outline" class="w-full"><input aria-label="Texto" matInput formControlName="texto" /></mat-form-field>
+                            </div>
+                            <button mat-icon-button type="button" aria-label="Remover item" (click)="removerItem(i, j)"><mat-icon>close</mat-icon></button>
+                          </div>
+                        }
+                      </div>
+                      <div class="flex items-center gap-1 mt-2">
+                        <button mat-stroked-button type="button" (click)="adicionarItem(i)"><mat-icon>add</mat-icon> Item</button>
+                        <button mat-icon-button type="button" aria-label="Remover serviço" (click)="removerServico(i)"><mat-icon>delete</mat-icon></button>
+                      </div>
+                    </mat-card-content>
+                  </mat-card>
+                }
+                <div><button mat-stroked-button type="button" (click)="adicionarServico()"><mat-icon>add</mat-icon> Adicionar serviço</button></div>
+              </div>
+            </mat-tab>
+            <mat-tab label="Tarefas">
+              <div formArrayName="tarefas" class="flex flex-col gap-4">
+                @for (tarefa of tarefas.controls; track $index; let i = $index) {
+                  <mat-card class="border! border-border! shadow-none mb-0!" [formGroupName]="i">
+                    <mat-card-content>
+                      <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1.2fr)_minmax(120px,180px)_minmax(220px,300px)_auto] gap-4 items-end">
+                        <div class="campo">
+                          <mat-label class="font-semibold mb-2 block">Título</mat-label>
+                          <mat-form-field appearance="outline" class="w-full"><input aria-label="Título" matInput formControlName="titulo" /></mat-form-field>
+                        </div>
+                        <div class="campo">
+                          <mat-label class="font-semibold mb-2 block">Grupo</mat-label>
+                          <mat-form-field appearance="outline" class="w-full"><input aria-label="Grupo" matInput formControlName="grupo" maxlength="80" /></mat-form-field>
+                        </div>
+                        <div class="flex gap-2 items-end min-w-0">
+                          @if (mostraQuantidade(i)) {
+                            <div class="campo w-24 shrink-0">
+                              <mat-label class="font-semibold mb-2 block">Prazo</mat-label>
+                              <mat-form-field appearance="outline" class="w-full">
+                                <input aria-label="Prazo" matInput type="number" min="0" max="999" formControlName="quantidade" />
+                              </mat-form-field>
+                            </div>
                           }
-                        </mat-select>
-                      </mat-form-field>
-                      <mat-form-field appearance="outline" class="grow"><mat-label>Texto</mat-label><input matInput formControlName="texto" /></mat-form-field>
-                      <button mat-icon-button type="button" aria-label="Remover item" (click)="removerItem(i, j)"><mat-icon>close</mat-icon></button>
-                    </div>
+                          <div class="campo flex-1">
+                            <mat-label class="font-semibold mb-2 block">{{ mostraQuantidade(i) ? 'Unidade' : 'Prazo' }}</mat-label>
+                            <mat-form-field appearance="outline" class="w-full">
+                              <mat-select [attr.aria-label]="mostraQuantidade(i) ? 'Unidade' : 'Prazo'" formControlName="unidade">
+                                @for (u of unidadesPrazo; track u.valor) {
+                                  <mat-option [value]="u.valor">{{ u.rotulo }}</mat-option>
+                                }
+                              </mat-select>
+                            </mat-form-field>
+                          </div>
+                        </div>
+                        <button mat-icon-button type="button" aria-label="Remover tarefa" (click)="removerTarefa(i)"><mat-icon>delete</mat-icon></button>
+                      </div>
+                      <p class="text-sm text-muted mt-2">{{ textoPrazo(i) }}</p>
+                    </mat-card-content>
+                  </mat-card>
+                }
+                <div><button mat-stroked-button type="button" (click)="adicionarTarefa()"><mat-icon>add</mat-icon> Adicionar tarefa</button></div>
+              </div>
+            </mat-tab>
+            <mat-tab label="Briefings">
+              <div class="campo w-full sm:w-80">
+                <mat-label class="font-semibold mb-2 block">Modelo de briefing</mat-label>
+                <mat-form-field appearance="outline" class="w-full">
+                  <mat-select aria-label="Modelo de briefing" [value]="vinculo('Briefing')" (valueChange)="definirVinculo('Briefing', $event)">
+                    <mat-option value="">Nenhum</mat-option>
+                    @for (item of briefings(); track item.id) {
+                      <mat-option [value]="item.id">{{ item.nome }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+              </div>
+            </mat-tab>
+            <mat-tab label="Roteiros">
+              <div class="campo w-full sm:w-80">
+                <mat-label class="font-semibold mb-2 block">Modelo de roteiro</mat-label>
+                <mat-form-field appearance="outline" class="w-full">
+                  <mat-select aria-label="Modelo de roteiro" [value]="vinculo('Roteiro')" (valueChange)="definirVinculo('Roteiro', $event)">
+                    <mat-option value="">Nenhum</mat-option>
+                    @for (item of roteiros(); track item.id) {
+                      <mat-option [value]="item.id">{{ item.nome }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+              </div>
+            </mat-tab>
+            <mat-tab label="Inspirações">
+              <div class="campo w-full sm:w-80">
+                <mat-label class="font-semibold mb-2 block">Modelo de inspirações</mat-label>
+                <mat-form-field appearance="outline" class="w-full">
+                  <mat-select aria-label="Modelo de inspirações" [value]="vinculo('Inspiracao')" (valueChange)="definirVinculo('Inspiracao', $event)">
+                    <mat-option value="">Nenhum</mat-option>
+                    @for (item of inspiracoes(); track item.id) {
+                      <mat-option [value]="item.id">{{ item.nome }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+              </div>
+            </mat-tab>
+            <mat-tab label="Contratos">
+              <p class="text-sm text-muted mb-4">Os contratos marcados entram nos eventos criados a partir deste modelo.</p>
+              @if (contratos().length === 0) {
+                <p class="text-center text-muted py-10">Nenhum contrato cadastrado. Cadastre em <a routerLink="/contratos">Contratos</a>.</p>
+              } @else {
+                <div class="flex flex-col gap-1">
+                  @for (contrato of contratos(); track contrato.id) {
+                    <mat-checkbox [checked]="contratosDoModelo().has(contrato.id)" (change)="marcarContrato(contrato.id, $event.checked)">
+                      {{ contrato.nome }}
+                    </mat-checkbox>
                   }
                 </div>
-                <div class="acoes-lista">
-                  <button mat-icon-button type="button" aria-label="Adicionar item" (click)="adicionarItem(i)"><mat-icon>add</mat-icon></button>
-                  <button mat-icon-button type="button" aria-label="Remover serviço" (click)="removerServico(i)"><mat-icon>delete</mat-icon></button>
-                </div>
-              </div>
-            }
-            <button mat-stroked-button type="button" class="acao-esquerda" (click)="adicionarServico()">Adicionar serviço</button>
-          </div>
-        </mat-tab>
-        <mat-tab label="Tarefas">
-          <div formArrayName="tarefas" class="aba">
-            @for (tarefa of tarefas.controls; track $index; let i = $index) {
-              <div class="bloco" [formGroupName]="i">
-                <div class="linha linha-tarefa">
-                  <mat-form-field appearance="outline" class="grow"><mat-label>Título</mat-label><input matInput formControlName="titulo" /></mat-form-field>
-                  <mat-form-field appearance="outline" class="grupo"><mat-label>Grupo</mat-label><input matInput formControlName="grupo" maxlength="80" /></mat-form-field>
-                  <div class="prazo">
-                    @if (mostraQuantidade(i)) {
-                      <mat-form-field class="qtd" appearance="outline">
-                        <mat-label>Prazo</mat-label>
-                        <input matInput type="number" min="0" max="999" formControlName="quantidade" />
-                      </mat-form-field>
+              }
+            </mat-tab>
+            <mat-tab label="RSVP e Mensagens">
+              <div class="campo w-full sm:w-80">
+                <mat-label class="font-semibold mb-2 block">Modelo de mensagem</mat-label>
+                <mat-form-field appearance="outline" class="w-full">
+                  <mat-select aria-label="Modelo de mensagem" [value]="vinculo('Mensagem')" (valueChange)="definirVinculo('Mensagem', $event)">
+                    <mat-option value="">Nenhum</mat-option>
+                    @for (item of mensagens(); track item.id) {
+                      <mat-option [value]="item.id">{{ item.nome }}</mat-option>
                     }
-                    <mat-form-field class="unidade" appearance="outline">
-                      <mat-label>{{ mostraQuantidade(i) ? 'Unidade' : 'Prazo' }}</mat-label>
-                      <mat-select formControlName="unidade">
-                        @for (u of unidadesPrazo; track u.valor) {
-                          <mat-option [value]="u.valor">{{ u.rotulo }}</mat-option>
-                        }
-                      </mat-select>
-                    </mat-form-field>
-                  </div>
-                  <button mat-icon-button type="button" (click)="removerTarefa(i)"><mat-icon>delete</mat-icon></button>
-                </div>
-                <p class="prazo-legivel">{{ textoPrazo(i) }}</p>
+                  </mat-select>
+                </mat-form-field>
               </div>
-            }
-            <button mat-stroked-button type="button" class="acao-esquerda" (click)="adicionarTarefa()">Adicionar tarefa</button>
-          </div>
-        </mat-tab>
-        <mat-tab label="Briefings">
-          <div class="aba">
-            <div class="bloco bloco-curto">
-            <mat-form-field class="campo" appearance="outline">
-              <mat-label>Modelo de briefing</mat-label>
-              <mat-select [value]="vinculo('Briefing')" (valueChange)="definirVinculo('Briefing', $event)">
-                <mat-option value="">Nenhum</mat-option>
-                @for (item of briefings(); track item.id) {
-                  <mat-option [value]="item.id">{{ item.nome }}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
-            </div>
-          </div>
-        </mat-tab>
-        <mat-tab label="Roteiros">
-          <div class="aba">
-            <div class="bloco bloco-curto">
-            <mat-form-field class="campo" appearance="outline">
-              <mat-label>Modelo de roteiro</mat-label>
-              <mat-select [value]="vinculo('Roteiro')" (valueChange)="definirVinculo('Roteiro', $event)">
-                <mat-option value="">Nenhum</mat-option>
-                @for (item of roteiros(); track item.id) {
-                  <mat-option [value]="item.id">{{ item.nome }}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
-            </div>
-          </div>
-        </mat-tab>
-        <mat-tab label="Inspirações">
-          <div class="aba">
-            <div class="bloco bloco-curto">
-            <mat-form-field class="campo" appearance="outline">
-              <mat-label>Modelo de inspirações</mat-label>
-              <mat-select [value]="vinculo('Inspiracao')" (valueChange)="definirVinculo('Inspiracao', $event)">
-                <mat-option value="">Nenhum</mat-option>
-                @for (item of inspiracoes(); track item.id) {
-                  <mat-option [value]="item.id">{{ item.nome }}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
-            </div>
-          </div>
-        </mat-tab>
-        <mat-tab label="Contratos">
-          <div class="aba">
-            <p class="gd-sub">Os contratos marcados entram nos eventos criados a partir deste modelo.</p>
-            @if (contratos().length === 0) {
-              <p class="gd-vazio">Nenhum contrato cadastrado. Cadastre em <a routerLink="/contratos">Contratos</a>.</p>
-            } @else {
-              <div class="lista-contratos">
-                @for (contrato of contratos(); track contrato.id) {
-                  <mat-checkbox [checked]="contratosDoModelo().has(contrato.id)" (change)="marcarContrato(contrato.id, $event.checked)">
-                    {{ contrato.nome }}
-                  </mat-checkbox>
-                }
-              </div>
-            }
-          </div>
-        </mat-tab>
-        <mat-tab label="RSVP e Mensagens">
-          <div class="aba">
-            <div class="bloco bloco-curto">
-            <mat-form-field class="campo" appearance="outline">
-              <mat-label>Modelo de mensagem</mat-label>
-              <mat-select [value]="vinculo('Mensagem')" (valueChange)="definirVinculo('Mensagem', $event)">
-                <mat-option value="">Nenhum</mat-option>
-                @for (item of mensagens(); track item.id) {
-                  <mat-option [value]="item.id">{{ item.nome }}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
-            </div>
-          </div>
-        </mat-tab>
-      </mat-tab-group>
-    </form>
+            </mat-tab>
+          </mat-tab-group>
+        </form>
+      </mat-card-content>
+    </mat-card>
   `,
-  styles: `
-    :host { display: block; max-width: 100%; min-width: 0; }
-    :host .gd-painel-form {
-      width: min(1040px, 100%);
-      margin-inline: auto;
-      box-sizing: border-box;
-      background: var(--gd-card);
-      border: 1px solid var(--gd-border);
-      border-radius: 14px;
-      padding: 24px;
-    }
-    :host .formulario,
-    :host mat-tab-group { min-width: 0; max-width: 100%; }
-    .acoes { display: flex; gap: 8px; flex-wrap: wrap; }
-    .lista-contratos { display: flex; flex-direction: column; gap: 4px; margin-left: -8px; }
-    .aba { padding: 16px 0; display: flex; flex-direction: column; gap: 12px; min-width: 0; max-width: 100%; }
-    .bloco {
-      box-sizing: border-box;
-      width: min(840px, 100%);
-      margin-inline: auto;
-      border: 1px solid var(--gd-border);
-      border-radius: 8px;
-      padding: 12px;
-      margin-bottom: 8px;
-    }
-    .bloco-curto {
-      width: fit-content;
-      max-width: 100%;
-      align-self: center;
-    }
-    .itens .linha + .linha {
-      border-top: 1px solid var(--gd-border);
-      margin-top: 8px;
-      padding-top: 16px;
-    }
-    .linha {
-      display: flex;
-      gap: 12px;
-      align-items: flex-start;
-    }
-    :host .linha mat-form-field {
-      width: auto;
-      flex: 1 1 0;
-      min-width: 0;
-    }
-    :host .linha .curto {
-      flex: 0 0 220px;
-      width: 220px;
-    }
-    .linha button {
-      flex: 0 0 auto;
-      margin-top: 6px;
-    }
-    .linha-tarefa {
-      display: grid;
-      grid-template-columns: minmax(0, 1.2fr) minmax(120px, 180px) minmax(220px, 300px) auto;
-      width: 100%;
-      max-width: 100%;
-      min-width: 0;
-    }
-    :host .linha-tarefa .grupo { width: 100%; }
-    :host .linha-tarefa > * { min-width: 0; }
-    :host .linha-tarefa mat-form-field {
-      width: 100%;
-      min-width: 0;
-      max-width: 100%;
-    }
-    .prazo {
-      display: flex;
-      gap: 8px;
-      align-items: flex-start;
-      min-width: 0;
-    }
-    :host .prazo .qtd { flex: 0 0 96px; width: 96px; }
-    :host .prazo .unidade { flex: 1 1 0; min-width: 0; }
-    .prazo-legivel {
-      margin: 0 0 0 0;
-      padding-left: 2px;
-      font-size: 0.85rem;
-      color: var(--gd-muted, #6b7280);
-    }
-    .linha-servico {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      gap: 12px;
-      align-items: start;
-    }
-    :host .linha-servico mat-form-field,
-    .linha-servico app-campo-dinheiro {
-      width: 100%;
-      min-width: 0;
-    }
-    :host .aba .campo {
-      width: 320px;
-      max-width: 100%;
-      align-self: flex-start;
-    }
-    .acoes-lista { display: flex; align-items: center; }
-    .acao-esquerda { align-self: flex-start; }
-    .grow { flex: 1; min-width: 0; }
-    @media (max-width: 720px) {
-      .linha { flex-wrap: wrap; }
-      :host .linha mat-form-field,
-      :host .linha .curto { flex: 1 1 100%; width: 100%; }
-      .linha-servico,
-      .linha-tarefa { grid-template-columns: 1fr; width: 100%; }
-      :host .aba .campo { width: 100%; }
-    }
-  `,
+
 })
 export class ModeloEventoEditorPage implements OnInit {
   private readonly fb = inject(FormBuilder);

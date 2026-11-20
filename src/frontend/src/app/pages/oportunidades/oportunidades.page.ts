@@ -1,5 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -26,54 +27,71 @@ import { grupoLocal, localPedido, LocalCamposComponent } from '../../shared/loca
 
 @Component({
   selector: 'app-oportunidade-dialog',
-  imports: [
-    ReactiveFormsModule,
-    MatDialogModule,
-    MatButtonModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    CampoDataComponent,
-    CampoDinheiroComponent,
-    LocalCamposComponent,
-  ],
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, CampoDataComponent, CampoDinheiroComponent, LocalCamposComponent],
   template: `
     <h2 mat-dialog-title>{{ dados ? 'Editar oportunidade' : 'Nova oportunidade' }}</h2>
     <mat-dialog-content>
-      <form class="gd-campos" [formGroup]="form">
+      <form class="grid grid-cols-1 gap-4" [formGroup]="form">
         <h3>Sobre a oportunidade</h3>
-        <mat-form-field appearance="outline"><mat-label>Nome</mat-label><input matInput formControlName="nome" /></mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Estágio</mat-label>
-          <mat-select formControlName="estagio">
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Nome</mat-label>
+          <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Nome'" matInput formControlName="nome" /></mat-form-field>
+        </div>
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Estágio</mat-label>
+          <mat-form-field appearance="outline" class="w-full">
+          <mat-select [attr.aria-label]="'Estágio'" formControlName="estagio">
             @for (e of estagios; track e) { <mat-option [value]="e">{{ e }}</mat-option> }
           </mat-select>
         </mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>Fonte</mat-label><input matInput formControlName="fonte" /></mat-form-field>
+        </div>
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Fonte</mat-label>
+          <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Fonte'" matInput formControlName="fonte" /></mat-form-field>
+        </div>
         <app-campo-dinheiro rotulo="Valor da proposta" formControlName="valorProposta" />
-        <mat-form-field appearance="outline"><mat-label>Responsável</mat-label><input matInput formControlName="responsavel" /></mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Serviço/produto</mat-label>
-          <mat-select formControlName="modeloServicoFunilId">
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Responsável</mat-label>
+          <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Responsável'" matInput formControlName="responsavel" /></mat-form-field>
+        </div>
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Serviço/produto</mat-label>
+          <mat-form-field appearance="outline" class="w-full">
+          <mat-select [attr.aria-label]="'Serviço/produto'" formControlName="modeloServicoFunilId">
             <mat-option [value]="null">Texto livre</mat-option>
             @for (s of servicos(); track s.id) { <mat-option [value]="s.id">{{ s.nome }}</mat-option> }
           </mat-select>
         </mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>Serviço (texto)</mat-label><input matInput formControlName="servicoProduto" /></mat-form-field>
+        </div>
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Serviço (texto)</mat-label>
+          <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Serviço (texto)'" matInput formControlName="servicoProduto" /></mat-form-field>
+        </div>
         @if (form.controls.estagio.value === 'Descartado') {
-          <mat-form-field appearance="outline"><mat-label>Motivo do descarte</mat-label><input matInput formControlName="motivoDescarte" /></mat-form-field>
+          <div class="campo">
+            <mat-label class="font-semibold mb-2 block">Motivo do descarte</mat-label>
+            <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Motivo do descarte'" matInput formControlName="motivoDescarte" /></mat-form-field>
+          </div>
         }
         <h3>Sobre o evento</h3>
-        <mat-form-field appearance="outline">
-          <mat-label>Tipo</mat-label>
-          <mat-select formControlName="tipoEvento">
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Tipo</mat-label>
+          <mat-form-field appearance="outline" class="w-full">
+          <mat-select [attr.aria-label]="'Tipo'" formControlName="tipoEvento">
             <mat-option [value]="null">—</mat-option>
             @for (t of tipos; track t.valor) { <mat-option [value]="t.valor">{{ t.rotulo }}</mat-option> }
           </mat-select>
         </mat-form-field>
+        </div>
         <app-campo-data formControlName="dataPrevista" rotulo="Data prevista" />
-        <mat-form-field appearance="outline"><mat-label>Convidados</mat-label><input matInput type="number" formControlName="quantidadeConvidados" /></mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>Horários</mat-label><input matInput formControlName="horarios" placeholder="hh:mm" /></mat-form-field>
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Convidados</mat-label>
+          <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Convidados'" matInput type="number" formControlName="quantidadeConvidados" /></mat-form-field>
+        </div>
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Horários</mat-label>
+          <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Horários'" matInput formControlName="horarios" placeholder="hh:mm" /></mat-form-field>
+        </div>
         <h3>Cerimônia</h3>
         <app-local-campos [grupo]="form.controls.cerimonia" />
         <h3>Recepção</h3>
@@ -82,9 +100,18 @@ import { grupoLocal, localPedido, LocalCamposComponent } from '../../shared/loca
         <div formArrayName="contatos">
           @for (c of contatos.controls; track $index; let i = $index) {
             <div [formGroupName]="i" class="contato">
-              <mat-form-field appearance="outline"><mat-label>Nome</mat-label><input matInput formControlName="nome" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Telefone</mat-label><input matInput formControlName="telefone" /></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>E-mail</mat-label><input matInput formControlName="email" /></mat-form-field>
+              <div class="campo">
+                <mat-label class="font-semibold mb-2 block">Nome</mat-label>
+                <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Nome'" matInput formControlName="nome" /></mat-form-field>
+              </div>
+              <div class="campo">
+                <mat-label class="font-semibold mb-2 block">Telefone</mat-label>
+                <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Telefone'" matInput formControlName="telefone" /></mat-form-field>
+              </div>
+              <div class="campo">
+                <mat-label class="font-semibold mb-2 block">E-mail</mat-label>
+                <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'E-mail'" matInput formControlName="email" /></mat-form-field>
+              </div>
             </div>
           }
         </div>
@@ -92,7 +119,7 @@ import { grupoLocal, localPedido, LocalCamposComponent } from '../../shared/loca
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button type="button" (click)="ref.close()">Cancelar</button>
+      <button mat-stroked-button type="button" (click)="ref.close()">Cancelar</button>
       <button mat-flat-button type="button" (click)="salvar()">Salvar</button>
     </mat-dialog-actions>
   `,
@@ -240,48 +267,47 @@ export class OportunidadeDialog implements OnInit {
 
 @Component({
   selector: 'app-oportunidades',
-  imports: [
-    ReactiveFormsModule,
-    MatButtonModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatIconModule,
-    MatSelectModule,
-    CampoDataComponent,
-    GdDinheiroPipe,
-  ],
+  imports: [MatCardModule, ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatSelectModule, CampoDataComponent, GdDinheiroPipe],
   template: `
-    <header class="gd-cabecalho">
+    <mat-card class="cardWithShadow">
+      <div class="p-6 flex flex-wrap items-center justify-between gap-4">
       <div>
-        <h1>Oportunidades</h1>
-        <p>Quadro do funil de vendas da conta.</p>
+        <mat-card-title class="mb-0">Oportunidades</mat-card-title>
+        <mat-card-subtitle>Quadro do funil de vendas da conta.</mat-card-subtitle>
       </div>
       <div class="acoes-topo">
         <button mat-stroked-button type="button" (click)="copiarLinkLead()">Link do lead</button>
         <button mat-stroked-button type="button" (click)="exportar()">Exportar</button>
         <button mat-flat-button type="button" (click)="abrir()"><mat-icon>add</mat-icon> Adicionar</button>
       </div>
-    </header>
-    <section class="gd-painel">
-      <form class="gd-barra gd-filtros" [formGroup]="filtros" (ngSubmit)="carregar()">
-        <mat-form-field class="gd-busca" appearance="outline" subscriptSizing="dynamic">
+    </div>
+      <mat-card-content class="border-t border-border">
+      <form class="flex flex-wrap items-end gap-4 mb-6" [formGroup]="filtros" (ngSubmit)="carregar()">
+        <div class="campo w-full sm:w-64">
+          <mat-label class="font-semibold mb-2 block">Buscar</mat-label>
+          <mat-form-field appearance="outline" class="w-full">
           <mat-icon matIconPrefix>search</mat-icon>
-          <input matInput formControlName="nome" placeholder="Buscar por nome" />
+          <input matInput aria-label="Buscar" formControlName="nome" placeholder="Buscar por nome" />
         </mat-form-field>
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>Responsável</mat-label>
-          <input matInput formControlName="responsavel" />
+        </div>
+        <div class="campo w-full sm:w-48">
+          <mat-label class="font-semibold mb-2 block">Responsável</mat-label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
+          <input [attr.aria-label]="'Responsável'" matInput formControlName="responsavel" />
         </mat-form-field>
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>Tipo de evento</mat-label>
-          <mat-select formControlName="tipoEvento">
+        </div>
+        <div class="campo w-full sm:w-48">
+          <mat-label class="font-semibold mb-2 block">Tipo de evento</mat-label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
+          <mat-select [attr.aria-label]="'Tipo de evento'" formControlName="tipoEvento">
             <mat-option [value]="''">Todos</mat-option>
             @for (t of tipos; track t.valor) { <mat-option [value]="t.valor">{{ t.rotulo }}</mat-option> }
           </mat-select>
         </mat-form-field>
-        <app-campo-data formControlName="dataDe" rotulo="Data de" />
-        <app-campo-data formControlName="dataAte" rotulo="Data até" />
-        <button mat-stroked-button type="submit">Filtrar</button>
+        </div>
+        <app-campo-data class="w-full sm:w-40" formControlName="dataDe" rotulo="Data de" />
+        <app-campo-data class="w-full sm:w-40" formControlName="dataAte" rotulo="Data até" />
+        <button mat-flat-button type="submit">Filtrar</button>
       </form>
       <div class="quadro">
         @for (estagio of estagios; track estagio) {
@@ -293,8 +319,8 @@ export class OportunidadeDialog implements OnInit {
             @for (item of daColuna(estagio); track item.id) {
               <article>
                 <strong>{{ item.nome }}</strong>
-                <span class="gd-sub">{{ (item.valorProposta ?? 0) | gdDinheiro }}</span>
-                <div class="gd-acoes">
+                <span class="block text-xs text-muted">{{ (item.valorProposta ?? 0) | gdDinheiro }}</span>
+                <div class="flex flex-wrap items-center justify-end gap-2">
                   <button mat-icon-button type="button" (click)="abrir(item)"><mat-icon>edit</mat-icon></button>
                   <button mat-icon-button type="button" (click)="mover(item)"><mat-icon>swap_horiz</mat-icon></button>
                   <button mat-icon-button type="button" (click)="excluir(item)"><mat-icon>delete</mat-icon></button>
@@ -304,18 +330,17 @@ export class OportunidadeDialog implements OnInit {
           </div>
         }
       </div>
-    </section>
+    </mat-card-content>
+    </mat-card>
   `,
   styles: `
     .acoes-topo { display: flex; gap: 8px; flex-wrap: wrap; }
     .filtros { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-    .filtros mat-form-field:not(.gd-busca), .filtros app-campo-data { width: 160px; }
-    .filtros .gd-busca { width: 240px; }
     .filtros app-campo-data { display: block; }
     .quadro { display: grid; grid-template-columns: repeat(4, minmax(180px, 1fr)); gap: 12px; overflow-x: auto; }
-    .coluna { background: var(--gd-card); border: 1px solid var(--gd-border); border-radius: 8px; padding: 10px; min-height: 240px; }
+    .coluna { background: var(--mat-card-elevated-container-color); border: 1px solid var(--mat-sys-outline-variant); border-radius: 8px; padding: 10px; min-height: 240px; }
     .coluna header { display: flex; flex-direction: column; gap: 2px; margin-bottom: 8px; }
-    article { border: 1px solid var(--gd-border); border-radius: 8px; padding: 8px; margin-bottom: 8px; }
+    article { border: 1px solid var(--mat-sys-outline-variant); border-radius: 8px; padding: 8px; margin-bottom: 8px; }
   `,
 })
 export class OportunidadesPage implements OnInit {

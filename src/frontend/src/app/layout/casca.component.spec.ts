@@ -59,9 +59,9 @@ describe('CascaComponent', () => {
 
   it('em tela larga não mostra Novo evento na barra superior', () => {
     const raiz = montar(false).nativeElement as HTMLElement;
-    const topo = raiz.querySelector('.gd-topo');
+    const topo = raiz.querySelector('.topbar');
 
     expect(topo?.textContent).not.toContain('Novo evento');
-    expect(raiz.querySelector('.gd-barra-inferior [aria-label="Novo evento"]')).toBeTruthy();
+    expect(raiz.querySelector('.barra-inferior [aria-label="Novo evento"]')).toBeTruthy();
   });
 });

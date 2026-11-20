@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { MatCardModule } from '@angular/material/card';
 
 const TITULOS: Record<string, string> = {
   pagamentos: 'Pagamentos',
@@ -10,16 +11,19 @@ const TITULOS: Record<string, string> = {
 
 @Component({
   selector: 'app-em-breve',
+  imports: [MatCardModule],
   template: `
-    <header class="gd-cabecalho">
+    <mat-card class="cardWithShadow">
+      <div class="p-6 flex flex-wrap items-center justify-between gap-4">
       <div>
-        <h1>{{ titulo }}</h1>
-        <p>Em breve — módulo em construção</p>
+        <mat-card-title class="mb-0">{{ titulo }}</mat-card-title>
+        <mat-card-subtitle>Módulo em construção</mat-card-subtitle>
       </div>
-    </header>
-    <section class="gd-painel">
-      <p class="gd-vazio">Em breve — módulo em construção</p>
-    </section>
+    </div>
+      <mat-card-content class="border-t border-border">
+      <p class="text-center text-muted py-10">Em breve — módulo em construção</p>
+    </mat-card-content>
+    </mat-card>
   `,
 })
 export class EmBrevePage {

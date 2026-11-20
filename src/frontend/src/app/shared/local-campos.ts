@@ -56,18 +56,41 @@ export function localPedido(valor: LocalFormValor): LocalFormValor {
     @if (titulo) {
       <h2>{{ titulo }}</h2>
     }
-    <div class="gd-campos duas" [formGroup]="grupo">
-      <mat-form-field appearance="outline"><mat-label>Nome</mat-label><input matInput formControlName="nome" /></mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>CEP</mat-label>
-        <input matInput formControlName="cep" gdMascara="cep" (blur)="buscar()" />
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4" [formGroup]="grupo">
+      <div class="campo">
+        <mat-label class="font-semibold mb-2 block">Nome</mat-label>
+        <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Nome'" matInput formControlName="nome" /></mat-form-field>
+      </div>
+      <div class="campo">
+        <mat-label class="font-semibold mb-2 block">CEP</mat-label>
+        <mat-form-field appearance="outline" class="w-full">
+        <input [attr.aria-label]="'CEP'" matInput formControlName="cep" gdMascara="cep" (blur)="buscar()" />
       </mat-form-field>
-      <mat-form-field appearance="outline"><mat-label>País</mat-label><input matInput formControlName="pais" /></mat-form-field>
-      <mat-form-field appearance="outline"><mat-label>Endereço</mat-label><input matInput formControlName="endereco" /></mat-form-field>
-      <mat-form-field appearance="outline"><mat-label>Número</mat-label><input matInput formControlName="numero" /></mat-form-field>
-      <mat-form-field appearance="outline"><mat-label>Estado</mat-label><input matInput formControlName="estado" /></mat-form-field>
-      <mat-form-field appearance="outline"><mat-label>Cidade</mat-label><input matInput formControlName="cidade" /></mat-form-field>
-      <mat-form-field appearance="outline"><mat-label>Bairro</mat-label><input matInput formControlName="bairro" /></mat-form-field>
+      </div>
+      <div class="campo">
+        <mat-label class="font-semibold mb-2 block">País</mat-label>
+        <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'País'" matInput formControlName="pais" /></mat-form-field>
+      </div>
+      <div class="campo">
+        <mat-label class="font-semibold mb-2 block">Endereço</mat-label>
+        <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Endereço'" matInput formControlName="endereco" /></mat-form-field>
+      </div>
+      <div class="campo">
+        <mat-label class="font-semibold mb-2 block">Número</mat-label>
+        <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Número'" matInput formControlName="numero" /></mat-form-field>
+      </div>
+      <div class="campo">
+        <mat-label class="font-semibold mb-2 block">Estado</mat-label>
+        <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Estado'" matInput formControlName="estado" /></mat-form-field>
+      </div>
+      <div class="campo">
+        <mat-label class="font-semibold mb-2 block">Cidade</mat-label>
+        <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Cidade'" matInput formControlName="cidade" /></mat-form-field>
+      </div>
+      <div class="campo">
+        <mat-label class="font-semibold mb-2 block">Bairro</mat-label>
+        <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Bairro'" matInput formControlName="bairro" /></mat-form-field>
+      </div>
     </div>
   `,
   styles: `

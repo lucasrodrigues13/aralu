@@ -29,18 +29,16 @@ const NOVO_SERVICO = '__novo__';
 /** Vincula um fornecedor do cadastro a um serviço do evento (SPEC-018). */
 @Component({
   selector: 'app-vincular-fornecedor',
-  imports: [
-    ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule,
-    MatSelectModule, MatAutocompleteModule, MatIconModule,
-  ],
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatAutocompleteModule, MatIconModule],
   template: `
     <h2 mat-dialog-title>Adicionar fornecedor</h2>
-    <p class="gd-dialog-descricao">Escolha um fornecedor do seu cadastro e o serviço do evento. Ele entra na etapa Orçamento.</p>
+    <p class="text-muted text-sm px-6 -mt-2 mb-4">Escolha um fornecedor do seu cadastro e o serviço do evento. Ele entra na etapa Orçamento.</p>
     <mat-dialog-content>
-      <form id="vincular-fornecedor" class="gd-campos" [formGroup]="form" (ngSubmit)="confirmar()">
-        <mat-form-field appearance="outline">
-          <mat-label>Serviço</mat-label>
-          <mat-select formControlName="servicoId" required>
+      <form id="vincular-fornecedor" class="grid grid-cols-1 gap-4" [formGroup]="form" (ngSubmit)="confirmar()">
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Serviço</mat-label>
+          <mat-form-field appearance="outline" class="w-full">
+          <mat-select [attr.aria-label]="'Serviço'" formControlName="servicoId" required>
             @for (servico of dados.servicos; track servico.id) {
               <mat-option [value]="servico.id">{{ servico.nome }}</mat-option>
             }
@@ -48,22 +46,26 @@ const NOVO_SERVICO = '__novo__';
           </mat-select>
           @if (form.controls.servicoId.invalid) { <mat-error>Escolha o serviço.</mat-error> }
         </mat-form-field>
+        </div>
 
         @if (ehNovoServico()) {
-          <mat-form-field appearance="outline">
-            <mat-label>Nome do novo serviço</mat-label>
-            <input matInput formControlName="novoServico" [matAutocomplete]="sugestoes" placeholder="Ex.: Buffet, Fotografia" required />
+          <div class="campo">
+            <mat-label class="font-semibold mb-2 block">Nome do novo serviço</mat-label>
+            <mat-form-field appearance="outline" class="w-full">
+            <input [attr.aria-label]="'Nome do novo serviço'" matInput formControlName="novoServico" [matAutocomplete]="sugestoes" placeholder="Ex.: Buffet, Fotografia" required />
             <mat-autocomplete #sugestoes="matAutocomplete">
               @for (nome of sugestoesServico(); track nome) { <mat-option [value]="nome">{{ nome }}</mat-option> }
             </mat-autocomplete>
             @if (form.controls.novoServico.invalid) { <mat-error>Informe o nome do serviço.</mat-error> }
           </mat-form-field>
+          </div>
         }
 
-        <mat-form-field appearance="outline">
-          <mat-label>Fornecedor</mat-label>
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Fornecedor</mat-label>
+          <mat-form-field appearance="outline" class="w-full">
           <mat-icon matIconPrefix>search</mat-icon>
-          <input
+          <input [attr.aria-label]="'Fornecedor'"
             matInput
             formControlName="fornecedor"
             [matAutocomplete]="listaFornecedores"
@@ -74,7 +76,7 @@ const NOVO_SERVICO = '__novo__';
             @for (fornecedor of fornecedoresFiltrados(); track fornecedor.id) {
               <mat-option [value]="fornecedor" [disabled]="jaVinculado(fornecedor.id)">
                 <span class="opcao-nome">{{ fornecedor.nome }}</span>
-                <span class="gd-sub">
+                <span class="block text-xs text-muted">
                   {{ jaVinculado(fornecedor.id) ? 'Já está neste serviço' : (fornecedor.servicos.join(', ') || 'Sem serviço informado') }}
                 </span>
               </mat-option>
@@ -84,8 +86,9 @@ const NOVO_SERVICO = '__novo__';
           </mat-autocomplete>
           @if (form.controls.fornecedor.invalid) { <mat-error>Escolha um fornecedor da lista.</mat-error> }
         </mat-form-field>
+        </div>
         <div>
-          <button mat-button type="button" class="gd-secundario" (click)="cadastrarFornecedor()">
+          <button mat-button type="button" (click)="cadastrarFornecedor()">
             <mat-icon>person_add</mat-icon>
             Cadastrar novo fornecedor
           </button>
@@ -94,13 +97,12 @@ const NOVO_SERVICO = '__novo__';
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button type="button" (click)="ref.close()">Cancelar</button>
+      <button mat-stroked-button type="button" (click)="ref.close()">Cancelar</button>
       <button mat-flat-button type="submit" form="vincular-fornecedor">Adicionar fornecedor</button>
     </mat-dialog-actions>
   `,
   styles: `
     .opcao-nome { display: block; font-size: 14px; line-height: 20px; }
-    mat-option .gd-sub { margin-top: 2px; }
   `,
 })
 export class VincularFornecedorDialog {

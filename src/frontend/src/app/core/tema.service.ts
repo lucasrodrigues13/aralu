@@ -20,7 +20,9 @@ export class TemaService {
 
   private aplicar(escuro: boolean): void {
     this.escuro.set(escuro);
-    document.documentElement.classList.toggle('escuro', escuro);
+    // Classes do TailwindAdmin: light-theme / dark-theme no <html>.
+    document.documentElement.classList.toggle('dark-theme', escuro);
+    document.documentElement.classList.toggle('light-theme', !escuro);
     localStorage.setItem(CHAVE, escuro ? 'escuro' : 'claro');
   }
 }

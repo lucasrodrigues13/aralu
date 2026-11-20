@@ -28,20 +28,17 @@ import { ChecklistTarefaComponent, progressoChecklist } from './checklist-tarefa
 
 @Component({
   selector: 'app-tarefas',
-  imports: [
-    RouterLink, ReactiveFormsModule, MatCardModule, MatButtonModule, MatButtonToggleModule, MatIconModule,
-    MatTableModule, MatFormFieldModule, MatInputModule, MatSelectModule, GdDataPipe, EventoAbasComponent, CampoDataComponent,
-    ChecklistTarefaComponent, MatCheckboxModule,
-  ],
+  imports: [RouterLink, ReactiveFormsModule, MatCardModule, MatButtonModule, MatButtonToggleModule, MatIconModule, MatTableModule, MatFormFieldModule, MatInputModule, MatSelectModule, GdDataPipe, EventoAbasComponent, CampoDataComponent, ChecklistTarefaComponent, MatCheckboxModule],
   template: `
     @if (eventoId()) { <app-evento-abas [eventoId]="eventoId()" /> }
-    <header class="gd-cabecalho">
+    <mat-card class="cardWithShadow">
+    <div class="p-6 flex flex-wrap items-center justify-between gap-4">
       <div>
-        <h1>Tarefas</h1>
-        <p>Pendências dos eventos da assessoria.</p>
+        <mat-card-title class="mb-0">Tarefas</mat-card-title>
+        <mat-card-subtitle>Pendências dos eventos da assessoria.</mat-card-subtitle>
       </div>
       @if (eventoId() && podeEditar()) {
-        <div class="gd-cabecalho-acoes">
+        <div class="flex flex-wrap gap-2">
           <button mat-stroked-button type="button" (click)="aplicarModelo()">
             <mat-icon>playlist_add</mat-icon>
             Aplicar modelo
@@ -52,59 +49,70 @@ import { ChecklistTarefaComponent, progressoChecklist } from './checklist-tarefa
           </button>
         </div>
       }
-    </header>
+    </div>
+    <mat-card-content class="border-t border-border">
     @if (somenteAtrasadas()) {
-      <div class="gd-alerta alerta">
-        <span class="gd-crescer"><strong>Mostrando só as tarefas atrasadas.</strong></span>
-        <button mat-button class="gd-secundario gd-pequeno" type="button" (click)="somenteAtrasadas.set(false)">Ver todas</button>
+      <div class="flex items-center gap-3 rounded p-4 mb-6 bg-light-warning text-warning">
+        <mat-icon>warning</mat-icon>
+        <strong class="flex-1 min-w-0">Mostrando só as tarefas atrasadas.</strong>
+        <button mat-stroked-button type="button" (click)="somenteAtrasadas.set(false)">Ver todas</button>
       </div>
     }
     @if (eventoId()) {
-      <section class="gd-painel">
-        <div class="gd-barra">
-          <span class="gd-barra-inicio gd-sub encontradas">{{ plural(visiveisEvento().length, 'tarefa encontrada', 'tarefas encontradas') }}</span>
-          <div class="gd-filtros">
-            <mat-checkbox [checked]="soChecklist()" (change)="soChecklist.set($event.checked)">Só com checklist</mat-checkbox>
-            <mat-form-field appearance="outline" subscriptSizing="dynamic">
-              <mat-select [value]="situacaoEvento()" (valueChange)="situacaoEvento.set($event)" aria-label="Situação">
-                <mat-option value="">Todas as situações</mat-option>
-                @for (item of situacoes; track item.valor) { <mat-option [value]="item.valor">{{ item.rotulo }}</mat-option> }
-              </mat-select>
+        <div class="flex flex-wrap items-end gap-4 mb-6">
+            <div class="campo w-full sm:w-64">
+              <mat-label class="font-semibold mb-2 block">Buscar</mat-label>
+              <mat-form-field appearance="outline" class="w-full">
+              <mat-icon matIconPrefix>search</mat-icon>
+              <input matInput aria-label="Buscar" placeholder="Título da tarefa" [value]="buscaEvento()" (input)="buscaEvento.set($any($event.target).value)" />
             </mat-form-field>
-            <mat-form-field appearance="outline" subscriptSizing="dynamic">
-              <mat-select [value]="responsavelEvento()" (valueChange)="responsavelEvento.set($event)" aria-label="Responsável">
-                <mat-option value="">Todos os responsáveis</mat-option>
-                @for (papel of papeis; track papel.valor) { <mat-option [value]="papel.valor">{{ papel.rotulo }}</mat-option> }
-              </mat-select>
-            </mat-form-field>
-            @if (servicos().length > 0) {
-              <mat-form-field appearance="outline" subscriptSizing="dynamic">
-                <mat-select [value]="servicoEvento()" (valueChange)="servicoEvento.set($event)" aria-label="Serviço">
-                  <mat-option value="">Todos os serviços</mat-option>
-                  <mat-option value="-">Sem serviço</mat-option>
-                  @for (servico of servicos(); track servico.id) { <mat-option [value]="servico.id">{{ servico.nome }}</mat-option> }
+            </div>
+            <div class="campo w-full sm:w-48">
+              <mat-label class="font-semibold mb-2 block">Situação</mat-label>
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-select [value]="situacaoEvento()" (valueChange)="situacaoEvento.set($event)" aria-label="Situação">
+                  <mat-option value="">Todas</mat-option>
+                  @for (item of situacoes; track item.valor) { <mat-option [value]="item.valor">{{ item.rotulo }}</mat-option> }
                 </mat-select>
               </mat-form-field>
+            </div>
+            <div class="campo w-full sm:w-48">
+              <mat-label class="font-semibold mb-2 block">Responsável</mat-label>
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-select [value]="responsavelEvento()" (valueChange)="responsavelEvento.set($event)" aria-label="Responsável">
+                  <mat-option value="">Todos</mat-option>
+                  @for (papel of papeis; track papel.valor) { <mat-option [value]="papel.valor">{{ papel.rotulo }}</mat-option> }
+                </mat-select>
+              </mat-form-field>
+            </div>
+            @if (servicos().length > 0) {
+              <div class="campo w-full sm:w-48">
+                <mat-label class="font-semibold mb-2 block">Serviço</mat-label>
+                <mat-form-field appearance="outline" class="w-full">
+                  <mat-select [value]="servicoEvento()" (valueChange)="servicoEvento.set($event)" aria-label="Serviço">
+                    <mat-option value="">Todos</mat-option>
+                    <mat-option value="-">Sem serviço</mat-option>
+                    @for (servico of servicos(); track servico.id) { <mat-option [value]="servico.id">{{ servico.nome }}</mat-option> }
+                  </mat-select>
+                </mat-form-field>
+              </div>
             }
-            <mat-form-field class="gd-busca" appearance="outline" subscriptSizing="dynamic">
-              <mat-icon matIconPrefix>search</mat-icon>
-              <input matInput placeholder="Buscar pelo título" [value]="buscaEvento()" (input)="buscaEvento.set($any($event.target).value)" />
-            </mat-form-field>
-          </div>
+            <mat-checkbox class="mb-1" [checked]="soChecklist()" (change)="soChecklist.set($event.checked)">Só com checklist</mat-checkbox>
+            <span class="text-sm text-muted mb-2.5 ml-auto">{{ plural(visiveisEvento().length, 'tarefa encontrada', 'tarefas encontradas') }}</span>
         </div>
         @if (secoesEvento().length === 0) {
-          <p class="gd-vazio">Não há tarefa para mostrar.</p>
+          <p class="text-center text-muted py-10">Não há tarefa para mostrar.</p>
         } @else {
-          <div class="gd-tabela-rolagem">
-            <table class="gd-grade agrupada">
+          <div class="relative overflow-auto">
+            <table class="tabela agrupada">
               <thead>
                 <tr>
-                  <th class="coluna-expandir"><span class="gd-sr">Checklist</span></th>
+                  <th class="coluna-expandir"><span class="sr-only">Checklist</span></th>
                   <th>Tarefa</th>
                   <th>Prazo</th>
                   <th>Serviço</th>
                   <th>Responsáveis</th>
-                  <th class="gd-acoes">Ações</th>
+                  <th class="text-end! whitespace-nowrap">Ações</th>
                 </tr>
               </thead>
               @for (secao of secoesEvento(); track secao.id) {
@@ -144,7 +152,7 @@ import { ChecklistTarefaComponent, progressoChecklist } from './checklist-tarefa
                             <div>
                               {{ tarefa.titulo }}
                               @if (tarefa.grupo || tarefa.checklist.length > 0) {
-                                <span class="gd-sub">
+                                <span class="block text-xs text-muted">
                                   {{ tarefa.grupo }}
                                   @if (tarefa.checklist.length > 0) {
                                     @if (tarefa.grupo) { · }
@@ -158,7 +166,7 @@ import { ChecklistTarefaComponent, progressoChecklist } from './checklist-tarefa
                         <td class="prazo">{{ tarefa.prazo ? (tarefa.prazo | gdData) : '—' }}</td>
                         <td>{{ tarefa.servico ?? '—' }}</td>
                         <td>{{ nomesResponsaveis(tarefa) }}</td>
-                        <td class="gd-acoes" (click)="$event.stopPropagation()">
+                        <td class="text-end! whitespace-nowrap" (click)="$event.stopPropagation()">
                           @if (tarefa.eventoEmAndamento) {
                             <button mat-icon-button type="button" aria-label="Editar" (click)="editar(tarefa)"><mat-icon>edit</mat-icon></button>
                           }
@@ -179,59 +187,68 @@ import { ChecklistTarefaComponent, progressoChecklist } from './checklist-tarefa
             </table>
           </div>
         }
-      </section>
     } @else {
-    <form class="gd-filtros" [formGroup]="filtro" (ngSubmit)="aplicarFiltro()">
-      <mat-form-field appearance="outline" subscriptSizing="dynamic">
-        <mat-label>Situação</mat-label>
-        <mat-select formControlName="situacao">
+    <form class="flex flex-wrap items-end gap-4 mb-6" [formGroup]="filtro" (ngSubmit)="aplicarFiltro()">
+      <div class="campo w-full sm:w-48">
+        <mat-label class="font-semibold mb-2 block">Situação</mat-label>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
+        <mat-select [attr.aria-label]="'Situação'" formControlName="situacao">
           <mat-option value="">Todas</mat-option>
           @for (item of situacoes; track item.valor) { <mat-option [value]="item.valor">{{ item.rotulo }}</mat-option> }
         </mat-select>
       </mat-form-field>
-      <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>Evento</mat-label>
-          <mat-select formControlName="eventoId">
+      </div>
+      <div class="campo w-full sm:w-48">
+        <mat-label class="font-semibold mb-2 block">Evento</mat-label>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
+          <mat-select [attr.aria-label]="'Evento'" formControlName="eventoId">
             <mat-option value="">Todos</mat-option>
             @for (evento of eventos(); track evento.id) { <mat-option [value]="evento.id">{{ evento.nome }}</mat-option> }
           </mat-select>
         </mat-form-field>
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>Responsável</mat-label>
-          <mat-select formControlName="responsavel">
+      </div>
+        <div class="campo w-full sm:w-48">
+          <mat-label class="font-semibold mb-2 block">Responsável</mat-label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
+          <mat-select [attr.aria-label]="'Responsável'" formControlName="responsavel">
             <mat-option value="">Todos</mat-option>
             @for (papel of papeis; track papel.valor) { <mat-option [value]="papel.valor">{{ papel.rotulo }}</mat-option> }
           </mat-select>
         </mat-form-field>
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>Serviço</mat-label>
-          <mat-select formControlName="servicoId">
+        </div>
+        <div class="campo w-full sm:w-48">
+          <mat-label class="font-semibold mb-2 block">Serviço</mat-label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
+          <mat-select [attr.aria-label]="'Serviço'" formControlName="servicoId">
             <mat-option value="">Todos</mat-option>
             @for (servico of servicos(); track servico.id) { <mat-option [value]="servico.id">{{ servico.nome }}</mat-option> }
           </mat-select>
         </mat-form-field>
-        <app-campo-data rotulo="Prazo de" formControlName="prazoDe" />
-        <app-campo-data rotulo="Prazo até" formControlName="prazoAte" />
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>Tag</mat-label>
-          <input matInput formControlName="tag" />
+        </div>
+        <app-campo-data class="w-full sm:w-40" rotulo="Prazo de" formControlName="prazoDe" />
+        <app-campo-data class="w-full sm:w-40" rotulo="Prazo até" formControlName="prazoAte" />
+        <div class="campo w-full sm:w-48">
+          <mat-label class="font-semibold mb-2 block">Tag</mat-label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
+          <input [attr.aria-label]="'Tag'" matInput formControlName="tag" />
         </mat-form-field>
-      <button mat-stroked-button type="submit">Filtrar</button>
-      <button mat-stroked-button type="button" (click)="limparFiltros()">Limpar filtros</button>
+        </div>
+      <div class="flex gap-2"><button mat-flat-button type="submit">Filtrar</button>
+      <button mat-stroked-button type="button" (click)="limparFiltros()">Limpar</button></div>
     </form>
-    <mat-button-toggle-group [value]="visao()" (change)="visao.set($event.value)">
+    <mat-button-toggle-group [value]="visao()" (change)="visao.set($event.value)" aria-label="Visão" class="mb-6">
       <mat-button-toggle value="lista">Lista</mat-button-toggle>
       <mat-button-toggle value="situacao">Quadro por situação</mat-button-toggle>
       <mat-button-toggle value="dia">Quadro por dia</mat-button-toggle>
     </mat-button-toggle-group>
     @if (visao() === 'lista') {
-      <section class="gd-painel">
         @if (visiveis().length === 0) {
-          <p class="gd-vazio">Não há tarefa.</p>
+          <p class="text-center text-muted py-10">Não há tarefa.</p>
         } @else {
-          <table class="gd-grade" mat-table [dataSource]="visiveis()" multiTemplateDataRows>
+          <div class="relative overflow-auto">
+          <table mat-table class="min-w-full" [dataSource]="visiveis()" multiTemplateDataRows>
             <ng-container matColumnDef="expandir">
-              <th mat-header-cell *matHeaderCellDef class="coluna-expandir"><span class="gd-sr">Checklist</span></th>
+              <th mat-header-cell *matHeaderCellDef class="coluna-expandir"><span class="sr-only">Checklist</span></th>
               <td mat-cell *matCellDef="let tarefa" class="coluna-expandir" (click)="$event.stopPropagation()">
                 @if (tarefa.checklist.length > 0) {
                   <button
@@ -260,7 +277,7 @@ import { ChecklistTarefaComponent, progressoChecklist } from './checklist-tarefa
               <td mat-cell *matCellDef="let tarefa">
                 {{ tarefa.titulo }}
                 @if (tarefa.grupo || tarefa.checklist.length > 0) {
-                  <span class="gd-sub">
+                  <span class="block text-xs text-muted">
                     {{ tarefa.grupo }}
                     @if (tarefa.checklist.length > 0) {
                       @if (tarefa.grupo) { · }
@@ -280,15 +297,15 @@ import { ChecklistTarefaComponent, progressoChecklist } from './checklist-tarefa
             </ng-container>
             <ng-container matColumnDef="situacao">
               <th mat-header-cell *matHeaderCellDef>Situação</th>
-              <td mat-cell *matCellDef="let tarefa"><span class="gd-status alerta">{{ rotulo(tarefa.situacao) }}</span></td>
+              <td mat-cell *matCellDef="let tarefa"><span [class]="classeSituacao(tarefa.situacao)">{{ rotulo(tarefa.situacao) }}</span></td>
             </ng-container>
             <ng-container matColumnDef="responsavel">
               <th mat-header-cell *matHeaderCellDef>Responsáveis</th>
               <td mat-cell *matCellDef="let tarefa">{{ nomesResponsaveis(tarefa) }}</td>
             </ng-container>
             <ng-container matColumnDef="acoes">
-              <th mat-header-cell *matHeaderCellDef class="gd-acoes">Ações</th>
-              <td mat-cell *matCellDef="let tarefa" class="gd-acoes" (click)="$event.stopPropagation()">
+              <th mat-header-cell *matHeaderCellDef class="text-end! whitespace-nowrap">Ações</th>
+              <td mat-cell *matCellDef="let tarefa" class="text-end! whitespace-nowrap" (click)="$event.stopPropagation()">
                 @if (tarefa.eventoEmAndamento) {
                   <button mat-icon-button type="button" aria-label="Editar" (click)="editar(tarefa)"><mat-icon>edit</mat-icon></button>
                 }
@@ -299,48 +316,50 @@ import { ChecklistTarefaComponent, progressoChecklist } from './checklist-tarefa
             <tr mat-row *matRowDef="let row; columns: colunas" [class.com-detalhe]="aberta(row)" (click)="ler(row)"></tr>
             <tr mat-row *matRowDef="let row; columns: ['detalhe']" class="linha-detalhe" [class.fechada]="!aberta(row)"></tr>
           </table>
+          </div>
         }
-      </section>
     } @else if (visao() === 'situacao') {
       @if (visiveis().length === 0) {
-        <p class="gd-vazio">Não há tarefa.</p>
+        <p class="text-center text-muted py-10">Não há tarefa.</p>
       } @else {
-        <div class="quadro">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           @for (coluna of situacoes; track coluna.valor) {
-            <section class="gd-painel">
-              <h2>{{ coluna.rotulo }}</h2>
+            <mat-card class="border! border-border! shadow-none mb-0!"><mat-card-content>
+              <mat-card-title class="mb-2">{{ coluna.rotulo }}</mat-card-title>
               @for (tarefa of daSituacao(coluna.valor); track tarefa.id) {
                 <button type="button" class="cartao" (click)="ler(tarefa)">{{ tarefa.titulo }} @if (tarefa.prazo) { — {{ tarefa.prazo | gdData }} }</button>
               }
-            </section>
+            </mat-card-content></mat-card>
           }
         </div>
       }
     } @else {
       @if (porDia().length === 0) {
-        <p class="gd-vazio">Não há tarefa.</p>
+        <p class="text-center text-muted py-10">Não há tarefa.</p>
       } @else {
-        <div class="quadro">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           @for (coluna of porDia(); track coluna.id) {
-            <section class="gd-painel">
-              <h2>{{ coluna.id === 'sem-prazo' ? coluna.rotulo : (coluna.rotulo | gdData) }}</h2>
+            <mat-card class="border! border-border! shadow-none mb-0!"><mat-card-content>
+              <mat-card-title class="mb-2">{{ coluna.id === 'sem-prazo' ? coluna.rotulo : (coluna.rotulo | gdData) }}</mat-card-title>
               @for (tarefa of coluna.tarefas; track tarefa.id) {
                 <button type="button" class="cartao" (click)="ler(tarefa)">{{ tarefa.titulo }}</button>
               }
-            </section>
+            </mat-card-content></mat-card>
           }
         </div>
       }
     }
     }
+    </mat-card-content>
+    </mat-card>
   `,
   styles: `
     .quadro { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-top: 16px; }
-    mat-button-toggle-group, .gd-filtros { margin-bottom: 16px; }
-    .cartao { display: block; width: 100%; text-align: left; margin-top: 8px; padding: 8px 12px; border: 1px solid var(--gd-borda); border-radius: 8px; background: transparent; cursor: pointer; }
+    .cartao { display: block; width: 100%; text-align: left; margin-top: 8px; padding: 10px 12px; border: 1px solid var(--mat-sys-outline-variant); border-radius: var(--mat-sys-corner-small); background: transparent; color: inherit; font: inherit; cursor: pointer; }
+    .cartao:hover { border-color: var(--mat-sys-primary); color: var(--mat-sys-primary); }
     tr { cursor: pointer; }
     .coluna-expandir { width: 40px; padding-right: 0 !important; }
-    .seta { width: 32px; height: 32px; padding: 4px; color: var(--gd-muted-foreground); }
+    .seta { width: 32px; height: 32px; padding: 4px; color: var(--mat-sys-surface-container-lowest); }
     .seta mat-icon { transition: transform 0.15s; }
     .seta.aberta mat-icon { transform: rotate(90deg); }
     .progresso { display: inline-flex; align-items: center; gap: 2px; vertical-align: middle; }
@@ -350,21 +369,19 @@ import { ChecklistTarefaComponent, progressoChecklist } from './checklist-tarefa
     tr.linha-detalhe.fechada { display: none; }
     tr.linha-detalhe:hover td { background: transparent !important; }
     td.detalhe { padding: 0 0 12px 40px !important; }
-    .encontradas { font-size: 13px; }
-    .agrupada tr.cabeca-grupo td { padding: 0 !important; background: color-mix(in oklab, var(--gd-muted) 60%, transparent); border-bottom: 1px solid var(--gd-border); }
-    .agrupada tr.cabeca-grupo:hover td { background: var(--gd-muted) !important; }
-    .botao-grupo { display: flex; width: 100%; align-items: center; justify-content: space-between; padding: 10px 12px; border: 0; background: transparent; color: var(--gd-foreground); font: inherit; cursor: pointer; }
+    .agrupada tr.cabeca-grupo td { padding: 0 !important; background: color-mix(in oklab, var(--mat-sys-surface-bright) 60%, transparent); border-bottom: 1px solid var(--mat-sys-outline-variant); }
+    .agrupada tr.cabeca-grupo:hover td { background: var(--mat-sys-surface-bright) !important; }
+    .botao-grupo { display: flex; width: 100%; align-items: center; justify-content: space-between; padding: 10px 12px; border: 0; background: transparent; color: var(--mat-sys-on-background); font: inherit; cursor: pointer; }
     .nome-grupo { font-size: 13px; font-weight: 600; letter-spacing: 0.02em; text-transform: uppercase; }
-    .contagem-grupo { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--gd-muted-foreground); }
+    .contagem-grupo { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--mat-sys-surface-container-lowest); }
     .contagem-grupo mat-icon { font-size: 18px; width: 18px; height: 18px; }
     .titulo-tarefa { display: flex; align-items: flex-start; gap: 10px; }
-    .ponto { flex-shrink: 0; width: 10px; height: 10px; margin-top: 5px; border-radius: 50%; background: var(--gd-muted-foreground); }
-    .ponto.ok { background: var(--gd-success); }
-    .ponto.erro { background: var(--gd-destructive); }
-    .ponto.info { background: var(--gd-info); }
-    .ponto.alerta { background: var(--gd-warning); }
+    .ponto { flex-shrink: 0; width: 10px; height: 10px; margin-top: 5px; border-radius: 50%; background: var(--mat-sys-surface-container-lowest); }
+    .ponto.ok { background: var(--success-color); }
+    .ponto.erro { background: var(--mat-sys-error); }
+    .ponto.info { background: var(--info-color); }
+    .ponto.alerta { background: var(--warning-color); }
     td.prazo { white-space: nowrap; }
-    .gd-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   `,
 })
 export class TarefasPage implements OnInit {
@@ -451,10 +468,10 @@ export class TarefasPage implements OnInit {
   }
 
   protected classeSituacao(situacao: string): string {
-    if (situacao === 'Concluida') return 'gd-status ok';
-    if (situacao === 'Atrasada') return 'gd-status erro';
-    if (situacao === 'EmAndamento') return 'gd-status info';
-    return 'gd-status alerta';
+    if (situacao === 'Concluida') return 'inline-block rounded font-semibold px-2 py-1 text-xs whitespace-nowrap bg-light-success text-success';
+    if (situacao === 'Atrasada') return 'inline-block rounded font-semibold px-2 py-1 text-xs whitespace-nowrap bg-light-error text-error';
+    if (situacao === 'EmAndamento') return 'inline-block rounded font-semibold px-2 py-1 text-xs whitespace-nowrap bg-light-info text-info';
+    return 'inline-block rounded font-semibold px-2 py-1 text-xs whitespace-nowrap bg-light-warning text-warning';
   }
 
   protected nomesResponsaveis(tarefa: Tarefa): string {

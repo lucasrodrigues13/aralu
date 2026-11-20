@@ -1,5 +1,6 @@
 import { Component, ElementRef, inject, OnDestroy, OnInit, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -14,6 +15,7 @@ import { DIALOG, DIALOG_LARGO, DIALOG_PEQUENO } from '../../shared/dialog';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { GdDinheiroPipe } from '../../shared/gd-dinheiro.pipe';
 import { GdHoraPipe } from '../../shared/gd-hora.pipe';
+import { STATUS } from '../../shared/status';
 import { ClienteFormDialog } from '../clientes/cliente-form.dialog';
 import { EventoAbasComponent } from './evento-abas.component';
 import { AplicarModeloDialog } from './aplicar-modelo.dialog';
@@ -26,40 +28,41 @@ import { SalvarComoModeloDialog } from './salvar-como-modelo.dialog';
   imports: [MatDialogModule, MatButtonModule, MatFormFieldModule, MatSelectModule, MatIconModule],
   template: `
     <h2 mat-dialog-title>Clientes do evento</h2>
-    <p class="gd-dialog-descricao">Quem contratou ou acompanha o evento.</p>
+    <p class="text-muted text-sm px-6 -mt-2 mb-4">Quem contratou ou acompanha o evento.</p>
     <mat-dialog-content>
       @if (vinculados().length === 0) {
-        <p class="gd-apoio">Nenhum cliente vinculado.</p>
+        <p class="text-muted">Nenhum cliente vinculado.</p>
       } @else {
-        <ul class="gd-lista">
+        <ul class="list-none p-0 m-0 divide-y divide-border [&>li]:flex [&>li]:items-center [&>li]:gap-3 [&>li]:py-3">
           @for (cliente of vinculados(); track cliente.id) {
             <li>
-              <span class="gd-crescer">
+              <span class="flex-1 min-w-0">
                 <strong>{{ cliente.nome }}</strong>
-                <span class="gd-sub">{{ rotulo(cliente.papel) }} · {{ cliente.celular }}</span>
+                <span class="block text-xs text-muted">{{ rotulo(cliente.papel) }} · {{ cliente.celular }}</span>
               </span>
-              <button mat-button class="gd-perigo gd-pequeno" type="button" (click)="desvincular(cliente.id)">Desvincular</button>
+              <button mat-button class="text-error" type="button" (click)="desvincular(cliente.id)">Desvincular</button>
             </li>
           }
         </ul>
       }
-      <div class="gd-campos duas vincular">
-        <mat-form-field>
-          <mat-label>Vincular cliente da conta</mat-label>
-          <mat-select (valueChange)="vincular($event)">
+      <div class="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-4 items-end mt-4">
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Vincular cliente da conta</mat-label>
+          <mat-form-field appearance="outline" class="w-full">
+          <mat-select [attr.aria-label]="'Vincular cliente da conta'" (valueChange)="vincular($event)">
             @for (cliente of disponiveis(); track cliente.id) {
               <mat-option [value]="cliente.id">{{ cliente.nome }}</mat-option>
             }
           </mat-select>
         </mat-form-field>
-        <button mat-button class="gd-secundario" type="button" (click)="novo()"><mat-icon>person_add</mat-icon> Cadastrar novo</button>
+        </div>
+        <button mat-stroked-button type="button" (click)="novo()"><mat-icon>person_add</mat-icon> Cadastrar novo</button>
       </div>
     </mat-dialog-content>
     <mat-dialog-actions>
       <button mat-flat-button type="button" mat-dialog-close>Pronto</button>
     </mat-dialog-actions>
   `,
-  styles: `.vincular { margin-top: 16px; align-items: end; } .vincular button { margin-bottom: 0; }`,
 })
 export class ClientesEventoDialog implements OnInit {
   private readonly negocio = inject(NegocioClient);
@@ -121,116 +124,134 @@ export class ClientesEventoDialog implements OnInit {
 /** Resumo do evento: cabeçalho, alertas e cartões (SPEC-008 v2, 6.2). */
 @Component({
   selector: 'app-evento-home',
-  imports: [RouterLink, MatButtonModule, MatIconModule, MatMenuModule, GdDataPipe, GdDinheiroPipe, GdHoraPipe, EventoAbasComponent],
+  imports: [RouterLink, MatCardModule, MatButtonModule, MatIconModule, MatMenuModule, GdDataPipe, GdDinheiroPipe, GdHoraPipe, EventoAbasComponent],
   template: `
-    <a mat-button routerLink="/eventos"><mat-icon>arrow_back</mat-icon> Eventos</a>
     <app-evento-abas [eventoId]="id" />
     @if (evento(); as atual) {
-      <header class="gd-cabecalho evento-topo">
-        <div class="identidade">
-          <button type="button" class="foto" [attr.aria-label]="foto() ? 'Trocar a foto do evento' : 'Adicionar foto ao evento'" (click)="escolherFoto()">
-            @if (foto(); as url) {
-              <img [src]="url" alt="" />
-            } @else {
-              <span>{{ iniciais(atual) }}</span>
-            }
-          </button>
-          <input #arquivo hidden type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" (change)="enviarFoto($event)" />
-          <div>
-            <h1>{{ atual.nome }}</h1>
-            <p class="gd-apoio">
-              {{ rotuloTipo(atual.tipo) }} ·
-              @if (atual.data) {
-                {{ atual.data | gdData }}@if (atual.hora) { às {{ atual.hora | gdHora }} }
-              } @else {
-                Sem data
-              }
-              @if (local(atual); as onde) { · {{ onde }} }
-            </p>
-            <div class="selos">
-              <span [class]="classe(atual.situacao)">{{ rotuloSituacao(atual.situacao) }}</span>
-              @if (atual.situacao === 'EmAndamento' && atual.diasRestantes !== null && atual.diasRestantes >= 0) {
-                <span class="gd-status info">{{ atual.diasRestantes === 0 ? 'É hoje' : 'Faltam ' + atual.diasRestantes + (atual.diasRestantes === 1 ? ' dia' : ' dias') }}</span>
+      <mat-card class="cardWithShadow">
+        <mat-card-content>
+          <div class="flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-4 min-w-0">
+              <button
+                type="button"
+                class="size-16 shrink-0 rounded-full overflow-hidden flex items-center justify-center cursor-pointer border-0 p-0 bg-light-primary text-primary text-lg font-semibold"
+                [attr.aria-label]="foto() ? 'Trocar a foto do evento' : 'Adicionar foto ao evento'"
+                (click)="escolherFoto()"
+              >
+                @if (foto(); as url) {
+                  <img [src]="url" alt="" class="size-full object-cover" />
+                } @else {
+                  <span>{{ iniciais(atual) }}</span>
+                }
+              </button>
+              <input #arquivo hidden type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" (change)="enviarFoto($event)" />
+              <div class="min-w-0">
+                <h3 class="text-xl font-semibold">{{ atual.nome }}</h3>
+                <p class="text-muted mt-1">
+                  {{ rotuloTipo(atual.tipo) }} ·
+                  @if (atual.data) {
+                    {{ atual.data | gdData }}@if (atual.hora) { às {{ atual.hora | gdHora }} }
+                  } @else {
+                    Sem data
+                  }
+                  @if (local(atual); as onde) { · {{ onde }} }
+                </p>
+                <div class="flex flex-wrap gap-2 mt-2">
+                  <span [class]="classe(atual.situacao)">{{ rotuloSituacao(atual.situacao) }}</span>
+                  @if (atual.situacao === 'EmAndamento' && atual.diasRestantes !== null && atual.diasRestantes >= 0) {
+                    <span [class]="status.info">{{ atual.diasRestantes === 0 ? 'É hoje' : 'Faltam ' + atual.diasRestantes + (atual.diasRestantes === 1 ? ' dia' : ' dias') }}</span>
+                  }
+                </div>
+              </div>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button mat-stroked-button type="button" [matMenuTriggerFor]="mais"><mat-icon>more_horiz</mat-icon> Mais</button>
+              <mat-menu #mais="matMenu" xPosition="before" class="cardWithShadow">
+                @if (foto()) {
+                  <button mat-menu-item type="button" (click)="removerFoto()"><mat-icon>hide_image</mat-icon> Remover foto</button>
+                }
+                @if (atual.situacao === 'EmAndamento') {
+                  <button mat-menu-item type="button" (click)="aplicarModelo()"><mat-icon>playlist_add</mat-icon> Aplicar modelo</button>
+                  <button mat-menu-item type="button" (click)="salvarComoModelo()"><mat-icon>save_as</mat-icon> Salvar como modelo</button>
+                  <button mat-menu-item type="button" (click)="encerrar('concluir')"><mat-icon>task_alt</mat-icon> Concluir evento</button>
+                  <button mat-menu-item type="button" (click)="encerrar('cancelar')"><mat-icon>block</mat-icon> Cancelar evento</button>
+                }
+              </mat-menu>
+              @if (atual.situacao === 'EmAndamento') {
+                <button mat-flat-button type="button" (click)="editar()"><mat-icon>edit</mat-icon> Editar</button>
               }
             </div>
           </div>
-        </div>
-        <div class="gd-cabecalho-acoes">
-          <button mat-button class="gd-secundario" type="button" [matMenuTriggerFor]="mais"><mat-icon>more_horiz</mat-icon> Mais</button>
-          <mat-menu #mais="matMenu" xPosition="before">
-            @if (foto()) {
-              <button mat-menu-item type="button" (click)="removerFoto()"><mat-icon>hide_image</mat-icon> Remover foto</button>
-            }
-            @if (atual.situacao === 'EmAndamento') {
-              <button mat-menu-item type="button" (click)="aplicarModelo()"><mat-icon>playlist_add</mat-icon> Aplicar modelo</button>
-              <button mat-menu-item type="button" (click)="salvarComoModelo()"><mat-icon>save_as</mat-icon> Salvar como modelo</button>
-              <button mat-menu-item type="button" (click)="encerrar('concluir')"><mat-icon>task_alt</mat-icon> Concluir evento</button>
-              <button mat-menu-item type="button" (click)="encerrar('cancelar')"><mat-icon>block</mat-icon> Cancelar evento</button>
-            }
-          </mat-menu>
-          @if (atual.situacao === 'EmAndamento') {
-            <button mat-flat-button type="button" (click)="editar()"><mat-icon>edit</mat-icon> Editar</button>
-          }
-        </div>
-      </header>
+        </mat-card-content>
+      </mat-card>
 
       @if (resumo(); as r) {
         @for (alerta of r.alertas; track alerta.codigo) {
-          <div class="gd-alerta" [class.erro]="urgente(alerta)" [class.alerta]="!urgente(alerta)" role="status">
+          <div
+            class="flex items-center gap-3 rounded p-4 mb-4"
+            [class]="urgente(alerta) ? 'bg-light-error text-error' : 'bg-light-warning text-warning'"
+            role="status"
+          >
             <mat-icon>{{ urgente(alerta) ? 'error' : 'warning' }}</mat-icon>
-            <div class="gd-crescer"><strong>{{ alerta.texto }}</strong></div>
-            <button mat-button class="gd-secundario gd-pequeno" type="button" (click)="resolver(alerta)">{{ acaoDoAlerta(alerta) }}</button>
+            <strong class="flex-1 min-w-0">{{ alerta.texto }}</strong>
+            <button mat-stroked-button type="button" (click)="resolver(alerta)">{{ acaoDoAlerta(alerta) }}</button>
           </div>
         }
 
-        <div class="gd-numeros">
-          <a class="gd-numero" [routerLink]="['/eventos', id, 'tarefas']">
-            <span>Tarefas</span>
-            <strong>{{ percentual(r.tarefasConcluidas, r.tarefas) }}%</strong>
-            <span class="gd-icone"><mat-icon>checklist</mat-icon></span>
-            <small>{{ r.tarefasConcluidas }} de {{ r.tarefas }} feitas · {{ r.tarefasAtrasadas }} {{ r.tarefasAtrasadas === 1 ? 'atrasada' : 'atrasadas' }}</small>
+        <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-6 mb-6">
+          <a class="block no-underline" [routerLink]="['/eventos', id, 'tarefas']">
+            <mat-card class="shadow-none text-center mb-0! h-full bg-light-primary card-hover">
+              <mat-card-content>
+                <mat-icon class="text-primary">checklist</mat-icon>
+                <h4 class="text-sm font-semibold text-primary mt-2!">Tarefas</h4>
+                <h6 class="text-xl font-semibold text-primary mt-2!">{{ percentual(r.tarefasConcluidas, r.tarefas) }}%</h6>
+                <span class="block text-xs text-primary mt-1">{{ r.tarefasConcluidas }} de {{ r.tarefas }} feitas · {{ r.tarefasAtrasadas }} {{ r.tarefasAtrasadas === 1 ? 'atrasada' : 'atrasadas' }}</span>
+              </mat-card-content>
+            </mat-card>
           </a>
-          <a class="gd-numero" [routerLink]="['/eventos', id, 'convidados']">
-            <span>Convidados confirmados</span>
-            <strong>{{ r.convidadosConfirmados }}</strong>
-            <span class="gd-icone"><mat-icon>groups</mat-icon></span>
-            <small>{{ r.convidadosPendentes }} pendentes · {{ r.convidadosRecusados }} recusados · de {{ r.convidados }}</small>
+          <a class="block no-underline" [routerLink]="['/eventos', id, 'convidados']">
+            <mat-card class="shadow-none text-center mb-0! h-full bg-light-info card-hover">
+              <mat-card-content>
+                <mat-icon class="text-info">groups</mat-icon>
+                <h4 class="text-sm font-semibold text-info mt-2!">Convidados confirmados</h4>
+                <h6 class="text-xl font-semibold text-info mt-2!">{{ r.convidadosConfirmados }}</h6>
+                <span class="block text-xs text-info mt-1">{{ r.convidadosPendentes }} pendentes · {{ r.convidadosRecusados }} recusados · de {{ r.convidados }}</span>
+              </mat-card-content>
+            </mat-card>
           </a>
-          <a class="gd-numero" [routerLink]="['/eventos', id, 'fornecedores']">
-            <span>Serviços contratados</span>
-            <strong>{{ r.servicosContratados }}</strong>
-            <span class="gd-icone"><mat-icon>storefront</mat-icon></span>
-            <small>{{ r.servicosContratados }} de {{ r.servicos }} serviços · {{ r.servicosSemFornecedor }} sem fornecedor</small>
+          <a class="block no-underline" [routerLink]="['/eventos', id, 'fornecedores']">
+            <mat-card class="shadow-none text-center mb-0! h-full bg-light-secondary card-hover">
+              <mat-card-content>
+                <mat-icon class="text-secondary">storefront</mat-icon>
+                <h4 class="text-sm font-semibold text-secondary mt-2!">Serviços contratados</h4>
+                <h6 class="text-xl font-semibold text-secondary mt-2!">{{ r.servicosContratados }}</h6>
+                <span class="block text-xs text-secondary mt-1">{{ r.servicosContratados }} de {{ r.servicos }} serviços · {{ r.servicosSemFornecedor }} sem fornecedor</span>
+              </mat-card-content>
+            </mat-card>
           </a>
-          <a class="gd-numero" [routerLink]="['/eventos', id, 'fornecedores']">
-            <span>Orçamento contratado</span>
-            <strong>{{ r.valorContratado | gdDinheiro }}</strong>
-            <span class="gd-icone"><mat-icon>request_quote</mat-icon></span>
-            <small>Estimado {{ r.orcamentoEstimado | gdDinheiro }} · pago {{ r.valorPago | gdDinheiro }}</small>
+          <a class="block no-underline" [routerLink]="['/eventos', id, 'fornecedores']">
+            <mat-card class="shadow-none text-center mb-0! h-full bg-light-success card-hover">
+              <mat-card-content>
+                <mat-icon class="text-success">request_quote</mat-icon>
+                <h4 class="text-sm font-semibold text-success mt-2!">Orçamento contratado</h4>
+                <h6 class="text-xl font-semibold text-success mt-2!">{{ r.valorContratado | gdDinheiro }}</h6>
+                <span class="block text-xs text-success mt-1">Estimado {{ r.orcamentoEstimado | gdDinheiro }} · pago {{ r.valorPago | gdDinheiro }}</span>
+              </mat-card-content>
+            </mat-card>
           </a>
-          <button type="button" class="gd-numero" (click)="abrirClientes()">
-            <span>Cliente</span>
-            <strong class="nome">{{ r.cliente?.nome ?? 'Nenhum cliente' }}</strong>
-            <span class="gd-icone"><mat-icon>person</mat-icon></span>
-            <small>{{ r.cliente ? r.cliente.celular : 'Vincular cliente' }}</small>
+          <button class="block w-full p-0 border-0 bg-transparent text-left cursor-pointer" type="button" (click)="abrirClientes()">
+            <mat-card class="shadow-none text-center mb-0! h-full bg-light-warning card-hover">
+              <mat-card-content>
+                <mat-icon class="text-warning">person</mat-icon>
+                <h4 class="text-sm font-semibold text-warning mt-2!">Cliente</h4>
+                <h6 class="text-xl font-semibold text-warning mt-2! truncate">{{ r.cliente?.nome ?? 'Nenhum cliente' }}</h6>
+                <span class="block text-xs text-warning mt-1">{{ r.cliente ? r.cliente.celular : 'Vincular cliente' }}</span>
+              </mat-card-content>
+            </mat-card>
           </button>
         </div>
       }
     }
-  `,
-  styles: `
-    .evento-topo { align-items: center; }
-    .identidade { display: flex; align-items: center; gap: 16px; min-width: 0; }
-    .identidade h1 { margin: 0; }
-    .identidade .gd-apoio { margin: 4px 0 8px; }
-    .foto { flex-shrink: 0; width: 64px; height: 64px; padding: 0; border: 0; border-radius: 50%; overflow: hidden; display: grid; place-items: center; cursor: pointer; background: color-mix(in oklab, var(--gd-primary) 15%, transparent); color: var(--gd-primary); font: inherit; font-size: 18px; font-weight: 700; }
-    .foto:focus-visible { outline: none; box-shadow: var(--gd-anel-foco); }
-    .foto img { width: 100%; height: 100%; object-fit: cover; }
-    .selos { display: flex; flex-wrap: wrap; gap: 8px; }
-    .gd-alerta { align-items: center; }
-    button.gd-numero { border: 0; font: inherit; text-align: left; cursor: pointer; }
-    button.gd-numero:hover { box-shadow: 0 0 0 1px color-mix(in oklab, var(--gd-primary) 50%, transparent), 0 1px 2px rgb(0 0 0 / 0.05); }
-    .nome { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 18px !important; }
   `,
 })
 export class EventoHomePage implements OnInit, OnDestroy {
@@ -245,6 +266,7 @@ export class EventoHomePage implements OnInit, OnDestroy {
   private fotoAtual: string | null = null;
   private readonly arquivo = viewChild<ElementRef<HTMLInputElement>>('arquivo');
   protected id = '';
+  protected readonly status = STATUS;
 
   ngOnInit(): void {
     this.id = this.rota.snapshot.paramMap.get('id') ?? '';
@@ -277,9 +299,9 @@ export class EventoHomePage implements OnInit, OnDestroy {
   }
 
   protected classe(situacao: string): string {
-    if (situacao === 'Concluido') return 'gd-status ok';
-    if (situacao === 'Cancelado') return 'gd-status erro';
-    return 'gd-status alerta';
+    if (situacao === 'Concluido') return STATUS.sucesso;
+    if (situacao === 'Cancelado') return STATUS.erro;
+    return STATUS.alerta;
   }
 
   protected percentual(feitas: number, total: number): number {

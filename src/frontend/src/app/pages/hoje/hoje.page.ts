@@ -1,13 +1,17 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatListModule } from '@angular/material/list';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { API_BASE_URL } from '../../core/api-base-url';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { ToastService } from '../../core/toast.service';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { GdDinheiroPipe } from '../../shared/gd-dinheiro.pipe';
+import { STATUS } from '../../shared/status';
 
 export interface Hoje {
   hoje: string;
@@ -48,181 +52,215 @@ function lerPulados(): string[] {
 /** Tela Hoje (SPEC-007 v2): o que pede ação hoje. */
 @Component({
   selector: 'app-hoje',
-  imports: [RouterLink, MatButtonModule, MatIconModule, GdDataPipe, GdDinheiroPipe],
+  imports: [MatCardModule, MatListModule, MatProgressBarModule, RouterLink, MatButtonModule, MatIconModule, GdDataPipe, GdDinheiroPipe],
   template: `
     @if (dados(); as d) {
-      <header class="gd-cabecalho">
-        <div>
-          <p class="data">{{ dataExtenso(d.hoje) }}</p>
-          <h1>{{ frase(d.tarefasHoje) }}</h1>
-        </div>
-      </header>
+      <mat-card class="cardWithShadow">
+        <mat-card-content>
+          <span class="text-sm text-muted capitalize">{{ dataExtenso(d.hoje) }}</span>
+          <h3 class="text-xl font-semibold mt-1">{{ frase(d.tarefasHoje) }}</h3>
+        </mat-card-content>
+      </mat-card>
 
       @if (checklist().length > 0) {
-        <section class="gd-painel config">
-          <div class="config-topo">
-            <h2>Configure sua conta</h2>
+        <mat-card class="cardWithShadow">
+          <div class="p-6 flex items-center justify-between gap-4">
+            <mat-card-title class="mb-0">Configure sua conta</mat-card-title>
             <button mat-button type="button" (click)="pularTudo()">Pular tudo</button>
           </div>
-          <ul>
-            @for (item of checklist(); track item.id) {
-              <li>
-                <mat-icon>radio_button_unchecked</mat-icon>
-                <a [routerLink]="item.rota">{{ item.rotulo }}</a>
-                <button mat-button type="button" class="pular" (click)="pular(item.id)">Pular</button>
-              </li>
-            }
-          </ul>
-        </section>
+          <mat-card-content class="border-t border-border">
+            <mat-list class="p-0!">
+              @for (item of checklist(); track item.id) {
+                <mat-list-item class="px-0!">
+                  <mat-icon matListItemIcon class="text-muted">radio_button_unchecked</mat-icon>
+                  <div matListItemTitle class="flex items-center justify-between gap-2">
+                    <a class="text-primary font-semibold no-underline" [routerLink]="item.rota">{{ item.rotulo }}</a>
+                    <button mat-button type="button" (click)="pular(item.id)">Pular</button>
+                  </div>
+                </mat-list-item>
+              }
+            </mat-list>
+          </mat-card-content>
+        </mat-card>
       }
 
-      <section class="gd-numeros">
-        <a class="gd-numero" routerLink="/tarefas">
-          <span>Tarefas para hoje</span>
-          <span class="gd-icone"><mat-icon>today</mat-icon></span>
-          <strong>{{ d.tarefasHoje }}</strong>
+      <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-6 mb-6">
+        <a class="block no-underline" routerLink="/tarefas">
+          <mat-card class="shadow-none text-center mb-0! h-full bg-light-primary card-hover">
+            <mat-card-content>
+              <mat-icon class="text-primary">today</mat-icon>
+              <h4 class="text-sm font-semibold text-primary mt-2!">Tarefas para hoje</h4>
+              <h6 class="text-xl font-semibold text-primary mt-2!">{{ d.tarefasHoje }}</h6>
+            </mat-card-content>
+          </mat-card>
         </a>
-        <a class="gd-numero" routerLink="/tarefas" [queryParams]="{ filtro: 'atrasadas' }">
-          <span>Tarefas atrasadas</span>
-          <span class="gd-icone"><mat-icon>schedule</mat-icon></span>
-          <strong [class.alerta]="d.tarefasAtrasadas > 0">{{ d.tarefasAtrasadas }}</strong>
+        <a class="block no-underline" routerLink="/tarefas" [queryParams]="{ filtro: 'atrasadas' }">
+          <mat-card class="shadow-none text-center mb-0! h-full bg-light-error card-hover">
+            <mat-card-content>
+              <mat-icon class="text-error">schedule</mat-icon>
+              <h4 class="text-sm font-semibold text-error mt-2!">Tarefas atrasadas</h4>
+              <h6 class="text-xl font-semibold text-error mt-2!">{{ d.tarefasAtrasadas }}</h6>
+            </mat-card-content>
+          </mat-card>
         </a>
-        <a class="gd-numero" routerLink="/tarefas">
-          <span>Tarefas da semana</span>
-          <span class="gd-icone"><mat-icon>date_range</mat-icon></span>
-          <strong>{{ d.tarefasSemana }}</strong>
+        <a class="block no-underline" routerLink="/tarefas">
+          <mat-card class="shadow-none text-center mb-0! h-full bg-light-info card-hover">
+            <mat-card-content>
+              <mat-icon class="text-info">date_range</mat-icon>
+              <h4 class="text-sm font-semibold text-info mt-2!">Tarefas da semana</h4>
+              <h6 class="text-xl font-semibold text-info mt-2!">{{ d.tarefasSemana }}</h6>
+            </mat-card-content>
+          </mat-card>
         </a>
-        <a class="gd-numero" href="#cobrancas" (click)="rolar($event, 'cobrancas')">
-          <span>Cobranças a fazer</span>
-          <span class="gd-icone"><mat-icon>request_quote</mat-icon></span>
-          <strong [class.alerta]="d.cobrancas.length > 0">{{ d.cobrancas.length }}</strong>
-          <small>atrasadas e próximos 7 dias</small>
+        <a class="block no-underline" href="#cobrancas" (click)="rolar($event, 'cobrancas')">
+          <mat-card class="shadow-none text-center mb-0! h-full bg-light-warning card-hover">
+            <mat-card-content>
+              <mat-icon class="text-warning">request_quote</mat-icon>
+              <h4 class="text-sm font-semibold text-warning mt-2!">Cobranças a fazer</h4>
+              <h6 class="text-xl font-semibold text-warning mt-2!">{{ d.cobrancas.length }}</h6>
+              <span class="block text-xs text-warning mt-1">atrasadas e próximos 7 dias</span>
+            </mat-card-content>
+          </mat-card>
         </a>
-        <a class="gd-numero" routerLink="/eventos">
-          <span>Respostas de convidados</span>
-          <span class="gd-icone"><mat-icon>how_to_reg</mat-icon></span>
-          <strong>{{ d.respostasConvidados.pendentes }}</strong>
-          <small>sem resposta · {{ d.respostasConvidados.sim }} sim · {{ d.respostasConvidados.nao }} não</small>
+        <a class="block no-underline" routerLink="/eventos">
+          <mat-card class="shadow-none text-center mb-0! h-full bg-light-secondary card-hover">
+            <mat-card-content>
+              <mat-icon class="text-secondary">how_to_reg</mat-icon>
+              <h4 class="text-sm font-semibold text-secondary mt-2!">Respostas de convidados</h4>
+              <h6 class="text-xl font-semibold text-secondary mt-2!">{{ d.respostasConvidados.pendentes }}</h6>
+              <span class="block text-xs text-secondary mt-1">sem resposta · {{ d.respostasConvidados.sim }} sim · {{ d.respostasConvidados.nao }} não</span>
+            </mat-card-content>
+          </mat-card>
         </a>
-        <a class="gd-numero" routerLink="/pagamentos">
-          <span>Pagar a fornecedores</span>
-          <span class="gd-icone"><mat-icon>payments</mat-icon></span>
-          <strong>{{ d.pagamentosSemana }}</strong>
-          <small>{{ d.valorPagamentosSemana | gdDinheiro }} nesta semana</small>
+        <a class="block no-underline" routerLink="/pagamentos">
+          <mat-card class="shadow-none text-center mb-0! h-full bg-light-success card-hover">
+            <mat-card-content>
+              <mat-icon class="text-success">payments</mat-icon>
+              <h4 class="text-sm font-semibold text-success mt-2!">Pagar a fornecedores</h4>
+              <h6 class="text-xl font-semibold text-success mt-2!">{{ d.pagamentosSemana }}</h6>
+              <span class="block text-xs text-success mt-1">{{ d.valorPagamentosSemana | gdDinheiro }} nesta semana</span>
+            </mat-card-content>
+          </mat-card>
         </a>
-      </section>
-
-      <div class="duas-colunas">
-        <section class="gd-painel proximo">
-          <h2>Próximo evento</h2>
-          @if (d.proximoEvento; as p) {
-            <a [routerLink]="['/eventos', p.id]" class="proximo-nome">{{ p.nome }}</a>
-            <p class="contagem">{{ p.dias === 0 ? 'É hoje' : (p.dias === 1 ? 'Amanhã' : 'Faltam ' + p.dias + ' dias') }}</p>
-            <span class="gd-sub">{{ p.data | gdData }}</span>
-          } @else {
-            <p class="gd-vazio">Nenhum evento com data marcada.</p>
-          }
-        </section>
-
-        <section class="gd-painel" id="cobrancas">
-          <h2>Cobranças a fazer</h2>
-          @if (d.cobrancas.length === 0) {
-            <p class="gd-vazio">Nenhuma parcela do casal vencida ou vencendo nos próximos 7 dias.</p>
-          } @else {
-            <ul class="cobrancas">
-              @for (item of d.cobrancas; track $index) {
-                <li>
-                  <a [routerLink]="['/eventos', item.eventoId, 'dinheiro']">{{ item.evento }}</a>
-                  <span class="gd-sub">{{ item.parcela }} · {{ item.vencimento | gdData }}</span>
-                  <span class="valor">{{ item.saldo | gdDinheiro }}</span>
-                  <span [class]="item.atrasada ? 'gd-status erro' : 'gd-status alerta'">{{ item.atrasada ? 'Atrasada' : 'A vencer' }}</span>
-                </li>
-              }
-            </ul>
-          }
-        </section>
       </div>
 
-      <section class="gd-painel">
-        <h2>Carteira</h2>
-        @if (d.carteira.length === 0) {
-          <p class="gd-vazio">Nenhum evento em andamento.</p>
-        } @else {
-          <div class="gd-tabela-rolagem">
-            <table class="gd-grade">
-              <thead>
-                <tr><th>Evento</th><th>Data</th><th>Tarefas feitas</th><th>Responderam</th><th>Atenção</th></tr>
-              </thead>
-              <tbody>
-                @for (linha of d.carteira; track linha.id) {
-                  <tr>
-                    <td><a [routerLink]="['/eventos', linha.id]">{{ linha.nome }}</a></td>
-                    <td>{{ linha.data ? (linha.data | gdData) : '—' }}</td>
-                    <td>
-                      <div class="barra"><span [style.width.%]="linha.percentualTarefas"></span></div>
-                      <span class="gd-sub">{{ linha.percentualTarefas }}%</span>
-                    </td>
-                    <td>{{ linha.convidados === 0 ? '—' : linha.responderam + ' de ' + linha.convidados }}</td>
-                    <td>
-                      @if (linha.tarefasAtrasadas > 0) {
-                        <span class="gd-status erro">{{ linha.tarefasAtrasadas }} atrasada{{ linha.tarefasAtrasadas > 1 ? 's' : '' }}</span>
-                      }
-                      @if (linha.respostasAbaixo) {
-                        <span class="gd-status alerta">Respostas abaixo do esperado</span>
-                      }
-                      @if (linha.tarefasAtrasadas === 0 && !linha.respostasAbaixo) { <span class="gd-sub">—</span> }
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        }
-      </section>
+      <div class="grid grid-cols-12 gap-6">
+        <mat-card class="cardWithShadow col-span-12 lg:col-span-4">
+          <mat-card-content>
+            <mat-card-title>Próximo evento</mat-card-title>
+            @if (d.proximoEvento; as p) {
+              <div class="mt-6">
+                <a [routerLink]="['/eventos', p.id]" class="text-lg font-semibold no-underline">{{ p.nome }}</a>
+                <h4 class="text-3xl font-semibold text-primary mt-2!">
+                  {{ p.dias === 0 ? 'É hoje' : (p.dias === 1 ? 'Amanhã' : 'Faltam ' + p.dias + ' dias') }}
+                </h4>
+                <span class="block text-sm text-muted mt-1">{{ p.data | gdData }}</span>
+              </div>
+            } @else {
+              <p class="text-center text-muted py-10">Nenhum evento com data marcada.</p>
+            }
+          </mat-card-content>
+        </mat-card>
 
-      <section class="gd-painel">
-        <h2>Funil de vendas</h2>
-        <div class="gd-numeros funil">
-          @for (estagio of d.funil; track estagio.estagio) {
-            <a class="gd-numero" routerLink="/oportunidades">
-              <span>{{ estagio.estagio }}</span>
-              <strong>{{ estagio.quantidade }}</strong>
-              <small>{{ estagio.valor | gdDinheiro }}</small>
-            </a>
+        <mat-card class="cardWithShadow col-span-12 lg:col-span-8" id="cobrancas">
+          <mat-card-content>
+            <mat-card-title>Cobranças a fazer</mat-card-title>
+            <mat-card-subtitle>Parcelas do casal vencidas ou vencendo nos próximos 7 dias</mat-card-subtitle>
+            @if (d.cobrancas.length === 0) {
+              <p class="text-center text-muted py-10">Nenhuma parcela do casal vencida ou vencendo nos próximos 7 dias.</p>
+            } @else {
+              <div class="relative overflow-auto mt-4">
+                <table class="tabela">
+                  <thead>
+                    <tr><th>Evento</th><th>Parcela</th><th class="text-end!">Saldo</th><th class="text-end!">Situação</th></tr>
+                  </thead>
+                  <tbody>
+                    @for (item of d.cobrancas; track $index) {
+                      <tr>
+                        <td><a [routerLink]="['/eventos', item.eventoId, 'dinheiro']">{{ item.evento }}</a></td>
+                        <td>{{ item.parcela }}<span class="block text-xs text-muted">{{ item.vencimento | gdData }}</span></td>
+                        <td class="text-end!"><span class="valor">{{ item.saldo | gdDinheiro }}</span></td>
+                        <td class="text-end!">
+                          <span [class]="item.atrasada ? status.erro : status.alerta">{{ item.atrasada ? 'Atrasada' : 'A vencer' }}</span>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <mat-card class="cardWithShadow">
+        <mat-card-content>
+          <mat-card-title>Carteira</mat-card-title>
+          <mat-card-subtitle>Eventos em andamento</mat-card-subtitle>
+          @if (d.carteira.length === 0) {
+            <p class="text-center text-muted py-10">Nenhum evento em andamento.</p>
+          } @else {
+            <div class="relative overflow-auto mt-4">
+              <table class="tabela">
+                <thead>
+                  <tr><th>Evento</th><th>Data</th><th>Tarefas feitas</th><th>Responderam</th><th>Atenção</th></tr>
+                </thead>
+                <tbody>
+                  @for (linha of d.carteira; track linha.id) {
+                    <tr>
+                      <td><a [routerLink]="['/eventos', linha.id]">{{ linha.nome }}</a></td>
+                      <td class="whitespace-nowrap">{{ linha.data ? (linha.data | gdData) : '—' }}</td>
+                      <td class="min-w-40">
+                        <span class="text-sm font-medium block mb-1">{{ linha.percentualTarefas }}%</span>
+                        <mat-progress-bar mode="determinate" [value]="linha.percentualTarefas"></mat-progress-bar>
+                      </td>
+                      <td>{{ linha.convidados === 0 ? '—' : linha.responderam + ' de ' + linha.convidados }}</td>
+                      <td>
+                        <div class="flex flex-wrap gap-1">
+                          @if (linha.tarefasAtrasadas > 0) {
+                            <span [class]="status.erro">{{ linha.tarefasAtrasadas }} atrasada{{ linha.tarefasAtrasadas > 1 ? 's' : '' }}</span>
+                          }
+                          @if (linha.respostasAbaixo) {
+                            <span [class]="status.alerta">Respostas abaixo do esperado</span>
+                          }
+                          @if (linha.tarefasAtrasadas === 0 && !linha.respostasAbaixo) { <span class="text-muted">—</span> }
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
           }
-        </div>
-      </section>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="cardWithShadow">
+        <mat-card-content>
+          <mat-card-title>Funil de vendas</mat-card-title>
+          <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-6 mt-6">
+            @for (estagio of d.funil; track estagio.estagio) {
+              <a class="block no-underline" routerLink="/oportunidades">
+                <mat-card class="shadow-none text-center mb-0! h-full bg-light-primary card-hover">
+                  <mat-card-content>
+                    <h4 class="text-sm font-semibold text-primary">{{ estagio.estagio }}</h4>
+                    <h6 class="text-xl font-semibold text-primary mt-2!">{{ estagio.quantidade }}</h6>
+                    <span class="block text-xs text-primary mt-1">{{ estagio.valor | gdDinheiro }}</span>
+                  </mat-card-content>
+                </mat-card>
+              </a>
+            }
+          </div>
+        </mat-card-content>
+      </mat-card>
     }
-  `,
-  styles: `
-    .data { margin: 0 0 4px; font-size: 13px; color: var(--gd-muted-foreground); text-transform: capitalize; }
-    h2 { font-size: 16px; font-weight: 600; margin: 0 0 12px; }
-    .gd-painel { margin-bottom: 16px; }
-    strong.alerta { color: var(--gd-destructive); }
-    .duas-colunas { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 16px; }
-    @media (max-width: 899px) { .duas-colunas { grid-template-columns: 1fr; } }
-    .proximo-nome { font-size: 18px; font-weight: 600; color: var(--gd-foreground); text-decoration: none; }
-    .contagem { font-size: 28px; font-weight: 700; margin: 8px 0 2px; color: var(--gd-primary); }
-    .cobrancas { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
-    .cobrancas li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; gap: 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid color-mix(in oklab, var(--gd-border) 50%, transparent); }
-    .cobrancas li:last-child { border-bottom: 0; }
-    .valor { font-weight: 600; white-space: nowrap; }
-    .barra { width: 96px; height: 6px; border-radius: 3px; background: var(--gd-muted); overflow: hidden; }
-    .barra span { display: block; height: 100%; background: var(--gd-primary); }
-    td .gd-status { margin-right: 4px; }
-    .funil { margin-bottom: 0; }
-    .config ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
-    .config li { display: flex; align-items: center; gap: 8px; }
-    .config li mat-icon { color: var(--gd-muted-foreground); font-size: 18px; width: 18px; height: 18px; }
-    .config-topo { display: flex; justify-content: space-between; align-items: center; }
-    .config-topo h2 { margin: 0; }
-    .pular { margin-left: auto; }
   `,
 })
 export class HojePage implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly base = inject(API_BASE_URL);
   private readonly toast = inject(ToastService);
+  protected readonly status = STATUS;
   protected readonly dados = signal<Hoje | null>(null);
   private readonly pulados = signal<string[]>(lerPulados());
   protected readonly frase = fraseHoje;

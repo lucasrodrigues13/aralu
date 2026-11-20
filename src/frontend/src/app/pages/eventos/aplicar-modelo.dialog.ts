@@ -18,24 +18,26 @@ export interface AplicarModeloDados {
   imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatSelectModule],
   template: `
     <h2 mat-dialog-title>Aplicar modelo</h2>
-    <p class="gd-dialog-descricao">Acrescenta só o que ainda não existe no evento.</p>
+    <p class="text-muted text-sm px-6 -mt-2 mb-4">Acrescenta só o que ainda não existe no evento.</p>
     <mat-dialog-content>
-      <form class="gd-campos" [formGroup]="form">
-        <mat-form-field appearance="outline">
-          <mat-label>Modelo</mat-label>
-          <mat-select formControlName="modeloId" (selectionChange)="carregarPrevia()">
+      <form class="grid grid-cols-1 gap-4" [formGroup]="form">
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Modelo</mat-label>
+          <mat-form-field appearance="outline" class="w-full">
+          <mat-select [attr.aria-label]="'Modelo'" formControlName="modeloId" (selectionChange)="carregarPrevia()">
             @for (m of modelos(); track m.id) {
               <mat-option [value]="m.id">{{ m.nome }} · {{ m.tarefas.length }} tarefas · {{ m.servicos.length }} serviços</mat-option>
             }
           </mat-select>
         </mat-form-field>
+        </div>
       </form>
       @if (previa(); as p) {
-        <p class="gd-apoio">{{ p.resumo }}</p>
+        <p class="text-muted">{{ p.resumo }}</p>
       }
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button type="button" (click)="ref.close(false)">Cancelar</button>
+      <button mat-stroked-button type="button" (click)="ref.close(false)">Cancelar</button>
       <button mat-flat-button type="button" [disabled]="!previa()" (click)="aplicar()">Aplicar</button>
     </mat-dialog-actions>
   `,

@@ -1,5 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialog, MatDialogModule, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
@@ -22,28 +24,35 @@ import { GdDataPipe } from '../../shared/gd-data.pipe';
   template: `
     <h2 mat-dialog-title>{{ dados ? 'Editar orçamento' : 'Novo orçamento' }}</h2>
     <mat-dialog-content>
-      <form class="gd-campos" [formGroup]="form">
+      <form class="grid grid-cols-1 gap-4" [formGroup]="form">
         @if (!dados) {
-          <mat-form-field appearance="outline">
-            <mat-label>Oportunidade</mat-label>
-            <mat-select formControlName="oportunidadeId">
+          <div class="campo">
+            <mat-label class="font-semibold mb-2 block">Oportunidade</mat-label>
+            <mat-form-field appearance="outline" class="w-full">
+            <mat-select [attr.aria-label]="'Oportunidade'" formControlName="oportunidadeId">
               @for (o of oportunidades(); track o.id) { <mat-option [value]="o.id">{{ o.nome }}</mat-option> }
             </mat-select>
           </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Modelo</mat-label>
-            <mat-select formControlName="modeloId" (selectionChange)="aplicarModelo($event.value)">
+          </div>
+          <div class="campo">
+            <mat-label class="font-semibold mb-2 block">Modelo</mat-label>
+            <mat-form-field appearance="outline" class="w-full">
+            <mat-select [attr.aria-label]="'Modelo'" formControlName="modeloId" (selectionChange)="aplicarModelo($event.value)">
               <mat-option [value]="null">Sem modelo</mat-option>
               @for (m of modelos(); track m.id) { <mat-option [value]="m.id">{{ m.nome }}</mat-option> }
             </mat-select>
           </mat-form-field>
+          </div>
         }
-        <mat-form-field appearance="outline"><mat-label>Conteúdo</mat-label><textarea matInput rows="8" formControlName="conteudo"></textarea></mat-form-field>
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Conteúdo</mat-label>
+          <mat-form-field appearance="outline" class="w-full"><textarea [attr.aria-label]="'Conteúdo'" matInput rows="8" formControlName="conteudo"></textarea></mat-form-field>
+        </div>
         <app-campo-dinheiro rotulo="Valor" formControlName="valor" />
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button type="button" (click)="ref.close()">Cancelar</button>
+      <button mat-stroked-button type="button" (click)="ref.close()">Cancelar</button>
       <button mat-flat-button type="button" (click)="salvar()">Salvar</button>
     </mat-dialog-actions>
   `,
@@ -96,28 +105,32 @@ export class OrcamentoFunilDialog implements OnInit {
 
 @Component({
   selector: 'app-orcamentos-funil',
-  imports: [MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatCheckboxModule, GdDataPipe],
+  imports: [MatButtonToggleModule, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatCheckboxModule, GdDataPipe],
   template: `
-    <header class="gd-cabecalho">
-      <div><h1>Orçamentos</h1><p>Orçamentos comerciais do funil.</p></div>
+    <mat-card class="cardWithShadow">
+      <div class="p-6 flex flex-wrap items-center justify-between gap-4">
+      <div><mat-card-title class="mb-0">Orçamentos</mat-card-title><mat-card-subtitle>Orçamentos comerciais do funil.</mat-card-subtitle></div>
       <button mat-flat-button type="button" (click)="abrir()"><mat-icon>add</mat-icon> Novo orçamento</button>
-    </header>
-    <section class="gd-painel">
-      <div class="gd-barra">
-        <div class="gd-abas">
+    </div>
+      <mat-card-content class="border-t border-border">
+      <div class="flex flex-wrap items-end justify-between gap-4 mb-6">
+        <mat-button-toggle-group [value]="situacao()" (change)="situacao.set($event.value); carregar()" aria-label="Situação">
           @for (aba of abas; track aba.valor) {
-            <button type="button" [class.ativa]="situacao() === aba.valor" (click)="situacao.set(aba.valor); carregar()">{{ aba.rotulo }}</button>
+            <mat-button-toggle [value]="aba.valor">{{ aba.rotulo }}</mat-button-toggle>
           }
-        </div>
-        <mat-form-field class="gd-busca" appearance="outline" subscriptSizing="dynamic">
+        </mat-button-toggle-group>
+        <div class="campo w-full sm:w-64">
+          <mat-label class="font-semibold mb-2 block">Buscar</mat-label>
+          <mat-form-field appearance="outline" class="w-full">
           <mat-icon matIconPrefix>search</mat-icon>
-          <input matInput placeholder="Buscar" [value]="busca()" (input)="buscar($event)" />
+          <input matInput aria-label="Buscar" placeholder="Buscar" [value]="busca()" (input)="buscar($event)" />
         </mat-form-field>
+        </div>
       </div>
       @if (lista().length === 0) {
-        <p class="gd-vazio">Não há orçamento nesta aba.</p>
+        <p class="text-center text-muted py-10">Não há orçamento nesta aba.</p>
       } @else {
-        <table class="gd-grade" mat-table [dataSource]="lista()">
+        <table mat-table class="min-w-full" [dataSource]="lista()">
           <ng-container matColumnDef="oportunidade">
             <th mat-header-cell *matHeaderCellDef>Oportunidade</th>
             <td mat-cell *matCellDef="let item">{{ item.oportunidadeNome }}</td>
@@ -127,8 +140,8 @@ export class OrcamentoFunilDialog implements OnInit {
             <td mat-cell *matCellDef="let item">{{ item.criadoEm | gdData }}</td>
           </ng-container>
           <ng-container matColumnDef="acoes">
-            <th mat-header-cell *matHeaderCellDef class="gd-acoes">Ações</th>
-            <td mat-cell *matCellDef="let item" class="gd-acoes">
+            <th mat-header-cell *matHeaderCellDef class="text-end! whitespace-nowrap">Ações</th>
+            <td mat-cell *matCellDef="let item" class="text-end! whitespace-nowrap">
               @if (item.situacao === 'EmAndamento') {
                 <button mat-icon-button type="button" (click)="abrir(item)"><mat-icon>edit</mat-icon></button>
                 <button mat-icon-button type="button" (click)="enviar(item)"><mat-icon>send</mat-icon></button>
@@ -142,7 +155,8 @@ export class OrcamentoFunilDialog implements OnInit {
           <tr mat-row *matRowDef="let row; columns: colunas"></tr>
         </table>
       }
-    </section>
+    </mat-card-content>
+    </mat-card>
   `,
 })
 export class OrcamentosFunilPage implements OnInit {

@@ -1,5 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -18,46 +19,50 @@ export interface ImportarTarefasModeloDados {
 
 @Component({
   selector: 'app-importar-tarefas-modelo',
-  imports: [
-    ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule,
-    MatSelectModule, MatTableModule,
-  ],
+  imports: [MatCardModule, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatTableModule],
   template: `
     <h2 mat-dialog-title>{{ dados.modeloId ? 'Colar tarefas' : 'Importar modelo' }}</h2>
-    <p class="gd-dialog-descricao">Cole a lista ou envie a planilha. Nada é gravado antes de Importar.</p>
+    <p class="text-muted text-sm px-6 -mt-2 mb-4">Cole a lista ou envie a planilha. Nada é gravado antes de Importar.</p>
     <mat-dialog-content>
-      <form class="gd-campos" [formGroup]="form">
+      <form class="grid grid-cols-1 gap-4" [formGroup]="form">
         @if (!dados.modeloId) {
-          <div class="gd-campos duas">
-            <mat-form-field appearance="outline"><mat-label>Nome</mat-label><input matInput formControlName="nome" /></mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>Tipo</mat-label>
-              <mat-select formControlName="tipo">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+            <div class="campo">
+              <mat-label class="font-semibold mb-2 block">Nome</mat-label>
+              <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Nome'" matInput formControlName="nome" /></mat-form-field>
+            </div>
+            <div class="campo">
+              <mat-label class="font-semibold mb-2 block">Tipo</mat-label>
+              <mat-form-field appearance="outline" class="w-full">
+              <mat-select [attr.aria-label]="'Tipo'" formControlName="tipo">
                 @for (tipo of tipos; track tipo.valor) {
                   <mat-option [value]="tipo.valor">{{ tipo.rotulo }}</mat-option>
                 }
               </mat-select>
             </mat-form-field>
+            </div>
           </div>
         }
-        <mat-form-field appearance="outline" class="inteiro">
-          <mat-label>Lista de tarefas</mat-label>
-          <textarea matInput rows="8" formControlName="texto" placeholder="Cerimônia:&#10;- Reservar igreja (6 semanas)"></textarea>
+        <div class="campo sm:col-span-2">
+          <mat-label class="font-semibold mb-2 block">Lista de tarefas</mat-label>
+          <mat-form-field appearance="outline" class="w-full">
+          <textarea [attr.aria-label]="'Lista de tarefas'" matInput rows="8" formControlName="texto" placeholder="Cerimônia:&#10;- Reservar igreja (6 semanas)"></textarea>
         </mat-form-field>
+        </div>
         <div class="acoes-arquivo">
           <button mat-stroked-button type="button" (click)="arquivo.click()">Enviar planilha</button>
           <button mat-button type="button" (click)="baixarPadrao()">Baixar planilha padrão</button>
           <input #arquivo type="file" accept=".xlsx,.xls,.csv" hidden (change)="enviarArquivo($event)" />
-          @if (nomeArquivo()) { <span class="gd-sub">{{ nomeArquivo() }}</span> }
+          @if (nomeArquivo()) { <span class="block text-xs text-muted">{{ nomeArquivo() }}</span> }
         </div>
       </form>
       @if (previa(); as p) {
         @if (p.total === 0) {
-          <p class="gd-alerta">Nenhuma tarefa encontrada</p>
+          <p class="flex gap-3 rounded p-4 mb-4 bg-light-primary">Nenhuma tarefa encontrada</p>
         } @else {
-          <p class="gd-apoio">{{ p.total }} {{ p.total === 1 ? 'tarefa' : 'tarefas' }} na prévia</p>
-          <div class="gd-painel previa">
-            <table class="gd-grade" mat-table [dataSource]="p.tarefas">
+          <p class="text-muted">{{ p.total }} {{ p.total === 1 ? 'tarefa' : 'tarefas' }} na prévia</p>
+          <mat-card class="cardWithShadow previa"><mat-card-content>
+            <table mat-table class="min-w-full" [dataSource]="p.tarefas">
               <ng-container matColumnDef="grupo">
                 <th mat-header-cell *matHeaderCellDef>Grupo</th>
                 <td mat-cell *matCellDef="let t">{{ t.grupo || '—' }}</td>
@@ -66,7 +71,7 @@ export interface ImportarTarefasModeloDados {
                 <th mat-header-cell *matHeaderCellDef>Tarefa</th>
                 <td mat-cell *matCellDef="let t">
                   {{ t.titulo }}
-                  @if (t.aviso) { <span class="gd-sub">{{ t.aviso }}</span> }
+                  @if (t.aviso) { <span class="block text-xs text-muted">{{ t.aviso }}</span> }
                 </td>
               </ng-container>
               <ng-container matColumnDef="prazo">
@@ -76,10 +81,10 @@ export interface ImportarTarefasModeloDados {
               <tr mat-header-row *matHeaderRowDef="colunas"></tr>
               <tr mat-row *matRowDef="let row; columns: colunas"></tr>
             </table>
-          </div>
+          </mat-card-content></mat-card>
         }
         @if (p.linhasIgnoradas.length) {
-          <div class="gd-alerta">
+          <div class="flex gap-3 rounded p-4 mb-4 bg-light-primary">
             <strong>Linhas ignoradas</strong>
             <ul>@for (linha of p.linhasIgnoradas; track $index) { <li>{{ linha }}</li> }</ul>
           </div>
@@ -87,7 +92,7 @@ export interface ImportarTarefasModeloDados {
       }
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button type="button" (click)="ref.close()">Cancelar</button>
+      <button mat-stroked-button type="button" (click)="ref.close()">Cancelar</button>
       <button mat-stroked-button type="button" (click)="gerarPrevia()">Prévia</button>
       <button mat-flat-button type="button" [disabled]="!podeImportar()" (click)="importar()">Importar</button>
     </mat-dialog-actions>

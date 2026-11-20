@@ -1249,6 +1249,12 @@ export interface CompromissoAgenda {
   hora: string | null;
   eventoId: string | null;
   deEvento: boolean;
+  /** compromisso avulso/de evento, tarefa de evento ou tarefa do funil. */
+  origem: 'compromisso' | 'tarefa' | 'tarefaFunil';
+  concluida: boolean;
+  oportunidadeId: string | null;
+  /** Nome do evento ou da oportunidade da tarefa. */
+  contexto: string | null;
 }
 
 export interface ContatoOportunidade {

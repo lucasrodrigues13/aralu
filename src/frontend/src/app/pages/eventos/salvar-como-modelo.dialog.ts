@@ -19,17 +19,20 @@ export interface SalvarComoModeloDados {
   imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule],
   template: `
     <h2 mat-dialog-title>Salvar como modelo</h2>
-    <p class="gd-dialog-descricao">Cria um modelo com as tarefas e serviços deste evento.</p>
+    <p class="text-muted text-sm px-6 -mt-2 mb-4">Cria um modelo com as tarefas e serviços deste evento.</p>
     <mat-dialog-content>
-      <form class="gd-campos" [formGroup]="form">
-        <mat-form-field appearance="outline"><mat-label>Nome</mat-label><input matInput formControlName="nome" /></mat-form-field>
+      <form class="grid grid-cols-1 gap-4" [formGroup]="form">
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Nome</mat-label>
+          <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Nome'" matInput formControlName="nome" /></mat-form-field>
+        </div>
       </form>
       @if (previa(); as p) {
-        <p class="gd-apoio">{{ p.resumo }}</p>
+        <p class="text-muted">{{ p.resumo }}</p>
       }
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button type="button" (click)="ref.close()">Cancelar</button>
+      <button mat-stroked-button type="button" (click)="ref.close()">Cancelar</button>
       <button mat-flat-button type="button" [disabled]="form.invalid || !previa()" (click)="salvar(false)">Salvar</button>
       <button mat-stroked-button type="button" [disabled]="form.invalid || !previa()" (click)="salvar(true)">Salvar e abrir</button>
     </mat-dialog-actions>

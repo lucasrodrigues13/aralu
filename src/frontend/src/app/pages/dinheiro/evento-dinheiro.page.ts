@@ -1,5 +1,6 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
@@ -26,198 +27,235 @@ import { EventoAbasComponent } from '../eventos/evento-abas.component';
 import { linkWhatsapp, textoCobranca } from './cobranca';
 import { ChavePixDialog, ContratoCasalDialog, LancamentoDialog, ReceberDialog } from './dinheiro.dialogs';
 import { ComprovanteDialog } from './comprovante.dialog';
+import { STATUS } from '../../shared/status';
 
 const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
 
 /** Aba Dinheiro do evento (SPEC-029): o que ela recebe do casal e o que paga aos fornecedores. */
 @Component({
   selector: 'app-evento-dinheiro',
-  imports: [RouterLink, MatButtonModule, MatIconModule, MatMenuModule, GdDataPipe, GdDinheiroPipe, EventoAbasComponent],
+  imports: [MatCardModule, MatButtonModule, MatIconModule, MatMenuModule, GdDataPipe, GdDinheiroPipe, EventoAbasComponent],
   template: `
-    <a mat-button routerLink="/eventos"><mat-icon>arrow_back</mat-icon> Eventos</a>
     <app-evento-abas [eventoId]="id" />
-    <header class="gd-cabecalho">
-      <div>
-        <h1>Dinheiro</h1>
-        <p>{{ nomeEvento() }} · o que você recebe do casal e o que paga aos fornecedores.</p>
-      </div>
-      <div class="gd-cabecalho-acoes">
-        <button mat-button class="gd-secundario" type="button" (click)="exportarBudget()"><mat-icon>download</mat-icon> Exportar orçamento</button>
-        <button mat-flat-button type="button" (click)="definirContrato()">
-          <mat-icon>{{ dados()?.parcelas?.length ? 'edit' : 'add' }}</mat-icon>
-          {{ dados()?.parcelas?.length ? 'Refazer parcelas' : 'Definir contrato' }}
-        </button>
-      </div>
-    </header>
 
     @if (dados(); as d) {
-      <section class="gd-numeros">
-        <div class="gd-numero"><span>Contrato</span><strong>{{ (d.valorContrato ?? 0) | gdDinheiro }}</strong></div>
-        <div class="gd-numero"><span>Recebido</span><strong>{{ d.recebido | gdDinheiro }}</strong></div>
-        <div class="gd-numero"><span>Saldo</span><strong>{{ d.saldo | gdDinheiro }}</strong></div>
-      </section>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-6">
+        <mat-card class="shadow-none text-center mb-0! h-full bg-light-primary">
+          <mat-card-content>
+            <mat-icon class="text-primary">description</mat-icon>
+            <h4 class="text-sm font-semibold text-primary mt-2!">Contrato</h4>
+            <h6 class="text-xl font-semibold text-primary mt-2!">{{ (d.valorContrato ?? 0) | gdDinheiro }}</h6>
+          </mat-card-content>
+        </mat-card>
+        <mat-card class="shadow-none text-center mb-0! h-full bg-light-success">
+          <mat-card-content>
+            <mat-icon class="text-success">savings</mat-icon>
+            <h4 class="text-sm font-semibold text-success mt-2!">Recebido</h4>
+            <h6 class="text-xl font-semibold text-success mt-2!">{{ d.recebido | gdDinheiro }}</h6>
+          </mat-card-content>
+        </mat-card>
+        <mat-card class="shadow-none text-center mb-0! h-full bg-light-warning">
+          <mat-card-content>
+            <mat-icon class="text-warning">account_balance_wallet</mat-icon>
+            <h4 class="text-sm font-semibold text-warning mt-2!">Saldo</h4>
+            <h6 class="text-xl font-semibold text-warning mt-2!">{{ d.saldo | gdDinheiro }}</h6>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    }
 
-      <section class="gd-painel">
-        <h2 class="titulo">Parcelas do casal</h2>
-        @if (d.parcelas.length === 0) {
-          <div class="gd-vazio vazio-acao">
-            <p>Informe o valor do contrato, a entrada e o número de parcelas para gerar as parcelas do casal.</p>
-            <button mat-flat-button type="button" (click)="definirContrato()"><mat-icon>add</mat-icon> Definir contrato</button>
-          </div>
-        } @else {
-          <div class="gd-tabela-rolagem">
-            <table class="gd-grade">
-              <thead>
-                <tr>
-                  <th>Parcela</th>
-                  <th>Vencimento</th>
-                  <th class="gd-direita">Valor</th>
-                  <th class="gd-direita">Recebido</th>
-                  <th>Situação</th>
-                  <th class="gd-acoes">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (parcela of d.parcelas; track parcela.id) {
+    <mat-card class="cardWithShadow">
+      <div class="p-6 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <mat-card-title class="mb-0">Parcelas do casal</mat-card-title>
+          <mat-card-subtitle>{{ nomeEvento() }} · o que você recebe do casal.</mat-card-subtitle>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button mat-stroked-button type="button" (click)="exportarBudget()"><mat-icon>download</mat-icon> Exportar orçamento</button>
+          <button mat-flat-button type="button" (click)="definirContrato()">
+            <mat-icon>{{ dados()?.parcelas?.length ? 'edit' : 'add' }}</mat-icon>
+            {{ dados()?.parcelas?.length ? 'Refazer parcelas' : 'Definir contrato' }}
+          </button>
+        </div>
+      </div>
+      <mat-card-content class="border-t border-border">
+        @if (dados(); as d) {
+          @if (d.parcelas.length === 0) {
+            <div class="flex flex-col items-center gap-3 text-center text-muted py-10">
+              <p>Informe o valor do contrato, a entrada e o número de parcelas para gerar as parcelas do casal.</p>
+              <button mat-flat-button type="button" (click)="definirContrato()"><mat-icon>add</mat-icon> Definir contrato</button>
+            </div>
+          } @else {
+            <div class="relative overflow-auto">
+              <table class="tabela">
+                <thead>
                   <tr>
-                    <td>
-                      {{ parcela.entrada ? 'Entrada' : 'Parcela ' + parcela.numero }}
-                      @if (parcela.recebimentos.length > 0) {
-                        <span class="gd-sub">{{ resumoRecebimentos(parcela) }}</span>
-                      }
-                    </td>
-                    <td>{{ parcela.vencimento | gdData }}</td>
-                    <td class="gd-direita valor">{{ parcela.valor | gdDinheiro }}</td>
-                    <td class="gd-direita">{{ parcela.recebido | gdDinheiro }}</td>
-                    <td><span class="gd-status" [class]="'gd-status ' + situacao(parcela).classe">{{ situacao(parcela).rotulo }}</span></td>
-                    <td class="gd-acoes">
-                      @if (parcela.situacao !== 'Recebida') {
-                        <button mat-stroked-button class="acao" type="button" (click)="cobrar(parcela)"><mat-icon>chat</mat-icon> Cobrar</button>
-                        <button mat-stroked-button class="acao" type="button" (click)="receber(parcela)">Recebi</button>
-                      }
-                      @if (parcela.recebimentos.length > 0) {
-                        <button mat-icon-button type="button" aria-label="Mais ações" [matMenuTriggerFor]="menu"><mat-icon>more_vert</mat-icon></button>
-                        <mat-menu #menu="matMenu" xPosition="before">
-                          <button mat-menu-item type="button" (click)="desfazer(parcela)"><mat-icon>undo</mat-icon> Desfazer último recebimento</button>
-                        </mat-menu>
-                      }
-                    </td>
+                    <th>Parcela</th>
+                    <th>Vencimento</th>
+                    <th class="text-end!">Valor</th>
+                    <th class="text-end!">Recebido</th>
+                    <th>Situação</th>
+                    <th class="text-end! whitespace-nowrap">Ações</th>
                   </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        }
-      </section>
-
-      <section class="gd-painel">
-        <h2 class="titulo">Pagamentos a fornecedores</h2>
-        @if (d.pagamentosFornecedores.length === 0) {
-          <p class="gd-vazio">Nenhuma parcela de fornecedor. Elas aparecem ao contratar um fornecedor na aba Fornecedores.</p>
-        } @else {
-          <div class="gd-tabela-rolagem">
-            <table class="gd-grade">
-              <thead>
-                <tr><th>Vencimento</th><th>Serviço</th><th>Fornecedor</th><th class="gd-direita">Valor</th><th>Situação</th></tr>
-              </thead>
-              @for (grupo of pagamentosPorMes(); track grupo.mes) {
+                </thead>
                 <tbody>
-                  <tr class="mes"><td colspan="5">{{ grupo.mes }} · {{ grupo.total | gdDinheiro }}</td></tr>
-                  @for (pagamento of grupo.itens; track $index) {
+                  @for (parcela of d.parcelas; track parcela.id) {
                     <tr>
-                      <td>{{ pagamento.vencimento | gdData }}</td>
-                      <td>{{ pagamento.servico }} <span class="gd-sub">{{ pagamento.entrada ? 'Entrada' : 'Parcela ' + pagamento.numero }}</span></td>
-                      <td>{{ pagamento.fornecedor ?? '—' }}</td>
-                      <td class="gd-direita valor">{{ pagamento.valor | gdDinheiro }}</td>
-                      <td><span class="gd-status" [class]="pagamento.situacao === 'Pago' ? 'gd-status ok' : 'gd-status alerta'">{{ pagamento.situacao === 'Pago' ? 'Pago' : 'Pendente' }}</span></td>
+                      <td>
+                        {{ parcela.entrada ? 'Entrada' : 'Parcela ' + parcela.numero }}
+                        @if (parcela.recebimentos.length > 0) {
+                          <span class="block text-xs text-muted">{{ resumoRecebimentos(parcela) }}</span>
+                        }
+                      </td>
+                      <td class="whitespace-nowrap">{{ parcela.vencimento | gdData }}</td>
+                      <td class="text-end! valor">{{ parcela.valor | gdDinheiro }}</td>
+                      <td class="text-end! whitespace-nowrap">{{ parcela.recebido | gdDinheiro }}</td>
+                      <td><span [class]="situacao(parcela).classe">{{ situacao(parcela).rotulo }}</span></td>
+                      <td class="text-end! whitespace-nowrap">
+                        @if (parcela.situacao !== 'Recebida') {
+                          <button mat-stroked-button class="ml-1" type="button" (click)="cobrar(parcela)"><mat-icon>chat</mat-icon> Cobrar</button>
+                          <button mat-stroked-button class="ml-1" type="button" (click)="receber(parcela)">Recebi</button>
+                        }
+                        @if (parcela.recebimentos.length > 0) {
+                          <button mat-icon-button type="button" aria-label="Mais ações" [matMenuTriggerFor]="menu"><mat-icon>more_vert</mat-icon></button>
+                          <mat-menu #menu="matMenu" xPosition="before" class="cardWithShadow">
+                            <button mat-menu-item type="button" (click)="desfazer(parcela)"><mat-icon>undo</mat-icon> Desfazer último recebimento</button>
+                          </mat-menu>
+                        }
+                      </td>
                     </tr>
                   }
                 </tbody>
-              }
-            </table>
-          </div>
+              </table>
+            </div>
+          }
         }
-      </section>
+      </mat-card-content>
+    </mat-card>
 
-      <section class="gd-painel">
-        <div class="titulo-linha">
-          <h2 class="titulo">Despesas e entradas</h2>
+    @if (dados(); as d) {
+      <mat-card class="cardWithShadow">
+        <div class="p-6">
+          <mat-card-title class="mb-0">Pagamentos a fornecedores</mat-card-title>
+          <mat-card-subtitle>Parcelas geradas ao contratar um fornecedor.</mat-card-subtitle>
+        </div>
+        <mat-card-content class="border-t border-border">
+          @if (d.pagamentosFornecedores.length === 0) {
+            <p class="text-center text-muted py-10">Nenhuma parcela de fornecedor. Elas aparecem ao contratar um fornecedor na aba Fornecedores.</p>
+          } @else {
+            <div class="relative overflow-auto">
+              <table class="tabela">
+                <thead>
+                  <tr><th>Vencimento</th><th>Serviço</th><th>Fornecedor</th><th class="text-end!">Valor</th><th>Situação</th></tr>
+                </thead>
+                @for (grupo of pagamentosPorMes(); track grupo.mes) {
+                  <tbody>
+                    <tr class="mes"><td colspan="5">{{ grupo.mes }} · {{ grupo.total | gdDinheiro }}</td></tr>
+                    @for (pagamento of grupo.itens; track $index) {
+                      <tr>
+                        <td class="whitespace-nowrap">{{ pagamento.vencimento | gdData }}</td>
+                        <td>{{ pagamento.servico }} <span class="block text-xs text-muted">{{ pagamento.entrada ? 'Entrada' : 'Parcela ' + pagamento.numero }}</span></td>
+                        <td>{{ pagamento.fornecedor ?? '—' }}</td>
+                        <td class="text-end! valor">{{ pagamento.valor | gdDinheiro }}</td>
+                        <td><span [class]="pagamento.situacao === 'Pago' ? status.sucesso : status.alerta">{{ pagamento.situacao === 'Pago' ? 'Pago' : 'Pendente' }}</span></td>
+                      </tr>
+                    }
+                  </tbody>
+                }
+              </table>
+            </div>
+          }
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="cardWithShadow">
+        <div class="p-6 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <mat-card-title class="mb-0">Despesas e entradas</mat-card-title>
+            <mat-card-subtitle>Lançamentos avulsos do evento.</mat-card-subtitle>
+          </div>
           <button mat-stroked-button type="button" (click)="lancamento()"><mat-icon>add</mat-icon> Adicionar</button>
         </div>
-        @if (d.lancamentos.length === 0) {
-          <p class="gd-vazio">Nenhuma despesa ou entrada avulsa neste evento.</p>
-        } @else {
-          <div class="gd-tabela-rolagem">
-            <table class="gd-grade">
-              <thead>
-                <tr><th>Data</th><th>Tipo</th><th>Categoria</th><th>Descrição</th><th class="gd-direita">Valor</th><th class="gd-acoes">Ações</th></tr>
-              </thead>
-              <tbody>
-                @for (item of d.lancamentos; track item.id) {
-                  <tr>
-                    <td>{{ item.data | gdData }}</td>
-                    <td><span class="gd-status" [class]="item.tipo === 'Despesa' ? 'gd-status erro' : 'gd-status ok'">{{ item.tipo }}</span></td>
-                    <td>{{ item.categoria }}</td>
-                    <td>{{ item.descricao ?? '—' }}</td>
-                    <td class="gd-direita valor">{{ item.valor | gdDinheiro }}</td>
-                    <td class="gd-acoes">
-                      <button mat-icon-button type="button" aria-label="Editar" (click)="lancamento(item)"><mat-icon>edit</mat-icon></button>
-                      <button mat-icon-button type="button" aria-label="Excluir" (click)="excluirLancamento(item)"><mat-icon>delete</mat-icon></button>
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-          <p class="gd-sub totais">Despesas {{ d.despesas | gdDinheiro }} · Entradas {{ d.entradas | gdDinheiro }}</p>
-        }
-      </section>
+        <mat-card-content class="border-t border-border">
+          @if (d.lancamentos.length === 0) {
+            <p class="text-center text-muted py-10">Nenhuma despesa ou entrada avulsa neste evento.</p>
+          } @else {
+            <div class="relative overflow-auto">
+              <table class="tabela">
+                <thead>
+                  <tr><th>Data</th><th>Tipo</th><th>Categoria</th><th>Descrição</th><th class="text-end!">Valor</th><th class="text-end! whitespace-nowrap">Ações</th></tr>
+                </thead>
+                <tbody>
+                  @for (item of d.lancamentos; track item.id) {
+                    <tr>
+                      <td class="whitespace-nowrap">{{ item.data | gdData }}</td>
+                      <td><span [class]="item.tipo === 'Despesa' ? status.erro : status.sucesso">{{ item.tipo }}</span></td>
+                      <td>{{ item.categoria }}</td>
+                      <td>{{ item.descricao ?? '—' }}</td>
+                      <td class="text-end! valor">{{ item.valor | gdDinheiro }}</td>
+                      <td class="text-end! whitespace-nowrap">
+                        <button mat-icon-button type="button" aria-label="Editar" (click)="lancamento(item)"><mat-icon>edit</mat-icon></button>
+                        <button mat-icon-button type="button" aria-label="Excluir" (click)="excluirLancamento(item)"><mat-icon>delete</mat-icon></button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+            <p class="text-sm text-muted text-end mt-4">Despesas {{ d.despesas | gdDinheiro }} · Entradas {{ d.entradas | gdDinheiro }}</p>
+          }
+        </mat-card-content>
+      </mat-card>
 
-      <section class="gd-painel">
-        <div class="titulo-linha">
-          <h2 class="titulo">Comprovantes e documentos</h2>
+      <mat-card class="cardWithShadow">
+        <div class="p-6 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <mat-card-title class="mb-0">Comprovantes e documentos</mat-card-title>
+            <mat-card-subtitle>JPG, JPEG, PNG ou PDF de até 5 MB.</mat-card-subtitle>
+          </div>
           <button mat-stroked-button type="button" (click)="enviarComprovante()"><mat-icon>upload_file</mat-icon> Enviar comprovante</button>
         </div>
-        @if (d.comprovantes.length === 0) {
-          <p class="gd-vazio">Nenhum comprovante. Aceita JPG, JPEG, PNG ou PDF de até 5 MB.</p>
-        } @else {
-          <table class="gd-grade">
-            <thead><tr><th>Arquivo</th><th>Descrição</th><th>Enviado em</th><th class="gd-acoes">Ações</th></tr></thead>
-            <tbody>
-              @for (item of d.comprovantes; track item.id) {
-                <tr>
-                  <td><mat-icon class="tipo">{{ item.tipoConteudo === 'application/pdf' ? 'picture_as_pdf' : 'image' }}</mat-icon> {{ item.nome }}</td>
-                  <td>{{ item.descricao ?? '—' }}</td>
-                  <td>{{ item.enviadoEm | gdData }}</td>
-                  <td class="gd-acoes">
-                    <button mat-icon-button type="button" aria-label="Abrir" (click)="abrirComprovante(item)"><mat-icon>open_in_new</mat-icon></button>
-                    <button mat-icon-button type="button" aria-label="Excluir" (click)="excluirComprovante(item)"><mat-icon>delete</mat-icon></button>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        }
-      </section>
+        <mat-card-content class="border-t border-border">
+          @if (d.comprovantes.length === 0) {
+            <p class="text-center text-muted py-10">Nenhum comprovante.</p>
+          } @else {
+            <div class="relative overflow-auto">
+              <table class="tabela">
+                <thead><tr><th>Arquivo</th><th>Descrição</th><th>Enviado em</th><th class="text-end! whitespace-nowrap">Ações</th></tr></thead>
+                <tbody>
+                  @for (item of d.comprovantes; track item.id) {
+                    <tr>
+                      <td>
+                        <span class="inline-flex items-center gap-2">
+                          <mat-icon class="text-muted">{{ item.tipoConteudo === 'application/pdf' ? 'picture_as_pdf' : 'image' }}</mat-icon>
+                          {{ item.nome }}
+                        </span>
+                      </td>
+                      <td>{{ item.descricao ?? '—' }}</td>
+                      <td class="whitespace-nowrap">{{ item.enviadoEm | gdData }}</td>
+                      <td class="text-end! whitespace-nowrap">
+                        <button mat-icon-button type="button" aria-label="Abrir" (click)="abrirComprovante(item)"><mat-icon>open_in_new</mat-icon></button>
+                        <button mat-icon-button type="button" aria-label="Excluir" (click)="excluirComprovante(item)"><mat-icon>delete</mat-icon></button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </mat-card-content>
+      </mat-card>
     }
   `,
   styles: `
-    .gd-painel { margin-bottom: 16px; }
-    .titulo { font-size: 16px; font-weight: 600; margin: 0 0 12px; }
-    .titulo-linha { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
-    .titulo-linha .titulo { margin: 0; }
-    .vazio-acao { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
-    .vazio-acao p { margin: 0; }
     .valor { font-weight: 600; white-space: nowrap; }
-    .acao { height: 32px; margin-left: 4px; }
-    .acao mat-icon { font-size: 16px; width: 16px; height: 16px; }
-    tr.mes td { font-size: 12px; font-weight: 600; text-transform: capitalize; color: var(--gd-muted-foreground); background: color-mix(in oklab, var(--gd-muted) 50%, transparent); }
-    .totais { margin-top: 12px; text-align: right; }
-    mat-icon.tipo { font-size: 18px; width: 18px; height: 18px; vertical-align: middle; color: var(--gd-muted-foreground); margin-right: 4px; }
+    tr.mes td { font-size: 12px; font-weight: 600; text-transform: capitalize; color: var(--mat-sys-surface-container-lowest); background: var(--mat-sys-surface-bright); padding-top: 10px; padding-bottom: 10px; }
   `,
+
 })
 export class EventoDinheiroPage implements OnInit {
   private readonly dinheiro = inject(DinheiroClient);
+  protected readonly status = STATUS;
   private readonly negocio = inject(NegocioClient);
   private readonly rota = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);

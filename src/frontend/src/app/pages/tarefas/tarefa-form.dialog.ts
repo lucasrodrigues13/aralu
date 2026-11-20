@@ -27,67 +27,82 @@ export interface TarefaFormDados {
 
 @Component({
   selector: 'app-tarefa-form',
-  imports: [
-    ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule,
-    MatSelectModule, MatCheckboxModule, MatIconModule, CampoDataComponent,
-  ],
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule, MatIconModule, CampoDataComponent],
   template: `
     <h2 mat-dialog-title>{{ dados.tarefa ? 'Editar tarefa' : 'Nova tarefa' }}</h2>
-    <p class="gd-dialog-descricao">Título, prazo, responsáveis e os detalhes da tarefa.</p>
+    <p class="text-muted text-sm px-6 -mt-2 mb-4">Título, prazo, responsáveis e os detalhes da tarefa.</p>
     <mat-dialog-content>
-      <form id="tarefa-form" class="gd-campos" [formGroup]="formulario" (ngSubmit)="salvar()">
-        <mat-form-field class="inteiro" appearance="outline">
-          <mat-label>Título</mat-label>
-          <input matInput formControlName="titulo" required />
+      <form id="tarefa-form" class="grid grid-cols-1 gap-4" [formGroup]="formulario" (ngSubmit)="salvar()">
+        <div class="campo sm:col-span-2">
+          <mat-label class="font-semibold mb-2 block">Título</mat-label>
+          <mat-form-field appearance="outline" class="w-full">
+          <input [attr.aria-label]="'Título'" matInput formControlName="titulo" required />
           @if (formulario.controls.titulo.invalid) { <mat-error>Informe o título.</mat-error> }
         </mat-form-field>
-        <mat-form-field class="inteiro" appearance="outline"><mat-label>Descrição</mat-label><textarea matInput rows="2" formControlName="descricao"></textarea></mat-form-field>
-        <div class="gd-campos duas">
+        </div>
+        <div class="campo sm:col-span-2">
+          <mat-label class="font-semibold mb-2 block">Descrição</mat-label>
+          <mat-form-field appearance="outline" class="w-full"><textarea [attr.aria-label]="'Descrição'" matInput rows="2" formControlName="descricao"></textarea></mat-form-field>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
           <app-campo-data rotulo="Prazo" formControlName="prazo" />
           @if (dados.tarefa) {
-            <mat-form-field appearance="outline">
-              <mat-label>Situação</mat-label>
-              <mat-select formControlName="situacao">
+            <div class="campo">
+              <mat-label class="font-semibold mb-2 block">Situação</mat-label>
+              <mat-form-field appearance="outline" class="w-full">
+              <mat-select [attr.aria-label]="'Situação'" formControlName="situacao">
                 @for (item of situacoes; track item.valor) { <mat-option [value]="item.valor">{{ item.rotulo }}</mat-option> }
               </mat-select>
             </mat-form-field>
+            </div>
           }
-          <mat-form-field appearance="outline">
-            <mat-label>Responsáveis</mat-label>
-            <mat-select formControlName="responsaveis" multiple required>
+          <div class="campo">
+            <mat-label class="font-semibold mb-2 block">Responsáveis</mat-label>
+            <mat-form-field appearance="outline" class="w-full">
+            <mat-select [attr.aria-label]="'Responsáveis'" formControlName="responsaveis" multiple required>
               @for (papel of papeis; track papel.valor) { <mat-option [value]="papel.valor">{{ papel.rotulo }}</mat-option> }
             </mat-select>
             @if (formulario.controls.responsaveis.hasError('required')) { <mat-error>Informe ao menos um responsável.</mat-error> }
           </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Prioridade</mat-label>
-            <mat-select formControlName="prioridade">
+          </div>
+          <div class="campo">
+            <mat-label class="font-semibold mb-2 block">Prioridade</mat-label>
+            <mat-form-field appearance="outline" class="w-full">
+            <mat-select [attr.aria-label]="'Prioridade'" formControlName="prioridade">
               @for (item of prioridades; track item.valor) { <mat-option [value]="item.valor">{{ item.rotulo }}</mat-option> }
             </mat-select>
           </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Visibilidade</mat-label>
-            <mat-select formControlName="visibilidade">
+          </div>
+          <div class="campo">
+            <mat-label class="font-semibold mb-2 block">Visibilidade</mat-label>
+            <mat-form-field appearance="outline" class="w-full">
+            <mat-select [attr.aria-label]="'Visibilidade'" formControlName="visibilidade">
               @for (item of visibilidades; track item.valor) { <mat-option [value]="item.valor">{{ item.rotulo }}</mat-option> }
             </mat-select>
           </mat-form-field>
-          <mat-form-field appearance="outline"><mat-label>Grupo</mat-label><input matInput formControlName="grupo" maxlength="80" /></mat-form-field>
+          </div>
+          <div class="campo">
+            <mat-label class="font-semibold mb-2 block">Grupo</mat-label>
+            <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Grupo'" matInput formControlName="grupo" maxlength="80" /></mat-form-field>
+          </div>
         </div>
         @if (servicos().length > 0) {
-          <mat-form-field class="inteiro" appearance="outline">
-            <mat-label>Serviço</mat-label>
-            <mat-select formControlName="servicoEventoId">
+          <div class="campo sm:col-span-2">
+            <mat-label class="font-semibold mb-2 block">Serviço</mat-label>
+            <mat-form-field appearance="outline" class="w-full">
+            <mat-select [attr.aria-label]="'Serviço'" formControlName="servicoEventoId">
               <mat-option value="">Nenhum</mat-option>
               @for (servico of servicos(); track servico.id) { <mat-option [value]="servico.id">{{ servico.nome }}</mat-option> }
             </mat-select>
           </mat-form-field>
+          </div>
         }
-        <div class="inteiro gd-lista-itens" formArrayName="checklist">
-          <span class="gd-rotulo">Checklist</span>
+        <div class="sm:col-span-2 flex flex-col gap-2" formArrayName="checklist">
+          <span class="font-semibold mb-2 block">Checklist</span>
           @for (item of checklist.controls; track item; let i = $index) {
-            <div class="gd-lista-item" [class.cancelado]="item.get('cancelado')?.value" [formGroupName]="i">
+            <div class="item-lista flex items-center gap-2" [class.line-through]="item.get('cancelado')?.value" [formGroupName]="i">
               <mat-checkbox formControlName="feito" [attr.aria-label]="'Marcar item ' + (i + 1) + ' como feito'" />
-              <mat-form-field appearance="outline">
+              <mat-form-field appearance="outline" class="flex-1 min-w-0">
                 <input matInput formControlName="texto" placeholder="Descreva o item" required [attr.aria-label]="'Item ' + (i + 1)" />
                 @if (item.get('texto')?.invalid) { <mat-error>Preencha ou remova o item.</mat-error> }
               </mat-form-field>
@@ -104,7 +119,7 @@ export interface TarefaFormDados {
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button type="button" (click)="ref.close(false)">Cancelar</button>
+      <button mat-stroked-button type="button" (click)="ref.close(false)">Cancelar</button>
       <button mat-flat-button type="submit" form="tarefa-form">Salvar</button>
     </mat-dialog-actions>
   `,
@@ -150,7 +165,7 @@ export class TarefaFormDialog implements OnInit {
   protected adicionarItem(): void {
     this.checklist.push(this.item('', false, false));
     setTimeout(() => {
-      const campos = this.elemento.nativeElement.querySelectorAll<HTMLInputElement>('.gd-lista-item input');
+      const campos = this.elemento.nativeElement.querySelectorAll<HTMLInputElement>('.item-lista input');
       campos[campos.length - 1]?.focus();
     });
   }

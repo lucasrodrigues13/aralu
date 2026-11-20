@@ -1,0 +1,672 @@
+// O que o TailwindAdmin não traz pronto, desenhado com as variáveis dele (--mat-sys-*).
+// Todo o resto é Material com os overrides do template + classes do Tailwind no próprio HTML.
+@use 'tailwindadmin/variables' as *;
+
+html,
+body,
+app-root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-size: 14px;
+  background: var(--mat-sys-background);
+}
+
+app-root {
+  display: block;
+}
+
+.mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
+}
+
+// Texto de apoio no tom do template
+.text-muted {
+  color: var(--mat-sys-surface-container-lowest);
+}
+
+// Valor monetário e números
+.valor {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+// ---------------------------------------------------------------- Logo aralu
+.logo-aralu {
+  display: inline-flex;
+  align-items: center;
+  line-height: 0;
+}
+
+.logo-aralu img {
+  height: var(--logo-altura, 32px);
+  width: auto;
+  max-width: none;
+}
+
+.logo-aralu .logo-creme,
+html.dark-theme .logo-aralu .logo-petroleo,
+.logo-aralu.sobre-escuro .logo-petroleo {
+  display: none;
+}
+
+html.dark-theme .logo-aralu .logo-creme,
+.logo-aralu.sobre-escuro .logo-creme {
+  display: block;
+}
+
+// ---------------------------------------------------------------- Campos
+// O rótulo fica acima da caixa (padrão do template: <mat-label class="font-semibold mb-2 block">).
+.campo {
+  min-width: 0;
+}
+
+.campo > .mat-mdc-form-field,
+app-campo-data .mat-mdc-form-field,
+app-campo-hora .mat-mdc-form-field,
+app-campo-dinheiro .mat-mdc-form-field {
+  width: 100%;
+}
+
+.mat-mdc-form-field-icon-prefix > .mat-icon,
+.mat-mdc-form-field-icon-suffix > .mat-icon {
+  padding: 6px 8px;
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: var(--mat-sys-surface-container-lowest);
+}
+
+.mat-mdc-form-field-icon-suffix .mat-mdc-icon-button {
+  --mat-icon-button-state-layer-size: 32px;
+  width: 32px;
+  height: 32px;
+  padding: 4px;
+}
+
+textarea.mat-mdc-input-element {
+  resize: vertical;
+}
+
+// Botões e campos com a mesma altura do campo do template (37px)
+html {
+  --mat-button-filled-container-height: 37px;
+  --mat-button-outlined-container-height: 37px;
+  --mat-button-text-container-height: 37px;
+  --mat-button-protected-container-height: 37px;
+  --mat-button-toggle-height: 37px;
+}
+
+.mat-mdc-button-base .mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+// Botão de perigo (texto ou contorno em vermelho)
+.mat-mdc-button-base.text-error {
+  --mat-button-text-label-text-color: var(--mat-sys-error);
+  --mat-button-outlined-label-text-color: var(--mat-sys-error);
+  --mat-icon-button-icon-color: var(--mat-sys-error);
+}
+
+// Seleção de arquivo: botão no mesmo desenho do mat-stroked-button
+.arquivo input[type='file'] {
+  font: inherit;
+  font-size: 13px;
+  color: var(--mat-sys-surface-container-lowest);
+}
+
+.arquivo input[type='file']::file-selector-button {
+  height: 37px;
+  margin-right: 12px;
+  padding: 0 15px;
+  border: 1px solid var(--mat-sys-outline);
+  border-radius: var(--mat-sys-corner-small);
+  background: transparent;
+  color: var(--mat-sys-on-background);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.arquivo input[type='file']::file-selector-button:hover {
+  border-color: var(--mat-sys-primary);
+  color: var(--mat-sys-primary);
+}
+
+// Busca dentro da lista suspensa (seleção com muitos itens)
+.opcao-busca.mdc-list-item--disabled {
+  opacity: 1;
+  position: sticky;
+  top: -8px;
+  z-index: 1;
+  background: var(--mat-sys-surface);
+}
+
+.opcao-busca .mdc-list-item__primary-text {
+  width: 100%;
+  opacity: 1;
+}
+
+.input-busca {
+  width: 100%;
+  box-sizing: border-box;
+  height: 37px;
+  padding: 0 12px;
+  border: 1px solid var(--mat-sys-outline);
+  border-radius: var(--mat-sys-corner-small);
+  background: transparent;
+  color: var(--mat-sys-on-background);
+  font: inherit;
+}
+
+.input-busca:focus {
+  outline: none;
+  border-color: var(--mat-sys-primary);
+}
+
+// Alternância (mat-button-toggle) sem o visto, como abas de filtro
+.mat-button-toggle-group .mat-pseudo-checkbox,
+.mat-button-toggle-checkbox-wrapper {
+  display: none !important;
+}
+
+.mat-button-toggle-group-appearance-standard {
+  --mat-button-toggle-selected-state-background-color: var(--mat-sys-primary);
+  --mat-button-toggle-selected-state-text-color: var(--mat-sys-on-primary);
+  --mat-button-toggle-text-color: var(--mat-sys-on-background);
+  --mat-button-toggle-label-text-size: 14px;
+  --mat-button-toggle-label-text-weight: 500;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.mat-button-toggle-appearance-standard .mat-button-toggle-label-content {
+  padding: 0 16px;
+  line-height: 37px;
+}
+
+// ---------------------------------------------------------------- Tabela HTML no desenho do mat-table do template
+.tabela {
+  width: 100%;
+  min-width: 100%;
+  border-collapse: collapse;
+  background: transparent;
+}
+
+.tabela th {
+  padding: 16px;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+  color: var(--mat-sys-on-background);
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+}
+
+.tabela td {
+  padding: 16px;
+  font-size: 14px;
+  vertical-align: middle;
+  color: var(--mat-sys-on-background);
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+}
+
+.tabela tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.tabela tbody tr:hover td {
+  background: var(--mat-sys-surface-bright);
+}
+
+.tabela th:first-child,
+.tabela td:first-child {
+  padding-left: 0;
+}
+
+.tabela th:last-child,
+.tabela td:last-child {
+  padding-right: 0;
+}
+
+.tabela a {
+  font-weight: 600;
+  color: var(--mat-sys-on-background);
+}
+
+.tabela a:hover {
+  color: var(--mat-sys-primary);
+}
+
+// ---------------------------------------------------------------- Modal
+.aralu-dialog .mat-mdc-dialog-surface {
+  overflow: hidden;
+}
+
+.aralu-dialog .mat-mdc-dialog-component-host {
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+}
+
+.aralu-dialog .mat-mdc-dialog-title {
+  margin: 0;
+}
+
+.aralu-dialog .mat-mdc-dialog-content {
+  flex: 1;
+  max-height: none;
+  border-top: 1px solid var(--mat-sys-outline-variant);
+}
+
+.aralu-dialog .mat-mdc-dialog-actions {
+  gap: 8px;
+  border-top: 1px solid var(--mat-sys-outline-variant);
+}
+
+.aralu-dialog .mat-mdc-dialog-actions .mat-mdc-button-base + .mat-mdc-button-base {
+  margin-left: 0;
+}
+
+.aralu-dialog .mat-mdc-tab-body-content {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+  padding-top: 16px;
+  overflow: visible;
+}
+
+@media (max-width: 639px) {
+  .cdk-global-overlay-wrapper:has(> .aralu-dialog) {
+    align-items: flex-end !important;
+  }
+
+  .cdk-overlay-pane.aralu-dialog {
+    width: 100vw !important;
+    max-width: 100vw !important;
+  }
+}
+
+// ---------------------------------------------------------------- Aviso (snack-bar)
+.aralu-toast.mat-mdc-snack-bar-container {
+  margin: 78px 16px 16px;
+}
+
+.aralu-toast .mdc-snackbar__surface {
+  min-width: 280px;
+  max-width: 360px;
+  padding: 0;
+  background: var(--mat-sys-surface) !important;
+  box-shadow: var(--mat-sys-level1) !important;
+}
+
+.aralu-toast .mat-mdc-snack-bar-label {
+  padding: 0;
+  color: var(--mat-sys-on-background) !important;
+}
+
+// ---------------------------------------------------------------- Telas públicas
+.tema-fixo {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 30;
+}
+
+.painel-marca {
+  position: relative;
+  background: $aralu-petroleo;
+  color: $aralu-creme;
+  overflow: hidden;
+}
+
+.painel-marca::before,
+.painel-marca::after {
+  content: '';
+  position: absolute;
+  border-radius: 9999px;
+  border: 1px solid rgb(246 243 236 / 0.12);
+}
+
+.painel-marca::before {
+  width: 420px;
+  height: 420px;
+  top: -160px;
+  right: -160px;
+}
+
+.painel-marca::after {
+  width: 300px;
+  height: 300px;
+  bottom: -140px;
+  left: -100px;
+}
+
+.painel-marca .logo-aralu img {
+  border-radius: 26px;
+  box-shadow: 0 20px 40px -12px rgb(0 0 0 / 0.35);
+}
+
+// ---------------------------------------------------------------- Casca no celular: barra inferior (produto-v1, seção 4)
+.barra-inferior {
+  display: none;
+}
+
+@media (max-width: 959px) {
+  .pageWrapper {
+    padding-bottom: 104px;
+  }
+
+  .barra-inferior {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 30;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    align-items: center;
+    height: 64px;
+    padding: 0 8px env(safe-area-inset-bottom);
+    background: var(--mat-sys-surface);
+    box-shadow: var(--mat-sys-level1);
+  }
+
+  .barra-inferior a,
+  .barra-inferior button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    height: 56px;
+    border: 0;
+    background: none;
+    font: inherit;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--mat-sys-surface-container-lowest);
+    cursor: pointer;
+    text-decoration: none;
+  }
+
+  .barra-inferior .ativo {
+    color: var(--mat-sys-primary);
+  }
+
+  .barra-inferior .novo {
+    align-self: center;
+    justify-self: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 9999px;
+    background: var(--mat-sys-primary);
+    color: var(--mat-sys-on-primary);
+  }
+}
+
+// ---------------------------------------------------------------- Calendário do mês (agenda)
+.calendario {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--mat-sys-corner-small);
+  background: var(--mat-sys-outline-variant);
+}
+
+.calendario-cabeca {
+  padding: 10px 8px;
+  background: var(--mat-sys-surface-bright);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.calendario-dia {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  min-height: 110px;
+  padding: 6px 8px;
+  background: var(--mat-card-elevated-container-color, var(--mat-sys-surface));
+}
+
+.calendario-dia:hover {
+  background: var(--mat-sys-surface-bright);
+}
+
+.calendario-dia-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.calendario-numero {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.calendario-dia.fora .calendario-numero {
+  opacity: 0.4;
+}
+
+.calendario-dia.hoje .calendario-numero {
+  background: var(--mat-sys-primary);
+  color: var(--mat-sys-on-primary);
+}
+
+.calendario-mais {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--mat-sys-surface-container-lowest);
+  cursor: pointer;
+  opacity: 0.5;
+}
+
+.calendario-mais .mat-icon {
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+}
+
+.calendario-dia:hover .calendario-mais,
+.calendario-mais:focus-visible {
+  opacity: 1;
+}
+
+.calendario-mais:hover {
+  background: var(--mat-sys-primary-fixed-dim);
+  color: var(--mat-sys-primary);
+}
+
+.calendario-item,
+.calendario-resto {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  padding: 2px 6px;
+  border: 0;
+  border-radius: 4px;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 15px;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+/* Cores da agenda: evento roxo, tarefa verde, compromisso azul. */
+:root {
+  --agenda-evento: #8754ec;
+  --agenda-evento-fundo: #8754ec26;
+  --agenda-tarefa: #0e9f6e;
+  --agenda-tarefa-fundo: #13deb933;
+  --agenda-compromisso: #2f80ed;
+  --agenda-compromisso-fundo: #539bff26;
+}
+
+.calendario-item,
+.agenda-etiqueta {
+  background: var(--agenda-compromisso-fundo);
+  color: var(--agenda-compromisso);
+}
+
+.calendario-item.evento,
+.agenda-etiqueta.evento {
+  background: var(--agenda-evento-fundo);
+  color: var(--agenda-evento);
+}
+
+.calendario-item.tarefa,
+.agenda-etiqueta.tarefa {
+  background: var(--agenda-tarefa-fundo);
+  color: var(--agenda-tarefa);
+}
+
+.calendario-item.concluida {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+.calendario-item:hover {
+  opacity: 0.8;
+}
+
+.calendario-hora {
+  margin-right: 4px;
+  opacity: 0.7;
+}
+
+.calendario-resto {
+  background: transparent;
+  color: var(--mat-sys-surface-container-lowest);
+}
+
+.calendario-legenda i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--agenda-compromisso);
+}
+
+.calendario-legenda i.evento {
+  background: var(--agenda-evento);
+}
+
+.calendario-legenda i.tarefa {
+  background: var(--agenda-tarefa);
+}
+
+@media (max-width: 639px) {
+  .calendario-dia {
+    min-height: 72px;
+    padding: 4px;
+  }
+
+  .calendario-dia-topo {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .calendario-mais {
+    opacity: 1;
+  }
+
+  .calendario-hora {
+    display: none;
+  }
+}
+
+@media (hover: none) {
+  .calendario-mais {
+    opacity: 1;
+  }
+}
+
+.toast-sucesso .toast-icone {
+  color: var(--success-color);
+}
+
+.toast-erro .toast-icone {
+  color: var(--mat-sys-error);
+}
+
+// Dentro da casca o botão de tema mora na topbar.
+body:has(.mainWrapper) app-tema.tema-fixo {
+  display: none;
+}
+
+.sidebar-list.mdc-list .menu-list-item .mdc-list-item__start {
+  align-self: center;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.sidebar-list.mdc-list .menu-list-item .mat-icon {
+  font-size: 22px;
+  width: 22px;
+  height: 22px;
+  line-height: 22px;
+}
+
+// mat-table como nos exemplos do template: cabeçalho semibold 14px, primeira e última coluna rente ao cartão
+.mat-mdc-table .mat-mdc-header-cell {
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.mat-mdc-table .mat-mdc-header-cell:first-child,
+.mat-mdc-table .mat-mdc-cell:first-child {
+  padding-left: 0 !important;
+}
+
+.mat-mdc-table .mat-mdc-header-cell:last-child,
+.mat-mdc-table .mat-mdc-cell:last-child {
+  padding-right: 0 !important;
+}
+
+// Item de checklist cancelado no formulário da tarefa
+.item-lista.line-through input {
+  text-decoration: line-through;
+  color: var(--mat-sys-surface-container-lowest);
+}
+
+// Conteúdo das abas (mat-tab-group) afastado da barra de abas
+.mat-mdc-tab-body-content {
+  padding-top: 24px;
+}
+
+// O _sidebar.scss do template põe `z-index: -1` no item com foco. No mousedown o item ganha foco,
+// cai para trás do fundo da barra lateral e o clique não chega ao link. Só o ::before fica atrás.
+.sidebar-list.mdc-list .menu-list-item:focus,
+.sidebar-list.mdc-list .menu-list-item:focus-visible {
+  z-index: auto;
+}

@@ -18,54 +18,119 @@ import { aplicarMascara } from '../../shared/mascaras';
 
 @Component({
   selector: 'app-cliente-form',
-  imports: [
-    ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule,
-    MatSelectModule, MatTabsModule, MatSlideToggleModule, MatCheckboxModule, MascaraDirective, CampoDataComponent,
-  ],
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatTabsModule, MatSlideToggleModule, MatCheckboxModule, MascaraDirective, CampoDataComponent],
   template: `
     <h2 mat-dialog-title>{{ dados ? 'Editar cliente' : 'Novo cliente' }}</h2>
     <mat-dialog-content>
-      <form id="cliente-form" class="gd-campos" [formGroup]="formulario" (ngSubmit)="salvar()">
+      <form id="cliente-form" class="grid grid-cols-1 gap-4" [formGroup]="formulario" (ngSubmit)="salvar()">
         <mat-tab-group>
           <mat-tab label="Dados pessoais">
-            <mat-form-field appearance="outline"><mat-label>Nome completo</mat-label><input matInput formControlName="nome" /></mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>Papel</mat-label>
-              <mat-select formControlName="papel">
+            <div class="campo">
+              <mat-label class="font-semibold mb-2 block">Nome completo</mat-label>
+              <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Nome completo'" matInput formControlName="nome" /></mat-form-field>
+            </div>
+            <div class="campo">
+              <mat-label class="font-semibold mb-2 block">Papel</mat-label>
+              <mat-form-field appearance="outline" class="w-full">
+              <mat-select [attr.aria-label]="'Papel'" formControlName="papel">
                 @for (papel of papeis; track papel) { <mat-option [value]="papel">{{ rotulo(papel) }}</mat-option> }
               </mat-select>
             </mat-form-field>
+            </div>
             <app-campo-data rotulo="Nascimento" formControlName="nascimento" />
-            <mat-form-field appearance="outline"><mat-label>E-mail</mat-label><input matInput type="email" formControlName="email" /></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>DDI</mat-label><input matInput formControlName="ddi" /></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>Celular</mat-label><input matInput formControlName="celular" gdMascara="celular" /></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>Telefone fixo</mat-label><input matInput formControlName="telefoneFixo" gdMascara="telefone" /></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>CPF</mat-label><input matInput formControlName="cpf" gdMascara="cpf" /></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>RG</mat-label><input matInput formControlName="rg" /></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>CNPJ</mat-label><input matInput formControlName="cnpj" gdMascara="cnpj" /></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>Profissão</mat-label><input matInput formControlName="profissao" /></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>Inscrição municipal</mat-label><input matInput formControlName="inscricaoMunicipal" /></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>Religião</mat-label><input matInput formControlName="religiao" /></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>Observação</mat-label><textarea matInput rows="2" formControlName="observacao"></textarea></mat-form-field>
+            <div class="campo">
+              <mat-label class="font-semibold mb-2 block">E-mail</mat-label>
+              <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'E-mail'" matInput type="email" formControlName="email" /></mat-form-field>
+            </div>
+            <div class="campo">
+              <mat-label class="font-semibold mb-2 block">DDI</mat-label>
+              <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'DDI'" matInput formControlName="ddi" /></mat-form-field>
+            </div>
+            <div class="campo">
+              <mat-label class="font-semibold mb-2 block">Celular</mat-label>
+              <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Celular'" matInput formControlName="celular" gdMascara="celular" /></mat-form-field>
+            </div>
+            <div class="campo">
+              <mat-label class="font-semibold mb-2 block">Telefone fixo</mat-label>
+              <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Telefone fixo'" matInput formControlName="telefoneFixo" gdMascara="telefone" /></mat-form-field>
+            </div>
+            <div class="campo">
+              <mat-label class="font-semibold mb-2 block">CPF</mat-label>
+              <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'CPF'" matInput formControlName="cpf" gdMascara="cpf" /></mat-form-field>
+            </div>
+            <div class="campo">
+              <mat-label class="font-semibold mb-2 block">RG</mat-label>
+              <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'RG'" matInput formControlName="rg" /></mat-form-field>
+            </div>
+            <div class="campo">
+              <mat-label class="font-semibold mb-2 block">CNPJ</mat-label>
+              <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'CNPJ'" matInput formControlName="cnpj" gdMascara="cnpj" /></mat-form-field>
+            </div>
+            <div class="campo">
+              <mat-label class="font-semibold mb-2 block">Profissão</mat-label>
+              <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Profissão'" matInput formControlName="profissao" /></mat-form-field>
+            </div>
+            <div class="campo">
+              <mat-label class="font-semibold mb-2 block">Inscrição municipal</mat-label>
+              <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Inscrição municipal'" matInput formControlName="inscricaoMunicipal" /></mat-form-field>
+            </div>
+            <div class="campo">
+              <mat-label class="font-semibold mb-2 block">Religião</mat-label>
+              <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Religião'" matInput formControlName="religiao" /></mat-form-field>
+            </div>
+            <div class="campo">
+              <mat-label class="font-semibold mb-2 block">Observação</mat-label>
+              <mat-form-field appearance="outline" class="w-full"><textarea [attr.aria-label]="'Observação'" matInput rows="2" formControlName="observacao"></textarea></mat-form-field>
+            </div>
           </mat-tab>
           <mat-tab label="Redes">
-            <mat-form-field appearance="outline"><mat-label>Facebook</mat-label><input matInput formControlName="facebook" /></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>Instagram</mat-label><input matInput formControlName="instagram" /></mat-form-field>
+            <div class="campo">
+              <mat-label class="font-semibold mb-2 block">Facebook</mat-label>
+              <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Facebook'" matInput formControlName="facebook" /></mat-form-field>
+            </div>
+            <div class="campo">
+              <mat-label class="font-semibold mb-2 block">Instagram</mat-label>
+              <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Instagram'" matInput formControlName="instagram" /></mat-form-field>
+            </div>
           </mat-tab>
           <mat-tab label="Endereço">
-            <mat-form-field appearance="outline"><mat-label>CEP</mat-label><input matInput formControlName="cep" gdMascara="cep" (blur)="completarCep()" /></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>País</mat-label><input matInput formControlName="pais" /></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>Endereço</mat-label><input matInput formControlName="endereco" /></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>Número</mat-label><input matInput formControlName="numero" /></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>Estado</mat-label><input matInput formControlName="estado" /></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>Cidade</mat-label><input matInput formControlName="cidade" /></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>Bairro</mat-label><input matInput formControlName="bairro" /></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>Complemento</mat-label><input matInput formControlName="complemento" /></mat-form-field>
+            <div class="campo">
+              <mat-label class="font-semibold mb-2 block">CEP</mat-label>
+              <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'CEP'" matInput formControlName="cep" gdMascara="cep" (blur)="completarCep()" /></mat-form-field>
+            </div>
+            <div class="campo">
+              <mat-label class="font-semibold mb-2 block">País</mat-label>
+              <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'País'" matInput formControlName="pais" /></mat-form-field>
+            </div>
+            <div class="campo">
+              <mat-label class="font-semibold mb-2 block">Endereço</mat-label>
+              <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Endereço'" matInput formControlName="endereco" /></mat-form-field>
+            </div>
+            <div class="campo">
+              <mat-label class="font-semibold mb-2 block">Número</mat-label>
+              <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Número'" matInput formControlName="numero" /></mat-form-field>
+            </div>
+            <div class="campo">
+              <mat-label class="font-semibold mb-2 block">Estado</mat-label>
+              <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Estado'" matInput formControlName="estado" /></mat-form-field>
+            </div>
+            <div class="campo">
+              <mat-label class="font-semibold mb-2 block">Cidade</mat-label>
+              <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Cidade'" matInput formControlName="cidade" /></mat-form-field>
+            </div>
+            <div class="campo">
+              <mat-label class="font-semibold mb-2 block">Bairro</mat-label>
+              <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Bairro'" matInput formControlName="bairro" /></mat-form-field>
+            </div>
+            <div class="campo">
+              <mat-label class="font-semibold mb-2 block">Complemento</mat-label>
+              <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Complemento'" matInput formControlName="complemento" /></mat-form-field>
+            </div>
           </mat-tab>
           <mat-tab label="Acesso">
             <mat-slide-toggle formControlName="acessoPlataforma">Acesso à plataforma</mat-slide-toggle>
-            <p class="gd-apoio">O cliente recebe link para definir a senha e entra com a role Client vinculada à sua conta.</p>
-            <div formGroupName="permissoes" class="gd-flags">
+            <p class="text-muted">O cliente recebe link para definir a senha e entra com a role Client vinculada à sua conta.</p>
+            <div formGroupName="permissoes" class="grid gap-1 mt-4">
               <mat-checkbox formControlName="convidados">Convidados</mat-checkbox>
               <mat-checkbox formControlName="tarefas">Tarefas</mat-checkbox>
               <mat-checkbox formControlName="anexos">Anexos</mat-checkbox>
@@ -79,13 +144,11 @@ import { aplicarMascara } from '../../shared/mascaras';
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button type="button" (click)="ref.close()">Cancelar</button>
+      <button mat-stroked-button type="button" (click)="ref.close()">Cancelar</button>
       <button mat-flat-button type="submit" form="cliente-form">Salvar</button>
     </mat-dialog-actions>
   `,
   styles: `
-    .gd-flags { display: grid; gap: 0.35rem; margin-top: 1rem; }
-    .gd-apoio { margin: 12px 0 0; }
     mat-slide-toggle { display: block; margin-top: 0.5rem; }
   `,
 })

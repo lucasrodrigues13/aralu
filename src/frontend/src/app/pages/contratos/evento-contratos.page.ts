@@ -1,6 +1,7 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -23,24 +24,26 @@ import { imprimirContrato } from './imprimir';
   imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatSelectModule, RouterLink],
   template: `
     <h2 mat-dialog-title>Adicionar contrato</h2>
-    <p class="gd-dialog-descricao">Escolha um contrato cadastrado em Contratos.</p>
+    <p class="text-muted text-sm px-6 -mt-2 mb-4">Escolha um contrato cadastrado em Contratos.</p>
     <mat-dialog-content>
       @if (dados.length === 0) {
-        <p class="gd-vazio">Todos os contratos já estão no evento, ou não há contrato cadastrado. <a routerLink="/contratos" mat-dialog-close>Ir para Contratos</a></p>
+        <p class="text-center text-muted py-10">Todos os contratos já estão no evento, ou não há contrato cadastrado. <a routerLink="/contratos" mat-dialog-close>Ir para Contratos</a></p>
       } @else {
-        <form id="adicionar-contrato" class="gd-campos" (ngSubmit)="ok()">
-          <mat-form-field appearance="outline">
-            <mat-label>Contrato</mat-label>
-            <mat-select [formControl]="escolha" required>
+        <form id="adicionar-contrato" class="grid grid-cols-1 gap-4" (ngSubmit)="ok()">
+          <div class="campo">
+            <mat-label class="font-semibold mb-2 block">Contrato</mat-label>
+            <mat-form-field appearance="outline" class="w-full">
+            <mat-select [attr.aria-label]="'Contrato'" [formControl]="escolha" required>
               @for (contrato of dados; track contrato.id) { <mat-option [value]="contrato.id">{{ contrato.nome }}</mat-option> }
             </mat-select>
             @if (escolha.invalid && escolha.touched) { <mat-error>Escolha o contrato.</mat-error> }
           </mat-form-field>
+          </div>
         </form>
       }
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button type="button" (click)="ref.close()">Cancelar</button>
+      <button mat-stroked-button type="button" (click)="ref.close()">Cancelar</button>
       @if (dados.length > 0) { <button mat-flat-button type="submit" form="adicionar-contrato">Adicionar</button> }
     </mat-dialog-actions>
   `,
@@ -65,10 +68,10 @@ export class AdicionarContratoDialog {
   imports: [MatDialogModule, MatButtonModule, MatIconModule],
   template: `
     <h2 mat-dialog-title>{{ dados.nome }}</h2>
-    <p class="gd-dialog-descricao">Preenchido com os dados atuais do cliente, do evento, do Perfil e do Dinheiro.</p>
+    <p class="text-muted text-sm px-6 -mt-2 mb-4">Preenchido com os dados atuais do cliente, do evento, do Perfil e do Dinheiro.</p>
     <mat-dialog-content><div class="texto">{{ dados.texto }}</div></mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button type="button" mat-dialog-close>Fechar</button>
+      <button mat-stroked-button type="button" mat-dialog-close>Fechar</button>
       <button mat-flat-button type="button" (click)="imprimir()"><mat-icon>print</mat-icon> Imprimir</button>
     </mat-dialog-actions>
   `,
@@ -85,73 +88,70 @@ export class LerContratoDialog {
 /** Aba Contratos do evento (SPEC-030 §6.4). */
 @Component({
   selector: 'app-evento-contratos',
-  imports: [RouterLink, MatButtonModule, MatIconModule, MatMenuModule, GdDataPipe, EventoAbasComponent],
+  imports: [MatCardModule, MatButtonModule, MatIconModule, MatMenuModule, GdDataPipe, EventoAbasComponent],
   template: `
-    <a mat-button routerLink="/eventos"><mat-icon>arrow_back</mat-icon> Eventos</a>
     <app-evento-abas [eventoId]="id" />
-    <header class="gd-cabecalho">
-      <div>
-        <h1>Contratos</h1>
-        <p>{{ nomeEvento() }} · contratos preenchidos com os dados do evento.</p>
+    <mat-card class="cardWithShadow">
+      <div class="p-6 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <mat-card-title class="mb-0">Contratos</mat-card-title>
+          <mat-card-subtitle>{{ nomeEvento() }} · contratos preenchidos com os dados do evento.</mat-card-subtitle>
+        </div>
+        <button mat-flat-button type="button" (click)="adicionar()"><mat-icon>add</mat-icon> Adicionar contrato</button>
       </div>
-      <button mat-flat-button type="button" (click)="adicionar()"><mat-icon>add</mat-icon> Adicionar contrato</button>
-    </header>
-    @if (dados(); as d) {
-      <section class="gd-painel">
-        @if (!d.emailCliente && d.contratos.length > 0) {
-          <div class="gd-alerta info aviso">
-            <mat-icon>info</mat-icon>
-            <span>Para enviar por e-mail, vincule ao evento um cliente com e-mail (aba Resumo).</span>
-          </div>
+      <mat-card-content class="border-t border-border">
+        @if (dados(); as d) {
+          @if (!d.emailCliente && d.contratos.length > 0) {
+            <div class="flex items-center gap-3 rounded p-4 mb-6 bg-light-info text-info">
+              <mat-icon>info</mat-icon>
+              <span>Para enviar por e-mail, vincule ao evento um cliente com e-mail (aba Resumo).</span>
+            </div>
+          }
+          @if (d.contratos.length === 0) {
+            <div class="flex flex-col items-center gap-3 text-center text-muted py-10">
+              <p>Nenhum contrato neste evento. Os contratos do modelo entram sozinhos ao criar o evento.</p>
+              <button mat-flat-button type="button" (click)="adicionar()"><mat-icon>add</mat-icon> Adicionar contrato</button>
+            </div>
+          } @else {
+            <div class="relative overflow-auto">
+              <table class="tabela">
+                <thead><tr><th>Contrato</th><th>Último envio</th><th class="text-end! whitespace-nowrap">Ações</th></tr></thead>
+                <tbody>
+                  @for (contrato of d.contratos; track contrato.id) {
+                    <tr>
+                      <td class="font-semibold">{{ contrato.nome }}</td>
+                      <td>
+                        @if (contrato.ultimoEnvio) {
+                          {{ contrato.ultimoEnvio | gdData }}
+                          <span class="block text-xs text-muted">
+                            {{ contrato.enviadoPara }} · {{ expirado(contrato) ? 'link expirado' : 'link vale até ' + dataHora(contrato.expiraEm) }}
+                          </span>
+                        } @else {
+                          <span class="text-muted">Não enviado</span>
+                        }
+                      </td>
+                      <td class="text-end! whitespace-nowrap">
+                        <button mat-stroked-button class="ml-1" type="button" (click)="ler(contrato)">Ler</button>
+                        <button mat-stroked-button class="ml-1" type="button" [disabled]="!d.emailCliente" (click)="enviar(contrato)">
+                          <mat-icon>send</mat-icon> Enviar por e-mail
+                        </button>
+                        <button mat-icon-button type="button" aria-label="Mais ações" [matMenuTriggerFor]="menu"><mat-icon>more_vert</mat-icon></button>
+                        <mat-menu #menu="matMenu" xPosition="before" class="cardWithShadow">
+                          <button mat-menu-item type="button" (click)="imprimir(contrato)"><mat-icon>print</mat-icon> Imprimir</button>
+                          <button mat-menu-item type="button" (click)="remover(contrato)"><mat-icon>link_off</mat-icon> Remover do evento</button>
+                        </mat-menu>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
         }
-        @if (d.contratos.length === 0) {
-          <div class="gd-vazio vazio-acao">
-            <p>Nenhum contrato neste evento. Os contratos do modelo entram sozinhos ao criar o evento.</p>
-            <button mat-flat-button type="button" (click)="adicionar()"><mat-icon>add</mat-icon> Adicionar contrato</button>
-          </div>
-        } @else {
-          <table class="gd-grade">
-            <thead><tr><th>Contrato</th><th>Último envio</th><th class="gd-acoes">Ações</th></tr></thead>
-            <tbody>
-              @for (contrato of d.contratos; track contrato.id) {
-                <tr>
-                  <td>{{ contrato.nome }}</td>
-                  <td>
-                    @if (contrato.ultimoEnvio) {
-                      {{ contrato.ultimoEnvio | gdData }}
-                      <span class="gd-sub">
-                        {{ contrato.enviadoPara }} · {{ expirado(contrato) ? 'link expirado' : 'link vale até ' + dataHora(contrato.expiraEm) }}
-                      </span>
-                    } @else {
-                      <span class="gd-sub">Não enviado</span>
-                    }
-                  </td>
-                  <td class="gd-acoes">
-                    <button mat-stroked-button class="acao" type="button" (click)="ler(contrato)">Ler</button>
-                    <button mat-stroked-button class="acao" type="button" [disabled]="!d.emailCliente" (click)="enviar(contrato)">
-                      <mat-icon>send</mat-icon> Enviar por e-mail
-                    </button>
-                    <button mat-icon-button type="button" aria-label="Mais ações" [matMenuTriggerFor]="menu"><mat-icon>more_vert</mat-icon></button>
-                    <mat-menu #menu="matMenu" xPosition="before">
-                      <button mat-menu-item type="button" (click)="imprimir(contrato)"><mat-icon>print</mat-icon> Imprimir</button>
-                      <button mat-menu-item type="button" (click)="remover(contrato)"><mat-icon>link_off</mat-icon> Remover do evento</button>
-                    </mat-menu>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        }
-      </section>
-    }
+      </mat-card-content>
+    </mat-card>
   `,
-  styles: `
-    .vazio-acao { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
-    .vazio-acao p { margin: 0; }
-    .aviso { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
-    .acao { height: 32px; margin-left: 4px; }
-    .acao mat-icon { font-size: 16px; width: 16px; height: 16px; }
-  `,
+
 })
 export class EventoContratosPage implements OnInit {
   private readonly contratoClient = inject(ContratoClient);

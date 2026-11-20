@@ -18,7 +18,7 @@ describe('ToastService', () => {
         data: { mensagem: 'Salvo.', erro: false },
         verticalPosition: 'top',
         horizontalPosition: 'end',
-        panelClass: ['gd-toast', 'gd-toast-sucesso'],
+        panelClass: ['aralu-toast', 'toast-sucesso'],
       }),
     );
   });

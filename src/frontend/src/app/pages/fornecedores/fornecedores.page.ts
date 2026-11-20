@@ -1,5 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -20,13 +21,15 @@ import { DIALOG_FORNECEDOR, FornecedorFormDialog } from './fornecedor-form.dialo
   template: `
     <h2 mat-dialog-title>Novo serviço</h2>
     <mat-dialog-content>
-      <mat-form-field appearance="outline" class="full">
-        <mat-label>Nome</mat-label>
-        <input matInput [formControl]="nome" />
+      <div class="campo full">
+        <mat-label class="font-semibold mb-2 block">Nome</mat-label>
+        <mat-form-field appearance="outline" class="w-full">
+        <input [attr.aria-label]="'Nome'" matInput [formControl]="nome" />
       </mat-form-field>
+      </div>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button type="button" (click)="ref.close()">Cancelar</button>
+      <button mat-stroked-button type="button" (click)="ref.close()">Cancelar</button>
       <button mat-flat-button type="button" (click)="salvar()">Criar</button>
     </mat-dialog-actions>
   `,
@@ -56,38 +59,40 @@ export class NovoServicoDialog {
 
 @Component({
   selector: 'app-fornecedores',
-  imports: [MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatTabsModule],
+  imports: [MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatTabsModule],
   template: `
-    <header class="gd-cabecalho">
+    <mat-card class="cardWithShadow">
+      <div class="p-6 flex flex-wrap items-center justify-between gap-4">
       <div>
-        <h1>Serviços e Fornecedores</h1>
-        <p>Catálogo da conta e lista de serviços.</p>
+        <mat-card-title class="mb-0">Serviços e Fornecedores</mat-card-title>
+        <mat-card-subtitle>Catálogo da conta e lista de serviços.</mat-card-subtitle>
       </div>
       <button mat-flat-button type="button" (click)="abrirFornecedor()">
         <mat-icon>add</mat-icon>
         Novo fornecedor
       </button>
-    </header>
-
-    <section class="gd-painel">
+    </div>
+      <mat-card-content class="border-t border-border">
       <mat-tab-group dynamicHeight>
         <mat-tab label="Fornecedores">
-          <div class="gd-barra">
-            <span></span>
-            <mat-form-field class="gd-busca" appearance="outline" subscriptSizing="dynamic">
+          <div class="flex flex-wrap items-end justify-between gap-4 mb-6">
+            <div class="campo w-full sm:w-64">
+              <mat-label class="font-semibold mb-2 block">Buscar</mat-label>
+              <mat-form-field appearance="outline" class="w-full">
               <mat-icon matIconPrefix>search</mat-icon>
-              <input matInput placeholder="Buscar por nome" [value]="buscaForn()" (input)="buscarForn($event)" />
+              <input matInput aria-label="Buscar" placeholder="Buscar por nome" [value]="buscaForn()" (input)="buscarForn($event)" />
             </mat-form-field>
+            </div>
           </div>
           @if (fornecedores().length === 0) {
-            <p class="gd-vazio">Não há fornecedor cadastrado.</p>
+            <p class="text-center text-muted py-10">Não há fornecedor cadastrado.</p>
           } @else {
-            <table class="gd-grade" mat-table [dataSource]="fornecedores()">
+            <table mat-table class="min-w-full" [dataSource]="fornecedores()">
               <ng-container matColumnDef="nome">
                 <th mat-header-cell *matHeaderCellDef>Nome</th>
                 <td mat-cell *matCellDef="let item">
                   {{ item.nome }}
-                  <span class="gd-sub">{{ item.completo ? 'Completo' : 'Incompleto' }}</span>
+                  <span class="block text-xs text-muted">{{ item.completo ? 'Completo' : 'Incompleto' }}</span>
                 </td>
               </ng-container>
               <ng-container matColumnDef="servicos">
@@ -95,8 +100,8 @@ export class NovoServicoDialog {
                 <td mat-cell *matCellDef="let item">{{ item.servicos.join(', ') || '—' }}</td>
               </ng-container>
               <ng-container matColumnDef="acoes">
-                <th mat-header-cell *matHeaderCellDef class="gd-acoes">Ações</th>
-                <td mat-cell *matCellDef="let item" class="gd-acoes">
+                <th mat-header-cell *matHeaderCellDef class="text-end! whitespace-nowrap">Ações</th>
+                <td mat-cell *matCellDef="let item" class="text-end! whitespace-nowrap">
                   <button mat-icon-button type="button" aria-label="Editar" (click)="abrirFornecedor(item)"><mat-icon>edit</mat-icon></button>
                   <button mat-icon-button type="button" aria-label="Excluir" (click)="excluirFornecedor(item)"><mat-icon>delete</mat-icon></button>
                 </td>
@@ -107,27 +112,30 @@ export class NovoServicoDialog {
           }
         </mat-tab>
         <mat-tab label="Serviços da conta">
-          <div class="gd-barra">
-            <button mat-stroked-button class="gd-barra-inicio" type="button" (click)="criarServico()"><mat-icon>add</mat-icon> Adicionar serviço</button>
-            <mat-form-field class="gd-busca" appearance="outline" subscriptSizing="dynamic">
+          <div class="flex flex-wrap items-end justify-between gap-4 mb-6">
+            <button mat-stroked-button type="button" (click)="criarServico()"><mat-icon>add</mat-icon> Adicionar serviço</button>
+            <div class="campo w-full sm:w-64">
+              <mat-label class="font-semibold mb-2 block">Buscar</mat-label>
+              <mat-form-field appearance="outline" class="w-full">
               <mat-icon matIconPrefix>search</mat-icon>
-              <input matInput placeholder="Buscar" [value]="buscaServ()" (input)="buscarServ($event)" />
+              <input matInput aria-label="Buscar" placeholder="Buscar" [value]="buscaServ()" (input)="buscarServ($event)" />
             </mat-form-field>
+            </div>
           </div>
           @if (servicos().length === 0) {
-            <p class="gd-vazio">Não há serviço da conta.</p>
+            <p class="text-center text-muted py-10">Não há serviço da conta.</p>
           } @else {
-            <table class="gd-grade" mat-table [dataSource]="servicos()">
+            <table mat-table class="min-w-full" [dataSource]="servicos()">
               <ng-container matColumnDef="nome">
                 <th mat-header-cell *matHeaderCellDef>Nome</th>
                 <td mat-cell *matCellDef="let item">
                   {{ item.nome }}
-                  @if (item.padrao) { <span class="gd-sub">Padrão</span> }
+                  @if (item.padrao) { <span class="block text-xs text-muted">Padrão</span> }
                 </td>
               </ng-container>
               <ng-container matColumnDef="acoes">
-                <th mat-header-cell *matHeaderCellDef class="gd-acoes">Ações</th>
-                <td mat-cell *matCellDef="let item" class="gd-acoes">
+                <th mat-header-cell *matHeaderCellDef class="text-end! whitespace-nowrap">Ações</th>
+                <td mat-cell *matCellDef="let item" class="text-end! whitespace-nowrap">
                   <button mat-icon-button type="button" aria-label="Excluir" (click)="excluirServico(item)"><mat-icon>delete</mat-icon></button>
                 </td>
               </ng-container>
@@ -137,10 +145,8 @@ export class NovoServicoDialog {
           }
         </mat-tab>
       </mat-tab-group>
-    </section>
-  `,
-  styles: `
-    :host .gd-barra { padding-top: 12px; }
+    </mat-card-content>
+    </mat-card>
   `,
 })
 export class FornecedoresPage implements OnInit {

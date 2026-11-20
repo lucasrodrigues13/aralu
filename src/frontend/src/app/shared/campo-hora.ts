@@ -16,8 +16,9 @@ import { aplicarHora } from './mascaras';
     },
   ],
   template: `
-    <mat-form-field appearance="outline">
-      <mat-label>{{ rotulo }}</mat-label>
+    <div class="campo">
+      <mat-label class="font-semibold mb-2 block">{{ rotulo }}</mat-label>
+      <mat-form-field appearance="outline" class="w-full">
       <input
         matInput
         [formControl]="controle"
@@ -28,8 +29,9 @@ import { aplicarHora } from './mascaras';
         (blur)="tocado()"
       />
     </mat-form-field>
+    </div>
   `,
-  styles: `:host { display: block; width: 100%; }`,
+  styles: `:host { display: block; min-width: 0; }`,
 })
 export class CampoHoraComponent implements ControlValueAccessor {
   @Input() rotulo = 'Hora';

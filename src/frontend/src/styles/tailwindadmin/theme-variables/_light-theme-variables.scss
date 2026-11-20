@@ -1,0 +1,31 @@
+// TailwindAdmin light-theme, com as cores da marca aralu (petróleo, creme e dourado).
+html {
+  --mat-sys-primary-fixed-dim: rgb(16 76 91 / 0.12);
+  --mat-sys-secondary-fixed-dim: rgb(201 162 76 / 0.18);
+}
+
+html.light-theme {
+  color-scheme: light;
+  --mat-sys-corner-small: 7px;
+  --mat-sys-background: #fff;
+  --mat-sys-surface-bright: #f6f3ec;
+  --mat-sys-surface: #fff;
+  --mat-sys-surface-container: #fff;
+  --mat-sys-surface-container-low: #fff;
+  --mat-sys-surface-container-lowest: #5f6f74;
+  --mat-sys-on-background: #22343a;
+  --mat-sys-on-surface: #22343a;
+  --mat-sys-outline: #d7dde2;
+  --mat-sys-outline-variant: #e5e9ec;
+  --mat-form-field-outlined-hover-outline-color: #d7dde2;
+  --mat-checkbox-unselected-hover-state-layer-color: #d7dde2;
+  --mat-menu-item-hover-state-layer-color: var(--mat-sys-primary-fixed-dim);
+  --mat-button-toggle-state-layer-color: var(--mat-sys-primary-fixed-dim);
+  --mat-option-focus-state-layer-color: var(--mat-sys-primary-fixed-dim);
+  --mat-option-hover-state-layer-color: var(--mat-sys-primary-fixed-dim);
+  --mat-slide-toggle-unselected-track-color: var(--mat-sys-primary-fixed-dim);
+  --mat-stepper-header-focus-state-layer-color: var(--mat-sys-primary-fixed-dim);
+  --mat-stepper-header-hover-state-layer-color: var(--mat-sys-primary-fixed-dim);
+  --mat-dialog-supporting-text-color: var(--mat-sys-on-background);
+  --mat-expansion-header-hover-state-layer-color: var(--mat-sys-primary-fixed-dim);
+}

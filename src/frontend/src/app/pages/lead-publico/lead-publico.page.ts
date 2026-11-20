@@ -13,33 +13,39 @@ import { ToastService } from '../../core/toast.service';
   selector: 'app-lead-publico',
   imports: [ReactiveFormsModule, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule],
   template: `
-    <section class="gd-publica">
-      <mat-card>
-        <mat-card-header>
-          <mat-card-title>Solicitar orçamento</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
+    <section class="flex min-h-screen w-full items-center justify-center p-4 bg-light">
+      <mat-card class="cardWithShadow w-full max-w-[440px] mb-0!">
+        <div class="px-6 pt-6"><h3 class="text-xl font-semibold">Solicitar orçamento</h3></div>
+        <mat-card-content class="pt-6!">
           @if (enviado()) {
             <p>Recebemos o seu contato. Em breve a assessoria retorna.</p>
           } @else {
-            <form class="gd-campos" [formGroup]="form" (ngSubmit)="enviar()">
-              <mat-form-field appearance="outline">
-                <mat-label>Nome da oportunidade</mat-label>
-                <input matInput formControlName="nome" />
+            <form class="grid grid-cols-1 gap-4" [formGroup]="form" (ngSubmit)="enviar()">
+              <div class="campo">
+                <mat-label class="font-semibold mb-2 block">Nome da oportunidade</mat-label>
+                <mat-form-field appearance="outline" class="w-full">
+                <input [attr.aria-label]="'Nome da oportunidade'" matInput formControlName="nome" />
               </mat-form-field>
-              <mat-form-field appearance="outline">
-                <mat-label>Seu nome</mat-label>
-                <input matInput formControlName="contatoNome" />
+              </div>
+              <div class="campo">
+                <mat-label class="font-semibold mb-2 block">Seu nome</mat-label>
+                <mat-form-field appearance="outline" class="w-full">
+                <input [attr.aria-label]="'Seu nome'" matInput formControlName="contatoNome" />
               </mat-form-field>
-              <mat-form-field appearance="outline">
-                <mat-label>Telefone</mat-label>
-                <input matInput formControlName="telefone" />
+              </div>
+              <div class="campo">
+                <mat-label class="font-semibold mb-2 block">Telefone</mat-label>
+                <mat-form-field appearance="outline" class="w-full">
+                <input [attr.aria-label]="'Telefone'" matInput formControlName="telefone" />
               </mat-form-field>
-              <mat-form-field appearance="outline">
-                <mat-label>E-mail</mat-label>
-                <input matInput formControlName="email" />
+              </div>
+              <div class="campo">
+                <mat-label class="font-semibold mb-2 block">E-mail</mat-label>
+                <mat-form-field appearance="outline" class="w-full">
+                <input [attr.aria-label]="'E-mail'" matInput formControlName="email" />
               </mat-form-field>
-              <button mat-flat-button type="submit" [disabled]="!contaId">Enviar</button>
+              </div>
+              <button mat-flat-button class="w-full" type="submit" [disabled]="!contaId">Enviar</button>
             </form>
           }
         </mat-card-content>

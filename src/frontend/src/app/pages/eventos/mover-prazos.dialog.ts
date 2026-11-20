@@ -12,7 +12,7 @@ import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
       Mover os prazos das tarefas não concluídas junto com a data?
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button type="button" (click)="ref.close(undefined)">Cancelar</button>
+      <button mat-stroked-button type="button" (click)="ref.close(undefined)">Cancelar</button>
       <button mat-stroked-button type="button" (click)="ref.close(false)">Manter</button>
       <button mat-flat-button type="button" (click)="ref.close(true)">Mover</button>
     </mat-dialog-actions>

@@ -49,12 +49,12 @@ export function progressoChecklist(tarefa: Tarefa): { feitos: number; total: num
     :host { display: block; }
     .itens { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
     li { display: flex; align-items: center; gap: 4px; min-height: 36px; padding: 0 4px 0 0; border-radius: 8px; }
-    li:hover { background: color-mix(in oklab, var(--gd-muted) 60%, transparent); }
+    li:hover { background: color-mix(in oklab, var(--mat-sys-surface-bright) 60%, transparent); }
     li > mat-checkbox { flex-shrink: 0; }
     .texto { flex: 1; min-width: 0; font-size: 14px; line-height: 20px; overflow-wrap: anywhere; }
-    li.feito .texto { color: var(--gd-muted-foreground); }
-    li.cancelado .texto { text-decoration: line-through; color: var(--gd-muted-foreground); }
-    .cancelar { flex-shrink: 0; width: 32px; height: 32px; padding: 4px; color: var(--gd-muted-foreground); opacity: 0; transition: opacity 0.15s; }
+    li.feito .texto { color: var(--mat-sys-surface-container-lowest); }
+    li.cancelado .texto { text-decoration: line-through; color: var(--mat-sys-surface-container-lowest); }
+    .cancelar { flex-shrink: 0; width: 32px; height: 32px; padding: 4px; color: var(--mat-sys-surface-container-lowest); opacity: 0; transition: opacity 0.15s; }
     .cancelar mat-icon { font-size: 18px; width: 18px; height: 18px; }
     li:hover .cancelar, li.cancelado .cancelar, .cancelar:focus-visible { opacity: 1; }
     @media (hover: none) { .cancelar { opacity: 1; } }

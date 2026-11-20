@@ -1,5 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -15,42 +16,45 @@ import { ClienteFormDialog } from './cliente-form.dialog';
 
 @Component({
   selector: 'app-clientes',
-  imports: [RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule],
+  imports: [MatCardModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule],
   template: `
-    <header class="gd-cabecalho">
+    <mat-card class="cardWithShadow">
+      <div class="p-6 flex flex-wrap items-center justify-between gap-4">
       <div>
-        <h1>Clientes</h1>
-        <p>Contatos da assessoria e os eventos vinculados.</p>
+        <mat-card-title class="mb-0">Clientes</mat-card-title>
+        <mat-card-subtitle>Contatos da assessoria e os eventos vinculados.</mat-card-subtitle>
       </div>
       <button mat-flat-button type="button" (click)="abrir()">
         <mat-icon>add</mat-icon>
         Novo cliente
       </button>
-    </header>
-    <section class="gd-painel">
-      <div class="gd-barra">
-        <span></span>
-        <mat-form-field class="gd-busca" appearance="outline" subscriptSizing="dynamic">
+    </div>
+      <mat-card-content class="border-t border-border">
+      <div class="flex flex-wrap items-end justify-between gap-4 mb-6">
+        <div class="campo w-full sm:w-64">
+          <mat-label class="font-semibold mb-2 block">Buscar</mat-label>
+          <mat-form-field appearance="outline" class="w-full">
           <mat-icon matIconPrefix>search</mat-icon>
-          <input matInput placeholder="Buscar por nome" [value]="busca()" (input)="buscar($event)" />
+          <input matInput aria-label="Buscar" placeholder="Buscar por nome" [value]="busca()" (input)="buscar($event)" />
         </mat-form-field>
+        </div>
       </div>
       @if (clientes().length === 0) {
-        <p class="gd-vazio">Não há cliente para mostrar.</p>
+        <p class="text-center text-muted py-10">Não há cliente para mostrar.</p>
       } @else {
-        <table class="gd-grade" mat-table [dataSource]="clientes()">
+        <table mat-table class="min-w-full" [dataSource]="clientes()">
           <ng-container matColumnDef="nome">
             <th mat-header-cell *matHeaderCellDef>Cliente</th>
             <td mat-cell *matCellDef="let cliente">
               {{ cliente.nome }}
-              <span class="gd-sub">{{ rotulo(cliente.papel) }}</span>
+              <span class="block text-xs text-muted">{{ rotulo(cliente.papel) }}</span>
             </td>
           </ng-container>
           <ng-container matColumnDef="contato">
             <th mat-header-cell *matHeaderCellDef>Contato</th>
             <td mat-cell *matCellDef="let cliente">
               {{ cliente.email }}
-              <span class="gd-sub">{{ cliente.ddi }} {{ cliente.celular }}</span>
+              <span class="block text-xs text-muted">{{ cliente.ddi }} {{ cliente.celular }}</span>
             </td>
           </ng-container>
           <ng-container matColumnDef="eventos">
@@ -70,8 +74,8 @@ import { ClienteFormDialog } from './cliente-form.dialog';
             <td mat-cell *matCellDef="let cliente">{{ cliente.ultimoAcesso ?? '—' }}</td>
           </ng-container>
           <ng-container matColumnDef="acoes">
-            <th mat-header-cell *matHeaderCellDef class="gd-acoes">Ações</th>
-            <td mat-cell *matCellDef="let cliente" class="gd-acoes">
+            <th mat-header-cell *matHeaderCellDef class="text-end! whitespace-nowrap">Ações</th>
+            <td mat-cell *matCellDef="let cliente" class="text-end! whitespace-nowrap">
               <button mat-icon-button type="button" aria-label="Editar" (click)="abrir(cliente)"><mat-icon>edit</mat-icon></button>
               <button mat-icon-button type="button" aria-label="Excluir" (click)="excluir()"><mat-icon>delete</mat-icon></button>
             </td>
@@ -80,7 +84,8 @@ import { ClienteFormDialog } from './cliente-form.dialog';
           <tr mat-row *matRowDef="let row; columns: colunas"></tr>
         </table>
       }
-    </section>
+    </mat-card-content>
+    </mat-card>
   `,
 })
 export class ClientesPage implements OnInit {

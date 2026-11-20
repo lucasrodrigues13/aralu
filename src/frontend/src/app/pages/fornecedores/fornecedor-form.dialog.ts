@@ -38,39 +38,59 @@ export const DIALOG_FORNECEDOR = DIALOG_LARGO;
 
 @Component({
   selector: 'app-fornecedor-form-dialog',
-  imports: [
-    ReactiveFormsModule, MatDialogModule, MatButtonModule, MatCheckboxModule, MatFormFieldModule, MatInputModule,
-    MatSelectModule, MatTabsModule, MatIconModule, MascaraDirective, CampoDinheiroComponent,
-  ],
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatCheckboxModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatTabsModule, MatIconModule, MascaraDirective, CampoDinheiroComponent],
   template: `
     <h2 mat-dialog-title>{{ dados ? 'Editar fornecedor' : 'Novo fornecedor' }}</h2>
     <mat-dialog-content>
-      <form class="gd-campos" [formGroup]="form">
+      <form class="grid grid-cols-1 gap-4" [formGroup]="form">
         <mat-tab-group dynamicHeight>
           <mat-tab label="Dados">
             <div class="aba">
               <div class="grade">
-                <mat-form-field appearance="outline"><mat-label>Nome</mat-label><input matInput formControlName="nome" /></mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>Serviços</mat-label>
-                  <mat-select formControlName="servicoContaIds" multiple>
+                <div class="campo">
+                  <mat-label class="font-semibold mb-2 block">Nome</mat-label>
+                  <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Nome'" matInput formControlName="nome" /></mat-form-field>
+                </div>
+                <div class="campo">
+                  <mat-label class="font-semibold mb-2 block">Serviços</mat-label>
+                  <mat-form-field appearance="outline" class="w-full">
+                  <mat-select [attr.aria-label]="'Serviços'" formControlName="servicoContaIds" multiple>
                     @for (servico of servicos(); track servico.id) {
                       <mat-option [value]="servico.id">{{ servico.nome }}</mat-option>
                     }
                   </mat-select>
                 </mat-form-field>
-                <mat-form-field appearance="outline"><mat-label>Razão social</mat-label><input matInput formControlName="razaoSocial" /></mat-form-field>
-                <mat-form-field appearance="outline"><mat-label>Responsável</mat-label><input matInput formControlName="nomeResponsavel" /></mat-form-field>
-                <mat-form-field appearance="outline"><mat-label>CNPJ</mat-label><input matInput formControlName="cnpj" gdMascara="cnpj" /></mat-form-field>
-                <mat-form-field appearance="outline"><mat-label>CPF</mat-label><input matInput formControlName="cpf" gdMascara="cpf" /></mat-form-field>
+                </div>
+                <div class="campo">
+                  <mat-label class="font-semibold mb-2 block">Razão social</mat-label>
+                  <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Razão social'" matInput formControlName="razaoSocial" /></mat-form-field>
+                </div>
+                <div class="campo">
+                  <mat-label class="font-semibold mb-2 block">Responsável</mat-label>
+                  <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Responsável'" matInput formControlName="nomeResponsavel" /></mat-form-field>
+                </div>
+                <div class="campo">
+                  <mat-label class="font-semibold mb-2 block">CNPJ</mat-label>
+                  <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'CNPJ'" matInput formControlName="cnpj" gdMascara="cnpj" /></mat-form-field>
+                </div>
+                <div class="campo">
+                  <mat-label class="font-semibold mb-2 block">CPF</mat-label>
+                  <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'CPF'" matInput formControlName="cpf" gdMascara="cpf" /></mat-form-field>
+                </div>
                 <app-campo-dinheiro rotulo="Preço de" formControlName="precoDe" />
                 <app-campo-dinheiro rotulo="Preço até" formControlName="precoAte" />
               </div>
               <div class="lista" formArrayName="telefones">
                 @for (tel of telefones.controls; track $index; let i = $index) {
                   <div class="linha" [formGroupName]="i">
-                    <mat-form-field appearance="outline"><mat-label>DDI</mat-label><input matInput formControlName="ddi" /></mat-form-field>
-                    <mat-form-field appearance="outline"><mat-label>Telefone</mat-label><input matInput formControlName="numero" gdMascara="celular" /></mat-form-field>
+                    <div class="campo">
+                      <mat-label class="font-semibold mb-2 block">DDI</mat-label>
+                      <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'DDI'" matInput formControlName="ddi" /></mat-form-field>
+                    </div>
+                    <div class="campo">
+                      <mat-label class="font-semibold mb-2 block">Telefone</mat-label>
+                      <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Telefone'" matInput formControlName="numero" gdMascara="celular" /></mat-form-field>
+                    </div>
                     <mat-checkbox formControlName="movel">Móvel</mat-checkbox>
                     <button mat-icon-button type="button" aria-label="Remover telefone" (click)="removerTelefone(i)"><mat-icon>close</mat-icon></button>
                   </div>
@@ -80,7 +100,10 @@ export const DIALOG_FORNECEDOR = DIALOG_LARGO;
               <div class="lista" formArrayName="emails">
                 @for (email of emails.controls; track $index; let i = $index) {
                   <div class="linha email" [formGroupName]="i">
-                    <mat-form-field appearance="outline"><mat-label>E-mail</mat-label><input matInput formControlName="endereco" /></mat-form-field>
+                    <div class="campo">
+                      <mat-label class="font-semibold mb-2 block">E-mail</mat-label>
+                      <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'E-mail'" matInput formControlName="endereco" /></mat-form-field>
+                    </div>
                     <button mat-icon-button type="button" aria-label="Remover e-mail" (click)="removerEmail(i)"><mat-icon>close</mat-icon></button>
                   </div>
                 }
@@ -91,38 +114,78 @@ export const DIALOG_FORNECEDOR = DIALOG_LARGO;
           <mat-tab label="Redes sociais">
             <div class="aba">
               <div class="grade">
-                <mat-form-field appearance="outline"><mat-label>Site</mat-label><input matInput formControlName="site" /></mat-form-field>
-                <mat-form-field appearance="outline"><mat-label>Facebook</mat-label><input matInput formControlName="facebook" /></mat-form-field>
-                <mat-form-field appearance="outline"><mat-label>Instagram</mat-label><input matInput formControlName="instagram" /></mat-form-field>
-                <mat-form-field appearance="outline"><mat-label>Youtube</mat-label><input matInput formControlName="youtube" /></mat-form-field>
-                <mat-form-field appearance="outline"><mat-label>Pinterest</mat-label><input matInput formControlName="pinterest" /></mat-form-field>
+                <div class="campo">
+                  <mat-label class="font-semibold mb-2 block">Site</mat-label>
+                  <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Site'" matInput formControlName="site" /></mat-form-field>
+                </div>
+                <div class="campo">
+                  <mat-label class="font-semibold mb-2 block">Facebook</mat-label>
+                  <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Facebook'" matInput formControlName="facebook" /></mat-form-field>
+                </div>
+                <div class="campo">
+                  <mat-label class="font-semibold mb-2 block">Instagram</mat-label>
+                  <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Instagram'" matInput formControlName="instagram" /></mat-form-field>
+                </div>
+                <div class="campo">
+                  <mat-label class="font-semibold mb-2 block">Youtube</mat-label>
+                  <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Youtube'" matInput formControlName="youtube" /></mat-form-field>
+                </div>
+                <div class="campo">
+                  <mat-label class="font-semibold mb-2 block">Pinterest</mat-label>
+                  <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Pinterest'" matInput formControlName="pinterest" /></mat-form-field>
+                </div>
               </div>
             </div>
           </mat-tab>
           <mat-tab label="Endereço">
             <div class="aba">
               <div class="grade">
-                <mat-form-field appearance="outline"><mat-label>CEP</mat-label><input matInput formControlName="cep" gdMascara="cep" (blur)="completarCep()" /></mat-form-field>
-                <mat-form-field appearance="outline"><mat-label>País</mat-label><input matInput formControlName="pais" /></mat-form-field>
-                <mat-form-field appearance="outline"><mat-label>Endereço</mat-label><input matInput formControlName="endereco" /></mat-form-field>
-                <mat-form-field appearance="outline"><mat-label>Número</mat-label><input matInput formControlName="numero" /></mat-form-field>
-                <mat-form-field appearance="outline"><mat-label>Estado</mat-label><input matInput formControlName="estado" /></mat-form-field>
-                <mat-form-field appearance="outline"><mat-label>Cidade</mat-label><input matInput formControlName="cidade" /></mat-form-field>
-                <mat-form-field appearance="outline"><mat-label>Bairro</mat-label><input matInput formControlName="bairro" /></mat-form-field>
-                <mat-form-field appearance="outline"><mat-label>Complemento</mat-label><input matInput formControlName="complemento" /></mat-form-field>
+                <div class="campo">
+                  <mat-label class="font-semibold mb-2 block">CEP</mat-label>
+                  <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'CEP'" matInput formControlName="cep" gdMascara="cep" (blur)="completarCep()" /></mat-form-field>
+                </div>
+                <div class="campo">
+                  <mat-label class="font-semibold mb-2 block">País</mat-label>
+                  <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'País'" matInput formControlName="pais" /></mat-form-field>
+                </div>
+                <div class="campo">
+                  <mat-label class="font-semibold mb-2 block">Endereço</mat-label>
+                  <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Endereço'" matInput formControlName="endereco" /></mat-form-field>
+                </div>
+                <div class="campo">
+                  <mat-label class="font-semibold mb-2 block">Número</mat-label>
+                  <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Número'" matInput formControlName="numero" /></mat-form-field>
+                </div>
+                <div class="campo">
+                  <mat-label class="font-semibold mb-2 block">Estado</mat-label>
+                  <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Estado'" matInput formControlName="estado" /></mat-form-field>
+                </div>
+                <div class="campo">
+                  <mat-label class="font-semibold mb-2 block">Cidade</mat-label>
+                  <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Cidade'" matInput formControlName="cidade" /></mat-form-field>
+                </div>
+                <div class="campo">
+                  <mat-label class="font-semibold mb-2 block">Bairro</mat-label>
+                  <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Bairro'" matInput formControlName="bairro" /></mat-form-field>
+                </div>
+                <div class="campo">
+                  <mat-label class="font-semibold mb-2 block">Complemento</mat-label>
+                  <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Complemento'" matInput formControlName="complemento" /></mat-form-field>
+                </div>
               </div>
             </div>
           </mat-tab>
           <mat-tab label="Dados bancários">
             <div class="aba">
               <div class="grade">
-                <mat-form-field appearance="outline">
-                  <mat-label>Banco</mat-label>
-                  <mat-select formControlName="banco" (openedChange)="aoAbrirBancos($event, buscaBanco)">
-                    <mat-option class="gd-opcao-busca" disabled>
+                <div class="campo">
+                  <mat-label class="font-semibold mb-2 block">Banco</mat-label>
+                  <mat-form-field appearance="outline" class="w-full">
+                  <mat-select [attr.aria-label]="'Banco'" formControlName="banco" (openedChange)="aoAbrirBancos($event, buscaBanco)">
+                    <mat-option class="opcao-busca" disabled>
                       <input
                         #buscaBanco
-                        class="gd-input-busca"
+                        class="input-busca"
                         placeholder="Buscar banco"
                         [value]="termoBanco()"
                         (input)="filtrarBanco($event)"
@@ -141,31 +204,44 @@ export const DIALOG_FORNECEDOR = DIALOG_LARGO;
                     }
                   </mat-select>
                 </mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>Agência</mat-label>
-                  <input matInput formControlName="agencia" gdMascara="agencia" placeholder="0000-0" />
+                </div>
+                <div class="campo">
+                  <mat-label class="font-semibold mb-2 block">Agência</mat-label>
+                  <mat-form-field appearance="outline" class="w-full">
+                  <input [attr.aria-label]="'Agência'" matInput formControlName="agencia" gdMascara="agencia" placeholder="0000-0" />
                 </mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>Conta</mat-label>
-                  <input matInput formControlName="contaBancaria" gdMascara="conta" placeholder="00000000-0" />
+                </div>
+                <div class="campo">
+                  <mat-label class="font-semibold mb-2 block">Conta</mat-label>
+                  <mat-form-field appearance="outline" class="w-full">
+                  <input [attr.aria-label]="'Conta'" matInput formControlName="contaBancaria" gdMascara="conta" placeholder="00000000-0" />
                 </mat-form-field>
-                <mat-form-field appearance="outline"><mat-label>Titular</mat-label><input matInput formControlName="titularConta" /></mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>Tipo de conta</mat-label>
-                  <mat-select formControlName="tipoConta">
+                </div>
+                <div class="campo">
+                  <mat-label class="font-semibold mb-2 block">Titular</mat-label>
+                  <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Titular'" matInput formControlName="titularConta" /></mat-form-field>
+                </div>
+                <div class="campo">
+                  <mat-label class="font-semibold mb-2 block">Tipo de conta</mat-label>
+                  <mat-form-field appearance="outline" class="w-full">
+                  <mat-select [attr.aria-label]="'Tipo de conta'" formControlName="tipoConta">
                     <mat-option value="">Selecione</mat-option>
                     @for (tipo of opcoesTipoConta(); track tipo) {
                       <mat-option [value]="tipo">{{ tipo }}</mat-option>
                     }
                   </mat-select>
                 </mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>CPF ou CNPJ</mat-label>
-                  <input matInput formControlName="documentosBancarios" gdMascara="documento" (input)="aoDigitarDocumento()" />
+                </div>
+                <div class="campo">
+                  <mat-label class="font-semibold mb-2 block">CPF ou CNPJ</mat-label>
+                  <mat-form-field appearance="outline" class="w-full">
+                  <input [attr.aria-label]="'CPF ou CNPJ'" matInput formControlName="documentosBancarios" gdMascara="documento" (input)="aoDigitarDocumento()" />
                 </mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>Tipo Chave Pix</mat-label>
-                  <mat-select formControlName="pixTipo">
+                </div>
+                <div class="campo">
+                  <mat-label class="font-semibold mb-2 block">Tipo Chave Pix</mat-label>
+                  <mat-form-field appearance="outline" class="w-full">
+                  <mat-select [attr.aria-label]="'Tipo Chave Pix'" formControlName="pixTipo">
                     <mat-option value="">Selecione</mat-option>
                     @if (pixTipoAvulso(); as avulso) {
                       <mat-option [value]="avulso">{{ avulso }}</mat-option>
@@ -175,16 +251,19 @@ export const DIALOG_FORNECEDOR = DIALOG_LARGO;
                     }
                   </mat-select>
                 </mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>Chave Pix</mat-label>
+                </div>
+                <div class="campo">
+                  <mat-label class="font-semibold mb-2 block">Chave Pix</mat-label>
+                  <mat-form-field appearance="outline" class="w-full">
                   @if (pixDocumento()) {
-                    <input matInput formControlName="pixChave" />
+                    <input [attr.aria-label]="'Chave Pix'" matInput formControlName="pixChave" />
                   } @else if (mascaraPix(); as mascara) {
                     <input matInput formControlName="pixChave" [gdMascara]="mascara" />
                   } @else {
                     <input matInput formControlName="pixChave" maxlength="77" />
                   }
                 </mat-form-field>
+                </div>
               </div>
             </div>
           </mat-tab>
@@ -192,8 +271,14 @@ export const DIALOG_FORNECEDOR = DIALOG_LARGO;
             <div class="aba" formArrayName="orcamentos">
               @for (orc of orcamentos.controls; track $index; let i = $index) {
                 <div class="linha orcamento" [formGroupName]="i">
-                  <mat-form-field appearance="outline"><mat-label>Título</mat-label><input matInput formControlName="titulo" /></mat-form-field>
-                  <mat-form-field appearance="outline"><mat-label>Link</mat-label><input matInput formControlName="link" /></mat-form-field>
+                  <div class="campo">
+                    <mat-label class="font-semibold mb-2 block">Título</mat-label>
+                    <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Título'" matInput formControlName="titulo" /></mat-form-field>
+                  </div>
+                  <div class="campo">
+                    <mat-label class="font-semibold mb-2 block">Link</mat-label>
+                    <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Link'" matInput formControlName="link" /></mat-form-field>
+                  </div>
                   <mat-checkbox formControlName="visivelClientes">Visível</mat-checkbox>
                   <button mat-icon-button type="button" aria-label="Remover orçamento" (click)="removerOrcamento(i)"><mat-icon>close</mat-icon></button>
                 </div>
@@ -203,25 +288,34 @@ export const DIALOG_FORNECEDOR = DIALOG_LARGO;
           </mat-tab>
           <mat-tab label="Diferencial">
             <div class="aba">
-              <mat-form-field appearance="outline" class="full"><mat-label>Diferencial</mat-label><textarea matInput rows="4" formControlName="diferencial"></textarea></mat-form-field>
+              <div class="campo full">
+                <mat-label class="font-semibold mb-2 block">Diferencial</mat-label>
+                <mat-form-field appearance="outline" class="w-full"><textarea [attr.aria-label]="'Diferencial'" matInput rows="4" formControlName="diferencial"></textarea></mat-form-field>
+              </div>
               <mat-checkbox formControlName="diferencialVisivelCliente">Visível ao cliente</mat-checkbox>
             </div>
           </mat-tab>
           <mat-tab label="Inf. gerais">
             <div class="aba">
-              <mat-form-field appearance="outline" class="full"><mat-label>Informações gerais</mat-label><textarea matInput rows="4" formControlName="informacoesGerais"></textarea></mat-form-field>
+              <div class="campo full">
+                <mat-label class="font-semibold mb-2 block">Informações gerais</mat-label>
+                <mat-form-field appearance="outline" class="w-full"><textarea [attr.aria-label]="'Informações gerais'" matInput rows="4" formControlName="informacoesGerais"></textarea></mat-form-field>
+              </div>
             </div>
           </mat-tab>
           <mat-tab label="Portfólio">
             <div class="aba">
-              <mat-form-field appearance="outline" class="full"><mat-label>Portfólio</mat-label><textarea matInput rows="4" formControlName="portfolio"></textarea></mat-form-field>
+              <div class="campo full">
+                <mat-label class="font-semibold mb-2 block">Portfólio</mat-label>
+                <mat-form-field appearance="outline" class="w-full"><textarea [attr.aria-label]="'Portfólio'" matInput rows="4" formControlName="portfolio"></textarea></mat-form-field>
+              </div>
             </div>
           </mat-tab>
         </mat-tab-group>
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button type="button" (click)="ref.close()">Cancelar</button>
+      <button mat-stroked-button type="button" (click)="ref.close()">Cancelar</button>
       <button mat-flat-button type="button" (click)="salvar()">Salvar</button>
     </mat-dialog-actions>
   `,
