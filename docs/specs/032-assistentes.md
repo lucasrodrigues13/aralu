@@ -213,7 +213,7 @@ Código de apoio (backend em `src/backend`, testes em `tests`):
 - Testes de integração (precisam do Docker): `Project.IntegrationTests/Negocio/AssistentesFluxoTests.cs` é o modelo de estilo.
 - Comandos: `dotnet test tests/Project.Tests`, `dotnet test tests/Project.IntegrationTests`, `npm --prefix src/frontend run build`, `cd src/frontend && npx ng test --watch=false`. Migration nova no projeto `Project.Infrastructure` (as anteriores estão em `Persistencia/Migrations`).
 
-### [ ] Passo 1. Excluir o que ela criou (§17, ponto 6)
+### [x] Passo 1. Excluir o que ela criou (§17, ponto 6)
 
 *Decidido:* guardar o autor e liberar a exclusão só do que é dela.
 
@@ -224,6 +224,7 @@ Código de apoio (backend em `src/backend`, testes em `tests`):
   3. Trocar `SoOrganizer` por `Papeis.Equipe` nas quatro rotas. A dona exclui tudo; a assistente só se `CriadoPor` for o id dela, senão 403. Itens antigos, sem autor, só a dona exclui.
   4. Frontend: botão de excluir para a assistente só nos itens dela (a resposta da API traz um indicador, por exemplo `podeExcluir`). Telas em `src/frontend/src/app/pages/oportunidades`, `orcamentos-funil`, `contratos-funil` e `tarefas-funil`.
 - **Não muda:** evento, cliente e fornecedor continuam sem exclusão para a assistente.
+- **Como ficou (20/11/2026):** em vez de `podeExcluir`, as leituras trazem `criadoPor` e `/conta/area` traz `usuarioId`; o frontend decide o botão (`AuthService.podeExcluirDoFunil`). A exclusão responde 200 (como as demais), não 204. Leads do formulário público ficam sem autor (só a dona exclui).
 - **Testes de integração:** a assistente exclui o que criou (204); não exclui o da dona nem o antigo sem autor (403); a dona exclui os dois; outra conta continua com 404.
 
 ### [ ] Passo 2. Pendências da Hoje (§17, ponto 8)

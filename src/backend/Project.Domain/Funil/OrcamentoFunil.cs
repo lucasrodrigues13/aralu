@@ -34,6 +34,9 @@ public sealed class OrcamentoFunil
 
     public DateTimeOffset CriadoEm { get; set; }
 
+    /// <summary>Id do usuário que criou. Nulo nos itens antigos (SPEC-032 §18, passo 1).</summary>
+    public string? CriadoPor { get; set; }
+
     public DateTimeOffset? EnviadoEm { get; set; }
 
     public DateTimeOffset? RespondidoEm { get; set; }

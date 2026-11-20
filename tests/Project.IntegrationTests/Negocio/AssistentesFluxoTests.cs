@@ -177,6 +177,88 @@ public class AssistentesFluxoTests
         Assert.Single(editada.GetProperty("responsaveis").EnumerateArray());
     }
 
+    [Fact]
+    public async Task Assistente_exclui_so_o_que_criou_no_funil_e_a_dona_exclui_tudo()
+    {
+        var dona = await EntrarOrganizer();
+        var outraConta = await EntrarOrganizer();
+        var (assistente, _, _) = await ConvidarEAtivar(dona, financeiro: false, somenteDela: false);
+
+        async Task<Guid> Lead(HttpClient quem, string nome) =>
+            (await Ler(await quem.PostAsJsonAsync("/api/v1/oportunidades", new
+            {
+                nome,
+                estagio = "Contato inicial",
+                contatos = new[] { new { nome = "Lia", telefone = "11977770002", email = "lia2@ex.com" } },
+            }))).GetProperty("id").GetGuid();
+
+        async Task<Guid> Orcamento(HttpClient quem, Guid lead) =>
+            (await Ler(await quem.PostAsJsonAsync("/api/v1/orcamentos-funil", new { oportunidadeId = lead, conteudo = "Proposta" }))).GetProperty("id").GetGuid();
+
+        async Task<Guid> Contrato(HttpClient quem, Guid lead) =>
+            (await Ler(await quem.PostAsJsonAsync("/api/v1/contratos-funil", new { oportunidadeId = lead, conteudo = "Contrato" }))).GetProperty("id").GetGuid();
+
+        async Task<Guid> Tarefa(HttpClient quem, Guid lead) =>
+            (await Ler(await quem.PostAsJsonAsync("/api/v1/tarefas-funil", new
+            {
+                titulo = "Ligar",
+                oportunidadeId = lead,
+                tipo = "Ligacao",
+                prazo = "2030-06-01",
+                responsavel = "Equipe",
+            }))).GetProperty("id").GetGuid();
+
+        var leadDona = await Lead(dona, "Lead da dona");
+        var leadDela = await Lead(assistente, "Lead dela");
+        var itensDona = new[]
+        {
+            ("oportunidades", leadDona),
+            ("orcamentos-funil", await Orcamento(dona, leadDona)),
+            ("contratos-funil", await Contrato(dona, leadDona)),
+            ("tarefas-funil", await Tarefa(dona, leadDona)),
+        };
+
+        // O que é da dona, e o que não tem autor (itens antigos), a assistente não exclui.
+        foreach (var (rota, id) in itensDona)
+        {
+            Assert.True(HttpStatusCode.Forbidden == (await assistente.DeleteAsync($"/api/v1/{rota}/{id}")).StatusCode, rota);
+            Assert.Equal(HttpStatusCode.NotFound, (await outraConta.DeleteAsync($"/api/v1/{rota}/{id}")).StatusCode);
+        }
+
+        // A leitura traz o autor, para a tela decidir o botão.
+        var lista = await Ler(await assistente.GetAsync("/api/v1/oportunidades"));
+        Assert.All(lista.EnumerateArray(), item => Assert.Equal(JsonValueKind.String, item.GetProperty("criadoPor").ValueKind));
+
+        // O que ela criou, ela exclui.
+        var dela = new[]
+        {
+            ("orcamentos-funil", await Orcamento(assistente, leadDela)),
+            ("contratos-funil", await Contrato(assistente, leadDela)),
+            ("tarefas-funil", await Tarefa(assistente, leadDela)),
+            ("oportunidades", leadDela),
+        };
+        foreach (var (rota, id) in dela)
+        {
+            Assert.Equal(HttpStatusCode.OK, (await assistente.DeleteAsync($"/api/v1/{rota}/{id}")).StatusCode);
+        }
+
+        // A dona exclui tudo, inclusive o que a assistente criou.
+        var leadOutro = await Lead(assistente, "Outro lead dela");
+        var itensOutro = new[]
+        {
+            ("orcamentos-funil", await Orcamento(assistente, leadOutro)),
+            ("contratos-funil", await Contrato(assistente, leadOutro)),
+            ("tarefas-funil", await Tarefa(assistente, leadOutro)),
+        };
+        foreach (var (rota, id) in itensOutro.Concat(itensDona.Skip(1).Reverse()))
+        {
+            Assert.Equal(HttpStatusCode.OK, (await dona.DeleteAsync($"/api/v1/{rota}/{id}")).StatusCode);
+        }
+
+        Assert.Equal(HttpStatusCode.OK, (await dona.DeleteAsync($"/api/v1/oportunidades/{leadOutro}")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await dona.DeleteAsync($"/api/v1/oportunidades/{leadDona}")).StatusCode);
+    }
+
     private async Task<(HttpClient Cliente, Guid Id, string Email)> ConvidarSemAtivar(HttpClient dona)
     {
         var email = $"pend-{Guid.NewGuid():N}@gevents.test";

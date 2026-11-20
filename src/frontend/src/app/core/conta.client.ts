@@ -11,6 +11,7 @@ export interface MensagemResposta {
 export interface AreaResposta {
   email: string;
   papeis: string[];
+  usuarioId?: string;
   podeVerFinanceiro?: boolean;
   somenteDela?: boolean;
 }

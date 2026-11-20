@@ -14,7 +14,8 @@ public sealed record TarefaFunilLeitura(
     DateOnly Prazo,
     bool Completa,
     Guid? AnexoArquivoId,
-    IReadOnlyList<ResponsavelLeitura>? Responsaveis = null);
+    IReadOnlyList<ResponsavelLeitura>? Responsaveis = null,
+    string? CriadoPor = null);
 
 public sealed record SalvarTarefaFunil(
     string? Titulo,
@@ -52,7 +53,7 @@ public sealed class TarefaFunilServico(IDados dados)
         return itens.Select(item => Ler(item, nomes.GetValueOrDefault(item.OportunidadeId, ""))).ToArray();
     }
 
-    public async Task<Resultado<TarefaFunilLeitura>> CriarAsync(string contaId, SalvarTarefaFunil pedido, CancellationToken ct)
+    public async Task<Resultado<TarefaFunilLeitura>> CriarAsync(string contaId, SalvarTarefaFunil pedido, CancellationToken ct, string? criadoPor = null)
     {
         var montado = await MontarAsync(contaId, Guid.NewGuid(), pedido, ct);
         if (!montado.Ok)
@@ -61,6 +62,7 @@ public sealed class TarefaFunilServico(IDados dados)
         }
 
         montado.Valor!.Completa = false;
+        montado.Valor.CriadoPor = criadoPor;
         await dados.InserirTarefaFunilAsync(montado.Valor, ct);
         var nomes = await dados.NomesOportunidadesAsync(contaId, [montado.Valor.OportunidadeId], ct);
         return Resultado<TarefaFunilLeitura>.Sucesso(Ler(montado.Valor, nomes.GetValueOrDefault(montado.Valor.OportunidadeId, "")));
@@ -128,12 +130,18 @@ public sealed class TarefaFunilServico(IDados dados)
         return Resultado<TarefaFunilLeitura>.Sucesso(Ler(item, nomes.GetValueOrDefault(item.OportunidadeId, "")));
     }
 
-    public async Task<Resultado<bool>> ExcluirAsync(string contaId, Guid id, CancellationToken ct)
+    /// <param name="soCriadoPor">Quando informado (assistente), só exclui o que ele mesmo criou (SPEC-032 §18, passo 1).</param>
+    public async Task<Resultado<bool>> ExcluirAsync(string contaId, Guid id, CancellationToken ct, string? soCriadoPor = null)
     {
         var item = await dados.ObterTarefaFunilAsync(contaId, id, ct);
         if (item is null)
         {
             return Resultado<bool>.Erro(Codigos.Indisponivel, "Indisponível.");
+        }
+
+        if (soCriadoPor is not null && item.CriadoPor != soCriadoPor)
+        {
+            return Resultado<bool>.Erro(Codigos.Proibido, "Você só pode excluir o que criou.");
         }
 
         await dados.RemoverTarefaFunilAsync(item, ct);
@@ -229,5 +237,6 @@ public sealed class TarefaFunilServico(IDados dados)
             item.AnexoArquivoId,
             item.Responsaveis.Count > 0
                 ? item.Responsaveis.Select(r => new ResponsavelLeitura(r.Papel, r.ReferenciaId)).ToArray()
-                : [new ResponsavelLeitura(Domain.Tarefas.PapelResponsavel.Organizer, item.Responsavel)]);
+                : [new ResponsavelLeitura(Domain.Tarefas.PapelResponsavel.Organizer, item.Responsavel)],
+            item.CriadoPor);
 }

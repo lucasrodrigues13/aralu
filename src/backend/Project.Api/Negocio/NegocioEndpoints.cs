@@ -125,7 +125,7 @@ public static class NegocioEndpoints
         api.MapPost("/oportunidades/{id:guid}/mover", MoverOportunidade).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/oportunidades/{id:guid}/cliente", VincularClienteOportunidade).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/oportunidades/{id:guid}/retorno", RetornoOportunidade).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
-        api.MapDelete("/oportunidades/{id:guid}", ExcluirOportunidade).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
+        api.MapDelete("/oportunidades/{id:guid}", ExcluirOportunidade).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapGet("/oportunidades/{id:guid}/briefing", BriefingDoLead).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/oportunidades/{id:guid}/briefing", AplicarBriefingAoLead).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPut("/oportunidades/{id:guid}/briefing", SalvarBriefingDoLead).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
@@ -145,7 +145,7 @@ public static class NegocioEndpoints
         api.MapPost("/contratos-funil/{id:guid}/enviar", EnviarContratoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/contratos-funil/{id:guid}/assinar", AssinarContratoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/contratos-funil/{id:guid}/cancelar", CancelarContratoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
-        api.MapDelete("/contratos-funil/{id:guid}", ExcluirContratoFunil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
+        api.MapDelete("/contratos-funil/{id:guid}", ExcluirContratoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
 
         api.MapGet("/orcamentos-funil/parametros", () => Results.Ok(ParametrosOrcamento.Lista)).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapGet("/orcamentos-funil/modelo-aplicado", TextoDoModeloOrcamento).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
@@ -156,14 +156,14 @@ public static class NegocioEndpoints
         api.MapPost("/orcamentos-funil/{id:guid}/enviar", EnviarOrcamentoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/orcamentos-funil/{id:guid}/responder", ResponderOrcamentoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/orcamentos-funil/{id:guid}/cancelar", CancelarOrcamentoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
-        api.MapDelete("/orcamentos-funil/{id:guid}", ExcluirOrcamentoFunil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
+        api.MapDelete("/orcamentos-funil/{id:guid}", ExcluirOrcamentoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
 
         api.MapGet("/tarefas-funil", TarefasFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/tarefas-funil", CriarTarefaFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPut("/tarefas-funil/{id:guid}", AtualizarTarefaFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/tarefas-funil/{id:guid}/concluir", ConcluirTarefaFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/tarefas-funil/{id:guid}/reabrir", ReabrirTarefaFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
-        api.MapDelete("/tarefas-funil/{id:guid}", ExcluirTarefaFunil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
+        api.MapDelete("/tarefas-funil/{id:guid}", ExcluirTarefaFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
 
         api.MapGet("/relatorios-funil", RelatoriosFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapGet("/relatorios-funil/exportar", ExportarRelatoriosFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
@@ -1240,7 +1240,7 @@ public static class NegocioEndpoints
             ct)));
 
     private static Task<IResult> CriarOportunidade(SalvarOportunidade pedido, ClaimsPrincipal usuario, OportunidadeServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.CriarAsync(conta, pedido, ct)));
+        ComConta(usuario, conta => De(servico.CriarAsync(conta, pedido, ct, UsuarioId(usuario))));
 
     private static Task<IResult> Oportunidade(Guid id, ClaimsPrincipal usuario, OportunidadeServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.ObterAsync(conta, id, ct)));
@@ -1273,7 +1273,7 @@ public static class NegocioEndpoints
         ComConta(usuario, async conta => Results.Ok(await servico.ContatoRepetidoAsync(conta, telefone ?? [], email ?? [], ignorar, ct)));
 
     private static Task<IResult> ExcluirOportunidade(Guid id, ClaimsPrincipal usuario, OportunidadeServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.ExcluirAsync(conta, id, ct)));
+        ComConta(usuario, conta => De(servico.ExcluirAsync(conta, id, ct, SoDoUsuario(usuario))));
 
     private static Task<IResult> ChecarDataOportunidade(DateOnly data, ClaimsPrincipal usuario, OportunidadeServico servico, CancellationToken ct) =>
         ComConta(usuario, async conta => Results.Ok(await servico.ChecarDataAsync(conta, data, ct)));
@@ -1327,7 +1327,7 @@ public static class NegocioEndpoints
         ComConta(usuario, async conta => Results.Ok(await servico.ListarAsync(conta, situacao, busca, criadoDe, criadoAte, ct)));
 
     private static Task<IResult> CriarContratoFunil(SalvarContratoFunil pedido, ClaimsPrincipal usuario, ContratoFunilServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.CriarAsync(conta, pedido, ct)));
+        ComConta(usuario, conta => De(servico.CriarAsync(conta, pedido, ct, UsuarioId(usuario))));
 
     private static Task<IResult> ContratoFunil(Guid id, ClaimsPrincipal usuario, ContratoFunilServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.ObterAsync(conta, id, ct)));
@@ -1345,7 +1345,7 @@ public static class NegocioEndpoints
         ComConta(usuario, conta => De(servico.CancelarAsync(conta, id, ct)));
 
     private static Task<IResult> ExcluirContratoFunil(Guid id, ClaimsPrincipal usuario, ContratoFunilServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.ExcluirAsync(conta, id, ct)));
+        ComConta(usuario, conta => De(servico.ExcluirAsync(conta, id, ct, SoDoUsuario(usuario))));
 
     private static Task<IResult> OrcamentosFunil(
         ClaimsPrincipal usuario,
@@ -1358,7 +1358,7 @@ public static class NegocioEndpoints
         ComConta(usuario, async conta => Results.Ok(await servico.ListarAsync(conta, situacao, busca, criadoDe, criadoAte, ct)));
 
     private static Task<IResult> CriarOrcamentoFunil(SalvarOrcamentoFunil pedido, ClaimsPrincipal usuario, OrcamentoFunilServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.CriarAsync(conta, pedido, ct)));
+        ComConta(usuario, conta => De(servico.CriarAsync(conta, pedido, ct, UsuarioId(usuario))));
 
     private static Task<IResult> OrcamentoFunil(Guid id, ClaimsPrincipal usuario, OrcamentoFunilServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.ObterAsync(conta, id, ct)));
@@ -1388,7 +1388,7 @@ public static class NegocioEndpoints
         ComConta(usuario, conta => De(servico.CancelarAsync(conta, id, ct)));
 
     private static Task<IResult> ExcluirOrcamentoFunil(Guid id, ClaimsPrincipal usuario, OrcamentoFunilServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.ExcluirAsync(conta, id, ct)));
+        ComConta(usuario, conta => De(servico.ExcluirAsync(conta, id, ct, SoDoUsuario(usuario))));
 
     private static Task<IResult> TarefasFunil(
         ClaimsPrincipal usuario,
@@ -1405,7 +1405,7 @@ public static class NegocioEndpoints
             ct)));
 
     private static Task<IResult> CriarTarefaFunil(SalvarTarefaFunil pedido, ClaimsPrincipal usuario, TarefaFunilServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.CriarAsync(conta, pedido, ct)));
+        ComConta(usuario, conta => De(servico.CriarAsync(conta, pedido, ct, UsuarioId(usuario))));
 
     private static Task<IResult> AtualizarTarefaFunil(Guid id, SalvarTarefaFunil pedido, ClaimsPrincipal usuario, TarefaFunilServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.AtualizarAsync(conta, id, pedido, ct)));
@@ -1417,7 +1417,7 @@ public static class NegocioEndpoints
         ComConta(usuario, conta => De(servico.ReabrirAsync(conta, id, ct)));
 
     private static Task<IResult> ExcluirTarefaFunil(Guid id, ClaimsPrincipal usuario, TarefaFunilServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.ExcluirAsync(conta, id, ct)));
+        ComConta(usuario, conta => De(servico.ExcluirAsync(conta, id, ct, SoDoUsuario(usuario))));
 
     private static Task<IResult> RelatoriosFunil(
         ClaimsPrincipal usuario,
@@ -1611,6 +1611,10 @@ public static class NegocioEndpoints
     private static bool EhClient(ClaimsPrincipal usuario) => usuario.IsInRole(Papeis.Client);
 
     private static string? UsuarioId(ClaimsPrincipal usuario) => usuario.FindFirstValue(ClaimTypes.NameIdentifier);
+
+    /// <summary>A assistente só exclui o que criou (SPEC-032 §18, passo 1); a dona exclui tudo (nulo).</summary>
+    private static string? SoDoUsuario(ClaimsPrincipal usuario) =>
+        usuario.IsInRole(Papeis.Assistant) ? UsuarioId(usuario) ?? "-" : null;
 
     private static async Task<IResult?> ExigirModuloAsync(
         ClaimsPrincipal usuario,

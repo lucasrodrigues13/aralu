@@ -247,6 +247,7 @@ public static class ContaEndpoints
         return Results.Ok(new
         {
             email,
+            usuarioId = usuario.FindFirstValue(ClaimTypes.NameIdentifier),
             papeis,
             podeVerFinanceiro = AssistenteEndpoints.PodeVerFinanceiro(usuario),
             somenteDela = assistente && usuario.FindFirstValue(AssistenteEndpoints.ClaimSomenteDela) == "true",

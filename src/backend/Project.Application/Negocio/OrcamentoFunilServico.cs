@@ -20,7 +20,8 @@ public sealed record OrcamentoFunilLeitura(
     DateTimeOffset? AbertoEm = null,
     string? SituacaoProposta = null,
     string? RespostaMensagem = null,
-    DateTimeOffset? RespostaEm = null);
+    DateTimeOffset? RespostaEm = null,
+    string? CriadoPor = null);
 
 public sealed record SalvarOrcamentoFunil(
     Guid? OportunidadeId,
@@ -104,7 +105,7 @@ public sealed class OrcamentoFunilServico(IDados dados)
         return Resultado<string>.Sucesso(ParametrosOrcamento.Aplicar(modelo.Texto, oportunidade, valor, DateOnly.FromDateTime(DateTime.UtcNow), perfil?.NomeEmpresa));
     }
 
-    public async Task<Resultado<OrcamentoFunilLeitura>> CriarAsync(string contaId, SalvarOrcamentoFunil pedido, CancellationToken ct)
+    public async Task<Resultado<OrcamentoFunilLeitura>> CriarAsync(string contaId, SalvarOrcamentoFunil pedido, CancellationToken ct, string? criadoPor = null)
     {
         if (pedido.OportunidadeId is not Guid oportunidadeId ||
             await dados.ObterOportunidadeAsync(contaId, oportunidadeId, ct) is not { } oportunidade)
@@ -154,6 +155,7 @@ public sealed class OrcamentoFunilServico(IDados dados)
             Situacao = SituacaoOrcamentoFunil.EmAndamento,
             CriadoEm = DateTimeOffset.UtcNow,
             ModeloId = modeloId,
+            CriadoPor = criadoPor,
         };
         await dados.InserirOrcamentoFunilAsync(item, ct);
         return Resultado<OrcamentoFunilLeitura>.Sucesso(Ler(item, oportunidade.Nome));
@@ -268,12 +270,18 @@ public sealed class OrcamentoFunilServico(IDados dados)
             return null;
         }, ct);
 
-    public async Task<Resultado<bool>> ExcluirAsync(string contaId, Guid id, CancellationToken ct)
+    /// <param name="soCriadoPor">Quando informado (assistente), só exclui o que ele mesmo criou (SPEC-032 §18, passo 1).</param>
+    public async Task<Resultado<bool>> ExcluirAsync(string contaId, Guid id, CancellationToken ct, string? soCriadoPor = null)
     {
         var item = await dados.ObterOrcamentoFunilAsync(contaId, id, ct);
         if (item is null)
         {
             return Resultado<bool>.Erro(Codigos.Indisponivel, "Indisponível.");
+        }
+
+        if (soCriadoPor is not null && item.CriadoPor != soCriadoPor)
+        {
+            return Resultado<bool>.Erro(Codigos.Proibido, "Você só pode excluir o que criou.");
         }
 
         if (item.Situacao != SituacaoOrcamentoFunil.EmAndamento)
@@ -501,5 +509,6 @@ public sealed class OrcamentoFunilServico(IDados dados)
             item.AbertoEm,
             SituacaoProposta(item),
             item.RespostaMensagem,
-            item.RespostaEm);
+            item.RespostaEm,
+            item.CriadoPor);
 }

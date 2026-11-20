@@ -46,7 +46,7 @@ export const financeiroGuard: CanActivateFn = () => {
 
   return conta.areaUsuario().pipe(
     map((area) => {
-      auth.permissoes.set({ podeVerFinanceiro: !!area.podeVerFinanceiro, somenteDela: !!area.somenteDela });
+      auth.permissoes.set({ podeVerFinanceiro: !!area.podeVerFinanceiro, somenteDela: !!area.somenteDela, usuarioId: area.usuarioId });
       return area.podeVerFinanceiro ? true : router.createUrlTree(['/sem-acesso']);
     }),
     catchError(() => of(router.createUrlTree(['/sem-acesso']))),

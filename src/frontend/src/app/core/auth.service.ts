@@ -12,6 +12,8 @@ export interface Sessao {
 export interface Permissoes {
   podeVerFinanceiro: boolean;
   somenteDela: boolean;
+  /** Id do usuário logado; serve para saber o que a assistente criou (SPEC-032 §18, passo 1). */
+  usuarioId?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -35,6 +37,16 @@ export class AuthService {
   /** A dona vê o financeiro sempre; a assistente só com a permissão. */
   podeVerFinanceiro(): boolean {
     return !this.ehAssistente() || (this.permissoes()?.podeVerFinanceiro ?? false);
+  }
+
+  /** A dona exclui tudo do funil; a assistente só o que ela mesma criou (SPEC-032 §18, passo 1). */
+  podeExcluirDoFunil(criadoPor: string | null | undefined): boolean {
+    if (!this.ehAssistente()) {
+      return true;
+    }
+
+    const eu = this.permissoes()?.usuarioId;
+    return !!criadoPor && !!eu && criadoPor === eu;
   }
 
   email(): string {

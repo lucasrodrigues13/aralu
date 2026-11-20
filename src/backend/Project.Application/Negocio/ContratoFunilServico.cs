@@ -12,7 +12,8 @@ public sealed record ContratoFunilLeitura(
     DateTimeOffset CriadoEm,
     DateTimeOffset? EnviadoEm,
     DateTimeOffset? AssinadoEm,
-    Guid? ModeloId);
+    Guid? ModeloId,
+    string? CriadoPor = null);
 
 public sealed record SalvarContratoFunil(Guid? OportunidadeId, string? Conteudo, Guid? ModeloId);
 
@@ -51,7 +52,7 @@ public sealed class ContratoFunilServico(IDados dados)
         return Resultado<ContratoFunilLeitura>.Sucesso(Ler(item, nomes.GetValueOrDefault(item.OportunidadeId, "")));
     }
 
-    public async Task<Resultado<ContratoFunilLeitura>> CriarAsync(string contaId, SalvarContratoFunil pedido, CancellationToken ct)
+    public async Task<Resultado<ContratoFunilLeitura>> CriarAsync(string contaId, SalvarContratoFunil pedido, CancellationToken ct, string? criadoPor = null)
     {
         if (pedido.OportunidadeId is not Guid oportunidadeId ||
             await dados.ObterOportunidadeAsync(contaId, oportunidadeId, ct) is not { } oportunidade)
@@ -94,6 +95,7 @@ public sealed class ContratoFunilServico(IDados dados)
             Situacao = SituacaoContratoFunil.EmAndamento,
             CriadoEm = DateTimeOffset.UtcNow,
             ModeloId = modeloId,
+            CriadoPor = criadoPor,
         };
         await dados.InserirContratoFunilAsync(item, ct);
         return Resultado<ContratoFunilLeitura>.Sucesso(Ler(item, oportunidade.Nome));
@@ -165,12 +167,18 @@ public sealed class ContratoFunilServico(IDados dados)
             return null;
         }, ct);
 
-    public async Task<Resultado<bool>> ExcluirAsync(string contaId, Guid id, CancellationToken ct)
+    /// <param name="soCriadoPor">Quando informado (assistente), só exclui o que ele mesmo criou (SPEC-032 §18, passo 1).</param>
+    public async Task<Resultado<bool>> ExcluirAsync(string contaId, Guid id, CancellationToken ct, string? soCriadoPor = null)
     {
         var item = await dados.ObterContratoFunilAsync(contaId, id, ct);
         if (item is null)
         {
             return Resultado<bool>.Erro(Codigos.Indisponivel, "Indisponível.");
+        }
+
+        if (soCriadoPor is not null && item.CriadoPor != soCriadoPor)
+        {
+            return Resultado<bool>.Erro(Codigos.Proibido, "Você só pode excluir o que criou.");
         }
 
         if (item.Situacao != SituacaoContratoFunil.EmAndamento)
@@ -218,5 +226,6 @@ public sealed class ContratoFunilServico(IDados dados)
             item.CriadoEm,
             item.EnviadoEm,
             item.AssinadoEm,
-            item.ModeloId);
+            item.ModeloId,
+            item.CriadoPor);
 }

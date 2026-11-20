@@ -1487,6 +1487,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<DateTimeOffset>("CriadoEm")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("CriadoPor")
+                        .HasColumnType("text");
+
                     b.Property<DateTimeOffset?>("EnviadoEm")
                         .HasColumnType("timestamp with time zone");
 
@@ -1768,6 +1771,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<DateTimeOffset>("CriadoEm")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("CriadoPor")
+                        .HasColumnType("text");
+
                     b.Property<DateOnly?>("DataPrevista")
                         .HasColumnType("date");
 
@@ -1896,6 +1902,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<DateTimeOffset>("CriadoEm")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("CriadoPor")
+                        .HasColumnType("text");
+
                     b.Property<DateTimeOffset?>("EnviadoEm")
                         .HasColumnType("timestamp with time zone");
 
@@ -2014,6 +2023,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
                     b.Property<string>("ContaId")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("CriadoPor")
                         .HasColumnType("text");
 
                     b.Property<string>("Observacao")

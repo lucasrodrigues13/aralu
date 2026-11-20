@@ -52,7 +52,8 @@ public sealed record OportunidadeLeitura(
     TimeOnly? HoraConvite = null,
     TimeOnly? HoraCerimonia = null,
     TimeOnly? HoraRecepcao = null,
-    TimeOnly? HoraFesta = null);
+    TimeOnly? HoraFesta = null,
+    string? CriadoPor = null);
 
 public sealed record ContatoOportunidadePedido(string? Nome, string? Telefone, string? Email);
 
@@ -147,7 +148,7 @@ public sealed class OportunidadeServico(IDados dados)
         return Resultado<OportunidadeLeitura>.Sucesso(Ler(item, OrcamentoFunilServico.Resumo(propostas.GetValueOrDefault(item.Id))));
     }
 
-    public async Task<Resultado<OportunidadeLeitura>> CriarAsync(string contaId, SalvarOportunidade pedido, CancellationToken ct)
+    public async Task<Resultado<OportunidadeLeitura>> CriarAsync(string contaId, SalvarOportunidade pedido, CancellationToken ct, string? criadoPor = null)
     {
         var montado = await MontarAsync(contaId, Guid.NewGuid(), pedido, null, ct);
         if (!montado.Ok)
@@ -158,6 +159,7 @@ public sealed class OportunidadeServico(IDados dados)
         var agora = DateTimeOffset.UtcNow;
         montado.Valor!.CriadoEm = agora;
         montado.Valor.EntradaNoEstagioEm = agora;
+        montado.Valor.CriadoPor = criadoPor;
         await dados.InserirOportunidadeAsync(montado.Valor, ct);
         return Resultado<OportunidadeLeitura>.Sucesso(Ler(montado.Valor));
     }
@@ -362,12 +364,18 @@ public sealed class OportunidadeServico(IDados dados)
             .ToArray();
     }
 
-    public async Task<Resultado<bool>> ExcluirAsync(string contaId, Guid id, CancellationToken ct)
+    /// <param name="soCriadoPor">Quando informado (assistente), só exclui o que ele mesmo criou (SPEC-032 §18, passo 1).</param>
+    public async Task<Resultado<bool>> ExcluirAsync(string contaId, Guid id, CancellationToken ct, string? soCriadoPor = null)
     {
         var item = await dados.ObterOportunidadeAsync(contaId, id, ct);
         if (item is null)
         {
             return Resultado<bool>.Erro(Codigos.Indisponivel, "Indisponível.");
+        }
+
+        if (soCriadoPor is not null && item.CriadoPor != soCriadoPor)
+        {
+            return Resultado<bool>.Erro(Codigos.Proibido, "Você só pode excluir o que criou.");
         }
 
         await dados.RemoverOportunidadeAsync(item, ct);
@@ -688,6 +696,7 @@ public sealed class OportunidadeServico(IDados dados)
             horarios.Convite,
             horarios.Cerimonia,
             horarios.Recepcao,
-            horarios.Festa);
+            horarios.Festa,
+            item.CriadoPor);
     }
 }

@@ -12,6 +12,7 @@ import { MatTableModule } from '@angular/material/table';
 import { AssistentesClient } from '../../core/assistentes.client';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { NegocioClient, Oportunidade, TarefaFunil, TIPOS_TAREFA_FUNIL } from '../../core/negocio.client';
+import { AuthService } from '../../core/auth.service';
 import { ToastService } from '../../core/toast.service';
 import { CampoDataComponent } from '../../shared/campo-data';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
@@ -202,7 +203,9 @@ export class TarefaFunilDialog implements OnInit {
               } @else {
                 <button mat-icon-button type="button" (click)="reabrir(item)"><mat-icon>undo</mat-icon></button>
               }
-              <button mat-icon-button type="button" (click)="excluir(item)"><mat-icon>delete</mat-icon></button>
+              @if (auth.podeExcluirDoFunil(item.criadoPor)) {
+                <button mat-icon-button type="button" (click)="excluir(item)"><mat-icon>delete</mat-icon></button>
+              }
             </td>
           </ng-container>
           <tr mat-header-row *matHeaderRowDef="colunas"></tr>
@@ -215,6 +218,7 @@ export class TarefaFunilDialog implements OnInit {
 })
 export class TarefasFunilPage implements OnInit {
   private readonly negocio = inject(NegocioClient);
+  protected readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
   private readonly toast = inject(ToastService);
   protected readonly tipos = TIPOS_TAREFA_FUNIL;

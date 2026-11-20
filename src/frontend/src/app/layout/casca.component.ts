@@ -258,7 +258,7 @@ export class CascaComponent {
   constructor() {
     if (this.auth.ehAssistente()) {
       this.conta.areaUsuario().subscribe({
-        next: (area) => this.auth.permissoes.set({ podeVerFinanceiro: !!area.podeVerFinanceiro, somenteDela: !!area.somenteDela }),
+        next: (area) => this.auth.permissoes.set({ podeVerFinanceiro: !!area.podeVerFinanceiro, somenteDela: !!area.somenteDela, usuarioId: area.usuarioId }),
         error: () => undefined,
       });
       this.assistentes.minhaConta().subscribe({

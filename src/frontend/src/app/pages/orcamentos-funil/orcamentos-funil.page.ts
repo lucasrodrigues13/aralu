@@ -13,6 +13,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { ModeloOrcamentoFunil, NegocioClient, Oportunidade, OrcamentoFunil } from '../../core/negocio.client';
+import { AuthService } from '../../core/auth.service';
 import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { CampoDinheiroComponent } from '../../shared/campo-dinheiro';
@@ -225,7 +226,9 @@ export class EnviarPropostaDialog implements OnInit {
                 <button mat-icon-button type="button" matTooltip="Enviar proposta" (click)="enviar(item)"><mat-icon>send</mat-icon></button>
                 <button mat-icon-button type="button" matTooltip="Registrar resposta" (click)="responder(item)"><mat-icon>mark_email_read</mat-icon></button>
                 <button mat-icon-button type="button" matTooltip="Cancelar" (click)="cancelar(item)"><mat-icon>cancel</mat-icon></button>
-                <button mat-icon-button type="button" matTooltip="Excluir" (click)="excluir(item)"><mat-icon>delete</mat-icon></button>
+                @if (auth.podeExcluirDoFunil(item.criadoPor)) {
+                  <button mat-icon-button type="button" matTooltip="Excluir" (click)="excluir(item)"><mat-icon>delete</mat-icon></button>
+                }
               } @else if (item.situacao === 'Respondido' && item.tokenLink) {
                 <button mat-icon-button type="button" matTooltip="Link da proposta" (click)="mostrarLink(item)"><mat-icon>link</mat-icon></button>
               }
@@ -241,6 +244,7 @@ export class EnviarPropostaDialog implements OnInit {
 })
 export class OrcamentosFunilPage implements OnInit {
   private readonly negocio = inject(NegocioClient);
+  protected readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
   private readonly toast = inject(ToastService);
   protected readonly abas = [

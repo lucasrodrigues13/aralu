@@ -96,6 +96,9 @@ public sealed class Oportunidade
 
     public DateTimeOffset CriadoEm { get; set; }
 
+    /// <summary>Id do usuário que criou. Nulo nos itens antigos e nos leads do formulário público (SPEC-032 §18, passo 1).</summary>
+    public string? CriadoPor { get; set; }
+
     public DateTimeOffset EntradaNoEstagioEm { get; set; }
 
     public List<ContatoOportunidade> Contatos { get; set; } = [];

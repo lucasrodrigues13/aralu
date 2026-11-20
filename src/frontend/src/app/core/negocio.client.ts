@@ -1384,6 +1384,7 @@ export interface Oportunidade {
   contatoRepetido: boolean;
   /** Proposta mais recente enviada por link (SPEC-031 §6.6); null quando não houve envio. */
   proposta: PropostaResumo | null;
+  criadoPor?: string | null;
 }
 
 export type SituacaoProposta = 'NaoAberta' | 'Aberta' | 'Aceita' | 'Duvidas' | 'Recusada';
@@ -1431,6 +1432,7 @@ export interface ContratoFunil {
   enviadoEm: string | null;
   assinadoEm: string | null;
   modeloId: string | null;
+  criadoPor?: string | null;
 }
 
 export interface OrcamentoFunil {
@@ -1450,6 +1452,7 @@ export interface OrcamentoFunil {
   situacaoProposta: SituacaoProposta | null;
   respostaMensagem: string | null;
   respostaEm: string | null;
+  criadoPor?: string | null;
 }
 
 export interface TarefaFunil {
@@ -1465,6 +1468,7 @@ export interface TarefaFunil {
   prazo: string;
   completa: boolean;
   anexoArquivoId: string | null;
+  criadoPor?: string | null;
 }
 
 export interface CatalogoRelatoriosFunil {

@@ -11,6 +11,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { ContratoFunil, ModeloContratoFunil, NegocioClient, Oportunidade } from '../../core/negocio.client';
+import { AuthService } from '../../core/auth.service';
 import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
@@ -143,7 +144,9 @@ export class ContratoFunilDialog implements OnInit {
                 <button mat-icon-button type="button" (click)="enviar(item)"><mat-icon>send</mat-icon></button>
                 <button mat-icon-button type="button" (click)="assinar(item)"><mat-icon>draw</mat-icon></button>
                 <button mat-icon-button type="button" (click)="cancelar(item)"><mat-icon>cancel</mat-icon></button>
-                <button mat-icon-button type="button" (click)="excluir(item)"><mat-icon>delete</mat-icon></button>
+                @if (auth.podeExcluirDoFunil(item.criadoPor)) {
+                  <button mat-icon-button type="button" (click)="excluir(item)"><mat-icon>delete</mat-icon></button>
+                }
               } @else if (item.situacao === 'Assinado') {
                 <button mat-icon-button type="button" (click)="cancelar(item)"><mat-icon>cancel</mat-icon></button>
               }
@@ -159,6 +162,7 @@ export class ContratoFunilDialog implements OnInit {
 })
 export class ContratosFunilPage implements OnInit {
   private readonly negocio = inject(NegocioClient);
+  protected readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
   private readonly toast = inject(ToastService);
   protected readonly abas = [

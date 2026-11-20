@@ -660,7 +660,9 @@ export function textoDias(dias: number): string {
                   @if (!item.clienteId) {
                     <button mat-menu-item type="button" (click)="virarCliente(item)"><mat-icon>person_add</mat-icon> Virar cliente</button>
                   }
-                  <button mat-menu-item type="button" (click)="excluir(item)"><mat-icon class="text-error">delete</mat-icon> Excluir</button>
+                  @if (auth.podeExcluirDoFunil(item.criadoPor)) {
+                    <button mat-menu-item type="button" (click)="excluir(item)"><mat-icon class="text-error">delete</mat-icon> Excluir</button>
+                  }
                 </mat-menu>
               </div>
 
@@ -817,9 +819,9 @@ export function textoDias(dias: number): string {
 export class OportunidadesPage implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly negocio = inject(NegocioClient);
+  protected readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
   private readonly toast = inject(ToastService);
-  private readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
