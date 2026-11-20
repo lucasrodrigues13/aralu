@@ -8,7 +8,17 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
   const router = inject(Router);
   const token = auth.token();
-  const pedido = token ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }) : req;
+  const conta = auth.ehAdmin() ? auth.contaSelecionada() : null;
+  const cabecalhos: Record<string, string> = {};
+  if (token) {
+    cabecalhos['Authorization'] = `Bearer ${token}`;
+  }
+
+  if (token && conta) {
+    cabecalhos['X-Aralu-Conta'] = conta.id;
+  }
+
+  const pedido = token ? req.clone({ setHeaders: cabecalhos }) : req;
   return next(pedido).pipe(
     catchError((erro: unknown) => {
       // SPEC-032 §6.5: a assistente removida cai na tela de entrar no próximo pedido.

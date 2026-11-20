@@ -90,13 +90,6 @@ function telaEstreita(): boolean {
                   }
                 }
               }
-              @if (auth.ehAdmin()) {
-                <div mat-subheader class="nav-caption">Sistema</div>
-                <a mat-list-item class="menu-list-item" routerLink="/admin" routerLinkActive="activeMenu" (click)="fecharMenu()">
-                  <mat-icon matListItemIcon>admin_panel_settings</mat-icon>
-                  <span class="hide-menu">Administração</span>
-                </a>
-              }
             </mat-nav-list>
           </div>
           <div class="p-6">
@@ -124,6 +117,9 @@ function telaEstreita(): boolean {
             </button>
           }
           <span class="flex-auto"></span>
+          @if (auth.ehAdmin() && auth.contaSelecionada(); as atual) {
+            <span class="text-xs text-muted truncate">Operando a conta {{ atual.email }}</span>
+          }
           <button
             mat-icon-button
             type="button"
@@ -243,7 +239,17 @@ export class CascaComponent {
   /** Menu conforme as permissões: a assistente só vê o que a SPEC-032 §8 libera. */
   protected readonly grupos = computed(() => {
     this.auth.permissoes();
-    return this.todosOsGrupos
+    const admin = this.auth.ehAdmin();
+    const grupoAdmin: GrupoMenu = {
+      rotulo: 'Administração',
+      itens: [{ rotulo: 'Início Admin', icone: 'admin_panel_settings', rota: '/admin' }],
+    };
+    // Admin sem conta escolhida só tem o Início Admin; com conta escolhida vê o menu inteiro dela.
+    if (admin && !this.auth.contaSelecionada()) {
+      return [grupoAdmin];
+    }
+
+    return [...(admin ? [grupoAdmin] : []), ...this.todosOsGrupos]
       .map((grupo) => ({
         ...grupo,
         itens: grupo.itens.filter(

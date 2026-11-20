@@ -1,6 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 
 const CHAVE = 'aralu.sessao';
+const CHAVE_CONTA = 'aralu.conta-admin';
 
 export interface Sessao {
   token: string;
@@ -19,6 +20,8 @@ export interface Permissoes {
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly sessao = signal<Sessao | null>(this.ler());
+  /** Conta organizer que o admin está operando (Início Admin); vai no cabeçalho de cada pedido. */
+  readonly contaSelecionada = signal<{ id: string; email: string } | null>(this.lerConta());
   readonly permissoes = signal<Permissoes | null>(null);
 
   autenticado(): boolean {
@@ -63,8 +66,29 @@ export class AuthService {
     this.permissoes.set(null);
   }
 
+  selecionarConta(conta: { id: string; email: string } | null): void {
+    if (conta) {
+      sessionStorage.setItem(CHAVE_CONTA, JSON.stringify(conta));
+    } else {
+      sessionStorage.removeItem(CHAVE_CONTA);
+    }
+
+    this.contaSelecionada.set(conta);
+  }
+
+  private lerConta(): { id: string; email: string } | null {
+    try {
+      const conta = JSON.parse(sessionStorage.getItem(CHAVE_CONTA) ?? 'null');
+      return conta?.id ? conta : null;
+    } catch {
+      return null;
+    }
+  }
+
   sair(): void {
     sessionStorage.removeItem(CHAVE);
+    sessionStorage.removeItem(CHAVE_CONTA);
+    this.contaSelecionada.set(null);
     this.sessao.set(null);
     this.permissoes.set(null);
   }

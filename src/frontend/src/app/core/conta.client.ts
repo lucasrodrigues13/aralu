@@ -16,6 +16,12 @@ export interface AreaResposta {
   somenteDela?: boolean;
 }
 
+export interface UsuarioAdmin {
+  id: string;
+  email: string;
+  papel: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ContaClient {
   private readonly http = inject(HttpClient);
@@ -56,6 +62,10 @@ export class ContaClient {
 
   areaUsuario() {
     return this.http.get<AreaResposta>(`${this.base}/api/v1/conta/area`);
+  }
+
+  usuariosAdmin() {
+    return this.http.get<UsuarioAdmin[]>(`${this.base}/api/v1/admin/usuarios`);
   }
 
   areaAdmin() {

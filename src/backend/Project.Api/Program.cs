@@ -168,11 +168,13 @@ app.UseCors();
 app.UseRateLimiter();
 app.UseAuthentication();
 app.Use(Project.Api.Conta.AssistenteEndpoints.AplicarPermissoes);
+app.Use(Project.Api.Conta.AdminEndpoints.AplicarContaDoAdmin);
 app.UseAuthorization();
 
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));
 ContaEndpoints.Mapear(app);
 Project.Api.Conta.AssistenteEndpoints.Mapear(app);
+Project.Api.Conta.AdminEndpoints.Mapear(app);
 NegocioEndpoints.Mapear(app);
 DinheiroEndpoints.Mapear(app);
 ContratoEndpoints.Mapear(app);
