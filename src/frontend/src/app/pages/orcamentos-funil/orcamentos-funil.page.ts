@@ -82,8 +82,18 @@ export class OrcamentoFunilDialog implements OnInit {
   protected aplicarModelo(id: string | null): void {
     const modelo = this.modelos().find((m) => m.id === id);
     if (!modelo) return;
-    const opp = this.oportunidades().find((o) => o.id === this.form.controls.oportunidadeId.value);
-    this.form.controls.conteudo.setValue(modelo.texto.replace(/#nome_oportunidade/gi, opp?.nome ?? ''));
+    const oportunidadeId = this.form.controls.oportunidadeId.value;
+    if (!oportunidadeId) {
+      this.form.controls.conteudo.setValue(modelo.texto);
+      this.toast.erro('Escolha a oportunidade para preencher os parâmetros do modelo.');
+      return;
+    }
+
+    // SPEC-031 §17, ponto 12: o servidor troca os parâmetros pelos dados do lead.
+    this.negocio.textoDoModeloOrcamento(modelo.id, oportunidadeId, this.form.controls.valor.value).subscribe({
+      next: (resposta) => this.form.controls.conteudo.setValue(resposta.texto),
+      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+    });
   }
 
   protected salvar(): void {

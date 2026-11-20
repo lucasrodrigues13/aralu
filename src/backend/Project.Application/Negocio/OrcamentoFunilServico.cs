@@ -90,6 +90,20 @@ public sealed class OrcamentoFunilServico(IDados dados)
         return Resultado<OrcamentoFunilLeitura>.Sucesso(await LerAsync(contaId, item, ct));
     }
 
+    /// <summary>Texto do modelo com os parâmetros trocados pelos dados do lead (SPEC-031 §17, ponto 12).</summary>
+    public async Task<Resultado<string>> TextoDoModeloAsync(string contaId, Guid modeloId, Guid oportunidadeId, decimal? valor, CancellationToken ct)
+    {
+        var modelo = await dados.ObterModeloOrcamentoFunilAsync(contaId, modeloId, ct);
+        var oportunidade = await dados.ObterOportunidadeAsync(contaId, oportunidadeId, ct);
+        if (modelo is null || oportunidade is null)
+        {
+            return Resultado<string>.Erro(Codigos.Validacao, "Escolha a oportunidade e o modelo.");
+        }
+
+        var perfil = await dados.ObterPerfilAsync(contaId, ct);
+        return Resultado<string>.Sucesso(ParametrosOrcamento.Aplicar(modelo.Texto, oportunidade, valor, DateOnly.FromDateTime(DateTime.UtcNow), perfil?.NomeEmpresa));
+    }
+
     public async Task<Resultado<OrcamentoFunilLeitura>> CriarAsync(string contaId, SalvarOrcamentoFunil pedido, CancellationToken ct)
     {
         if (pedido.OportunidadeId is not Guid oportunidadeId ||
@@ -113,7 +127,8 @@ public sealed class OrcamentoFunilServico(IDados dados)
                 return Resultado<OrcamentoFunilLeitura>.Erro(Codigos.Validacao, "Modelo inválido.");
             }
 
-            conteudo = AplicarTokens(modelo.Texto, oportunidade.Nome);
+            var perfil = await dados.ObterPerfilAsync(contaId, ct);
+            conteudo = ParametrosOrcamento.Aplicar(modelo.Texto, oportunidade, pedido.Valor, DateOnly.FromDateTime(DateTime.UtcNow), perfil?.NomeEmpresa);
         }
         else if (modeloId is Guid mid2)
         {
@@ -465,9 +480,6 @@ public sealed class OrcamentoFunilServico(IDados dados)
         var nomes = await dados.NomesOportunidadesAsync(contaId, [item.OportunidadeId], ct);
         return Ler(item, nomes.GetValueOrDefault(item.OportunidadeId, ""));
     }
-
-    private static string AplicarTokens(string texto, string nomeOportunidade) =>
-        texto.Replace("#nome_oportunidade", nomeOportunidade, StringComparison.OrdinalIgnoreCase);
 
     private static string NovoToken() =>
         Convert.ToBase64String(RandomNumberGenerator.GetBytes(32)).Replace('+', '-').Replace('/', '_').TrimEnd('=');

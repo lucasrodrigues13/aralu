@@ -147,6 +147,8 @@ public static class NegocioEndpoints
         api.MapPost("/contratos-funil/{id:guid}/cancelar", CancelarContratoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapDelete("/contratos-funil/{id:guid}", ExcluirContratoFunil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
 
+        api.MapGet("/orcamentos-funil/parametros", () => Results.Ok(ParametrosOrcamento.Lista)).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapGet("/orcamentos-funil/modelo-aplicado", TextoDoModeloOrcamento).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapGet("/orcamentos-funil", OrcamentosFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/orcamentos-funil", CriarOrcamentoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapGet("/orcamentos-funil/{id:guid}", OrcamentoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
@@ -697,6 +699,13 @@ public static class NegocioEndpoints
             }
 
             return await De(servico.CriarAsync(conta, id, pedido, Hoje(), ct));
+        });
+
+    private static Task<IResult> TextoDoModeloOrcamento(Guid modeloId, Guid oportunidadeId, decimal? valor, ClaimsPrincipal usuario, OrcamentoFunilServico servico, CancellationToken ct) =>
+        ComConta(usuario, async conta =>
+        {
+            var texto = await servico.TextoDoModeloAsync(conta, modeloId, oportunidadeId, valor, ct);
+            return texto.Ok ? Results.Ok(new { texto = texto.Valor }) : Falha(texto.Falha!);
         });
 
     private static Task<IResult> BriefingDoLead(Guid id, ClaimsPrincipal usuario, BriefingLeadServico servico, CancellationToken ct) =>

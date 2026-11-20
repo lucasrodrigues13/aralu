@@ -439,6 +439,33 @@ public class FunilFluxoTests
         Assert.Equal(JsonValueKind.Null, (await Ler(await dono.GetAsync($"/api/v1/oportunidades/{leadId}/briefing"))).GetProperty("briefing").ValueKind);
     }
 
+    [Fact]
+    public async Task Modelo_de_orcamento_troca_os_parametros_pelos_dados_do_lead()
+    {
+        var dono = await Entrar();
+        var modelo = await Ler(await dono.PostAsJsonAsync("/api/v1/modelos-orcamento-funil", new
+        {
+            nome = "Padrão",
+            texto = "Olá #nome_oportunidade, seu #tipo_evento em #data_evento tem #convidados convidados.",
+        }));
+        var lead = await Ler(await dono.PostAsJsonAsync("/api/v1/oportunidades", new
+        {
+            nome = "Ana e Beto",
+            estagio = "Contato inicial",
+            tipoEvento = "Casamento",
+            dataPrevista = "2030-09-14",
+            quantidadeConvidados = 120,
+            contatos = new[] { new { nome = "Ana", telefone = "11955550001", email = "ana.p@ex.com" } },
+        }));
+
+        var aplicado = await Ler(await dono.GetAsync(
+            $"/api/v1/orcamentos-funil/modelo-aplicado?modeloId={modelo.GetProperty("id").GetGuid()}&oportunidadeId={lead.GetProperty("id").GetGuid()}"));
+        Assert.Equal("Olá Ana e Beto, seu Casamento em 14/09/2030 tem 120 convidados.", aplicado.GetProperty("texto").GetString());
+
+        var parametros = await Ler(await dono.GetAsync("/api/v1/orcamentos-funil/parametros"));
+        Assert.Contains("#validade", parametros.EnumerateArray().Select(item => item.GetString()));
+    }
+
     private async Task<HttpClient> Entrar()
     {
         var email = $"funil-{Guid.NewGuid():N}@gevents.test";

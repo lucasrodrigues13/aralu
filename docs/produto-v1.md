@@ -136,7 +136,7 @@ Substitui o dashboard atual (SPEC-007, RF-080 a RF-082).
 | Criar pelo botão "Nova tarefa", em modal (título obrigatório; prazo e demais campos opcionais) | Pronto | D (SPEC-003 v3) |
 | Lista do evento em uma tabela, com filtro de situação. Grupos de prazo saíram dessa aba | Pronto | D (SPEC-003 v3) |
 | Situações (pendente, em andamento, concluída, atrasada) como filtro na aba do evento e como quadro na lista de todos os eventos | Pronto | D, G |
-| Responsáveis: ela, assistente, equipe ou casal; **mais de um** | Ajustar (hoje um só) | PDF, AV, D |
+| Responsáveis: ela, assistente, equipe ou casal; **mais de um** | Pronto (20/11/2026) para dona, assistente e casal; equipe fica para a spec de equipe | PDF, AV, D |
 | **Visibilidade** por tarefa: só eu / casal / compartilhada | Novo | D, IV |
 | **Prioridade** baixa / média / alta | Novo | D, IV |
 | Checklist e anexos dentro da tarefa, recolhidos até alguém precisar | Novo | PDF, AV |
@@ -260,9 +260,9 @@ Fica na 1.0 e ganha o que faltou (D).
 | Origem do contato em lista fechada + outro | Pronto (20/11/2026) | CF, AV (SPEC-031 parte B) |
 | **Proposta por link** com respostas "aceitar / tenho dúvidas / não vou seguir" e status "ainda não foi aberta" | Pronto (20/11/2026); envio por e-mail e aviso por e-mail à dona esperam o canal de e-mail | D, PDF, CF (SPEC-031 parte C) |
 | Aviso de contato repetido | Pronto (20/11/2026) | D, PDF (SPEC-031 parte B) |
-| Tarefas comerciais com vários responsáveis e observação formatada | Ajustar | AV |
-| Modelos de briefing no funil | Novo | AV |
-| Parâmetros do modelo de orçamento alinhados à referência | Ajustar | AV |
+| Tarefas comerciais com vários responsáveis e observação formatada | Pronto (20/11/2026) | AV (SPEC-031 parte D) |
+| Modelos de briefing no funil | Pronto (20/11/2026), como roteiro interno | AV (SPEC-031 parte D) |
+| Parâmetros do modelo de orçamento alinhados à referência | Pronto (20/11/2026) | AV (SPEC-031 parte D) |
 
 ### 5.14. Financeiro da empresa
 
@@ -281,7 +281,7 @@ Fica na 1.0 e ganha o que faltou (D).
 | Equipe do dia no evento: pessoa, função, hora de chegada; aviso de conflito de agenda | Novo | D, AV, CF |
 | "Mandar a escala no WhatsApp" com horários da equipe e dos fornecedores | Novo | PDF, CF |
 | Mural de recados para a equipe do dia | Pendente | AV |
-| **Assistente com login**: convite por e-mail; "pode ver o financeiro"; "vê todos os eventos / só os dela"; plano, Pix, contrato e página só com a dona | Novo | D, CF |
+| **Assistente com login**: convite por e-mail; "pode ver o financeiro"; "vê todos os eventos / só os dela"; plano, Pix, contrato e página só com a dona | Pronto (20/11/2026), exceto excluir o que ela criou, pendências da Hoje e Admin (SPEC-032 §18) | D, CF |
 
 ### 5.16. Aniversários
 
@@ -375,10 +375,10 @@ Baseada no PDF (base → uso diário → diferencial), com o que já existe.
 10. Roteiro e cronograma no evento.
 11. Link do casal (aprovações, código de edição, depoimento).
 12. Resumo do dia por e-mail.
-13. Equipe, equipe do dia e assistente. Assistente na [SPEC-032](specs/032-assistentes.md), rascunho de 20/11/2026; vem antes da SPEC-031 parte D (decisão de 20/11/2026).
+13. Equipe, equipe do dia e assistente. Assistente na [SPEC-032](specs/032-assistentes.md), aprovada e implementada em 20/11/2026 (faltam os itens da §18). Equipe e equipe do dia seguem sem spec.
 14. Financeiro da empresa e relatórios.
 15. Agenda completa e feed iCal.
-16. Funil: estágios, arrastar, proposta por link. Quadro em cartões e lead → cliente **prontos** em 20/11/2026 (SPEC-020 v2); o resto do bloco está na SPEC-031, aprovada em 20/11/2026, em quatro partes: A (estágios e arrastar), B (retorno, origem e contato repetido) e C (proposta por link) **prontas** em 20/11/2026; D (ajustes do formulário) pendente.
+16. Funil: estágios, arrastar, proposta por link. Quadro em cartões e lead → cliente **prontos** em 20/11/2026 (SPEC-020 v2); o resto do bloco está na SPEC-031, aprovada em 20/11/2026, em quatro partes: A (estágios e arrastar), B (retorno, origem e contato repetido) e C (proposta por link) **prontas** em 20/11/2026; D (ajustes do formulário) **pronta** em 20/11/2026.
 17. Aniversários, página pública, briefing e inspirações no evento, demais itens da Assessoria VIP.
 
 ## 10. Pendências

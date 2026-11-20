@@ -634,6 +634,12 @@ export class NegocioClient {
     return this.http.delete(`${this.base}/api/v1/modelos-briefing/${id}`);
   }
 
+  textoDoModeloOrcamento(modeloId: string, oportunidadeId: string, valor: number | null) {
+    let params = new HttpParams().set('modeloId', modeloId).set('oportunidadeId', oportunidadeId);
+    if (valor !== null) params = params.set('valor', String(valor));
+    return this.http.get<{ texto: string }>(`${this.base}/api/v1/orcamentos-funil/modelo-aplicado`, { params });
+  }
+
   briefingDoLead(oportunidadeId: string) {
     return this.http.get<{ briefing: BriefingDoLead | null }>(`${this.base}/api/v1/oportunidades/${oportunidadeId}/briefing`);
   }

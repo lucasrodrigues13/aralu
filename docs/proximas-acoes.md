@@ -2,46 +2,29 @@
 
 Roteiro para continuar o trabalho em outra sessão. Siga na ordem. Na dúvida, pare e pergunte ao usuário: não invente regra.
 
-## 0. Próxima tarefa (preparada em 20/11/2026): assistentes e depois a parte D do funil
+## 0. Próxima tarefa (atualizada em 20/11/2026)
 
-Decisão do usuário em 20/11/2026: antes da SPEC-031 parte D, fazer a spec das assistentes (RF-045) e implementá-la, porque a parte D precisa dos vários responsáveis (dona + assistentes).
+A SPEC-032 (assistentes) e a SPEC-031 parte D (ajustes do formulário do funil) estão **implementadas e commitadas na `main`**. Backend: 102 testes de unidade e 52 de integração passando. Frontend: `ng build` e 63 testes passando. O usuário ainda não conferiu na tela.
 
-### Passo 1. Aprovar a [SPEC-032](specs/032-assistentes.md) (assistentes)
+### Passo 1. Fechar o que a SPEC-032 deixou combinado (§18 da spec)
 
-- Está em **rascunho**. Código só depois de o usuário aprovar. Leia a §17 com ele.
-- Se ele aprovar "com as sugestões da §17" (como fez na SPEC-031), então:
-  - mude o status para aprovada, com a data;
-  - transforme cada sugestão em decisão, no mesmo formato da SPEC-031 §17;
-  - troque, na tabela da §8, cada "§17, ponto N" pela regra decidida;
-  - atualize as specs que esperavam a assistente: SPEC-003 §4, SPEC-007 §17 ponto 4, SPEC-008 §4, SPEC-012 §4, SPEC-029 §4 e SPEC-030 §4;
-  - faça um commit só de docs.
-- Se ele mudar alguma sugestão, registre a decisão dele, não a sugestão.
+Pergunte ao usuário o que quer fazer, na ordem que ele escolher:
 
-### Passo 2. Implementar a SPEC-032 em três partes (um commit por parte)
+1. **Excluir o que ela criou (§17, ponto 6):** hoje a assistente não exclui lead, orçamento, contrato nem tarefa do funil. Precisa guardar quem criou cada item (coluna de autor nas quatro tabelas) e liberar a exclusão só do que é dela.
+2. **Pendências da Hoje (§17, ponto 8):** card de tarefas abertas de assistente removida na Hoje da dona.
+3. **Admin (§4):** o Admin gerenciar as assistentes de qualquer conta.
+4. **"Só os dela" no dinheiro:** a tela Pagamentos e as Estatísticas de eventos não filtram por evento liberado.
 
-- **A. Conta da assistente:** role `Assistant`, convite por e-mail, primeiro acesso (criar senha), tela Assistentes (convidar, editar permissões, reenviar, remover), "Minha conta" e remoção.
-- **B. Permissões:** liberar para a assistente só o que a §8 permite, no backend e no frontend (menus da casca e guarda de rota). Financeiro só com "pode ver o financeiro". Perfil, Contratos (modelos da conta) e Assistentes só para a dona.
-- **C. "Só os dela" e responsáveis:** campo "Assistentes do evento", filtro em Eventos, Tarefas, Hoje e Agenda; seletor de responsáveis das tarefas do evento (SPEC-003) com a dona e as assistentes ativas.
+### Passo 2. Próximo bloco do produto-v1 (§9)
 
-Pontos do código que ajudam (conferidos em 20/11/2026):
+Falta spec dos blocos 8 a 12 e 14 a 17 (convidados, fornecedores, roteiro e cronograma no evento, link do casal, resumo do dia, financeiro da empresa, agenda, aniversários). Escolha com o usuário qual vem primeiro e rascunhe a spec (seção 5 deste arquivo).
 
-- O login já emite a marca `organizer_id` (`ContaClaims.OrganizerId`, gravada em `ApplicationUser.OrganizerId`). Os endpoints já resolvem a conta por ela antes do id do usuário (`Conta(...)` em `NegocioEndpoints`, `ContratoEndpoints` e `DinheiroEndpoints`). A assistente com `OrganizerId` da dona cai no tenant certo sem mudar as consultas.
-- `Papeis` tem `Admin`, `Organizer` e `Client` (sobra antiga). `BootstrapAdministrador` cria as roles. A maioria dos endpoints exige `SoOrganizer` ou `AdminOuOrganizer`: é aí que a parte B entra.
-- `ContaCliente` (convite do antigo `Client`, com senha temporária e e-mail de "redefinir senha") serve de modelo para o convite da assistente. Pela SPEC-032 §17 ponto 15, não mexa no acesso do `Client` nesta spec.
-- As permissões mudam com a assistente logada (§6.3 e §6.5): o JWT não basta; leia as permissões e a situação dela no banco a cada pedido (ou de outro jeito que valha "no próximo pedido").
-- `PapelResponsavel` já tem `Assistente` (tarefas do evento).
+### Pontos do código que ajudam
 
-### Passo 3. SPEC-031 parte D (só depois do passo 2)
-
-Itens da [SPEC-031](specs/031-funil-estagios-retorno-e-proposta.md) §6.7, um commit por grupo:
-
-1. Horários em quatro campos (convite, cerimônia, recepção, festa), convertendo o texto livre que já existe.
-2. Endereço completo da cerimônia e da recepção, com busca pelo CEP.
-3. Tarefas comerciais (SPEC-023) com vários responsáveis (dona + assistentes ativas) e observação com formatação simples.
-4. Briefing no funil como roteiro interno (o link para o lead fica para depois; texto corrigido em 20/11/2026 para bater com a §17 ponto 11).
-5. Parâmetros do modelo de orçamento (§17 ponto 12). Hoje só `#nome_oportunidade` é trocado (`OrcamentoFunilServico.AplicarTokens` e o modal de orçamento no frontend).
-
-Em cada passo: migration nova, `deploy/schema.sql` gerado de novo, testes de integração e de unidade, `ng build` e `ng test`. Ao terminar, marque o item na §7 e no [produto-v1](produto-v1.md). O usuário confere na tela; não abra o navegador para conferir.
+- Permissões da assistente: `AssistenteEndpoints.AplicarPermissoes` (middleware que lê o banco a cada pedido), política `Financeiro` e `EscopoAssistente` (filtro "só os dela") em `src/backend/Project.Api/Conta`.
+- Menus e guardas no frontend: `core/auth.guard.ts` (`donaGuard`, `financeiroGuard`) e `layout/casca.component.ts`.
+- Seletor de responsáveis compartilhado: `shared/responsaveis.ts` (tarefas do evento e do funil).
+- Em arquivos `.cs` e `.ts` o Git converte LF/CRLF; se um script de edição não achar um trecho de várias linhas, confira os finais de linha.
 
 ## 1. Leia antes de tudo
 
@@ -139,11 +122,12 @@ Atualize este arquivo: marque o que ficou pronto e anote as dúvidas para o usu�
   - [x] Parte A (estágios configuráveis e arrastar) — implementada em 20/11/2026
   - [x] Parte B (retorno, origem e contato repetido) — implementada em 20/11/2026
   - [x] Parte C (proposta por link) — implementada em 20/11/2026
-  - [ ] Parte D (ajustes do formulário; depende das assistentes, RF-045) — fazer depois da SPEC-032 (§0, passo 3)
-- [ ] SPEC-032 (assistentes, parte do bloco 13) — rascunho em 20/11/2026; aguarda aprovação (§0, passo 1)
-  - [ ] Parte A (conta da assistente)
-  - [ ] Parte B (permissões)
-  - [ ] Parte C ("só os dela" e responsáveis)
+  - [x] Parte D (ajustes do formulário) — implementada em 20/11/2026
+- [x] SPEC-032 (assistentes, parte do bloco 13) — aprovada com as sugestões da §17 e implementada em 20/11/2026
+  - [x] Parte A (conta da assistente)
+  - [x] Parte B (permissões)
+  - [x] Parte C ("só os dela" e responsáveis)
+  - [ ] Pendências da §18 da spec (excluir o que ela criou, pendências da Hoje, Admin, dinheiro "só os dela")
 
 Respondidas em 18/11/2026 (registradas nas specs): "Esta semana"/"Para conferir" descartadas; "N" da Hoje = tarefas ativas com prazo hoje; respostas abaixo do esperado = menos de 2 meses e 50% sem resposta; Resultado vira Saldo; cobrar sem Pix pede a chave; contratos viram tela própria com campos de mesclagem (SPEC-030 v2).
 

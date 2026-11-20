@@ -1,6 +1,6 @@
 # 031. Funil: estágios, retorno e proposta por link
 
-**Status: aprovada (20/11/2026).** O código segue esta spec, em quatro partes (§17, ponto 1). Fonte: [produto-v1.md](../produto-v1.md) §5.13 (o que ainda não está pronto) e RF-075. Completa a SPEC-020 v2 (quadro em cartões e lead que vira cliente). O usuário aprovou em 20/11/2026 todas as sugestões da §17, que agora são decisões. **Partes A (estágios configuráveis e arrastar), B (retorno, origem e contato repetido) e C (proposta por link) implementadas em 20/11/2026**; D pendente. Como a parte C ficou no código está na §18.
+**Status: aprovada (20/11/2026).** O código segue esta spec, em quatro partes (§17, ponto 1). Fonte: [produto-v1.md](../produto-v1.md) §5.13 (o que ainda não está pronto) e RF-075. Completa a SPEC-020 v2 (quadro em cartões e lead que vira cliente). O usuário aprovou em 20/11/2026 todas as sugestões da §17, que agora são decisões. **Partes A (estágios configuráveis e arrastar), B (retorno, origem e contato repetido), C (proposta por link) e D (ajustes do formulário) implementadas em 20/11/2026.** Como a parte C ficou no código está na §18 e como a parte D ficou, na §19.
 
 ## 1. Identificador e nome
 
@@ -247,3 +247,11 @@ Pontos que a spec não detalhava e foram resolvidos assim. Se algum não servir,
 6. **Cartão:** mostra a proposta mais recente enviada que não foi cancelada. Com dúvida ou recusa, mostra a mensagem do lead. Na recusa, o botão "Descartar" abre o modal de descarte com o motivo do lead já preenchido.
 7. **Aviso à dona no "Aceitar":** por enquanto é o selo "Aceitou" no cartão e na lista de orçamentos. O aviso por e-mail entra com o canal de e-mail (§16).
 8. **Página pública:** mostra o nome da empresa do perfil como marca. Vencida ou cancelada, mostra só o nome e o celular do perfil. Token inválido mostra uma mensagem neutra.
+
+## 19. Como a parte D ficou no código (20/11/2026)
+
+1. **Horários:** quatro campos de hora no formulário (convite, cerimônia, recepção, festa), colunas novas em `Oportunidade`. O texto livre antigo continua guardado; ao ler, um conversor (`HorariosTexto`) preenche os quatro campos a partir de trechos como "cerimônia 16h, recepção 18h30" (trecho sem a palavra-chave é ignorado) e, ao salvar o lead, o texto some.
+2. **Endereços:** já estavam completos desde a SPEC-020 (CEP com busca, endereço, número, bairro, cidade e UF da cerimônia e da recepção); nada novo foi preciso.
+3. **Tarefas do funil:** vários responsáveis (a dona e as assistentes ativas), numa tabela própria; tarefa antiga mostra o responsável de texto livre até alguém editá-la. A observação é texto com `**negrito**`, lista com `- ` e links (`[texto](https://...)` ou o endereço solto), com botões de formatação no modal; a exibição escapa o HTML antes de formatar.
+4. **Briefing do lead:** o menu do cartão ganhou "Briefing". Aplicar copia as perguntas do modelo para o lead (editar o modelo depois não muda o lead); a dona anota as respostas (até 2.000 caracteres cada). Trocar o modelo apaga as respostas, com confirmação.
+5. **Parâmetros do orçamento:** `#nome_oportunidade`, `#tipo_evento`, `#data_evento`, `#convidados`, `#local_cerimonia`, `#local_recepcao`, `#valor`, `#validade` (hoje + 30 dias) e `#nome_assessoria`. O servidor troca os parâmetros ao aplicar o modelo, e a tela de orçamento pede a oportunidade antes. Dado ausente vira texto vazio. O editor do modelo de orçamento mostra essa lista; os modelos de serviço e de contrato do funil mantêm a lista anterior.
