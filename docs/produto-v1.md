@@ -256,10 +256,10 @@ Fica na 1.0 e ganha o que faltou (D).
 | Arrastar o cartão entre colunas | Pronto (20/11/2026), só no computador; no celular segue "Mover para…" | AV (SPEC-031 parte A) |
 | Rótulo do estágio: **"Orçamento enviado"** (decidido em 18/11/2026) | Ajustar | AV, G |
 | Horários do evento em campos separados (convite, festa, cerimônia, recepção) e endereço completo | Ajustar | AV |
-| Data de retorno no cartão ("retornar sex, 20/11") | Novo | CF |
-| Origem do contato em lista fechada + outro | Ajustar | CF, AV |
+| Data de retorno no cartão ("retornar sex, 20/11") e card "Retornos do funil" na Hoje | Pronto (20/11/2026) | CF (SPEC-031 parte B) |
+| Origem do contato em lista fechada + outro | Pronto (20/11/2026) | CF, AV (SPEC-031 parte B) |
 | **Proposta por link** com respostas "aceitar / tenho dúvidas / não vou seguir" e status "ainda não foi aberta" | Novo | D, PDF, CF |
-| Aviso de contato repetido | Novo | D, PDF |
+| Aviso de contato repetido | Pronto (20/11/2026) | D, PDF (SPEC-031 parte B) |
 | Tarefas comerciais com vários responsáveis e observação formatada | Ajustar | AV |
 | Modelos de briefing no funil | Novo | AV |
 | Parâmetros do modelo de orçamento alinhados à referência | Ajustar | AV |
@@ -378,7 +378,7 @@ Baseada no PDF (base → uso diário → diferencial), com o que já existe.
 13. Equipe, equipe do dia e assistente.
 14. Financeiro da empresa e relatórios.
 15. Agenda completa e feed iCal.
-16. Funil: estágios, arrastar, proposta por link. Quadro em cartões e lead → cliente **prontos** em 20/11/2026 (SPEC-020 v2); o resto do bloco está na SPEC-031, aprovada em 20/11/2026, em quatro partes (A estágios e arrastar; B retorno, origem e contato repetido; C proposta por link; D ajustes do formulário).
+16. Funil: estágios, arrastar, proposta por link. Quadro em cartões e lead → cliente **prontos** em 20/11/2026 (SPEC-020 v2); o resto do bloco está na SPEC-031, aprovada em 20/11/2026, em quatro partes: A (estágios e arrastar) e B (retorno, origem e contato repetido) **prontas** em 20/11/2026; C (proposta por link) e D (ajustes do formulário) pendentes.
 17. Aniversários, página pública, briefing e inspirações no evento, demais itens da Assessoria VIP.
 
 ## 10. Pendências

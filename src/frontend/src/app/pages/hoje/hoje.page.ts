@@ -29,6 +29,7 @@ export interface Hoje {
   }[];
   funil: { estagio: string; quantidade: number; valor: number; id?: string; cor?: string }[];
   configuracao: { temPerfil: boolean; temPix: boolean; temContrato: boolean };
+  retornosFunil: { id: string; nome: string; estagio: string; data: string; hora: string | null; atrasado: boolean }[];
 }
 
 const CHAVE_PULADOS = 'gevents-hoje-pulados';
@@ -225,6 +226,38 @@ function lerPulados(): string[] {
                           }
                           @if (linha.tarefasAtrasadas === 0 && !linha.respostasAbaixo) { <span class="text-muted">—</span> }
                         </div>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="cardWithShadow" id="retornos">
+        <mat-card-content>
+          <mat-card-title>Retornos do funil</mat-card-title>
+          <mat-card-subtitle>Leads para retornar hoje ou com retorno atrasado</mat-card-subtitle>
+          @if (d.retornosFunil.length === 0) {
+            <p class="text-center text-muted py-10">Nenhum lead para retornar hoje.</p>
+          } @else {
+            <div class="relative overflow-auto mt-4">
+              <table class="tabela">
+                <thead>
+                  <tr><th>Lead</th><th>Estágio</th><th class="text-end!">Situação</th></tr>
+                </thead>
+                <tbody>
+                  @for (r of d.retornosFunil; track r.id) {
+                    <tr>
+                      <td>
+                        <a routerLink="/oportunidades" [queryParams]="{ abrir: r.id }">{{ r.nome }}</a>
+                        <span class="block text-xs text-muted">{{ r.data | gdData }}{{ r.hora ? ' às ' + r.hora.slice(0, 5) : '' }}</span>
+                      </td>
+                      <td>{{ r.estagio }}</td>
+                      <td class="text-end!">
+                        <span [class]="r.atrasado ? status.erro : status.alerta">{{ r.atrasado ? 'Atrasado' : 'Hoje' }}</span>
                       </td>
                     </tr>
                   }

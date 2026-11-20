@@ -1629,6 +1629,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<bool>("ContatoRepetido")
+                        .HasColumnType("boolean");
+
                     b.Property<DateTimeOffset>("CriadoEm")
                         .HasColumnType("timestamp with time zone");
 
@@ -1651,6 +1654,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<string>("Fonte")
+                        .HasColumnType("text");
+
+                    b.Property<string>("FonteOutro")
                         .HasColumnType("text");
 
                     b.Property<string>("Horarios")
@@ -1696,6 +1702,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<string>("Responsavel")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<DateOnly?>("RetornarEm")
+                        .HasColumnType("date");
+
+                    b.Property<TimeOnly?>("RetornarHora")
+                        .HasColumnType("time without time zone");
 
                     b.Property<string>("ServicoProduto")
                         .HasColumnType("text");

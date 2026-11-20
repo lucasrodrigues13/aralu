@@ -9,6 +9,7 @@ using Project.Application.Negocio;
 using Project.Domain.Clientes;
 using Project.Domain.Convidados;
 using Project.Domain.Eventos;
+using Project.Domain.Funil;
 using Project.Domain.Tarefas;
 
 namespace Project.Api.Negocio;
@@ -112,10 +113,12 @@ public static class NegocioEndpoints
         api.MapPost("/oportunidades", CriarOportunidade).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapGet("/oportunidades/exportar", ExportarOportunidades).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapGet("/oportunidades/checar-data", ChecarDataOportunidade).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
+        api.MapGet("/oportunidades/contato-repetido", ContatoRepetidoOportunidade).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapGet("/oportunidades/{id:guid}", Oportunidade).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapPut("/oportunidades/{id:guid}", AtualizarOportunidade).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapPost("/oportunidades/{id:guid}/mover", MoverOportunidade).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapPost("/oportunidades/{id:guid}/cliente", VincularClienteOportunidade).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
+        api.MapPost("/oportunidades/{id:guid}/retorno", RetornoOportunidade).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapDelete("/oportunidades/{id:guid}", ExcluirOportunidade).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapGet("/estagios-funil", EstagiosFunil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapPut("/estagios-funil", SalvarEstagiosFunil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
@@ -1121,6 +1124,18 @@ public static class NegocioEndpoints
     private static Task<IResult> SalvarEstagiosFunil(SalvarEstagiosFunil pedido, ClaimsPrincipal usuario, EstagioFunilServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.SalvarAsync(conta, pedido, ct)));
 
+    private static Task<IResult> RetornoOportunidade(Guid id, RetornoOportunidade pedido, ClaimsPrincipal usuario, OportunidadeServico servico, CancellationToken ct) =>
+        ComConta(usuario, conta => De(servico.MarcarRetornoAsync(conta, id, pedido, ct)));
+
+    private static Task<IResult> ContatoRepetidoOportunidade(
+        ClaimsPrincipal usuario,
+        OportunidadeServico servico,
+        [FromQuery] string[]? telefone,
+        [FromQuery] string[]? email,
+        Guid? ignorar,
+        CancellationToken ct) =>
+        ComConta(usuario, async conta => Results.Ok(await servico.ContatoRepetidoAsync(conta, telefone ?? [], email ?? [], ignorar, ct)));
+
     private static Task<IResult> ExcluirOportunidade(Guid id, ClaimsPrincipal usuario, OportunidadeServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.ExcluirAsync(conta, id, ct)));
 
@@ -1146,7 +1161,7 @@ public static class NegocioEndpoints
             var csv = "Nome;Estagio;Valor;Responsavel;Fonte;Servico\n" + string.Join(
                 "\n",
                 lista.Select(item =>
-                    $"{EscaparCsv(item.Nome)};{EscaparCsv(item.Estagio)};{item.ValorProposta};{EscaparCsv(item.Responsavel)};{EscaparCsv(item.Fonte)};{EscaparCsv(item.ServicoProduto)}"));
+                    $"{EscaparCsv(item.Nome)};{EscaparCsv(item.Estagio)};{item.ValorProposta};{EscaparCsv(item.Responsavel)};{EscaparCsv(OrigensFunil.Texto(item.Fonte, item.FonteOutro))};{EscaparCsv(item.ServicoProduto)}"));
             return Results.Text(csv, "text/csv");
         });
 

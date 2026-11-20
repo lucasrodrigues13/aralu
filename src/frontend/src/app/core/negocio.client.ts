@@ -1049,6 +1049,18 @@ export class NegocioClient {
     return this.http.post<Oportunidade>(`${this.base}/api/v1/oportunidades/${id}/cliente`, { clienteId });
   }
 
+  marcarRetornoOportunidade(id: string, data: string | null, hora: string | null) {
+    return this.http.post<Oportunidade>(`${this.base}/api/v1/oportunidades/${id}/retorno`, { data, hora });
+  }
+
+  contatoRepetido(telefones: string[], emails: string[], ignorar?: string) {
+    let params = new HttpParams();
+    telefones.forEach((t) => (params = params.append('telefone', t)));
+    emails.forEach((e) => (params = params.append('email', e)));
+    if (ignorar) params = params.set('ignorar', ignorar);
+    return this.http.get<ContatoRepetido[]>(`${this.base}/api/v1/oportunidades/contato-repetido`, { params });
+  }
+
   estagiosFunil() {
     return this.http.get<EstagioFunil[]>(`${this.base}/api/v1/estagios-funil`);
   }
@@ -1317,6 +1329,14 @@ export interface Oportunidade {
   estagioId: string;
   /** Aberto, Contratado ou Descartado. */
   tipoEstagio: TipoEstagioFunil;
+  /** Texto livre quando a origem é "Outro". */
+  fonteOutro: string | null;
+  /** Data de retorno (yyyy-MM-dd). */
+  retornarEm: string | null;
+  /** Hora do retorno (HH:mm:ss). */
+  retornarHora: string | null;
+  /** Lead do formulário público com contato que já existia na conta. */
+  contatoRepetido: boolean;
 }
 
 export interface LeadRsvp {
@@ -1450,6 +1470,28 @@ export const CORES_ESTAGIO = [
 ];
 
 export const MAXIMO_ESTAGIOS_ABERTOS = 8;
+
+/** Origem do contato em lista fechada (SPEC-031 §6.4). */
+export const ORIGENS_FUNIL = [
+  'Instagram',
+  'Indicação',
+  'Google',
+  'Página pública',
+  'Formulário do site',
+  'WhatsApp',
+  'Feira ou evento',
+  'Fornecedor parceiro',
+  'Cliente antigo',
+  'Outro',
+];
+
+/** Outro lead ou cliente com o mesmo telefone ou e-mail. */
+export interface ContatoRepetido {
+  tipo: 'oportunidade' | 'cliente';
+  id: string;
+  nome: string;
+  estagio: string | null;
+}
 
 export const TIPOS_TAREFA_FUNIL = [
   { valor: 'Reuniao', rotulo: 'Reunião' },

@@ -1,4 +1,4 @@
-import { acaoRapida, diasDesde, iconeEstagio, textoDias } from './oportunidades.page';
+import { acaoRapida, diasDesde, iconeEstagio, situacaoRetorno, textoDias, textoOrigem, textoRetorno } from './oportunidades.page';
 import { montarPedidoEstagios, nomeRepetido } from './estagios-funil.dialog';
 import { EstagioFunil } from '../../core/negocio.client';
 
@@ -67,5 +67,26 @@ describe('Gerenciar estágios', () => {
       corDescartado: 'error',
       exclusoes: [{ id: 'c', destinoId: 'a' }],
     });
+  });
+});
+
+describe('Retorno e origem do lead', () => {
+  const agora = new Date(2026, 10, 20, 15, 0); // sex, 20/11/2026
+
+  it('classifica o retorno pela data local', () => {
+    expect(situacaoRetorno('2026-11-19', agora)).toBe('atrasado');
+    expect(situacaoRetorno('2026-11-20', agora)).toBe('hoje');
+    expect(situacaoRetorno('2026-11-21', agora)).toBe('futuro');
+  });
+
+  it('escreve o retorno com dia da semana e hora', () => {
+    expect(textoRetorno('2026-11-20', null)).toBe('sex, 20/11');
+    expect(textoRetorno('2026-11-22', '14:30:00')).toBe('dom, 22/11 às 14:30');
+  });
+
+  it('mostra o texto livre quando a origem é Outro', () => {
+    expect(textoOrigem('Outro', 'TikTok')).toBe('TikTok');
+    expect(textoOrigem('Instagram', null)).toBe('Instagram');
+    expect(textoOrigem(null, null)).toBeNull();
   });
 });

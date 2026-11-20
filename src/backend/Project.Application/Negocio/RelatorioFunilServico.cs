@@ -60,7 +60,7 @@ public sealed class RelatorioFunilServico(IDados dados)
                 new("Fechados", fechados.Length, fechados.Sum(o => o.ValorProposta ?? 0)),
                 new("Perdidos", perdidos.Length, perdidos.Sum(o => o.ValorProposta ?? 0)),
             ],
-            Agrupar(porCriacao, o => o.Fonte ?? "(sem fonte)"),
+            Agrupar(porCriacao, o => o.Fonte ?? "(sem origem)"),
             Agrupar(porCriacao, o => o.ServicoProduto ?? "(sem serviço)"),
             estagios.Select(estagio =>
             {

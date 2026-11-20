@@ -101,5 +101,5 @@ SPEC-001, casca (bloco 1), SPEC-002/008 (eventos), SPEC-003 (tarefas), SPEC-004/
 4. Comportamento do cartão financeiro para Assistant sem permissão (ocultar vs zero).
 5. ~~Definição de "respostas de convidados".~~ Decidido: pendentes, sim e não (§6, item 3).
 6. Se o bloco "próximo evento" some quando não há data. Implementado: mostra "Nenhum evento com data marcada".
-7. "Retornos do funil" só entra quando o funil (bloco 16) ganhar a data de retorno. Decidido em 18/11/2026. A data de retorno está na SPEC-031 (parte B), aprovada em 20/11/2026.
+7. "Retornos do funil" só entra quando o funil (bloco 16) ganhar a data de retorno. Decidido em 18/11/2026. O card "Retornos do funil" entrou com a SPEC-031 parte B em 20/11/2026.
 8. O checklist de configuração mostra só o que já existe (perfil, Pix, contrato). Marca, página pública e equipe entram com os blocos deles. "Pular" fica guardado no navegador.

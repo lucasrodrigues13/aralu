@@ -43,7 +43,11 @@ public sealed record OportunidadeLeitura(
     IReadOnlyList<ContatoOportunidadeLeitura> Contatos,
     Guid? ClienteId,
     Guid EstagioId,
-    string TipoEstagio);
+    string TipoEstagio,
+    string? FonteOutro,
+    DateOnly? RetornarEm,
+    TimeOnly? RetornarHora,
+    bool ContatoRepetido);
 
 public sealed record ContatoOportunidadePedido(string? Nome, string? Telefone, string? Email);
 
@@ -78,11 +82,20 @@ public sealed record SalvarOportunidade(
     string? Uf,
     string? Cidade,
     string? MotivoDescarte,
-    IReadOnlyList<ContatoOportunidadePedido>? Contatos);
+    IReadOnlyList<ContatoOportunidadePedido>? Contatos,
+    string? FonteOutro = null,
+    DateOnly? RetornarEm = null,
+    TimeOnly? RetornarHora = null);
 
 public sealed record MoverOportunidade(string? Estagio, string? MotivoDescarte);
 
 public sealed record VincularClienteOportunidade(Guid? ClienteId);
+
+/// <summary>Data de retorno do lead; data nula limpa o retorno (SPEC-031 §6.3).</summary>
+public sealed record RetornoOportunidade(DateOnly? Data, TimeOnly? Hora);
+
+/// <summary>Outro lead ou cliente da conta com o mesmo telefone ou e-mail.</summary>
+public sealed record ContatoRepetidoLeitura(string Tipo, Guid Id, string Nome, string? Estagio);
 
 public sealed record FiltroOportunidades(
     string? Nome,
@@ -163,6 +176,9 @@ public sealed class OportunidadeServico(IDados dados)
         item.EstagioFunilId = novo.EstagioFunilId;
         item.EstagioFunil = novo.EstagioFunil;
         item.Fonte = novo.Fonte;
+        item.FonteOutro = novo.FonteOutro;
+        item.RetornarEm = novo.RetornarEm;
+        item.RetornarHora = novo.RetornarHora;
         item.ValorProposta = novo.ValorProposta;
         item.Responsavel = novo.Responsavel;
         item.ServicoProduto = novo.ServicoProduto;
@@ -273,6 +289,61 @@ public sealed class OportunidadeServico(IDados dados)
         return Resultado<OportunidadeLeitura>.Sucesso(Ler(item));
     }
 
+    /// <summary>Marca ou limpa a data de retorno do lead (SPEC-031 §6.3).</summary>
+    public async Task<Resultado<OportunidadeLeitura>> MarcarRetornoAsync(
+        string contaId,
+        Guid id,
+        RetornoOportunidade pedido,
+        CancellationToken ct)
+    {
+        var item = await dados.ObterOportunidadeAsync(contaId, id, ct);
+        if (item is null)
+        {
+            return Resultado<OportunidadeLeitura>.Erro(Codigos.Indisponivel, "Indisponível.");
+        }
+
+        if (pedido.Hora is not null && pedido.Data is null)
+        {
+            return Resultado<OportunidadeLeitura>.Erro(Codigos.Validacao, "Informe a data do retorno.");
+        }
+
+        item.RetornarEm = pedido.Data;
+        item.RetornarHora = pedido.Data is null ? null : pedido.Hora;
+        await dados.SalvarNegocioAsync(ct);
+        return Resultado<OportunidadeLeitura>.Sucesso(Ler(item));
+    }
+
+    /// <summary>
+    /// Outros leads e clientes da conta com o mesmo telefone (só os dígitos) ou e-mail (SPEC-031 §6.5).
+    /// Só avisa: quem decide gravar é a dona.
+    /// </summary>
+    public async Task<IReadOnlyList<ContatoRepetidoLeitura>> ContatoRepetidoAsync(
+        string contaId,
+        IEnumerable<string?> telefones,
+        IEnumerable<string?> emails,
+        Guid? ignorar,
+        CancellationToken ct)
+    {
+        var fones = telefones.Select(ContatoNormalizado.Telefone).OfType<string>().ToHashSet();
+        var mails = emails.Select(ContatoNormalizado.Email).OfType<string>().ToHashSet();
+        if (fones.Count == 0 && mails.Count == 0)
+        {
+            return [];
+        }
+
+        var contatos = await dados.ListarContatosDaContaAsync(contaId, ct);
+        return contatos
+            .Where(c => c.Id != ignorar)
+            .Where(c =>
+                c.Telefones.Select(ContatoNormalizado.Telefone).Any(t => t is not null && fones.Contains(t)) ||
+                (ContatoNormalizado.Email(c.Email) is string email && mails.Contains(email)))
+            .GroupBy(c => (c.Tipo, c.Id))
+            .Select(g => new ContatoRepetidoLeitura(g.Key.Tipo, g.Key.Id, g.First().Nome, g.First().Estagio))
+            .OrderBy(c => c.Tipo == "cliente" ? 1 : 0)
+            .ThenBy(c => c.Nome)
+            .ToArray();
+    }
+
     public async Task<Resultado<bool>> ExcluirAsync(string contaId, Guid id, CancellationToken ct)
     {
         var item = await dados.ObterOportunidadeAsync(contaId, id, ct);
@@ -306,7 +377,7 @@ public sealed class OportunidadeServico(IDados dados)
             Nome = nome,
             EstagioFunilId = primeiro.Id,
             EstagioFunil = primeiro,
-            Fonte = Domain.Comum.Texto.Limpo(pedido.Fonte) ?? "Formulário público",
+            Fonte = OrigensFunil.FormularioSite,
             Responsavel = contaId,
             CriadoEm = agora,
             EntradaNoEstagioEm = agora,
@@ -322,6 +393,7 @@ public sealed class OportunidadeServico(IDados dados)
             ],
         };
         item.Contatos[0].OportunidadeId = item.Id;
+        item.ContatoRepetido = (await ContatoRepetidoAsync(contaId, [item.Contatos[0].Telefone], [item.Contatos[0].Email], null, ct)).Count > 0;
         await dados.InserirOportunidadeAsync(item, ct);
         return Resultado<OportunidadeLeitura>.Sucesso(Ler(item));
     }
@@ -453,6 +525,31 @@ public sealed class OportunidadeServico(IDados dados)
             servicoProduto ??= modelo.Nome;
         }
 
+        var fonte = Domain.Comum.Texto.Limpo(pedido.Fonte);
+        string? fonteOutro = null;
+        if (fonte is not null)
+        {
+            fonte = OrigensFunil.Item(fonte);
+            if (fonte is null)
+            {
+                return Resultado<Oportunidade>.Erro(Codigos.Validacao, "Escolha a origem na lista.");
+            }
+
+            if (fonte == OrigensFunil.Outro)
+            {
+                fonteOutro = Domain.Comum.Texto.Limpo(pedido.FonteOutro);
+                if (fonteOutro is null)
+                {
+                    return Resultado<Oportunidade>.Erro(Codigos.Validacao, "Conte de onde veio o contato.");
+                }
+            }
+        }
+
+        if (pedido.RetornarHora is not null && pedido.RetornarEm is null)
+        {
+            return Resultado<Oportunidade>.Erro(Codigos.Validacao, "Informe a data do retorno.");
+        }
+
         TipoEvento? tipo = null;
         if (!string.IsNullOrWhiteSpace(pedido.TipoEvento))
         {
@@ -471,7 +568,10 @@ public sealed class OportunidadeServico(IDados dados)
             Nome = nome,
             EstagioFunilId = estagio.Id,
             EstagioFunil = estagio,
-            Fonte = Domain.Comum.Texto.Limpo(pedido.Fonte),
+            Fonte = fonte,
+            FonteOutro = fonteOutro,
+            RetornarEm = pedido.RetornarEm,
+            RetornarHora = pedido.RetornarEm is null ? null : pedido.RetornarHora,
             ValorProposta = pedido.ValorProposta,
             Responsavel = Domain.Comum.Texto.Limpo(pedido.Responsavel) ?? contaId,
             ServicoProduto = servicoProduto,
@@ -545,5 +645,9 @@ public sealed class OportunidadeServico(IDados dados)
             item.Contatos.Select(c => new ContatoOportunidadeLeitura(c.Id, c.Nome, c.Telefone, c.Email)).ToArray(),
             item.ClienteId,
             item.EstagioFunilId,
-            item.EstagioFunil?.Tipo.ToString() ?? "");
+            item.EstagioFunil?.Tipo.ToString() ?? "",
+            item.FonteOutro,
+            item.RetornarEm,
+            item.RetornarHora,
+            item.ContatoRepetido);
 }

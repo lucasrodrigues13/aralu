@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Project.Domain.Funil;
 using Project.Application.Negocio;
 using Project.Domain.Contratos;
 using Project.Domain.Convidados;
@@ -10,6 +11,15 @@ namespace Project.Infrastructure.Persistencia;
 
 public sealed class DadosHojeEf(AppDbContext banco) : IDadosHoje
 {
+    public async Task<IReadOnlyList<RetornoFunilHoje>> RetornosFunilAsync(string contaId, DateOnly ate, CancellationToken ct) =>
+        await banco.Oportunidades.AsNoTracking()
+            .Where(item => item.ContaId == contaId
+                && item.RetornarEm != null
+                && item.RetornarEm <= ate
+                && item.EstagioFunil!.Tipo == TipoEstagioFunil.Aberto)
+            .Select(item => new RetornoFunilHoje(item.Id, item.Nome, item.EstagioFunil!.Nome, item.RetornarEm!.Value, item.RetornarHora, false))
+            .ToListAsync(ct);
+
     public async Task<IReadOnlyList<EventoHojeDado>> EventosEmAndamentoAsync(string contaId, CancellationToken ct) =>
         await banco.Eventos.AsNoTracking()
             .Where(evento => evento.ContaId == contaId && evento.Situacao == SituacaoEvento.EmAndamento)

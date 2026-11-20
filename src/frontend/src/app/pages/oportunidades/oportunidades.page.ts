@@ -1,6 +1,8 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { debounceTime } from 'rxjs';
 import { FormArray, FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CdkDrag, CdkDragDrop, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -15,7 +17,9 @@ import { AuthService } from '../../core/auth.service';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import {
   Cliente,
+  ContatoRepetido,
   EstagioFunil,
+  ORIGENS_FUNIL,
   ModeloServicoFunil,
   NegocioClient,
   Oportunidade,
@@ -36,7 +40,7 @@ import { EstagiosFunilDialog } from './estagios-funil.dialog';
 
 @Component({
   selector: 'app-oportunidade-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, CampoDataComponent, CampoDinheiroComponent, LocalCamposComponent],
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, CampoDataComponent, CampoDinheiroComponent, LocalCamposComponent],
   template: `
     <h2 mat-dialog-title>{{ dados ? 'Editar oportunidade' : 'Nova oportunidade' }}</h2>
     <mat-dialog-content>
@@ -55,10 +59,28 @@ import { EstagiosFunilDialog } from './estagios-funil.dialog';
         </mat-form-field>
         </div>
         <div class="campo">
-          <mat-label class="font-semibold mb-2 block">Fonte</mat-label>
-          <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Fonte'" matInput formControlName="fonte" /></mat-form-field>
+          <mat-label class="font-semibold mb-2 block">Origem</mat-label>
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-select aria-label="Origem" formControlName="fonte">
+              <mat-option [value]="''">—</mat-option>
+              @for (o of origens; track o) { <mat-option [value]="o">{{ o }}</mat-option> }
+            </mat-select>
+          </mat-form-field>
         </div>
+        @if (form.controls.fonte.value === 'Outro') {
+          <div class="campo">
+            <mat-label class="font-semibold mb-2 block">De onde veio?</mat-label>
+            <mat-form-field appearance="outline" class="w-full"><input aria-label="De onde veio" matInput formControlName="fonteOutro" placeholder="Ex.: TikTok, panfleto" /></mat-form-field>
+          </div>
+        }
         <app-campo-dinheiro rotulo="Valor da proposta" formControlName="valorProposta" />
+        <div class="grid grid-cols-2 gap-4">
+          <app-campo-data formControlName="retornarEm" rotulo="Retornar em" />
+          <div class="campo">
+            <mat-label class="font-semibold mb-2 block">Hora (opcional)</mat-label>
+            <mat-form-field appearance="outline" class="w-full"><input aria-label="Hora do retorno" matInput type="time" formControlName="retornarHora" /></mat-form-field>
+          </div>
+        </div>
         <div class="campo">
           <mat-label class="font-semibold mb-2 block">Responsável</mat-label>
           <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Responsável'" matInput formControlName="responsavel" /></mat-form-field>
@@ -106,6 +128,20 @@ import { EstagiosFunilDialog } from './estagios-funil.dialog';
         <h3>Recepção</h3>
         <app-local-campos [grupo]="form.controls.recepcao" />
         <h3>Contatos</h3>
+        @if (repetidos().length) {
+          <div class="aviso-repetido bg-light-warning" role="status">
+            <mat-icon class="text-warning">warning</mat-icon>
+            <div>
+              @for (r of repetidos(); track r.tipo + r.id) {
+                <p>
+                  {{ r.tipo === 'cliente' ? 'Esse contato já é cliente:' : 'Esse contato já está no funil:' }}
+                  <a href="#" (click)="irPara($event, r)">{{ r.nome }}</a>{{ r.estagio ? ', em ' + r.estagio : '' }}.
+                </p>
+              }
+              <p class="text-xs text-muted">Você pode salvar mesmo assim.</p>
+            </div>
+          </div>
+        }
         <div formArrayName="contatos">
           @for (c of contatos.controls; track $index; let i = $index) {
             <div [formGroupName]="i" class="contato">
@@ -135,6 +171,9 @@ import { EstagiosFunilDialog } from './estagios-funil.dialog';
   styles: `
     h3 { margin: 12px 0 4px; font-size: 0.95rem; }
     .contato { display: grid; gap: 8px; }
+    .aviso-repetido { display: flex; gap: 10px; align-items: flex-start; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; font-size: 0.875rem; }
+    .aviso-repetido p { margin: 0 0 4px; }
+    .aviso-repetido a { text-decoration: underline; font-weight: 600; color: inherit; }
   `,
 })
 export class OportunidadeDialog implements OnInit {
@@ -146,10 +185,17 @@ export class OportunidadeDialog implements OnInit {
   protected readonly tipos = TIPOS;
   protected readonly servicos = signal<ModeloServicoFunil[]>([]);
   protected readonly estagios = signal<EstagioFunil[]>([]);
+  protected readonly origens = ORIGENS_FUNIL;
+  protected readonly repetidos = signal<ContatoRepetido[]>([]);
+  private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
   protected readonly form = this.fb.nonNullable.group({
     nome: [this.dados?.nome ?? '', Validators.required],
     estagio: [this.dados?.estagioId ?? '', Validators.required],
     fonte: [this.dados?.fonte ?? ''],
+    fonteOutro: [this.dados?.fonteOutro ?? ''],
+    retornarEm: this.fb.control<Date | null>(deIsoParaData(this.dados?.retornarEm)),
+    retornarHora: [(this.dados?.retornarHora ?? '').slice(0, 5)],
     valorProposta: this.fb.control<number | null>(this.dados?.valorProposta ?? null),
     responsavel: [this.dados?.responsavel ?? ''],
     modeloServicoFunilId: [this.dados?.modeloServicoFunilId ?? null as string | null],
@@ -199,6 +245,7 @@ export class OportunidadeDialog implements OnInit {
       next: (lista) => this.servicos.set(lista),
       error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
     });
+    this.vigiarContatoRepetido();
     this.negocio.estagiosFunil().subscribe({
       next: (lista) => {
         this.estagios.set(lista);
@@ -208,6 +255,34 @@ export class OportunidadeDialog implements OnInit {
       },
       error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
     });
+  }
+
+  /** Avisa (sem bloquear) quando telefone ou e-mail já existe na conta (SPEC-031 §6.5). */
+  private vigiarContatoRepetido(): void {
+    this.contatos.valueChanges
+      .pipe(debounceTime(500), takeUntilDestroyed(this.destroyRef))
+      .subscribe((lista: { telefone?: string; email?: string }[]) => {
+        const telefones = lista.map((c) => (c.telefone ?? '').trim()).filter((t) => t.replace(/D/g, '').length >= 8);
+        const emails = lista.map((c) => (c.email ?? '').trim()).filter((e) => e.includes('@'));
+        if (!telefones.length && !emails.length) {
+          this.repetidos.set([]);
+          return;
+        }
+        this.negocio.contatoRepetido(telefones, emails, this.dados?.id).subscribe({
+          next: (achados) => this.repetidos.set(achados),
+          error: () => this.repetidos.set([]),
+        });
+      });
+  }
+
+  protected irPara(evento: Event, r: ContatoRepetido): void {
+    evento.preventDefault();
+    this.ref.close();
+    if (r.tipo === 'cliente') {
+      void this.router.navigate(['/clientes']);
+    } else {
+      void this.router.navigate(['/oportunidades'], { queryParams: { abrir: r.id } });
+    }
   }
 
   protected ehDescarte(): boolean {
@@ -224,6 +299,10 @@ export class OportunidadeDialog implements OnInit {
       this.toast.erro('Confira nome, estágio e contato.');
       return;
     }
+    if (this.form.controls.fonte.value === 'Outro' && !this.form.controls.fonteOutro.value.trim()) {
+      this.toast.erro('Conte de onde veio o contato.');
+      return;
+    }
     const v = this.form.getRawValue();
     const dataIso = deDataParaIso(v.dataPrevista);
     const cerimonia = localPedido(v.cerimonia);
@@ -232,7 +311,10 @@ export class OportunidadeDialog implements OnInit {
       const pedido = {
         nome: v.nome,
         estagio: v.estagio,
-        fonte: v.fonte,
+        fonte: v.fonte || null,
+        fonteOutro: v.fonte === 'Outro' ? v.fonteOutro.trim() : null,
+        retornarEm: deDataParaIso(v.retornarEm),
+        retornarHora: v.retornarEm && v.retornarHora ? v.retornarHora : null,
         valorProposta: v.valorProposta,
         responsavel: v.responsavel,
         modeloServicoFunilId: v.modeloServicoFunilId,
@@ -322,6 +404,86 @@ export class DescarteDialog {
     }
     this.ref.close(texto);
   }
+}
+
+export interface DadosRetorno {
+  nome: string;
+  data: string | null;
+  hora: string | null;
+  /** "retornei": a dona acabou de falar com o lead e escolhe o próximo retorno. */
+  modo: 'marcar' | 'retornei';
+}
+
+/** Resultado: nova data, ou nulo para ficar sem retorno. Fechar sem escolher devolve undefined. */
+export type ResultadoRetorno = { data: string; hora: string | null } | null;
+
+/** Marca, muda ou limpa a data de retorno do lead (SPEC-031 §6.3). */
+@Component({
+  selector: 'app-retorno-dialog',
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, CampoDataComponent],
+  template: `
+    <h2 mat-dialog-title>{{ dados.modo === 'retornei' ? 'Próximo retorno' : 'Retornar em' }}</h2>
+    <mat-dialog-content>
+      <p class="text-sm text-muted mb-4">
+        {{ dados.modo === 'retornei' ? 'Quando você vai falar de novo com ' + dados.nome + '?' : 'Quando você quer voltar a falar com ' + dados.nome + '?' }}
+      </p>
+      <div class="grid grid-cols-2 gap-4">
+        <app-campo-data [formControl]="data" rotulo="Data" />
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Hora (opcional)</mat-label>
+          <mat-form-field appearance="outline" class="w-full"><input aria-label="Hora do retorno" matInput type="time" [formControl]="hora" /></mat-form-field>
+        </div>
+      </div>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-stroked-button type="button" (click)="ref.close()">Cancelar</button>
+      @if (dados.modo === 'retornei' || dados.data) {
+        <button mat-button type="button" (click)="ref.close(null)">{{ dados.modo === 'retornei' ? 'Sem próximo retorno' : 'Sem retorno' }}</button>
+      }
+      <button mat-flat-button type="button" (click)="salvar()">Salvar</button>
+    </mat-dialog-actions>
+  `,
+})
+export class RetornoDialog {
+  protected readonly dados = inject<DadosRetorno>(MAT_DIALOG_DATA);
+  protected readonly ref = inject(MatDialogRef<RetornoDialog, ResultadoRetorno>);
+  protected readonly data = new FormControl<Date | null>(this.dados.modo === 'retornei' ? null : deIsoParaData(this.dados.data));
+  protected readonly hora = new FormControl(this.dados.modo === 'retornei' ? '' : (this.dados.hora ?? '').slice(0, 5), { nonNullable: true });
+
+  protected salvar(): void {
+    const iso = deDataParaIso(this.data.value);
+    if (!iso) {
+      this.data.markAsTouched();
+      return;
+    }
+    this.ref.close({ data: iso, hora: this.hora.value || null });
+  }
+}
+
+const DIAS_CURTOS = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+
+function dataLocal(iso: string): Date {
+  const [ano, mes, dia] = iso.slice(0, 10).split('-').map(Number);
+  return new Date(ano, mes - 1, dia);
+}
+
+/** Retorno vencido, de hoje ou futuro, pela data local. */
+export function situacaoRetorno(iso: string, agora: Date = new Date()): 'atrasado' | 'hoje' | 'futuro' {
+  const data = dataLocal(iso).getTime();
+  const hoje = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate()).getTime();
+  return data < hoje ? 'atrasado' : data === hoje ? 'hoje' : 'futuro';
+}
+
+/** "sex, 20/11" ou "sex, 20/11 às 14:30". */
+export function textoRetorno(iso: string, hora: string | null): string {
+  const d = dataLocal(iso);
+  const dia = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+  return `${DIAS_CURTOS[d.getDay()]}, ${dia}${hora ? ' às ' + hora.slice(0, 5) : ''}`;
+}
+
+/** Origem para mostrar: o item, ou o texto livre quando é "Outro". */
+export function textoOrigem(fonte: string | null, outro: string | null): string | null {
+  return fonte === 'Outro' && outro ? outro : fonte;
 }
 
 /** Ícone do estágio: fixos têm o seu; abertos seguem a posição no funil. */
@@ -476,6 +638,9 @@ export function textoDias(dias: number): string {
                       </button>
                     }
                   }
+                  @if (item.tipoEstagio === 'Aberto') {
+                    <button mat-menu-item type="button" (click)="marcarRetorno(item, 'marcar')"><mat-icon>event</mat-icon> {{ item.retornarEm ? 'Mudar retorno' : 'Marcar retorno' }}</button>
+                  }
                   @if (!item.clienteId) {
                     <button mat-menu-item type="button" (click)="virarCliente(item)"><mat-icon>person_add</mat-icon> Virar cliente</button>
                   }
@@ -486,6 +651,9 @@ export function textoDias(dias: number): string {
               <span class="block text-lg font-semibold mt-1" [class.text-muted]="item.valorProposta == null">
                 {{ item.valorProposta == null ? 'Sem valor' : (item.valorProposta | gdDinheiro) }}
               </span>
+              @if (item.contatoRepetido) {
+                <span class="mt-2" [class]="status.alerta" matTooltip="Telefone ou e-mail igual ao de outro lead ou cliente da conta"><mat-icon class="selo">content_copy</mat-icon> Contato repetido</span>
+              }
 
               <ul class="detalhes mt-3">
                 @if (item.tipoEvento || item.dataPrevista) {
@@ -507,8 +675,18 @@ export function textoDias(dias: number): string {
                     }
                   </li>
                 }
-                @if (item.fonte) {
-                  <li><mat-icon>campaign</mat-icon><span class="truncate">{{ item.fonte }}</span></li>
+                @if (origem(item); as o) {
+                  <li><mat-icon>campaign</mat-icon><span class="truncate">{{ o }}</span></li>
+                }
+                @if (item.tipoEstagio === 'Aberto' && item.retornarEm) {
+                  @let sit = retorno(item.retornarEm);
+                  <li class="linha-retorno" [class.text-error]="sit === 'atrasado'" [class.text-warning]="sit === 'hoje'">
+                    <mat-icon>event</mat-icon>
+                    <span>retornar {{ textoRetorno(item.retornarEm, item.retornarHora) }}</span>
+                    @if (sit !== 'futuro') {
+                      <button mat-button type="button" class="retornei" (click)="$event.stopPropagation(); marcarRetorno(item, 'retornei')">Retornei</button>
+                    }
+                  </li>
                 }
                 @if (item.tipoEstagio === 'Descartado' && item.motivoDescarte) {
                   <li class="text-error"><mat-icon>info</mat-icon><span>{{ item.motivoDescarte }}</span></li>
@@ -593,6 +771,8 @@ export function textoDias(dias: number): string {
     .relogio, .selo { font-size: 14px; width: 14px; height: 14px; vertical-align: -2px; }
     a[routerLink] { text-decoration: none; }
     .acao-lead { min-height: 32px; height: 32px; font-size: 0.8125rem; }
+    .detalhes li.linha-retorno { flex-wrap: wrap; row-gap: 2px; }
+    .retornei { margin-left: auto; min-height: 26px; height: 26px; padding: 0 8px; font-size: 0.75rem; flex: none; }
     .vazio { border: 1px dashed var(--color-border); border-radius: 10px; padding: 24px 12px; margin: 0; }
   `,
 })
@@ -602,8 +782,12 @@ export class OportunidadesPage implements OnInit {
   private readonly dialog = inject(MatDialog);
   private readonly toast = inject(ToastService);
   private readonly auth = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
   protected readonly tipos = TIPOS;
   protected readonly status = STATUS;
+  protected readonly textoRetorno = textoRetorno;
   /** No celular o cartão não arrasta: o caminho é o menu "Mover para…". */
   protected readonly toque = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
   protected readonly estagios = signal<EstagioFunil[]>([]);
@@ -625,6 +809,35 @@ export class OportunidadesPage implements OnInit {
   ngOnInit(): void {
     this.carregarEstagios();
     this.carregar();
+    // "?abrir=id" abre o lead (link do aviso de contato repetido e do card da Hoje).
+    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+      const id = params.get('abrir');
+      if (!id) return;
+      void this.router.navigate([], { queryParams: { abrir: null }, queryParamsHandling: 'merge', replaceUrl: true });
+      this.abrirPorId(id);
+    });
+  }
+
+  protected origem(item: Oportunidade): string | null {
+    return textoOrigem(item.fonte, item.fonteOutro);
+  }
+
+  protected retorno(iso: string) {
+    return situacaoRetorno(iso);
+  }
+
+  protected marcarRetorno(item: Oportunidade, modo: DadosRetorno['modo']): void {
+    const data: DadosRetorno = { nome: item.nome, data: item.retornarEm, hora: item.retornarHora, modo };
+    this.dialog.open(RetornoDialog, { ...DIALOG_PEQUENO, data }).afterClosed().subscribe((r?: ResultadoRetorno) => {
+      if (r === undefined) return;
+      this.negocio.marcarRetornoOportunidade(item.id, r?.data ?? null, r?.hora ?? null).subscribe({
+        next: (atualizado) => {
+          this.lista.update((l) => l.map((i) => (i.id === atualizado.id ? atualizado : i)));
+          this.toast.sucesso(r ? `Retorno marcado: ${textoRetorno(r.data, r.hora)}.` : 'Sem retorno marcado.');
+        },
+        error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+      });
+    });
   }
 
   protected icone(estagio: EstagioFunil, indice: number): string {
@@ -701,14 +914,18 @@ export class OportunidadesPage implements OnInit {
 
   protected abrir(item?: Oportunidade): void {
     if (item) {
-      this.negocio.oportunidade(item.id).subscribe({
-        next: (detalhe) =>
-          this.dialog.open(OportunidadeDialog, { ...DIALOG, data: detalhe }).afterClosed().subscribe((ok) => ok && this.carregar()),
-        error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
-      });
+      this.abrirPorId(item.id);
       return;
     }
     this.dialog.open(OportunidadeDialog, { ...DIALOG, data: null }).afterClosed().subscribe((ok) => ok && this.carregar());
+  }
+
+  private abrirPorId(id: string): void {
+    this.negocio.oportunidade(id).subscribe({
+      next: (detalhe) =>
+        this.dialog.open(OportunidadeDialog, { ...DIALOG, data: detalhe }).afterClosed().subscribe((ok) => ok && this.carregar()),
+      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+    });
   }
 
   /** Soltar o cartão noutra coluna (SPEC-031 §6.2). */

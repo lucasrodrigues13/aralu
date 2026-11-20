@@ -242,6 +242,126 @@ public class FunilFluxoTests
         Assert.Equal("Contato inicial", daOutra[0].GetProperty("nome").GetString());
     }
 
+    [Fact]
+    public async Task Retorno_origem_e_contato_repetido()
+    {
+        var dono = await Entrar();
+        var outra = await Entrar();
+        var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
+
+        // Origem fora da lista e "Outro" sem texto não gravam.
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PostAsJsonAsync("/api/v1/oportunidades", new
+        {
+            nome = "Lead TikTok",
+            estagio = "Contato inicial",
+            fonte = "TikTok",
+            contatos = new[] { new { nome = "Bia" } },
+        })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PostAsJsonAsync("/api/v1/oportunidades", new
+        {
+            nome = "Lead TikTok",
+            estagio = "Contato inicial",
+            fonte = "Outro",
+            contatos = new[] { new { nome = "Bia" } },
+        })).StatusCode);
+
+        var atrasado = await Ler(await dono.PostAsJsonAsync("/api/v1/oportunidades", new
+        {
+            nome = "Casamento Bia",
+            estagio = "Contato inicial",
+            fonte = "outro",
+            fonteOutro = "TikTok",
+            retornarEm = hoje.AddDays(-2).ToString("yyyy-MM-dd"),
+            contatos = new[] { new { nome = "Bia", telefone = "(11) 98888-7777", email = "Bia@Ex.com" } },
+        }));
+        Assert.Equal("Outro", atrasado.GetProperty("fonte").GetString());
+        Assert.Equal("TikTok", atrasado.GetProperty("fonteOutro").GetString());
+        var atrasadoId = atrasado.GetProperty("id").GetGuid();
+
+        var deHoje = await Ler(await dono.PostAsJsonAsync("/api/v1/oportunidades", new
+        {
+            nome = "15 anos Duda",
+            estagio = "Contato inicial",
+            fonte = "Instagram",
+            contatos = new[] { new { nome = "Duda" } },
+        }));
+        var deHojeId = deHoje.GetProperty("id").GetGuid();
+        var marcado = await Ler(await dono.PostAsJsonAsync($"/api/v1/oportunidades/{deHojeId}/retorno", new
+        {
+            data = hoje.ToString("yyyy-MM-dd"),
+            hora = "14:30",
+        }));
+        Assert.Equal("14:30:00", marcado.GetProperty("retornarHora").GetString());
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PostAsJsonAsync($"/api/v1/oportunidades/{deHojeId}/retorno", new { hora = "10:00" })).StatusCode);
+        Assert.NotEqual(HttpStatusCode.OK, (await outra.PostAsJsonAsync($"/api/v1/oportunidades/{deHojeId}/retorno", new { data = hoje.ToString("yyyy-MM-dd") })).StatusCode);
+
+        // Futuro e descartado não entram no card da Hoje.
+        await Ler(await dono.PostAsJsonAsync("/api/v1/oportunidades", new
+        {
+            nome = "Futuro",
+            estagio = "Contato inicial",
+            retornarEm = hoje.AddDays(3).ToString("yyyy-MM-dd"),
+            contatos = new[] { new { nome = "F" } },
+        }));
+        await Ler(await dono.PostAsJsonAsync("/api/v1/oportunidades", new
+        {
+            nome = "Já descartado",
+            estagio = "Descartado",
+            motivoDescarte = "Preço",
+            retornarEm = hoje.AddDays(-1).ToString("yyyy-MM-dd"),
+            contatos = new[] { new { nome = "D" } },
+        }));
+
+        var retornos = (await Ler(await dono.GetAsync("/api/v1/hoje"))).GetProperty("retornosFunil").EnumerateArray().ToArray();
+        Assert.Equal(["Casamento Bia", "15 anos Duda"], retornos.Select(r => r.GetProperty("nome").GetString()));
+        Assert.True(retornos[0].GetProperty("atrasado").GetBoolean());
+        Assert.False(retornos[1].GetProperty("atrasado").GetBoolean());
+        Assert.Empty((await Ler(await outra.GetAsync("/api/v1/hoje"))).GetProperty("retornosFunil").EnumerateArray());
+
+        // "Retornei" sem próximo retorno limpa a data.
+        await Ler(await dono.PostAsJsonAsync($"/api/v1/oportunidades/{deHojeId}/retorno", new { data = (string?)null }));
+        Assert.Single((await Ler(await dono.GetAsync("/api/v1/hoje"))).GetProperty("retornosFunil").EnumerateArray());
+
+        // Contato repetido: telefone com outra máscara ou e-mail com maiúsculas, só na própria conta.
+        var repetidos = (await Ler(await dono.GetAsync("/api/v1/oportunidades/contato-repetido?telefone=%2B55%2011988887777"))).EnumerateArray().ToArray();
+        Assert.Single(repetidos);
+        Assert.Equal(atrasadoId, repetidos[0].GetProperty("id").GetGuid());
+        Assert.Equal("Contato inicial", repetidos[0].GetProperty("estagio").GetString());
+        Assert.Single((await Ler(await dono.GetAsync("/api/v1/oportunidades/contato-repetido?email=bia@ex.com"))).EnumerateArray());
+        Assert.Empty((await Ler(await dono.GetAsync($"/api/v1/oportunidades/contato-repetido?email=bia@ex.com&ignorar={atrasadoId}"))).EnumerateArray());
+        Assert.Empty((await Ler(await outra.GetAsync("/api/v1/oportunidades/contato-repetido?email=bia@ex.com"))).EnumerateArray());
+
+        // Cliente da conta também conta como contato repetido.
+        await Ler(await dono.PostAsJsonAsync("/api/v1/clientes", new
+        {
+            nome = "Carlos",
+            papel = "Noivo",
+            email = $"carlos-{Guid.NewGuid():N}@gevents.test",
+            ddi = "+55",
+            celular = "21955554444",
+        }));
+        var cliente = (await Ler(await dono.GetAsync("/api/v1/oportunidades/contato-repetido?telefone=(21)95555-4444"))).EnumerateArray().Single();
+        Assert.Equal("cliente", cliente.GetProperty("tipo").GetString());
+
+        // Lead do formulário público com contato repetido ganha o selo; origem automática.
+        var anonimo = _banco.Fabrica.CreateClient();
+        var publico = await Ler(await anonimo.PostAsJsonAsync($"/api/v1/public/leads/{ContaId(dono)}", new
+        {
+            nome = "Bia de novo",
+            contatoNome = "Bia",
+            telefone = "11988887777",
+        }));
+        Assert.True(publico.GetProperty("contatoRepetido").GetBoolean());
+        Assert.Equal("Formulário do site", publico.GetProperty("fonte").GetString());
+        var novo = await Ler(await anonimo.PostAsJsonAsync($"/api/v1/public/leads/{ContaId(dono)}", new
+        {
+            nome = "Gente nova",
+            contatoNome = "Nova",
+            telefone = "11911112222",
+        }));
+        Assert.False(novo.GetProperty("contatoRepetido").GetBoolean());
+    }
+
     private static string ContaId(HttpClient cliente)
     {
         var token = cliente.DefaultRequestHeaders.Authorization!.Parameter!;

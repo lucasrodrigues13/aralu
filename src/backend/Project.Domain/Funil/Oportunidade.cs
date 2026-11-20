@@ -14,7 +14,19 @@ public sealed class Oportunidade
 
     public EstagioFunil? EstagioFunil { get; set; }
 
+    /// <summary>Origem do contato: item de <see cref="OrigensFunil.Lista"/>.</summary>
     public string? Fonte { get; set; }
+
+    /// <summary>Texto livre quando a origem é "Outro".</summary>
+    public string? FonteOutro { get; set; }
+
+    /// <summary>Quando a dona quer voltar a falar com o lead (SPEC-031 §6.3).</summary>
+    public DateOnly? RetornarEm { get; set; }
+
+    public TimeOnly? RetornarHora { get; set; }
+
+    /// <summary>Lead do formulário público com telefone ou e-mail que já existia na conta.</summary>
+    public bool ContatoRepetido { get; set; }
 
     public decimal? ValorProposta { get; set; }
 

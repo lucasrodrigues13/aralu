@@ -1,6 +1,6 @@
 # 031. Funil: estágios, retorno e proposta por link
 
-**Status: aprovada (20/11/2026).** O código segue esta spec, em quatro partes (§17, ponto 1). Fonte: [produto-v1.md](../produto-v1.md) §5.13 (o que ainda não está pronto) e RF-075. Completa a SPEC-020 v2 (quadro em cartões e lead que vira cliente). O usuário aprovou em 20/11/2026 todas as sugestões da §17, que agora são decisões. **Parte A (estágios configuráveis e arrastar) implementada em 20/11/2026**; B, C e D pendentes.
+**Status: aprovada (20/11/2026).** O código segue esta spec, em quatro partes (§17, ponto 1). Fonte: [produto-v1.md](../produto-v1.md) §5.13 (o que ainda não está pronto) e RF-075. Completa a SPEC-020 v2 (quadro em cartões e lead que vira cliente). O usuário aprovou em 20/11/2026 todas as sugestões da §17, que agora são decisões. **Partes A (estágios configuráveis e arrastar) e B (retorno, origem e contato repetido) implementadas em 20/11/2026**; C e D pendentes.
 
 ## 1. Identificador e nome
 
@@ -127,7 +127,9 @@ Conta autenticada (SPEC-001). O quadro da SPEC-020 v2 já está no ar.
 - **Leitura dos estágios:** relatórios (SPEC-024) e dashboard (SPEC-007) leem os estágios da conta. O relatório de motivos continua olhando o estágio do tipo descartado.
 - **Abertura da proposta:** só a primeira abertura pelo lead conta como "aberta". Aberturas pela própria dona, logada, não contam.
 - **Resposta da proposta:** fica gravada com data e hora e não pode ser editada pela dona.
-- **Contato repetido:** a busca é sempre dentro da conta, nunca entre contas.
+- **Contato repetido:** a busca é sempre dentro da conta, nunca entre contas. Compara telefone só pelos dígitos (sem o 55 na frente, a partir de 8 dígitos) e e-mail sem diferenciar maiúsculas, nos contatos dos leads e no celular e telefone fixo dos clientes.
+- **Origem de leads automáticos:** formulário público = "Formulário do site"; lead vindo do RSVP = "Outro" com o texto "RSVP".
+- **Data de hoje dos retornos:** o card da Hoje usa a data do servidor (UTC), como o resto da tela Hoje; a cor do cartão no quadro usa a data do aparelho.
 - **Origem:** a lista é fechada no produto, igual para todas as contas, com "Outro" para o resto.
 
 ## 9. Validações
@@ -151,7 +153,7 @@ Conta autenticada (SPEC-001). O quadro da SPEC-020 v2 já está no ar.
 - **`EstagioFunil`:** id, conta, nome, cor, ordem e tipo. A oportunidade passa a apontar para `EstagioFunilId` no lugar do enum.
 - **Oportunidade:**
   - `RetornarEm` (data e hora);
-  - `Origem` (item da lista) e `OrigemOutro`;
+  - origem: coluna `Fonte` (item da lista) e `FonteOutro` (texto quando é "Outro");
   - `HoraConvite`, `HoraCerimonia`, `HoraRecepcao`, `HoraFesta`;
   - endereço completo da cerimônia e da recepção;
   - `ContatoRepetido` (bool).

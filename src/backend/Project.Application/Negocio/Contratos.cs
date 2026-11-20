@@ -50,6 +50,9 @@ public sealed record ParticipacaoNome(string Nome, decimal Valor);
 
 public sealed record ContagemOportunidadeEstagio(Guid EstagioFunilId, int Quantidade, decimal Valor);
 
+/// <summary>Contato de um lead (Tipo "oportunidade") ou de um cliente (Tipo "cliente") da conta.</summary>
+public sealed record ContatoNaConta(string Tipo, Guid Id, string Nome, string? Estagio, IReadOnlyList<string?> Telefones, string? Email);
+
 public interface IDados
 {
     Task<PerfilAssessoria?> ObterPerfilAsync(string contaId, CancellationToken ct);
@@ -306,6 +309,9 @@ public interface IDados
 
     /// <summary>Estágios da conta (rastreados), já com os padrões criados se a conta não tinha nenhum.</summary>
     Task<List<EstagioFunil>> ListarEstagiosFunilAsync(string contaId, CancellationToken ct);
+
+    /// <summary>Telefones e e-mails dos leads e clientes da conta, para o aviso de contato repetido.</summary>
+    Task<IReadOnlyList<ContatoNaConta>> ListarContatosDaContaAsync(string contaId, CancellationToken ct);
 
     void AdicionarEstagioFunil(EstagioFunil estagio);
 

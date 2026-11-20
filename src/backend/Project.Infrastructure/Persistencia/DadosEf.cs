@@ -1181,6 +1181,30 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         }
     }
 
+    public async Task<IReadOnlyList<ContatoNaConta>> ListarContatosDaContaAsync(string contaId, CancellationToken ct)
+    {
+        var leads = await banco.Oportunidades.AsNoTracking()
+            .Where(item => item.ContaId == contaId)
+            .SelectMany(item => item.Contatos.Select(contato => new
+            {
+                item.Id,
+                item.Nome,
+                Estagio = item.EstagioFunil!.Nome,
+                contato.Telefone,
+                contato.Email,
+            }))
+            .ToListAsync(ct);
+        var clientes = await banco.Clientes.AsNoTracking()
+            .Where(item => item.ContaId == contaId)
+            .Select(item => new { item.Id, item.Nome, item.Ddi, item.Celular, item.TelefoneFixo, item.Email })
+            .ToListAsync(ct);
+        return leads
+            .Select(l => new ContatoNaConta("oportunidade", l.Id, l.Nome, l.Estagio, [l.Telefone], l.Email))
+            .Concat(clientes.Select(c => new ContatoNaConta(
+                "cliente", c.Id, c.Nome, null, [c.Ddi + c.Celular, c.Celular, c.TelefoneFixo], c.Email)))
+            .ToArray();
+    }
+
     public void AdicionarEstagioFunil(EstagioFunil estagio) => banco.EstagiosFunil.Add(estagio);
 
     public void RemoverEstagioFunil(EstagioFunil estagio) => banco.EstagiosFunil.Remove(estagio);

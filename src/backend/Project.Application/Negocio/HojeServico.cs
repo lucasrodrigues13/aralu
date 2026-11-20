@@ -18,6 +18,9 @@ public sealed record PagamentoSemanaDado(DateOnly Vencimento, decimal Valor);
 
 public sealed record ConfiguracaoContaDado(bool TemPerfil, bool TemPix, bool TemContrato);
 
+/// <summary>Lead com retorno marcado até hoje, num estágio aberto (SPEC-031 §6.3).</summary>
+public sealed record RetornoFunilHoje(Guid Id, string Nome, string Estagio, DateOnly Data, TimeOnly? Hora, bool Atrasado);
+
 public interface IDadosHoje
 {
     Task<IReadOnlyList<EventoHojeDado>> EventosEmAndamentoAsync(string contaId, CancellationToken ct);
@@ -31,6 +34,9 @@ public interface IDadosHoje
     Task<IReadOnlyList<PagamentoSemanaDado>> PagamentosPendentesAsync(string contaId, IReadOnlyCollection<Guid> eventoIds, DateOnly de, DateOnly ate, CancellationToken ct);
 
     Task<ConfiguracaoContaDado> ConfiguracaoAsync(string contaId, CancellationToken ct);
+
+    /// <summary>Leads em estágio aberto com retorno marcado até a data.</summary>
+    Task<IReadOnlyList<RetornoFunilHoje>> RetornosFunilAsync(string contaId, DateOnly ate, CancellationToken ct);
 }
 
 public sealed record CobrancaHoje(Guid EventoId, string Evento, string Parcela, DateOnly Vencimento, decimal Saldo, bool Atrasada);
@@ -59,7 +65,8 @@ public sealed record HojeLeitura(
     ProximoEventoHoje? ProximoEvento,
     IReadOnlyList<CarteiraLinha> Carteira,
     IReadOnlyList<FunilEstagio> Funil,
-    ConfiguracaoContaDado Configuracao);
+    ConfiguracaoContaDado Configuracao,
+    IReadOnlyList<RetornoFunilHoje> RetornosFunil);
 
 /// <summary>Regras da tela Hoje (SPEC-007 v2, decisões de 18/11/2026).</summary>
 public static class HojeRegras
@@ -146,6 +153,11 @@ public sealed class HojeServico(IDadosHoje dados, PainelServico painel)
             proximo,
             carteira,
             funil,
-            await dados.ConfiguracaoAsync(contaId, ct));
+            await dados.ConfiguracaoAsync(contaId, ct),
+            (await dados.RetornosFunilAsync(contaId, hoje, ct))
+                .Select(item => item with { Atrasado = item.Data < hoje })
+                .OrderBy(item => item.Data)
+                .ThenBy(item => item.Hora ?? TimeOnly.MaxValue)
+                .ToArray());
     }
 }

@@ -96,7 +96,7 @@ Atualize este arquivo: marque o que ficou pronto e anote as dúvidas para o usu�
 - [x] SPEC-020 v2 (parte do bloco 16: quadro em cartões e lead → cliente) — aprovada e implementada em 20/11/2026
 - [x] SPEC-031 (resto do bloco 16, funil) — aprovada em 20/11/2026 com as sugestões da §17; implementar na ordem A, B, C, D
   - [x] Parte A (estágios configuráveis e arrastar) — implementada em 20/11/2026
-  - [ ] Parte B (retorno, origem e contato repetido)
+  - [x] Parte B (retorno, origem e contato repetido) — implementada em 20/11/2026
   - [ ] Parte C (proposta por link)
   - [ ] Parte D (ajustes do formulário; depende das assistentes, RF-045)
 

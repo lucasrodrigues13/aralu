@@ -2336,3 +2336,62 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261120173102_RetornoOrigemDoFunil') THEN
+    ALTER TABLE "Oportunidades" ADD "ContatoRepetido" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261120173102_RetornoOrigemDoFunil') THEN
+    ALTER TABLE "Oportunidades" ADD "FonteOutro" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261120173102_RetornoOrigemDoFunil') THEN
+    ALTER TABLE "Oportunidades" ADD "RetornarEm" date;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261120173102_RetornoOrigemDoFunil') THEN
+    ALTER TABLE "Oportunidades" ADD "RetornarHora" time without time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261120173102_RetornoOrigemDoFunil') THEN
+    UPDATE "Oportunidades" SET "Fonte" = 'Formulário do site'
+    WHERE lower(trim("Fonte")) IN ('formulário público', 'formulario publico', 'formulário do site');
+
+    UPDATE "Oportunidades" o SET "Fonte" = l.item
+    FROM (VALUES ('Instagram'), ('Indicação'), ('Google'), ('Página pública'), ('Formulário do site'),
+                 ('WhatsApp'), ('Feira ou evento'), ('Fornecedor parceiro'), ('Cliente antigo'), ('Outro')) AS l(item)
+    WHERE lower(trim(o."Fonte")) = lower(l.item);
+
+    UPDATE "Oportunidades" SET "FonteOutro" = trim("Fonte"), "Fonte" = 'Outro'
+    WHERE "Fonte" IS NOT NULL AND trim("Fonte") <> ''
+      AND "Fonte" NOT IN ('Instagram', 'Indicação', 'Google', 'Página pública', 'Formulário do site',
+                          'WhatsApp', 'Feira ou evento', 'Fornecedor parceiro', 'Cliente antigo', 'Outro');
+
+    UPDATE "Oportunidades" SET "Fonte" = NULL WHERE trim("Fonte") = '';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261120173102_RetornoOrigemDoFunil') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261120173102_RetornoOrigemDoFunil', '10.0.4');
+    END IF;
+END $EF$;
+COMMIT;
+
