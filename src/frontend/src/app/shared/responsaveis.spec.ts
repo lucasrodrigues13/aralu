@@ -1,4 +1,4 @@
-import { chaveResponsavel, opcoesResponsavel, pedidoResponsavel, rotuloResponsavel } from './responsaveis';
+import { chaveResponsavel, opcoesResponsavel, pedidoResponsavel, rotuloResponsavel, trocarResponsavelRemovido } from './responsaveis';
 
 describe('responsáveis da tarefa (SPEC-032)', () => {
   const nomes = [
@@ -23,5 +23,16 @@ describe('responsáveis da tarefa (SPEC-032)', () => {
     const opcoes = opcoesResponsavel(nomes, 'Dona da conta', ['Assistente:b2']);
     expect(opcoes.find((item) => item.valor === 'Assistente:b2')?.rotulo).toBe('Bia (removida)');
     expect(rotuloResponsavel({ papel: 'Assistente', referenciaId: 'b2' }, opcoes)).toBe('Bia (removida)');
+  });
+});
+
+describe('trocarResponsavelRemovido', () => {
+  it('tira a removida, mantém as demais e acrescenta a escolhida sem repetir', () => {
+    const atuais = [{ papel: 'Organizer' }, { papel: 'Assistente', referenciaId: 'a1' }];
+    expect(trocarResponsavelRemovido(atuais, ['a1'], 'Assistente:a2')).toEqual([
+      { papel: 'Organizer' },
+      { papel: 'Assistente', referenciaId: 'a2' },
+    ]);
+    expect(trocarResponsavelRemovido(atuais, ['a1'], 'Organizer')).toEqual([{ papel: 'Organizer' }]);
   });
 });

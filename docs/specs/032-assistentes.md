@@ -227,7 +227,7 @@ Código de apoio (backend em `src/backend`, testes em `tests`):
 - **Como ficou (20/11/2026):** em vez de `podeExcluir`, as leituras trazem `criadoPor` e `/conta/area` traz `usuarioId`; o frontend decide o botão (`AuthService.podeExcluirDoFunil`). A exclusão responde 200 (como as demais), não 204. Leads do formulário público ficam sem autor (só a dona exclui).
 - **Testes de integração:** a assistente exclui o que criou (204); não exclui o da dona nem o antigo sem autor (403); a dona exclui os dois; outra conta continua com 404.
 
-### [ ] Passo 2. Pendências da Hoje (§17, ponto 8)
+### [x] Passo 2. Pendências da Hoje (§17, ponto 8)
 
 *Decidido:* card só na Hoje da dona, com as tarefas abertas cujo responsável é assistente removida, e troca de responsável ali mesmo.
 
@@ -235,6 +235,7 @@ Código de apoio (backend em `src/backend`, testes em `tests`):
 - **Fazer:**
   1. A resposta da Hoje ganha a lista `tarefasSemResponsavelAtivo` (evento, tarefa, prazo, nome da assistente removida), só para a dona e só com tarefas abertas (não concluídas nem canceladas), do evento e do funil.
   2. Card na tela, escondido quando a lista está vazia; cada linha tem o seletor de responsável (dona e assistentes ativas), que usa a rota de troca de responsável que a tarefa já tem. A tarefa sai do card ao trocar.
+- **Como ficou (20/11/2026):** `HojeLeitura.TarefasSemResponsavelAtivo` (origem Evento ou Funil, id, título, contexto, prazo, nome da assistente), preenchida só quando o usuário é a dona (`comPendencias`). A tarefa entra se qualquer responsável for assistente removida; a troca (PUT da tarefa, com o pedido remontado no frontend por `trocarResponsavelRemovido`) tira as removidas e põe a escolhida. Sem teste de unidade do `HojeServico` (não existe fake de `IDadosHoje`); a cobertura é de integração.
 - **Testes:** unidade do `HojeServico` com a lista; integração: remover a assistente com tarefa aberta, a Hoje da dona traz a tarefa, a da assistente não traz, e trocar o responsável tira do card.
 
 ### [ ] Passo 3. Admin vê as assistentes (§4)

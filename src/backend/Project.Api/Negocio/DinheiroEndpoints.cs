@@ -32,7 +32,8 @@ public static class DinheiroEndpoints
                 Hoje(),
                 ct,
                 await EscopoAssistente.LiberadosAsync(usuario, banco, ct),
-                AssistenteEndpoints.PodeVerFinanceiro(usuario))))).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+                AssistenteEndpoints.PodeVerFinanceiro(usuario),
+                usuario.IsInRole(Papeis.Organizer))))).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
     }
 
     private static Task<IResult> Obter(Guid id, ClaimsPrincipal usuario, DinheiroServico servico, CancellationToken ct) =>

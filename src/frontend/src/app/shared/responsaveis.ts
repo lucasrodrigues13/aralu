@@ -41,3 +41,19 @@ export function rotuloResponsavel(item: ResponsavelItem, opcoes: OpcaoResponsave
   const chave = chaveResponsavel(item);
   return opcoes.find((opcao) => opcao.valor === chave)?.rotulo ?? (item.papel === 'Assistente' ? 'Assistente' : item.papel);
 }
+
+/**
+ * Pedido de responsáveis depois de trocar a assistente removida: mantém os demais, tira as removidas
+ * e acrescenta o escolhido (se ainda não estiver na lista). SPEC-032 §18, passo 2.
+ */
+export function trocarResponsavelRemovido(
+  atuais: ResponsavelItem[],
+  removidas: string[],
+  novaChave: string,
+): { papel: string; referenciaId?: string }[] {
+  const restantes = atuais.filter((item) => !(item.papel === 'Assistente' && item.referenciaId && removidas.includes(item.referenciaId)));
+  const chaves = restantes.map(chaveResponsavel);
+  const pedido = restantes.map((item) => pedidoResponsavel(chaveResponsavel(item)));
+  if (!chaves.includes(novaChave)) pedido.push(pedidoResponsavel(novaChave));
+  return pedido;
+}

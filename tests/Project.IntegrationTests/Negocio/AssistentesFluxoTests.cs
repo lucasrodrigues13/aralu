@@ -99,6 +99,70 @@ public class AssistentesFluxoTests
     }
 
     [Fact]
+    public async Task Hoje_da_dona_lista_tarefas_abertas_de_assistente_removida_e_a_troca_tira_do_card()
+    {
+        var dona = await EntrarOrganizer();
+        var (outraAssistente, _, _) = await ConvidarEAtivar(dona, financeiro: false, somenteDela: false);
+        var (_, removidaId, _) = await ConvidarEAtivar(dona, financeiro: false, somenteDela: false);
+
+        var evento = (await CriarEvento(dona, "Festa pendente")).GetProperty("id").GetGuid();
+        var tarefaEvento = await Ler(await dona.PostAsJsonAsync($"/api/v1/eventos/{evento}/tarefas", new
+        {
+            titulo = "Contratar DJ",
+            responsaveis = new object[] { new { papel = "Assistente", referenciaId = removidaId.ToString() } },
+        }));
+        var tarefaEventoId = tarefaEvento.GetProperty("id").GetGuid();
+        var lead = await Ler(await dona.PostAsJsonAsync("/api/v1/oportunidades", new
+        {
+            nome = "Lead pendente",
+            estagio = "Contato inicial",
+            contatos = new[] { new { nome = "Lia", telefone = "11977770002", email = "lia2@ex.com" } },
+        }));
+        var tarefaFunil = await Ler(await dona.PostAsJsonAsync("/api/v1/tarefas-funil", new
+        {
+            titulo = "Ligar para o lead",
+            oportunidadeId = lead.GetProperty("id").GetGuid(),
+            tipo = "Ligacao",
+            prazo = "2030-06-01",
+            responsaveis = new object[] { new { papel = "Assistente", referenciaId = removidaId.ToString() } },
+        }));
+        var tarefaFunilId = tarefaFunil.GetProperty("id").GetGuid();
+
+        // Com a assistente ativa, nada aparece no card.
+        Assert.Equal(0, (await Ler(await dona.GetAsync("/api/v1/hoje"))).GetProperty("tarefasSemResponsavelAtivo").GetArrayLength());
+
+        Assert.Equal(HttpStatusCode.NoContent, (await dona.DeleteAsync($"/api/v1/assistentes/{removidaId}")).StatusCode);
+
+        var pendencias = (await Ler(await dona.GetAsync("/api/v1/hoje"))).GetProperty("tarefasSemResponsavelAtivo").EnumerateArray().ToArray();
+        Assert.Equal(2, pendencias.Length);
+        Assert.Contains(pendencias, item => item.GetProperty("id").GetGuid() == tarefaEventoId && item.GetProperty("origem").GetString() == "Evento");
+        Assert.Contains(pendencias, item => item.GetProperty("id").GetGuid() == tarefaFunilId && item.GetProperty("origem").GetString() == "Funil");
+        Assert.All(pendencias, item => Assert.Equal("Ana Assistente", item.GetProperty("assistente").GetString()));
+
+        // A Hoje da assistente não traz o card.
+        Assert.Equal(0, (await Ler(await outraAssistente.GetAsync("/api/v1/hoje"))).GetProperty("tarefasSemResponsavelAtivo").GetArrayLength());
+
+        // Trocar o responsável tira a tarefa do card.
+        Assert.Equal(HttpStatusCode.OK, (await dona.PutAsJsonAsync($"/api/v1/tarefas/{tarefaEventoId}", new
+        {
+            titulo = "Contratar DJ",
+            situacao = "Pendente",
+            prioridade = "Media",
+            visibilidade = "SoEu",
+            responsaveis = new object[] { new { papel = "Organizer" } },
+        })).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await dona.PutAsJsonAsync($"/api/v1/tarefas-funil/{tarefaFunilId}", new
+        {
+            titulo = "Ligar para o lead",
+            oportunidadeId = lead.GetProperty("id").GetGuid(),
+            tipo = "Ligacao",
+            prazo = "2030-06-01",
+            responsaveis = new object[] { new { papel = "Organizer" } },
+        })).StatusCode);
+        Assert.Equal(0, (await Ler(await dona.GetAsync("/api/v1/hoje"))).GetProperty("tarefasSemResponsavelAtivo").GetArrayLength());
+    }
+
+    [Fact]
     public async Task Convite_nao_aceita_email_de_outra_conta_e_reenviar_invalida_o_link_anterior()
     {
         var dona = await EntrarOrganizer();

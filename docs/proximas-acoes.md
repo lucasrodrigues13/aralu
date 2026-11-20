@@ -11,7 +11,7 @@ A SPEC-032 (assistentes) e a SPEC-031 parte D (ajustes do formulário do funil) 
 Os itens restantes (2 a 4) já estão decididos e detalhados (arquivos, regra e testes) na §18 da [SPEC-032](specs/032-assistentes.md). **Um passo por sessão**: leia só a §18, faça o primeiro passo pendente (`[ ]`), rode os testes, marque `[x]` lá e aqui, e commite. Não precisa perguntar de novo. Resumo:
 
 1. ~~**Excluir o que ela criou (§17, ponto 6)**~~ — feito em 20/11/2026: coluna `CriadoPor` nas quatro tabelas (migration `AutoriaDoFunil`); a assistente exclui só o que criou (403 no resto), a dona exclui tudo.
-2. **Pendências da Hoje (§17, ponto 8):** card de tarefas abertas de assistente removida na Hoje da dona.
+2. ~~**Pendências da Hoje (§17, ponto 8)**~~ — feito em 20/11/2026: card "Tarefas sem responsável" na Hoje da dona, com troca de responsável na linha.
 3. **Admin (§4):** o Admin gerenciar as assistentes de qualquer conta.
 4. **"Só os dela" no dinheiro:** a tela Pagamentos e as Estatísticas de eventos não filtram por evento liberado.
 

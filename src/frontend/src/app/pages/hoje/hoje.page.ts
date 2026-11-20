@@ -6,6 +6,11 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatSelectModule } from '@angular/material/select';
+import { Observable, switchMap, throwError } from 'rxjs';
+import { AssistentesClient } from '../../core/assistentes.client';
+import { NegocioClient } from '../../core/negocio.client';
+import { trocarResponsavelRemovido } from '../../shared/responsaveis';
 import { API_BASE_URL } from '../../core/api-base-url';
 import { AuthService } from '../../core/auth.service';
 import { mensagemDeErro } from '../../core/mensagem-erro';
@@ -13,6 +18,17 @@ import { ToastService } from '../../core/toast.service';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { GdDinheiroPipe } from '../../shared/gd-dinheiro.pipe';
 import { STATUS } from '../../shared/status';
+
+/** Tarefa aberta de assistente removida (SPEC-032 §18, passo 2). */
+export interface TarefaSemResponsavel {
+  origem: 'Evento' | 'Funil';
+  id: string;
+  titulo: string;
+  contextoId: string;
+  contexto: string;
+  prazo: string | null;
+  assistente: string;
+}
 
 export interface Hoje {
   hoje: string;
@@ -31,6 +47,7 @@ export interface Hoje {
   funil: { estagio: string; quantidade: number; valor: number; id?: string; cor?: string }[];
   configuracao: { temPerfil: boolean; temPix: boolean; temContrato: boolean };
   retornosFunil: { id: string; nome: string; estagio: string; data: string; hora: string | null; atrasado: boolean }[];
+  tarefasSemResponsavelAtivo?: TarefaSemResponsavel[];
 }
 
 const CHAVE_PULADOS = 'gevents-hoje-pulados';
@@ -54,7 +71,7 @@ function lerPulados(): string[] {
 /** Tela Hoje (SPEC-007 v2): o que pede ação hoje. */
 @Component({
   selector: 'app-hoje',
-  imports: [MatCardModule, MatListModule, MatProgressBarModule, RouterLink, MatButtonModule, MatIconModule, GdDataPipe, GdDinheiroPipe],
+  imports: [MatCardModule, MatListModule, MatProgressBarModule, MatSelectModule, RouterLink, MatButtonModule, MatIconModule, GdDataPipe, GdDinheiroPipe],
   template: `
     @if (dados(); as d) {
       <mat-card class="cardWithShadow">
@@ -243,6 +260,47 @@ function lerPulados(): string[] {
         </mat-card-content>
       </mat-card>
 
+      @if ((d.tarefasSemResponsavelAtivo ?? []).length > 0) {
+        <mat-card class="cardWithShadow" id="pendencias">
+          <mat-card-content>
+            <mat-card-title>Tarefas sem responsável</mat-card-title>
+            <mat-card-subtitle>Tarefas abertas de assistentes que foram removidas</mat-card-subtitle>
+            <div class="relative overflow-auto mt-4">
+              <table class="tabela">
+                <thead>
+                  <tr><th>Tarefa</th><th>Prazo</th><th>Era de</th><th>Novo responsável</th></tr>
+                </thead>
+                <tbody>
+                  @for (t of d.tarefasSemResponsavelAtivo; track t.origem + t.id) {
+                    <tr>
+                      <td>
+                        {{ t.titulo }}
+                        <span class="block text-xs text-muted">{{ t.origem === 'Evento' ? 'Evento' : 'Lead' }}: {{ t.contexto }}</span>
+                      </td>
+                      <td class="whitespace-nowrap">{{ t.prazo ? (t.prazo | gdData) : '—' }}</td>
+                      <td>{{ t.assistente }}</td>
+                      <td class="min-w-48">
+                        <mat-select
+                          class="border border-border rounded px-2 py-1"
+                          [attr.aria-label]="'Novo responsável de ' + t.titulo"
+                          placeholder="Escolher"
+                          [disabled]="trocando() === t.id"
+                          (selectionChange)="trocar(t, $event.value)"
+                        >
+                          @for (opcao of opcoesTroca(); track opcao.valor) {
+                            <mat-option [value]="opcao.valor">{{ opcao.rotulo }}</mat-option>
+                          }
+                        </mat-select>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      }
+
       <mat-card class="cardWithShadow" id="retornos">
         <mat-card-content>
           <mat-card-title>Retornos do funil</mat-card-title>
@@ -318,10 +376,85 @@ export class HojePage implements OnInit {
     return itens.filter((item) => !item.feito && !this.pulados().includes(item.id));
   });
 
+  private readonly negocio = inject(NegocioClient);
+  private readonly assistentes = inject(AssistentesClient);
+  protected readonly trocando = signal<string | null>(null);
+  protected readonly opcoesTroca = signal<{ valor: string; rotulo: string }[]>([{ valor: 'Organizer', rotulo: 'Eu' }]);
+  private removidas: string[] = [];
+
+  /** Troca o responsável da tarefa pendente e a tira do card (SPEC-032 §18, passo 2). */
+  protected trocar(tarefa: TarefaSemResponsavel, chave: string): void {
+    this.trocando.set(tarefa.id);
+    const pedido$: Observable<unknown> = tarefa.origem === 'Evento' ? this.trocarDoEvento(tarefa, chave) : this.trocarDoFunil(tarefa, chave);
+    pedido$.subscribe({
+      next: () => {
+        this.trocando.set(null);
+        this.dados.update((d) =>
+          d ? { ...d, tarefasSemResponsavelAtivo: (d.tarefasSemResponsavelAtivo ?? []).filter((item) => item.id !== tarefa.id) } : d,
+        );
+        this.toast.sucesso('Responsável trocado.');
+      },
+      error: (erro: unknown) => {
+        this.trocando.set(null);
+        this.toast.erro(mensagemDeErro(erro));
+      },
+    });
+  }
+
+  private trocarDoEvento(tarefa: TarefaSemResponsavel, chave: string) {
+    return this.negocio.tarefasDoEvento(tarefa.contextoId).pipe(
+      switchMap((lista) => {
+        const atual = lista.find((item) => item.id === tarefa.id);
+        if (!atual) return throwError(() => new Error('Tarefa não encontrada.'));
+        return this.negocio.atualizarTarefa(atual.id, {
+          titulo: atual.titulo,
+          descricao: atual.descricao,
+          grupo: atual.grupo,
+          prazo: atual.prazo,
+          situacao: atual.situacao,
+          prioridade: atual.prioridade,
+          visibilidade: atual.visibilidade,
+          atualizarServico: false,
+          responsaveis: trocarResponsavelRemovido(atual.responsaveis, this.removidas, chave),
+        });
+      }),
+    );
+  }
+
+  private trocarDoFunil(tarefa: TarefaSemResponsavel, chave: string) {
+    return this.negocio.tarefasFunil().pipe(
+      switchMap((lista) => {
+        const atual = lista.find((item) => item.id === tarefa.id);
+        if (!atual) return throwError(() => new Error('Tarefa não encontrada.'));
+        return this.negocio.atualizarTarefaFunil(atual.id, {
+          titulo: atual.titulo,
+          oportunidadeId: atual.oportunidadeId,
+          tipo: atual.tipo,
+          observacao: atual.observacao,
+          prazo: atual.prazo,
+          responsaveis: trocarResponsavelRemovido(atual.responsaveis, this.removidas, chave),
+        });
+      }),
+    );
+  }
+
   ngOnInit(): void {
     this.http.get<Hoje>(`${this.base}/api/v1/hoje`).subscribe({
-      next: (dados) => this.dados.set(dados),
+      next: (dados) => {
+        this.dados.set(dados);
+        if ((dados.tarefasSemResponsavelAtivo ?? []).length > 0) this.carregarOpcoesDeTroca();
+      },
       error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+    });
+  }
+
+  private carregarOpcoesDeTroca(): void {
+    this.assistentes.nomes().subscribe((nomes) => {
+      this.removidas = nomes.filter((item) => item.removida).map((item) => item.id);
+      this.opcoesTroca.set([
+        { valor: 'Organizer', rotulo: 'Eu' },
+        ...nomes.filter((item) => !item.removida).map((item) => ({ valor: `Assistente:${item.id}`, rotulo: item.nome })),
+      ]);
     });
   }
 

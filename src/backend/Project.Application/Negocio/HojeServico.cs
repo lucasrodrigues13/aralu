@@ -21,8 +21,21 @@ public sealed record ConfiguracaoContaDado(bool TemPerfil, bool TemPix, bool Tem
 /// <summary>Lead com retorno marcado até hoje, num estágio aberto (SPEC-031 §6.3).</summary>
 public sealed record RetornoFunilHoje(Guid Id, string Nome, string Estagio, DateOnly Data, TimeOnly? Hora, bool Atrasado);
 
+/// <summary>Tarefa aberta cujo responsável é uma assistente removida (SPEC-032 §18, passo 2). Origem: "Evento" ou "Funil".</summary>
+public sealed record TarefaSemResponsavelAtivo(
+    string Origem,
+    Guid Id,
+    string Titulo,
+    Guid ContextoId,
+    string Contexto,
+    DateOnly? Prazo,
+    string Assistente);
+
 public interface IDadosHoje
 {
+    /// <summary>Tarefas abertas (evento e funil) com assistente removida entre os responsáveis.</summary>
+    Task<IReadOnlyList<TarefaSemResponsavelAtivo>> TarefasSemResponsavelAtivoAsync(string contaId, CancellationToken ct);
+
     Task<IReadOnlyList<EventoHojeDado>> EventosEmAndamentoAsync(string contaId, CancellationToken ct);
 
     Task<IReadOnlyList<TarefaHojeDado>> TarefasAsync(string contaId, IReadOnlyCollection<Guid> eventoIds, CancellationToken ct);
@@ -66,7 +79,8 @@ public sealed record HojeLeitura(
     IReadOnlyList<CarteiraLinha> Carteira,
     IReadOnlyList<FunilEstagio> Funil,
     ConfiguracaoContaDado Configuracao,
-    IReadOnlyList<RetornoFunilHoje> RetornosFunil);
+    IReadOnlyList<RetornoFunilHoje> RetornosFunil,
+    IReadOnlyList<TarefaSemResponsavelAtivo> TarefasSemResponsavelAtivo);
 
 /// <summary>Regras da tela Hoje (SPEC-007 v2, decisões de 18/11/2026).</summary>
 public static class HojeRegras
@@ -96,7 +110,8 @@ public sealed class HojeServico(IDadosHoje dados, PainelServico painel)
         DateOnly hoje,
         CancellationToken ct,
         IReadOnlySet<Guid>? eventosLiberados = null,
-        bool comFinanceiro = true)
+        bool comFinanceiro = true,
+        bool comPendencias = false)
     {
         var eventos = await dados.EventosEmAndamentoAsync(contaId, ct);
         if (eventosLiberados is not null)
@@ -168,6 +183,7 @@ public sealed class HojeServico(IDadosHoje dados, PainelServico painel)
                 .Select(item => item with { Atrasado = item.Data < hoje })
                 .OrderBy(item => item.Data)
                 .ThenBy(item => item.Hora ?? TimeOnly.MaxValue)
-                .ToArray());
+                .ToArray(),
+            comPendencias ? await dados.TarefasSemResponsavelAtivoAsync(contaId, ct) : []);
     }
 }

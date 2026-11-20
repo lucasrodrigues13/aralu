@@ -5,12 +5,70 @@ using Project.Domain.Contratos;
 using Project.Domain.Convidados;
 using Project.Domain.Dinheiro;
 using Project.Domain.Eventos;
+using Project.Domain.Equipe;
 using Project.Domain.Fornecedores;
+using Project.Domain.Tarefas;
 
 namespace Project.Infrastructure.Persistencia;
 
 public sealed class DadosHojeEf(AppDbContext banco) : IDadosHoje
 {
+    public async Task<IReadOnlyList<TarefaSemResponsavelAtivo>> TarefasSemResponsavelAtivoAsync(string contaId, CancellationToken ct)
+    {
+        var removidas = await banco.Assistentes.AsNoTracking()
+            .Where(item => item.ContaId == contaId && item.Situacao == SituacaoAssistente.Removida)
+            .ToDictionaryAsync(item => item.Id.ToString(), item => item.Nome, ct);
+        if (removidas.Count == 0)
+        {
+            return [];
+        }
+
+        var chaves = removidas.Keys.ToArray();
+        var resultado = new List<TarefaSemResponsavelAtivo>();
+
+        var doEvento = await banco.Tarefas.AsNoTracking()
+            .Where(tarefa => tarefa.ContaId == contaId
+                && tarefa.Situacao != SituacaoTarefa.Concluida
+                && tarefa.Responsaveis.Any(r => r.Papel == PapelResponsavel.Assistente && r.ReferenciaId != null && chaves.Contains(r.ReferenciaId)))
+            .Select(tarefa => new
+            {
+                tarefa.Id,
+                tarefa.Titulo,
+                tarefa.EventoId,
+                Evento = banco.Eventos.Where(e => e.Id == tarefa.EventoId).Select(e => e.Nome).FirstOrDefault(),
+                tarefa.Prazo,
+                Referencia = tarefa.Responsaveis
+                    .Where(r => r.Papel == PapelResponsavel.Assistente && r.ReferenciaId != null && chaves.Contains(r.ReferenciaId))
+                    .Select(r => r.ReferenciaId!)
+                    .First(),
+            })
+            .ToListAsync(ct);
+        resultado.AddRange(doEvento.Select(item => new TarefaSemResponsavelAtivo(
+            "Evento", item.Id, item.Titulo, item.EventoId, item.Evento ?? "", item.Prazo, removidas[item.Referencia])));
+
+        var doFunil = await banco.TarefasFunil.AsNoTracking()
+            .Where(tarefa => tarefa.ContaId == contaId
+                && !tarefa.Completa
+                && tarefa.Responsaveis.Any(r => r.Papel == PapelResponsavel.Assistente && chaves.Contains(r.ReferenciaId)))
+            .Select(tarefa => new
+            {
+                tarefa.Id,
+                tarefa.Titulo,
+                tarefa.OportunidadeId,
+                Lead = banco.Oportunidades.Where(o => o.Id == tarefa.OportunidadeId).Select(o => o.Nome).FirstOrDefault(),
+                tarefa.Prazo,
+                Referencia = tarefa.Responsaveis
+                    .Where(r => r.Papel == PapelResponsavel.Assistente && chaves.Contains(r.ReferenciaId))
+                    .Select(r => r.ReferenciaId)
+                    .First(),
+            })
+            .ToListAsync(ct);
+        resultado.AddRange(doFunil.Select(item => new TarefaSemResponsavelAtivo(
+            "Funil", item.Id, item.Titulo, item.OportunidadeId, item.Lead ?? "", (DateOnly?)item.Prazo, removidas[item.Referencia])));
+
+        return resultado.OrderBy(item => item.Prazo ?? DateOnly.MaxValue).ThenBy(item => item.Titulo).ToArray();
+    }
+
     public async Task<IReadOnlyList<RetornoFunilHoje>> RetornosFunilAsync(string contaId, DateOnly ate, CancellationToken ct) =>
         await banco.Oportunidades.AsNoTracking()
             .Where(item => item.ContaId == contaId
