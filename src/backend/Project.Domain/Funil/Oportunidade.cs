@@ -42,7 +42,16 @@ public sealed class Oportunidade
 
     public DateOnly? DataPrevista { get; set; }
 
+    /// <summary>Texto livre antigo. Desde a SPEC-031 parte D os horários ficam nos quatro campos abaixo.</summary>
     public string? Horarios { get; set; }
+
+    public TimeOnly? HoraConvite { get; set; }
+
+    public TimeOnly? HoraCerimonia { get; set; }
+
+    public TimeOnly? HoraRecepcao { get; set; }
+
+    public TimeOnly? HoraFesta { get; set; }
 
     public int? QuantidadePadrinhos { get; set; }
 

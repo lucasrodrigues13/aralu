@@ -27,6 +27,8 @@ import {
 } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { CampoDataComponent } from '../../shared/campo-data';
+import { CampoHoraComponent } from '../../shared/campo-hora';
+import { horaParaApi } from '../../shared/mascaras';
 import { CampoDinheiroComponent } from '../../shared/campo-dinheiro';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { deDataParaIso, deIsoParaData } from '../../shared/data';
@@ -41,7 +43,7 @@ import { EstagiosFunilDialog } from './estagios-funil.dialog';
 
 @Component({
   selector: 'app-oportunidade-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, CampoDataComponent, CampoDinheiroComponent, LocalCamposComponent],
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, CampoDataComponent, CampoHoraComponent, CampoDinheiroComponent, LocalCamposComponent],
   template: `
     <h2 mat-dialog-title>{{ dados ? 'Editar oportunidade' : 'Nova oportunidade' }}</h2>
     <mat-dialog-content>
@@ -120,10 +122,10 @@ import { EstagiosFunilDialog } from './estagios-funil.dialog';
           <mat-label class="font-semibold mb-2 block">Convidados</mat-label>
           <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Convidados'" matInput type="number" formControlName="quantidadeConvidados" /></mat-form-field>
         </div>
-        <div class="campo">
-          <mat-label class="font-semibold mb-2 block">Horários</mat-label>
-          <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Horários'" matInput formControlName="horarios" placeholder="hh:mm" /></mat-form-field>
-        </div>
+        <app-campo-hora rotulo="Horário do convite" formControlName="horaConvite" />
+        <app-campo-hora rotulo="Horário da cerimônia" formControlName="horaCerimonia" />
+        <app-campo-hora rotulo="Horário da recepção" formControlName="horaRecepcao" />
+        <app-campo-hora rotulo="Horário da festa" formControlName="horaFesta" />
         <h3>Cerimônia</h3>
         <app-local-campos [grupo]="form.controls.cerimonia" />
         <h3>Recepção</h3>
@@ -205,7 +207,10 @@ export class OportunidadeDialog implements OnInit {
     tipoEvento: [this.dados?.tipoEvento ?? null as string | null],
     dataPrevista: this.fb.control<Date | null>(deIsoParaData(this.dados?.dataPrevista)),
     quantidadeConvidados: [this.dados?.quantidadeConvidados ?? null as number | null],
-    horarios: [this.dados?.horarios ?? ''],
+    horaConvite: [(this.dados?.horaConvite ?? '').slice(0, 5)],
+    horaCerimonia: [(this.dados?.horaCerimonia ?? '').slice(0, 5)],
+    horaRecepcao: [(this.dados?.horaRecepcao ?? '').slice(0, 5)],
+    horaFesta: [(this.dados?.horaFesta ?? '').slice(0, 5)],
     cerimonia: grupoLocal(this.fb, {
       nome: this.dados?.localCerimonia,
       endereco: this.dados?.enderecoCerimonia,
@@ -324,7 +329,11 @@ export class OportunidadeDialog implements OnInit {
         tipoEvento: v.tipoEvento,
         dataPrevista: dataIso,
         quantidadeConvidados: v.quantidadeConvidados,
-        horarios: v.horarios?.trim() || null,
+        horarios: null,
+        horaConvite: horaParaApi(v.horaConvite),
+        horaCerimonia: horaParaApi(v.horaCerimonia),
+        horaRecepcao: horaParaApi(v.horaRecepcao),
+        horaFesta: horaParaApi(v.horaFesta),
         localCerimonia: cerimonia.nome,
         enderecoCerimonia: cerimonia.endereco,
         cepCerimonia: cerimonia.cep,

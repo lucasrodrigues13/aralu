@@ -371,6 +371,36 @@ public class FunilFluxoTests
         return json.RootElement.GetProperty("sub").GetString()!;
     }
 
+    [Fact]
+    public async Task Horarios_do_lead_ficam_em_quatro_campos_e_o_texto_antigo_e_convertido()
+    {
+        var dono = await Entrar();
+        var lead = await Ler(await dono.PostAsJsonAsync("/api/v1/oportunidades", new
+        {
+            nome = "Casamento Bia",
+            estagio = "Contato inicial",
+            horaConvite = "15:30",
+            horaCerimonia = "16:00",
+            horaRecepcao = "18:00",
+            horaFesta = "20:30",
+            contatos = new[] { new { nome = "Bia", telefone = "11988880001", email = "bia@ex.com" } },
+        }));
+        Assert.Equal("15:30:00", lead.GetProperty("horaConvite").GetString());
+        Assert.Equal("20:30:00", lead.GetProperty("horaFesta").GetString());
+
+        // Lead antigo: só o texto livre. A leitura converte nos quatro campos; ao salvar, o texto some.
+        var antigo = await Ler(await dono.PostAsJsonAsync("/api/v1/oportunidades", new
+        {
+            nome = "Casamento Carla",
+            estagio = "Contato inicial",
+            horarios = "Cerimônia 17h, recepção 19h30",
+            contatos = new[] { new { nome = "Carla", telefone = "11988880002", email = "carla@ex.com" } },
+        }));
+        Assert.Equal("17:00:00", antigo.GetProperty("horaCerimonia").GetString());
+        Assert.Equal("19:30:00", antigo.GetProperty("horaRecepcao").GetString());
+        Assert.Equal(JsonValueKind.Null, antigo.GetProperty("horaFesta").ValueKind);
+    }
+
     private async Task<HttpClient> Entrar()
     {
         var email = $"funil-{Guid.NewGuid():N}@gevents.test";

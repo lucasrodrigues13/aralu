@@ -2545,3 +2545,42 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261120194619_HorariosDoLead') THEN
+    ALTER TABLE "Oportunidades" ADD "HoraCerimonia" time without time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261120194619_HorariosDoLead') THEN
+    ALTER TABLE "Oportunidades" ADD "HoraConvite" time without time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261120194619_HorariosDoLead') THEN
+    ALTER TABLE "Oportunidades" ADD "HoraFesta" time without time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261120194619_HorariosDoLead') THEN
+    ALTER TABLE "Oportunidades" ADD "HoraRecepcao" time without time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261120194619_HorariosDoLead') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261120194619_HorariosDoLead', '10.0.4');
+    END IF;
+END $EF$;
+COMMIT;
+

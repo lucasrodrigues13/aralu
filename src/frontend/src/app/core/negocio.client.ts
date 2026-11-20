@@ -1312,7 +1312,12 @@ export interface Oportunidade {
   tipoEvento: string | null;
   quantidadeConvidados: number | null;
   dataPrevista: string | null;
+  /** Texto livre antigo; os quatro horários abaixo o substituem (SPEC-031 §6.7). */
   horarios: string | null;
+  horaConvite: string | null;
+  horaCerimonia: string | null;
+  horaRecepcao: string | null;
+  horaFesta: string | null;
   quantidadePadrinhos: number | null;
   quantidadeDamas: number | null;
   localCerimonia: string | null;

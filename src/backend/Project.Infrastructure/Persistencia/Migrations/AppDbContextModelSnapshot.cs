@@ -1731,6 +1731,18 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<string>("FonteOutro")
                         .HasColumnType("text");
 
+                    b.Property<TimeOnly?>("HoraCerimonia")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<TimeOnly?>("HoraConvite")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<TimeOnly?>("HoraFesta")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<TimeOnly?>("HoraRecepcao")
+                        .HasColumnType("time without time zone");
+
                     b.Property<string>("Horarios")
                         .HasColumnType("text");
 

@@ -48,7 +48,11 @@ public sealed record OportunidadeLeitura(
     DateOnly? RetornarEm,
     TimeOnly? RetornarHora,
     bool ContatoRepetido,
-    PropostaResumo? Proposta = null);
+    PropostaResumo? Proposta = null,
+    TimeOnly? HoraConvite = null,
+    TimeOnly? HoraCerimonia = null,
+    TimeOnly? HoraRecepcao = null,
+    TimeOnly? HoraFesta = null);
 
 public sealed record ContatoOportunidadePedido(string? Nome, string? Telefone, string? Email);
 
@@ -86,7 +90,11 @@ public sealed record SalvarOportunidade(
     IReadOnlyList<ContatoOportunidadePedido>? Contatos,
     string? FonteOutro = null,
     DateOnly? RetornarEm = null,
-    TimeOnly? RetornarHora = null);
+    TimeOnly? RetornarHora = null,
+    TimeOnly? HoraConvite = null,
+    TimeOnly? HoraCerimonia = null,
+    TimeOnly? HoraRecepcao = null,
+    TimeOnly? HoraFesta = null);
 
 public sealed record MoverOportunidade(string? Estagio, string? MotivoDescarte);
 
@@ -193,6 +201,10 @@ public sealed class OportunidadeServico(IDados dados)
         item.QuantidadeConvidados = novo.QuantidadeConvidados;
         item.DataPrevista = novo.DataPrevista;
         item.Horarios = novo.Horarios;
+        item.HoraConvite = novo.HoraConvite;
+        item.HoraCerimonia = novo.HoraCerimonia;
+        item.HoraRecepcao = novo.HoraRecepcao;
+        item.HoraFesta = novo.HoraFesta;
         item.QuantidadePadrinhos = novo.QuantidadePadrinhos;
         item.QuantidadeDamas = novo.QuantidadeDamas;
         item.LocalCerimonia = novo.LocalCerimonia;
@@ -586,6 +598,10 @@ public sealed class OportunidadeServico(IDados dados)
             QuantidadeConvidados = pedido.QuantidadeConvidados,
             DataPrevista = pedido.DataPrevista,
             Horarios = Domain.Comum.Texto.Limpo(pedido.Horarios),
+            HoraConvite = pedido.HoraConvite,
+            HoraCerimonia = pedido.HoraCerimonia,
+            HoraRecepcao = pedido.HoraRecepcao,
+            HoraFesta = pedido.HoraFesta,
             QuantidadePadrinhos = pedido.QuantidadePadrinhos,
             QuantidadeDamas = pedido.QuantidadeDamas,
             LocalCerimonia = Domain.Comum.Texto.Limpo(pedido.LocalCerimonia),
@@ -615,8 +631,18 @@ public sealed class OportunidadeServico(IDados dados)
 
     internal static OportunidadeLeitura Ler(Oportunidade item) => Ler(item, null);
 
-    internal static OportunidadeLeitura Ler(Oportunidade item, PropostaResumo? proposta) =>
-        new(
+    internal static OportunidadeLeitura Ler(Oportunidade item, PropostaResumo? proposta)
+    {
+        // SPEC-031 §6.7: o texto livre antigo é convertido nos quatro campos ao ler; ao salvar, o texto some.
+        var antigos = item.HoraConvite is null && item.HoraCerimonia is null && item.HoraRecepcao is null && item.HoraFesta is null
+            ? HorariosTexto.Interpretar(item.Horarios)
+            : new QuatroHorarios(null, null, null, null);
+        var horarios = new QuatroHorarios(
+            item.HoraConvite ?? antigos.Convite,
+            item.HoraCerimonia ?? antigos.Cerimonia,
+            item.HoraRecepcao ?? antigos.Recepcao,
+            item.HoraFesta ?? antigos.Festa);
+        return new(
             item.Id,
             item.Nome,
             item.EstagioFunil?.Nome ?? "",
@@ -658,5 +684,10 @@ public sealed class OportunidadeServico(IDados dados)
             item.RetornarEm,
             item.RetornarHora,
             item.ContatoRepetido,
-            proposta);
+            proposta,
+            horarios.Convite,
+            horarios.Cerimonia,
+            horarios.Recepcao,
+            horarios.Festa);
+    }
 }
