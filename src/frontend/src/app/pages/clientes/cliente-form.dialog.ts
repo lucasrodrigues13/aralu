@@ -20,7 +20,7 @@ import { aplicarMascara } from '../../shared/mascaras';
   selector: 'app-cliente-form',
   imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatTabsModule, MatSlideToggleModule, MatCheckboxModule, MascaraDirective, CampoDataComponent],
   template: `
-    <h2 mat-dialog-title>{{ dados ? 'Editar cliente' : 'Novo cliente' }}</h2>
+    <h2 mat-dialog-title>{{ edicao ? 'Editar cliente' : 'Novo cliente' }}</h2>
     <mat-dialog-content>
       <form id="cliente-form" class="grid grid-cols-1 gap-4" [formGroup]="formulario" (ngSubmit)="salvar()">
         <mat-tab-group>
@@ -153,7 +153,9 @@ import { aplicarMascara } from '../../shared/mascaras';
   `,
 })
 export class ClienteFormDialog {
-  protected readonly dados = inject<Cliente | null>(MAT_DIALOG_DATA);
+  /** Cliente para editar, ou dados parciais (sem id) para pré-preencher um cliente novo. */
+  protected readonly dados = inject<Partial<Cliente> | null>(MAT_DIALOG_DATA);
+  protected readonly edicao = !!this.dados?.id;
   protected readonly ref = inject(MatDialogRef<ClienteFormDialog, Cliente>);
   private readonly fb = inject(FormBuilder);
   private readonly negocio = inject(NegocioClient);
@@ -161,7 +163,7 @@ export class ClienteFormDialog {
   protected readonly papeis = PAPEIS;
   protected readonly formulario = this.fb.nonNullable.group({
     nome: [this.dados?.nome ?? '', Validators.required],
-    papel: [this.dados ? (this.dados.papel ?? '') : 'Noiva', Validators.required],
+    papel: [this.edicao ? (this.dados?.papel ?? '') : (this.dados?.papel ?? 'Noiva'), Validators.required],
     nascimento: this.fb.control<Date | null>(deIsoParaData(this.dados?.nascimento)),
     email: [this.dados?.email ?? '', Validators.required],
     ddi: this.dados?.ddi ?? '+55',
@@ -228,12 +230,13 @@ export class ClienteFormDialog {
       ...valor,
       nascimento: deDataParaIso(valor.nascimento),
     };
-    const destino = this.dados
-      ? this.negocio.atualizarCliente(this.dados.id, pedido)
+    const id = this.dados?.id;
+    const destino = id
+      ? this.negocio.atualizarCliente(id, pedido)
       : this.negocio.criarCliente(pedido);
     destino.subscribe({
       next: (cliente) => {
-        this.toast.sucesso(this.dados ? 'Cliente atualizado.' : 'Cliente criado.');
+        this.toast.sucesso(id ? 'Cliente atualizado.' : 'Cliente criado.');
         this.ref.close(cliente);
       },
       error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),

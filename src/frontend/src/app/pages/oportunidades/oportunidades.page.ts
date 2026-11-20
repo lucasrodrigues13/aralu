@@ -1,15 +1,19 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
-import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { FormArray, FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { AuthService } from '../../core/auth.service';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import {
+  Cliente,
   ESTAGIOS_FUNIL,
   ModeloServicoFunil,
   NegocioClient,
@@ -22,8 +26,11 @@ import { CampoDinheiroComponent } from '../../shared/campo-dinheiro';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { deDataParaIso, deIsoParaData } from '../../shared/data';
 import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
+import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { GdDinheiroPipe } from '../../shared/gd-dinheiro.pipe';
 import { grupoLocal, localPedido, LocalCamposComponent } from '../../shared/local-campos';
+import { STATUS } from '../../shared/status';
+import { ClienteFormDialog } from '../clientes/cliente-form.dialog';
 
 @Component({
   selector: 'app-oportunidade-dialog',
@@ -265,82 +272,277 @@ export class OportunidadeDialog implements OnInit {
   }
 }
 
+
+/** Pede o motivo do descarte (SPEC-020 §8). */
+@Component({
+  selector: 'app-descarte-dialog',
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule],
+  template: `
+    <h2 mat-dialog-title>Descartar oportunidade</h2>
+    <p class="gd-dialog-descricao">{{ nome }} sai do funil ativo. O motivo vai para o relatório de descartes.</p>
+    <mat-dialog-content>
+      <div class="campo">
+        <mat-label class="font-semibold mb-2 block">Motivo do descarte</mat-label>
+        <mat-form-field appearance="outline" class="w-full">
+          <input matInput aria-label="Motivo do descarte" [formControl]="motivo" placeholder="Ex.: preço, data ocupada, desistiu" />
+        </mat-form-field>
+      </div>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-stroked-button type="button" (click)="ref.close()">Cancelar</button>
+      <button mat-flat-button type="button" (click)="confirmar()">Descartar</button>
+    </mat-dialog-actions>
+  `,
+})
+export class DescarteDialog {
+  protected readonly nome = inject<string>(MAT_DIALOG_DATA);
+  protected readonly ref = inject(MatDialogRef<DescarteDialog, string>);
+  protected readonly motivo = new FormControl('', { nonNullable: true, validators: Validators.required });
+
+  protected confirmar(): void {
+    const texto = this.motivo.value.trim();
+    if (!texto) {
+      this.motivo.markAsTouched();
+      return;
+    }
+    this.ref.close(texto);
+  }
+}
+
+interface AparenciaEstagio {
+  icone: string;
+  /** Cor do token do tema (primary, info, warning, success, error). */
+  cor: string;
+}
+
+/** Cor e ícone de cada estágio, no padrão dos cartões da tela Hoje. */
+export const APARENCIA_ESTAGIO: Record<string, AparenciaEstagio> = {
+  'Contato inicial': { icone: 'forum', cor: 'info' },
+  'Orçamento enviado': { icone: 'request_quote', cor: 'warning' },
+  Contratado: { icone: 'handshake', cor: 'success' },
+  Descartado: { icone: 'block', cor: 'error' },
+};
+
+const ROTULO_TIPO: Record<string, string> = Object.fromEntries(TIPOS.map((t) => [t.valor, t.rotulo]));
+
+/** Dias inteiros desde a data ISO até agora (nunca negativo). */
+export function diasDesde(iso: string, agora: Date = new Date()): number {
+  const inicio = new Date(iso);
+  const ms = agora.getTime() - inicio.getTime();
+  return Math.max(0, Math.floor(ms / 86_400_000));
+}
+
+/** "hoje", "há 1 dia", "há N dias". */
+export function textoDias(dias: number): string {
+  if (dias === 0) return 'hoje';
+  return dias === 1 ? 'há 1 dia' : `há ${dias} dias`;
+}
+
+/** Quadro de oportunidades (SPEC-020 v2): leads em cartões por estágio. */
 @Component({
   selector: 'app-oportunidades',
-  imports: [MatCardModule, ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatSelectModule, CampoDataComponent, GdDinheiroPipe],
+  imports: [
+    MatCardModule, ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule,
+    MatSelectModule, MatMenuModule, MatTooltipModule, RouterLink, CampoDataComponent, GdDinheiroPipe, GdDataPipe,
+  ],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6 flex flex-wrap items-center justify-between gap-4">
-      <div>
-        <mat-card-title class="mb-0">Oportunidades</mat-card-title>
-        <mat-card-subtitle>Quadro do funil de vendas da conta.</mat-card-subtitle>
+        <div>
+          <mat-card-title class="mb-0">Oportunidades</mat-card-title>
+          <mat-card-subtitle>
+            {{ emAberto().qtd }} {{ emAberto().qtd === 1 ? 'lead em aberto' : 'leads em aberto' }}
+            · {{ emAberto().valor | gdDinheiro }} em negociação
+          </mat-card-subtitle>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button mat-stroked-button type="button" (click)="copiarLinkLead()"><mat-icon>link</mat-icon> Link do lead</button>
+          <button mat-stroked-button type="button" (click)="exportar()"><mat-icon>download</mat-icon> Exportar</button>
+          <button mat-flat-button type="button" (click)="abrir()"><mat-icon>add</mat-icon> Nova oportunidade</button>
+        </div>
       </div>
-      <div class="acoes-topo">
-        <button mat-stroked-button type="button" (click)="copiarLinkLead()">Link do lead</button>
-        <button mat-stroked-button type="button" (click)="exportar()">Exportar</button>
-        <button mat-flat-button type="button" (click)="abrir()"><mat-icon>add</mat-icon> Adicionar</button>
-      </div>
+    </mat-card>
+
+    <div class="grid grid-cols-2 xl:grid-cols-4 gap-6 mb-6">
+      @for (estagio of estagios; track estagio) {
+        <a class="block no-underline" [href]="'#' + ancora(estagio)" (click)="rolar($event, estagio)">
+          <mat-card class="shadow-none text-center mb-0! h-full card-hover" [class]="'bg-light-' + cor(estagio)">
+            <mat-card-content>
+              <mat-icon [class]="'text-' + cor(estagio)">{{ icone(estagio) }}</mat-icon>
+              <h4 class="text-sm font-semibold mt-2!" [class]="'text-' + cor(estagio)">{{ estagio }}</h4>
+              <h6 class="text-xl font-semibold mt-2!" [class]="'text-' + cor(estagio)">{{ resumo(estagio).qtd }}</h6>
+              <span class="block text-xs mt-1" [class]="'text-' + cor(estagio)">{{ resumo(estagio).valor | gdDinheiro }}</span>
+            </mat-card-content>
+          </mat-card>
+        </a>
+      }
     </div>
-      <mat-card-content class="border-t border-border">
-      <form class="flex flex-wrap items-end gap-4 mb-6" [formGroup]="filtros" (ngSubmit)="carregar()">
-        <div class="campo w-full sm:w-64">
-          <mat-label class="font-semibold mb-2 block">Buscar</mat-label>
-          <mat-form-field appearance="outline" class="w-full">
-          <mat-icon matIconPrefix>search</mat-icon>
-          <input matInput aria-label="Buscar" formControlName="nome" placeholder="Buscar por nome" />
-        </mat-form-field>
-        </div>
-        <div class="campo w-full sm:w-48">
-          <mat-label class="font-semibold mb-2 block">Responsável</mat-label>
-          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
-          <input [attr.aria-label]="'Responsável'" matInput formControlName="responsavel" />
-        </mat-form-field>
-        </div>
-        <div class="campo w-full sm:w-48">
-          <mat-label class="font-semibold mb-2 block">Tipo de evento</mat-label>
-          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
-          <mat-select [attr.aria-label]="'Tipo de evento'" formControlName="tipoEvento">
-            <mat-option [value]="''">Todos</mat-option>
-            @for (t of tipos; track t.valor) { <mat-option [value]="t.valor">{{ t.rotulo }}</mat-option> }
-          </mat-select>
-        </mat-form-field>
-        </div>
-        <app-campo-data class="w-full sm:w-40" formControlName="dataDe" rotulo="Data de" />
-        <app-campo-data class="w-full sm:w-40" formControlName="dataAte" rotulo="Data até" />
-        <button mat-flat-button type="submit">Filtrar</button>
-      </form>
-      <div class="quadro">
-        @for (estagio of estagios; track estagio) {
-          <div class="coluna">
-            <header>
-              <strong>{{ estagio }}</strong>
-              <span>{{ resumo(estagio).qtd }} · {{ resumo(estagio).valor | gdDinheiro }}</span>
-            </header>
-            @for (item of daColuna(estagio); track item.id) {
-              <article>
-                <strong>{{ item.nome }}</strong>
-                <span class="block text-xs text-muted">{{ (item.valorProposta ?? 0) | gdDinheiro }}</span>
-                <div class="flex flex-wrap items-center justify-end gap-2">
-                  <button mat-icon-button type="button" (click)="abrir(item)"><mat-icon>edit</mat-icon></button>
-                  <button mat-icon-button type="button" (click)="mover(item)"><mat-icon>swap_horiz</mat-icon></button>
-                  <button mat-icon-button type="button" (click)="excluir(item)"><mat-icon>delete</mat-icon></button>
-                </div>
-              </article>
+
+    <mat-card class="cardWithShadow">
+      <mat-card-content>
+        <form class="flex flex-wrap items-end gap-4" [formGroup]="filtros" (ngSubmit)="carregar()">
+          <div class="campo w-full sm:w-64">
+            <mat-label class="font-semibold mb-2 block">Buscar</mat-label>
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
+              <mat-icon matIconPrefix>search</mat-icon>
+              <input matInput aria-label="Buscar" formControlName="nome" placeholder="Nome do lead" />
+            </mat-form-field>
+          </div>
+          <div class="campo w-full sm:w-48">
+            <mat-label class="font-semibold mb-2 block">Tipo de evento</mat-label>
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
+              <mat-select aria-label="Tipo de evento" formControlName="tipoEvento">
+                <mat-option [value]="''">Todos</mat-option>
+                @for (t of tipos; track t.valor) { <mat-option [value]="t.valor">{{ t.rotulo }}</mat-option> }
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <app-campo-data class="w-full sm:w-40" formControlName="dataDe" rotulo="Evento de" />
+          <app-campo-data class="w-full sm:w-40" formControlName="dataAte" rotulo="Evento até" />
+          <div class="campo w-full sm:w-48">
+            <mat-label class="font-semibold mb-2 block">Responsável</mat-label>
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
+              <input matInput aria-label="Responsável" formControlName="responsavel" />
+            </mat-form-field>
+          </div>
+          <div class="flex gap-2">
+            <button mat-flat-button type="submit">Filtrar</button>
+            @if (temFiltro()) {
+              <button mat-button type="button" (click)="limpar()">Limpar</button>
             }
           </div>
-        }
-      </div>
-    </mat-card-content>
+        </form>
+      </mat-card-content>
     </mat-card>
+
+    <div class="quadro grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+      @for (estagio of estagios; track estagio) {
+        <section class="coluna" [id]="ancora(estagio)" [style.--cor-estagio]="'var(--color-' + cor(estagio) + ')'">
+          <header class="flex items-center justify-between gap-2 mb-4">
+            <div class="flex items-center gap-2 min-w-0">
+              <mat-icon [class]="'text-' + cor(estagio)">{{ icone(estagio) }}</mat-icon>
+              <h3 class="text-base font-semibold truncate">{{ estagio }}</h3>
+              <span class="contador" [class]="'bg-light-' + cor(estagio) + ' text-' + cor(estagio)">{{ resumo(estagio).qtd }}</span>
+            </div>
+            <span class="text-sm font-semibold whitespace-nowrap">{{ resumo(estagio).valor | gdDinheiro }}</span>
+          </header>
+
+          @for (item of daColuna(estagio); track item.id) {
+            <article class="lead" (click)="abrir(item)" (keydown.enter)="abrir(item)" tabindex="0" [attr.aria-label]="'Abrir ' + item.nome">
+              <div class="flex items-start justify-between gap-2">
+                <h4 class="text-sm font-semibold leading-snug">{{ item.nome }}</h4>
+                <button mat-icon-button type="button" class="menu-lead" aria-label="Ações do lead"
+                  [matMenuTriggerFor]="menu" (click)="$event.stopPropagation()">
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+                <mat-menu #menu="matMenu">
+                  <button mat-menu-item type="button" (click)="abrir(item)"><mat-icon>edit</mat-icon> Editar</button>
+                  @for (destino of estagios; track destino) {
+                    @if (destino !== item.estagio) {
+                      <button mat-menu-item type="button" (click)="mover(item, destino)">
+                        <mat-icon>{{ icone(destino) }}</mat-icon> Mover para {{ destino }}
+                      </button>
+                    }
+                  }
+                  @if (!item.clienteId) {
+                    <button mat-menu-item type="button" (click)="virarCliente(item)"><mat-icon>person_add</mat-icon> Virar cliente</button>
+                  }
+                  <button mat-menu-item type="button" (click)="excluir(item)"><mat-icon class="text-error">delete</mat-icon> Excluir</button>
+                </mat-menu>
+              </div>
+
+              <span class="block text-lg font-semibold mt-1" [class.text-muted]="item.valorProposta == null">
+                {{ item.valorProposta == null ? 'Sem valor' : (item.valorProposta | gdDinheiro) }}
+              </span>
+
+              <ul class="detalhes mt-3">
+                @if (item.tipoEvento || item.dataPrevista) {
+                  <li>
+                    <mat-icon>celebration</mat-icon>
+                    <span>{{ tipo(item.tipoEvento) }}{{ item.tipoEvento && item.dataPrevista ? ' · ' : '' }}{{ item.dataPrevista ? (item.dataPrevista | gdData) : '' }}</span>
+                  </li>
+                }
+                @if (item.quantidadeConvidados) {
+                  <li><mat-icon>groups</mat-icon><span>{{ item.quantidadeConvidados }} convidados</span></li>
+                }
+                @if (item.contatos[0]; as contato) {
+                  <li>
+                    <mat-icon>person</mat-icon>
+                    <span class="truncate">{{ contato.nome }}{{ contato.telefone ? ' · ' + contato.telefone : '' }}</span>
+                    @if (whatsapp(contato.telefone); as link) {
+                      <a class="whats" [href]="link" target="_blank" rel="noopener" matTooltip="Abrir no WhatsApp"
+                        aria-label="Abrir no WhatsApp" (click)="$event.stopPropagation()"><mat-icon>chat</mat-icon></a>
+                    }
+                  </li>
+                }
+                @if (item.fonte) {
+                  <li><mat-icon>campaign</mat-icon><span class="truncate">{{ item.fonte }}</span></li>
+                }
+                @if (item.estagio === 'Descartado' && item.motivoDescarte) {
+                  <li class="text-error"><mat-icon>info</mat-icon><span>{{ item.motivoDescarte }}</span></li>
+                }
+              </ul>
+
+              <footer class="flex flex-wrap items-center justify-between gap-2 mt-3 pt-3">
+                <span class="text-xs text-muted" [matTooltip]="'Entrou em ' + item.estagio + ' em ' + (item.entradaNoEstagioEm | gdData)">
+                  <mat-icon class="relogio">schedule</mat-icon> {{ diasNoEstagio(item) }}
+                </span>
+                @if (item.clienteId) {
+                  <a [class]="status.sucesso" routerLink="/clientes" (click)="$event.stopPropagation()">
+                    <mat-icon class="selo">verified</mat-icon> Cliente
+                  </a>
+                } @else if (item.estagio === 'Contato inicial') {
+                  <button mat-button type="button" class="acao-lead" (click)="$event.stopPropagation(); mover(item, 'Orçamento enviado')">
+                    Orçamento enviado <mat-icon iconPositionEnd>arrow_forward</mat-icon>
+                  </button>
+                } @else if (item.estagio === 'Orçamento enviado' || item.estagio === 'Contratado') {
+                  <button mat-flat-button type="button" class="acao-lead" (click)="$event.stopPropagation(); virarCliente(item)">
+                    <mat-icon>person_add</mat-icon> Virar cliente
+                  </button>
+                }
+              </footer>
+            </article>
+          } @empty {
+            <p class="vazio text-sm text-muted text-center">Nenhum lead nesta etapa.</p>
+          }
+        </section>
+      }
+    </div>
   `,
   styles: `
-    .acoes-topo { display: flex; gap: 8px; flex-wrap: wrap; }
-    .filtros { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-    .filtros app-campo-data { display: block; }
-    .quadro { display: grid; grid-template-columns: repeat(4, minmax(180px, 1fr)); gap: 12px; overflow-x: auto; }
-    .coluna { background: var(--mat-card-elevated-container-color); border: 1px solid var(--mat-sys-outline-variant); border-radius: 8px; padding: 10px; min-height: 240px; }
-    .coluna header { display: flex; flex-direction: column; gap: 2px; margin-bottom: 8px; }
-    article { border: 1px solid var(--mat-sys-outline-variant); border-radius: 8px; padding: 8px; margin-bottom: 8px; }
+    .quadro { align-items: start; }
+    .coluna {
+      background: var(--mat-card-elevated-container-color, var(--color-light));
+      border: 1px solid var(--color-border);
+      border-top: 3px solid var(--cor-estagio);
+      border-radius: 12px;
+      padding: 16px;
+      min-height: 200px;
+    }
+    .contador { border-radius: 999px; padding: 0 8px; font-size: 0.75rem; font-weight: 600; line-height: 20px; }
+    .lead {
+      background: var(--mat-sys-surface);
+      border: 1px solid var(--color-border);
+      border-left: 3px solid var(--cor-estagio);
+      border-radius: 10px;
+      padding: 12px 12px 10px 14px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: box-shadow 0.15s ease, transform 0.15s ease;
+    }
+    .lead:hover, .lead:focus-visible { box-shadow: 0 6px 18px rgb(0 0 0 / 0.08); transform: translateY(-1px); outline: none; }
+    .lead h4 { margin: 0; padding-top: 6px; overflow-wrap: anywhere; }
+    .menu-lead { margin: -6px -8px 0 0; flex: none; }
+    .detalhes { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+    .detalhes li { display: flex; align-items: center; gap: 8px; font-size: 0.8125rem; min-width: 0; }
+    .detalhes li > .mat-icon { font-size: 16px; width: 16px; height: 16px; flex: none; opacity: 0.7; }
+    .whats { margin-left: auto; display: inline-flex; color: var(--color-success); }
+    .whats .mat-icon { font-size: 18px; width: 18px; height: 18px; }
+    .lead footer { border-top: 1px dashed var(--color-border); }
+    .relogio, .selo { font-size: 14px; width: 14px; height: 14px; vertical-align: -2px; }
+    a[routerLink] { text-decoration: none; }
+    .acao-lead { min-height: 32px; height: 32px; font-size: 0.8125rem; }
+    .vazio { border: 1px dashed var(--color-border); border-radius: 10px; padding: 24px 12px; margin: 0; }
   `,
 })
 export class OportunidadesPage implements OnInit {
@@ -351,6 +553,7 @@ export class OportunidadesPage implements OnInit {
   private readonly auth = inject(AuthService);
   protected readonly estagios = ESTAGIOS_FUNIL;
   protected readonly tipos = TIPOS;
+  protected readonly status = STATUS;
   protected readonly lista = signal<Oportunidade[]>([]);
   protected readonly filtros = this.fb.nonNullable.group({
     nome: [''],
@@ -360,8 +563,40 @@ export class OportunidadesPage implements OnInit {
     dataAte: this.fb.control<Date | null>(null),
   });
 
+  /** Leads ainda em negociação (Contato inicial e Orçamento enviado). */
+  protected readonly emAberto = computed(() => {
+    const abertos = this.lista().filter((i) => i.estagio === 'Contato inicial' || i.estagio === 'Orçamento enviado');
+    return { qtd: abertos.length, valor: abertos.reduce((acc, i) => acc + (i.valorProposta ?? 0), 0) };
+  });
+
   ngOnInit(): void {
     this.carregar();
+  }
+
+  protected cor(estagio: string): string {
+    return APARENCIA_ESTAGIO[estagio]?.cor ?? 'primary';
+  }
+
+  protected icone(estagio: string): string {
+    return APARENCIA_ESTAGIO[estagio]?.icone ?? 'label';
+  }
+
+  protected ancora(estagio: string): string {
+    return 'estagio-' + this.estagios.indexOf(estagio);
+  }
+
+  protected tipo(valor: string | null): string {
+    return valor ? (ROTULO_TIPO[valor] ?? valor) : '';
+  }
+
+  protected diasNoEstagio(item: Oportunidade): string {
+    return textoDias(diasDesde(item.entradaNoEstagioEm));
+  }
+
+  protected whatsapp(telefone: string | null): string | null {
+    const digitos = (telefone ?? '').replace(/\D/g, '');
+    if (digitos.length < 10) return null;
+    return `https://wa.me/${digitos.length <= 11 ? '55' + digitos : digitos}`;
   }
 
   protected daColuna(estagio: string): Oportunidade[] {
@@ -371,6 +606,21 @@ export class OportunidadesPage implements OnInit {
   protected resumo(estagio: string): { qtd: number; valor: number } {
     const itens = this.daColuna(estagio);
     return { qtd: itens.length, valor: itens.reduce((acc, item) => acc + (item.valorProposta ?? 0), 0) };
+  }
+
+  protected rolar(evento: Event, estagio: string): void {
+    evento.preventDefault();
+    document.getElementById(this.ancora(estagio))?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  protected temFiltro(): boolean {
+    const v = this.filtros.getRawValue();
+    return !!(v.nome || v.responsavel || v.tipoEvento || v.dataDe || v.dataAte);
+  }
+
+  protected limpar(): void {
+    this.filtros.reset();
+    this.carregar();
   }
 
   protected abrir(item?: Oportunidade): void {
@@ -385,23 +635,40 @@ export class OportunidadesPage implements OnInit {
     this.dialog.open(OportunidadeDialog, { ...DIALOG, data: null }).afterClosed().subscribe((ok) => ok && this.carregar());
   }
 
-  protected mover(item: Oportunidade): void {
-    const atual = this.estagios.indexOf(item.estagio);
-    const proximo = this.estagios[(atual + 1) % this.estagios.length];
-    let motivo: string | undefined;
-    if (proximo === 'Descartado') {
-      motivo = prompt('Motivo do descarte') ?? undefined;
-      if (!motivo?.trim()) {
-        this.toast.erro('Informe o motivo do descarte.');
-        return;
-      }
+  protected mover(item: Oportunidade, destino: string): void {
+    if (destino === 'Descartado') {
+      this.dialog.open(DescarteDialog, { ...DIALOG_PEQUENO, data: item.nome }).afterClosed().subscribe((motivo?: string) => {
+        if (motivo) this.gravarMovimento(item, destino, motivo);
+      });
+      return;
     }
-    this.negocio.moverOportunidade(item.id, { estagio: proximo, motivoDescarte: motivo }).subscribe({
-      next: () => {
-        this.toast.sucesso('Estágio atualizado.');
-        this.carregar();
-      },
-      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+    this.gravarMovimento(item, destino);
+  }
+
+  /**
+   * Fim do funil: abre o cadastro de cliente já preenchido com o contato do lead.
+   * Ao salvar, o lead fica ligado ao cliente e vai para Contratado.
+   */
+  protected virarCliente(item: Oportunidade): void {
+    const contato = item.contatos[0];
+    const telefone = (contato?.telefone ?? '').replace(/\D/g, '');
+    const inicial: Partial<Cliente> = {
+      nome: contato?.nome ?? item.nome,
+      email: contato?.email ?? '',
+      celular: telefone.length > 11 && telefone.startsWith('55') ? telefone.slice(2) : telefone,
+      observacao: `Veio do funil: ${item.nome}${item.fonte ? ` (origem: ${item.fonte})` : ''}.`,
+      cidade: item.cidade ?? undefined,
+      estado: item.uf ?? undefined,
+    };
+    this.dialog.open(ClienteFormDialog, { ...DIALOG, data: inicial }).afterClosed().subscribe((cliente?: Cliente) => {
+      if (!cliente) return;
+      this.negocio.vincularClienteOportunidade(item.id, cliente.id).subscribe({
+        next: () => {
+          this.toast.sucesso(`${cliente.nome} agora é cliente. O lead foi para Contratado.`);
+          this.carregar();
+        },
+        error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+      });
     });
   }
 
@@ -451,6 +718,16 @@ export class OportunidadesPage implements OnInit {
   protected carregar(): void {
     this.negocio.oportunidades(this.filtroAtual()).subscribe({
       next: (lista) => this.lista.set(lista),
+      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+    });
+  }
+
+  private gravarMovimento(item: Oportunidade, estagio: string, motivoDescarte?: string): void {
+    this.negocio.moverOportunidade(item.id, { estagio, motivoDescarte }).subscribe({
+      next: () => {
+        this.toast.sucesso(`${item.nome} foi para ${estagio}.`);
+        this.carregar();
+      },
       error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
     });
   }

@@ -1583,6 +1583,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<string>("CidadeRecepcao")
                         .HasColumnType("text");
 
+                    b.Property<Guid?>("ClienteId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("ContaId")
                         .IsRequired()
                         .HasColumnType("text");

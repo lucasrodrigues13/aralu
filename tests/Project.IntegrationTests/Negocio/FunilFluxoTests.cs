@@ -124,6 +124,43 @@ public class FunilFluxoTests
         Assert.Equal("Lead site", lead.GetProperty("nome").GetString());
     }
 
+    [Fact]
+    public async Task Lead_vira_cliente_e_vai_para_contratado()
+    {
+        var dono = await Entrar();
+        var outra = await Entrar();
+
+        var lead = await Ler(await dono.PostAsJsonAsync("/api/v1/oportunidades", new
+        {
+            nome = "Casamento Carla",
+            estagio = "Orçamento enviado",
+            valorProposta = 9000,
+            contatos = new[] { new { nome = "Carla", telefone = "11977776666", email = "carla@ex.com" } },
+        }));
+        var leadId = lead.GetProperty("id").GetGuid();
+        Assert.Equal(JsonValueKind.Null, lead.GetProperty("clienteId").ValueKind);
+
+        var cliente = await Ler(await dono.PostAsJsonAsync("/api/v1/clientes", new
+        {
+            nome = "Carla",
+            papel = "Noiva",
+            email = $"carla-{Guid.NewGuid():N}@gevents.test",
+            ddi = "+55",
+            celular = "11977776666",
+        }));
+        var clienteId = cliente.GetProperty("id").GetGuid();
+
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PostAsJsonAsync($"/api/v1/oportunidades/{leadId}/cliente", new { })).StatusCode);
+        Assert.NotEqual(HttpStatusCode.OK, (await outra.PostAsJsonAsync($"/api/v1/oportunidades/{leadId}/cliente", new { clienteId })).StatusCode);
+
+        var fechado = await Ler(await dono.PostAsJsonAsync($"/api/v1/oportunidades/{leadId}/cliente", new { clienteId }));
+        Assert.Equal("Contratado", fechado.GetProperty("estagio").GetString());
+        Assert.Equal(clienteId, fechado.GetProperty("clienteId").GetGuid());
+
+        var lista = (await Ler(await dono.GetAsync("/api/v1/oportunidades"))).EnumerateArray().ToArray();
+        Assert.Contains(lista, item => item.GetProperty("id").GetGuid() == leadId && item.GetProperty("clienteId").GetGuid() == clienteId);
+    }
+
     private static string ContaId(HttpClient cliente)
     {
         var token = cliente.DefaultRequestHeaders.Authorization!.Parameter!;

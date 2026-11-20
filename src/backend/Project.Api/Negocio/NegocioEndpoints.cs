@@ -115,6 +115,7 @@ public static class NegocioEndpoints
         api.MapGet("/oportunidades/{id:guid}", Oportunidade).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapPut("/oportunidades/{id:guid}", AtualizarOportunidade).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapPost("/oportunidades/{id:guid}/mover", MoverOportunidade).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
+        api.MapPost("/oportunidades/{id:guid}/cliente", VincularClienteOportunidade).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapDelete("/oportunidades/{id:guid}", ExcluirOportunidade).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
 
         api.MapGet("/leads-rsvp", LeadsRsvp).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
@@ -1108,6 +1109,9 @@ public static class NegocioEndpoints
 
     private static Task<IResult> MoverOportunidade(Guid id, MoverOportunidade pedido, ClaimsPrincipal usuario, OportunidadeServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.MoverAsync(conta, id, pedido, ct)));
+
+    private static Task<IResult> VincularClienteOportunidade(Guid id, VincularClienteOportunidade pedido, ClaimsPrincipal usuario, OportunidadeServico servico, CancellationToken ct) =>
+        ComConta(usuario, conta => De(servico.VincularClienteAsync(conta, id, pedido, ct)));
 
     private static Task<IResult> ExcluirOportunidade(Guid id, ClaimsPrincipal usuario, OportunidadeServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.ExcluirAsync(conta, id, ct)));

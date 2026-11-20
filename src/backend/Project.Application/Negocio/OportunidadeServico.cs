@@ -40,7 +40,8 @@ public sealed record OportunidadeLeitura(
     string? MotivoDescarte,
     DateTimeOffset CriadoEm,
     DateTimeOffset EntradaNoEstagioEm,
-    IReadOnlyList<ContatoOportunidadeLeitura> Contatos);
+    IReadOnlyList<ContatoOportunidadeLeitura> Contatos,
+    Guid? ClienteId);
 
 public sealed record ContatoOportunidadePedido(string? Nome, string? Telefone, string? Email);
 
@@ -78,6 +79,8 @@ public sealed record SalvarOportunidade(
     IReadOnlyList<ContatoOportunidadePedido>? Contatos);
 
 public sealed record MoverOportunidade(string? Estagio, string? MotivoDescarte);
+
+public sealed record VincularClienteOportunidade(Guid? ClienteId);
 
 public sealed record FiltroOportunidades(
     string? Nome,
@@ -229,6 +232,43 @@ public sealed class OportunidadeServico(IDados dados)
         if (item.Estagio != estagio)
         {
             item.Estagio = estagio;
+            item.EntradaNoEstagioEm = DateTimeOffset.UtcNow;
+        }
+
+        await dados.SalvarNegocioAsync(ct);
+        return Resultado<OportunidadeLeitura>.Sucesso(Ler(item));
+    }
+
+    /// <summary>
+    /// Fecha o negócio: liga o lead a um cliente da conta e o coloca em Contratado.
+    /// </summary>
+    public async Task<Resultado<OportunidadeLeitura>> VincularClienteAsync(
+        string contaId,
+        Guid id,
+        VincularClienteOportunidade pedido,
+        CancellationToken ct)
+    {
+        var item = await dados.ObterOportunidadeAsync(contaId, id, ct);
+        if (item is null)
+        {
+            return Resultado<OportunidadeLeitura>.Erro(Codigos.Indisponivel, "Indisponível.");
+        }
+
+        if (pedido.ClienteId is not Guid clienteId)
+        {
+            return Resultado<OportunidadeLeitura>.Erro(Codigos.Validacao, "Informe o cliente.");
+        }
+
+        if (await dados.ObterClienteAsync(contaId, clienteId, ct) is null)
+        {
+            return Resultado<OportunidadeLeitura>.Erro(Codigos.Validacao, "Cliente inválido.");
+        }
+
+        item.ClienteId = clienteId;
+        item.MotivoDescarte = null;
+        if (item.Estagio != EstagioOportunidade.Contratado)
+        {
+            item.Estagio = EstagioOportunidade.Contratado;
             item.EntradaNoEstagioEm = DateTimeOffset.UtcNow;
         }
 
@@ -474,5 +514,6 @@ public sealed class OportunidadeServico(IDados dados)
             item.MotivoDescarte,
             item.CriadoEm,
             item.EntradaNoEstagioEm,
-            item.Contatos.Select(c => new ContatoOportunidadeLeitura(c.Id, c.Nome, c.Telefone, c.Email)).ToArray());
+            item.Contatos.Select(c => new ContatoOportunidadeLeitura(c.Id, c.Nome, c.Telefone, c.Email)).ToArray(),
+            item.ClienteId);
 }

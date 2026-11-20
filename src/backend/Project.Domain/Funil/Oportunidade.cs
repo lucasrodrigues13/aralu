@@ -68,6 +68,9 @@ public sealed class Oportunidade
 
     public string? MotivoDescarte { get; set; }
 
+    /// <summary>Cliente criado a partir do lead ao fechar o negócio.</summary>
+    public Guid? ClienteId { get; set; }
+
     public DateTimeOffset CriadoEm { get; set; }
 
     public DateTimeOffset EntradaNoEstagioEm { get; set; }

@@ -1044,6 +1044,11 @@ export class NegocioClient {
     return this.http.post<Oportunidade>(`${this.base}/api/v1/oportunidades/${id}/mover`, pedido);
   }
 
+  /** Fecha o negócio: liga o lead ao cliente e o coloca em Contratado. */
+  vincularClienteOportunidade(id: string, clienteId: string) {
+    return this.http.post<Oportunidade>(`${this.base}/api/v1/oportunidades/${id}/cliente`, { clienteId });
+  }
+
   excluirOportunidade(id: string) {
     return this.http.delete(`${this.base}/api/v1/oportunidades/${id}`);
   }
@@ -1299,6 +1304,8 @@ export interface Oportunidade {
   criadoEm: string;
   entradaNoEstagioEm: string;
   contatos: ContatoOportunidade[];
+  /** Cliente criado a partir do lead, quando o negócio fechou. */
+  clienteId: string | null;
 }
 
 export interface LeadRsvp {
