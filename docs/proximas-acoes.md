@@ -93,6 +93,8 @@ Atualize este arquivo: marque o que ficou pronto e anote as dúvidas para o usu�
 - [x] SPEC-007 (bloco 5) — aprovada em 18/11/2026
 - [x] SPEC-029 (bloco 6) — aprovada em 18/11/2026
 - [x] SPEC-030 (bloco 7) — aprovada em 18/11/2026
+- [x] SPEC-020 v2 (parte do bloco 16: quadro em cartões e lead → cliente) — aprovada e implementada em 20/11/2026
+- [ ] SPEC-031 (resto do bloco 16, funil) — rascunho em 20/11/2026, aguardando aprovação
 
 Respondidas em 18/11/2026 (registradas nas specs): "Esta semana"/"Para conferir" descartadas; "N" da Hoje = tarefas ativas com prazo hoje; respostas abaixo do esperado = menos de 2 meses e 50% sem resposta; Resultado vira Saldo; cobrar sem Pix pede a chave; contratos viram tela própria com campos de mesclagem (SPEC-030 v2).
 
@@ -100,3 +102,4 @@ Dúvidas para o usuário:
 
 - SPEC-003 §17: atrasada automática, exclusão de tarefa.
 - SPEC-030 §17: plataforma de assinatura eletrônica (pendência).
+- SPEC-031 §17: 14 pontos do funil (divisão em partes, lista de origens, proposta por link, motivos de descarte etc.).
