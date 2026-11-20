@@ -102,8 +102,8 @@ Conta autenticada (SPEC-001). O quadro da SPEC-020 v2 já está no ar.
 
 1. **Horários:** em vez do texto livre, quatro campos de hora separados: convite, cerimônia, recepção e festa.
 2. **Endereços:** cerimônia e recepção com endereço completo (CEP, rua, número, bairro, cidade e UF), com busca pelo CEP como no cliente.
-3. **Tarefas comerciais (SPEC-023):** vários responsáveis por tarefa, escolhidos entre a dona e as assistentes, e observação com formatação simples (negrito, lista, link).
-4. **Briefing no funil:** a dona aplica um modelo de briefing (SPEC-013) ao lead e manda o link para o lead responder antes de fechar (§17, ponto 11).
+3. **Tarefas comerciais (SPEC-023):** vários responsáveis por tarefa, escolhidos entre a dona e as assistentes ativas (SPEC-032 §6.6), e observação com formatação simples (negrito, lista, link).
+4. **Briefing no funil:** a dona aplica um modelo de briefing (SPEC-013) ao lead e usa as perguntas como roteiro interno da conversa, anotando as respostas no lead. O link para o lead responder fica para depois (§17, ponto 11).
 5. **Modelo de orçamento (SPEC-027):** ganha a lista fechada de parâmetros (§17, ponto 12).
 
 ## 7. Fluxos alternativos

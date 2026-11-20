@@ -375,7 +375,7 @@ Baseada no PDF (base → uso diário → diferencial), com o que já existe.
 10. Roteiro e cronograma no evento.
 11. Link do casal (aprovações, código de edição, depoimento).
 12. Resumo do dia por e-mail.
-13. Equipe, equipe do dia e assistente.
+13. Equipe, equipe do dia e assistente. Assistente na [SPEC-032](specs/032-assistentes.md), rascunho de 20/11/2026; vem antes da SPEC-031 parte D (decisão de 20/11/2026).
 14. Financeiro da empresa e relatórios.
 15. Agenda completa e feed iCal.
 16. Funil: estágios, arrastar, proposta por link. Quadro em cartões e lead → cliente **prontos** em 20/11/2026 (SPEC-020 v2); o resto do bloco está na SPEC-031, aprovada em 20/11/2026, em quatro partes: A (estágios e arrastar), B (retorno, origem e contato repetido) e C (proposta por link) **prontas** em 20/11/2026; D (ajustes do formulário) pendente.
