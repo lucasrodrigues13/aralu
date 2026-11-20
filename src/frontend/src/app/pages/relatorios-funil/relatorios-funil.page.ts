@@ -5,6 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
+import { MatTabsModule } from '@angular/material/tabs';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { CatalogoRelatoriosFunil, NegocioClient } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
@@ -14,7 +15,7 @@ import { deDataParaIso } from '../../shared/data';
 
 @Component({
   selector: 'app-relatorios-funil',
-  imports: [MatCardModule, ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatTableModule, CampoDataComponent, GdDinheiroPipe],
+  imports: [MatCardModule, ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatTableModule, MatTabsModule, CampoDataComponent, GdDinheiroPipe],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6 flex flex-wrap items-center justify-between gap-4">
@@ -28,9 +29,10 @@ import { deDataParaIso } from '../../shared/data';
         <button mat-flat-button type="submit">Atualizar</button>
       </form>
       @if (dados(); as catalogo) {
-        <div class="catalogo">
+        <mat-tab-group class="catalogo" mat-align-tabs="start" animationDuration="0ms">
           @for (bloco of blocos(catalogo); track bloco.titulo) {
-            <article>
+            <mat-tab [label]="bloco.titulo">
+            <article class="pt-4">
               <h2>{{ bloco.titulo }}</h2>
               @if (bloco.linhas.length === 0) {
                 <p class="text-center text-muted py-10">Sem movimento no período.</p>
@@ -53,8 +55,10 @@ import { deDataParaIso } from '../../shared/data';
                 </table>
               }
             </article>
+            </mat-tab>
           }
-          <article>
+          <mat-tab label="9. Oportunidades de RSVP">
+          <article class="pt-4">
             <h2>Oportunidades de RSVP</h2>
             <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 mb-6">
               <div><mat-card class="shadow-none text-center mb-0! h-full bg-light-primary"><mat-card-content><h4 class="text-sm font-semibold text-primary">Visualizações</h4><h6 class="text-xl font-semibold text-primary mt-2!">{{ catalogo.oportunidadesRsvp.visualizacoes }}</h6></mat-card-content></mat-card></div>
@@ -66,13 +70,13 @@ import { deDataParaIso } from '../../shared/data';
               <div><mat-card class="shadow-none text-center mb-0! h-full bg-light-primary"><mat-card-content><h4 class="text-sm font-semibold text-primary">Conversões anteriores</h4><h6 class="text-xl font-semibold text-primary mt-2!">{{ catalogo.oportunidadesRsvp.conversoesAnteriores }}</h6></mat-card-content></mat-card></div>
             </div>
           </article>
-        </div>
+          </mat-tab>
+        </mat-tab-group>
       }
     </mat-card-content>
     </mat-card>
   `,
   styles: `
-    .catalogo { display: grid; gap: 16px; }
     article h2 { margin: 0 0 8px; font-size: 1rem; }
   `,
 })
