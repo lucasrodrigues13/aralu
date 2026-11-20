@@ -127,6 +127,63 @@ public class AssistentesFluxoTests
         Assert.Equal(HttpStatusCode.OK, novo.StatusCode);
     }
 
+    [Fact]
+    public async Task Tarefa_do_funil_aceita_dona_e_assistentes_ativas_como_responsaveis()
+    {
+        var dona = await EntrarOrganizer();
+        var (_, assistenteId, _) = await ConvidarEAtivar(dona, financeiro: false, somenteDela: false);
+        var (_, pendenteId, _) = await ConvidarSemAtivar(dona);
+        var lead = await Ler(await dona.PostAsJsonAsync("/api/v1/oportunidades", new
+        {
+            nome = "Lead com tarefa",
+            estagio = "Contato inicial",
+            contatos = new[] { new { nome = "Lia", telefone = "11977770001", email = "lia@ex.com" } },
+        }));
+        var leadId = lead.GetProperty("id").GetGuid();
+
+        var tarefa = await Ler(await dona.PostAsJsonAsync("/api/v1/tarefas-funil", new
+        {
+            titulo = "Ligar para a Lia",
+            oportunidadeId = leadId,
+            tipo = "Ligacao",
+            prazo = "2030-06-01",
+            observacao = "**Levar** o orçamento",
+            responsaveis = new object[]
+            {
+                new { papel = "Organizer" },
+                new { papel = "Assistente", referenciaId = assistenteId.ToString() },
+            },
+        }));
+        Assert.Equal(2, tarefa.GetProperty("responsaveis").GetArrayLength());
+
+        var invalida = await dona.PostAsJsonAsync("/api/v1/tarefas-funil", new
+        {
+            titulo = "Convite pendente",
+            oportunidadeId = leadId,
+            tipo = "Tarefa",
+            prazo = "2030-06-02",
+            responsaveis = new object[] { new { papel = "Assistente", referenciaId = pendenteId.ToString() } },
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, invalida.StatusCode);
+
+        var editada = await Ler(await dona.PutAsJsonAsync($"/api/v1/tarefas-funil/{tarefa.GetProperty("id").GetGuid()}", new
+        {
+            titulo = "Ligar para a Lia",
+            oportunidadeId = leadId,
+            tipo = "Ligacao",
+            prazo = "2030-06-01",
+            responsaveis = new object[] { new { papel = "Assistente", referenciaId = assistenteId.ToString() } },
+        }));
+        Assert.Single(editada.GetProperty("responsaveis").EnumerateArray());
+    }
+
+    private async Task<(HttpClient Cliente, Guid Id, string Email)> ConvidarSemAtivar(HttpClient dona)
+    {
+        var email = $"pend-{Guid.NewGuid():N}@gevents.test";
+        var convite = await Ler(await dona.PostAsJsonAsync("/api/v1/assistentes", new { nome = "Pendente", email }));
+        return (_banco.Fabrica.CreateClient(), convite.GetProperty("id").GetGuid(), email);
+    }
+
     private (string UsuarioId, string Token) LinkDoConvite(string email)
     {
         var mensagem = _banco.Fabrica.Email.Mensagens.Last(item => item.Email == email && item.Tipo == "texto");

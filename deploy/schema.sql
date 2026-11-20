@@ -2584,3 +2584,35 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261120194822_ResponsaveisTarefaFunil') THEN
+    CREATE TABLE "ResponsaveisTarefaFunil" (
+        "Id" uuid NOT NULL,
+        "TarefaFunilId" uuid NOT NULL,
+        "Papel" text NOT NULL,
+        "ReferenciaId" text NOT NULL,
+        CONSTRAINT "PK_ResponsaveisTarefaFunil" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_ResponsaveisTarefaFunil_TarefasFunil_TarefaFunilId" FOREIGN KEY ("TarefaFunilId") REFERENCES "TarefasFunil" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261120194822_ResponsaveisTarefaFunil') THEN
+    CREATE INDEX "IX_ResponsaveisTarefaFunil_TarefaFunilId" ON "ResponsaveisTarefaFunil" ("TarefaFunilId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261120194822_ResponsaveisTarefaFunil') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261120194822_ResponsaveisTarefaFunil', '10.0.4');
+    END IF;
+END $EF$;
+COMMIT;
+

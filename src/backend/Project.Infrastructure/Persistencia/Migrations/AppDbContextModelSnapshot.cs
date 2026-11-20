@@ -1883,6 +1883,30 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.ToTable("OrcamentosFunil");
                 });
 
+            modelBuilder.Entity("Project.Domain.Funil.ResponsavelTarefaFunil", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Papel")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ReferenciaId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("TarefaFunilId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TarefaFunilId");
+
+                    b.ToTable("ResponsaveisTarefaFunil", (string)null);
+                });
+
             modelBuilder.Entity("Project.Domain.Funil.RespostaPropostaFunil", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2995,6 +3019,15 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Navigation("EstagioFunil");
                 });
 
+            modelBuilder.Entity("Project.Domain.Funil.ResponsavelTarefaFunil", b =>
+                {
+                    b.HasOne("Project.Domain.Funil.TarefaFunil", null)
+                        .WithMany("Responsaveis")
+                        .HasForeignKey("TarefaFunilId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Project.Domain.Funil.RespostaPropostaFunil", b =>
                 {
                     b.HasOne("Project.Domain.Funil.OrcamentoFunil", null)
@@ -3167,6 +3200,11 @@ namespace Project.Infrastructure.Persistencia.Migrations
             modelBuilder.Entity("Project.Domain.Funil.Oportunidade", b =>
                 {
                     b.Navigation("Contatos");
+                });
+
+            modelBuilder.Entity("Project.Domain.Funil.TarefaFunil", b =>
+                {
+                    b.Navigation("Responsaveis");
                 });
 
             modelBuilder.Entity("Project.Domain.Modelos.ModeloBriefing", b =>

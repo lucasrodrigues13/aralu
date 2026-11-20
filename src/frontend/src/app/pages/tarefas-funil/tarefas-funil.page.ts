@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, ElementRef, inject, OnInit, signal, viewChild } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
@@ -9,6 +9,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
+import { AssistentesClient } from '../../core/assistentes.client';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { NegocioClient, Oportunidade, TarefaFunil, TIPOS_TAREFA_FUNIL } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
@@ -17,10 +18,12 @@ import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { deDataParaIso, deIsoParaData } from '../../shared/data';
 import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
+import { chaveResponsavel, opcoesResponsavel, OpcaoResponsavel, pedidoResponsavel, rotuloResponsavel } from '../../shared/responsaveis';
+import { aplicarLink, aplicarLista, aplicarNegrito, EdicaoTexto, htmlDeTextoSimples } from '../../shared/texto-simples';
 
 @Component({
   selector: 'app-tarefa-funil-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, CampoDataComponent],
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, CampoDataComponent],
   template: `
     <h2 mat-dialog-title>{{ dados ? 'Editar tarefa' : 'Nova tarefa' }}</h2>
     <mat-dialog-content>
@@ -46,13 +49,23 @@ import { GdDataPipe } from '../../shared/gd-data.pipe';
         </mat-form-field>
         </div>
         <div class="campo">
-          <mat-label class="font-semibold mb-2 block">Responsável</mat-label>
-          <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Responsável'" matInput formControlName="responsavel" /></mat-form-field>
+          <mat-label class="font-semibold mb-2 block">Responsáveis</mat-label>
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-select [attr.aria-label]="'Responsáveis'" formControlName="responsaveis" multiple required>
+              @for (opcao of opcoes(); track opcao.valor) { <mat-option [value]="opcao.valor">{{ opcao.rotulo }}</mat-option> }
+            </mat-select>
+            @if (form.controls.responsaveis.hasError('required')) { <mat-error>Informe ao menos um responsável.</mat-error> }
+          </mat-form-field>
         </div>
         <app-campo-data formControlName="prazo" rotulo="Prazo" />
         <div class="campo">
           <mat-label class="font-semibold mb-2 block">Observação</mat-label>
-          <mat-form-field appearance="outline" class="w-full"><textarea [attr.aria-label]="'Observação'" matInput rows="3" formControlName="observacao"></textarea></mat-form-field>
+          <div class="flex gap-1 mb-1" role="toolbar" aria-label="Formatação da observação">
+            <button mat-icon-button type="button" aria-label="Negrito" (click)="formatar('negrito')"><mat-icon>format_bold</mat-icon></button>
+            <button mat-icon-button type="button" aria-label="Lista" (click)="formatar('lista')"><mat-icon>format_list_bulleted</mat-icon></button>
+            <button mat-icon-button type="button" aria-label="Link" (click)="formatar('link')"><mat-icon>link</mat-icon></button>
+          </div>
+          <mat-form-field appearance="outline" class="w-full"><textarea #observacao [attr.aria-label]="'Observação'" matInput rows="4" formControlName="observacao"></textarea></mat-form-field>
         </div>
       </form>
     </mat-dialog-content>
@@ -69,18 +82,39 @@ export class TarefaFunilDialog implements OnInit {
   protected readonly dados = inject<TarefaFunil | null>(MAT_DIALOG_DATA);
   protected readonly ref = inject(MatDialogRef<TarefaFunilDialog, boolean>);
   protected readonly tipos = TIPOS_TAREFA_FUNIL;
+  private readonly assistentes = inject(AssistentesClient);
+  private readonly campoObservacao = viewChild<ElementRef<HTMLTextAreaElement>>('observacao');
   protected readonly oportunidades = signal<Oportunidade[]>([]);
+  protected readonly opcoes = signal<OpcaoResponsavel[]>(
+    opcoesResponsavel([], 'Eu').filter((opcao) => opcao.valor !== 'Casal'),
+  );
   protected readonly form = this.fb.nonNullable.group({
     titulo: [this.dados?.titulo ?? '', Validators.required],
     oportunidadeId: [this.dados?.oportunidadeId ?? '', Validators.required],
     tipo: [this.dados?.tipo ?? 'Tarefa', Validators.required],
-    responsavel: [this.dados?.responsavel ?? '', Validators.required],
+    responsaveis: [this.dados?.responsaveis?.filter((item) => item.papel === 'Organizer' || item.papel === 'Assistente').map((item) => chaveResponsavel(item)) ?? ['Organizer'] as string[], Validators.required],
     prazo: this.fb.control<Date | null>(deIsoParaData(this.dados?.prazo), Validators.required),
     observacao: [this.dados?.observacao ?? ''],
   });
 
   ngOnInit(): void {
     this.negocio.oportunidades().subscribe({ next: (lista) => this.oportunidades.set(lista) });
+    const atuais = (this.dados?.responsaveis ?? []).map((item) => chaveResponsavel(item));
+    this.assistentes.nomes().subscribe({
+      next: (nomes) => this.opcoes.set(opcoesResponsavel(nomes, 'Eu', atuais).filter((opcao) => opcao.valor !== 'Casal')),
+      error: () => undefined,
+    });
+  }
+
+  protected formatar(tipo: 'negrito' | 'lista' | 'link'): void {
+    const campo = this.campoObservacao()?.nativeElement;
+    if (!campo) return;
+    const aplicar: (texto: string, inicio: number, fim: number) => EdicaoTexto =
+      tipo === 'negrito' ? aplicarNegrito : tipo === 'lista' ? aplicarLista : aplicarLink;
+    const edicao = aplicar(campo.value, campo.selectionStart, campo.selectionEnd);
+    this.form.controls.observacao.setValue(edicao.texto);
+    campo.focus();
+    setTimeout(() => campo.setSelectionRange(edicao.inicio, edicao.fim));
   }
 
   protected salvar(): void {
@@ -90,7 +124,14 @@ export class TarefaFunilDialog implements OnInit {
       return;
     }
     const v = this.form.getRawValue();
-    const pedido = { ...v, prazo: deDataParaIso(v.prazo) };
+    const pedido = {
+      titulo: v.titulo,
+      oportunidadeId: v.oportunidadeId,
+      tipo: v.tipo,
+      observacao: v.observacao,
+      responsaveis: v.responsaveis.map((chave) => pedidoResponsavel(chave)),
+      prazo: deDataParaIso(v.prazo),
+    };
     const req = this.dados
       ? this.negocio.atualizarTarefaFunil(this.dados.id, pedido)
       : this.negocio.criarTarefaFunil(pedido);
@@ -135,11 +176,18 @@ export class TarefaFunilDialog implements OnInit {
         <table mat-table class="min-w-full" [dataSource]="lista()">
           <ng-container matColumnDef="titulo">
             <th mat-header-cell *matHeaderCellDef>Título</th>
-            <td mat-cell *matCellDef="let item">{{ item.titulo }}<span class="block text-xs text-muted">{{ item.oportunidadeNome }}</span></td>
+            <td mat-cell *matCellDef="let item">
+              {{ item.titulo }}<span class="block text-xs text-muted">{{ item.oportunidadeNome }}</span>
+              @if (item.observacao) { <div class="observacao text-sm mt-1" [innerHTML]="html(item.observacao)"></div> }
+            </td>
           </ng-container>
           <ng-container matColumnDef="tipo">
             <th mat-header-cell *matHeaderCellDef>Tipo</th>
             <td mat-cell *matCellDef="let item">{{ item.tipo }}</td>
+          </ng-container>
+          <ng-container matColumnDef="responsaveis">
+            <th mat-header-cell *matHeaderCellDef>Responsáveis</th>
+            <td mat-cell *matCellDef="let item">{{ nomes(item) }}</td>
           </ng-container>
           <ng-container matColumnDef="prazo">
             <th mat-header-cell *matHeaderCellDef>Prazo</th>
@@ -173,9 +221,23 @@ export class TarefasFunilPage implements OnInit {
   protected readonly completa = signal(false);
   protected readonly tipo = signal('');
   protected readonly lista = signal<TarefaFunil[]>([]);
-  protected readonly colunas = ['titulo', 'tipo', 'prazo', 'acoes'];
+  protected readonly colunas = ['titulo', 'tipo', 'responsaveis', 'prazo', 'acoes'];
+  private readonly assistentes = inject(AssistentesClient);
+  private readonly opcoes = signal<OpcaoResponsavel[]>(opcoesResponsavel([], 'Dona da conta'));
+
+  protected html(texto: string | null): string {
+    return htmlDeTextoSimples(texto);
+  }
+
+  protected nomes(item: TarefaFunil): string {
+    return (item.responsaveis ?? []).map((responsavel) => rotuloResponsavel(responsavel, this.opcoes())).join(', ');
+  }
 
   ngOnInit(): void {
+    this.assistentes.nomes().subscribe({
+      next: (nomes) => this.opcoes.set(opcoesResponsavel(nomes, 'Dona da conta', nomes.map((item) => `Assistente:${item.id}`))),
+      error: () => undefined,
+    });
     this.carregar();
   }
 

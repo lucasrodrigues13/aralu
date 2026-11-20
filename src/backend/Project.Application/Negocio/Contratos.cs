@@ -123,6 +123,8 @@ public interface IDados
     /// <summary>Assistentes ativas da conta (SPEC-032): podem ser responsáveis de tarefas.</summary>
     Task<IReadOnlyList<Guid>> IdsAssistentesAtivasAsync(string contaId, CancellationToken ct);
 
+    Task SubstituirResponsaveisTarefaFunilAsync(Guid tarefaId, IReadOnlyList<ResponsavelTarefaFunil> responsaveis, CancellationToken ct);
+
     Task SubstituirResponsaveisAsync(Guid tarefaId, IReadOnlyList<ResponsavelTarefa> responsaveis, CancellationToken ct);
 
     Task SubstituirChecklistAsync(Guid tarefaId, IReadOnlyList<ItemChecklistTarefa> itens, CancellationToken ct);

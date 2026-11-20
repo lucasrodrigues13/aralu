@@ -155,6 +155,9 @@ public static class Mapa
         resposta.Property(item => item.Mensagem).HasMaxLength(1000);
         resposta.HasOne<OrcamentoFunil>().WithMany().HasForeignKey(item => item.OrcamentoFunilId).OnDelete(DeleteBehavior.Cascade);
 
+        modelBuilder.Entity<ResponsavelTarefaFunil>().ToTable("ResponsaveisTarefaFunil");
+        modelBuilder.Entity<ResponsavelTarefaFunil>().Property(item => item.Papel).HasConversion<string>();
+        modelBuilder.Entity<TarefaFunil>().HasMany(item => item.Responsaveis).WithOne().HasForeignKey(item => item.TarefaFunilId).OnDelete(DeleteBehavior.Cascade);
         var tarefa = modelBuilder.Entity<TarefaFunil>();
         tarefa.HasIndex(item => item.ContaId);
         tarefa.Property(item => item.Tipo).HasConversion<string>();

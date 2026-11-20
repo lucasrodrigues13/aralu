@@ -13,7 +13,8 @@ public sealed record TarefaFunilLeitura(
     string Responsavel,
     DateOnly Prazo,
     bool Completa,
-    Guid? AnexoArquivoId);
+    Guid? AnexoArquivoId,
+    IReadOnlyList<ResponsavelLeitura>? Responsaveis = null);
 
 public sealed record SalvarTarefaFunil(
     string? Titulo,
@@ -22,7 +23,8 @@ public sealed record SalvarTarefaFunil(
     string? Responsavel,
     DateOnly? Prazo,
     string? Observacao,
-    Guid? AnexoArquivoId);
+    Guid? AnexoArquivoId,
+    IReadOnlyList<ResponsavelPedido>? Responsaveis = null);
 
 public sealed record FiltroTarefaFunil(DateOnly? PrazoDe, DateOnly? PrazoAte, string? Tipo, string? Responsavel, bool? Completa);
 
@@ -90,8 +92,12 @@ public sealed class TarefaFunilServico(IDados dados)
         item.Observacao = montado.Valor.Observacao;
         item.AnexoArquivoId = montado.Valor.AnexoArquivoId;
         await dados.SalvarNegocioAsync(ct);
+        await dados.SubstituirResponsaveisTarefaFunilAsync(item.Id, montado.Valor.Responsaveis, ct);
         var nomes = await dados.NomesOportunidadesAsync(contaId, [item.OportunidadeId], ct);
-        return Resultado<TarefaFunilLeitura>.Sucesso(Ler(item, nomes.GetValueOrDefault(item.OportunidadeId, "")));
+        var leitura = Ler(item, nomes.GetValueOrDefault(item.OportunidadeId, ""));
+        return Resultado<TarefaFunilLeitura>.Sucesso(montado.Valor.Responsaveis.Count == 0
+            ? leitura
+            : leitura with { Responsaveis = montado.Valor.Responsaveis.Select(r => new ResponsavelLeitura(r.Papel, r.ReferenciaId)).ToArray() });
     }
 
     public async Task<Resultado<TarefaFunilLeitura>> ConcluirAsync(string contaId, Guid id, CancellationToken ct)
@@ -153,7 +159,37 @@ public sealed class TarefaFunilServico(IDados dados)
             return Resultado<TarefaFunil>.Erro(Codigos.Validacao, "Informe o tipo da tarefa.");
         }
 
-        var responsavel = Domain.Comum.Texto.Limpo(pedido.Responsavel);
+        var responsaveis = new List<ResponsavelTarefaFunil>();
+        string? responsavel;
+        if (pedido.Responsaveis is { Count: > 0 })
+        {
+            // SPEC-031 §6.7: a dona e as assistentes ativas da conta (SPEC-032 §6.6).
+            var ativas = (await dados.IdsAssistentesAtivasAsync(contaId, ct)).Select(a => a.ToString()).ToHashSet();
+            foreach (var item in pedido.Responsaveis)
+            {
+                var chave = item.Papel == Domain.Tarefas.PapelResponsavel.Organizer ? contaId : item.ReferenciaId;
+                if (item.Papel is not (Domain.Tarefas.PapelResponsavel.Organizer or Domain.Tarefas.PapelResponsavel.Assistente)
+                    || chave is null
+                    || (item.Papel == Domain.Tarefas.PapelResponsavel.Assistente && !ativas.Contains(chave)))
+                {
+                    return Resultado<TarefaFunil>.Erro(Codigos.Validacao, "Escolha a dona ou uma assistente ativa da conta.");
+                }
+
+                if (responsaveis.Any(r => r.ReferenciaId == chave))
+                {
+                    return Resultado<TarefaFunil>.Erro(Codigos.Validacao, "Responsável repetido.");
+                }
+
+                responsaveis.Add(new ResponsavelTarefaFunil { Id = Guid.NewGuid(), TarefaFunilId = id, Papel = item.Papel, ReferenciaId = chave });
+            }
+
+            responsavel = responsaveis[0].ReferenciaId;
+        }
+        else
+        {
+            responsavel = Domain.Comum.Texto.Limpo(pedido.Responsavel);
+        }
+
         if (responsavel is null)
         {
             return Resultado<TarefaFunil>.Erro(Codigos.Validacao, "Informe o responsável.");
@@ -173,6 +209,7 @@ public sealed class TarefaFunilServico(IDados dados)
             Observacao = Domain.Comum.Texto.Limpo(pedido.Observacao),
             Tipo = tipo,
             Responsavel = responsavel,
+            Responsaveis = responsaveis,
             Prazo = prazo,
             AnexoArquivoId = pedido.AnexoArquivoId,
         });
@@ -189,5 +226,8 @@ public sealed class TarefaFunilServico(IDados dados)
             item.Responsavel,
             item.Prazo,
             item.Completa,
-            item.AnexoArquivoId);
+            item.AnexoArquivoId,
+            item.Responsaveis.Count > 0
+                ? item.Responsaveis.Select(r => new ResponsavelLeitura(r.Papel, r.ReferenciaId)).ToArray()
+                : [new ResponsavelLeitura(Domain.Tarefas.PapelResponsavel.Organizer, item.Responsavel)]);
 }

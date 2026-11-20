@@ -1431,6 +1431,8 @@ export interface TarefaFunil {
   observacao: string | null;
   tipo: string;
   responsavel: string;
+  /** Dona e assistentes responsáveis (SPEC-031 §6.7). */
+  responsaveis: { papel: string; referenciaId: string | null }[];
   prazo: string;
   completa: boolean;
   anexoArquivoId: string | null;

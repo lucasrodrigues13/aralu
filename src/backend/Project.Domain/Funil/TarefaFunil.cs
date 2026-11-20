@@ -29,4 +29,20 @@ public sealed class TarefaFunil
     public bool Completa { get; set; }
 
     public Guid? AnexoArquivoId { get; set; }
+
+    /// <summary>Dona e assistentes responsáveis (SPEC-031 §6.7, ponto 3). Vazio em tarefas antigas: vale <see cref="Responsavel"/>.</summary>
+    public List<ResponsavelTarefaFunil> Responsaveis { get; set; } = [];
+}
+
+public sealed class ResponsavelTarefaFunil
+{
+    public Guid Id { get; set; }
+
+    public Guid TarefaFunilId { get; set; }
+
+    /// <summary>Organizer (a dona) ou Assistente.</summary>
+    public Project.Domain.Tarefas.PapelResponsavel Papel { get; set; }
+
+    /// <summary>Id da conta (dona) ou da assistente.</summary>
+    public string ReferenciaId { get; set; } = "";
 }

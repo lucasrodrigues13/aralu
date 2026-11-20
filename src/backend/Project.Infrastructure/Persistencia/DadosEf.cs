@@ -389,6 +389,18 @@ public sealed class DadosEf(AppDbContext banco) : IDados
             .Select(item => item.Id)
             .ToListAsync(ct);
 
+    public async Task SubstituirResponsaveisTarefaFunilAsync(Guid tarefaId, IReadOnlyList<ResponsavelTarefaFunil> responsaveis, CancellationToken ct)
+    {
+        if (responsaveis.Count == 0)
+        {
+            return;
+        }
+
+        await banco.Set<ResponsavelTarefaFunil>().Where(item => item.TarefaFunilId == tarefaId).ExecuteDeleteAsync(ct);
+        banco.Set<ResponsavelTarefaFunil>().AddRange(responsaveis);
+        await banco.SaveChangesAsync(ct);
+    }
+
     public async Task SubstituirResponsaveisAsync(Guid tarefaId, IReadOnlyList<ResponsavelTarefa> responsaveis, CancellationToken ct)
     {
         await banco.Set<ResponsavelTarefa>().Where(item => item.TarefaId == tarefaId).ExecuteDeleteAsync(ct);
@@ -1489,7 +1501,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         bool? completa,
         CancellationToken ct)
     {
-        var consulta = banco.TarefasFunil.AsNoTracking().Where(item => item.ContaId == contaId);
+        var consulta = banco.TarefasFunil.AsNoTracking().Include(item => item.Responsaveis).Where(item => item.ContaId == contaId);
         if (prazoDe is DateOnly de)
         {
             consulta = consulta.Where(item => item.Prazo >= de);
@@ -1520,7 +1532,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
     }
 
     public Task<TarefaFunil?> ObterTarefaFunilAsync(string contaId, Guid id, CancellationToken ct) =>
-        banco.TarefasFunil.FirstOrDefaultAsync(item => item.ContaId == contaId && item.Id == id, ct);
+        banco.TarefasFunil.Include(item => item.Responsaveis).FirstOrDefaultAsync(item => item.ContaId == contaId && item.Id == id, ct);
 
     public async Task InserirTarefaFunilAsync(TarefaFunil tarefa, CancellationToken ct)
     {
