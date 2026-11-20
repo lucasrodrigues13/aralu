@@ -32,7 +32,8 @@ public static class Dependencias
             .AddEntityFrameworkStores<AppDbContext>()
             .AddSignInManager()
             .AddTokenProvider<ConfirmacaoEmailTokenProvider>(ConfirmacaoEmailTokenProvider.Nome)
-            .AddTokenProvider<RedefinicaoSenhaTokenProvider>(RedefinicaoSenhaTokenProvider.Nome);
+            .AddTokenProvider<RedefinicaoSenhaTokenProvider>(RedefinicaoSenhaTokenProvider.Nome)
+            .AddTokenProvider<ConviteAssistenteTokenProvider>(ConviteAssistenteTokenProvider.Nome);
 
         services.Configure<JwtOpcoes>(configuration.GetSection("Jwt"));
         services.Configure<EmailOpcoes>(configuration.GetSection("Email"));
@@ -75,6 +76,7 @@ public static class Dependencias
         services.AddScoped<ModeloOrcamentoFunilServico>();
         services.AddScoped<ModeloContratoFunilServico>();
         services.AddScoped<IContaCliente, ContaCliente>();
+        services.AddScoped<AssistenteServico>();
         services.AddScoped<IArmazenamentoArquivo, ArmazenamentoArquivo>();
         services.AddHttpClient<IConsultaCep, ViaCepConsulta>(cliente =>
         {

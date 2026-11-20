@@ -10,7 +10,10 @@ using Project.Domain.Clientes;
 using Project.Domain.Convidados;
 using Project.Domain.Eventos;
 using Project.Domain.Funil;
+using Microsoft.EntityFrameworkCore;
 using Project.Domain.Tarefas;
+using Project.Infrastructure.Conta;
+using Project.Infrastructure.Persistencia;
 
 namespace Project.Api.Negocio;
 
@@ -21,73 +24,76 @@ public static class NegocioEndpoints
     public static void Mapear(WebApplication app)
     {
         var api = app.MapGroup("/api/v1").RequireAuthorization();
+        api.AddEndpointFilter(EscopoAssistente.Filtro);
         api.MapGet("/perfil", Perfil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapPut("/perfil", GravarPerfil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapPost("/perfil/foto", FotoPerfil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer)).DisableAntiforgery();
         api.MapDelete("/perfil/foto", RemoverFotoPerfil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapGet("/painel", Painel).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapGet("/modelos", Modelos).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPost("/modelos", CriarModelo).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapGet("/modelos/{id:guid}", Modelo).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPut("/modelos/{id:guid}", AtualizarModelo).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapDelete("/modelos/{id:guid}", ExcluirModelo).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPost("/modelos/{id:guid}/clonar", ClonarModelo).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapGet("/modelos/tarefas/planilha", PlanilhaTarefasModeloPadrao).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPost("/modelos/importar/previa", PreviaImportarModelo).RequireAuthorization(policy => policy.RequireRole(SoOrganizer)).DisableAntiforgery();
-        api.MapPost("/modelos/importar", ImportarModeloNovo).RequireAuthorization(policy => policy.RequireRole(SoOrganizer)).DisableAntiforgery();
-        api.MapPost("/modelos/{id:guid}/tarefas/importar/previa", PreviaImportarTarefasModelo).RequireAuthorization(policy => policy.RequireRole(SoOrganizer)).DisableAntiforgery();
-        api.MapPost("/modelos/{id:guid}/tarefas/importar", ImportarTarefasModelo).RequireAuthorization(policy => policy.RequireRole(SoOrganizer)).DisableAntiforgery();
-        api.MapPost("/eventos/{id:guid}/aplicar-modelo/previa", PreviaAplicarModelo).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPost("/eventos/{id:guid}/aplicar-modelo", AplicarModelo).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPost("/eventos/{id:guid}/salvar-como-modelo/previa", PreviaSalvarComoModelo).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPost("/eventos/{id:guid}/salvar-como-modelo", SalvarComoModelo).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapGet("/eventos/estatisticas", Estatisticas).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
+        api.MapGet("/painel", Painel).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapGet("/modelos", Modelos).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/modelos", CriarModelo).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapGet("/modelos/{id:guid}", Modelo).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPut("/modelos/{id:guid}", AtualizarModelo).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapDelete("/modelos/{id:guid}", ExcluirModelo).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/modelos/{id:guid}/clonar", ClonarModelo).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapGet("/modelos/tarefas/planilha", PlanilhaTarefasModeloPadrao).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/modelos/importar/previa", PreviaImportarModelo).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe)).DisableAntiforgery();
+        api.MapPost("/modelos/importar", ImportarModeloNovo).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe)).DisableAntiforgery();
+        api.MapPost("/modelos/{id:guid}/tarefas/importar/previa", PreviaImportarTarefasModelo).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe)).DisableAntiforgery();
+        api.MapPost("/modelos/{id:guid}/tarefas/importar", ImportarTarefasModelo).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe)).DisableAntiforgery();
+        api.MapPost("/eventos/{id:guid}/aplicar-modelo/previa", PreviaAplicarModelo).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/eventos/{id:guid}/aplicar-modelo", AplicarModelo).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/eventos/{id:guid}/salvar-como-modelo/previa", PreviaSalvarComoModelo).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/eventos/{id:guid}/salvar-como-modelo", SalvarComoModelo).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapGet("/eventos/estatisticas", Estatisticas).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         MapearBiblioteca(api, "/modelos-briefing", Briefings, CriarBriefing, Briefing, AtualizarBriefing, ExcluirBriefing, ClonarBriefing);
         MapearBiblioteca(api, "/modelos-roteiro", Roteiros, CriarRoteiro, Roteiro, AtualizarRoteiro, ExcluirRoteiro, ClonarRoteiro);
         MapearBiblioteca(api, "/modelos-cronograma", Cronogramas, CriarCronograma, Cronograma, AtualizarCronograma, ExcluirCronograma, ClonarCronograma);
         MapearBiblioteca(api, "/modelos-inspiracoes", Inspiracoes, CriarInspiracao, Inspiracao, AtualizarInspiracao, ExcluirInspiracao, ClonarInspiracao);
         MapearBiblioteca(api, "/modelos-mensagens", Mensagens, CriarMensagem, Mensagem, AtualizarMensagem, ExcluirMensagem, ClonarMensagem);
-        api.MapGet("/servicos-conta", ServicosConta).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPost("/servicos-conta", CriarServicoConta).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
+        api.MapGet("/servicos-conta", ServicosConta).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/servicos-conta", CriarServicoConta).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapDelete("/servicos-conta/{id:guid}", ExcluirServicoConta).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapGet("/fornecedores", Fornecedores).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPost("/fornecedores", CriarFornecedor).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapGet("/fornecedores/{id:guid}", Fornecedor).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPut("/fornecedores/{id:guid}", AtualizarFornecedor).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
+        api.MapGet("/fornecedores", Fornecedores).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/fornecedores", CriarFornecedor).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapGet("/fornecedores/{id:guid}", Fornecedor).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPut("/fornecedores/{id:guid}", AtualizarFornecedor).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapDelete("/fornecedores/{id:guid}", ExcluirFornecedor).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPost("/eventos/{id:guid}/servicos", AdicionarServicoEvento).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPut("/eventos/{id:guid}/servicos/{servicoId:guid}/estimado", AtualizarEstimado).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPost("/eventos/{id:guid}/servicos/{servicoId:guid}/fornecedores", AdicionarFornecedorServico).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPost("/eventos/{id:guid}/servicos/{servicoId:guid}/fornecedores/{vinculoId:guid}/avancar", AvancarEtapa).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPost("/eventos/{id:guid}/servicos/{servicoId:guid}/fornecedores/{vinculoId:guid}/voltar", VoltarEtapa).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPost("/eventos/{id:guid}/servicos/{servicoId:guid}/fornecedores/{vinculoId:guid}/contratar", ContratarFornecedor).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapGet("/eventos/{id:guid}/budget", Budget).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapGet("/eventos/{id:guid}/resumo", ResumoEvento).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
+        api.MapPost("/eventos/{id:guid}/servicos", AdicionarServicoEvento).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPut("/eventos/{id:guid}/servicos/{servicoId:guid}/estimado", AtualizarEstimado).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/eventos/{id:guid}/servicos/{servicoId:guid}/fornecedores", AdicionarFornecedorServico).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/eventos/{id:guid}/servicos/{servicoId:guid}/fornecedores/{vinculoId:guid}/avancar", AvancarEtapa).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/eventos/{id:guid}/servicos/{servicoId:guid}/fornecedores/{vinculoId:guid}/voltar", VoltarEtapa).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/eventos/{id:guid}/servicos/{servicoId:guid}/fornecedores/{vinculoId:guid}/contratar", ContratarFornecedor).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapGet("/eventos/{id:guid}/budget", Budget).RequireAuthorization(AssistenteEndpoints.PoliticaFinanceiro);
+        api.MapGet("/eventos/{id:guid}/resumo", ResumoEvento).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapGet("/eventos/{id:guid}/assistentes", AssistentesDoEvento).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPut("/eventos/{id:guid}/assistentes", DefinirAssistentesDoEvento).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapGet("/eventos", Eventos);
         api.MapGet("/eventos/{id:guid}", Evento);
-        api.MapPost("/eventos", CriarEvento).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPut("/eventos/{id:guid}", AtualizarEvento).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPost("/eventos/{id:guid}/concluir", Concluir).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPost("/eventos/{id:guid}/cancelar", Cancelar).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPost("/eventos/{id:guid}/assessoria", Assessoria).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPut("/eventos/{id:guid}/transfer", Transfer).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPost("/eventos/{id:guid}/imagem", ImagemEvento).RequireAuthorization(policy => policy.RequireRole(SoOrganizer)).DisableAntiforgery();
-        api.MapDelete("/eventos/{id:guid}/imagem", RemoverImagemEvento).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
+        api.MapPost("/eventos", CriarEvento).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPut("/eventos/{id:guid}", AtualizarEvento).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/eventos/{id:guid}/concluir", Concluir).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/eventos/{id:guid}/cancelar", Cancelar).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/eventos/{id:guid}/assessoria", Assessoria).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPut("/eventos/{id:guid}/transfer", Transfer).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/eventos/{id:guid}/imagem", ImagemEvento).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe)).DisableAntiforgery();
+        api.MapDelete("/eventos/{id:guid}/imagem", RemoverImagemEvento).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapGet("/eventos/{id:guid}/tarefas", TarefasDoEvento);
         api.MapPost("/eventos/{id:guid}/tarefas", CriarTarefa);
         api.MapGet("/tarefas", Tarefas);
         api.MapPut("/tarefas/{id:guid}", AtualizarTarefa);
         api.MapPost("/tarefas/{id:guid}/comentarios", ComentarTarefa);
         api.MapPut("/tarefas/{id:guid}/checklist/{itemId:guid}", MarcarItemChecklist);
-        api.MapPost("/tarefas/{id:guid}/anexos", AnexarTarefa).RequireAuthorization(policy => policy.RequireRole(SoOrganizer)).DisableAntiforgery();
-        api.MapDelete("/tarefas/{id:guid}/anexos/{anexoId:guid}", RemoverAnexoTarefa).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapGet("/clientes", Clientes).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPost("/clientes", CriarCliente).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPut("/clientes/{id:guid}", AtualizarCliente).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPost("/clientes/{id:guid}/foto", FotoCliente).RequireAuthorization(policy => policy.RequireRole(SoOrganizer)).DisableAntiforgery();
-        api.MapGet("/eventos/{id:guid}/clientes", ClientesDoEvento).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPost("/eventos/{id:guid}/clientes", Vincular).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapDelete("/eventos/{id:guid}/clientes/{clienteId:guid}", Desvincular).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
+        api.MapPost("/tarefas/{id:guid}/anexos", AnexarTarefa).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe)).DisableAntiforgery();
+        api.MapDelete("/tarefas/{id:guid}/anexos/{anexoId:guid}", RemoverAnexoTarefa).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapGet("/clientes", Clientes).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/clientes", CriarCliente).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPut("/clientes/{id:guid}", AtualizarCliente).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/clientes/{id:guid}/foto", FotoCliente).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe)).DisableAntiforgery();
+        api.MapGet("/eventos/{id:guid}/clientes", ClientesDoEvento).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/eventos/{id:guid}/clientes", Vincular).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapDelete("/eventos/{id:guid}/clientes/{clienteId:guid}", Desvincular).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapGet("/grupos", Grupos);
         api.MapPost("/grupos", CriarGrupo);
         api.MapGet("/eventos/{id:guid}/convites", Convites);
@@ -104,57 +110,57 @@ public static class NegocioEndpoints
         api.MapGet("/arquivos/{id:guid}", Arquivo);
         api.MapGet("/cep/{cep}", Cep);
 
-        api.MapGet("/agenda", Agenda).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPost("/agenda", CriarCompromisso).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPut("/agenda/{id:guid}", AtualizarCompromisso).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapDelete("/agenda/{id:guid}", ExcluirCompromisso).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
+        api.MapGet("/agenda", Agenda).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/agenda", CriarCompromisso).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPut("/agenda/{id:guid}", AtualizarCompromisso).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapDelete("/agenda/{id:guid}", ExcluirCompromisso).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
 
-        api.MapGet("/oportunidades", Oportunidades).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPost("/oportunidades", CriarOportunidade).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapGet("/oportunidades/exportar", ExportarOportunidades).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapGet("/oportunidades/checar-data", ChecarDataOportunidade).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapGet("/oportunidades/contato-repetido", ContatoRepetidoOportunidade).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapGet("/oportunidades/{id:guid}", Oportunidade).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPut("/oportunidades/{id:guid}", AtualizarOportunidade).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPost("/oportunidades/{id:guid}/mover", MoverOportunidade).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPost("/oportunidades/{id:guid}/cliente", VincularClienteOportunidade).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPost("/oportunidades/{id:guid}/retorno", RetornoOportunidade).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
+        api.MapGet("/oportunidades", Oportunidades).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/oportunidades", CriarOportunidade).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapGet("/oportunidades/exportar", ExportarOportunidades).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapGet("/oportunidades/checar-data", ChecarDataOportunidade).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapGet("/oportunidades/contato-repetido", ContatoRepetidoOportunidade).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapGet("/oportunidades/{id:guid}", Oportunidade).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPut("/oportunidades/{id:guid}", AtualizarOportunidade).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/oportunidades/{id:guid}/mover", MoverOportunidade).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/oportunidades/{id:guid}/cliente", VincularClienteOportunidade).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/oportunidades/{id:guid}/retorno", RetornoOportunidade).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapDelete("/oportunidades/{id:guid}", ExcluirOportunidade).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapGet("/estagios-funil", EstagiosFunil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
+        api.MapGet("/estagios-funil", EstagiosFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPut("/estagios-funil", SalvarEstagiosFunil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
 
-        api.MapGet("/leads-rsvp", LeadsRsvp).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPost("/leads-rsvp/{id:guid}/gerar-oportunidade", GerarOportunidadeLead).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPost("/leads-rsvp/{id:guid}/descartar", DescartarLead).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPost("/leads-rsvp/{id:guid}/contatar", ContatarLead).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
+        api.MapGet("/leads-rsvp", LeadsRsvp).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/leads-rsvp/{id:guid}/gerar-oportunidade", GerarOportunidadeLead).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/leads-rsvp/{id:guid}/descartar", DescartarLead).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/leads-rsvp/{id:guid}/contatar", ContatarLead).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
 
-        api.MapGet("/contratos-funil", ContratosFunil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPost("/contratos-funil", CriarContratoFunil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapGet("/contratos-funil/{id:guid}", ContratoFunil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPut("/contratos-funil/{id:guid}", AtualizarContratoFunil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPost("/contratos-funil/{id:guid}/enviar", EnviarContratoFunil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPost("/contratos-funil/{id:guid}/assinar", AssinarContratoFunil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPost("/contratos-funil/{id:guid}/cancelar", CancelarContratoFunil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
+        api.MapGet("/contratos-funil", ContratosFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/contratos-funil", CriarContratoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapGet("/contratos-funil/{id:guid}", ContratoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPut("/contratos-funil/{id:guid}", AtualizarContratoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/contratos-funil/{id:guid}/enviar", EnviarContratoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/contratos-funil/{id:guid}/assinar", AssinarContratoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/contratos-funil/{id:guid}/cancelar", CancelarContratoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapDelete("/contratos-funil/{id:guid}", ExcluirContratoFunil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
 
-        api.MapGet("/orcamentos-funil", OrcamentosFunil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPost("/orcamentos-funil", CriarOrcamentoFunil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapGet("/orcamentos-funil/{id:guid}", OrcamentoFunil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPut("/orcamentos-funil/{id:guid}", AtualizarOrcamentoFunil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPost("/orcamentos-funil/{id:guid}/enviar", EnviarOrcamentoFunil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPost("/orcamentos-funil/{id:guid}/responder", ResponderOrcamentoFunil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPost("/orcamentos-funil/{id:guid}/cancelar", CancelarOrcamentoFunil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
+        api.MapGet("/orcamentos-funil", OrcamentosFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/orcamentos-funil", CriarOrcamentoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapGet("/orcamentos-funil/{id:guid}", OrcamentoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPut("/orcamentos-funil/{id:guid}", AtualizarOrcamentoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/orcamentos-funil/{id:guid}/enviar", EnviarOrcamentoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/orcamentos-funil/{id:guid}/responder", ResponderOrcamentoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/orcamentos-funil/{id:guid}/cancelar", CancelarOrcamentoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapDelete("/orcamentos-funil/{id:guid}", ExcluirOrcamentoFunil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
 
-        api.MapGet("/tarefas-funil", TarefasFunil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPost("/tarefas-funil", CriarTarefaFunil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPut("/tarefas-funil/{id:guid}", AtualizarTarefaFunil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPost("/tarefas-funil/{id:guid}/concluir", ConcluirTarefaFunil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPost("/tarefas-funil/{id:guid}/reabrir", ReabrirTarefaFunil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
+        api.MapGet("/tarefas-funil", TarefasFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/tarefas-funil", CriarTarefaFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPut("/tarefas-funil/{id:guid}", AtualizarTarefaFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/tarefas-funil/{id:guid}/concluir", ConcluirTarefaFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/tarefas-funil/{id:guid}/reabrir", ReabrirTarefaFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapDelete("/tarefas-funil/{id:guid}", ExcluirTarefaFunil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
 
-        api.MapGet("/relatorios-funil", RelatoriosFunil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapGet("/relatorios-funil/exportar", ExportarRelatoriosFunil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
+        api.MapGet("/relatorios-funil", RelatoriosFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapGet("/relatorios-funil/exportar", ExportarRelatoriosFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
 
         MapearBibliotecaSimples(api, "/modelos-servicos-funil", ModelosServicoFunil, CriarModeloServicoFunil, ModeloServicoFunil, AtualizarModeloServicoFunil, ExcluirModeloServicoFunil);
         MapearBibliotecaSimples(api, "/modelos-orcamento-funil", ModelosOrcamentoFunil, CriarModeloOrcamentoFunil, ModeloOrcamentoFunil, AtualizarModeloOrcamentoFunil, ExcluirModeloOrcamentoFunil);
@@ -430,7 +436,18 @@ public static class NegocioEndpoints
         ComConta(usuario, conta => De(servico.CriarAsync(conta, pedido, ct)));
 
     private static Task<IResult> Fornecedor(Guid id, ClaimsPrincipal usuario, FornecedorServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.ObterAsync(conta, id, ct)));
+        ComConta(usuario, async conta =>
+        {
+            var fornecedor = await servico.ObterAsync(conta, id, ct);
+            if (!fornecedor.Ok)
+            {
+                return Falha(fornecedor.Falha!);
+            }
+
+            return Results.Ok(AssistenteEndpoints.PodeVerFinanceiro(usuario)
+                ? fornecedor.Valor
+                : fornecedor.Valor! with { PrecoDe = null, PrecoAte = null });
+        });
 
     private static Task<IResult> AtualizarFornecedor(Guid id, SalvarFornecedor pedido, ClaimsPrincipal usuario, FornecedorServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.AtualizarAsync(conta, id, pedido, ct)));
@@ -505,12 +522,12 @@ public static class NegocioEndpoints
         Delegate excluir,
         Delegate clonar)
     {
-        api.MapGet(caminho, listar).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPost(caminho, criar).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapGet($"{caminho}/{{id:guid}}", obter).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPut($"{caminho}/{{id:guid}}", atualizar).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapDelete($"{caminho}/{{id:guid}}", excluir).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPost($"{caminho}/{{id:guid}}/clonar", clonar).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
+        api.MapGet(caminho, listar).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost(caminho, criar).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapGet($"{caminho}/{{id:guid}}", obter).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPut($"{caminho}/{{id:guid}}", atualizar).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapDelete($"{caminho}/{{id:guid}}", excluir).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost($"{caminho}/{{id:guid}}/clonar", clonar).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
     }
 
     private static Task<IResult> Eventos(
@@ -523,6 +540,7 @@ public static class NegocioEndpoints
         DateOnly? de,
         DateOnly? ate,
         string? tag,
+        AppDbContext banco,
         CancellationToken ct) =>
         ComConta(usuario, async conta =>
         {
@@ -531,6 +549,11 @@ public static class NegocioEndpoints
                 new FiltroEventos(EnumOuNulo<SituacaoEvento>(situacao), nome, EnumOuNulo<TipoEvento>(tipo), de, ate, tag),
                 Hoje(),
                 ct);
+            if (await EscopoAssistente.LiberadosAsync(usuario, banco, ct) is { } liberados)
+            {
+                lista = lista.Where(evento => liberados.Contains(evento.Id)).ToArray();
+            }
+
             if (!EhClient(usuario))
             {
                 return Results.Ok(lista);
@@ -549,7 +572,13 @@ public static class NegocioEndpoints
                 return bloqueio;
             }
 
-            return await De(servico.ObterAsync(conta, id, Hoje(), ct));
+            var detalhe = await servico.ObterAsync(conta, id, Hoje(), ct);
+            if (detalhe.Ok && !AssistenteEndpoints.PodeVerFinanceiro(usuario))
+            {
+                return Results.Ok(detalhe.Valor! with { OrcamentoEstimado = null });
+            }
+
+            return detalhe.Ok ? Results.Ok(detalhe.Valor) : Falha(detalhe.Falha!);
         });
 
     private static Task<IResult> CriarEvento(
@@ -557,6 +586,7 @@ public static class NegocioEndpoints
         ClaimsPrincipal usuario,
         EventoServico servico,
         ContratoServico contratos,
+        AppDbContext banco,
         CancellationToken ct) =>
         ComConta(usuario, async conta =>
         {
@@ -565,6 +595,13 @@ public static class NegocioEndpoints
             {
                 // SPEC-030 §6.3: o evento criado do modelo já vem com os contratos do modelo.
                 await contratos.CopiarDoModeloAsync(conta, resultado.Valor!.Id, modeloId, ct);
+            }
+
+            // SPEC-032 §17, ponto 1: o evento criado por uma assistente "só os dela" já nasce com ela marcada.
+            if (resultado.Ok && EscopoAssistente.AssistenteId(usuario) is Guid criadora)
+            {
+                banco.EventosAssistentes.Add(new Project.Domain.Equipe.EventoAssistente { EventoId = resultado.Valor!.Id, AssistenteId = criadora });
+                await banco.SaveChangesAsync(ct);
             }
 
             return resultado.Ok ? Results.Ok(resultado.Valor) : Falha(resultado.Falha!);
@@ -580,7 +617,18 @@ public static class NegocioEndpoints
         ComConta(usuario, conta => De(servico.EncerrarAsync(conta, id, SituacaoEvento.Cancelado, Hoje(), ct)));
 
     private static Task<IResult> ResumoEvento(Guid id, ClaimsPrincipal usuario, EventoServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.ResumoAsync(conta, id, Hoje(), ct)));
+        ComConta(usuario, async conta =>
+        {
+            var resumo = await servico.ResumoAsync(conta, id, Hoje(), ct);
+            if (!resumo.Ok)
+            {
+                return Falha(resumo.Falha!);
+            }
+
+            return Results.Ok(AssistenteEndpoints.PodeVerFinanceiro(usuario)
+                ? resumo.Valor
+                : resumo.Valor! with { OrcamentoEstimado = null, ValorContratado = 0, ValorPago = 0 });
+        });
 
     private static Task<IResult> Assessoria(Guid id, AssessoriaPedido pedido, ClaimsPrincipal usuario, EventoServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.DefinirAssessoriaAsync(conta, id, pedido, Hoje(), ct)));
@@ -647,7 +695,43 @@ public static class NegocioEndpoints
             return await De(servico.CriarAsync(conta, id, pedido, Hoje(), ct));
         });
 
-    private static Task<IResult> Tarefas(ClaimsPrincipal usuario, TarefaServico servico, IDados dados, CancellationToken ct) =>
+    private static Task<IResult> AssistentesDoEvento(Guid id, ClaimsPrincipal usuario, AppDbContext banco, CancellationToken ct) =>
+        ComConta(usuario, async conta =>
+        {
+            var ids = await banco.EventosAssistentes.AsNoTracking()
+                .Where(item => item.EventoId == id)
+                .Join(banco.Assistentes, item => item.AssistenteId, assistente => assistente.Id, (item, assistente) => assistente)
+                .Where(assistente => assistente.ContaId == conta)
+                .Select(assistente => assistente.Id)
+                .ToListAsync(ct);
+            return Results.Ok(new { assistentes = ids });
+        });
+
+    private static Task<IResult> DefinirAssistentesDoEvento(Guid id, AssistentesDoEventoPedido pedido, ClaimsPrincipal usuario, AppDbContext banco, CancellationToken ct) =>
+        ComConta(usuario, async conta =>
+        {
+            if (!await banco.Eventos.AnyAsync(evento => evento.Id == id && evento.ContaId == conta, ct))
+            {
+                return Indisponivel();
+            }
+
+            var pedidos = (pedido.Assistentes ?? []).Distinct().ToList();
+            var validas = await banco.Assistentes
+                .Where(assistente => assistente.ContaId == conta && assistente.Situacao == Project.Domain.Equipe.SituacaoAssistente.Ativa && pedidos.Contains(assistente.Id))
+                .Select(assistente => assistente.Id)
+                .ToListAsync(ct);
+            if (validas.Count != pedidos.Count)
+            {
+                return Validacao("Escolha só assistentes ativas da conta.");
+            }
+
+            await banco.EventosAssistentes.Where(item => item.EventoId == id).ExecuteDeleteAsync(ct);
+            banco.EventosAssistentes.AddRange(validas.Select(assistente => new Project.Domain.Equipe.EventoAssistente { EventoId = id, AssistenteId = assistente }));
+            await banco.SaveChangesAsync(ct);
+            return Results.Ok(new { assistentes = validas });
+        });
+
+    private static Task<IResult> Tarefas(ClaimsPrincipal usuario, TarefaServico servico, IDados dados, AppDbContext banco, CancellationToken ct) =>
         ComConta(usuario, async conta =>
         {
             var bloqueio = await ExigirModuloAsync(usuario, conta, ModuloCliente.Tarefas, dados, ct);
@@ -657,6 +741,11 @@ public static class NegocioEndpoints
             }
 
             var lista = await servico.DaContaAsync(conta, Hoje(), ct);
+            if (await EscopoAssistente.LiberadosAsync(usuario, banco, ct) is { } liberados)
+            {
+                lista = lista.Where(tarefa => liberados.Contains(tarefa.EventoId)).ToArray();
+            }
+
             if (!EhClient(usuario))
             {
                 return Results.Ok(lista);
@@ -1066,11 +1155,11 @@ public static class NegocioEndpoints
         Delegate atualizar,
         Delegate excluir)
     {
-        api.MapGet(caminho, listar).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPost(caminho, criar).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapGet($"{caminho}/{{id:guid}}", obter).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapPut($"{caminho}/{{id:guid}}", atualizar).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
-        api.MapDelete($"{caminho}/{{id:guid}}", excluir).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
+        api.MapGet(caminho, listar).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost(caminho, criar).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapGet($"{caminho}/{{id:guid}}", obter).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPut($"{caminho}/{{id:guid}}", atualizar).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapDelete($"{caminho}/{{id:guid}}", excluir).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
     }
 
     private static Task<IResult> Agenda(
@@ -1078,8 +1167,18 @@ public static class NegocioEndpoints
         AgendaServico servico,
         DateOnly? de,
         DateOnly? ate,
+        AppDbContext banco,
         CancellationToken ct) =>
-        ComConta(usuario, async conta => Results.Ok(await servico.ListarAsync(conta, de, ate, ct)));
+        ComConta(usuario, async conta =>
+        {
+            var itens = await servico.ListarAsync(conta, de, ate, ct);
+            if (await EscopoAssistente.LiberadosAsync(usuario, banco, ct) is { } liberados)
+            {
+                itens = itens.Where(item => item.EventoId is not Guid evento || liberados.Contains(evento)).ToArray();
+            }
+
+            return Results.Ok(itens);
+        });
 
     private static Task<IResult> CriarCompromisso(SalvarCompromisso pedido, ClaimsPrincipal usuario, AgendaServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.CriarAsync(conta, pedido, ct)));
@@ -1606,6 +1705,8 @@ public static class NegocioEndpoints
         return string.IsNullOrWhiteSpace(limpo) ? "arquivo" : limpo;
     }
 }
+
+public sealed record AssistentesDoEventoPedido(IReadOnlyList<Guid>? Assistentes);
 
 public sealed record TransferPedido(bool Ativo, IReadOnlyList<string>? Locais);
 

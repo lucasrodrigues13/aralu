@@ -243,7 +243,14 @@ public static class ContaEndpoints
         var email = usuario.FindFirstValue(ClaimTypes.Email)
             ?? usuario.FindFirstValue("email");
         var papeis = usuario.FindAll(ClaimTypes.Role).Select(claim => claim.Value).ToArray();
-        return Results.Ok(new { email, papeis });
+        var assistente = usuario.IsInRole(Papeis.Assistant);
+        return Results.Ok(new
+        {
+            email,
+            papeis,
+            podeVerFinanceiro = AssistenteEndpoints.PodeVerFinanceiro(usuario),
+            somenteDela = assistente && usuario.FindFirstValue(AssistenteEndpoints.ClaimSomenteDela) == "true",
+        });
     }
 
     private static async Task<bool> EnviarConfirmacaoAsync(

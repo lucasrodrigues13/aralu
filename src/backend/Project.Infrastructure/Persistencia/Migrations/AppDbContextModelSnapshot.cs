@@ -664,6 +664,78 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.ToTable("RecebimentosParcela", (string)null);
                 });
 
+            modelBuilder.Entity("Project.Domain.Equipe.Assistente", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Celular")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ContaId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("ConvidadaEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateOnly?>("Nascimento")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("PodeVerFinanceiro")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset?>("PrimeiroAcessoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("RemovidaEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Situacao")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("SomenteDela")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("UsuarioId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContaId");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.ToTable("Assistentes", (string)null);
+                });
+
+            modelBuilder.Entity("Project.Domain.Equipe.EventoAssistente", b =>
+                {
+                    b.Property<Guid>("EventoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AssistenteId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("EventoId", "AssistenteId");
+
+                    b.HasIndex("AssistenteId");
+
+                    b.ToTable("EventosAssistentes", (string)null);
+                });
+
             modelBuilder.Entity("Project.Domain.Eventos.CompromissoAgenda", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2648,6 +2720,21 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.HasOne("Project.Domain.Dinheiro.ParcelaCasal", null)
                         .WithMany("Recebimentos")
                         .HasForeignKey("ParcelaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Project.Domain.Equipe.EventoAssistente", b =>
+                {
+                    b.HasOne("Project.Domain.Equipe.Assistente", null)
+                        .WithMany()
+                        .HasForeignKey("AssistenteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Project.Domain.Eventos.Evento", null)
+                        .WithMany()
+                        .HasForeignKey("EventoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

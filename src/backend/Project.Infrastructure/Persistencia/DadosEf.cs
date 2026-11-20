@@ -383,6 +383,12 @@ public sealed class DadosEf(AppDbContext banco) : IDados
     public Task<Tarefa?> ObterTarefaAsync(string contaId, Guid id, CancellationToken ct) =>
         banco.Tarefas.FirstOrDefaultAsync(tarefa => tarefa.Id == id && tarefa.ContaId == contaId, ct);
 
+    public async Task<IReadOnlyList<Guid>> IdsAssistentesAtivasAsync(string contaId, CancellationToken ct) =>
+        await banco.Assistentes.AsNoTracking()
+            .Where(item => item.ContaId == contaId && item.Situacao == Project.Domain.Equipe.SituacaoAssistente.Ativa)
+            .Select(item => item.Id)
+            .ToListAsync(ct);
+
     public async Task SubstituirResponsaveisAsync(Guid tarefaId, IReadOnlyList<ResponsavelTarefa> responsaveis, CancellationToken ct)
     {
         await banco.Set<ResponsavelTarefa>().Where(item => item.TarefaId == tarefaId).ExecuteDeleteAsync(ct);

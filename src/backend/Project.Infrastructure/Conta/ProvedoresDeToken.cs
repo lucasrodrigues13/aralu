@@ -27,6 +27,29 @@ public sealed class ConfirmacaoEmailTokenProviderOptions : DataProtectionTokenPr
     }
 }
 
+public sealed class ConviteAssistenteTokenProvider : DataProtectorTokenProvider<ApplicationUser>
+{
+    public const string Nome = "ConviteAssistente";
+
+    public ConviteAssistenteTokenProvider(
+        IDataProtectionProvider dataProtectionProvider,
+        IOptions<ConviteAssistenteTokenProviderOptions> options,
+        ILogger<DataProtectorTokenProvider<ApplicationUser>> logger)
+        : base(dataProtectionProvider, Microsoft.Extensions.Options.Options.Create<DataProtectionTokenProviderOptions>(options.Value), logger)
+    {
+    }
+}
+
+/// <summary>O convite da assistente vale 7 dias (SPEC-032 §17, ponto 7).</summary>
+public sealed class ConviteAssistenteTokenProviderOptions : DataProtectionTokenProviderOptions
+{
+    public ConviteAssistenteTokenProviderOptions()
+    {
+        Name = ConviteAssistenteTokenProvider.Nome;
+        TokenLifespan = TimeSpan.FromDays(7);
+    }
+}
+
 public sealed class RedefinicaoSenhaTokenProvider : DataProtectorTokenProvider<ApplicationUser>
 {
     public const string Nome = "RedefinicaoSenha";

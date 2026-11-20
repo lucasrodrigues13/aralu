@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Project.Domain.Clientes;
 using Project.Domain.Convidados;
+using Project.Domain.Equipe;
 using Project.Domain.Eventos;
 using Project.Domain.Fornecedores;
 using Project.Domain.Funil;
@@ -22,6 +23,10 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<PerfilAssessoria> Perfis => Set<PerfilAssessoria>();
 
     public DbSet<ModeloEvento> Modelos => Set<ModeloEvento>();
+
+    public DbSet<Assistente> Assistentes => Set<Assistente>();
+
+    public DbSet<EventoAssistente> EventosAssistentes => Set<EventoAssistente>();
 
     public DbSet<Evento> Eventos => Set<Evento>();
 

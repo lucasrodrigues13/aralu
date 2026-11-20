@@ -15,7 +15,7 @@ public sealed class GarantiaDePapeis
 
     public async Task GarantirAsync()
     {
-        foreach (var papel in new[] { Papeis.Admin, Papeis.Organizer, Papeis.Client })
+        foreach (var papel in new[] { Papeis.Admin, Papeis.Organizer, Papeis.Client, Papeis.Assistant })
         {
             if (!await _roles.RoleExistsAsync(papel))
             {

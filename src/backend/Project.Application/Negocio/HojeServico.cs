@@ -91,14 +91,24 @@ public static class HojeRegras
 /// <summary>Tela Hoje: o que pede ação hoje (SPEC-007 v2).</summary>
 public sealed class HojeServico(IDadosHoje dados, PainelServico painel)
 {
-    public async Task<HojeLeitura> ObterAsync(string contaId, DateOnly hoje, CancellationToken ct)
+    public async Task<HojeLeitura> ObterAsync(
+        string contaId,
+        DateOnly hoje,
+        CancellationToken ct,
+        IReadOnlySet<Guid>? eventosLiberados = null,
+        bool comFinanceiro = true)
     {
         var eventos = await dados.EventosEmAndamentoAsync(contaId, ct);
+        if (eventosLiberados is not null)
+        {
+            eventos = eventos.Where(evento => eventosLiberados.Contains(evento.Id)).ToArray();
+        }
+
         var ids = eventos.Select(evento => evento.Id).ToArray();
         var tarefas = await dados.TarefasAsync(contaId, ids, ct);
         var convidados = (await dados.ConvidadosAsync(contaId, ids, ct)).ToDictionary(item => item.EventoId);
-        var cobrancas = await dados.CobrancasAsync(contaId, ids, hoje.AddDays(7), ct);
-        var pagamentos = await dados.PagamentosPendentesAsync(contaId, ids, hoje, hoje.AddDays(6), ct);
+        var cobrancas = comFinanceiro ? await dados.CobrancasAsync(contaId, ids, hoje.AddDays(7), ct) : [];
+        var pagamentos = comFinanceiro ? await dados.PagamentosPendentesAsync(contaId, ids, hoje, hoje.AddDays(6), ct) : [];
         var funil = (await painel.ObterAsync(contaId, ct)).Funil;
 
         var proximo = eventos

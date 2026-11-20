@@ -13,7 +13,8 @@ public static class DinheiroEndpoints
 
     public static void Mapear(WebApplication app)
     {
-        var api = app.MapGroup("/api/v1").RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
+        var api = app.MapGroup("/api/v1").RequireAuthorization(AssistenteEndpoints.PoliticaFinanceiro);
+        api.AddEndpointFilter(EscopoAssistente.Filtro);
         api.MapGet("/eventos/{id:guid}/dinheiro", Obter);
         api.MapPut("/eventos/{id:guid}/dinheiro/contrato", DefinirContrato);
         api.MapPost("/eventos/{id:guid}/dinheiro/parcelas/{parcelaId:guid}/recebimentos", Receber);
@@ -25,8 +26,13 @@ public static class DinheiroEndpoints
         api.MapPost("/eventos/{id:guid}/dinheiro/comprovantes", EnviarComprovante).DisableAntiforgery();
         api.MapDelete("/eventos/{id:guid}/dinheiro/comprovantes/{comprovanteId:guid}", ExcluirComprovante);
         api.MapGet("/pagamentos", Pagamentos);
-        api.MapGet("/hoje", (ClaimsPrincipal usuario, HojeServico servico, CancellationToken ct) =>
-            ComConta(usuario, async conta => Results.Ok(await servico.ObterAsync(conta, Hoje(), ct))));
+        app.MapGet("/api/v1/hoje", (ClaimsPrincipal usuario, HojeServico servico, Project.Infrastructure.Persistencia.AppDbContext banco, CancellationToken ct) =>
+            ComConta(usuario, async conta => Results.Ok(await servico.ObterAsync(
+                conta,
+                Hoje(),
+                ct,
+                await EscopoAssistente.LiberadosAsync(usuario, banco, ct),
+                AssistenteEndpoints.PodeVerFinanceiro(usuario))))).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
     }
 
     private static Task<IResult> Obter(Guid id, ClaimsPrincipal usuario, DinheiroServico servico, CancellationToken ct) =>

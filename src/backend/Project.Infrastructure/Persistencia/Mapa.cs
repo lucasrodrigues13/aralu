@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Project.Domain.Clientes;
 using Project.Domain.Convidados;
+using Project.Domain.Equipe;
 using Project.Domain.Eventos;
 using Project.Domain.Fornecedores;
 using Project.Domain.Funil;
@@ -53,6 +54,16 @@ public static class Mapa
         modelBuilder.Entity<FornecedorNoServico>().Property(item => item.ValorOrcamento).HasPrecision(12, 2);
         modelBuilder.Entity<ParcelaServico>().Property(parcela => parcela.Valor).HasPrecision(12, 2);
         modelBuilder.Entity<ParcelaServico>().Property(parcela => parcela.Situacao).HasConversion<string>();
+
+        var assistente = modelBuilder.Entity<Assistente>();
+        assistente.ToTable("Assistentes");
+        assistente.Property(item => item.Situacao).HasConversion<string>();
+        assistente.Property(item => item.Nome).HasMaxLength(100);
+        assistente.HasIndex(item => item.ContaId);
+        assistente.HasIndex(item => item.UsuarioId);
+        modelBuilder.Entity<EventoAssistente>().ToTable("EventosAssistentes").HasKey(item => new { item.EventoId, item.AssistenteId });
+        modelBuilder.Entity<EventoAssistente>().HasOne<Evento>().WithMany().HasForeignKey(item => item.EventoId).OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<EventoAssistente>().HasOne<Assistente>().WithMany().HasForeignKey(item => item.AssistenteId).OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<TagConta>().HasIndex(tag => new { tag.ContaId, tag.Nome }).IsUnique();
 

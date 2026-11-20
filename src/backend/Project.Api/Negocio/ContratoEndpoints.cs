@@ -22,7 +22,8 @@ public static class ContratoEndpoints
         cadastro.MapPut("/{id:guid}", Atualizar);
         cadastro.MapDelete("/{id:guid}", Excluir);
 
-        var api = app.MapGroup("/api/v1").RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
+        var api = app.MapGroup("/api/v1").RequireAuthorization(AssistenteEndpoints.PoliticaFinanceiro);
+        api.AddEndpointFilter(EscopoAssistente.Filtro);
         api.MapGet("/modelos/{id:guid}/contratos", DoModelo);
         api.MapPut("/modelos/{id:guid}/contratos", VincularAoModelo);
         api.MapGet("/eventos/{id:guid}/contratos", DoEvento);

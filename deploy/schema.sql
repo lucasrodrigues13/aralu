@@ -2478,3 +2478,70 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261120193447_Assistentes') THEN
+    CREATE TABLE "Assistentes" (
+        "Id" uuid NOT NULL,
+        "ContaId" text NOT NULL,
+        "UsuarioId" text NOT NULL,
+        "Nome" character varying(100) NOT NULL,
+        "Email" text NOT NULL,
+        "Celular" text,
+        "Nascimento" date,
+        "PodeVerFinanceiro" boolean NOT NULL,
+        "SomenteDela" boolean NOT NULL,
+        "Situacao" text NOT NULL,
+        "ConvidadaEm" timestamp with time zone NOT NULL,
+        "PrimeiroAcessoEm" timestamp with time zone,
+        "RemovidaEm" timestamp with time zone,
+        CONSTRAINT "PK_Assistentes" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261120193447_Assistentes') THEN
+    CREATE TABLE "EventosAssistentes" (
+        "EventoId" uuid NOT NULL,
+        "AssistenteId" uuid NOT NULL,
+        CONSTRAINT "PK_EventosAssistentes" PRIMARY KEY ("EventoId", "AssistenteId"),
+        CONSTRAINT "FK_EventosAssistentes_Assistentes_AssistenteId" FOREIGN KEY ("AssistenteId") REFERENCES "Assistentes" ("Id") ON DELETE CASCADE,
+        CONSTRAINT "FK_EventosAssistentes_Eventos_EventoId" FOREIGN KEY ("EventoId") REFERENCES "Eventos" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261120193447_Assistentes') THEN
+    CREATE INDEX "IX_Assistentes_ContaId" ON "Assistentes" ("ContaId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261120193447_Assistentes') THEN
+    CREATE INDEX "IX_Assistentes_UsuarioId" ON "Assistentes" ("UsuarioId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261120193447_Assistentes') THEN
+    CREATE INDEX "IX_EventosAssistentes_AssistenteId" ON "EventosAssistentes" ("AssistenteId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261120193447_Assistentes') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261120193447_Assistentes', '10.0.4');
+    END IF;
+END $EF$;
+COMMIT;
+

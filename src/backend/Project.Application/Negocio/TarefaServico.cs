@@ -4,7 +4,7 @@ using Project.Domain.Tarefas;
 
 namespace Project.Application.Negocio;
 
-public sealed record ResponsavelPedido(PapelResponsavel Papel);
+public sealed record ResponsavelPedido(PapelResponsavel Papel, string? ReferenciaId = null);
 
 public sealed record ItemChecklistPedido(string? Texto, bool Feito, bool Cancelado = false);
 
@@ -178,7 +178,8 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
             return Resultado<TarefaLeitura>.Erro(visibilidade.Codigo, visibilidade.Mensagem);
         }
 
-        if (pedido.Responsaveis is not null && ValidarResponsaveis(pedido.Responsaveis) is Falha responsaveis)
+        if (pedido.Responsaveis is not null
+            && ValidarResponsaveis(pedido.Responsaveis, await ReferenciasPermitidasAsync(contaId, null, ct)) is Falha responsaveis)
         {
             return Resultado<TarefaLeitura>.Erro(responsaveis.Codigo, responsaveis.Mensagem);
         }
@@ -256,7 +257,8 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
             return Resultado<TarefaLeitura>.Erro(visibilidade.Codigo, visibilidade.Mensagem);
         }
 
-        if (pedido.Responsaveis is not null && ValidarResponsaveis(pedido.Responsaveis) is Falha responsaveis)
+        if (pedido.Responsaveis is not null
+            && ValidarResponsaveis(pedido.Responsaveis, await ReferenciasPermitidasAsync(contaId, tarefa, ct)) is Falha responsaveis)
         {
             return Resultado<TarefaLeitura>.Erro(responsaveis.Codigo, responsaveis.Mensagem);
         }
@@ -458,8 +460,28 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
             Id = Guid.NewGuid(),
             TarefaId = tarefa.Id,
             Papel = pedido.Papel,
-            ReferenciaId = pedido.Papel == PapelResponsavel.Organizer ? contaId : null,
+            ReferenciaId = pedido.Papel switch
+            {
+                PapelResponsavel.Organizer => contaId,
+                PapelResponsavel.Assistente => pedido.ReferenciaId,
+                _ => null,
+            },
         }).ToList();
+    }
+
+    /// <summary>Assistentes que podem ser marcadas: as ativas da conta e as que já estão na tarefa (SPEC-032 §6.6).</summary>
+    private async Task<HashSet<string>> ReferenciasPermitidasAsync(string contaId, Tarefa? atual, CancellationToken ct)
+    {
+        var ativas = (await dados.IdsAssistentesAtivasAsync(contaId, ct)).Select(id => id.ToString()).ToHashSet();
+        if (atual is not null)
+        {
+            foreach (var item in atual.Responsaveis.Where(item => item.Papel == PapelResponsavel.Assistente && item.ReferenciaId is not null))
+            {
+                ativas.Add(item.ReferenciaId!);
+            }
+        }
+
+        return ativas;
     }
 
     private static void AplicarChecklist(Tarefa tarefa, IReadOnlyList<ItemChecklistPedido>? pedidos)
@@ -490,14 +512,14 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
         where TEnum : struct, Enum =>
         valor is TEnum definido && !Enum.IsDefined(definido) ? new Falha(Codigos.Validacao, mensagem) : null;
 
-    private static Falha? ValidarResponsaveis(IReadOnlyList<ResponsavelPedido> pedidos)
+    private static Falha? ValidarResponsaveis(IReadOnlyList<ResponsavelPedido> pedidos, IReadOnlySet<string> assistentesPermitidas)
     {
         if (pedidos.Count == 0)
         {
             return new Falha(Codigos.Validacao, "Informe ao menos um responsável.");
         }
 
-        var vistos = new HashSet<PapelResponsavel>();
+        var vistos = new HashSet<string>();
         foreach (var pedido in pedidos)
         {
             if (!Enum.IsDefined(pedido.Papel))
@@ -505,12 +527,18 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
                 return new Falha(Codigos.Validacao, "Escolha o responsável.");
             }
 
-            if (pedido.Papel is PapelResponsavel.Assistente or PapelResponsavel.Equipe)
+            if (pedido.Papel == PapelResponsavel.Equipe)
             {
-                return new Falha(Codigos.Validacao, "Assistente e membro da equipe ainda não podem ser responsáveis.");
+                return new Falha(Codigos.Validacao, "Membro da equipe ainda não pode ser responsável.");
             }
 
-            if (!vistos.Add(pedido.Papel))
+            if (pedido.Papel == PapelResponsavel.Assistente
+                && (pedido.ReferenciaId is null || !assistentesPermitidas.Contains(pedido.ReferenciaId)))
+            {
+                return new Falha(Codigos.Validacao, "Escolha uma assistente ativa da conta.");
+            }
+
+            if (!vistos.Add($"{pedido.Papel}:{pedido.ReferenciaId}"))
             {
                 return new Falha(Codigos.Validacao, "Responsável repetido.");
             }
