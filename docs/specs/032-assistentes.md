@@ -204,9 +204,49 @@ Implementada em três partes (A conta, B permissões, C "só os dela" e respons�
 7. **Responsáveis:** o seletor da tarefa do evento lista a dona, o casal e as assistentes ativas; assistente removida continua na tarefa com o selo "(removida)".
 8. **Minha conta:** a assistente edita nome, celular, nascimento e senha; o menu mostra "Assistente de <empresa>".
 
-Ainda falta, com as decisões do usuário (20/11/2026). Cada item é um passo, em sessão própria:
+Ainda falta, com as decisões do usuário (20/11/2026). **Cada passo roda em uma sessão própria, sem conferir no navegador** (só build e testes). Uma sessão nova deve ler só esta seção e o código apontado. Os passos são independentes; ordem sugerida: 1, 2, 4, 3. Ao terminar um passo: rodar os testes, trocar `[ ]` por `[x]` aqui, atualizar o Passo 1 de [proximas-acoes.md](../proximas-acoes.md) e commitar na `main`.
 
-1. **Excluir o que ela criou (§17, ponto 6):** hoje a assistente não exclui lead, orçamento, contrato nem tarefa do funil, porque o código não guarda quem criou cada item. *Decidido:* campo `CriadoPor` (com migration) nos quatro itens; a assistente exclui só os que ela criou; itens antigos, sem autor, só a dona exclui.
-2. **Pendências da Hoje (§17, ponto 8):** o card de tarefas abertas de assistente removida não existe. *Decidido:* card na Hoje da dona (só ela vê), listando as tarefas abertas com responsável removida e permitindo trocar o responsável ali mesmo.
-3. **Admin (§4):** o Admin não vê as assistentes de outra conta. *Decidido:* só consulta a lista, sem editar, convidar nem remover.
-4. **"Só os dela" nas telas de dinheiro:** Pagamentos lista a conta toda e Estatísticas de eventos não filtra. *Decidido:* filtrar as duas pelos eventos marcados para a assistente "só os dela", como nas outras telas.
+Código de apoio (backend em `src/backend`, testes em `tests`):
+
+- Permissões: `Project.Api/Conta/AssistenteEndpoints.cs` (`PodeVerFinanceiro`, `AplicarPermissoes`, claims) e `EscopoAssistente.cs` (`Restrito`, `AssistenteId`, `LiberadosAsync`).
+- Rotas do negócio: `Project.Api/Negocio/NegocioEndpoints.cs`, `DinheiroEndpoints.cs` (Pagamentos e Hoje) e `ContratoEndpoints.cs`.
+- Testes de integração (precisam do Docker): `Project.IntegrationTests/Negocio/AssistentesFluxoTests.cs` é o modelo de estilo.
+- Comandos: `dotnet test tests/Project.Tests`, `dotnet test tests/Project.IntegrationTests`, `npm --prefix src/frontend run build`, `cd src/frontend && npx ng test --watch=false`. Migration nova no projeto `Project.Infrastructure` (as anteriores estão em `Persistencia/Migrations`).
+
+### [ ] Passo 1. Excluir o que ela criou (§17, ponto 6)
+
+*Decidido:* guardar o autor e liberar a exclusão só do que é dela.
+
+- **Hoje:** as rotas `MapDelete` de `/oportunidades/{id}`, `/orcamentos-funil/{id}`, `/contratos-funil/{id}` e `/tarefas-funil/{id}` em `NegocioEndpoints.cs` (linhas ~128 a 166) exigem `SoOrganizer`.
+- **Fazer:**
+  1. Campo `CriadoPor` (texto com o id do usuário, aceita nulo) em `Oportunidade`, `OrcamentoFunil`, `ContratoFunil` e `TarefaFunil` (`Project.Domain/Funil`), mapeamento em `Persistencia/Mapa.cs` e migration `AutoriaDoFunil`.
+  2. Preencher `CriadoPor` ao criar, com o usuário logado (dona ou assistente).
+  3. Trocar `SoOrganizer` por `Papeis.Equipe` nas quatro rotas. A dona exclui tudo; a assistente só se `CriadoPor` for o id dela, senão 403. Itens antigos, sem autor, só a dona exclui.
+  4. Frontend: botão de excluir para a assistente só nos itens dela (a resposta da API traz um indicador, por exemplo `podeExcluir`). Telas em `src/frontend/src/app/pages/oportunidades`, `orcamentos-funil`, `contratos-funil` e `tarefas-funil`.
+- **Não muda:** evento, cliente e fornecedor continuam sem exclusão para a assistente.
+- **Testes de integração:** a assistente exclui o que criou (204); não exclui o da dona nem o antigo sem autor (403); a dona exclui os dois; outra conta continua com 404.
+
+### [ ] Passo 2. Pendências da Hoje (§17, ponto 8)
+
+*Decidido:* card só na Hoje da dona, com as tarefas abertas cujo responsável é assistente removida, e troca de responsável ali mesmo.
+
+- **Hoje:** `HojeServico` (`Project.Application/Negocio/HojeServico.cs`), rota `/api/v1/hoje` em `DinheiroEndpoints.cs` e tela em `src/frontend/src/app/pages/hoje`. O seletor de responsáveis compartilhado é `shared/responsaveis.ts`.
+- **Fazer:**
+  1. A resposta da Hoje ganha a lista `tarefasSemResponsavelAtivo` (evento, tarefa, prazo, nome da assistente removida), só para a dona e só com tarefas abertas (não concluídas nem canceladas), do evento e do funil.
+  2. Card na tela, escondido quando a lista está vazia; cada linha tem o seletor de responsável (dona e assistentes ativas), que usa a rota de troca de responsável que a tarefa já tem. A tarefa sai do card ao trocar.
+- **Testes:** unidade do `HojeServico` com a lista; integração: remover a assistente com tarefa aberta, a Hoje da dona traz a tarefa, a da assistente não traz, e trocar o responsável tira do card.
+
+### [ ] Passo 3. Admin vê as assistentes (§4)
+
+*Decidido:* só consulta, sem editar, convidar nem remover.
+
+- **Fazer:** rota `GET` do Admin com as assistentes de uma conta (nome, e-mail, situação e as duas permissões) e a lista na tela do Admin (`src/frontend/src/app/pages/admin`), por exemplo ao abrir a conta. Ver como o Admin lista contas hoje (`ContaEndpoints.cs`) e seguir o mesmo padrão.
+- **Testes de integração:** o Admin lê as assistentes de qualquer conta; dona e assistente recebem 403 nessa rota.
+
+### [ ] Passo 4. "Só os dela" em Pagamentos e Estatísticas (§6.4)
+
+*Decidido:* filtrar as duas telas pelos eventos liberados.
+
+- **Hoje:** `Pagamentos` (`DinheiroEndpoints.cs`, rota `/pagamentos`) e `Estatisticas` (`NegocioEndpoints.cs`, rota `/eventos/estatisticas`) não filtram. Eventos, Tarefas, Hoje e Agenda já usam `EscopoAssistente.LiberadosAsync` (exemplos em `NegocioEndpoints.cs` ~558, ~779 e ~1210).
+- **Fazer:** nas duas rotas, quando `LiberadosAsync` devolver um conjunto, restringir eventos, parcelas, pagamentos e totais a ele; os totais devem bater com a lista. Se as estatísticas incluem dados sem evento (funil, clientes), deixar como estão e anotar aqui.
+- **Testes de integração:** assistente "só os dela" com financeiro vê só os pagamentos e as estatísticas dos eventos marcados; com "todos" vê tudo.

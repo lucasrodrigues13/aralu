@@ -8,7 +8,7 @@ A SPEC-032 (assistentes) e a SPEC-031 parte D (ajustes do formulário do funil) 
 
 ### Passo 1. Fechar o que a SPEC-032 deixou combinado (§18 da spec)
 
-Pergunte ao usuário o que quer fazer, na ordem que ele escolher:
+Os quatro itens já estão decididos e detalhados (arquivos, regra e testes) na §18 da [SPEC-032](specs/032-assistentes.md). **Um passo por sessão**: leia só a §18, faça o primeiro passo pendente (`[ ]`), rode os testes, marque `[x]` lá e aqui, e commite. Não precisa perguntar de novo. Resumo:
 
 1. **Excluir o que ela criou (§17, ponto 6):** hoje a assistente não exclui lead, orçamento, contrato nem tarefa do funil. Precisa guardar quem criou cada item (coluna de autor nas quatro tabelas) e liberar a exclusão só do que é dela.
 2. **Pendências da Hoje (§17, ponto 8):** card de tarefas abertas de assistente removida na Hoje da dona.
