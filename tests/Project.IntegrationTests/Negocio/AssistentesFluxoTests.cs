@@ -3,6 +3,8 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.DependencyInjection;
+using Project.Infrastructure.Conta;
 using Project.IntegrationTests.Suporte;
 
 namespace Project.IntegrationTests.Negocio;
@@ -357,6 +359,39 @@ public class AssistentesFluxoTests
         var estatisticas = await Ler(await restrita.GetAsync("/api/v1/eventos/estatisticas"));
         Assert.Equal(1, estatisticas.GetProperty("total").GetInt32());
         Assert.Equal(1, estatisticas.GetProperty("rankingServicos").EnumerateArray().Max(item => item.GetProperty("quantidade").GetInt32()));
+    }
+
+    [Fact]
+    public async Task Admin_le_as_assistentes_de_qualquer_conta_e_dona_e_assistente_recebem_403()
+    {
+        var dona = await EntrarOrganizer();
+        var (assistente, assistenteId, email) = await ConvidarEAtivar(dona, financeiro: true, somenteDela: true);
+
+        var adminEmail = $"adm-{Guid.NewGuid():N}@gevents.test";
+        const string senhaAdmin = "administrador";
+        await using var fabrica = new FabricaApi(_banco.Conexao, bootstrap: true, adminEmail: adminEmail, adminSenha: senhaAdmin);
+        var admin = fabrica.CreateClient();
+        await using (var escopo = fabrica.Services.CreateAsyncScope())
+        {
+            await escopo.ServiceProvider.GetRequiredService<BootstrapAdministrador>().ExecutarAsync();
+        }
+
+        var entrada = await admin.PostAsJsonAsync("/api/v1/conta/entrar", new { email = adminEmail, senha = senhaAdmin });
+        var sessao = await entrada.Content.ReadFromJsonAsync<Sessao>();
+        admin.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", sessao!.Token);
+
+        var contas = await Ler(await admin.GetAsync("/api/v1/admin/assistentes"));
+        var lida = contas.EnumerateArray()
+            .SelectMany(conta => conta.GetProperty("assistentes").EnumerateArray())
+            .First(item => item.GetProperty("id").GetGuid() == assistenteId);
+        Assert.Equal(email, lida.GetProperty("email").GetString());
+        Assert.Equal("Ativa", lida.GetProperty("situacao").GetString());
+        Assert.True(lida.GetProperty("podeVerFinanceiro").GetBoolean());
+        Assert.True(lida.GetProperty("somenteDela").GetBoolean());
+        Assert.Contains(contas.EnumerateArray(), conta => conta.GetProperty("emailDaConta").GetString()!.StartsWith("org-", StringComparison.Ordinal));
+
+        Assert.Equal(HttpStatusCode.Forbidden, (await dona.GetAsync("/api/v1/admin/assistentes")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await assistente.GetAsync("/api/v1/admin/assistentes")).StatusCode);
     }
 
     private async Task<(HttpClient Cliente, Guid Id, string Email)> ConvidarSemAtivar(HttpClient dona)

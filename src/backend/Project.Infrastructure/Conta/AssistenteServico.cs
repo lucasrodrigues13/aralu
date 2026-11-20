@@ -30,6 +30,8 @@ public sealed record AssistenteLeitura(
     DateTimeOffset? PrimeiroAcessoEm,
     bool? ConviteEnviado);
 
+public sealed record ContaComAssistentes(string ContaId, string EmailDaConta, IReadOnlyList<AssistenteLeitura> Assistentes);
+
 public sealed record NomeAssistente(Guid Id, string Nome, bool Removida);
 
 public sealed record MinhaConta(string Nome, string Email, string? Celular, DateOnly? Nascimento, string Empresa);
@@ -52,6 +54,27 @@ public sealed class AssistenteServico(
             .OrderBy(item => item.Nome)
             .ToListAsync(ct);
         return itens.Select(item => Ler(item, null)).ToList();
+    }
+
+    /// <summary>Consulta do Admin (SPEC-032 §4): assistentes de todas as contas, inclusive removidas, agrupadas por conta.</summary>
+    public async Task<IReadOnlyList<ContaComAssistentes>> ListarParaAdminAsync(CancellationToken ct)
+    {
+        var itens = await banco.Assistentes.AsNoTracking()
+            .OrderBy(item => item.Nome)
+            .ToListAsync(ct);
+        var contas = itens.Select(item => item.ContaId).Distinct().ToList();
+        var emails = await banco.Users.AsNoTracking()
+            .Where(usuario => contas.Contains(usuario.Id))
+            .Select(usuario => new { usuario.Id, usuario.Email })
+            .ToDictionaryAsync(usuario => usuario.Id, usuario => usuario.Email ?? "", ct);
+        return itens
+            .GroupBy(item => item.ContaId)
+            .Select(grupo => new ContaComAssistentes(
+                grupo.Key,
+                emails.GetValueOrDefault(grupo.Key, ""),
+                grupo.Select(item => Ler(item, null)).ToList()))
+            .OrderBy(conta => conta.EmailDaConta)
+            .ToList();
     }
 
     /// <summary>Assistentes ativas da conta: base dos seletores de responsável (§6.6).</summary>

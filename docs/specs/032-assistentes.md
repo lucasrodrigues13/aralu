@@ -238,9 +238,11 @@ Código de apoio (backend em `src/backend`, testes em `tests`):
 - **Como ficou (20/11/2026):** `HojeLeitura.TarefasSemResponsavelAtivo` (origem Evento ou Funil, id, título, contexto, prazo, nome da assistente), preenchida só quando o usuário é a dona (`comPendencias`). A tarefa entra se qualquer responsável for assistente removida; a troca (PUT da tarefa, com o pedido remontado no frontend por `trocarResponsavelRemovido`) tira as removidas e põe a escolhida. Sem teste de unidade do `HojeServico` (não existe fake de `IDadosHoje`); a cobertura é de integração.
 - **Testes:** unidade do `HojeServico` com a lista; integração: remover a assistente com tarefa aberta, a Hoje da dona traz a tarefa, a da assistente não traz, e trocar o responsável tira do card.
 
-### [ ] Passo 3. Admin vê as assistentes (§4)
+### [x] Passo 3. Admin vê as assistentes (§4)
 
 *Decidido:* só consulta, sem editar, convidar nem remover.
+
+- **Como ficou (20/11/2026):** como o Admin não tinha lista de contas, a rota `GET /api/v1/admin/assistentes` devolve todas as assistentes (inclusive removidas) agrupadas por conta (`contaId`, `emailDaConta`, `assistentes`), em `AssistenteServico.ListarParaAdminAsync`. A tela do Admin mostra o card "Assistentes das contas" com nome, e-mail, situação e as duas permissões.
 
 - **Fazer:** rota `GET` do Admin com as assistentes de uma conta (nome, e-mail, situação e as duas permissões) e a lista na tela do Admin (`src/frontend/src/app/pages/admin`), por exemplo ao abrir a conta. Ver como o Admin lista contas hoje (`ContaEndpoints.cs`) e seguir o mesmo padrão.
 - **Testes de integração:** o Admin lê as assistentes de qualquer conta; dona e assistente recebem 403 nessa rota.

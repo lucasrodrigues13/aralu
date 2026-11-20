@@ -16,6 +16,12 @@ export interface Assistente {
   conviteEnviado: boolean | null;
 }
 
+export interface ContaComAssistentes {
+  contaId: string;
+  emailDaConta: string;
+  assistentes: Assistente[];
+}
+
 export interface NomeAssistente {
   id: string;
   nome: string;
@@ -47,6 +53,11 @@ export class AssistentesClient {
 
   listar() {
     return this.http.get<Assistente[]>(`${this.base}/api/v1/assistentes`);
+  }
+
+  /** Consulta do Admin: assistentes de todas as contas (só leitura). */
+  doAdmin() {
+    return this.http.get<ContaComAssistentes[]>(`${this.base}/api/v1/admin/assistentes`);
   }
 
   ativas() {

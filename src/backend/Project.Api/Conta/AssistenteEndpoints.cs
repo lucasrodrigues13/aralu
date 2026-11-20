@@ -27,6 +27,9 @@ public static class AssistenteEndpoints
         dona.MapPost("/{id:guid}/reenviar", Reenviar);
         dona.MapDelete("/{id:guid}", Remover);
 
+        app.MapGet("/api/v1/admin/assistentes", async (AssistenteServico servico, CancellationToken ct) =>
+            Results.Ok(await servico.ListarParaAdminAsync(ct))).RequireAuthorization(policy => policy.RequireRole(Papeis.Admin));
+
         app.MapGet("/api/v1/assistentes/ativas", Ativas).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
 
         app.MapGet("/api/v1/assistentes/nomes", async (ClaimsPrincipal usuario, AssistenteServico servico, CancellationToken ct) =>
