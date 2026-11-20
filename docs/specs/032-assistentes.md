@@ -204,9 +204,9 @@ Implementada em três partes (A conta, B permissões, C "só os dela" e respons�
 7. **Responsáveis:** o seletor da tarefa do evento lista a dona, o casal e as assistentes ativas; assistente removida continua na tarefa com o selo "(removida)".
 8. **Minha conta:** a assistente edita nome, celular, nascimento e senha; o menu mostra "Assistente de <empresa>".
 
-Ainda falta (combinar com o usuário antes):
+Ainda falta, com as decisões do usuário (20/11/2026). Cada item é um passo, em sessão própria:
 
-- **Excluir o que ela criou (§17, ponto 6):** hoje a assistente não exclui lead, orçamento, contrato nem tarefa do funil, porque o código ainda não guarda quem criou cada item. Fica só com a dona até existir esse registro.
-- **Pendências da Hoje (§17, ponto 8):** o card de tarefas abertas de assistente removida ainda não existe.
-- **Admin (§4):** o Admin ainda não gerencia as assistentes de outra conta.
-- **"Só os dela" nas telas de dinheiro:** Pagamentos lista a conta toda para quem tem a permissão financeira; Estatísticas de eventos também não filtra.
+1. **Excluir o que ela criou (§17, ponto 6):** hoje a assistente não exclui lead, orçamento, contrato nem tarefa do funil, porque o código não guarda quem criou cada item. *Decidido:* campo `CriadoPor` (com migration) nos quatro itens; a assistente exclui só os que ela criou; itens antigos, sem autor, só a dona exclui.
+2. **Pendências da Hoje (§17, ponto 8):** o card de tarefas abertas de assistente removida não existe. *Decidido:* card na Hoje da dona (só ela vê), listando as tarefas abertas com responsável removida e permitindo trocar o responsável ali mesmo.
+3. **Admin (§4):** o Admin não vê as assistentes de outra conta. *Decidido:* só consulta a lista, sem editar, convidar nem remover.
+4. **"Só os dela" nas telas de dinheiro:** Pagamentos lista a conta toda e Estatísticas de eventos não filtra. *Decidido:* filtrar as duas pelos eventos marcados para a assistente "só os dela", como nas outras telas.
