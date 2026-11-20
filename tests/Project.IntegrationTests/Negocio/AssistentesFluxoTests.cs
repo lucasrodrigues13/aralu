@@ -323,6 +323,42 @@ public class AssistentesFluxoTests
         Assert.Equal(HttpStatusCode.OK, (await dona.DeleteAsync($"/api/v1/oportunidades/{leadDona}")).StatusCode);
     }
 
+    [Fact]
+    public async Task Somente_dela_com_financeiro_ve_so_pagamentos_e_estatisticas_dos_eventos_marcados()
+    {
+        var dona = await EntrarOrganizer();
+        var (restrita, restritaId, _) = await ConvidarEAtivar(dona, financeiro: true, somenteDela: true);
+        var (todos, _, _) = await ConvidarEAtivar(dona, financeiro: true, somenteDela: false);
+
+        var marcado = (await CriarEvento(dona, "Marcado")).GetProperty("id").GetGuid();
+        var outro = (await CriarEvento(dona, "Outro")).GetProperty("id").GetGuid();
+        Assert.Equal(HttpStatusCode.OK, (await dona.PutAsJsonAsync($"/api/v1/eventos/{marcado}/assistentes", new { assistentes = new[] { restritaId } })).StatusCode);
+        foreach (var id in new[] { marcado, outro })
+        {
+            Assert.Equal(HttpStatusCode.OK, (await dona.PostAsJsonAsync($"/api/v1/eventos/{id}/assessoria", new
+            {
+                valorTotal = 4000,
+                quantidadeParcelas = 2,
+                primeiraParcela = "2026-12-10",
+                comEntrada = false,
+            })).StatusCode);
+        }
+
+        async Task<Guid[]> EventosDosPagamentos(HttpClient quem) =>
+            (await Ler(await quem.GetAsync("/api/v1/pagamentos"))).EnumerateArray()
+                .Select(item => item.GetProperty("eventoId").GetGuid()).Distinct().ToArray();
+
+        Assert.Equal(new[] { marcado }, await EventosDosPagamentos(restrita));
+        var vistosPorTodos = await EventosDosPagamentos(todos);
+        Assert.Contains(marcado, vistosPorTodos);
+        Assert.Contains(outro, vistosPorTodos);
+        Assert.Equal(2, (await Ler(await dona.GetAsync("/api/v1/eventos/estatisticas"))).GetProperty("total").GetInt32());
+        Assert.Equal(2, (await Ler(await todos.GetAsync("/api/v1/eventos/estatisticas"))).GetProperty("total").GetInt32());
+        var estatisticas = await Ler(await restrita.GetAsync("/api/v1/eventos/estatisticas"));
+        Assert.Equal(1, estatisticas.GetProperty("total").GetInt32());
+        Assert.Equal(1, estatisticas.GetProperty("rankingServicos").EnumerateArray().Max(item => item.GetProperty("quantidade").GetInt32()));
+    }
+
     private async Task<(HttpClient Cliente, Guid Id, string Email)> ConvidarSemAtivar(HttpClient dona)
     {
         var email = $"pend-{Guid.NewGuid():N}@gevents.test";

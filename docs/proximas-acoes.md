@@ -4,16 +4,16 @@ Roteiro para continuar o trabalho em outra sessão. Siga na ordem. Na dúvida, p
 
 ## 0. Próxima tarefa (atualizada em 20/11/2026)
 
-A SPEC-032 (assistentes) e a SPEC-031 parte D (ajustes do formulário do funil) estão **implementadas e commitadas na `main`**. Backend: 102 testes de unidade e 53 de integração passando. Frontend: `ng build` e 63 testes passando. O usuário ainda não conferiu na tela.
+A SPEC-032 (assistentes) e a SPEC-031 parte D (ajustes do formulário do funil) estão **implementadas e commitadas na `main`**. Backend: 102 testes de unidade e 54 de integração passando. Frontend: `ng build` e 63 testes passando. O usuário ainda não conferiu na tela.
 
 ### Passo 1. Fechar o que a SPEC-032 deixou combinado (§18 da spec)
 
-Os itens restantes (2 a 4) já estão decididos e detalhados (arquivos, regra e testes) na §18 da [SPEC-032](specs/032-assistentes.md). **Um passo por sessão**: leia só a §18, faça o primeiro passo pendente (`[ ]`), rode os testes, marque `[x]` lá e aqui, e commite. Não precisa perguntar de novo. Resumo:
+O item restante (3) já estão decididos e detalhados (arquivos, regra e testes) na §18 da [SPEC-032](specs/032-assistentes.md). **Um passo por sessão**: leia só a §18, faça o primeiro passo pendente (`[ ]`), rode os testes, marque `[x]` lá e aqui, e commite. Não precisa perguntar de novo. Resumo:
 
 1. ~~**Excluir o que ela criou (§17, ponto 6)**~~ — feito em 20/11/2026: coluna `CriadoPor` nas quatro tabelas (migration `AutoriaDoFunil`); a assistente exclui só o que criou (403 no resto), a dona exclui tudo.
 2. ~~**Pendências da Hoje (§17, ponto 8)**~~ — feito em 20/11/2026: card "Tarefas sem responsável" na Hoje da dona, com troca de responsável na linha.
 3. **Admin (§4):** o Admin gerenciar as assistentes de qualquer conta.
-4. **"Só os dela" no dinheiro:** a tela Pagamentos e as Estatísticas de eventos não filtram por evento liberado.
+4. ~~**"Só os dela" no dinheiro**~~ — feito em 20/11/2026: Pagamentos e Estatísticas de eventos filtram pelos eventos liberados.
 
 ### Passo 2. Próximo bloco do produto-v1 (§9)
 

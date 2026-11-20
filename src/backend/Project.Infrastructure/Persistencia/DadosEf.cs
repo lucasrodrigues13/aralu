@@ -728,9 +728,11 @@ public sealed class DadosEf(AppDbContext banco) : IDados
             convidado => convidado.Id == id && banco.Convites.Any(convite => convite.Id == convidado.ConviteId && convite.ContaId == contaId),
             ct);
 
-    public async Task<IReadOnlyList<ContagemSituacao>> ContarEventosAsync(string contaId, CancellationToken ct) =>
+    private static Guid[]? Ids(IReadOnlySet<Guid>? liberados) => liberados?.ToArray();
+
+    public async Task<IReadOnlyList<ContagemSituacao>> ContarEventosAsync(string contaId, CancellationToken ct, IReadOnlySet<Guid>? liberados = null) =>
         await banco.Eventos.AsNoTracking()
-            .Where(evento => evento.ContaId == contaId)
+            .Where(evento => evento.ContaId == contaId && (Ids(liberados) == null || Ids(liberados)!.Contains(evento.Id)))
             .GroupBy(evento => evento.Situacao)
             .Select(grupo => new ContagemSituacao(grupo.Key, grupo.Count()))
             .ToListAsync(ct);
@@ -751,19 +753,20 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         return situacao;
     }
 
-    public async Task<IReadOnlyList<ContagemMes>> ContarEventosPorMesAsync(string contaId, int ano, CancellationToken ct) =>
+    public async Task<IReadOnlyList<ContagemMes>> ContarEventosPorMesAsync(string contaId, int ano, CancellationToken ct, IReadOnlySet<Guid>? liberados = null) =>
         await banco.Eventos.AsNoTracking()
-            .Where(evento => evento.ContaId == contaId && evento.Data != null && evento.Data.Value.Year == ano)
+            .Where(evento => evento.ContaId == contaId && (Ids(liberados) == null || Ids(liberados)!.Contains(evento.Id)) && evento.Data != null && evento.Data.Value.Year == ano)
             .GroupBy(evento => evento.Data!.Value.Month)
             .Select(grupo => new ContagemMes(grupo.Key, grupo.Count()))
             .ToListAsync(ct);
 
-    public async Task<IReadOnlyList<ParticipacaoNome>> ParticipacaoOrcamentoConcluidosAsync(string contaId, CancellationToken ct) =>
+    public async Task<IReadOnlyList<ParticipacaoNome>> ParticipacaoOrcamentoConcluidosAsync(string contaId, CancellationToken ct, IReadOnlySet<Guid>? liberados = null) =>
         await banco.Set<ServicoEvento>().AsNoTracking()
             .Where(servico =>
                 banco.Eventos.Any(evento =>
                     evento.Id == servico.EventoId
                     && evento.ContaId == contaId
+                    && (Ids(liberados) == null || Ids(liberados)!.Contains(evento.Id))
                     && evento.Situacao == SituacaoEvento.Concluido)
                 && servico.ValorContratado != null
                 && servico.ValorContratado > 0)
@@ -771,7 +774,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
             .Select(grupo => new ParticipacaoNome(grupo.Key, grupo.Sum(servico => servico.ValorContratado!.Value)))
             .ToListAsync(ct);
 
-    public async Task<IReadOnlyList<ContagemNome>> ContarFornecedoresContratadosAsync(string contaId, CancellationToken ct)
+    public async Task<IReadOnlyList<ContagemNome>> ContarFornecedoresContratadosAsync(string contaId, CancellationToken ct, IReadOnlySet<Guid>? liberados = null)
     {
         var linhas = await (
             from vinculo in banco.Set<FornecedorNoServico>().AsNoTracking()
@@ -779,6 +782,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
             join evento in banco.Eventos.AsNoTracking() on servico.EventoId equals evento.Id
             join fornecedor in banco.Fornecedores.AsNoTracking() on vinculo.FornecedorId equals fornecedor.Id
             where evento.ContaId == contaId
+                && (Ids(liberados) == null || Ids(liberados)!.Contains(evento.Id))
                 && fornecedor.ContaId == contaId
                 && vinculo.Etapa == EtapaNegociacao.Contratado
             group vinculo by fornecedor.Nome into grupo
@@ -786,17 +790,18 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         return linhas;
     }
 
-    public async Task<IReadOnlyList<ContagemNome>> ContarServicosUtilizadosAsync(string contaId, CancellationToken ct) =>
+    public async Task<IReadOnlyList<ContagemNome>> ContarServicosUtilizadosAsync(string contaId, CancellationToken ct, IReadOnlySet<Guid>? liberados = null) =>
         await banco.Set<ServicoEvento>().AsNoTracking()
-            .Where(servico => banco.Eventos.Any(evento => evento.Id == servico.EventoId && evento.ContaId == contaId))
+            .Where(servico => banco.Eventos.Any(evento => evento.Id == servico.EventoId && evento.ContaId == contaId && (Ids(liberados) == null || Ids(liberados)!.Contains(evento.Id))))
             .GroupBy(servico => servico.Nome)
             .Select(grupo => new ContagemNome(grupo.Key, grupo.Count()))
             .ToListAsync(ct);
 
-    public Task<int> ContarTarefasNaSemanaAsync(string contaId, DateOnly inicio, DateOnly fim, CancellationToken ct) =>
+    public Task<int> ContarTarefasNaSemanaAsync(string contaId, DateOnly inicio, DateOnly fim, CancellationToken ct, IReadOnlySet<Guid>? liberados = null) =>
         banco.Tarefas.AsNoTracking()
             .CountAsync(
                 tarefa => tarefa.ContaId == contaId
+                    && (Ids(liberados) == null || Ids(liberados)!.Contains(tarefa.EventoId))
                     && tarefa.Prazo != null
                     && tarefa.Prazo >= inicio
                     && tarefa.Prazo <= fim,

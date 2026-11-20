@@ -333,8 +333,8 @@ public static class NegocioEndpoints
         return Results.Ok(servico.PreviaTexto(pedido?.Texto));
     }
 
-    private static Task<IResult> Estatisticas(ClaimsPrincipal usuario, EstatisticasServico servico, CancellationToken ct) =>
-        ComConta(usuario, async conta => Results.Ok(await servico.ObterAsync(conta, DateTimeOffset.UtcNow, ct)));
+    private static Task<IResult> Estatisticas(ClaimsPrincipal usuario, EstatisticasServico servico, Project.Infrastructure.Persistencia.AppDbContext banco, CancellationToken ct) =>
+        ComConta(usuario, async conta => Results.Ok(await servico.ObterAsync(conta, DateTimeOffset.UtcNow, ct, await EscopoAssistente.LiberadosAsync(usuario, banco, ct))));
 
     private static Task<IResult> Briefings(ClaimsPrincipal usuario, BriefingServico servico, string? nome, CancellationToken ct) =>
         ComConta(usuario, async conta => Results.Ok(await servico.ListarAsync(conta, nome, ct)));

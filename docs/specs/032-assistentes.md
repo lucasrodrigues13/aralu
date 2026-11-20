@@ -245,10 +245,11 @@ Código de apoio (backend em `src/backend`, testes em `tests`):
 - **Fazer:** rota `GET` do Admin com as assistentes de uma conta (nome, e-mail, situação e as duas permissões) e a lista na tela do Admin (`src/frontend/src/app/pages/admin`), por exemplo ao abrir a conta. Ver como o Admin lista contas hoje (`ContaEndpoints.cs`) e seguir o mesmo padrão.
 - **Testes de integração:** o Admin lê as assistentes de qualquer conta; dona e assistente recebem 403 nessa rota.
 
-### [ ] Passo 4. "Só os dela" em Pagamentos e Estatísticas (§6.4)
+### [x] Passo 4. "Só os dela" em Pagamentos e Estatísticas (§6.4)
 
 *Decidido:* filtrar as duas telas pelos eventos liberados.
 
 - **Hoje:** `Pagamentos` (`DinheiroEndpoints.cs`, rota `/pagamentos`) e `Estatisticas` (`NegocioEndpoints.cs`, rota `/eventos/estatisticas`) não filtram. Eventos, Tarefas, Hoje e Agenda já usam `EscopoAssistente.LiberadosAsync` (exemplos em `NegocioEndpoints.cs` ~558, ~779 e ~1210).
 - **Fazer:** nas duas rotas, quando `LiberadosAsync` devolver um conjunto, restringir eventos, parcelas, pagamentos e totais a ele; os totais devem bater com a lista. Se as estatísticas incluem dados sem evento (funil, clientes), deixar como estão e anotar aqui.
+- **Como ficou (20/11/2026):** `Pagamentos` filtra a lista por `EventoId` no `DinheiroServico`; as seis consultas de contagem do `EstatisticasServico` (`DadosEf`) ganharam o parâmetro `liberados`, então total, situações, por mês, rankings e tarefas da semana batem com os eventos marcados. Nada ficou sem filtro: todos os dados das Estatísticas são ligados a evento.
 - **Testes de integração:** assistente "só os dela" com financeiro vê só os pagamentos e as estatísticas dos eventos marcados; com "todos" vê tudo.

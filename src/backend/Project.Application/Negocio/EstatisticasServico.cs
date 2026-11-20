@@ -51,9 +51,9 @@ public static class EstatisticasCalculo
 
 public sealed class EstatisticasServico(IDados dados)
 {
-    public async Task<EstatisticasEventos> ObterAsync(string contaId, DateTimeOffset agoraUtc, CancellationToken ct)
+    public async Task<EstatisticasEventos> ObterAsync(string contaId, DateTimeOffset agoraUtc, CancellationToken ct, IReadOnlySet<Guid>? liberados = null)
     {
-        var contagens = await dados.ContarEventosAsync(contaId, ct);
+        var contagens = await dados.ContarEventosAsync(contaId, ct, liberados);
         var mapa = contagens.ToDictionary(item => item.Situacao, item => item.Quantidade);
         var total = mapa.Values.Sum();
         var situacoes = Enum.GetValues<SituacaoEvento>()
@@ -65,12 +65,12 @@ public sealed class EstatisticasServico(IDados dados)
             .ToArray();
 
         var ano = agoraUtc.UtcDateTime.Year;
-        var porMes = (await dados.ContarEventosPorMesAsync(contaId, ano, ct)).ToDictionary(item => item.Mes, item => item.Quantidade);
+        var porMes = (await dados.ContarEventosPorMesAsync(contaId, ano, ct, liberados)).ToDictionary(item => item.Mes, item => item.Quantidade);
         var eventosPorMes = Enumerable.Range(1, 12)
             .Select(mes => new MesEstatistica(mes, porMes.GetValueOrDefault(mes)))
             .ToArray();
 
-        var orcamento = await dados.ParticipacaoOrcamentoConcluidosAsync(contaId, ct);
+        var orcamento = await dados.ParticipacaoOrcamentoConcluidosAsync(contaId, ct, liberados);
         var totalOrcamento = orcamento.Sum(item => item.Valor);
         var rankingOrcamento = orcamento
             .OrderByDescending(item => item.Valor)
@@ -81,20 +81,20 @@ public sealed class EstatisticasServico(IDados dados)
                 EstatisticasCalculo.PercentualValor(item.Valor, totalOrcamento)))
             .ToArray();
 
-        var rankingFornecedores = (await dados.ContarFornecedoresContratadosAsync(contaId, ct))
+        var rankingFornecedores = (await dados.ContarFornecedoresContratadosAsync(contaId, ct, liberados))
             .OrderByDescending(item => item.Quantidade)
             .ThenBy(item => item.Nome, StringComparer.OrdinalIgnoreCase)
             .Select((item, indice) => new RankingFornecedor(indice + 1, item.Nome, item.Quantidade))
             .ToArray();
 
-        var rankingServicos = (await dados.ContarServicosUtilizadosAsync(contaId, ct))
+        var rankingServicos = (await dados.ContarServicosUtilizadosAsync(contaId, ct, liberados))
             .OrderByDescending(item => item.Quantidade)
             .ThenBy(item => item.Nome, StringComparer.OrdinalIgnoreCase)
             .Select((item, indice) => new RankingServico(indice + 1, item.Nome, item.Quantidade))
             .ToArray();
 
         var (inicio, fim) = EstatisticasCalculo.SemanaUtc(agoraUtc);
-        var tarefasSemana = await dados.ContarTarefasNaSemanaAsync(contaId, inicio, fim, ct);
+        var tarefasSemana = await dados.ContarTarefasNaSemanaAsync(contaId, inicio, fim, ct, liberados);
         var resumo = new ResumoEstatisticas(
             tarefasSemana,
             0,
