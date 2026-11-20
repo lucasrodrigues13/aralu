@@ -58,7 +58,9 @@ html {
   }
 
   .mat-mdc-outlined-button:not(:disabled) {
-    border-color: inherit !important;
+    // currentColor, não inherit: inherit copia a cor de cada lado da borda do pai
+    // (ex.: o divisor claro no topo de mat-dialog-actions) e apagava o topo do botão.
+    border-color: currentColor !important;
   }
 
   .mat-mdc-button-base.text-secondary:hover {
