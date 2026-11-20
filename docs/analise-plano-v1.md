@@ -7,7 +7,7 @@ Classificação: **Plausível** (fazer como pedido) · **Ajustar** (fazer, com m
 
 ## 1. O que o PDF muda no rumo
 
-1. **Foco no celular**, com barra inferior de 5 itens (Hoje, Eventos, + Novo, Dinheiro, Mais) e evento organizado em 4 grupos (Planejar, Convidados, Dinheiro, Casal) + Resumo. Hoje o gevents segue o menu lateral da Assessoria VIP (mvp-scope §3) e o visual de dashboard Apex.
+1. **Foco no celular**, com barra inferior de 5 itens (Hoje, Eventos, + Novo, Dinheiro, Mais) e evento organizado em 4 grupos (Planejar, Convidados, Dinheiro, Casal) + Resumo. Hoje o aralu segue o menu lateral da Assessoria VIP (mvp-scope §3) e o visual de dashboard Apex.
 2. **Funil de vendas, briefing, financeiro da empresa, aniversários, equipe, relatórios e mesas vão para a v1.1.** O funil (specs 020–028) já está construído.
 3. **Minha agenda não aparece no plano.** Só há "agenda geral de fornecedores" no passo 8.
 4. **Inspirações em quatro sistemas**: Cerimonial Fácil (11 de 12 passos), Assessoria VIP (4), Ivola (2), WeddingPro (4). Só a Assessoria VIP foi inventariada.

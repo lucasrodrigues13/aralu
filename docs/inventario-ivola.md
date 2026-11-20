@@ -2,7 +2,7 @@
 
 **Status: observado.** Leitura de 18/11/2026 em ivola.com.br (área do cerimonialista, plano Pro em teste de 14 dias), na conta de teste com o evento "Ana Teste & Bruno Teste". Somente leitura, sem salvar nada. O PDF usa o Ivola como inspiração para a **tela inicial** e a **organização das tarefas** (passos 3 e 4).
 
-O Ivola é, antes de tudo, um produto de **convite digital para casais** (freemium) com uma área para cerimonialistas por cima. Convite, presentes, álbum, mural e playlist estão fora do gevents (PDF: "não fazer").
+O Ivola é, antes de tudo, um produto de **convite digital para casais** (freemium) com uma área para cerimonialistas por cima. Convite, presentes, álbum, mural e playlist estão fora do aralu (PDF: "não fazer").
 
 ## 1. Navegação
 

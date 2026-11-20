@@ -1,6 +1,6 @@
 ---
 name: requirements-analysis
-description: Consolida requisitos do gevents a partir de docs/brief.md e docs/requirements.md, separando confirmado, observado, proposto e pendente. Use quando o usuário pedir levantamento, consolidação de RF ou atualização de requisitos sem nova entrevista.
+description: Consolida requisitos do aralu a partir de docs/brief.md e docs/requirements.md, separando confirmado, observado, proposto e pendente. Use quando o usuário pedir levantamento, consolidação de RF ou atualização de requisitos sem nova entrevista.
 ---
 
 # Análise de requisitos

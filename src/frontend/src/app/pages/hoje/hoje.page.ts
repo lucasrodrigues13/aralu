@@ -50,7 +50,7 @@ export interface Hoje {
   tarefasSemResponsavelAtivo?: TarefaSemResponsavel[];
 }
 
-const CHAVE_PULADOS = 'gevents-hoje-pulados';
+const CHAVE_PULADOS = 'aralu-hoje-pulados';
 const DIAS = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
 const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
 

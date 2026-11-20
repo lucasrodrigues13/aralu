@@ -1,6 +1,6 @@
 # Inventário da plataforma de referência
 
-**Status: observado.** Leitura tela a tela da plataforma que o cliente usa hoje, feita em 08/11/2026 com autorização para cadastro completo. Nada aqui é requisito aprovado. O que virar regra do gevents entra em [requirements.md](requirements.md) com ID próprio e depois numa spec.
+**Status: observado.** Leitura tela a tela da plataforma que o cliente usa hoje, feita em 08/11/2026 com autorização para cadastro completo. Nada aqui é requisito aprovado. O que virar regra do aralu entra em [requirements.md](requirements.md) com ID próprio e depois numa spec.
 
 Convenção: `*` marca campo obrigatório na tela. Listas fechadas vêm na ordem em que a tela mostra. Nomes, contatos e documentos de pessoas reais da conta não foram copiados. O evento de teste chama-se `TESTE LUCÃO`.
 

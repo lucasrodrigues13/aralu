@@ -98,7 +98,7 @@ public class ModelosBibliotecaFluxoTests
 
     private async Task<HttpClient> Entrar()
     {
-        var email = $"bib-{Guid.NewGuid():N}@gevents.test";
+        var email = $"bib-{Guid.NewGuid():N}@aralu.test";
         var cliente = _banco.Fabrica.CreateClient();
         Assert.Equal(HttpStatusCode.Created, (await cliente.PostAsJsonAsync("/api/v1/conta/cadastro", new { email, senha = Senha, confirmacao = Senha })).StatusCode);
         var mensagem = _banco.Fabrica.Email.Mensagens.Last(item => item.Email == email && item.Tipo == "confirmacao");

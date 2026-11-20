@@ -287,7 +287,7 @@ public static class ContaEndpoints
         string? token,
         string aviso)
     {
-        var logger = logs.CreateLogger("gevents.email");
+        var logger = logs.CreateLogger("aralu.email");
         if (!ambiente.IsDevelopment())
         {
             logger.LogWarning(aviso);

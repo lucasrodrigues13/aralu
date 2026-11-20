@@ -1,6 +1,6 @@
 ---
 name: specification-writing
-description: Escreve uma specification de comportamento do gevents em docs/specs, ligada aos RF. Use quando o usuário pedir spec, fluxo funcional ou critério de aceite. Gera uma spec por vez.
+description: Escreve uma specification de comportamento do aralu em docs/specs, ligada aos RF. Use quando o usuário pedir spec, fluxo funcional ou critério de aceite. Gera uma spec por vez.
 ---
 
 # Escrita de specification

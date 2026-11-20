@@ -3,8 +3,8 @@ namespace Project.Infrastructure.Conta;
 public sealed class JwtOpcoes
 {
     public string Secret { get; set; } = "";
-    public string Issuer { get; set; } = "gevents";
-    public string Audience { get; set; } = "gevents";
+    public string Issuer { get; set; } = "aralu";
+    public string Audience { get; set; } = "aralu";
     public int ExpiryHours { get; set; } = 8;
 }
 

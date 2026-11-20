@@ -31,7 +31,7 @@ public class ClienteAcessoFluxoTests
         }));
         var eventoId = evento.GetProperty("id").GetGuid();
 
-        var emailCliente = $"client-{Guid.NewGuid():N}@gevents.test";
+        var emailCliente = $"client-{Guid.NewGuid():N}@aralu.test";
         var contato = await Ler(await dono.PostAsJsonAsync("/api/v1/clientes", new
         {
             nome = "Cliente Portal",
@@ -114,7 +114,7 @@ public class ClienteAcessoFluxoTests
         }));
         var eventoId = evento.GetProperty("id").GetGuid();
 
-        var emailCliente = $"client-{Guid.NewGuid():N}@gevents.test";
+        var emailCliente = $"client-{Guid.NewGuid():N}@aralu.test";
         var contato = await Ler(await dono.PostAsJsonAsync("/api/v1/clientes", new
         {
             nome = "Sem Evento",
@@ -154,7 +154,7 @@ public class ClienteAcessoFluxoTests
     [Fact]
     public async Task Client_sem_OrganizerId_nao_entra()
     {
-        var email = $"solto-{Guid.NewGuid():N}@gevents.test";
+        var email = $"solto-{Guid.NewGuid():N}@aralu.test";
         await using (var escopo = _banco.Fabrica.Services.CreateAsyncScope())
         {
             var usuarios = escopo.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
@@ -170,7 +170,7 @@ public class ClienteAcessoFluxoTests
 
     private async Task<HttpClient> EntrarOrganizer()
     {
-        var email = $"org-{Guid.NewGuid():N}@gevents.test";
+        var email = $"org-{Guid.NewGuid():N}@aralu.test";
         var cliente = _banco.Fabrica.CreateClient();
         Assert.Equal(HttpStatusCode.Created, (await cliente.PostAsJsonAsync("/api/v1/conta/cadastro", new { email, senha = Senha, confirmacao = Senha })).StatusCode);
         var mensagem = _banco.Fabrica.Email.Mensagens.Last(item => item.Email == email && item.Tipo == "confirmacao");

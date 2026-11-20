@@ -1,6 +1,6 @@
 ---
 name: feature-implementation
-description: Implementa uma funcionalidade do gevents já coberta por spec aprovada. Use quando o usuário pedir para implementar, codar ou testar uma feature aprovada. Não amplia o escopo.
+description: Implementa uma funcionalidade do aralu já coberta por spec aprovada. Use quando o usuário pedir para implementar, codar ou testar uma feature aprovada. Não amplia o escopo.
 ---
 
 # Implementação

@@ -6,7 +6,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "gevents": {
+    "aralu": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -74,10 +74,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "gevents:build:production"
+              "buildTarget": "aralu:build:production"
             },
             "development": {
-              "buildTarget": "gevents:build:development"
+              "buildTarget": "aralu:build:development"
             }
           },
           "defaultConfiguration": "development"

@@ -1,6 +1,6 @@
 ---
 name: implementation-planning
-description: Só use quando o usuário pedir explicitamente um plano técnico. O gevents implementa a partir da spec aprovada, sem plano separado.
+description: Só use quando o usuário pedir explicitamente um plano técnico. O aralu implementa a partir da spec aprovada, sem plano separado.
 ---
 
 # Plano de implementação

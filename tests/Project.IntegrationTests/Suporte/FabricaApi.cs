@@ -51,11 +51,11 @@ public sealed class FabricaApi : WebApplicationFactory<Program>
     {
         builder.UseSetting("ConnectionStrings:Default", _conexao);
         builder.UseSetting("Jwt:Secret", "segredo-de-teste-com-32-caracteres");
-        builder.UseSetting("Jwt:Issuer", "gevents-test");
-        builder.UseSetting("Jwt:Audience", "gevents-test");
+        builder.UseSetting("Jwt:Issuer", "aralu-test");
+        builder.UseSetting("Jwt:Audience", "aralu-test");
         builder.UseSetting("Jwt:ExpiryHours", "8");
         builder.UseSetting("PublicUrl", "http://localhost:4200");
-        builder.UseSetting("DataProtection:KeysPath", Path.Combine(Path.GetTempPath(), "gevents-chaves-teste"));
+        builder.UseSetting("DataProtection:KeysPath", Path.Combine(Path.GetTempPath(), "aralu-chaves-teste"));
         builder.UseSetting("Email:Password", "smtp-segredo-nao-logar");
         builder.UseSetting("Bootstrap:Enabled", _bootstrap ? "true" : "false");
         builder.UseSetting("Bootstrap:AdminEmail", _adminEmail ?? "");
@@ -65,7 +65,7 @@ public sealed class FabricaApi : WebApplicationFactory<Program>
         builder.UseSetting("RateLimit:RecuperacaoPorHora", _recuperacaoPorHora.ToString());
         builder.UseSetting("RateLimit:ReenvioPorHora", _reenvioPorHora.ToString());
         builder.UseSetting("Swagger:Enabled", "false");
-        builder.UseSetting("Storage:Root", Path.Combine(Path.GetTempPath(), "gevents-arquivos-teste", Guid.NewGuid().ToString("N")));
+        builder.UseSetting("Storage:Root", Path.Combine(Path.GetTempPath(), "aralu-arquivos-teste", Guid.NewGuid().ToString("N")));
         builder.UseSetting("Storage:MaxImageBytes", "5242880");
         builder.ConfigureLogging(logging => logging.AddProvider(Logs));
         builder.ConfigureServices(services =>

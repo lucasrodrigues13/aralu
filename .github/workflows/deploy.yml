@@ -39,17 +39,17 @@ jobs:
           fi
           port="${SSH_PORT:-22}"
           install -m 700 -d ~/.ssh
-          printf '%s\n' "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/gevents_deploy
-          chmod 600 ~/.ssh/gevents_deploy
+          printf '%s\n' "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/aralu_deploy
+          chmod 600 ~/.ssh/aralu_deploy
           ssh-keyscan -p "$port" -H "$SSH_HOST" >> ~/.ssh/known_hosts
           destino="${SSH_USER}@${SSH_HOST}"
-          ssh_base="ssh -i ${HOME}/.ssh/gevents_deploy -p ${port} -o StrictHostKeyChecking=yes -o ConnectTimeout=20 -o ServerAliveInterval=30"
-          $ssh_base "$destino" "mkdir -p /opt/gevents"
+          ssh_base="ssh -i ${HOME}/.ssh/aralu_deploy -p ${port} -o StrictHostKeyChecking=yes -o ConnectTimeout=20 -o ServerAliveInterval=30"
+          $ssh_base "$destino" "mkdir -p /opt/aralu"
           rsync -az --delete \
             --exclude '.git/' \
             --exclude '.env' \
             --exclude 'node_modules/' \
             -e "$ssh_base" \
-            ./ "${destino}:/opt/gevents/"
-          $ssh_base "$destino" "if [ ! -f /opt/gevents/.env ]; then cp /opt/gevents/.env.example /opt/gevents/.env; chmod 600 /opt/gevents/.env; echo 'Preencha /opt/gevents/.env e rode este workflow de novo.'; exit 1; fi"
-          $ssh_base "$destino" "cd /opt/gevents && docker compose -f compose.production.yaml up -d --build --remove-orphans --wait"
+            ./ "${destino}:/opt/aralu/"
+          $ssh_base "$destino" "if [ ! -f /opt/aralu/.env ]; then cp /opt/aralu/.env.example /opt/aralu/.env; chmod 600 /opt/aralu/.env; echo 'Preencha /opt/aralu/.env e rode este workflow de novo.'; exit 1; fi"
+          $ssh_base "$destino" "cd /opt/aralu && docker compose -f compose.production.yaml up -d --build --remove-orphans --wait"

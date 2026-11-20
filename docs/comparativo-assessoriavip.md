@@ -1,4 +1,4 @@
-# Comparativo: Assessoria VIP × specs × gevents
+# Comparativo: Assessoria VIP × specs × aralu
 
 **Status: observado.** Levantamento de 18/11/2026 nos menus Gestão de Eventos, Minha agenda e Funil de vendas da plataforma de referência. A navegação foi só de leitura: nenhum registro foi criado ou alterado (o evento `TESTE LUCÃO` é o único liberado para escrita e ainda não foi usado nesta rodada). Nomes e contatos reais da conta não foram copiados.
 
@@ -32,7 +32,7 @@ Legenda: ✅ coberto · 🟡 parcial · ❌ ausente · ⛔ fora do corte por dec
 
 ### 1.2. Spec 019 × código
 
-| Item | Referência | Spec 019 | gevents |
+| Item | Referência | Spec 019 | aralu |
 |---|---|---|---|
 | Vistas Mês/Semana/Dia/Lista + navegação | ✅ | ✅ | ✅ (verificar fidelidade visual) |
 | Título | ✅ | "descrição" | `Descricao` |
@@ -63,7 +63,7 @@ Referência:
 - Menu "…" (não aberto).
 - Formulário "Adicionar oportunidade" em abas: **Sobre a oportunidade** (Nome*, Estágio*, Fonte com sugestões + texto livre, Valor da proposta, Responsável, Serviço/Produto com chips Assessoria completa/parcial/do dia + texto livre), **Sobre o evento** (Tipo, Qtde convidados, Data prevista, Horário (convite), Tempo de festa, Início cerimônia, Início recepção, Padrinhos, Damas e pajens), **Cerimônia** e **Recepção** (Local, País, CEP, Endereço, Número, Estado, Cidade, Bairro, Complemento), **Contatos** (lista; "Nenhum contato cadastrado. Informe os dados de pelo menos um contato"). O subformulário de contato não foi aberto.
 
-| Item | Spec 020 | gevents |
+| Item | Spec 020 | aralu |
 |---|---|---|
 | 4 colunas com qtd e valor | ✅ | ✅ |
 | Rótulo "Enviado orçamento" | ⚠️ spec usa "Orçamento enviado" | segue a spec |
@@ -92,7 +92,7 @@ Lista lateral com 9 relatórios: Negócios fechados x perdidos; Oportunidades po
 
 ### 2.6. Modelos
 
-| Modelo | Referência | Spec | gevents |
+| Modelo | Referência | Spec | aralu |
 |---|---|---|---|
 | Serviços/Produtos | Lista + "Novo serviço/produto" | 026 ✅ | ✅ |
 | Orçamento | Lista lateral + editor; "Modelo padrão da Assessoria VIP" não editável; **Personalização** (cor de fundo, cor do texto); texto rico Froala com parâmetros `#nome_oportunidade`, `#data_evento`, `#data_atual`, `#horario_previsto`, `#tempo_festa`, `#tipo_evento`, `#valor_proposta`, `#qtd_convidados`, `#qtd_padrinhos`, `#qtd_dama_pajens`, `#local_cerimonia`, `#endereco_cerimonia`, `#horario_cerimonia`, `#local_recepcao`, `#endereco_recepcao`, `#horario_recepcao` + "Mostrar mais parâmetros"; Adicionar anexo | 027 ✅ | 🟡 conferir lista de parâmetros, cores e anexo |
@@ -101,11 +101,11 @@ Lista lateral com 9 relatórios: Negócios fechados x perdidos; Oportunidades po
 
 ## 3. Gestão de Eventos
 
-O inventário já cobre lista, cadastro, home, fornecedores, convidados e modelos. Abaixo o que faltava e o estado no gevents.
+O inventário já cobre lista, cadastro, home, fornecedores, convidados e modelos. Abaixo o que faltava e o estado no aralu.
 
 ### 3.1. Telas globais (atalhos do topo)
 
-| Tela | Referência | Spec | gevents |
+| Tela | Referência | Spec | aralu |
 |---|---|---|---|
 | Pagamentos de todos eventos (`/gestao_eventos/payments`) | Filtro (status Pendente pré-selecionado), "N pagamentos", agrupado por mês ("Sem data" primeiro) com "Pago: R$ X de R$ Y" e "Juros incluso"; linha: situação (Pendente/Atrasado/Pago), vencimento, fornecedor, evento, valor | ❌ | ❌ "Em breve" |
 | Tarefas de todos eventos (`/task_all`) | Filtros Por situação (Concluídas, Pendentes, Em andamento, Atrasadas, Todas), responsável, prazo (+ sem prazo), evento, serviço (+ sem serviço), tags do evento, só com checklist, só com perguntas, incluir eventos concluídos; vistas **Lista, Quadros por situação, Quadros por dia** | 003 parcial | 🟡 lista + quadro; faltam filtros e "quadro por dia" |
@@ -116,7 +116,7 @@ O inventário já cobre lista, cadastro, home, fornecedores, convidados e modelo
 
 Home, Convidados (4 sub-rotas), **Pagamentos**, Tarefas, **Roteiro**, **Cronograma**, **Briefing**, **Inspirações**, **Anexos** (Fornecedores, Serviços, Tarefas, Observações gerais), Site de casamento (⛔ RF-079).
 
-| Aba | Referência (evento TESTE LUCÃO) | Spec | gevents |
+| Aba | Referência (evento TESTE LUCÃO) | Spec | aralu |
 |---|---|---|---|
 | Pagamentos do evento | Ver inventário §3 | 018 parcial (parcelas) | ❌ sem aba |
 | Tarefas do evento | 166 tarefas agrupadas por "N MESES ANTES"; mesmos filtros da tela global; vistas Lista/Quadros por situação/por dia. Formulário em abas **Tarefa** (situação, Título*, Descrição em texto rico, Responsáveis, Pertence ao serviço, Prazo), **Perguntas**, **Checklist** | 003 | 🟡 sem perguntas, checklist, serviço, anexos, agrupamento por meses antes; responsável único |
@@ -135,7 +135,7 @@ Escalar equipe do dia (⛔ RF-051), observações gerais do evento com modelos, 
 ## 4. Achados transversais
 
 1. **Escopo vs. pedido.** O `mvp-scope.md` corta Google Agenda, link de presença, estágios configuráveis, anexos globais, equipe do dia e mapa de mesas. O pedido atual ("tudo que tem dentro destes menus") contradiz esses cortes — decidir item a item antes de reescrever specs.
-2. **Texto rico.** A referência usa Froala em tarefas, observações, modelos de orçamento/contrato e alinhamentos. O gevents não tem editor rico; escolher um (ex.: ngx-quill ou TipTap) uma vez e reusar.
+2. **Texto rico.** A referência usa Froala em tarefas, observações, modelos de orçamento/contrato e alinhamentos. O aralu não tem editor rico; escolher um (ex.: ngx-quill ou TipTap) uma vez e reusar.
 3. **Drag and drop.** Agenda, kanban do funil, ordenar estágios e ordenar serviços dependem disso; adotar `@angular/cdk/drag-drop` (+ FullCalendar Angular para a agenda).
 4. **Responsáveis múltiplos.** Tarefas (evento e funil) aceitam vários responsáveis; o domínio tem `ResponsavelContaId` único.
 5. **Instância de modelo no evento.** Roteiro, cronograma, briefing e inspirações precisam de entidade por evento (clonada do modelo), não só a biblioteca.

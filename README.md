@@ -1,4 +1,4 @@
-# gevents
+# aralu
 
 API .NET e interface Angular do mesmo produto. O Caddy publica o build estático e encaminha `/api`.
 
@@ -6,7 +6,7 @@ API .NET e interface Angular do mesmo produto. O Caddy publica o build estático
 
 ```text
 src/frontend/                 Angular
-src/backend/gevents.slnx      solution só do backend
+src/backend/aralu.slnx      solution só do backend
 src/backend/Project.Api/      API
 src/backend/Project.Application/
 src/backend/Project.Domain/
@@ -16,7 +16,7 @@ deploy/                        script SQL da base local
 docs/                          requisitos e specs
 ```
 
-Abra `src/backend/gevents.slnx` no Visual Studio. Ela não inclui o Angular. Os testes ficam fora de `src/`, separados da produção. 
+Abra `src/backend/aralu.slnx` no Visual Studio. Ela não inclui o Angular. Os testes ficam fora de `src/`, separados da produção. 
 
 ## Subir local
 

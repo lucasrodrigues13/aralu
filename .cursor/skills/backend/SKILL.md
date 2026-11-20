@@ -1,6 +1,6 @@
 ---
 name: backend
-description: Implementa ou ajusta a API .NET do gevents. Use ao criar ou alterar endpoint, caso de uso, DbContext, migration, JWT, Identity na API ou teste de backend.
+description: Implementa ou ajusta a API .NET do aralu. Use ao criar ou alterar endpoint, caso de uso, DbContext, migration, JWT, Identity na API ou teste de backend.
 ---
 
 # Backend
@@ -15,7 +15,7 @@ Use esta skill ao implementar ou alterar a API.
 
 ## Onde cada coisa fica
 
-Os quatro projetos e a solution ficam em `src/backend/`. A solution é `src/backend/gevents.slnx` e não inclui o Angular. Os testes ficam em `tests/` e entram nessa solution.
+Os quatro projetos e a solution ficam em `src/backend/`. A solution é `src/backend/aralu.slnx` e não inclui o Angular. Os testes ficam em `tests/` e entram nessa solution.
 
 - **Domain.** Entidades, enums e invariantes. Sem EF Core, Identity, ASP.NET Core nem JWT.
 - **Application.** Casos de uso, DTOs e interfaces de recurso externo, inclusive a de assinar o JWT. Sem `DbContext` e sem tipo de HTTP.

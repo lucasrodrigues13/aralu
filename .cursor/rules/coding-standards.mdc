@@ -1,5 +1,5 @@
 ---
-description: Convenções de C# e .NET para o gevents
+description: Convenções de C# e .NET para o aralu
 globs: "**/*.cs"
 alwaysApply: false
 ---

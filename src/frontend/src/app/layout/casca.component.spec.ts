@@ -15,7 +15,7 @@ function montar(estreita: boolean, assistente = false, financeiro = true): Compo
       {
         provide: AuthService,
         useValue: {
-          email: () => 'pessoa@gevents.test',
+          email: () => 'pessoa@aralu.test',
           ehAdmin: () => false,
           ehAssistente: () => assistente,
           podeVerFinanceiro: () => financeiro,
@@ -23,7 +23,7 @@ function montar(estreita: boolean, assistente = false, financeiro = true): Compo
           sair: () => undefined,
         },
       },
-      { provide: ContaClient, useValue: { sair: () => of(undefined), areaUsuario: () => of({ email: 'pessoa@gevents.test', papeis: [] }) } },
+      { provide: ContaClient, useValue: { sair: () => of(undefined), areaUsuario: () => of({ email: 'pessoa@aralu.test', papeis: [] }) } },
       { provide: AssistentesClient, useValue: { minhaConta: () => of({ empresa: 'Aralu Eventos' }) } },
       {
         provide: BreakpointObserver,

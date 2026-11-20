@@ -174,7 +174,7 @@ public class AssistentesFluxoTests
         Assert.Equal(HttpStatusCode.BadRequest, recusado.StatusCode);
         Assert.Contains("outra conta", await recusado.Content.ReadAsStringAsync());
 
-        var email = $"ass-{Guid.NewGuid():N}@gevents.test";
+        var email = $"ass-{Guid.NewGuid():N}@aralu.test";
         var convite = await Ler(await dona.PostAsJsonAsync("/api/v1/assistentes", new { nome = "Bia", email }));
         Assert.True(convite.GetProperty("conviteEnviado").GetBoolean());
         Assert.Equal("Convidada", convite.GetProperty("situacao").GetString());
@@ -367,7 +367,7 @@ public class AssistentesFluxoTests
         var dona = await EntrarOrganizer();
         var (assistente, assistenteId, email) = await ConvidarEAtivar(dona, financeiro: true, somenteDela: true);
 
-        var adminEmail = $"adm-{Guid.NewGuid():N}@gevents.test";
+        var adminEmail = $"adm-{Guid.NewGuid():N}@aralu.test";
         const string senhaAdmin = "administrador";
         await using var fabrica = new FabricaApi(_banco.Conexao, bootstrap: true, adminEmail: adminEmail, adminSenha: senhaAdmin);
         var admin = fabrica.CreateClient();
@@ -396,7 +396,7 @@ public class AssistentesFluxoTests
 
     private async Task<(HttpClient Cliente, Guid Id, string Email)> ConvidarSemAtivar(HttpClient dona)
     {
-        var email = $"pend-{Guid.NewGuid():N}@gevents.test";
+        var email = $"pend-{Guid.NewGuid():N}@aralu.test";
         var convite = await Ler(await dona.PostAsJsonAsync("/api/v1/assistentes", new { nome = "Pendente", email }));
         return (_banco.Fabrica.CreateClient(), convite.GetProperty("id").GetGuid(), email);
     }
@@ -411,7 +411,7 @@ public class AssistentesFluxoTests
 
     private async Task<(HttpClient Cliente, Guid Id, string Email)> ConvidarEAtivar(HttpClient dona, bool financeiro, bool somenteDela)
     {
-        var email = $"ass-{Guid.NewGuid():N}@gevents.test";
+        var email = $"ass-{Guid.NewGuid():N}@aralu.test";
         var convite = await Ler(await dona.PostAsJsonAsync("/api/v1/assistentes", new
         {
             nome = "Ana Assistente",
@@ -448,7 +448,7 @@ public class AssistentesFluxoTests
 
     private async Task<HttpClient> EntrarOrganizer()
     {
-        var email = $"org-{Guid.NewGuid():N}@gevents.test";
+        var email = $"org-{Guid.NewGuid():N}@aralu.test";
         var cliente = _banco.Fabrica.CreateClient();
         Assert.Equal(HttpStatusCode.Created, (await cliente.PostAsJsonAsync("/api/v1/conta/cadastro", new { email, senha = Senha, confirmacao = Senha })).StatusCode);
         var mensagem = _banco.Fabrica.Email.Mensagens.Last(item => item.Email == email && item.Tipo == "confirmacao");

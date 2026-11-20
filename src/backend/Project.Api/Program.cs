@@ -76,8 +76,8 @@ builder.Services.AddCors(options =>
     options.AddDefaultPolicy(policy => policy.WithOrigins(origens).AllowAnyHeader().AllowAnyMethod());
 });
 
-var issuer = builder.Configuration["Jwt:Issuer"] ?? "gevents";
-var audience = builder.Configuration["Jwt:Audience"] ?? "gevents";
+var issuer = builder.Configuration["Jwt:Issuer"] ?? "aralu";
+var audience = builder.Configuration["Jwt:Audience"] ?? "aralu";
 builder.Services.AddAuthentication(Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -147,7 +147,7 @@ app.UseExceptionHandler(handler =>
     handler.Run(async contexto =>
     {
         var falha = contexto.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>();
-        var logger = contexto.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("gevents");
+        var logger = contexto.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("aralu");
         logger.LogError(
             "Falha interna {Tipo} ao processar {Metodo} {Caminho}.",
             falha?.Error.GetType().Name,

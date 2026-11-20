@@ -493,7 +493,7 @@ public class ContaFluxoTests
         return Convert.ToBase64String(protetor.Protect(memoria.ToArray()));
     }
 
-    private static string Unico() => $"pessoa-{Guid.NewGuid():N}@gevents.test";
+    private static string Unico() => $"pessoa-{Guid.NewGuid():N}@aralu.test";
 
     private static string SenhaDaConexao(string conexao)
     {

@@ -102,5 +102,5 @@ SPEC-001. RF-054. RF-071 para aplicação no evento. SPEC-012 pode vincular brie
 ## 17. Premissas e pontos não definidos
 
 - Demais tipos de pergunta além de texto curto.
-- Unificação obrigatória da lista Gestão × Funil neste produto (a referência mostra origem mista; o gevents trata como biblioteca da conta do Organizer).
+- Unificação obrigatória da lista Gestão × Funil neste produto (a referência mostra origem mista; o aralu trata como biblioteca da conta do Organizer).
 - Texto exato do aviso do modelo padrão.

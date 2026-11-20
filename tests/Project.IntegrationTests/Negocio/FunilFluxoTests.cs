@@ -144,7 +144,7 @@ public class FunilFluxoTests
         {
             nome = "Carla",
             papel = "Noiva",
-            email = $"carla-{Guid.NewGuid():N}@gevents.test",
+            email = $"carla-{Guid.NewGuid():N}@aralu.test",
             ddi = "+55",
             celular = "11977776666",
         }));
@@ -336,7 +336,7 @@ public class FunilFluxoTests
         {
             nome = "Carlos",
             papel = "Noivo",
-            email = $"carlos-{Guid.NewGuid():N}@gevents.test",
+            email = $"carlos-{Guid.NewGuid():N}@aralu.test",
             ddi = "+55",
             celular = "21955554444",
         }));
@@ -468,7 +468,7 @@ public class FunilFluxoTests
 
     private async Task<HttpClient> Entrar()
     {
-        var email = $"funil-{Guid.NewGuid():N}@gevents.test";
+        var email = $"funil-{Guid.NewGuid():N}@aralu.test";
         var cliente = _banco.Fabrica.CreateClient();
         Assert.Equal(HttpStatusCode.Created, (await cliente.PostAsJsonAsync("/api/v1/conta/cadastro", new { email, senha = Senha, confirmacao = Senha })).StatusCode);
         var mensagem = _banco.Fabrica.Email.Mensagens.Last(item => item.Email == email && item.Tipo == "confirmacao");

@@ -1,23 +1,23 @@
 # VPS de teste. Segredos vêm do .env ao lado deste arquivo, que não entra no Git.
-# O workflow publica este diretório em /opt/gevents e roda:
+# O workflow publica este diretório em /opt/aralu e roda:
 #   docker compose -f compose.production.yaml up -d --build --remove-orphans --wait
 
-name: gevents
+name: aralu
 
 services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-gevents}
+      POSTGRES_USER: ${POSTGRES_USER:-aralu}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
-      POSTGRES_DB: ${POSTGRES_DB:-gevents}
+      POSTGRES_DB: ${POSTGRES_DB:-aralu}
     volumes:
       - banco:/var/lib/postgresql/data
     networks:
       - interna
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-gevents} -d ${POSTGRES_DB:-gevents}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-aralu} -d ${POSTGRES_DB:-aralu}"]
       interval: 5s
       timeout: 5s
       retries: 12
@@ -27,8 +27,8 @@ services:
     environment:
       PGPASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
       PGHOST: postgres
-      PGUSER: ${POSTGRES_USER:-gevents}
-      PGDATABASE: ${POSTGRES_DB:-gevents}
+      PGUSER: ${POSTGRES_USER:-aralu}
+      PGDATABASE: ${POSTGRES_DB:-aralu}
     volumes:
       - ./deploy/schema.sql:/schema.sql:ro
     command: ["psql", "-v", "ON_ERROR_STOP=1", "-f", "/schema.sql"]
@@ -46,10 +46,10 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__Default: Host=postgres;Port=5432;Database=${POSTGRES_DB:-gevents};Username=${POSTGRES_USER:-gevents};Password=${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
+      ConnectionStrings__Default: Host=postgres;Port=5432;Database=${POSTGRES_DB:-aralu};Username=${POSTGRES_USER:-aralu};Password=${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
       Jwt__Secret: ${JWT_SECRET:?defina JWT_SECRET no .env}
-      Jwt__Issuer: gevents
-      Jwt__Audience: gevents
+      Jwt__Issuer: aralu
+      Jwt__Audience: aralu
       Jwt__ExpiryHours: "8"
       DataProtection__KeysPath: /keys
       Storage__Root: /storage

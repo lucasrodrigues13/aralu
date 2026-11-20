@@ -232,7 +232,7 @@ Não há cookie de autenticação. DA-019 registra isso.
 | ID | Decisão | Status |
 |---|---|---|
 | DA-001 | A aplicação é um produto com dois processos: a API e o build estático do Angular. Não é microsserviço. A interface não roda dentro do processo da API. | Definido |
-| DA-002 | A arquitetura é Clean Architecture simplificada, com quatro projetos .NET de produção em `src/backend/`. A solution `src/backend/gevents.slnx` inclui esses projetos e os testes, e não inclui o frontend. O Angular fica em `src/frontend/`. Os testes ficam em `tests/`, separados em unitário e integração. | Definido |
+| DA-002 | A arquitetura é Clean Architecture simplificada, com quatro projetos .NET de produção em `src/backend/`. A solution `src/backend/aralu.slnx` inclui esses projetos e os testes, e não inclui o frontend. O Angular fica em `src/frontend/`. Os testes ficam em `tests/`, separados em unitário e integração. | Definido |
 | DA-003 | A interface é Angular em `src/frontend/`. A API é ASP.NET Core em `src/backend/Project.Api`, com rotas em `/api/v1`. Erro HTTP vai em JSON, com código e mensagem, sem stack trace em produção. Swagger é configurável e fica ligado em desenvolvimento. CORS só libera a origem local do `ng serve`. Em produção a origem é a do Caddy. Não há Razor Pages. | Definido |
 | DA-004 | .NET 10 LTS, C#, ASP.NET Core. | Definido |
 | DA-005 | PostgreSQL, Entity Framework Core, Code First e Migrations. O provider é Npgsql. | Definido |
@@ -304,7 +304,7 @@ Não há cookie de autenticação. DA-019 registra isso.
 ```text
 src/
 ├── backend/
-│   ├── gevents.slnx
+│   ├── aralu.slnx
 │   ├── Project.Api/
 │   ├── Project.Application/
 │   ├── Project.Domain/
@@ -320,7 +320,7 @@ docs/
 └── requirements.md
 ```
 
-A solution fica em `src/backend/gevents.slnx` e tem quatro projetos de produção .NET mais os dois de teste. `src/frontend/` é o Angular e não entra na solution. Os testes são dois porque a suíte unitária não sobe banco e a de integração sobe PostgreSQL descartável. Novo projeto de produção só com justificativa registrada neste documento.
+A solution fica em `src/backend/aralu.slnx` e tem quatro projetos de produção .NET mais os dois de teste. `src/frontend/` é o Angular e não entra na solution. Os testes são dois porque a suíte unitária não sobe banco e a de integração sobe PostgreSQL descartável. Novo projeto de produção só com justificativa registrada neste documento.
 
 ### 6.1. Project.Domain
 

@@ -1,5 +1,5 @@
 ---
-description: Padrão visual Angular Material das telas do gevents
+description: Padrão visual Angular Material das telas do aralu
 globs: src/frontend/**/*.{ts,html,css,scss}
 alwaysApply: false
 ---

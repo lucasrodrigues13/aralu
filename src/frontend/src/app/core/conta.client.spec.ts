@@ -17,11 +17,11 @@ describe('ContaClient', () => {
     const cliente = TestBed.inject(ContaClient);
     const http = TestBed.inject(HttpTestingController);
 
-    cliente.entrar('pessoa@gevents.test', 'abcdefgh').subscribe();
+    cliente.entrar('pessoa@aralu.test', 'abcdefgh').subscribe();
 
     const pedido = http.expectOne('http://api.teste/api/v1/conta/entrar');
     expect(pedido.request.method).toBe('POST');
-    pedido.flush({ token: 't', email: 'pessoa@gevents.test', papeis: ['Organizer'] });
+    pedido.flush({ token: 't', email: 'pessoa@aralu.test', papeis: ['Organizer'] });
     http.verify();
   });
 });

@@ -25,7 +25,7 @@ Antes de criar um componente, procure o exemplo equivalente no template (`packag
 
 ## 3. Tema e cores
 
-- `TemaService` põe `light-theme` ou `dark-theme` no `<html>`, como o template. Escolha salva em `localStorage` (`gevents-tema`); sem escolha, segue `prefers-color-scheme`.
+- `TemaService` põe `light-theme` ou `dark-theme` no `<html>`, como o template. Escolha salva em `localStorage` (`aralu-tema`); sem escolha, segue `prefers-color-scheme`.
 - Marca: petróleo `#104c5b` (primária), dourado `#c9a24c` (secundária), creme `#f6f3ec` (`--mat-sys-surface-bright`, o `bg-light` do template). No escuro a primária clareia para `#3a8c9f` e o fundo vai para `#172429`.
 - Estados do template: sucesso `#13deb9`, alerta `#ffae1f`, info `#539bff`, erro `rgb(250 137 107)`.
 - Fonte **DM Sans** (`@fontsource-variable/dm-sans`), a mesma do template. Ícones: Material Symbols.

@@ -151,7 +151,7 @@ Mês corrente: Recebido no mês, Pago no mês, Saldo do mês, A receber. "A cobr
 
 ## 10. Ideias novas para decidir
 
-1. **Página pública** da cerimonialista com botão de orçamento que cai no funil (o gevents já tem formulário público de lead, spec 020).
+1. **Página pública** da cerimonialista com botão de orçamento que cai no funil (o aralu já tem formulário público de lead, spec 020).
 2. **Feed de calendário (iCal)** para Google/iPhone — alternativa barata à integração com o Google Agenda.
 3. **Aprovações** do cliente pelo link (cardápio, decoração, convite).
 4. **Depoimento** pós-evento pelo link do cliente.

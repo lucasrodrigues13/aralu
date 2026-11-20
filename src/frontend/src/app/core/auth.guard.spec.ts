@@ -22,7 +22,7 @@ describe('guardas de conta', () => {
   it('bloqueia Organizer na rota de Admin', () => {
     TestBed.inject(AuthService).guardar({
       token: 'token-de-teste',
-      email: 'pessoa@gevents.test',
+      email: 'pessoa@aralu.test',
       papeis: ['Organizer'],
     });
 

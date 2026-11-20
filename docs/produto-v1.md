@@ -1,6 +1,6 @@
 # Produto: versão 1.0
 
-**Status: consolidado em 18/11/2026, aguardando revisão do cliente.** Este documento junta, módulo a módulo, o que já está construído no gevents, o que a Assessoria VIP tem, as sugestões do plano "Versão 1.0 em 12 passos" e o que foi visto no Cerimonial Fácil, no Ivola e no WeddingPro. Cada item diz de onde vem e se já existe, se muda ou se é novo.
+**Status: consolidado em 18/11/2026, aguardando revisão do cliente.** Este documento junta, módulo a módulo, o que já está construído no aralu, o que a Assessoria VIP tem, as sugestões do plano "Versão 1.0 em 12 passos" e o que foi visto no Cerimonial Fácil, no Ivola e no WeddingPro. Cada item diz de onde vem e se já existe, se muda ou se é novo.
 
 ## 1. Como este documento se relaciona com os outros
 
@@ -17,7 +17,7 @@
 
 Legenda de estado: **Pronto** (construído e segue igual) · **Ajustar** (construído, muda) · **Novo** (não existe) · **Pendente** (sem decisão; não codificar).
 
-Fontes: **G** gevents construído · **AV** Assessoria VIP · **PDF** plano de 12 passos · **CF** Cerimonial Fácil · **IV** Ivola · **WP** WeddingPro · **D** decisão do cliente em 18/11/2026.
+Fontes: **G** aralu construído · **AV** Assessoria VIP · **PDF** plano de 12 passos · **CF** Cerimonial Fácil · **IV** Ivola · **WP** WeddingPro · **D** decisão do cliente em 18/11/2026.
 
 ## 2. Princípios
 

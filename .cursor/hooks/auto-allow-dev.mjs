@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Auto-allow local build/test/run commands for gevents agents.
+ * Auto-allow local build/test/run commands for aralu agents.
  * Destructive git/deploy still asks.
  */
 import { stdin } from 'node:process';

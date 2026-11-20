@@ -41,16 +41,16 @@ public class ContaSemBancoTests
         var emissor = new EmissorJwt(Options.Create(new JwtOpcoes
         {
             Secret = "segredo-de-teste-com-32-caracteres",
-            Issuer = "gevents-test",
-            Audience = "gevents-test",
+            Issuer = "aralu-test",
+            Audience = "aralu-test",
             ExpiryHours = 8,
         }));
 
-        var token = emissor.Emitir("usuario-1", "pessoa@gevents.test", [Papeis.Organizer]);
+        var token = emissor.Emitir("usuario-1", "pessoa@aralu.test", [Papeis.Organizer]);
         var jwt = new JwtSecurityTokenHandler().ReadJwtToken(token);
 
-        Assert.Equal("gevents-test", jwt.Issuer);
-        Assert.Contains(jwt.Claims, claim => claim.Type is "email" or ClaimTypes.Email && claim.Value == "pessoa@gevents.test");
+        Assert.Equal("aralu-test", jwt.Issuer);
+        Assert.Contains(jwt.Claims, claim => claim.Type is "email" or ClaimTypes.Email && claim.Value == "pessoa@aralu.test");
         Assert.Contains(jwt.Claims, claim => claim.Type == ClaimTypes.Role && claim.Value == Papeis.Organizer);
         Assert.DoesNotContain(jwt.Claims, claim => claim.Type == ContaClaims.OrganizerId);
         Assert.InRange((jwt.ValidTo - DateTime.UtcNow).TotalHours, 7.5, 8.1);
@@ -62,12 +62,12 @@ public class ContaSemBancoTests
         var emissor = new EmissorJwt(Options.Create(new JwtOpcoes
         {
             Secret = "segredo-de-teste-com-32-caracteres",
-            Issuer = "gevents-test",
-            Audience = "gevents-test",
+            Issuer = "aralu-test",
+            Audience = "aralu-test",
             ExpiryHours = 8,
         }));
 
-        var token = emissor.Emitir("client-1", "client@gevents.test", [Papeis.Client], "organizer-9");
+        var token = emissor.Emitir("client-1", "client@aralu.test", [Papeis.Client], "organizer-9");
         var jwt = new JwtSecurityTokenHandler().ReadJwtToken(token);
 
         Assert.Contains(jwt.Claims, claim => claim.Type == ClaimTypes.Role && claim.Value == Papeis.Client);
@@ -79,7 +79,7 @@ public class ContaSemBancoTests
     {
         var emissor = new EmissorJwt(Options.Create(new JwtOpcoes { Secret = "curto" }));
 
-        var erro = Assert.Throws<InvalidOperationException>(() => emissor.Emitir("usuario-1", "pessoa@gevents.test", [Papeis.Organizer]));
+        var erro = Assert.Throws<InvalidOperationException>(() => emissor.Emitir("usuario-1", "pessoa@aralu.test", [Papeis.Organizer]));
 
         Assert.DoesNotContain("curto", erro.Message, StringComparison.Ordinal);
     }

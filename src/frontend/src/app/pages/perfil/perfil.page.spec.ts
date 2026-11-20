@@ -8,7 +8,7 @@ import { GD_DATE_FORMATS, GdDateAdapter } from '../../shared/gd-date-adapter';
 import { PerfilPage } from './perfil.page';
 
 const perfilVazio = {
-  email: 'ana@gevents.test',
+  email: 'ana@aralu.test',
   nomeEmpresa: 'Assessoria Ana',
   responsavel: 'Ana Lima',
   documento: '',

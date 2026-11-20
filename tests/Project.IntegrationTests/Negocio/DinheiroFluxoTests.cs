@@ -124,7 +124,7 @@ public class DinheiroFluxoTests
 
     private async Task<HttpClient> Entrar()
     {
-        var email = $"pessoa-{Guid.NewGuid():N}@gevents.test";
+        var email = $"pessoa-{Guid.NewGuid():N}@aralu.test";
         var cliente = _banco.Fabrica.CreateClient();
         var cadastro = await cliente.PostAsJsonAsync("/api/v1/conta/cadastro", new { email, senha = Senha, confirmacao = Senha });
         Assert.Equal(HttpStatusCode.Created, cadastro.StatusCode);

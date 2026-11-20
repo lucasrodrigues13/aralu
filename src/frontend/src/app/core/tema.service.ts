@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 
-const CHAVE = 'gevents-tema';
+const CHAVE = 'aralu-tema';
 
 @Injectable({ providedIn: 'root' })
 export class TemaService {

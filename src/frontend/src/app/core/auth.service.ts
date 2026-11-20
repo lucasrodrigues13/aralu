@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 
-const CHAVE = 'gevents.sessao';
+const CHAVE = 'aralu.sessao';
 
 export interface Sessao {
   token: string;

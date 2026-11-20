@@ -1,6 +1,6 @@
 ---
 name: frontend
-description: Implementa ou ajusta a interface Angular do gevents com Angular Material. Use ao criar ou alterar tela, layout, formulário, tabela, diálogo, alerta, menu, guarda de rota ou cliente HTTP.
+description: Implementa ou ajusta a interface Angular do aralu com Angular Material. Use ao criar ou alterar tela, layout, formulário, tabela, diálogo, alerta, menu, guarda de rota ou cliente HTTP.
 ---
 
 # Frontend Angular
@@ -25,7 +25,7 @@ O build publicado é estático. O Caddy serve esse build e encaminha `/api`. Sem
 
 Siga `docs/design-system.md` em toda tela nova ou alterada.
 
-- Tokens `--gd-*` da versão 2 do design system, modo claro e escuro. A classe `escuro` no `html` liga o escuro. A escolha fica em `localStorage` (`gevents-tema`). Estilos globais só em `src/frontend/src/styles/` (tokens, material, base, casca, componentes, formulário, modal).
+- Tokens `--gd-*` da versão 2 do design system, modo claro e escuro. A classe `escuro` no `html` liga o escuro. A escolha fica em `localStorage` (`aralu-tema`). Estilos globais só em `src/frontend/src/styles/` (tokens, material, base, casca, componentes, formulário, modal).
 - Casca: barra lateral escura de 260px, barra superior de 64px com título da área e tema. Abaixo de 960px a barra lateral vira gaveta e aparece a barra inferior. "Novo evento" fica no cabeçalho da lista; no celular, o "+" da barra inferior abre o mesmo modal.
 - Cabeçalho de lista: `.gd-cabecalho` com título, apoio e botão verde à direita (`.gd-cabecalho-acoes` para mais de um).
 - Tabela `.gd-grade` dentro de `.gd-painel`, com `.gd-barra` (abas `.gd-abas`, busca `.gd-busca`, filtros `.gd-filtros`). Situação em `.gd-status` (`ok`, `alerta`, `erro`, `info`, `neutro`). A última coluna é Ações, com Editar e Excluir. Excluir só chama a API quando o fluxo já tem remoção.
@@ -50,7 +50,7 @@ Evite:
 - NgRx, Akita ou outra store global
 - segunda biblioteca de componentes, Tailwind como base visual, Bootstrap ou pacote NuGet de tema
 - cliente OpenAPI gerado, salvo pedido explícito do usuário
-- SSR e PWA como deploy do gevents
+- SSR e PWA como deploy do aralu
 
 ## Estrutura esperada
 

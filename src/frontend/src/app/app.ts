@@ -10,7 +10,7 @@ import { TemaBotao } from './shared/tema-botao';
   templateUrl: './app.html',
 })
 export class App {
-  protected readonly title = signal('gevents');
+  protected readonly title = signal('aralu');
 
   constructor() {
     inject(TemaService);
