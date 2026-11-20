@@ -155,6 +155,13 @@ public static class Mapa
         resposta.Property(item => item.Mensagem).HasMaxLength(1000);
         resposta.HasOne<OrcamentoFunil>().WithMany().HasForeignKey(item => item.OrcamentoFunilId).OnDelete(DeleteBehavior.Cascade);
 
+        var briefingLead = modelBuilder.Entity<BriefingOportunidade>();
+        briefingLead.ToTable("BriefingsOportunidade");
+        briefingLead.HasIndex(item => item.OportunidadeId).IsUnique();
+        briefingLead.Property(item => item.ModeloNome).HasMaxLength(200);
+        briefingLead.HasOne<Oportunidade>().WithMany().HasForeignKey(item => item.OportunidadeId).OnDelete(DeleteBehavior.Cascade);
+        briefingLead.HasMany(item => item.Itens).WithOne().HasForeignKey(item => item.BriefingOportunidadeId).OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<ItemBriefingOportunidade>().ToTable("ItensBriefingOportunidade");
         modelBuilder.Entity<ResponsavelTarefaFunil>().ToTable("ResponsaveisTarefaFunil");
         modelBuilder.Entity<ResponsavelTarefaFunil>().Property(item => item.Papel).HasConversion<string>();
         modelBuilder.Entity<TarefaFunil>().HasMany(item => item.Responsaveis).WithOne().HasForeignKey(item => item.TarefaFunilId).OnDelete(DeleteBehavior.Cascade);

@@ -126,6 +126,10 @@ public static class NegocioEndpoints
         api.MapPost("/oportunidades/{id:guid}/cliente", VincularClienteOportunidade).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/oportunidades/{id:guid}/retorno", RetornoOportunidade).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapDelete("/oportunidades/{id:guid}", ExcluirOportunidade).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
+        api.MapGet("/oportunidades/{id:guid}/briefing", BriefingDoLead).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/oportunidades/{id:guid}/briefing", AplicarBriefingAoLead).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPut("/oportunidades/{id:guid}/briefing", SalvarBriefingDoLead).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapDelete("/oportunidades/{id:guid}/briefing", RemoverBriefingDoLead).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapGet("/estagios-funil", EstagiosFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPut("/estagios-funil", SalvarEstagiosFunil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
 
@@ -694,6 +698,28 @@ public static class NegocioEndpoints
 
             return await De(servico.CriarAsync(conta, id, pedido, Hoje(), ct));
         });
+
+    private static Task<IResult> BriefingDoLead(Guid id, ClaimsPrincipal usuario, BriefingLeadServico servico, CancellationToken ct) =>
+        ComConta(usuario, async conta => await ComoBriefing(servico.ObterAsync(conta, id, ct)));
+
+    private static Task<IResult> AplicarBriefingAoLead(Guid id, AplicarBriefingLead pedido, ClaimsPrincipal usuario, BriefingLeadServico servico, CancellationToken ct) =>
+        ComConta(usuario, async conta => await ComoBriefing(servico.AplicarAsync(conta, id, pedido, ct)));
+
+    private static Task<IResult> SalvarBriefingDoLead(Guid id, SalvarRespostasBriefingLead pedido, ClaimsPrincipal usuario, BriefingLeadServico servico, CancellationToken ct) =>
+        ComConta(usuario, async conta => await ComoBriefing(servico.SalvarRespostasAsync(conta, id, pedido, ct)));
+
+    private static Task<IResult> RemoverBriefingDoLead(Guid id, ClaimsPrincipal usuario, BriefingLeadServico servico, CancellationToken ct) =>
+        ComConta(usuario, async conta =>
+        {
+            var resultado = await servico.RemoverAsync(conta, id, ct);
+            return resultado.Ok ? Results.NoContent() : Falha(resultado.Falha!);
+        });
+
+    private static async Task<IResult> ComoBriefing(Task<Resultado<BriefingLeadLeitura?>> tarefa)
+    {
+        var resultado = await tarefa;
+        return resultado.Ok ? Results.Ok(new { briefing = resultado.Valor }) : Falha(resultado.Falha!);
+    }
 
     private static Task<IResult> AssistentesDoEvento(Guid id, ClaimsPrincipal usuario, AppDbContext banco, CancellationToken ct) =>
         ComConta(usuario, async conta =>

@@ -2616,3 +2616,60 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261120195241_BriefingDoLead') THEN
+    CREATE TABLE "BriefingsOportunidade" (
+        "Id" uuid NOT NULL,
+        "ContaId" text NOT NULL,
+        "OportunidadeId" uuid NOT NULL,
+        "ModeloBriefingId" uuid,
+        "ModeloNome" character varying(200) NOT NULL,
+        "AplicadoEm" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_BriefingsOportunidade" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_BriefingsOportunidade_Oportunidades_OportunidadeId" FOREIGN KEY ("OportunidadeId") REFERENCES "Oportunidades" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261120195241_BriefingDoLead') THEN
+    CREATE TABLE "ItensBriefingOportunidade" (
+        "Id" uuid NOT NULL,
+        "BriefingOportunidadeId" uuid NOT NULL,
+        "Ordem" integer NOT NULL,
+        "Secao" text,
+        "Pergunta" text NOT NULL,
+        "Resposta" text,
+        CONSTRAINT "PK_ItensBriefingOportunidade" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_ItensBriefingOportunidade_BriefingsOportunidade_BriefingOpo~" FOREIGN KEY ("BriefingOportunidadeId") REFERENCES "BriefingsOportunidade" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261120195241_BriefingDoLead') THEN
+    CREATE UNIQUE INDEX "IX_BriefingsOportunidade_OportunidadeId" ON "BriefingsOportunidade" ("OportunidadeId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261120195241_BriefingDoLead') THEN
+    CREATE INDEX "IX_ItensBriefingOportunidade_BriefingOportunidadeId" ON "ItensBriefingOportunidade" ("BriefingOportunidadeId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261120195241_BriefingDoLead') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261120195241_BriefingDoLead', '10.0.4');
+    END IF;
+END $EF$;
+COMMIT;
+

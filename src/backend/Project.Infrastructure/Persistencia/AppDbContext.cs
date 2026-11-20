@@ -66,6 +66,8 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<EstagioFunil> EstagiosFunil => Set<EstagioFunil>();
 
+    public DbSet<BriefingOportunidade> BriefingsOportunidade => Set<BriefingOportunidade>();
+
     public DbSet<LeadRsvp> LeadsRsvp => Set<LeadRsvp>();
 
     public DbSet<MetricasRsvpFunil> MetricasRsvpFunil => Set<MetricasRsvpFunil>();

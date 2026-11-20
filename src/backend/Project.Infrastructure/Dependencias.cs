@@ -77,6 +77,7 @@ public static class Dependencias
         services.AddScoped<ModeloContratoFunilServico>();
         services.AddScoped<IContaCliente, ContaCliente>();
         services.AddScoped<AssistenteServico>();
+        services.AddScoped<BriefingLeadServico>();
         services.AddScoped<IArmazenamentoArquivo, ArmazenamentoArquivo>();
         services.AddHttpClient<IConsultaCep, ViaCepConsulta>(cliente =>
         {

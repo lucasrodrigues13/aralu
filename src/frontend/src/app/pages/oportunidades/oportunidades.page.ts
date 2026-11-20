@@ -28,6 +28,7 @@ import {
 import { ToastService } from '../../core/toast.service';
 import { CampoDataComponent } from '../../shared/campo-data';
 import { CampoHoraComponent } from '../../shared/campo-hora';
+import { BriefingLeadDialog } from './briefing-lead.dialog';
 import { horaParaApi } from '../../shared/mascaras';
 import { CampoDinheiroComponent } from '../../shared/campo-dinheiro';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
@@ -645,6 +646,7 @@ export function textoDias(dias: number): string {
                 </button>
                 <mat-menu #menu="matMenu">
                   <button mat-menu-item type="button" (click)="abrir(item)"><mat-icon>edit</mat-icon> Editar</button>
+                  <button mat-menu-item type="button" (click)="briefing(item)"><mat-icon>quiz</mat-icon> Briefing</button>
                   @for (destino of estagios(); track destino.id; let j = $index) {
                     @if (destino.id !== item.estagioId) {
                       <button mat-menu-item type="button" (click)="mover(item, destino)">
@@ -947,6 +949,10 @@ export class OportunidadesPage implements OnInit {
         }),
       error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
     });
+  }
+
+  protected briefing(item: Oportunidade): void {
+    this.dialog.open(BriefingLeadDialog, { ...DIALOG, data: { id: item.id, nome: item.nome } });
   }
 
   protected abrir(item?: Oportunidade): void {

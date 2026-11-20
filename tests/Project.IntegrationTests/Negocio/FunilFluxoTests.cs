@@ -401,6 +401,44 @@ public class FunilFluxoTests
         Assert.Equal(JsonValueKind.Null, antigo.GetProperty("horaFesta").ValueKind);
     }
 
+    [Fact]
+    public async Task Briefing_do_lead_copia_as_perguntas_guarda_respostas_e_isola_por_conta()
+    {
+        var dono = await Entrar();
+        var outra = await Entrar();
+        var modelo = await Ler(await dono.PostAsJsonAsync("/api/v1/modelos-briefing", new
+        {
+            nome = "Primeira conversa",
+            secoes = new[]
+            {
+                new { titulo = "Geral", descricao = "", perguntas = new[] { new { enunciado = "Quantos convidados?", tipo = "TextoCurto" }, new { enunciado = "Qual o orçamento?", tipo = "TextoCurto" } } },
+            },
+        }));
+        var lead = await Ler(await dono.PostAsJsonAsync("/api/v1/oportunidades", new
+        {
+            nome = "Lead com briefing",
+            estagio = "Contato inicial",
+            contatos = new[] { new { nome = "Dani", telefone = "11966660001", email = "dani@ex.com" } },
+        }));
+        var leadId = lead.GetProperty("id").GetGuid();
+
+        Assert.Equal(JsonValueKind.Null, (await Ler(await dono.GetAsync($"/api/v1/oportunidades/{leadId}/briefing"))).GetProperty("briefing").ValueKind);
+        var aplicado = await Ler(await dono.PostAsJsonAsync($"/api/v1/oportunidades/{leadId}/briefing", new { modeloId = modelo.GetProperty("id").GetGuid() }));
+        var itens = aplicado.GetProperty("briefing").GetProperty("itens");
+        Assert.Equal(2, itens.GetArrayLength());
+        Assert.Equal("Quantos convidados?", itens[0].GetProperty("pergunta").GetString());
+
+        var salvo = await Ler(await dono.PutAsJsonAsync($"/api/v1/oportunidades/{leadId}/briefing", new
+        {
+            respostas = new[] { new { id = itens[0].GetProperty("id").GetGuid(), resposta = "120" } },
+        }));
+        Assert.Equal("120", salvo.GetProperty("briefing").GetProperty("itens")[0].GetProperty("resposta").GetString());
+
+        Assert.Equal(HttpStatusCode.NotFound, (await outra.GetAsync($"/api/v1/oportunidades/{leadId}/briefing")).StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, (await dono.DeleteAsync($"/api/v1/oportunidades/{leadId}/briefing")).StatusCode);
+        Assert.Equal(JsonValueKind.Null, (await Ler(await dono.GetAsync($"/api/v1/oportunidades/{leadId}/briefing"))).GetProperty("briefing").ValueKind);
+    }
+
     private async Task<HttpClient> Entrar()
     {
         var email = $"funil-{Guid.NewGuid():N}@gevents.test";

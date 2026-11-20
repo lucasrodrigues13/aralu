@@ -1409,6 +1409,38 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.ToTable("TelefoneFornecedor");
                 });
 
+            modelBuilder.Entity("Project.Domain.Funil.BriefingOportunidade", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("AplicadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ContaId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("ModeloBriefingId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ModeloNome")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("OportunidadeId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OportunidadeId")
+                        .IsUnique();
+
+                    b.ToTable("BriefingsOportunidade", (string)null);
+                });
+
             modelBuilder.Entity("Project.Domain.Funil.ContatoOportunidade", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1512,6 +1544,35 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .HasFilter("\"Tipo\" <> 'Aberto'");
 
                     b.ToTable("EstagiosFunil", (string)null);
+                });
+
+            modelBuilder.Entity("Project.Domain.Funil.ItemBriefingOportunidade", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BriefingOportunidadeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Ordem")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Pergunta")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Resposta")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Secao")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BriefingOportunidadeId");
+
+                    b.ToTable("ItensBriefingOportunidade", (string)null);
                 });
 
             modelBuilder.Entity("Project.Domain.Funil.LeadRsvp", b =>
@@ -2999,11 +3060,29 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Project.Domain.Funil.BriefingOportunidade", b =>
+                {
+                    b.HasOne("Project.Domain.Funil.Oportunidade", null)
+                        .WithMany()
+                        .HasForeignKey("OportunidadeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Project.Domain.Funil.ContatoOportunidade", b =>
                 {
                     b.HasOne("Project.Domain.Funil.Oportunidade", null)
                         .WithMany("Contatos")
                         .HasForeignKey("OportunidadeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Project.Domain.Funil.ItemBriefingOportunidade", b =>
+                {
+                    b.HasOne("Project.Domain.Funil.BriefingOportunidade", null)
+                        .WithMany("Itens")
+                        .HasForeignKey("BriefingOportunidadeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -3195,6 +3274,11 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Navigation("Servicos");
 
                     b.Navigation("Telefones");
+                });
+
+            modelBuilder.Entity("Project.Domain.Funil.BriefingOportunidade", b =>
+                {
+                    b.Navigation("Itens");
                 });
 
             modelBuilder.Entity("Project.Domain.Funil.Oportunidade", b =>

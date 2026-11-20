@@ -634,6 +634,22 @@ export class NegocioClient {
     return this.http.delete(`${this.base}/api/v1/modelos-briefing/${id}`);
   }
 
+  briefingDoLead(oportunidadeId: string) {
+    return this.http.get<{ briefing: BriefingDoLead | null }>(`${this.base}/api/v1/oportunidades/${oportunidadeId}/briefing`);
+  }
+
+  aplicarBriefingAoLead(oportunidadeId: string, modeloId: string) {
+    return this.http.post<{ briefing: BriefingDoLead | null }>(`${this.base}/api/v1/oportunidades/${oportunidadeId}/briefing`, { modeloId });
+  }
+
+  salvarBriefingDoLead(oportunidadeId: string, respostas: { id: string; resposta: string }[]) {
+    return this.http.put<{ briefing: BriefingDoLead | null }>(`${this.base}/api/v1/oportunidades/${oportunidadeId}/briefing`, { respostas });
+  }
+
+  removerBriefingDoLead(oportunidadeId: string) {
+    return this.http.delete<void>(`${this.base}/api/v1/oportunidades/${oportunidadeId}/briefing`);
+  }
+
   clonarBriefing(id: string) {
     return this.http.post<Briefing>(`${this.base}/api/v1/modelos-briefing/${id}/clonar`, {});
   }
@@ -1291,6 +1307,13 @@ export interface CompromissoAgenda {
   oportunidadeId: string | null;
   /** Nome do evento ou da oportunidade da tarefa. */
   contexto: string | null;
+}
+
+export interface BriefingDoLead {
+  modeloId: string | null;
+  modeloNome: string;
+  aplicadoEm: string;
+  itens: { id: string; secao: string | null; pergunta: string; resposta: string | null }[];
 }
 
 export interface ContatoOportunidade {
