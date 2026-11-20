@@ -1,6 +1,6 @@
 # 031. Funil: estágios, retorno e proposta por link
 
-**Status: aprovada (20/11/2026).** O código segue esta spec, em quatro partes (§17, ponto 1). Fonte: [produto-v1.md](../produto-v1.md) §5.13 (o que ainda não está pronto) e RF-075. Completa a SPEC-020 v2 (quadro em cartões e lead que vira cliente). O usuário aprovou em 20/11/2026 todas as sugestões da §17, que agora são decisões. **Partes A (estágios configuráveis e arrastar) e B (retorno, origem e contato repetido) implementadas em 20/11/2026**; C e D pendentes.
+**Status: aprovada (20/11/2026).** O código segue esta spec, em quatro partes (§17, ponto 1). Fonte: [produto-v1.md](../produto-v1.md) §5.13 (o que ainda não está pronto) e RF-075. Completa a SPEC-020 v2 (quadro em cartões e lead que vira cliente). O usuário aprovou em 20/11/2026 todas as sugestões da §17, que agora são decisões. **Partes A (estágios configuráveis e arrastar), B (retorno, origem e contato repetido) e C (proposta por link) implementadas em 20/11/2026**; D pendente. Como a parte C ficou no código está na §18.
 
 ## 1. Identificador e nome
 
@@ -119,7 +119,7 @@ Conta autenticada (SPEC-001). O quadro da SPEC-020 v2 já está no ar.
 
 - Estágios pertencem à conta e têm nome, cor, ordem e um tipo: **aberto**, **contratado** ou **descartado**. Há exatamente um contratado e um descartado, e eles ficam por último.
 - **"Em negociação"** (no título do quadro e na Hoje) passa a ser a soma de todos os estágios abertos.
-- **Orçamento enviado ao enviar orçamento (SPEC-025):** o lead vai para o estágio aberto chamado "Orçamento enviado", se ele existir e o lead estiver num estágio aberto antes dele. Se a dona renomear ou excluir esse estágio, enviar o orçamento não move o lead. Esta regra vale até a parte C (proposta por link).
+- **Orçamento enviado ao enviar orçamento (SPEC-025):** o lead vai para o estágio aberto chamado "Orçamento enviado", se ele existir e o lead estiver num estágio aberto antes dele. Se a dona renomear ou excluir esse estágio, enviar o orçamento não move o lead. Desde a parte C, "Enviar proposta" aplica esta regra sozinho, sem perguntar.
 - **Ação rápida do cartão:** em cada estágio aberto, avança para o próximo estágio aberto. No último estágio aberto e em Contratado, a ação é "Virar cliente".
 - **Cores:** a paleta tem seis tokens do tema: azul, amarelo, verde, vermelho, petróleo e dourado. Um estágio novo vem com uma cor que nenhum outro estágio usa, quando ainda houver uma livre.
 - **O lead público** nasce no primeiro estágio aberto.
@@ -234,3 +234,16 @@ Decididos em 20/11/2026: o usuário aprovou todas as sugestões. A decisão de c
     - "Virar cliente" também cria o evento com tipo, data, convidados e locais? (Sim, com a opção de desmarcar no modal.)
     - Um lead pode virar dois clientes (noiva e noivo)? (Não nesta versão.)
 14. **Lista fechada de motivos de descarte** (vinda da SPEC-020). (Preço, Data indisponível, Fechou com outra assessoria, Desistiu do evento, Sem resposta, Outro.)
+
+## 18. Como a parte C ficou no código (20/11/2026)
+
+Pontos que a spec não detalhava e foram resolvidos assim. Se algum não servir, é só pedir a troca.
+
+1. **Onde enviar:** na lista de Orçamentos, o botão "Enviar proposta" gera o link e abre um modal com "Copiar link" e "Enviar pelo WhatsApp" (texto pronto para o primeiro contato do lead). Não pergunta mais se move o lead: aplica a regra da §8 sozinho.
+2. **Reenvio:** o link é o mesmo e a validade volta a contar 30 dias a partir do reenvio.
+3. **Editar depois de enviar:** só quando o conteúdo ou o valor mudam, a proposta volta a "ainda não foi aberta" e a resposta atual sai do cartão (continua no histórico).
+4. **Situação do orçamento (SPEC-025):** "Aceitar" e "Não vou seguir" levam o orçamento para Respondidos. "Tenho dúvidas" mantém em Em andamento, para a dona poder editar e reenviar. O lead pode mudar a resposta enquanto o link vale.
+5. **Dona logada:** abrir o link não conta como aberto, e responder é bloqueado com a orientação de abrir numa janela anônima.
+6. **Cartão:** mostra a proposta mais recente enviada que não foi cancelada. Com dúvida ou recusa, mostra a mensagem do lead. Na recusa, o botão "Descartar" abre o modal de descarte com o motivo do lead já preenchido.
+7. **Aviso à dona no "Aceitar":** por enquanto é o selo "Aceitou" no cartão e na lista de orçamentos. O aviso por e-mail entra com o canal de e-mail (§16).
+8. **Página pública:** mostra o nome da empresa do perfil como marca. Vencida ou cancelada, mostra só o nome e o celular do perfil. Token inválido mostra uma mensagem neutra.

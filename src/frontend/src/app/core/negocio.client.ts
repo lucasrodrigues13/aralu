@@ -1152,9 +1152,20 @@ export class NegocioClient {
     return this.http.put<OrcamentoFunil>(`${this.base}/api/v1/orcamentos-funil/${id}`, pedido);
   }
 
-  enviarOrcamentoFunil(id: string, moverParaOrcamentoEnviado = false) {
-    return this.http.post<OrcamentoFunil>(`${this.base}/api/v1/orcamentos-funil/${id}/enviar`, {
-      moverParaOrcamentoEnviado,
+  /** Gera (ou mantém) o link da proposta e leva o lead para "Orçamento enviado" (SPEC-031 §6.6). */
+  enviarOrcamentoFunil(id: string) {
+    return this.http.post<OrcamentoFunil>(`${this.base}/api/v1/orcamentos-funil/${id}/enviar`, {});
+  }
+
+  /** Página pública da proposta, sem login. */
+  propostaPublica(token: string) {
+    return this.http.get<PropostaPublica>(`${this.base}/api/v1/publico/propostas/${encodeURIComponent(token)}`);
+  }
+
+  responderProposta(token: string, tipo: RespostaProposta, mensagem: string | null) {
+    return this.http.post<PropostaPublica>(`${this.base}/api/v1/publico/propostas/${encodeURIComponent(token)}/resposta`, {
+      tipo,
+      mensagem,
     });
   }
 
@@ -1337,6 +1348,33 @@ export interface Oportunidade {
   retornarHora: string | null;
   /** Lead do formulário público com contato que já existia na conta. */
   contatoRepetido: boolean;
+  /** Proposta mais recente enviada por link (SPEC-031 §6.6); null quando não houve envio. */
+  proposta: PropostaResumo | null;
+}
+
+export type SituacaoProposta = 'NaoAberta' | 'Aberta' | 'Aceita' | 'Duvidas' | 'Recusada';
+
+export interface PropostaResumo {
+  orcamentoId: string;
+  situacao: SituacaoProposta;
+  abertaEm: string | null;
+  mensagem: string | null;
+  respondidaEm: string | null;
+}
+
+export type RespostaProposta = 'Aceitar' | 'Duvidas' | 'Recusar';
+
+export interface PropostaPublica {
+  estado: 'Disponivel' | 'Vencida' | 'Cancelada';
+  empresa: string | null;
+  contato: string | null;
+  titulo: string | null;
+  conteudo: string | null;
+  valor: number | null;
+  validoAte: string | null;
+  resposta: RespostaProposta | null;
+  respostaMensagem: string | null;
+  respostaEm: string | null;
 }
 
 export interface LeadRsvp {
@@ -1372,6 +1410,12 @@ export interface OrcamentoFunil {
   enviadoEm: string | null;
   respondidoEm: string | null;
   modeloId: string | null;
+  tokenLink: string | null;
+  validoAte: string | null;
+  abertoEm: string | null;
+  situacaoProposta: SituacaoProposta | null;
+  respostaMensagem: string | null;
+  respostaEm: string | null;
 }
 
 export interface TarefaFunil {

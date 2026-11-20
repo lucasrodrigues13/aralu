@@ -163,6 +163,8 @@ public static class NegocioEndpoints
         app.MapGet("/api/v1/rsvp/{token}", AbrirRsvp);
         app.MapPost("/api/v1/rsvp/{token}", ResponderRsvp);
         app.MapPost("/api/v1/public/leads/{contaId}", LeadPublico);
+        app.MapGet("/api/v1/publico/propostas/{token}", PropostaPublica);
+        app.MapPost("/api/v1/publico/propostas/{token}/resposta", ResponderPropostaPublica);
     }
 
     private static Task<IResult> Perfil(ClaimsPrincipal usuario, PerfilServico servico, CancellationToken ct) =>
@@ -1230,13 +1232,20 @@ public static class NegocioEndpoints
     private static Task<IResult> AtualizarOrcamentoFunil(Guid id, SalvarOrcamentoFunil pedido, ClaimsPrincipal usuario, OrcamentoFunilServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.AtualizarAsync(conta, id, pedido, ct)));
 
-    private static Task<IResult> EnviarOrcamentoFunil(
-        Guid id,
-        EnviarOrcamentoPedido? pedido,
+    private static Task<IResult> EnviarOrcamentoFunil(Guid id, ClaimsPrincipal usuario, OrcamentoFunilServico servico, CancellationToken ct) =>
+        ComConta(usuario, conta => De(servico.EnviarAsync(conta, id, ct)));
+
+    /// <summary>Sem login. Se a própria dona estiver logada, a abertura não conta (SPEC-031 §8).</summary>
+    private static Task<IResult> PropostaPublica(string token, ClaimsPrincipal usuario, OrcamentoFunilServico servico, CancellationToken ct) =>
+        De(servico.PublicaAsync(token, Conta(usuario), ct));
+
+    private static Task<IResult> ResponderPropostaPublica(
+        string token,
+        ResponderProposta pedido,
         ClaimsPrincipal usuario,
         OrcamentoFunilServico servico,
         CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.EnviarAsync(conta, id, pedido?.MoverParaOrcamentoEnviado, ct)));
+        De(servico.ResponderPublicaAsync(token, Conta(usuario), pedido, DateOnly.FromDateTime(DateTime.UtcNow), ct));
 
     private static Task<IResult> ResponderOrcamentoFunil(Guid id, ClaimsPrincipal usuario, OrcamentoFunilServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.ResponderAsync(conta, id, ct)));
@@ -1607,8 +1616,6 @@ public sealed record GrupoPedido(string? Nome);
 public sealed record PrincipalPedido(Guid ConvidadoId);
 
 public sealed record RespostasPedido(IReadOnlyList<RespostaRsvp>? Respostas, bool? PretendeRealizarEvento);
-
-public sealed record EnviarOrcamentoPedido(bool? MoverParaOrcamentoEnviado);
 
 public sealed record ImportarTextoPedido(string? Texto);
 

@@ -47,7 +47,8 @@ public sealed record OportunidadeLeitura(
     string? FonteOutro,
     DateOnly? RetornarEm,
     TimeOnly? RetornarHora,
-    bool ContatoRepetido);
+    bool ContatoRepetido,
+    PropostaResumo? Proposta = null);
 
 public sealed record ContatoOportunidadePedido(string? Nome, string? Telefone, string? Email);
 
@@ -122,15 +123,20 @@ public sealed class OportunidadeServico(IDados dados)
         CancellationToken ct)
     {
         var itens = await dados.ListarOportunidadesAsync(contaId, filtro, ct);
-        return itens.Select(Ler).ToArray();
+        var propostas = await dados.PropostasDasOportunidadesAsync(contaId, itens.Select(i => i.Id), ct);
+        return itens.Select(item => Ler(item, OrcamentoFunilServico.Resumo(propostas.GetValueOrDefault(item.Id)))).ToArray();
     }
 
     public async Task<Resultado<OportunidadeLeitura>> ObterAsync(string contaId, Guid id, CancellationToken ct)
     {
         var item = await dados.ObterOportunidadeAsync(contaId, id, ct);
-        return item is null
-            ? Resultado<OportunidadeLeitura>.Erro(Codigos.Indisponivel, "Indisponível.")
-            : Resultado<OportunidadeLeitura>.Sucesso(Ler(item));
+        if (item is null)
+        {
+            return Resultado<OportunidadeLeitura>.Erro(Codigos.Indisponivel, "Indisponível.");
+        }
+
+        var propostas = await dados.PropostasDasOportunidadesAsync(contaId, [item.Id], ct);
+        return Resultado<OportunidadeLeitura>.Sucesso(Ler(item, OrcamentoFunilServico.Resumo(propostas.GetValueOrDefault(item.Id))));
     }
 
     public async Task<Resultado<OportunidadeLeitura>> CriarAsync(string contaId, SalvarOportunidade pedido, CancellationToken ct)
@@ -607,7 +613,9 @@ public sealed class OportunidadeServico(IDados dados)
         });
     }
 
-    internal static OportunidadeLeitura Ler(Oportunidade item) =>
+    internal static OportunidadeLeitura Ler(Oportunidade item) => Ler(item, null);
+
+    internal static OportunidadeLeitura Ler(Oportunidade item, PropostaResumo? proposta) =>
         new(
             item.Id,
             item.Nome,
@@ -649,5 +657,6 @@ public sealed class OportunidadeServico(IDados dados)
             item.FonteOutro,
             item.RetornarEm,
             item.RetornarHora,
-            item.ContatoRepetido);
+            item.ContatoRepetido,
+            proposta);
 }

@@ -10,6 +10,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { ModeloOrcamentoFunil, NegocioClient, Oportunidade, OrcamentoFunil } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
@@ -17,6 +18,7 @@ import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { CampoDinheiroComponent } from '../../shared/campo-dinheiro';
 import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
+import { linkProposta, SELO_PROPOSTA, whatsappProposta } from '../../shared/proposta';
 
 @Component({
   selector: 'app-orcamento-funil-dialog',
@@ -103,9 +105,65 @@ export class OrcamentoFunilDialog implements OnInit {
   }
 }
 
+/** Link da proposta: copiar ou mandar pelo WhatsApp (SPEC-031 §6.6, item 2). */
+@Component({
+  selector: 'app-enviar-proposta-dialog',
+  imports: [MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, GdDataPipe],
+  template: `
+    <h2 mat-dialog-title>Enviar proposta</h2>
+    <mat-dialog-content>
+      <p class="text-sm text-muted mb-4">
+        Mande este link para {{ contato()?.nome || dados.oportunidadeNome }}. O lead abre sem login, vê a proposta e responde por lá.
+        @if (dados.validoAte) { O link vale até {{ dados.validoAte | gdData }}. }
+      </p>
+      <div class="campo">
+        <mat-label class="font-semibold mb-2 block">Link da proposta</mat-label>
+        <mat-form-field appearance="outline" class="w-full">
+          <input matInput readonly aria-label="Link da proposta" [value]="link" (focus)="$any($event.target).select()" />
+        </mat-form-field>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <button mat-stroked-button type="button" (click)="copiar()"><mat-icon>content_copy</mat-icon> Copiar link</button>
+        <a mat-flat-button [href]="whatsapp()" target="_blank" rel="noopener"><mat-icon>chat</mat-icon> Enviar pelo WhatsApp</a>
+      </div>
+      <p class="text-xs text-muted mt-4">O envio por e-mail chega quando o canal de e-mail estiver pronto.</p>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-stroked-button type="button" (click)="ref.close()">Fechar</button>
+    </mat-dialog-actions>
+  `,
+})
+export class EnviarPropostaDialog implements OnInit {
+  private readonly negocio = inject(NegocioClient);
+  private readonly toast = inject(ToastService);
+  protected readonly dados = inject<OrcamentoFunil>(MAT_DIALOG_DATA);
+  protected readonly ref = inject(MatDialogRef<EnviarPropostaDialog>);
+  protected readonly link = linkProposta(this.dados.tokenLink ?? '');
+  protected readonly contato = signal<{ nome: string; telefone: string | null } | null>(null);
+
+  ngOnInit(): void {
+    this.negocio.oportunidade(this.dados.oportunidadeId).subscribe({
+      next: (o) => this.contato.set(o.contatos[0] ?? null),
+      error: () => this.contato.set(null),
+    });
+  }
+
+  protected whatsapp(): string {
+    const c = this.contato();
+    return whatsappProposta(c?.telefone, c?.nome, this.link);
+  }
+
+  protected copiar(): void {
+    void navigator.clipboard.writeText(this.link).then(
+      () => this.toast.sucesso('Link copiado.'),
+      () => this.toast.erro('Não deu para copiar. Selecione o link e copie.'),
+    );
+  }
+}
+
 @Component({
   selector: 'app-orcamentos-funil',
-  imports: [MatButtonToggleModule, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatCheckboxModule, GdDataPipe],
+  imports: [MatButtonToggleModule, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatCheckboxModule, MatTooltipModule, GdDataPipe],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6 flex flex-wrap items-center justify-between gap-4">
@@ -139,15 +197,27 @@ export class OrcamentoFunilDialog implements OnInit {
             <th mat-header-cell *matHeaderCellDef>Criado em</th>
             <td mat-cell *matCellDef="let item">{{ item.criadoEm | gdData }}</td>
           </ng-container>
+          <ng-container matColumnDef="proposta">
+            <th mat-header-cell *matHeaderCellDef>Proposta</th>
+            <td mat-cell *matCellDef="let item">
+              @if (seloDe(item); as s) {
+                <span [class]="s.classe" [matTooltip]="item.respostaMensagem ?? ''">{{ s.texto }}</span>
+              } @else {
+                <span class="text-xs text-muted">Não enviada</span>
+              }
+            </td>
+          </ng-container>
           <ng-container matColumnDef="acoes">
             <th mat-header-cell *matHeaderCellDef class="text-end! whitespace-nowrap">Ações</th>
             <td mat-cell *matCellDef="let item" class="text-end! whitespace-nowrap">
               @if (item.situacao === 'EmAndamento') {
-                <button mat-icon-button type="button" (click)="abrir(item)"><mat-icon>edit</mat-icon></button>
-                <button mat-icon-button type="button" (click)="enviar(item)"><mat-icon>send</mat-icon></button>
-                <button mat-icon-button type="button" (click)="responder(item)"><mat-icon>mark_email_read</mat-icon></button>
-                <button mat-icon-button type="button" (click)="cancelar(item)"><mat-icon>cancel</mat-icon></button>
-                <button mat-icon-button type="button" (click)="excluir(item)"><mat-icon>delete</mat-icon></button>
+                <button mat-icon-button type="button" matTooltip="Editar" (click)="abrir(item)"><mat-icon>edit</mat-icon></button>
+                <button mat-icon-button type="button" matTooltip="Enviar proposta" (click)="enviar(item)"><mat-icon>send</mat-icon></button>
+                <button mat-icon-button type="button" matTooltip="Registrar resposta" (click)="responder(item)"><mat-icon>mark_email_read</mat-icon></button>
+                <button mat-icon-button type="button" matTooltip="Cancelar" (click)="cancelar(item)"><mat-icon>cancel</mat-icon></button>
+                <button mat-icon-button type="button" matTooltip="Excluir" (click)="excluir(item)"><mat-icon>delete</mat-icon></button>
+              } @else if (item.situacao === 'Respondido' && item.tokenLink) {
+                <button mat-icon-button type="button" matTooltip="Link da proposta" (click)="mostrarLink(item)"><mat-icon>link</mat-icon></button>
               }
             </td>
           </ng-container>
@@ -171,7 +241,10 @@ export class OrcamentosFunilPage implements OnInit {
   protected readonly situacao = signal('EmAndamento');
   protected readonly busca = signal('');
   protected readonly lista = signal<OrcamentoFunil[]>([]);
-  protected readonly colunas = ['oportunidade', 'criadoEm', 'acoes'];
+  protected readonly colunas = ['oportunidade', 'criadoEm', 'proposta', 'acoes'];
+  protected seloDe(item: OrcamentoFunil) {
+    return item.situacaoProposta ? SELO_PROPOSTA[item.situacaoProposta] : null;
+  }
 
   ngOnInit(): void {
     this.carregar();
@@ -186,12 +259,19 @@ export class OrcamentosFunilPage implements OnInit {
     this.dialog.open(OrcamentoFunilDialog, { ...DIALOG, data: item ?? null }).afterClosed().subscribe((ok) => ok && this.carregar());
   }
 
+  /** Gera o link e abre as opções de envio (SPEC-031 §6.6). */
   protected enviar(item: OrcamentoFunil): void {
-    const mover = confirm('Mover a oportunidade para Orçamento enviado?');
-    this.negocio.enviarOrcamentoFunil(item.id, mover).subscribe({
-      next: () => { this.toast.sucesso('Orçamento enviado.'); this.carregar(); },
+    this.negocio.enviarOrcamentoFunil(item.id).subscribe({
+      next: (enviado) => {
+        this.carregar();
+        this.mostrarLink(enviado);
+      },
       error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
     });
+  }
+
+  protected mostrarLink(item: OrcamentoFunil): void {
+    this.dialog.open(EnviarPropostaDialog, { ...DIALOG, data: item });
   }
 
   protected responder(item: OrcamentoFunil): void {

@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using Project.Application.Comum;
 using Project.Domain.Funil;
 
@@ -13,17 +14,50 @@ public sealed record OrcamentoFunilLeitura(
     DateTimeOffset CriadoEm,
     DateTimeOffset? EnviadoEm,
     DateTimeOffset? RespondidoEm,
-    Guid? ModeloId);
+    Guid? ModeloId,
+    string? TokenLink = null,
+    DateTimeOffset? ValidoAte = null,
+    DateTimeOffset? AbertoEm = null,
+    string? SituacaoProposta = null,
+    string? RespostaMensagem = null,
+    DateTimeOffset? RespostaEm = null);
 
 public sealed record SalvarOrcamentoFunil(
     Guid? OportunidadeId,
     string? Conteudo,
     decimal? Valor,
-    Guid? ModeloId,
-    bool? MoverParaOrcamentoEnviado);
+    Guid? ModeloId);
+
+/// <summary>Situação da proposta por link no cartão do lead (SPEC-031 §6.6, item 6).</summary>
+public sealed record PropostaResumo(
+    Guid OrcamentoId,
+    string Situacao,
+    DateTimeOffset? AbertaEm,
+    string? Mensagem,
+    DateTimeOffset? RespondidaEm);
+
+/// <summary>
+/// O que a página pública da proposta mostra. <c>Estado</c>: Disponivel, Vencida ou Cancelada.
+/// Vencida e Cancelada só trazem a marca e o contato da assessoria.
+/// </summary>
+public sealed record PropostaPublica(
+    string Estado,
+    string? Empresa,
+    string? Contato,
+    string? Titulo,
+    string? Conteudo,
+    decimal? Valor,
+    DateTimeOffset? ValidoAte,
+    string? Resposta,
+    string? RespostaMensagem,
+    DateTimeOffset? RespostaEm);
+
+public sealed record ResponderProposta(string? Tipo, string? Mensagem);
 
 public sealed class OrcamentoFunilServico(IDados dados)
 {
+    public const int LimiteMensagem = 1000;
+
     public async Task<IReadOnlyList<OrcamentoFunilLeitura>> ListarAsync(
         string contaId,
         string? situacao,
@@ -53,8 +87,7 @@ public sealed class OrcamentoFunilServico(IDados dados)
             return Resultado<OrcamentoFunilLeitura>.Erro(Codigos.Indisponivel, "Indisponível.");
         }
 
-        var nomes = await dados.NomesOportunidadesAsync(contaId, [item.OportunidadeId], ct);
-        return Resultado<OrcamentoFunilLeitura>.Sucesso(Ler(item, nomes.GetValueOrDefault(item.OportunidadeId, "")));
+        return Resultado<OrcamentoFunilLeitura>.Sucesso(await LerAsync(contaId, item, ct));
     }
 
     public async Task<Resultado<OrcamentoFunilLeitura>> CriarAsync(string contaId, SalvarOrcamentoFunil pedido, CancellationToken ct)
@@ -139,18 +172,28 @@ public sealed class OrcamentoFunilServico(IDados dados)
             return Resultado<OrcamentoFunilLeitura>.Erro(Codigos.Validacao, "O valor não pode ser negativo.");
         }
 
+        var mudou = item.Conteudo != conteudo || item.Valor != pedido.Valor;
         item.Conteudo = conteudo;
         item.Valor = pedido.Valor;
+        if (mudou && item.TokenLink is not null)
+        {
+            // SPEC-031 §17, ponto 10: o link continua o mesmo e a proposta volta a "ainda não foi aberta".
+            // A resposta anterior fica só no histórico.
+            item.AbertoEm = null;
+            item.Resposta = null;
+            item.RespostaMensagem = null;
+            item.RespostaEm = null;
+        }
+
         await dados.SalvarNegocioAsync(ct);
-        var nomes = await dados.NomesOportunidadesAsync(contaId, [item.OportunidadeId], ct);
-        return Resultado<OrcamentoFunilLeitura>.Sucesso(Ler(item, nomes.GetValueOrDefault(item.OportunidadeId, "")));
+        return Resultado<OrcamentoFunilLeitura>.Sucesso(await LerAsync(contaId, item, ct));
     }
 
-    public async Task<Resultado<OrcamentoFunilLeitura>> EnviarAsync(
-        string contaId,
-        Guid id,
-        bool? moverParaOrcamentoEnviado,
-        CancellationToken ct)
+    /// <summary>
+    /// Enviar proposta (SPEC-031 §6.6): gera o link no primeiro envio (o mesmo link vale nos reenvios,
+    /// com a validade renovada) e leva o lead para "Orçamento enviado" quando ele está antes desse estágio.
+    /// </summary>
+    public async Task<Resultado<OrcamentoFunilLeitura>> EnviarAsync(string contaId, Guid id, CancellationToken ct)
     {
         var item = await dados.ObterOrcamentoFunilAsync(contaId, id, ct);
         if (item is null)
@@ -158,32 +201,31 @@ public sealed class OrcamentoFunilServico(IDados dados)
             return Resultado<OrcamentoFunilLeitura>.Erro(Codigos.Indisponivel, "Indisponível.");
         }
 
-        if (item.Situacao != SituacaoOrcamentoFunil.EmAndamento)
+        if (item.Situacao == SituacaoOrcamentoFunil.Cancelado)
         {
-            return Resultado<OrcamentoFunilLeitura>.Erro(Codigos.Validacao, "Só orçamentos em andamento podem ser enviados.");
+            return Resultado<OrcamentoFunilLeitura>.Erro(Codigos.Validacao, "Orçamento cancelado não pode ser enviado.");
         }
 
-        item.EnviadoEm = DateTimeOffset.UtcNow;
-        if (moverParaOrcamentoEnviado == true)
+        var agora = DateTimeOffset.UtcNow;
+        item.TokenLink ??= NovoToken();
+        item.ValidoAte = agora.Add(OrcamentoFunil.ValidadeLink);
+        item.EnviadoEm = agora;
+
+        var oportunidade = await dados.ObterOportunidadeAsync(contaId, item.OportunidadeId, ct);
+        if (oportunidade?.EstagioFunil is { Tipo: TipoEstagioFunil.Aberto } atual)
         {
-            var oportunidade = await dados.ObterOportunidadeAsync(contaId, item.OportunidadeId, ct);
-            if (oportunidade?.EstagioFunil is { Tipo: TipoEstagioFunil.Aberto } atual)
+            var estagios = await dados.ListarEstagiosFunilAsync(contaId, ct);
+            var alvo = estagios.FirstOrDefault(e =>
+                e.Tipo == TipoEstagioFunil.Aberto &&
+                string.Equals(e.Nome, EstagiosFunil.NomeOrcamentoEnviado, StringComparison.OrdinalIgnoreCase));
+            if (alvo is not null && atual.Ordem < alvo.Ordem)
             {
-                // SPEC-031: vai para "Orçamento enviado" se esse estágio existir e o lead estiver antes dele.
-                var estagios = await dados.ListarEstagiosFunilAsync(contaId, ct);
-                var alvo = estagios.FirstOrDefault(e =>
-                    e.Tipo == TipoEstagioFunil.Aberto &&
-                    string.Equals(e.Nome, EstagiosFunil.NomeOrcamentoEnviado, StringComparison.OrdinalIgnoreCase));
-                if (alvo is not null && atual.Ordem < alvo.Ordem)
-                {
-                    OportunidadeServico.ColocarNoEstagio(oportunidade, alvo);
-                }
+                OportunidadeServico.ColocarNoEstagio(oportunidade, alvo);
             }
         }
 
         await dados.SalvarNegocioAsync(ct);
-        var nomes = await dados.NomesOportunidadesAsync(contaId, [item.OportunidadeId], ct);
-        return Resultado<OrcamentoFunilLeitura>.Sucesso(Ler(item, nomes.GetValueOrDefault(item.OportunidadeId, "")));
+        return Resultado<OrcamentoFunilLeitura>.Sucesso(await LerAsync(contaId, item, ct));
     }
 
     public Task<Resultado<OrcamentoFunilLeitura>> ResponderAsync(string contaId, Guid id, CancellationToken ct) =>
@@ -228,6 +270,174 @@ public sealed class OrcamentoFunilServico(IDados dados)
         return Resultado<bool>.Sucesso(true);
     }
 
+    /// <summary>
+    /// Página pública da proposta. Registra a primeira abertura, menos quando quem abre é a própria
+    /// conta logada (<paramref name="contaDoVisitante"/>).
+    /// </summary>
+    public async Task<Resultado<PropostaPublica>> PublicaAsync(string token, string? contaDoVisitante, CancellationToken ct)
+    {
+        var item = await PorTokenAsync(token, ct);
+        if (item is null)
+        {
+            return Resultado<PropostaPublica>.Erro(Codigos.Indisponivel, "Link inválido.");
+        }
+
+        var agora = DateTimeOffset.UtcNow;
+        if (item.Situacao != SituacaoOrcamentoFunil.Cancelado &&
+            item.LinkValido(agora) &&
+            item.AbertoEm is null &&
+            !DaPropriaConta(item, contaDoVisitante))
+        {
+            item.AbertoEm = agora;
+            await dados.SalvarNegocioAsync(ct);
+        }
+
+        return Resultado<PropostaPublica>.Sucesso(await LerPublicaAsync(item, agora, ct));
+    }
+
+    /// <summary>Resposta do lead (SPEC-031 §6.6, itens 5 e 7). Vale a última; todas ficam no histórico.</summary>
+    public async Task<Resultado<PropostaPublica>> ResponderPublicaAsync(
+        string token,
+        string? contaDoVisitante,
+        ResponderProposta pedido,
+        DateOnly hoje,
+        CancellationToken ct)
+    {
+        var item = await PorTokenAsync(token, ct);
+        if (item is null)
+        {
+            return Resultado<PropostaPublica>.Erro(Codigos.Indisponivel, "Link inválido.");
+        }
+
+        var agora = DateTimeOffset.UtcNow;
+        if (item.Situacao == SituacaoOrcamentoFunil.Cancelado || !item.LinkValido(agora))
+        {
+            return Resultado<PropostaPublica>.Erro(Codigos.Validacao, "Esta proposta não aceita mais resposta.");
+        }
+
+        if (DaPropriaConta(item, contaDoVisitante))
+        {
+            return Resultado<PropostaPublica>.Erro(
+                Codigos.Proibido,
+                "Você está logada na conta da assessoria. A resposta é do lead: abra o link numa janela anônima para testar.");
+        }
+
+        if (!Enum.TryParse<RespostaProposta>(pedido.Tipo, true, out var tipo) || !Enum.IsDefined(tipo))
+        {
+            return Resultado<PropostaPublica>.Erro(Codigos.Validacao, "Escolha uma resposta.");
+        }
+
+        var mensagem = Domain.Comum.Texto.Limpo(pedido.Mensagem);
+        if (tipo == RespostaProposta.Duvidas && mensagem is null)
+        {
+            return Resultado<PropostaPublica>.Erro(Codigos.Validacao, "Escreva a sua dúvida.");
+        }
+
+        if (mensagem is { Length: > LimiteMensagem })
+        {
+            return Resultado<PropostaPublica>.Erro(Codigos.Validacao, $"A mensagem pode ter até {LimiteMensagem} caracteres.");
+        }
+
+        if (tipo == RespostaProposta.Aceitar)
+        {
+            mensagem = null;
+        }
+
+        item.AbertoEm ??= agora;
+        item.Resposta = tipo;
+        item.RespostaMensagem = mensagem;
+        item.RespostaEm = agora;
+        if (tipo == RespostaProposta.Duvidas)
+        {
+            // A conversa continua: o orçamento segue em andamento e pode ser editado.
+            item.Situacao = SituacaoOrcamentoFunil.EmAndamento;
+            item.RespondidoEm = null;
+        }
+        else
+        {
+            item.Situacao = SituacaoOrcamentoFunil.Respondido;
+            item.RespondidoEm = agora;
+        }
+
+        dados.AdicionarRespostaProposta(new RespostaPropostaFunil
+        {
+            Id = Guid.NewGuid(),
+            ContaId = item.ContaId,
+            OrcamentoFunilId = item.Id,
+            Tipo = tipo,
+            Mensagem = mensagem,
+            Em = agora,
+        });
+
+        if (tipo == RespostaProposta.Duvidas &&
+            await dados.ObterOportunidadeAsync(item.ContaId, item.OportunidadeId, ct) is { EstagioFunil.Tipo: TipoEstagioFunil.Aberto } oportunidade)
+        {
+            oportunidade.RetornarEm = hoje;
+            oportunidade.RetornarHora = null;
+        }
+
+        await dados.SalvarNegocioAsync(ct);
+        return Resultado<PropostaPublica>.Sucesso(await LerPublicaAsync(item, agora, ct));
+    }
+
+    public static string? SituacaoProposta(OrcamentoFunil item) =>
+        item.TokenLink is null || item.Situacao == SituacaoOrcamentoFunil.Cancelado
+            ? null
+            : item.Resposta switch
+            {
+                RespostaProposta.Aceitar => "Aceita",
+                RespostaProposta.Duvidas => "Duvidas",
+                RespostaProposta.Recusar => "Recusada",
+                _ => item.AbertoEm is null ? "NaoAberta" : "Aberta",
+            };
+
+    public static PropostaResumo? Resumo(OrcamentoFunil? item) =>
+        item is null || SituacaoProposta(item) is not { } situacao
+            ? null
+            : new PropostaResumo(item.Id, situacao, item.AbertoEm, item.RespostaMensagem, item.RespostaEm);
+
+    private async Task<OrcamentoFunil?> PorTokenAsync(string token, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(token) || token.Length > 64)
+        {
+            return null;
+        }
+
+        return await dados.OrcamentoFunilPorTokenAsync(token, ct);
+    }
+
+    private static bool DaPropriaConta(OrcamentoFunil item, string? contaDoVisitante) =>
+        !string.IsNullOrEmpty(contaDoVisitante) && contaDoVisitante == item.ContaId;
+
+    private async Task<PropostaPublica> LerPublicaAsync(OrcamentoFunil item, DateTimeOffset agora, CancellationToken ct)
+    {
+        var perfil = await dados.ObterPerfilAsync(item.ContaId, ct);
+        var empresa = perfil?.NomeEmpresa;
+        var contato = perfil?.Celular;
+        if (item.Situacao == SituacaoOrcamentoFunil.Cancelado)
+        {
+            return new PropostaPublica("Cancelada", empresa, contato, null, null, null, null, null, null, null);
+        }
+
+        if (!item.LinkValido(agora))
+        {
+            return new PropostaPublica("Vencida", empresa, contato, null, null, null, item.ValidoAte, null, null, null);
+        }
+
+        var nomes = await dados.NomesOportunidadesAsync(item.ContaId, [item.OportunidadeId], ct);
+        return new PropostaPublica(
+            "Disponivel",
+            empresa,
+            contato,
+            nomes.GetValueOrDefault(item.OportunidadeId),
+            item.Conteudo,
+            item.Valor,
+            item.ValidoAte,
+            item.Resposta?.ToString(),
+            item.RespostaMensagem,
+            item.RespostaEm);
+    }
+
     private async Task<Resultado<OrcamentoFunilLeitura>> MudarAsync(
         string contaId,
         Guid id,
@@ -247,12 +457,20 @@ public sealed class OrcamentoFunilServico(IDados dados)
         }
 
         await dados.SalvarNegocioAsync(ct);
+        return Resultado<OrcamentoFunilLeitura>.Sucesso(await LerAsync(contaId, item, ct));
+    }
+
+    private async Task<OrcamentoFunilLeitura> LerAsync(string contaId, OrcamentoFunil item, CancellationToken ct)
+    {
         var nomes = await dados.NomesOportunidadesAsync(contaId, [item.OportunidadeId], ct);
-        return Resultado<OrcamentoFunilLeitura>.Sucesso(Ler(item, nomes.GetValueOrDefault(item.OportunidadeId, "")));
+        return Ler(item, nomes.GetValueOrDefault(item.OportunidadeId, ""));
     }
 
     private static string AplicarTokens(string texto, string nomeOportunidade) =>
         texto.Replace("#nome_oportunidade", nomeOportunidade, StringComparison.OrdinalIgnoreCase);
+
+    private static string NovoToken() =>
+        Convert.ToBase64String(RandomNumberGenerator.GetBytes(32)).Replace('+', '-').Replace('/', '_').TrimEnd('=');
 
     private static OrcamentoFunilLeitura Ler(OrcamentoFunil item, string oportunidadeNome) =>
         new(
@@ -265,5 +483,11 @@ public sealed class OrcamentoFunilServico(IDados dados)
             item.CriadoEm,
             item.EnviadoEm,
             item.RespondidoEm,
-            item.ModeloId);
+            item.ModeloId,
+            item.TokenLink,
+            item.ValidoAte,
+            item.AbertoEm,
+            SituacaoProposta(item),
+            item.RespostaMensagem,
+            item.RespostaEm);
 }

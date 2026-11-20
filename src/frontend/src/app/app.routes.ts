@@ -4,6 +4,7 @@ import { adminGuard, authGuard } from './core/auth.guard';
 export const routes: Routes = [
   { path: 'rsvp/:token', loadComponent: () => import('./pages/rsvp/rsvp.page').then((m) => m.RsvpPage) },
   { path: 'contrato/:token', loadComponent: () => import('./pages/contratos/contrato-publico.page').then((m) => m.ContratoPublicoPage) },
+  { path: 'proposta/:token', loadComponent: () => import('./pages/proposta-publica/proposta-publica.page').then((m) => m.PropostaPublicaPage) },
   {
     path: 'lead/:contaId',
     loadComponent: () => import('./pages/lead-publico/lead-publico.page').then((m) => m.LeadPublicoPage),

@@ -258,7 +258,7 @@ Fica na 1.0 e ganha o que faltou (D).
 | Horários do evento em campos separados (convite, festa, cerimônia, recepção) e endereço completo | Ajustar | AV |
 | Data de retorno no cartão ("retornar sex, 20/11") e card "Retornos do funil" na Hoje | Pronto (20/11/2026) | CF (SPEC-031 parte B) |
 | Origem do contato em lista fechada + outro | Pronto (20/11/2026) | CF, AV (SPEC-031 parte B) |
-| **Proposta por link** com respostas "aceitar / tenho dúvidas / não vou seguir" e status "ainda não foi aberta" | Novo | D, PDF, CF |
+| **Proposta por link** com respostas "aceitar / tenho dúvidas / não vou seguir" e status "ainda não foi aberta" | Pronto (20/11/2026); envio por e-mail e aviso por e-mail à dona esperam o canal de e-mail | D, PDF, CF (SPEC-031 parte C) |
 | Aviso de contato repetido | Pronto (20/11/2026) | D, PDF (SPEC-031 parte B) |
 | Tarefas comerciais com vários responsáveis e observação formatada | Ajustar | AV |
 | Modelos de briefing no funil | Novo | AV |
@@ -378,7 +378,7 @@ Baseada no PDF (base → uso diário → diferencial), com o que já existe.
 13. Equipe, equipe do dia e assistente.
 14. Financeiro da empresa e relatórios.
 15. Agenda completa e feed iCal.
-16. Funil: estágios, arrastar, proposta por link. Quadro em cartões e lead → cliente **prontos** em 20/11/2026 (SPEC-020 v2); o resto do bloco está na SPEC-031, aprovada em 20/11/2026, em quatro partes: A (estágios e arrastar) e B (retorno, origem e contato repetido) **prontas** em 20/11/2026; C (proposta por link) e D (ajustes do formulário) pendentes.
+16. Funil: estágios, arrastar, proposta por link. Quadro em cartões e lead → cliente **prontos** em 20/11/2026 (SPEC-020 v2); o resto do bloco está na SPEC-031, aprovada em 20/11/2026, em quatro partes: A (estágios e arrastar), B (retorno, origem e contato repetido) e C (proposta por link) **prontas** em 20/11/2026; D (ajustes do formulário) pendente.
 17. Aniversários, página pública, briefing e inspirações no evento, demais itens da Assessoria VIP.
 
 ## 10. Pendências

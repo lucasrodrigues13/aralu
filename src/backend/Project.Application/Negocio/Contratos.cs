@@ -393,6 +393,20 @@ public interface IDados
 
     Task RemoverOrcamentoFunilAsync(OrcamentoFunil orcamento, CancellationToken ct);
 
+    /// <summary>Proposta por link, sem conta: busca pelo token (SPEC-031 §6.6).</summary>
+    Task<OrcamentoFunil?> OrcamentoFunilPorTokenAsync(string token, CancellationToken ct);
+
+    /// <summary>Só adiciona; grava junto com o próximo <c>SalvarNegocioAsync</c>.</summary>
+    void AdicionarRespostaProposta(RespostaPropostaFunil resposta);
+
+    Task<IReadOnlyList<RespostaPropostaFunil>> RespostasPropostaAsync(string contaId, Guid orcamentoId, CancellationToken ct);
+
+    /// <summary>Proposta mais recente enviada por link de cada oportunidade, sem as canceladas.</summary>
+    Task<IReadOnlyDictionary<Guid, OrcamentoFunil>> PropostasDasOportunidadesAsync(
+        string contaId,
+        IEnumerable<Guid> oportunidadeIds,
+        CancellationToken ct);
+
     Task<IReadOnlyList<TarefaFunil>> ListarTarefasFunilAsync(
         string contaId,
         DateOnly? prazoDe,

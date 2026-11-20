@@ -1737,6 +1737,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<DateTimeOffset?>("AbertoEm")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("ContaId")
                         .IsRequired()
                         .HasColumnType("text");
@@ -1760,9 +1763,27 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<DateTimeOffset?>("RespondidoEm")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Resposta")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTimeOffset?>("RespostaEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RespostaMensagem")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
                     b.Property<string>("Situacao")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<string>("TokenLink")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTimeOffset?>("ValidoAte")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<decimal?>("Valor")
                         .HasPrecision(12, 2)
@@ -1772,7 +1793,42 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
                     b.HasIndex("ContaId");
 
+                    b.HasIndex("TokenLink")
+                        .IsUnique();
+
                     b.ToTable("OrcamentosFunil");
+                });
+
+            modelBuilder.Entity("Project.Domain.Funil.RespostaPropostaFunil", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ContaId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("Em")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Mensagem")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<Guid>("OrcamentoFunilId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrcamentoFunilId");
+
+                    b.ToTable("RespostasPropostaFunil");
                 });
 
             modelBuilder.Entity("Project.Domain.Funil.TarefaFunil", b =>
@@ -2838,6 +2894,15 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .IsRequired();
 
                     b.Navigation("EstagioFunil");
+                });
+
+            modelBuilder.Entity("Project.Domain.Funil.RespostaPropostaFunil", b =>
+                {
+                    b.HasOne("Project.Domain.Funil.OrcamentoFunil", null)
+                        .WithMany()
+                        .HasForeignKey("OrcamentoFunilId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Project.Domain.Modelos.ItemCronograma", b =>

@@ -1440,6 +1440,40 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         await banco.SaveChangesAsync(ct);
     }
 
+    public Task<OrcamentoFunil?> OrcamentoFunilPorTokenAsync(string token, CancellationToken ct) =>
+        banco.OrcamentosFunil.FirstOrDefaultAsync(item => item.TokenLink == token, ct);
+
+    public void AdicionarRespostaProposta(RespostaPropostaFunil resposta) =>
+        banco.RespostasPropostaFunil.Add(resposta);
+
+    public async Task<IReadOnlyList<RespostaPropostaFunil>> RespostasPropostaAsync(string contaId, Guid orcamentoId, CancellationToken ct) =>
+        await banco.RespostasPropostaFunil.AsNoTracking()
+            .Where(item => item.ContaId == contaId && item.OrcamentoFunilId == orcamentoId)
+            .OrderBy(item => item.Em)
+            .ToListAsync(ct);
+
+    public async Task<IReadOnlyDictionary<Guid, OrcamentoFunil>> PropostasDasOportunidadesAsync(
+        string contaId,
+        IEnumerable<Guid> oportunidadeIds,
+        CancellationToken ct)
+    {
+        var ids = oportunidadeIds.Distinct().ToArray();
+        if (ids.Length == 0)
+        {
+            return new Dictionary<Guid, OrcamentoFunil>();
+        }
+
+        var itens = await banco.OrcamentosFunil.AsNoTracking()
+            .Where(item => item.ContaId == contaId &&
+                ids.Contains(item.OportunidadeId) &&
+                item.TokenLink != null &&
+                item.Situacao != SituacaoOrcamentoFunil.Cancelado)
+            .ToListAsync(ct);
+        return itens
+            .GroupBy(item => item.OportunidadeId)
+            .ToDictionary(grupo => grupo.Key, grupo => grupo.OrderByDescending(item => item.EnviadoEm).First());
+    }
+
     public async Task<IReadOnlyList<TarefaFunil>> ListarTarefasFunilAsync(
         string contaId,
         DateOnly? prazoDe,

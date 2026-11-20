@@ -34,6 +34,7 @@ import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { GdDinheiroPipe } from '../../shared/gd-dinheiro.pipe';
 import { grupoLocal, localPedido, LocalCamposComponent } from '../../shared/local-campos';
+import { SELO_PROPOSTA } from '../../shared/proposta';
 import { STATUS } from '../../shared/status';
 import { ClienteFormDialog } from '../clientes/cliente-form.dialog';
 import { EstagiosFunilDialog } from './estagios-funil.dialog';
@@ -377,7 +378,10 @@ export class OportunidadeDialog implements OnInit {
   template: `
     <h2 mat-dialog-title>Descartar oportunidade</h2>
     <mat-dialog-content>
-      <p class="text-sm text-muted mb-4">{{ nome }} sai do funil ativo. O motivo vai para o relatório de descartes.</p>
+      <p class="text-sm text-muted mb-4">{{ dados.nome }} sai do funil ativo. O motivo vai para o relatório de descartes.</p>
+      @if (dados.sugestao) {
+        <p class="text-sm mb-4">O lead recusou a proposta. Confira o motivo antes de descartar.</p>
+      }
       <div class="campo">
         <mat-label class="font-semibold mb-2 block">Motivo do descarte</mat-label>
         <mat-form-field appearance="outline" class="w-full">
@@ -392,9 +396,10 @@ export class OportunidadeDialog implements OnInit {
   `,
 })
 export class DescarteDialog {
-  protected readonly nome = inject<string>(MAT_DIALOG_DATA);
+  /** `sugestao`: motivo que o lead deu ao recusar a proposta (SPEC-031 §6.6, item 7). */
+  protected readonly dados = inject<{ nome: string; sugestao?: string | null }>(MAT_DIALOG_DATA);
   protected readonly ref = inject(MatDialogRef<DescarteDialog, string>);
-  protected readonly motivo = new FormControl('', { nonNullable: true, validators: Validators.required });
+  protected readonly motivo = new FormControl(this.dados.sugestao ?? '', { nonNullable: true, validators: Validators.required });
 
   protected confirmar(): void {
     const texto = this.motivo.value.trim();
@@ -654,6 +659,13 @@ export function textoDias(dias: number): string {
               @if (item.contatoRepetido) {
                 <span class="mt-2" [class]="status.alerta" matTooltip="Telefone ou e-mail igual ao de outro lead ou cliente da conta"><mat-icon class="selo">content_copy</mat-icon> Contato repetido</span>
               }
+              @if (item.proposta; as p) {
+                <span class="mt-2 ml-1" [class]="seloProposta[p.situacao].classe"
+                  [matTooltip]="p.abertaEm ? 'Aberta em ' + (p.abertaEm | gdData) : 'O lead ainda não abriu o link'">
+                  <mat-icon class="selo">{{ seloProposta[p.situacao].icone }}</mat-icon>
+                  {{ p.situacao === 'Aberta' && p.abertaEm ? 'Aberta em ' + (p.abertaEm | gdData) : seloProposta[p.situacao].texto }}
+                </span>
+              }
 
               <ul class="detalhes mt-3">
                 @if (item.tipoEvento || item.dataPrevista) {
@@ -686,6 +698,19 @@ export function textoDias(dias: number): string {
                     @if (sit !== 'futuro') {
                       <button mat-button type="button" class="retornei" (click)="$event.stopPropagation(); marcarRetorno(item, 'retornei')">Retornei</button>
                     }
+                  </li>
+                }
+                @if (item.proposta?.mensagem && (item.proposta?.situacao === 'Duvidas' || item.proposta?.situacao === 'Recusada')) {
+                  <li class="mensagem-lead" [class.text-warning]="item.proposta?.situacao === 'Duvidas'">
+                    <mat-icon>{{ item.proposta?.situacao === 'Duvidas' ? 'help' : 'chat_bubble' }}</mat-icon>
+                    <span>"{{ item.proposta?.mensagem }}"</span>
+                  </li>
+                }
+                @if (item.proposta?.situacao === 'Recusada' && item.tipoEstagio === 'Aberto') {
+                  <li class="linha-retorno text-error">
+                    <mat-icon>thumb_down</mat-icon>
+                    <span>Recusou a proposta</span>
+                    <button mat-button type="button" class="retornei" (click)="$event.stopPropagation(); descartarRecusa(item)">Descartar</button>
                   </li>
                 }
                 @if (item.tipoEstagio === 'Descartado' && item.motivoDescarte) {
@@ -773,6 +798,8 @@ export function textoDias(dias: number): string {
     .acao-lead { min-height: 32px; height: 32px; font-size: 0.8125rem; }
     .detalhes li.linha-retorno { flex-wrap: wrap; row-gap: 2px; }
     .retornei { margin-left: auto; min-height: 26px; height: 26px; padding: 0 8px; font-size: 0.75rem; flex: none; }
+    .detalhes li.mensagem-lead { align-items: flex-start; font-style: italic; }
+    .detalhes li.mensagem-lead span { overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
     .vazio { border: 1px dashed var(--color-border); border-radius: 10px; padding: 24px 12px; margin: 0; }
   `,
 })
@@ -787,6 +814,7 @@ export class OportunidadesPage implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   protected readonly tipos = TIPOS;
   protected readonly status = STATUS;
+  protected readonly seloProposta = SELO_PROPOSTA;
   protected readonly textoRetorno = textoRetorno;
   /** No celular o cartão não arrasta: o caminho é o menu "Mover para…". */
   protected readonly toque = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
@@ -832,7 +860,7 @@ export class OportunidadesPage implements OnInit {
       if (r === undefined) return;
       this.negocio.marcarRetornoOportunidade(item.id, r?.data ?? null, r?.hora ?? null).subscribe({
         next: (atualizado) => {
-          this.lista.update((l) => l.map((i) => (i.id === atualizado.id ? atualizado : i)));
+          this.lista.update((l) => l.map((i) => (i.id === atualizado.id ? { ...atualizado, proposta: atualizado.proposta ?? i.proposta } : i)));
           this.toast.sucesso(r ? `Retorno marcado: ${textoRetorno(r.data, r.hora)}.` : 'Sem retorno marcado.');
         },
         error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
@@ -934,9 +962,16 @@ export class OportunidadesPage implements OnInit {
     this.mover(evento.item.data as Oportunidade, evento.container.data);
   }
 
-  protected mover(item: Oportunidade, destino: EstagioFunil): void {
+  /** "Não vou seguir": sugere o descarte com o motivo do lead; só descarta se a dona confirmar. */
+  protected descartarRecusa(item: Oportunidade): void {
+    const destino = this.estagios().find((e) => e.tipo === 'Descartado');
+    if (destino) this.mover(item, destino, item.proposta?.mensagem ?? 'Recusou a proposta');
+  }
+
+  protected mover(item: Oportunidade, destino: EstagioFunil, sugestao?: string): void {
     if (destino.tipo === 'Descartado') {
-      this.dialog.open(DescarteDialog, { ...DIALOG_PEQUENO, data: item.nome }).afterClosed().subscribe((motivo?: string) => {
+      const data = { nome: item.nome, sugestao: sugestao ?? null };
+      this.dialog.open(DescarteDialog, { ...DIALOG_PEQUENO, data }).afterClosed().subscribe((motivo?: string) => {
         if (motivo) this.gravarMovimento(item, destino, motivo);
       });
       return;
@@ -1040,7 +1075,7 @@ export class OportunidadesPage implements OnInit {
     );
     this.negocio.moverOportunidade(item.id, { estagio: destino.id, motivoDescarte }).subscribe({
       next: (atualizado) => {
-        this.lista.update((l) => l.map((i) => (i.id === atualizado.id ? { ...i, ...atualizado, contatos: i.contatos } : i)));
+        this.lista.update((l) => l.map((i) => (i.id === atualizado.id ? { ...i, ...atualizado, contatos: i.contatos, proposta: atualizado.proposta ?? i.proposta } : i)));
         this.toast.sucesso(`${item.nome} foi para ${destino.nome}.`);
       },
       error: (erro: unknown) => {

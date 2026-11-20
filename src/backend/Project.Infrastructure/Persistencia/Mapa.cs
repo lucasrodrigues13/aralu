@@ -133,6 +133,16 @@ public static class Mapa
         orcamento.HasIndex(item => item.ContaId);
         orcamento.Property(item => item.Situacao).HasConversion<string>();
         orcamento.Property(item => item.Valor).HasPrecision(12, 2);
+        orcamento.Property(item => item.TokenLink).HasMaxLength(64);
+        orcamento.HasIndex(item => item.TokenLink).IsUnique();
+        orcamento.Property(item => item.Resposta).HasConversion<string>().HasMaxLength(20);
+        orcamento.Property(item => item.RespostaMensagem).HasMaxLength(1000);
+
+        var resposta = modelBuilder.Entity<RespostaPropostaFunil>();
+        resposta.HasIndex(item => item.OrcamentoFunilId);
+        resposta.Property(item => item.Tipo).HasConversion<string>().HasMaxLength(20);
+        resposta.Property(item => item.Mensagem).HasMaxLength(1000);
+        resposta.HasOne<OrcamentoFunil>().WithMany().HasForeignKey(item => item.OrcamentoFunilId).OnDelete(DeleteBehavior.Cascade);
 
         var tarefa = modelBuilder.Entity<TarefaFunil>();
         tarefa.HasIndex(item => item.ContaId);

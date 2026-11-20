@@ -2395,3 +2395,86 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261120190023_PropostaPorLink') THEN
+    ALTER TABLE "OrcamentosFunil" ADD "AbertoEm" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261120190023_PropostaPorLink') THEN
+    ALTER TABLE "OrcamentosFunil" ADD "Resposta" character varying(20);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261120190023_PropostaPorLink') THEN
+    ALTER TABLE "OrcamentosFunil" ADD "RespostaEm" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261120190023_PropostaPorLink') THEN
+    ALTER TABLE "OrcamentosFunil" ADD "RespostaMensagem" character varying(1000);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261120190023_PropostaPorLink') THEN
+    ALTER TABLE "OrcamentosFunil" ADD "TokenLink" character varying(64);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261120190023_PropostaPorLink') THEN
+    ALTER TABLE "OrcamentosFunil" ADD "ValidoAte" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261120190023_PropostaPorLink') THEN
+    CREATE TABLE "RespostasPropostaFunil" (
+        "Id" uuid NOT NULL,
+        "ContaId" text NOT NULL,
+        "OrcamentoFunilId" uuid NOT NULL,
+        "Tipo" character varying(20) NOT NULL,
+        "Mensagem" character varying(1000),
+        "Em" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_RespostasPropostaFunil" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_RespostasPropostaFunil_OrcamentosFunil_OrcamentoFunilId" FOREIGN KEY ("OrcamentoFunilId") REFERENCES "OrcamentosFunil" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261120190023_PropostaPorLink') THEN
+    CREATE UNIQUE INDEX "IX_OrcamentosFunil_TokenLink" ON "OrcamentosFunil" ("TokenLink");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261120190023_PropostaPorLink') THEN
+    CREATE INDEX "IX_RespostasPropostaFunil_OrcamentoFunilId" ON "RespostasPropostaFunil" ("OrcamentoFunilId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261120190023_PropostaPorLink') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261120190023_PropostaPorLink', '10.0.4');
+    END IF;
+END $EF$;
+COMMIT;
+

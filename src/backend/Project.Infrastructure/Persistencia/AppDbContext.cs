@@ -69,6 +69,8 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<OrcamentoFunil> OrcamentosFunil => Set<OrcamentoFunil>();
 
+    public DbSet<RespostaPropostaFunil> RespostasPropostaFunil => Set<RespostaPropostaFunil>();
+
     public DbSet<TarefaFunil> TarefasFunil => Set<TarefaFunil>();
 
     public DbSet<ModeloServicoFunil> ModelosServicoFunil => Set<ModeloServicoFunil>();
