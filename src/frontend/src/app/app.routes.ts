@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { adminGuard, authGuard } from './core/auth.guard';
+import { adminGuard, authGuard, donaGuard, financeiroGuard } from './core/auth.guard';
 
 export const routes: Routes = [
   { path: 'rsvp/:token', loadComponent: () => import('./pages/rsvp/rsvp.page').then((m) => m.RsvpPage) },
@@ -25,6 +25,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/esqueci-senha/esqueci-senha.page').then((m) => m.EsqueciSenhaPage),
   },
   {
+    path: 'convite-assistente',
+    loadComponent: () => import('./pages/assistentes/convite-assistente.page').then((m) => m.ConviteAssistentePage),
+  },
+  {
     path: 'redefinir-senha',
     loadComponent: () => import('./pages/redefinir-senha/redefinir-senha.page').then((m) => m.RedefinirSenhaPage),
   },
@@ -35,7 +39,7 @@ export const routes: Routes = [
     children: [
       { path: 'hoje', loadComponent: () => import('./pages/hoje/hoje.page').then((m) => m.HojePage) },
       { path: 'painel', redirectTo: 'hoje', pathMatch: 'full' },
-      { path: 'perfil', loadComponent: () => import('./pages/perfil/perfil.page').then((m) => m.PerfilPage) },
+      { path: 'perfil', canActivate: [donaGuard], loadComponent: () => import('./pages/perfil/perfil.page').then((m) => m.PerfilPage) },
       { path: 'eventos', loadComponent: () => import('./pages/eventos/eventos.page').then((m) => m.EventosPage) },
       // Novo e Editar evento abrem em modal (docs/design-system.md, 1). As rotas antigas voltam para a lista ou para o evento.
       { path: 'eventos/novo', redirectTo: 'eventos', pathMatch: 'full' },
@@ -43,14 +47,16 @@ export const routes: Routes = [
       { path: 'eventos/:id/editar', redirectTo: 'eventos/:id', pathMatch: 'full' },
       { path: 'eventos/:id/tarefas', loadComponent: () => import('./pages/tarefas/tarefas.page').then((m) => m.TarefasPage) },
       { path: 'eventos/:id/fornecedores', loadComponent: () => import('./pages/eventos/evento-fornecedores.page').then((m) => m.EventoFornecedoresPage) },
-      { path: 'eventos/:id/contratos', loadComponent: () => import('./pages/contratos/evento-contratos.page').then((m) => m.EventoContratosPage) },
-      { path: 'contratos', loadComponent: () => import('./pages/contratos/contratos.page').then((m) => m.ContratosPage) },
-      { path: 'eventos/:id/dinheiro', loadComponent: () => import('./pages/dinheiro/evento-dinheiro.page').then((m) => m.EventoDinheiroPage) },
+      { path: 'eventos/:id/contratos', canActivate: [financeiroGuard], loadComponent: () => import('./pages/contratos/evento-contratos.page').then((m) => m.EventoContratosPage) },
+      { path: 'contratos', canActivate: [donaGuard], loadComponent: () => import('./pages/contratos/contratos.page').then((m) => m.ContratosPage) },
+      { path: 'eventos/:id/dinheiro', canActivate: [financeiroGuard], loadComponent: () => import('./pages/dinheiro/evento-dinheiro.page').then((m) => m.EventoDinheiroPage) },
       { path: 'eventos/:id/convidados', loadComponent: () => import('./pages/convidados/convidados.page').then((m) => m.ConvidadosPage) },
       { path: 'tarefas', loadComponent: () => import('./pages/tarefas/tarefas.page').then((m) => m.TarefasPage) },
       { path: 'clientes', loadComponent: () => import('./pages/clientes/clientes.page').then((m) => m.ClientesPage) },
       { path: 'convidados', redirectTo: 'eventos', pathMatch: 'full' },
-      { path: 'pagamentos', loadComponent: () => import('./pages/dinheiro/pagamentos.page').then((m) => m.PagamentosPage) },
+      { path: 'pagamentos', canActivate: [financeiroGuard], loadComponent: () => import('./pages/dinheiro/pagamentos.page').then((m) => m.PagamentosPage) },
+      { path: 'assistentes', canActivate: [donaGuard], loadComponent: () => import('./pages/assistentes/assistentes.page').then((m) => m.AssistentesPage) },
+      { path: 'sem-acesso', loadComponent: () => import('./pages/atalhos/sem-acesso.page').then((m) => m.SemAcessoPage) },
       { path: 'anexos', loadComponent: () => import('./pages/atalhos/em-breve.page').then((m) => m.EmBrevePage) },
       { path: 'equipe', loadComponent: () => import('./pages/atalhos/em-breve.page').then((m) => m.EmBrevePage) },
       { path: 'aniversarios', loadComponent: () => import('./pages/atalhos/em-breve.page').then((m) => m.EmBrevePage) },

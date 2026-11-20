@@ -1,9 +1,10 @@
-import { Component, input } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTabsModule } from '@angular/material/tabs';
+import { AuthService } from '../../core/auth.service';
 
 /** Seções do evento: voltar para a lista e abas de navegação (mat-tab-nav-bar) dentro de um cartão. */
 @Component({
@@ -15,7 +16,7 @@ import { MatTabsModule } from '@angular/material/tabs';
       <div class="flex items-center gap-1 pl-2">
         <a mat-icon-button routerLink="/eventos" aria-label="Voltar para eventos"><mat-icon>arrow_back</mat-icon></a>
         <nav mat-tab-nav-bar [tabPanel]="painel" class="flex-1 min-w-0" aria-label="Seções do evento">
-          @for (aba of abas; track aba.rotulo) {
+          @for (aba of abasVisiveis(); track aba.rotulo) {
             <a
               mat-tab-link
               [routerLink]="aba.rota ? ['/eventos', eventoId(), aba.rota] : ['/eventos', eventoId()]"
@@ -35,12 +36,17 @@ import { MatTabsModule } from '@angular/material/tabs';
 })
 export class EventoAbasComponent {
   readonly eventoId = input.required<string>();
-  protected readonly abas = [
+  private readonly auth = inject(AuthService);
+  protected readonly abasVisiveis = computed(() => {
+    this.auth.permissoes();
+    return this.abas.filter((aba) => !aba.financeiro || this.auth.podeVerFinanceiro());
+  });
+  private readonly abas = [
     { rotulo: 'Resumo', rota: '' },
     { rotulo: 'Tarefas', rota: 'tarefas' },
     { rotulo: 'Convidados', rota: 'convidados' },
     { rotulo: 'Fornecedores', rota: 'fornecedores' },
-    { rotulo: 'Dinheiro', rota: 'dinheiro' },
-    { rotulo: 'Contratos', rota: 'contratos' },
+    { rotulo: 'Dinheiro', rota: 'dinheiro', financeiro: true },
+    { rotulo: 'Contratos', rota: 'contratos', financeiro: true },
   ];
 }

@@ -8,13 +8,15 @@ import { MatInputModule } from '@angular/material/input';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import {
   NegocioClient,
-  PAPEIS_RESPONSAVEL_TAREFA,
   PRIORIDADES_TAREFA,
   SITUACOES_TAREFA,
   Tarefa,
   VISIBILIDADES_TAREFA,
 } from '../../core/negocio.client';
+import { AssistentesClient } from '../../core/assistentes.client';
+import { AuthService } from '../../core/auth.service';
 import { ToastService } from '../../core/toast.service';
+import { chaveResponsavel, opcoesResponsavel, OpcaoResponsavel, rotuloResponsavel } from '../../shared/responsaveis';
 import { validarComprovante as validarArquivo } from '../../core/dinheiro.client';
 import { AnexoTarefa } from '../../core/negocio.client';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
@@ -118,6 +120,9 @@ export class TarefaLeituraDialog {
   protected readonly ref = inject(MatDialogRef<TarefaLeituraDialog, AcaoLeitura>);
   private readonly negocio = inject(NegocioClient);
   private readonly toast = inject(ToastService);
+  private readonly assistentes = inject(AssistentesClient);
+  private readonly auth = inject(AuthService);
+  protected readonly opcoes = signal<OpcaoResponsavel[]>(opcoesResponsavel([], this.auth.ehAssistente() ? 'Dona da conta' : 'Eu'));
   private readonly fb = inject(FormBuilder);
   protected readonly tarefa = signal(this.dados);
   protected readonly checklistAberto = signal(false);
@@ -129,13 +134,20 @@ export class TarefaLeituraDialog {
   private mudou = false;
   protected readonly comentario = this.fb.nonNullable.group({ texto: ['', Validators.required] });
 
+  constructor() {
+    this.assistentes.nomes().subscribe({
+      next: (nomes) => this.opcoes.set(opcoesResponsavel(nomes, this.auth.ehAssistente() ? 'Dona da conta' : 'Eu', this.tarefa().responsaveis.map((item) => chaveResponsavel(item)))),
+      error: () => undefined,
+    });
+  }
+
   protected rotulo(lista: { valor: string; rotulo: string }[], valor: string): string {
     return lista.find((item) => item.valor === valor)?.rotulo ?? valor;
   }
 
   protected responsaveis(): string {
     return this.tarefa().responsaveis
-      .map((item) => PAPEIS_RESPONSAVEL_TAREFA.find((papel) => papel.valor === item.papel)?.rotulo ?? item.papel)
+      .map((item) => rotuloResponsavel(item, this.opcoes()))
       .join(', ');
   }
 

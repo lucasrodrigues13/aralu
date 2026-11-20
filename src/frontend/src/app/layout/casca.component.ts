@@ -10,6 +10,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { AuthService } from '../core/auth.service';
+import { AssistentesClient } from '../core/assistentes.client';
 import { ContaClient } from '../core/conta.client';
 import { TemaService } from '../core/tema.service';
 import { NovoEventoDialog } from '../pages/eventos/novo-evento.dialog';
@@ -21,6 +22,10 @@ interface ItemMenu {
   icone: string;
   rota?: string;
   emBreve?: boolean;
+  /** Só a dona vê (Perfil, Contratos da conta, Assistentes). */
+  soDona?: boolean;
+  /** Só quem pode ver o financeiro. */
+  financeiro?: boolean;
 }
 
 interface GrupoMenu {
@@ -63,7 +68,7 @@ function telaEstreita(): boolean {
           </div>
           <div class="flex-1 overflow-y-auto">
             <mat-nav-list class="sidebar-list" aria-label="Menu principal">
-              @for (grupo of grupos; track grupo.rotulo) {
+              @for (grupo of grupos(); track grupo.rotulo) {
                 <div mat-subheader class="nav-caption">{{ grupo.rotulo }}</div>
                 @for (item of grupo.itens; track item.rotulo) {
                   @if (item.rota && !item.emBreve) {
@@ -100,7 +105,7 @@ function telaEstreita(): boolean {
                 {{ iniciais() }}
               </span>
               <div class="min-w-0 flex-1">
-                <span class="block text-xs text-muted">Conectado como</span>
+                <span class="block text-xs text-muted">{{ empresa() ? 'Assistente de ' + empresa() : 'Conectado como' }}</span>
                 <span class="block text-sm font-semibold truncate" [title]="auth.email()">{{ auth.email() }}</span>
               </div>
               <button mat-icon-button type="button" (click)="sair()" aria-label="Sair">
@@ -144,7 +149,9 @@ function telaEstreita(): boolean {
               <span class="block text-xs text-muted">Conectado como</span>
               <span class="block text-sm font-semibold">{{ auth.email() }}</span>
             </div>
-            <a mat-menu-item routerLink="/perfil"><mat-icon>apartment</mat-icon>Perfil da assessoria</a>
+            @if (!auth.ehAssistente()) {
+              <a mat-menu-item routerLink="/perfil"><mat-icon>apartment</mat-icon>Perfil da assessoria</a>
+            }
             <a mat-menu-item routerLink="/conta"><mat-icon>manage_accounts</mat-icon>Minha conta</a>
             <div class="px-3 mt-3 mb-2">
               <button mat-stroked-button type="button" class="w-full" (click)="sair()">Sair</button>
@@ -162,7 +169,9 @@ function telaEstreita(): boolean {
       <a routerLink="/hoje" routerLinkActive="ativo"><mat-icon>home</mat-icon>Hoje</a>
       <a routerLink="/eventos" routerLinkActive="ativo"><mat-icon>celebration</mat-icon>Eventos</a>
       <button type="button" class="novo" (click)="novoEvento()" aria-label="Novo evento"><mat-icon>add</mat-icon></button>
-      <a routerLink="/pagamentos" routerLinkActive="ativo"><mat-icon>payments</mat-icon>Dinheiro</a>
+      @if (auth.podeVerFinanceiro()) {
+        <a routerLink="/pagamentos" routerLinkActive="ativo"><mat-icon>payments</mat-icon>Dinheiro</a>
+      }
       <button type="button" (click)="menuAberto.set(true)" aria-label="Mais opções"><mat-icon>menu</mat-icon>Mais</button>
     </nav>
   `,
@@ -171,18 +180,22 @@ export class CascaComponent {
   protected readonly auth = inject(AuthService);
   protected readonly tema = inject(TemaService);
   private readonly conta = inject(ContaClient);
+  private readonly assistentes = inject(AssistentesClient);
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
   private readonly breakpoints = inject(BreakpointObserver);
   protected readonly estreito = signal(telaEstreita());
   protected readonly menuAberto = signal(false);
 
-  protected readonly grupos: GrupoMenu[] = [
+  protected readonly empresa = signal('');
+
+  private readonly todosOsGrupos: GrupoMenu[] = [
     {
       rotulo: 'Principal',
       itens: [
         { rotulo: 'Hoje', icone: 'today', rota: '/hoje' },
-        { rotulo: 'Perfil', icone: 'apartment', rota: '/perfil' },
+        { rotulo: 'Perfil', icone: 'apartment', rota: '/perfil', soDona: true },
+        { rotulo: 'Assistentes', icone: 'support_agent', rota: '/assistentes', soDona: true },
       ],
     },
     {
@@ -192,14 +205,14 @@ export class CascaComponent {
         { rotulo: 'Tarefas', icone: 'task_alt', rota: '/tarefas' },
         { rotulo: 'Clientes', icone: 'group', rota: '/clientes' },
         { rotulo: 'Serviços e fornecedores', icone: 'storefront', rota: '/fornecedores' },
-        { rotulo: 'Pagamentos', icone: 'payments', rota: '/pagamentos' },
+        { rotulo: 'Pagamentos', icone: 'payments', rota: '/pagamentos', financeiro: true },
       ],
     },
     {
       rotulo: 'Modelos',
       itens: [
         { rotulo: 'Modelos de evento', icone: 'content_copy', rota: '/modelos-evento' },
-        { rotulo: 'Contratos', icone: 'gavel', rota: '/contratos' },
+        { rotulo: 'Contratos', icone: 'gavel', rota: '/contratos', soDona: true },
         { rotulo: 'Modelos de briefing', icone: 'quiz', rota: '/modelos-briefing' },
         { rotulo: 'Modelos de roteiro', icone: 'schedule', rota: '/modelos-roteiro' },
         { rotulo: 'Modelos de cronograma', icone: 'view_timeline', rota: '/modelos-cronograma' },
@@ -227,9 +240,33 @@ export class CascaComponent {
     },
   ];
 
+  /** Menu conforme as permissões: a assistente só vê o que a SPEC-032 §8 libera. */
+  protected readonly grupos = computed(() => {
+    this.auth.permissoes();
+    return this.todosOsGrupos
+      .map((grupo) => ({
+        ...grupo,
+        itens: grupo.itens.filter(
+          (item) => !(item.soDona && this.auth.ehAssistente()) && !(item.financeiro && !this.auth.podeVerFinanceiro()),
+        ),
+      }))
+      .filter((grupo) => grupo.itens.length > 0);
+  });
+
   protected readonly iniciais = computed(() => (this.auth.email() ?? '').slice(0, 2).toUpperCase());
 
   constructor() {
+    if (this.auth.ehAssistente()) {
+      this.conta.areaUsuario().subscribe({
+        next: (area) => this.auth.permissoes.set({ podeVerFinanceiro: !!area.podeVerFinanceiro, somenteDela: !!area.somenteDela }),
+        error: () => undefined,
+      });
+      this.assistentes.minhaConta().subscribe({
+        next: (minha) => this.empresa.set(minha.empresa),
+        error: () => undefined,
+      });
+    }
+
     this.breakpoints
       .observe('(max-width: 959px)')
       .pipe(takeUntilDestroyed(inject(DestroyRef)))

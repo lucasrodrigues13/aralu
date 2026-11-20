@@ -190,3 +190,23 @@ Decididos em 20/11/2026: o usuário aprovou todas as sugestões. A decisão de c
 13. **Hoje sem financeiro (SPEC-007 §17, ponto 4):** ocultar os cartões ou mostrar zero? (Decidido: Ocultar.)
 14. **A dona vê o que cada assistente fez?** (Decidido: Não nesta versão. O registro de quem fez o quê fica para depois.)
 15. **Contas `Client` antigas.** A role `Client` deixou de existir (RF-024). (Decidido: Esta spec não mexe no acesso do casal; a retirada do `Client` entra na spec do link do casal, RF-056.)
+
+## 18. Como ficou no código (20/11/2026)
+
+Implementada em três partes (A conta, B permissões, C "só os dela" e responsáveis), com migration `Assistentes`. O que a spec não detalhava, ou que ficou mais restrito, e o que ainda falta:
+
+1. **Login:** a assistente é uma conta Identity com role `Assistant` e `OrganizerId` da dona, mais uma linha na tabela `Assistentes` (nome, permissões, situação). Remover apaga o login (o e-mail fica livre) e mantém a linha como "Removida", para o nome continuar nas tarefas.
+2. **Convite:** link `/convite-assistente` com token próprio de 7 dias. Reenviar troca o carimbo de segurança e invalida o link anterior. Se o e-mail muda enquanto o convite está pendente, o convite é reenviado.
+3. **Permissões a cada pedido:** um middleware lê a situação e as duas permissões da assistente no banco em cada pedido. Removida: 401 "Seu acesso foi removido." e o frontend volta para a tela de entrar com o aviso.
+4. **Fechado para a assistente (403):** Perfil, Assistentes (gestão), Contratos da conta (modelos), estágios do funil (PUT) e exclusão de fornecedor e de serviço da conta. Financeiro (Dinheiro do evento, Pagamentos, Budget, contratos do evento e dos modelos) só com "pode ver o financeiro".
+5. **Sem a permissão financeira:** resumo do evento sem valores, evento sem orçamento estimado, fornecedor sem faixa de preço, Hoje sem cobranças nem pagamentos (o servidor zera e a tela oculta os cartões), abas Dinheiro e Contratos e menu Pagamentos ocultos.
+6. **Só os dela:** tabela `EventosAssistentes`. Filtro nas listas de Eventos, Tarefas, Hoje e Agenda; rotas de evento, tarefa, convite e convidado de outro evento respondem 404. O evento criado por uma assistente já nasce com ela marcada. A dona marca as assistentes no modal "Editar evento".
+7. **Responsáveis:** o seletor da tarefa do evento lista a dona, o casal e as assistentes ativas; assistente removida continua na tarefa com o selo "(removida)".
+8. **Minha conta:** a assistente edita nome, celular, nascimento e senha; o menu mostra "Assistente de <empresa>".
+
+Ainda falta (combinar com o usuário antes):
+
+- **Excluir o que ela criou (§17, ponto 6):** hoje a assistente não exclui lead, orçamento, contrato nem tarefa do funil, porque o código ainda não guarda quem criou cada item. Fica só com a dona até existir esse registro.
+- **Pendências da Hoje (§17, ponto 8):** o card de tarefas abertas de assistente removida ainda não existe.
+- **Admin (§4):** o Admin ainda não gerencia as assistentes de outra conta.
+- **"Só os dela" nas telas de dinheiro:** Pagamentos lista a conta toda para quem tem a permissão financeira; Estatísticas de eventos também não filtra.

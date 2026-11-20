@@ -7,6 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { API_BASE_URL } from '../../core/api-base-url';
+import { AuthService } from '../../core/auth.service';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { ToastService } from '../../core/toast.service';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
@@ -113,6 +114,7 @@ function lerPulados(): string[] {
             </mat-card-content>
           </mat-card>
         </a>
+        @if (auth.podeVerFinanceiro()) {
         <a class="block no-underline" href="#cobrancas" (click)="rolar($event, 'cobrancas')">
           <mat-card class="shadow-none text-center mb-0! h-full bg-light-warning card-hover">
             <mat-card-content>
@@ -123,6 +125,7 @@ function lerPulados(): string[] {
             </mat-card-content>
           </mat-card>
         </a>
+        }
         <a class="block no-underline" routerLink="/eventos">
           <mat-card class="shadow-none text-center mb-0! h-full bg-light-secondary card-hover">
             <mat-card-content>
@@ -133,6 +136,7 @@ function lerPulados(): string[] {
             </mat-card-content>
           </mat-card>
         </a>
+        @if (auth.podeVerFinanceiro()) {
         <a class="block no-underline" routerLink="/pagamentos">
           <mat-card class="shadow-none text-center mb-0! h-full bg-light-success card-hover">
             <mat-card-content>
@@ -143,6 +147,7 @@ function lerPulados(): string[] {
             </mat-card-content>
           </mat-card>
         </a>
+        }
       </div>
 
       <div class="grid grid-cols-12 gap-6">
@@ -163,6 +168,7 @@ function lerPulados(): string[] {
           </mat-card-content>
         </mat-card>
 
+        @if (auth.podeVerFinanceiro()) {
         <mat-card class="cardWithShadow col-span-12 lg:col-span-8" id="cobrancas">
           <mat-card-content>
             <mat-card-title>Cobranças a fazer</mat-card-title>
@@ -192,6 +198,7 @@ function lerPulados(): string[] {
             }
           </mat-card-content>
         </mat-card>
+        }
       </div>
 
       <mat-card class="cardWithShadow">
@@ -291,6 +298,7 @@ function lerPulados(): string[] {
   `,
 })
 export class HojePage implements OnInit {
+  protected readonly auth = inject(AuthService);
   private readonly http = inject(HttpClient);
   private readonly base = inject(API_BASE_URL);
   private readonly toast = inject(ToastService);

@@ -2,19 +2,29 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
+import { signal } from '@angular/core';
+import { AssistentesClient } from '../core/assistentes.client';
 import { AuthService } from '../core/auth.service';
 import { ContaClient } from '../core/conta.client';
 import { CascaComponent } from './casca.component';
 
-function montar(estreita: boolean): ComponentFixture<CascaComponent> {
+function montar(estreita: boolean, assistente = false, financeiro = true): ComponentFixture<CascaComponent> {
   TestBed.configureTestingModule({
     providers: [
       provideRouter([]),
       {
         provide: AuthService,
-        useValue: { email: () => 'pessoa@gevents.test', ehAdmin: () => false, sair: () => undefined },
+        useValue: {
+          email: () => 'pessoa@gevents.test',
+          ehAdmin: () => false,
+          ehAssistente: () => assistente,
+          podeVerFinanceiro: () => financeiro,
+          permissoes: signal(null),
+          sair: () => undefined,
+        },
       },
-      { provide: ContaClient, useValue: { sair: () => of(undefined) } },
+      { provide: ContaClient, useValue: { sair: () => of(undefined), areaUsuario: () => of({ email: 'pessoa@gevents.test', papeis: [] }) } },
+      { provide: AssistentesClient, useValue: { minhaConta: () => of({ empresa: 'Aralu Eventos' }) } },
       {
         provide: BreakpointObserver,
         useValue: { observe: () => of({ matches: estreita, breakpoints: {} }) },
@@ -29,6 +39,22 @@ function montar(estreita: boolean): ComponentFixture<CascaComponent> {
 
 describe('CascaComponent', () => {
   afterEach(() => TestBed.resetTestingModule());
+
+  it('esconde da assistente Perfil, Contratos da conta, Assistentes e o financeiro sem permissão (SPEC-032 §8)', () => {
+    const texto = (montar(false, true, false).nativeElement as HTMLElement).textContent ?? '';
+    expect(texto).toContain('Eventos');
+    expect(texto).not.toContain('Perfil');
+    expect(texto).not.toContain('Assistentes');
+    expect(texto).not.toContain('Pagamentos');
+    expect(texto).toContain('Assistente de Aralu Eventos');
+  });
+
+  it('mostra Perfil, Assistentes e Pagamentos para a dona', () => {
+    const texto = (montar(false).nativeElement as HTMLElement).textContent ?? '';
+    expect(texto).toContain('Perfil');
+    expect(texto).toContain('Assistentes');
+    expect(texto).toContain('Pagamentos');
+  });
 
   it('em tela estreita deixa o menu fechado e oferece abrir e fechar', () => {
     const fixture = montar(true);

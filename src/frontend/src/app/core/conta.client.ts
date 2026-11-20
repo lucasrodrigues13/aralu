@@ -11,6 +11,8 @@ export interface MensagemResposta {
 export interface AreaResposta {
   email: string;
   papeis: string[];
+  podeVerFinanceiro?: boolean;
+  somenteDela?: boolean;
 }
 
 @Injectable({ providedIn: 'root' })

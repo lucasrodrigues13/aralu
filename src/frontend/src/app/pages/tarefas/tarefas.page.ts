@@ -12,7 +12,10 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { mensagemDeErro } from '../../core/mensagem-erro';
-import { NegocioClient, PAPEIS_RESPONSAVEL_TAREFA, SITUACOES_TAREFA, Tarefa } from '../../core/negocio.client';
+import { AssistentesClient } from '../../core/assistentes.client';
+import { AuthService } from '../../core/auth.service';
+import { NegocioClient, SITUACOES_TAREFA, Tarefa } from '../../core/negocio.client';
+import { chaveResponsavel, opcoesResponsavel, OpcaoResponsavel, rotuloResponsavel } from '../../shared/responsaveis';
 import { ToastService } from '../../core/toast.service';
 import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
@@ -81,7 +84,7 @@ import { ChecklistTarefaComponent, progressoChecklist } from './checklist-tarefa
               <mat-form-field appearance="outline" class="w-full">
                 <mat-select [value]="responsavelEvento()" (valueChange)="responsavelEvento.set($event)" aria-label="Responsável">
                   <mat-option value="">Todos</mat-option>
-                  @for (papel of papeis; track papel.valor) { <mat-option [value]="papel.valor">{{ papel.rotulo }}</mat-option> }
+                  @for (papel of papeis(); track papel.valor) { <mat-option [value]="papel.valor">{{ papel.rotulo }}</mat-option> }
                 </mat-select>
               </mat-form-field>
             </div>
@@ -212,7 +215,7 @@ import { ChecklistTarefaComponent, progressoChecklist } from './checklist-tarefa
           <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
           <mat-select [attr.aria-label]="'Responsável'" formControlName="responsavel">
             <mat-option value="">Todos</mat-option>
-            @for (papel of papeis; track papel.valor) { <mat-option [value]="papel.valor">{{ papel.rotulo }}</mat-option> }
+            @for (papel of papeis(); track papel.valor) { <mat-option [value]="papel.valor">{{ papel.rotulo }}</mat-option> }
           </mat-select>
         </mat-form-field>
         </div>
@@ -391,7 +394,9 @@ export class TarefasPage implements OnInit {
   private readonly toast = inject(ToastService);
   private readonly fb = inject(FormBuilder);
   protected readonly situacoes = SITUACOES_TAREFA;
-  protected readonly papeis = PAPEIS_RESPONSAVEL_TAREFA;
+  private readonly assistentes = inject(AssistentesClient);
+  private readonly auth = inject(AuthService);
+  protected readonly papeis = signal<OpcaoResponsavel[]>(opcoesResponsavel([], this.auth.ehAssistente() ? 'Dona da conta' : 'Eu'));
   protected readonly tarefas = signal<Tarefa[]>([]);
   protected readonly visao = signal('lista');
   protected readonly eventoId = signal('');
@@ -425,7 +430,7 @@ export class TarefasPage implements OnInit {
     return this.tarefas().filter((tarefa) =>
       (!termo || tarefa.titulo.toLocaleLowerCase('pt').includes(termo))
       && (!this.situacaoEvento() || tarefa.situacao === this.situacaoEvento())
-      && (!this.responsavelEvento() || tarefa.responsaveis.some((item) => item.papel === this.responsavelEvento()))
+      && (!this.responsavelEvento() || tarefa.responsaveis.some((item) => chaveResponsavel(item) === this.responsavelEvento()))
       && (!servico || (servico === '-' ? !tarefa.servicoEventoId : tarefa.servicoEventoId === servico))
       && (!this.soChecklist() || tarefa.checklist.length > 0));
   });
@@ -449,6 +454,10 @@ export class TarefasPage implements OnInit {
   protected readonly progresso = progressoChecklist;
 
   ngOnInit(): void {
+    this.assistentes.nomes().subscribe({
+      next: (nomes) => this.papeis.set(opcoesResponsavel(nomes, this.auth.ehAssistente() ? 'Dona da conta' : 'Eu', nomes.map((item) => `Assistente:${item.id}`))),
+      error: () => undefined,
+    });
     this.eventoId.set(this.rota.snapshot.paramMap.get('id') ?? '');
     this.somenteAtrasadas.set(this.rota.snapshot.queryParamMap.get('filtro') === 'atrasadas');
     if (this.eventoId()) {
@@ -476,7 +485,7 @@ export class TarefasPage implements OnInit {
 
   protected nomesResponsaveis(tarefa: Tarefa): string {
     return tarefa.responsaveis
-      .map((item) => this.papeis.find((papel) => papel.valor === item.papel)?.rotulo ?? item.papel)
+      .map((item) => rotuloResponsavel(item, this.papeis()))
       .join(', ');
   }
 

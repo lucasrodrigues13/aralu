@@ -8,9 +8,16 @@ export interface Sessao {
   papeis: string[];
 }
 
+/** O que a pessoa logada pode ver. Vem de /conta/area, lido do banco a cada pedido (SPEC-032 §6.3). */
+export interface Permissoes {
+  podeVerFinanceiro: boolean;
+  somenteDela: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly sessao = signal<Sessao | null>(this.ler());
+  readonly permissoes = signal<Permissoes | null>(null);
 
   autenticado(): boolean {
     return !!this.sessao()?.token;
@@ -18,6 +25,16 @@ export class AuthService {
 
   ehAdmin(): boolean {
     return this.sessao()?.papeis.includes('Admin') ?? false;
+  }
+
+  /** Assistente da conta: não vê Perfil, Contratos da conta nem Assistentes (SPEC-032 §8). */
+  ehAssistente(): boolean {
+    return this.sessao()?.papeis.includes('Assistant') ?? false;
+  }
+
+  /** A dona vê o financeiro sempre; a assistente só com a permissão. */
+  podeVerFinanceiro(): boolean {
+    return !this.ehAssistente() || (this.permissoes()?.podeVerFinanceiro ?? false);
   }
 
   email(): string {
@@ -31,11 +48,13 @@ export class AuthService {
   guardar(sessao: Sessao): void {
     sessionStorage.setItem(CHAVE, JSON.stringify(sessao));
     this.sessao.set(sessao);
+    this.permissoes.set(null);
   }
 
   sair(): void {
     sessionStorage.removeItem(CHAVE);
     this.sessao.set(null);
+    this.permissoes.set(null);
   }
 
   private ler(): Sessao | null {

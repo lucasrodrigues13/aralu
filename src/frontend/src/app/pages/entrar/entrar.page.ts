@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -63,6 +63,13 @@ export class EntrarPage {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
+  private readonly rota = inject(ActivatedRoute);
+
+  constructor() {
+    if (this.rota.snapshot.queryParamMap.get('aviso') === 'acesso-removido') {
+      this.toast.erro('Seu acesso foi removido.');
+    }
+  }
 
   protected readonly enviando = signal(false);
   protected readonly formulario = this.fb.nonNullable.group({

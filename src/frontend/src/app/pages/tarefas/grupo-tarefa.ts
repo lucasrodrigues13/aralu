@@ -1,3 +1,4 @@
+import { chaveResponsavel } from '../../shared/responsaveis';
 export interface TarefaAgrupavel {
   grupoPrazo: string | null;
   situacao: string;
@@ -6,7 +7,7 @@ export interface TarefaAgrupavel {
   eventoId: string;
   servicoEventoId: string | null;
   tags: string[];
-  responsaveis: { papel: string }[];
+  responsaveis: { papel: string; referenciaId?: string | null }[];
 }
 
 export interface SecaoTarefas<T> {
@@ -77,7 +78,7 @@ export function filtrarTarefas<T extends TarefaAgrupavel>(tarefas: T[], filtro: 
   return tarefas.filter((tarefa) => {
     if (filtro.situacao && tarefa.situacao !== filtro.situacao) return false;
     if (filtro.eventoId && tarefa.eventoId !== filtro.eventoId) return false;
-    if (filtro.responsavel && !tarefa.responsaveis.some((item) => item.papel === filtro.responsavel)) return false;
+    if (filtro.responsavel && !tarefa.responsaveis.some((item) => chaveResponsavel(item) === filtro.responsavel)) return false;
     if (filtro.servicoId && tarefa.servicoEventoId !== filtro.servicoId) return false;
     if (tag && !tarefa.tags.some((item) => item.toLocaleLowerCase('pt').includes(tag))) return false;
     const dia = tarefa.prazo?.slice(0, 10) ?? null;

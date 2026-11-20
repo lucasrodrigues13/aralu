@@ -10,13 +10,15 @@ import { MatSelectModule } from '@angular/material/select';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import {
   NegocioClient,
-  PAPEIS_RESPONSAVEL_TAREFA,
   PRIORIDADES_TAREFA,
   SITUACOES_TAREFA,
   Tarefa,
   VISIBILIDADES_TAREFA,
 } from '../../core/negocio.client';
+import { AssistentesClient } from '../../core/assistentes.client';
+import { AuthService } from '../../core/auth.service';
 import { ToastService } from '../../core/toast.service';
+import { chaveResponsavel, opcoesResponsavel, OpcaoResponsavel, pedidoResponsavel } from '../../shared/responsaveis';
 import { CampoDataComponent } from '../../shared/campo-data';
 import { deDataParaIso, deIsoParaData } from '../../shared/data';
 
@@ -60,7 +62,7 @@ export interface TarefaFormDados {
             <mat-label class="font-semibold mb-2 block">Responsáveis</mat-label>
             <mat-form-field appearance="outline" class="w-full">
             <mat-select [attr.aria-label]="'Responsáveis'" formControlName="responsaveis" multiple required>
-              @for (papel of papeis; track papel.valor) { <mat-option [value]="papel.valor">{{ papel.rotulo }}</mat-option> }
+              @for (papel of papeis(); track papel.valor) { <mat-option [value]="papel.valor">{{ papel.rotulo }}</mat-option> }
             </mat-select>
             @if (formulario.controls.responsaveis.hasError('required')) { <mat-error>Informe ao menos um responsável.</mat-error> }
           </mat-form-field>
@@ -134,14 +136,16 @@ export class TarefaFormDialog implements OnInit {
   protected readonly situacoes = SITUACOES_TAREFA;
   protected readonly prioridades = PRIORIDADES_TAREFA;
   protected readonly visibilidades = VISIBILIDADES_TAREFA;
-  protected readonly papeis = PAPEIS_RESPONSAVEL_TAREFA;
+  private readonly assistentes = inject(AssistentesClient);
+  private readonly auth = inject(AuthService);
+  protected readonly papeis = signal<OpcaoResponsavel[]>(opcoesResponsavel([], this.auth.ehAssistente() ? 'Dona da conta' : 'Eu'));
   protected readonly servicos = signal<{ id: string; nome: string }[]>([]);
   protected readonly formulario = this.fb.nonNullable.group({
     titulo: [this.dados.tarefa?.titulo ?? '', [Validators.required, Validators.pattern(/\S/)]],
     descricao: this.dados.tarefa?.descricao ?? '',
     prazo: this.fb.control<Date | null>(deIsoParaData(this.dados.tarefa?.prazo)),
     situacao: this.dados.tarefa?.situacao ?? 'Pendente',
-    responsaveis: [this.dados.tarefa?.responsaveis.map((item) => item.papel) ?? ['Organizer'] as string[], Validators.required],
+    responsaveis: [this.dados.tarefa?.responsaveis.map((item) => chaveResponsavel(item)) ?? ['Organizer'] as string[], Validators.required],
     prioridade: this.dados.tarefa?.prioridade ?? 'Media',
     visibilidade: this.dados.tarefa?.visibilidade ?? 'SoEu',
     grupo: this.dados.tarefa?.grupo ?? '',
@@ -154,6 +158,11 @@ export class TarefaFormDialog implements OnInit {
   }
 
   ngOnInit(): void {
+    const atuais = (this.dados.tarefa?.responsaveis ?? []).map((item) => chaveResponsavel(item));
+    this.assistentes.nomes().subscribe({
+      next: (nomes) => this.papeis.set(opcoesResponsavel(nomes, this.auth.ehAssistente() ? 'Dona da conta' : 'Eu', atuais)),
+      error: () => undefined,
+    });
     const eventoId = this.dados.eventoId || this.dados.tarefa?.eventoId;
     if (!eventoId) return;
     this.negocio.evento(eventoId).subscribe({
@@ -192,7 +201,7 @@ export class TarefaFormDialog implements OnInit {
       visibilidade: valor.visibilidade,
       servicoEventoId: valor.servicoEventoId || null,
       atualizarServico: true,
-      responsaveis: valor.responsaveis.map((papel) => ({ papel })),
+      responsaveis: valor.responsaveis.map((chave) => pedidoResponsavel(chave)),
       checklist: valor.checklist.map((item) => ({ texto: item.texto.trim(), feito: item.feito, cancelado: item.cancelado })),
     };
     const destino = this.dados.tarefa

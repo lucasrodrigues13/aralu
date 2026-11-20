@@ -7,6 +7,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
+import { AuthService } from '../../core/auth.service';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { AlertaEvento, Cliente, EventoDetalhe, NegocioClient, ResumoEvento, ROTULO_PAPEL, TIPOS } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
@@ -229,6 +230,7 @@ export class ClientesEventoDialog implements OnInit {
               </mat-card-content>
             </mat-card>
           </a>
+          @if (auth.podeVerFinanceiro()) {
           <a class="block no-underline" [routerLink]="['/eventos', id, 'fornecedores']">
             <mat-card class="shadow-none text-center mb-0! h-full bg-light-success card-hover">
               <mat-card-content>
@@ -239,6 +241,7 @@ export class ClientesEventoDialog implements OnInit {
               </mat-card-content>
             </mat-card>
           </a>
+          }
           <button class="block w-full p-0 border-0 bg-transparent text-left cursor-pointer" type="button" (click)="abrirClientes()">
             <mat-card class="shadow-none text-center mb-0! h-full bg-light-warning card-hover">
               <mat-card-content>
@@ -255,6 +258,7 @@ export class ClientesEventoDialog implements OnInit {
   `,
 })
 export class EventoHomePage implements OnInit, OnDestroy {
+  protected readonly auth = inject(AuthService);
   private readonly negocio = inject(NegocioClient);
   private readonly rota = inject(ActivatedRoute);
   private readonly router = inject(Router);

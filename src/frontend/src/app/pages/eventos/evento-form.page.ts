@@ -8,6 +8,8 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatDialog, MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { mensagemDeErro } from '../../core/mensagem-erro';
+import { AssistentesClient, Assistente } from '../../core/assistentes.client';
+import { AuthService } from '../../core/auth.service';
 import { NegocioClient } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { CampoDataComponent } from '../../shared/campo-data';
@@ -67,6 +69,16 @@ export interface EventoFormDados {
                   <mat-label class="font-semibold mb-2 block">Senha do site</mat-label>
                   <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Senha do site'" matInput formControlName="senhaSite" /></mat-form-field>
                 </div>
+                @if (!auth.ehAssistente() && assistentesAtivas().length > 0) {
+                  <div class="campo sm:col-span-2">
+                    <mat-label class="font-semibold mb-2 block">Assistentes do evento</mat-label>
+                    <mat-form-field appearance="outline" class="w-full">
+                      <mat-select [attr.aria-label]="'Assistentes do evento'" multiple [value]="assistentesDoEvento() ?? []" (valueChange)="assistentesDoEvento.set($event)">
+                        @for (assistente of assistentesAtivas(); track assistente.id) { <mat-option [value]="assistente.id">{{ assistente.nome }}</mat-option> }
+                      </mat-select>
+                    </mat-form-field>
+                  </div>
+                }
                 <div class="campo sm:col-span-2">
                   <mat-label class="font-semibold mb-2 block">Tags</mat-label>
                   <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Tags'" matInput formControlName="tags" placeholder="Assessoria completa" /></mat-form-field>
@@ -118,6 +130,10 @@ export class EventoFormPage implements OnInit {
   private readonly dialogRef = inject(MatDialogRef<EventoFormPage, string>);
   private readonly toast = inject(ToastService);
   private readonly dialog = inject(MatDialog);
+  private readonly assistentes = inject(AssistentesClient);
+  protected readonly auth = inject(AuthService);
+  protected readonly assistentesAtivas = signal<Assistente[]>([]);
+  protected readonly assistentesDoEvento = signal<string[] | null>(null);
   protected readonly tipo = signal('');
   protected readonly urlSite = signal('');
   private foto: File | null = null;
@@ -148,6 +164,10 @@ export class EventoFormPage implements OnInit {
 
   ngOnInit(): void {
     this.id = this.dadosDialogo?.id ?? '';
+    if (this.id && !this.auth.ehAssistente()) {
+      this.assistentes.ativas().subscribe({ next: (lista) => this.assistentesAtivas.set(lista), error: () => undefined });
+      this.assistentes.doEvento(this.id).subscribe({ next: (r) => this.assistentesDoEvento.set(r.assistentes), error: () => undefined });
+    }
     if (this.id) {
       this.negocio.evento(this.id).subscribe({
         next: (evento) => {
@@ -216,9 +236,24 @@ export class EventoFormPage implements OnInit {
     const pedido = { ...this.pedido(), moverPrazos };
     this.negocio.atualizarEvento(this.id, pedido).subscribe({
       next: (evento) => {
-        const seguir = () => {
+        const fechar = () => {
           this.toast.sucesso('Evento atualizado.');
           this.dialogRef.close(evento.id);
+        };
+        // SPEC-032 §6.4: só a dona escolhe as assistentes do evento.
+        const seguir = () => {
+          const escolhidas = this.assistentesDoEvento();
+          if (this.auth.ehAssistente() || escolhidas === null) {
+            fechar();
+            return;
+          }
+          this.assistentes.definirDoEvento(evento.id, escolhidas).subscribe({
+            next: fechar,
+            error: (erro: unknown) => {
+              this.toast.erro(mensagemDeErro(erro));
+              fechar();
+            },
+          });
         };
         if (!this.foto) {
           seguir();
