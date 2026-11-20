@@ -19,7 +19,7 @@ RF-080 (cartões de ação), RF-081 (próximo evento, carteira, checklist inicia
 | Ator | Pode |
 |---|---|
 | Organizer | Vê a Hoje da própria conta. |
-| Assistant | Vê a Hoje com os eventos que a dona liberou; cartões financeiros só se "pode ver o financeiro" (RF-045). |
+| Assistant | Vê a Hoje com os eventos que a dona liberou; cartões financeiros só se "pode ver o financeiro" (RF-045); sem a permissão, os cartões são ocultados (SPEC-032 §17, ponto 13). |
 | Outra conta / casal / convidado | Não vê. |
 
 ## 5. Pré-condições
@@ -98,7 +98,7 @@ SPEC-001, casca (bloco 1), SPEC-002/008 (eventos), SPEC-003 (tarefas), SPEC-004/
 1. ~~O que entra no "N" da saudação.~~ Decidido: tarefas ativas com prazo hoje, de todos os eventos (§6, item 2).
 2. ~~Limiar de "respostas abaixo do esperado".~~ Decidido: menos de 2 meses para o evento e 50% ou mais dos convidados sem resposta (§6, item 5).
 3. Destino dos cartões de cobrança antes do bloco 6 existir.
-4. Comportamento do cartão financeiro para Assistant sem permissão (ocultar vs zero).
+4. Comportamento do cartão financeiro para Assistant sem permissão (ocultar vs zero). Decidido na SPEC-032 §17, ponto 13: ocultar.
 5. ~~Definição de "respostas de convidados".~~ Decidido: pendentes, sim e não (§6, item 3).
 6. Se o bloco "próximo evento" some quando não há data. Implementado: mostra "Nenhum evento com data marcada".
 7. "Retornos do funil" só entra quando o funil (bloco 16) ganhar a data de retorno. Decidido em 18/11/2026. O card "Retornos do funil" entrou com a SPEC-031 parte B em 20/11/2026.

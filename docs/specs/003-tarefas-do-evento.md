@@ -21,7 +21,7 @@ Fora deste rascunho: mural da equipe, caixa global de anexos, lembrete de aniver
 | Ator | Pode |
 |---|---|
 | Organizer | Tudo nas tarefas dos próprios eventos. |
-| Assistant | O mesmo nos eventos liberados (RF-045). Enquanto a spec de assistente não existir, só o Organizer. |
+| Assistant | O mesmo nos eventos liberados (RF-045, SPEC-032). |
 | Casal (link) | Ver e marcar como feitas as tarefas com visibilidade "casal" ou "compartilhada" (RF-056). Não edita título, prazo nem responsáveis. |
 | Outra conta | Não vê. |
 
@@ -130,7 +130,7 @@ Abrir "Nova tarefa" e fechar sem salvar (nada é criado). Criar só com título 
 
 ## 16. Dependências
 
-SPEC-001, SPEC-002, SPEC-008, SPEC-012 (grupo e aplicar modelo), SPEC-018 (serviço). Bloco 11 (link do casal) para a parte do casal. Spec de assistente e equipe para responsáveis além da dona.
+SPEC-001, SPEC-002, SPEC-008, SPEC-012 (grupo e aplicar modelo), SPEC-018 (serviço). Bloco 11 (link do casal) para a parte do casal. SPEC-032 (assistentes como responsáveis); equipe e casal em outra spec.
 
 ## 17. Premissas e pontos não definidos
 

@@ -20,7 +20,7 @@ RF-098 (contrato do evento). RF-095 / SPEC-029 (valor e parcelas do casal, lidos
 |---|---|
 | Admin | Vê e mantém a tela Contratos da própria conta. |
 | Organizer | Vê e mantém a tela Contratos; vincula contratos ao modelo de evento; vê os contratos do evento; envia o link de leitura por e-mail. |
-| Assistant | Não vê a tela Contratos. Contratos no evento só quando a spec de assistente decidir. |
+| Assistant | Não vê a tela Contratos. Contratos no evento só com "pode ver o financeiro" (SPEC-032 §17, ponto 3). |
 | Casal (sem login) | Lê o contrato preenchido pelo link recebido por e-mail, enquanto o link não expirar. Não edita. |
 | Outra conta | Não vê. |
 

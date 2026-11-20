@@ -21,7 +21,7 @@ Fora: cobrança automática sem aprovação; financeiro da empresa (RF-076, outr
 | Ator | Pode |
 |---|---|
 | Organizer | Tudo no dinheiro dos próprios eventos. |
-| Assistant | Só se a dona marcou "pode ver o financeiro" (RF-045). |
+| Assistant | Só se a dona marcou "pode ver o financeiro" (RF-045, SPEC-032). |
 | Casal (link) | Vê parcelas e Pix se a dona liberar no link (RF-056); não registra "Recebi". |
 | Outra conta | Não vê. |
 

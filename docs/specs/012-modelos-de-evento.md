@@ -21,7 +21,7 @@ Fora: roteiro no modelo (RF-092, bloco 10), bibliotecas de briefing a mensagens 
 | Ator | Pode |
 |---|---|
 | Organizer | Tudo desta spec, nos modelos e eventos da própria conta. |
-| Assistant | O mesmo, quando a spec de assistente estiver implementada (RF-045). Até lá, só o Organizer. |
+| Assistant | O mesmo (RF-045, SPEC-032 §17, ponto 2). |
 | Outra conta | Não vê modelo nem evento. |
 
 ## 5. Pré-condições

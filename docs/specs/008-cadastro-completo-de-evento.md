@@ -21,7 +21,7 @@ Fora desta spec, cada um com a sua: dinheiro do casal (RF-095), roteiro (RF-092)
 | Ator | Pode |
 |---|---|
 | Organizer | Criar, abrir, editar, concluir e cancelar os próprios eventos. |
-| Assistant | O mesmo, nos eventos que a dona liberou para ela (RF-045). Enquanto a spec de assistente não for implementada, só o Organizer. |
+| Assistant | O mesmo, nos eventos que a dona liberou para ela (RF-045). Regras na SPEC-032. |
 | Outra conta | Não vê o evento. |
 
 ## 5. Pré-condições

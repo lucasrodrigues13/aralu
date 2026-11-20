@@ -1,6 +1,6 @@
 # 032. Assistentes
 
-**Status: rascunho (20/11/2026).** Aguarda a revisão do usuário. Fonte: [produto-v1.md](../produto-v1.md) §5.15 (linha "Assistente com login") e RF-045. Cobre só a parte "assistente" do bloco 13. A ficha da equipe e a equipe do dia (RF-102, RF-051) ficam para outra spec. Cada ponto que os RFs não fecham está na §17, com uma sugestão. Nada da §17 vale como regra até o usuário aprovar.
+**Status: aprovada (20/11/2026).** O código segue esta spec, em três partes (A conta, B permissões, C "só os dela" e responsáveis). O usuário aprovou todas as sugestões da §17, que agora são decisões. Fonte: [produto-v1.md](../produto-v1.md) §5.15 (linha "Assistente com login") e RF-045. Cobre só a parte "assistente" do bloco 13. A ficha da equipe e a equipe do dia (RF-102, RF-051) ficam para outra spec. Cada ponto que os RFs não fecham está na §17, com a decisão.
 
 ## 1. Identificador e nome
 
@@ -85,7 +85,7 @@ Dona autenticada (SPEC-001). Canal de e-mail funcionando para o convite (o mesmo
 
 ## 8. Regras de negócio
 
-Cada linha aponta o RF. O que não está no RF vem da §17 e só vale depois de aprovado.
+Cada linha aponta o RF. O que não está no RF vem da §17 (decidido).
 
 | Área | Assistente | Fonte |
 |---|---|---|
@@ -94,13 +94,13 @@ Cada linha aponta o RF. O que não está no RF vem da §17 e só vale depois de 
 | Eventos (lista, cadastro, resumo, convidados, tarefas, roteiro, fornecedores do evento, anexos) | Todos ou só os dela, conforme a permissão | RF-045 |
 | Dinheiro do evento, Pagamentos, cartões financeiros da Hoje, financeiro da empresa | Só com "pode ver o financeiro" | RF-045, SPEC-029, SPEC-007 |
 | Valor do contrato e parcelas no resumo do evento | Só com "pode ver o financeiro" | RF-045, SPEC-008 |
-| Contratos no evento (ler e enviar ao cliente) | §17, ponto 3 | SPEC-030 |
+| Contratos no evento (ler e enviar ao cliente) | Só com "pode ver o financeiro" | SPEC-030 |
 | Tela Contratos (modelos de contrato da conta) | Não vê | RF-045 ("contrato da conta") |
-| Clientes, fornecedores, modelos (evento, briefing, roteiro, cronograma, inspirações, mensagens) | §17, ponto 2 | — |
-| Agenda | §17, ponto 4 | — |
-| Funil (quadro, arrastar, retorno, orçamentos, proposta por link, contratos e tarefas do funil, relatórios) | §17, ponto 5 | SPEC-031 §4 |
+| Clientes, fornecedores, modelos (evento, briefing, roteiro, cronograma, inspirações, mensagens) | Vê e edita; valores só com financeiro | §17, ponto 2 |
+| Agenda | Compromissos da conta para todas; eventos conforme a permissão | §17, ponto 4 |
+| Funil (quadro, arrastar, retorno, orçamentos, proposta por link, contratos e tarefas do funil, relatórios) | Usa tudo, sem "só os dela"; valores comerciais aparecem | SPEC-031 §4 |
 | Gerenciar estágios do funil | Não | SPEC-031 §17, ponto 2 |
-| Excluir de vez (evento, cliente, fornecedor, lead) | §17, ponto 6 | — |
+| Excluir de vez (evento, cliente, fornecedor, lead) | Só o que ela mesma criou (tarefa, lead, orçamento); evento, cliente e fornecedor não | §17, ponto 6 |
 | Convidar outra assistente | Não | RF-045 |
 
 Outras regras:
@@ -108,7 +108,7 @@ Outras regras:
 - A assistente pertence a uma só conta. O e-mail dela não pode ser de outra conta (RF-040).
 - Tudo que a assistente grava fica na conta da dona (RF-083).
 - A assistente nunca vê dados de outra conta.
-- Limite de assistentes por conta: §17, ponto 11.
+- Sem limite de assistentes por conta na 1.0.
 
 ## 9. Validações
 
@@ -173,20 +173,20 @@ Outras regras:
 
 ## 17. Premissas e pontos não definidos
 
-Cada ponto traz uma sugestão entre parênteses. Nenhum vale até o usuário aprovar.
+Decididos em 20/11/2026: o usuário aprovou todas as sugestões. A decisão de cada ponto está entre parênteses.
 
-1. **Quando um evento é "dela"?** (Sugestão: quando a dona a marca no campo "Assistentes do evento". Evento criado por uma assistente "só os dela" já nasce com ela marcada, para não sumir da tela dela.)
-2. **Clientes, fornecedores e modelos:** a assistente vê e edita? (Sugestão: vê e edita clientes, fornecedores e modelos de evento, briefing, roteiro, cronograma, inspirações e mensagens, sem depender de "só os dela". O valor dos fornecedores e dos serviços aparece só com "pode ver o financeiro".)
-3. **Contratos no evento (SPEC-030):** a assistente lê e envia ao cliente? (Sugestão: só com "pode ver o financeiro", porque o contrato traz valor e parcelas.)
-4. **Agenda:** a agenda é da conta ou de cada pessoa? (Sugestão: os compromissos são da conta e todas veem; os eventos na agenda seguem "todos / só os dela".)
-5. **Funil:** a assistente usa o funil? Vê os valores? (Sugestão: usa o funil inteiro, como diz a SPEC-031 §4, sem "só os dela", porque lead ainda não tem dona. Os valores comerciais (proposta e orçamento) aparecem mesmo sem financeiro; "financeiro" é o dinheiro que entra e sai, não o valor da venda.)
-6. **Excluir de vez:** a assistente pode? (Sugestão: pode excluir tarefas, leads, orçamentos e itens que ela mesma criou; não pode excluir evento, cliente nem fornecedor. Cancelar e concluir evento pode.)
-7. **Validade do convite.** (Sugestão: 7 dias. Reenviar gera um link novo e invalida o anterior.)
-8. **Tarefas da assistente removida.** (Sugestão: a tarefa continua com o nome dela e o selo "removida"; as tarefas abertas aparecem no card de pendências da Hoje da dona para ela trocar o responsável. Nada muda sozinho.)
-9. **Quando a mudança de permissão vale.** (Sugestão: no próximo pedido, sem sair e entrar.)
-10. **Dados da assistente.** (Sugestão: nome e e-mail obrigatórios; celular e nascimento opcionais, para o aniversário (RF-103). A própria assistente edita nome, celular, nascimento e senha em "Minha conta"; o e-mail só a dona troca, reenviando o convite.)
-11. **Limite de assistentes por conta.** (Sugestão: sem limite na 1.0. O limite entra com o plano, quando existir.)
-12. **Onde fica a tela Assistentes.** (Sugestão: item "Assistentes" no grupo Principal do menu, logo abaixo de Perfil, só para a dona. Quando a spec de equipe existir, vira uma aba da tela Equipe.)
-13. **Hoje sem financeiro (SPEC-007 §17, ponto 4):** ocultar os cartões ou mostrar zero? (Sugestão: ocultar.)
-14. **A dona vê o que cada assistente fez?** (Sugestão: não nesta versão. O registro de quem fez o quê fica para depois.)
-15. **Contas `Client` antigas.** A role `Client` deixou de existir (RF-024). (Sugestão: esta spec não mexe no acesso do casal; a retirada do `Client` entra na spec do link do casal, RF-056.)
+1. **Quando um evento é "dela"?** (Decidido: Quando a dona a marca no campo "Assistentes do evento". Evento criado por uma assistente "só os dela" já nasce com ela marcada, para não sumir da tela dela.)
+2. **Clientes, fornecedores e modelos:** a assistente vê e edita? (Decidido: Vê e edita clientes, fornecedores e modelos de evento, briefing, roteiro, cronograma, inspirações e mensagens, sem depender de "só os dela". O valor dos fornecedores e dos serviços aparece só com "pode ver o financeiro".)
+3. **Contratos no evento (SPEC-030):** a assistente lê e envia ao cliente? (Decidido: Só com "pode ver o financeiro", porque o contrato traz valor e parcelas.)
+4. **Agenda:** a agenda é da conta ou de cada pessoa? (Decidido: Os compromissos são da conta e todas veem; os eventos na agenda seguem "todos / só os dela".)
+5. **Funil:** a assistente usa o funil? Vê os valores? (Decidido: Usa o funil inteiro, como diz a SPEC-031 §4, sem "só os dela", porque lead ainda não tem dona. Os valores comerciais (proposta e orçamento) aparecem mesmo sem financeiro; "financeiro" é o dinheiro que entra e sai, não o valor da venda.)
+6. **Excluir de vez:** a assistente pode? (Decidido: Pode excluir tarefas, leads, orçamentos e itens que ela mesma criou; não pode excluir evento, cliente nem fornecedor. Cancelar e concluir evento pode.)
+7. **Validade do convite.** (Decidido: 7 dias. Reenviar gera um link novo e invalida o anterior.)
+8. **Tarefas da assistente removida.** (Decidido: A tarefa continua com o nome dela e o selo "removida"; as tarefas abertas aparecem no card de pendências da Hoje da dona para ela trocar o responsável. Nada muda sozinho.)
+9. **Quando a mudança de permissão vale.** (Decidido: No próximo pedido, sem sair e entrar.)
+10. **Dados da assistente.** (Decidido: Nome e e-mail obrigatórios; celular e nascimento opcionais, para o aniversário (RF-103). A própria assistente edita nome, celular, nascimento e senha em "Minha conta"; o e-mail só a dona troca, reenviando o convite.)
+11. **Limite de assistentes por conta.** (Decidido: Sem limite na 1.0. O limite entra com o plano, quando existir.)
+12. **Onde fica a tela Assistentes.** (Decidido: Item "Assistentes" no grupo Principal do menu, logo abaixo de Perfil, só para a dona. Quando a spec de equipe existir, vira uma aba da tela Equipe.)
+13. **Hoje sem financeiro (SPEC-007 §17, ponto 4):** ocultar os cartões ou mostrar zero? (Decidido: Ocultar.)
+14. **A dona vê o que cada assistente fez?** (Decidido: Não nesta versão. O registro de quem fez o quê fica para depois.)
+15. **Contas `Client` antigas.** A role `Client` deixou de existir (RF-024). (Decidido: Esta spec não mexe no acesso do casal; a retirada do `Client` entra na spec do link do casal, RF-056.)
