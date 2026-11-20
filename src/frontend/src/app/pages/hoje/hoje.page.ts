@@ -27,7 +27,7 @@ export interface Hoje {
     id: string; nome: string; data: string | null; percentualTarefas: number; responderam: number;
     convidados: number; tarefasAtrasadas: number; respostasAbaixo: boolean;
   }[];
-  funil: { estagio: string; quantidade: number; valor: number }[];
+  funil: { estagio: string; quantidade: number; valor: number; id?: string; cor?: string }[];
   configuracao: { temPerfil: boolean; temPix: boolean; temContrato: boolean };
 }
 
@@ -240,12 +240,13 @@ function lerPulados(): string[] {
           <mat-card-title>Funil de vendas</mat-card-title>
           <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-6 mt-6">
             @for (estagio of d.funil; track estagio.estagio) {
+              @let cor = estagio.cor || 'primary';
               <a class="block no-underline" routerLink="/oportunidades">
-                <mat-card class="shadow-none text-center mb-0! h-full bg-light-primary card-hover">
+                <mat-card class="shadow-none text-center mb-0! h-full card-hover" [class]="'bg-light-' + cor">
                   <mat-card-content>
-                    <h4 class="text-sm font-semibold text-primary">{{ estagio.estagio }}</h4>
-                    <h6 class="text-xl font-semibold text-primary mt-2!">{{ estagio.quantidade }}</h6>
-                    <span class="block text-xs text-primary mt-1">{{ estagio.valor | gdDinheiro }}</span>
+                    <h4 class="text-sm font-semibold" [class]="'text-' + cor">{{ estagio.estagio }}</h4>
+                    <h6 class="text-xl font-semibold mt-2!" [class]="'text-' + cor">{{ estagio.quantidade }}</h6>
+                    <span class="block text-xs mt-1" [class]="'text-' + cor">{{ estagio.valor | gdDinheiro }}</span>
                   </mat-card-content>
                 </mat-card>
               </a>

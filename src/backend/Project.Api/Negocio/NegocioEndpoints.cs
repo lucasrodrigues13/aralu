@@ -117,6 +117,8 @@ public static class NegocioEndpoints
         api.MapPost("/oportunidades/{id:guid}/mover", MoverOportunidade).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapPost("/oportunidades/{id:guid}/cliente", VincularClienteOportunidade).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapDelete("/oportunidades/{id:guid}", ExcluirOportunidade).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
+        api.MapGet("/estagios-funil", EstagiosFunil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
+        api.MapPut("/estagios-funil", SalvarEstagiosFunil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
 
         api.MapGet("/leads-rsvp", LeadsRsvp).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapPost("/leads-rsvp/{id:guid}/gerar-oportunidade", GerarOportunidadeLead).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
@@ -1112,6 +1114,12 @@ public static class NegocioEndpoints
 
     private static Task<IResult> VincularClienteOportunidade(Guid id, VincularClienteOportunidade pedido, ClaimsPrincipal usuario, OportunidadeServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.VincularClienteAsync(conta, id, pedido, ct)));
+
+    private static Task<IResult> EstagiosFunil(ClaimsPrincipal usuario, EstagioFunilServico servico, CancellationToken ct) =>
+        ComConta(usuario, async conta => Results.Ok(await servico.ListarAsync(conta, ct)));
+
+    private static Task<IResult> SalvarEstagiosFunil(SalvarEstagiosFunil pedido, ClaimsPrincipal usuario, EstagioFunilServico servico, CancellationToken ct) =>
+        ComConta(usuario, conta => De(servico.SalvarAsync(conta, pedido, ct)));
 
     private static Task<IResult> ExcluirOportunidade(Guid id, ClaimsPrincipal usuario, OportunidadeServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.ExcluirAsync(conta, id, ct)));

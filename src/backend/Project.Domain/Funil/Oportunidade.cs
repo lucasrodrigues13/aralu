@@ -10,7 +10,9 @@ public sealed class Oportunidade
 
     public string Nome { get; set; } = "";
 
-    public EstagioOportunidade Estagio { get; set; }
+    public Guid EstagioFunilId { get; set; }
+
+    public EstagioFunil? EstagioFunil { get; set; }
 
     public string? Fonte { get; set; }
 

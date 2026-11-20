@@ -1154,6 +1154,40 @@ public sealed class DadosEf(AppDbContext banco) : IDados
     public Task<Oportunidade?> ObterOportunidadeAsync(string contaId, Guid id, CancellationToken ct) =>
         OportunidadesCompletas().FirstOrDefaultAsync(item => item.ContaId == contaId && item.Id == id, ct);
 
+    public async Task<List<EstagioFunil>> ListarEstagiosFunilAsync(string contaId, CancellationToken ct)
+    {
+        var estagios = await banco.EstagiosFunil.Where(item => item.ContaId == contaId).ToListAsync(ct);
+        if (estagios.Count > 0)
+        {
+            return estagios;
+        }
+
+        var padrao = EstagiosFunil.Padrao(contaId);
+        banco.EstagiosFunil.AddRange(padrao);
+        try
+        {
+            await banco.SaveChangesAsync(ct);
+            return padrao;
+        }
+        catch (DbUpdateException)
+        {
+            // Outra requisição criou os padrões ao mesmo tempo (índice único de Contratado/Descartado).
+            foreach (var item in padrao)
+            {
+                banco.Entry(item).State = EntityState.Detached;
+            }
+
+            return await banco.EstagiosFunil.Where(item => item.ContaId == contaId).ToListAsync(ct);
+        }
+    }
+
+    public void AdicionarEstagioFunil(EstagioFunil estagio) => banco.EstagiosFunil.Add(estagio);
+
+    public void RemoverEstagioFunil(EstagioFunil estagio) => banco.EstagiosFunil.Remove(estagio);
+
+    public Task<List<Oportunidade>> ListarOportunidadesDoEstagioAsync(string contaId, Guid estagioId, CancellationToken ct) =>
+        banco.Oportunidades.Where(item => item.ContaId == contaId && item.EstagioFunilId == estagioId).ToListAsync(ct);
+
     public async Task InserirOportunidadeAsync(Oportunidade oportunidade, CancellationToken ct)
     {
         banco.Oportunidades.Add(oportunidade);
@@ -1172,7 +1206,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
     {
         var grupos = await banco.Oportunidades.AsNoTracking()
             .Where(item => item.ContaId == contaId)
-            .GroupBy(item => item.Estagio)
+            .GroupBy(item => item.EstagioFunilId)
             .Select(grupo => new
             {
                 Estagio = grupo.Key,
@@ -1550,7 +1584,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
     }
 
     private IQueryable<Oportunidade> OportunidadesCompletas() =>
-        banco.Oportunidades.Include(item => item.Contatos);
+        banco.Oportunidades.Include(item => item.Contatos).Include(item => item.EstagioFunil);
 
     private IQueryable<ModeloEvento> ModelosCompletos() =>
         banco.Modelos

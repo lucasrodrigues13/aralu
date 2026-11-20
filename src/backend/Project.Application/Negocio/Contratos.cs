@@ -48,7 +48,7 @@ public sealed record ContagemNome(string Nome, int Quantidade);
 
 public sealed record ParticipacaoNome(string Nome, decimal Valor);
 
-public sealed record ContagemOportunidadeEstagio(EstagioOportunidade Estagio, int Quantidade, decimal Valor);
+public sealed record ContagemOportunidadeEstagio(Guid EstagioFunilId, int Quantidade, decimal Valor);
 
 public interface IDados
 {
@@ -303,6 +303,16 @@ public interface IDados
         CancellationToken ct);
 
     Task<Oportunidade?> ObterOportunidadeAsync(string contaId, Guid id, CancellationToken ct);
+
+    /// <summary>Estágios da conta (rastreados), já com os padrões criados se a conta não tinha nenhum.</summary>
+    Task<List<EstagioFunil>> ListarEstagiosFunilAsync(string contaId, CancellationToken ct);
+
+    void AdicionarEstagioFunil(EstagioFunil estagio);
+
+    void RemoverEstagioFunil(EstagioFunil estagio);
+
+    /// <summary>Oportunidades (rastreadas) de um estágio, para mover antes de excluí-lo.</summary>
+    Task<List<Oportunidade>> ListarOportunidadesDoEstagioAsync(string contaId, Guid estagioId, CancellationToken ct);
 
     Task InserirOportunidadeAsync(Oportunidade oportunidade, CancellationToken ct);
 

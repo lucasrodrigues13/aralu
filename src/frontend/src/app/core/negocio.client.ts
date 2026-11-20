@@ -7,7 +7,7 @@ export interface Painel {
   concluidos: number;
   cancelados: number;
   eventosEmAndamento: { id: string; nome: string; data: string | null }[];
-  funil: { estagio: string; quantidade: number; valor: number }[];
+  funil: FunilEstagio[];
 }
 
 export interface Perfil {
@@ -1049,6 +1049,14 @@ export class NegocioClient {
     return this.http.post<Oportunidade>(`${this.base}/api/v1/oportunidades/${id}/cliente`, { clienteId });
   }
 
+  estagiosFunil() {
+    return this.http.get<EstagioFunil[]>(`${this.base}/api/v1/estagios-funil`);
+  }
+
+  salvarEstagiosFunil(pedido: SalvarEstagiosFunil) {
+    return this.http.put<EstagioFunil[]>(`${this.base}/api/v1/estagios-funil`, pedido);
+  }
+
   excluirOportunidade(id: string) {
     return this.http.delete(`${this.base}/api/v1/oportunidades/${id}`);
   }
@@ -1306,6 +1314,9 @@ export interface Oportunidade {
   contatos: ContatoOportunidade[];
   /** Cliente criado a partir do lead, quando o negócio fechou. */
   clienteId: string | null;
+  estagioId: string;
+  /** Aberto, Contratado ou Descartado. */
+  tipoEstagio: TipoEstagioFunil;
 }
 
 export interface LeadRsvp {
@@ -1399,12 +1410,46 @@ export interface ModeloContratoFunil {
   parametros: string[];
 }
 
-export const ESTAGIOS_FUNIL = [
-  'Contato inicial',
-  'Orçamento enviado',
-  'Contratado',
-  'Descartado',
+export type TipoEstagioFunil = 'Aberto' | 'Contratado' | 'Descartado';
+
+/** Estágio do funil da conta (SPEC-031). */
+export interface EstagioFunil {
+  id: string;
+  nome: string;
+  /** Token de cor do tema. */
+  cor: string;
+  ordem: number;
+  tipo: TipoEstagioFunil;
+  quantidade: number;
+}
+
+export interface FunilEstagio {
+  estagio: string;
+  quantidade: number;
+  valor: number;
+  id: string;
+  cor: string;
+  tipo: TipoEstagioFunil;
+}
+
+export interface SalvarEstagiosFunil {
+  abertos: { id: string | null; nome: string; cor: string }[];
+  corContratado: string;
+  corDescartado: string;
+  exclusoes: { id: string; destinoId: string | null }[];
+}
+
+/** Paleta fechada dos estágios (tokens do tema). */
+export const CORES_ESTAGIO = [
+  { valor: 'info', rotulo: 'Azul' },
+  { valor: 'warning', rotulo: 'Amarelo' },
+  { valor: 'success', rotulo: 'Verde' },
+  { valor: 'error', rotulo: 'Vermelho' },
+  { valor: 'primary', rotulo: 'Petróleo' },
+  { valor: 'secondary', rotulo: 'Dourado' },
 ];
+
+export const MAXIMO_ESTAGIOS_ABERTOS = 8;
 
 export const TIPOS_TAREFA_FUNIL = [
   { valor: 'Reuniao', rotulo: 'Reunião' },

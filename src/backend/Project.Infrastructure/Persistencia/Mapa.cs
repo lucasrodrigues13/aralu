@@ -107,7 +107,16 @@ public static class Mapa
     {
         var oportunidade = modelBuilder.Entity<Oportunidade>();
         oportunidade.HasIndex(item => item.ContaId);
-        oportunidade.Property(item => item.Estagio).HasConversion<string>();
+        oportunidade.HasOne(item => item.EstagioFunil).WithMany().HasForeignKey(item => item.EstagioFunilId).OnDelete(DeleteBehavior.Restrict);
+
+        var estagio = modelBuilder.Entity<EstagioFunil>();
+        estagio.ToTable("EstagiosFunil");
+        estagio.HasIndex(item => item.ContaId);
+        estagio.Property(item => item.Nome).HasMaxLength(EstagiosFunil.TamanhoMaximoNome);
+        estagio.Property(item => item.Cor).HasMaxLength(20);
+        estagio.Property(item => item.Tipo).HasConversion<string>().HasMaxLength(20);
+        // Um Contratado e um Descartado por conta, mesmo se duas requisições criarem os padrões juntas.
+        estagio.HasIndex(item => new { item.ContaId, item.Tipo }).IsUnique().HasFilter("\"Tipo\" <> 'Aberto'");
         oportunidade.Property(item => item.TipoEvento).HasConversion<string>();
         oportunidade.Property(item => item.ValorProposta).HasPrecision(12, 2);
         oportunidade.HasMany(item => item.Contatos).WithOne().HasForeignKey(c => c.OportunidadeId).OnDelete(DeleteBehavior.Cascade);

@@ -41,7 +41,9 @@ public sealed record OportunidadeLeitura(
     DateTimeOffset CriadoEm,
     DateTimeOffset EntradaNoEstagioEm,
     IReadOnlyList<ContatoOportunidadeLeitura> Contatos,
-    Guid? ClienteId);
+    Guid? ClienteId,
+    Guid EstagioId,
+    string TipoEstagio);
 
 public sealed record ContatoOportunidadePedido(string? Nome, string? Telefone, string? Email);
 
@@ -152,13 +154,14 @@ public sealed class OportunidadeServico(IDados dados)
         }
 
         var novo = montado.Valor!;
-        if (novo.Estagio != item.Estagio)
+        if (novo.EstagioFunilId != item.EstagioFunilId)
         {
             item.EntradaNoEstagioEm = DateTimeOffset.UtcNow;
         }
 
         item.Nome = novo.Nome;
-        item.Estagio = novo.Estagio;
+        item.EstagioFunilId = novo.EstagioFunilId;
+        item.EstagioFunil = novo.EstagioFunil;
         item.Fonte = novo.Fonte;
         item.ValorProposta = novo.ValorProposta;
         item.Responsavel = novo.Responsavel;
@@ -209,12 +212,13 @@ public sealed class OportunidadeServico(IDados dados)
             return Resultado<OportunidadeLeitura>.Erro(Codigos.Indisponivel, "Indisponível.");
         }
 
-        if (!TryParseEstagio(pedido.Estagio, out var estagio))
+        var estagio = ResolverEstagio(await dados.ListarEstagiosFunilAsync(contaId, ct), pedido.Estagio);
+        if (estagio is null)
         {
             return Resultado<OportunidadeLeitura>.Erro(Codigos.Validacao, "Informe o estágio.");
         }
 
-        if (estagio == EstagioOportunidade.Descartado)
+        if (estagio.Tipo == TipoEstagioFunil.Descartado)
         {
             var motivo = Domain.Comum.Texto.Limpo(pedido.MotivoDescarte);
             if (motivo is null)
@@ -229,11 +233,7 @@ public sealed class OportunidadeServico(IDados dados)
             item.MotivoDescarte = null;
         }
 
-        if (item.Estagio != estagio)
-        {
-            item.Estagio = estagio;
-            item.EntradaNoEstagioEm = DateTimeOffset.UtcNow;
-        }
+        ColocarNoEstagio(item, estagio);
 
         await dados.SalvarNegocioAsync(ct);
         return Resultado<OportunidadeLeitura>.Sucesso(Ler(item));
@@ -266,11 +266,8 @@ public sealed class OportunidadeServico(IDados dados)
 
         item.ClienteId = clienteId;
         item.MotivoDescarte = null;
-        if (item.Estagio != EstagioOportunidade.Contratado)
-        {
-            item.Estagio = EstagioOportunidade.Contratado;
-            item.EntradaNoEstagioEm = DateTimeOffset.UtcNow;
-        }
+        var estagios = await dados.ListarEstagiosFunilAsync(contaId, ct);
+        ColocarNoEstagio(item, estagios.Single(e => e.Tipo == TipoEstagioFunil.Contratado));
 
         await dados.SalvarNegocioAsync(ct);
         return Resultado<OportunidadeLeitura>.Sucesso(Ler(item));
@@ -301,12 +298,14 @@ public sealed class OportunidadeServico(IDados dados)
         }
 
         var agora = DateTimeOffset.UtcNow;
+        var primeiro = PrimeiroAberto(await dados.ListarEstagiosFunilAsync(contaId, ct));
         var item = new Oportunidade
         {
             Id = Guid.NewGuid(),
             ContaId = contaId,
             Nome = nome,
-            Estagio = EstagioOportunidade.ContatoInicial,
+            EstagioFunilId = primeiro.Id,
+            EstagioFunil = primeiro,
             Fonte = Domain.Comum.Texto.Limpo(pedido.Fonte) ?? "Formulário público",
             Responsavel = contaId,
             CriadoEm = agora,
@@ -332,12 +331,64 @@ public sealed class OportunidadeServico(IDados dados)
 
     public async Task<IReadOnlyList<FunilEstagio>> ContarPorEstagioAsync(string contaId, CancellationToken ct)
     {
+        var estagios = EstagiosFunil.Ordenar(await dados.ListarEstagiosFunilAsync(contaId, ct));
         var contagens = await dados.ContarOportunidadesPorEstagioAsync(contaId, ct);
-        return RotulosEstagio.Todos.Select(estagio =>
+        return estagios.Select(estagio =>
         {
-            var item = contagens.FirstOrDefault(c => c.Estagio == estagio);
-            return new FunilEstagio(RotulosEstagio.Texto(estagio), item?.Quantidade ?? 0, item?.Valor ?? 0);
+            var item = contagens.FirstOrDefault(c => c.EstagioFunilId == estagio.Id);
+            return new FunilEstagio(
+                estagio.Nome,
+                item?.Quantidade ?? 0,
+                item?.Valor ?? 0,
+                estagio.Id,
+                estagio.Cor,
+                estagio.Tipo.ToString());
         }).ToArray();
+    }
+
+    /// <summary>Primeiro estágio aberto: onde nasce o lead público e o do RSVP.</summary>
+    internal static EstagioFunil PrimeiroAberto(IEnumerable<EstagioFunil> estagios) =>
+        EstagiosFunil.Ordenar(estagios).First(e => e.Tipo == TipoEstagioFunil.Aberto);
+
+    internal static void ColocarNoEstagio(Oportunidade item, EstagioFunil estagio)
+    {
+        if (item.EstagioFunilId != estagio.Id)
+        {
+            item.EntradaNoEstagioEm = DateTimeOffset.UtcNow;
+        }
+
+        item.EstagioFunilId = estagio.Id;
+        item.EstagioFunil = estagio;
+    }
+
+    /// <summary>Aceita o id do estágio, o nome dele ou o nome antigo do enum.</summary>
+    internal static EstagioFunil? ResolverEstagio(IReadOnlyList<EstagioFunil> estagios, string? valor)
+    {
+        if (string.IsNullOrWhiteSpace(valor))
+        {
+            return null;
+        }
+
+        var texto = valor.Trim();
+        if (Guid.TryParse(texto, out var id))
+        {
+            return estagios.FirstOrDefault(e => e.Id == id);
+        }
+
+        var porNome = estagios.FirstOrDefault(e => string.Equals(e.Nome, texto, StringComparison.OrdinalIgnoreCase));
+        if (porNome is not null)
+        {
+            return porNome;
+        }
+
+        return texto.ToLowerInvariant() switch
+        {
+            "contatoinicial" => estagios.FirstOrDefault(e => e.Nome == EstagiosFunil.NomeContatoInicial),
+            "orcamentoenviado" => estagios.FirstOrDefault(e => e.Nome == EstagiosFunil.NomeOrcamentoEnviado),
+            "contratado" => estagios.FirstOrDefault(e => e.Tipo == TipoEstagioFunil.Contratado),
+            "descartado" => estagios.FirstOrDefault(e => e.Tipo == TipoEstagioFunil.Descartado),
+            _ => null,
+        };
     }
 
     private async Task<Resultado<Oportunidade>> MontarAsync(
@@ -353,7 +404,8 @@ public sealed class OportunidadeServico(IDados dados)
             return Resultado<Oportunidade>.Erro(Codigos.Validacao, "Informe o nome da oportunidade.");
         }
 
-        if (!TryParseEstagio(pedido.Estagio, out var estagio))
+        var estagio = ResolverEstagio(await dados.ListarEstagiosFunilAsync(contaId, ct), pedido.Estagio);
+        if (estagio is null)
         {
             return Resultado<Oportunidade>.Erro(Codigos.Validacao, "Informe o estágio.");
         }
@@ -379,7 +431,7 @@ public sealed class OportunidadeServico(IDados dados)
             return Resultado<Oportunidade>.Erro(Codigos.Validacao, "O valor não pode ser negativo.");
         }
 
-        if (estagio == EstagioOportunidade.Descartado)
+        if (estagio.Tipo == TipoEstagioFunil.Descartado)
         {
             var motivo = Domain.Comum.Texto.Limpo(pedido.MotivoDescarte);
             if (motivo is null)
@@ -417,7 +469,8 @@ public sealed class OportunidadeServico(IDados dados)
             Id = id,
             ContaId = contaId,
             Nome = nome,
-            Estagio = estagio,
+            EstagioFunilId = estagio.Id,
+            EstagioFunil = estagio,
             Fonte = Domain.Comum.Texto.Limpo(pedido.Fonte),
             ValorProposta = pedido.ValorProposta,
             Responsavel = Domain.Comum.Texto.Limpo(pedido.Responsavel) ?? contaId,
@@ -445,7 +498,7 @@ public sealed class OportunidadeServico(IDados dados)
             CidadeRecepcao = Domain.Comum.Texto.Limpo(pedido.CidadeRecepcao),
             Uf = Domain.Comum.Texto.Limpo(pedido.Uf),
             Cidade = Domain.Comum.Texto.Limpo(pedido.Cidade),
-            MotivoDescarte = estagio == EstagioOportunidade.Descartado
+            MotivoDescarte = estagio.Tipo == TipoEstagioFunil.Descartado
                 ? Domain.Comum.Texto.Limpo(pedido.MotivoDescarte)
                 : null,
             CriadoEm = existente?.CriadoEm ?? DateTimeOffset.UtcNow,
@@ -454,36 +507,11 @@ public sealed class OportunidadeServico(IDados dados)
         });
     }
 
-    private static bool TryParseEstagio(string? valor, out EstagioOportunidade estagio)
-    {
-        estagio = default;
-        if (string.IsNullOrWhiteSpace(valor))
-        {
-            return false;
-        }
-
-        if (Enum.TryParse(valor, true, out estagio) && Enum.IsDefined(estagio))
-        {
-            return true;
-        }
-
-        foreach (var item in RotulosEstagio.Todos)
-        {
-            if (string.Equals(RotulosEstagio.Texto(item), valor.Trim(), StringComparison.OrdinalIgnoreCase))
-            {
-                estagio = item;
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     internal static OportunidadeLeitura Ler(Oportunidade item) =>
         new(
             item.Id,
             item.Nome,
-            RotulosEstagio.Texto(item.Estagio),
+            item.EstagioFunil?.Nome ?? "",
             item.Fonte,
             item.ValorProposta,
             item.Responsavel,
@@ -515,5 +543,7 @@ public sealed class OportunidadeServico(IDados dados)
             item.CriadoEm,
             item.EntradaNoEstagioEm,
             item.Contatos.Select(c => new ContatoOportunidadeLeitura(c.Id, c.Nome, c.Telefone, c.Email)).ToArray(),
-            item.ClienteId);
+            item.ClienteId,
+            item.EstagioFunilId,
+            item.EstagioFunil?.Tipo.ToString() ?? "");
 }

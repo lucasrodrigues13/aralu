@@ -252,8 +252,8 @@ Fica na 1.0 e ganha o que faltou (D).
 | Oportunidades, RSVP, contratos, orçamentos, tarefas comerciais, relatórios, modelos de serviço/orçamento/contrato | Pronto | G (SPEC-020 a 028) |
 | Quadro em cartões no molde da Hoje (totais por estágio, lead com valor, evento, contato, origem e dias no estágio) | Pronto (20/11/2026) | Usuário (SPEC-020 v2) |
 | Lead vira cliente no fim do funil (cadastro de cliente pré-preenchido; lead vai para Contratado) | Pronto (20/11/2026) | Usuário (SPEC-020 v2) |
-| Estágios configuráveis (nome, cor, ordem); contratado e descartado fixos | Ajustar | AV |
-| Arrastar o cartão entre colunas | Novo | AV |
+| Estágios configuráveis (nome, cor, ordem); contratado e descartado fixos | Pronto (20/11/2026) | AV (SPEC-031 parte A) |
+| Arrastar o cartão entre colunas | Pronto (20/11/2026), só no computador; no celular segue "Mover para…" | AV (SPEC-031 parte A) |
 | Rótulo do estágio: **"Orçamento enviado"** (decidido em 18/11/2026) | Ajustar | AV, G |
 | Horários do evento em campos separados (convite, festa, cerimônia, recepção) e endereço completo | Ajustar | AV |
 | Data de retorno no cartão ("retornar sex, 20/11") | Novo | CF |

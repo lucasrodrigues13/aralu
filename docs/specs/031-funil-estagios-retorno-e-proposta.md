@@ -1,6 +1,6 @@
 # 031. Funil: estágios, retorno e proposta por link
 
-**Status: aprovada (20/11/2026).** O código segue esta spec, em quatro partes (§17, ponto 1). Fonte: [produto-v1.md](../produto-v1.md) §5.13 (o que ainda não está pronto) e RF-075. Completa a SPEC-020 v2 (quadro em cartões e lead que vira cliente). O usuário aprovou em 20/11/2026 todas as sugestões da §17, que agora são decisões.
+**Status: aprovada (20/11/2026).** O código segue esta spec, em quatro partes (§17, ponto 1). Fonte: [produto-v1.md](../produto-v1.md) §5.13 (o que ainda não está pronto) e RF-075. Completa a SPEC-020 v2 (quadro em cartões e lead que vira cliente). O usuário aprovou em 20/11/2026 todas as sugestões da §17, que agora são decisões. **Parte A (estágios configuráveis e arrastar) implementada em 20/11/2026**; B, C e D pendentes.
 
 ## 1. Identificador e nome
 
@@ -119,6 +119,9 @@ Conta autenticada (SPEC-001). O quadro da SPEC-020 v2 já está no ar.
 
 - Estágios pertencem à conta e têm nome, cor, ordem e um tipo: **aberto**, **contratado** ou **descartado**. Há exatamente um contratado e um descartado, e eles ficam por último.
 - **"Em negociação"** (no título do quadro e na Hoje) passa a ser a soma de todos os estágios abertos.
+- **Orçamento enviado ao enviar orçamento (SPEC-025):** o lead vai para o estágio aberto chamado "Orçamento enviado", se ele existir e o lead estiver num estágio aberto antes dele. Se a dona renomear ou excluir esse estágio, enviar o orçamento não move o lead. Esta regra vale até a parte C (proposta por link).
+- **Ação rápida do cartão:** em cada estágio aberto, avança para o próximo estágio aberto. No último estágio aberto e em Contratado, a ação é "Virar cliente".
+- **Cores:** a paleta tem seis tokens do tema: azul, amarelo, verde, vermelho, petróleo e dourado. Um estágio novo vem com uma cor que nenhum outro estágio usa, quando ainda houver uma livre.
 - **O lead público** nasce no primeiro estágio aberto.
 - **Limites:** no máximo oito estágios abertos (§17, ponto 4). O nome é obrigatório e não pode repetir na conta.
 - **Leitura dos estágios:** relatórios (SPEC-024) e dashboard (SPEC-007) leem os estágios da conta. O relatório de motivos continua olhando o estágio do tipo descartado.

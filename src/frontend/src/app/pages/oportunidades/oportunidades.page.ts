@@ -1,6 +1,7 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormArray, FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { CdkDrag, CdkDragDrop, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
@@ -14,7 +15,7 @@ import { AuthService } from '../../core/auth.service';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import {
   Cliente,
-  ESTAGIOS_FUNIL,
+  EstagioFunil,
   ModeloServicoFunil,
   NegocioClient,
   Oportunidade,
@@ -31,6 +32,7 @@ import { GdDinheiroPipe } from '../../shared/gd-dinheiro.pipe';
 import { grupoLocal, localPedido, LocalCamposComponent } from '../../shared/local-campos';
 import { STATUS } from '../../shared/status';
 import { ClienteFormDialog } from '../clientes/cliente-form.dialog';
+import { EstagiosFunilDialog } from './estagios-funil.dialog';
 
 @Component({
   selector: 'app-oportunidade-dialog',
@@ -48,7 +50,7 @@ import { ClienteFormDialog } from '../clientes/cliente-form.dialog';
           <mat-label class="font-semibold mb-2 block">Estágio</mat-label>
           <mat-form-field appearance="outline" class="w-full">
           <mat-select [attr.aria-label]="'Estágio'" formControlName="estagio">
-            @for (e of estagios; track e) { <mat-option [value]="e">{{ e }}</mat-option> }
+            @for (e of estagios(); track e.id) { <mat-option [value]="e.id">{{ e.nome }}</mat-option> }
           </mat-select>
         </mat-form-field>
         </div>
@@ -74,7 +76,7 @@ import { ClienteFormDialog } from '../clientes/cliente-form.dialog';
           <mat-label class="font-semibold mb-2 block">Serviço (texto)</mat-label>
           <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Serviço (texto)'" matInput formControlName="servicoProduto" /></mat-form-field>
         </div>
-        @if (form.controls.estagio.value === 'Descartado') {
+        @if (ehDescarte()) {
           <div class="campo">
             <mat-label class="font-semibold mb-2 block">Motivo do descarte</mat-label>
             <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Motivo do descarte'" matInput formControlName="motivoDescarte" /></mat-form-field>
@@ -141,12 +143,12 @@ export class OportunidadeDialog implements OnInit {
   private readonly toast = inject(ToastService);
   protected readonly dados = inject<Oportunidade | null>(MAT_DIALOG_DATA);
   protected readonly ref = inject(MatDialogRef<OportunidadeDialog, boolean>);
-  protected readonly estagios = ESTAGIOS_FUNIL;
   protected readonly tipos = TIPOS;
   protected readonly servicos = signal<ModeloServicoFunil[]>([]);
+  protected readonly estagios = signal<EstagioFunil[]>([]);
   protected readonly form = this.fb.nonNullable.group({
     nome: [this.dados?.nome ?? '', Validators.required],
-    estagio: [this.dados?.estagio ?? 'Contato inicial', Validators.required],
+    estagio: [this.dados?.estagioId ?? '', Validators.required],
     fonte: [this.dados?.fonte ?? ''],
     valorProposta: this.fb.control<number | null>(this.dados?.valorProposta ?? null),
     responsavel: [this.dados?.responsavel ?? ''],
@@ -197,6 +199,19 @@ export class OportunidadeDialog implements OnInit {
       next: (lista) => this.servicos.set(lista),
       error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
     });
+    this.negocio.estagiosFunil().subscribe({
+      next: (lista) => {
+        this.estagios.set(lista);
+        if (!this.form.controls.estagio.value) {
+          this.form.controls.estagio.setValue(lista.find((e) => e.tipo === 'Aberto')?.id ?? '');
+        }
+      },
+      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+    });
+  }
+
+  protected ehDescarte(): boolean {
+    return this.estagios().find((e) => e.id === this.form.controls.estagio.value)?.tipo === 'Descartado';
   }
 
   protected addContato(): void {
@@ -279,8 +294,8 @@ export class OportunidadeDialog implements OnInit {
   imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule],
   template: `
     <h2 mat-dialog-title>Descartar oportunidade</h2>
-    <p class="gd-dialog-descricao">{{ nome }} sai do funil ativo. O motivo vai para o relatório de descartes.</p>
     <mat-dialog-content>
+      <p class="text-sm text-muted mb-4">{{ nome }} sai do funil ativo. O motivo vai para o relatório de descartes.</p>
       <div class="campo">
         <mat-label class="font-semibold mb-2 block">Motivo do descarte</mat-label>
         <mat-form-field appearance="outline" class="w-full">
@@ -309,19 +324,29 @@ export class DescarteDialog {
   }
 }
 
-interface AparenciaEstagio {
-  icone: string;
-  /** Cor do token do tema (primary, info, warning, success, error). */
-  cor: string;
+/** Ícone do estágio: fixos têm o seu; abertos seguem a posição no funil. */
+export function iconeEstagio(estagio: Pick<EstagioFunil, 'nome' | 'tipo'>, indice: number): string {
+  if (estagio.tipo === 'Contratado') return 'handshake';
+  if (estagio.tipo === 'Descartado') return 'block';
+  if (estagio.nome.toLocaleLowerCase('pt-BR').includes('orçamento')) return 'request_quote';
+  return indice === 0 ? 'forum' : 'flag';
 }
 
-/** Cor e ícone de cada estágio, no padrão dos cartões da tela Hoje. */
-export const APARENCIA_ESTAGIO: Record<string, AparenciaEstagio> = {
-  'Contato inicial': { icone: 'forum', cor: 'info' },
-  'Orçamento enviado': { icone: 'request_quote', cor: 'warning' },
-  Contratado: { icone: 'handshake', cor: 'success' },
-  Descartado: { icone: 'block', cor: 'error' },
-};
+/**
+ * Ação rápida do pé do cartão: o próximo estágio aberto, ou "Virar cliente"
+ * no último aberto e em Contratado. Descartado não tem ação.
+ */
+export function acaoRapida(
+  estagios: EstagioFunil[],
+  estagioId: string,
+): { tipo: 'avancar'; destino: EstagioFunil } | { tipo: 'cliente' } | null {
+  const atual = estagios.find((e) => e.id === estagioId);
+  if (!atual || atual.tipo === 'Descartado') return null;
+  if (atual.tipo === 'Contratado') return { tipo: 'cliente' };
+  const abertos = estagios.filter((e) => e.tipo === 'Aberto');
+  const proximo = abertos[abertos.indexOf(atual) + 1];
+  return proximo ? { tipo: 'avancar', destino: proximo } : { tipo: 'cliente' };
+}
 
 const ROTULO_TIPO: Record<string, string> = Object.fromEntries(TIPOS.map((t) => [t.valor, t.rotulo]));
 
@@ -338,12 +363,13 @@ export function textoDias(dias: number): string {
   return dias === 1 ? 'há 1 dia' : `há ${dias} dias`;
 }
 
-/** Quadro de oportunidades (SPEC-020 v2): leads em cartões por estágio. */
+/** Quadro de oportunidades (SPEC-020 v2 e SPEC-031): leads em cartões pelos estágios da conta. */
 @Component({
   selector: 'app-oportunidades',
   imports: [
     MatCardModule, ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule,
     MatSelectModule, MatMenuModule, MatTooltipModule, RouterLink, CampoDataComponent, GdDinheiroPipe, GdDataPipe,
+    CdkDropListGroup, CdkDropList, CdkDrag,
   ],
   template: `
     <mat-card class="cardWithShadow">
@@ -356,6 +382,7 @@ export function textoDias(dias: number): string {
           </mat-card-subtitle>
         </div>
         <div class="flex flex-wrap gap-2">
+          <button mat-stroked-button type="button" (click)="gerenciarEstagios()"><mat-icon>view_column</mat-icon> Gerenciar estágios</button>
           <button mat-stroked-button type="button" (click)="copiarLinkLead()"><mat-icon>link</mat-icon> Link do lead</button>
           <button mat-stroked-button type="button" (click)="exportar()"><mat-icon>download</mat-icon> Exportar</button>
           <button mat-flat-button type="button" (click)="abrir()"><mat-icon>add</mat-icon> Nova oportunidade</button>
@@ -363,15 +390,15 @@ export function textoDias(dias: number): string {
       </div>
     </mat-card>
 
-    <div class="grid grid-cols-2 xl:grid-cols-4 gap-6 mb-6">
-      @for (estagio of estagios; track estagio) {
+    <div class="totais mb-6">
+      @for (estagio of estagios(); track estagio.id; let i = $index) {
         <a class="block no-underline" [href]="'#' + ancora(estagio)" (click)="rolar($event, estagio)">
-          <mat-card class="shadow-none text-center mb-0! h-full card-hover" [class]="'bg-light-' + cor(estagio)">
+          <mat-card class="shadow-none text-center mb-0! h-full card-hover" [class]="'bg-light-' + estagio.cor">
             <mat-card-content>
-              <mat-icon [class]="'text-' + cor(estagio)">{{ icone(estagio) }}</mat-icon>
-              <h4 class="text-sm font-semibold mt-2!" [class]="'text-' + cor(estagio)">{{ estagio }}</h4>
-              <h6 class="text-xl font-semibold mt-2!" [class]="'text-' + cor(estagio)">{{ resumo(estagio).qtd }}</h6>
-              <span class="block text-xs mt-1" [class]="'text-' + cor(estagio)">{{ resumo(estagio).valor | gdDinheiro }}</span>
+              <mat-icon [class]="'text-' + estagio.cor">{{ icone(estagio, i) }}</mat-icon>
+              <h4 class="text-sm font-semibold mt-2!" [class]="'text-' + estagio.cor">{{ estagio.nome }}</h4>
+              <h6 class="text-xl font-semibold mt-2!" [class]="'text-' + estagio.cor">{{ resumo(estagio).qtd }}</h6>
+              <span class="block text-xs mt-1" [class]="'text-' + estagio.cor">{{ resumo(estagio).valor | gdDinheiro }}</span>
             </mat-card-content>
           </mat-card>
         </a>
@@ -415,20 +442,25 @@ export function textoDias(dias: number): string {
       </mat-card-content>
     </mat-card>
 
-    <div class="quadro grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-      @for (estagio of estagios; track estagio) {
-        <section class="coluna" [id]="ancora(estagio)" [style.--cor-estagio]="'var(--color-' + cor(estagio) + ')'">
+    @if (!toque) {
+      <p class="dica text-xs text-muted mb-2"><mat-icon>pan_tool</mat-icon> Arraste o cartão para outra coluna para mudar o estágio.</p>
+    }
+    <div class="quadro" cdkDropListGroup>
+      @for (estagio of estagios(); track estagio.id; let i = $index) {
+        <section class="coluna" [id]="ancora(estagio)" [style.--cor-estagio]="'var(--color-' + estagio.cor + ')'"
+          cdkDropList [cdkDropListData]="estagio" (cdkDropListDropped)="soltar($event)">
           <header class="mb-4">
             <div class="flex items-center gap-2">
-              <mat-icon [class]="'text-' + cor(estagio)">{{ icone(estagio) }}</mat-icon>
-              <h3 class="text-base font-semibold">{{ estagio }}</h3>
-              <span class="contador ml-auto" [class]="'bg-light-' + cor(estagio) + ' text-' + cor(estagio)">{{ resumo(estagio).qtd }}</span>
+              <mat-icon [class]="'text-' + estagio.cor">{{ icone(estagio, i) }}</mat-icon>
+              <h3 class="text-base font-semibold">{{ estagio.nome }}</h3>
+              <span class="contador ml-auto" [class]="'bg-light-' + estagio.cor + ' text-' + estagio.cor">{{ resumo(estagio).qtd }}</span>
             </div>
             <span class="block text-sm text-muted mt-1">{{ resumo(estagio).valor | gdDinheiro }} no total</span>
           </header>
 
           @for (item of daColuna(estagio); track item.id) {
-            <article class="lead" (click)="abrir(item)" (keydown.enter)="abrir(item)" tabindex="0" [attr.aria-label]="'Abrir ' + item.nome">
+            <article class="lead" cdkDrag [cdkDragData]="item" [cdkDragDisabled]="toque"
+              (click)="abrir(item)" (keydown.enter)="abrir(item)" tabindex="0" [attr.aria-label]="'Abrir ' + item.nome">
               <div class="flex items-start justify-between gap-2">
                 <h4 class="text-sm font-semibold leading-snug">{{ item.nome }}</h4>
                 <button mat-icon-button type="button" class="menu-lead" aria-label="Ações do lead"
@@ -437,10 +469,10 @@ export function textoDias(dias: number): string {
                 </button>
                 <mat-menu #menu="matMenu">
                   <button mat-menu-item type="button" (click)="abrir(item)"><mat-icon>edit</mat-icon> Editar</button>
-                  @for (destino of estagios; track destino) {
-                    @if (destino !== item.estagio) {
+                  @for (destino of estagios(); track destino.id; let j = $index) {
+                    @if (destino.id !== item.estagioId) {
                       <button mat-menu-item type="button" (click)="mover(item, destino)">
-                        <mat-icon>{{ icone(destino) }}</mat-icon> Mover para {{ destino }}
+                        <mat-icon>{{ icone(destino, j) }}</mat-icon> Mover para {{ destino.nome }}
                       </button>
                     }
                   }
@@ -478,7 +510,7 @@ export function textoDias(dias: number): string {
                 @if (item.fonte) {
                   <li><mat-icon>campaign</mat-icon><span class="truncate">{{ item.fonte }}</span></li>
                 }
-                @if (item.estagio === 'Descartado' && item.motivoDescarte) {
+                @if (item.tipoEstagio === 'Descartado' && item.motivoDescarte) {
                   <li class="text-error"><mat-icon>info</mat-icon><span>{{ item.motivoDescarte }}</span></li>
                 }
               </ul>
@@ -491,14 +523,19 @@ export function textoDias(dias: number): string {
                   <a [class]="status.sucesso" routerLink="/clientes" (click)="$event.stopPropagation()">
                     <mat-icon class="selo">verified</mat-icon> Cliente
                   </a>
-                } @else if (item.estagio === 'Contato inicial') {
-                  <button mat-button type="button" class="acao-lead" (click)="$event.stopPropagation(); mover(item, 'Orçamento enviado')">
-                    Orçamento enviado <mat-icon iconPositionEnd>arrow_forward</mat-icon>
-                  </button>
-                } @else if (item.estagio === 'Orçamento enviado' || item.estagio === 'Contratado') {
-                  <button mat-flat-button type="button" class="acao-lead" (click)="$event.stopPropagation(); virarCliente(item)">
-                    <mat-icon>person_add</mat-icon> Virar cliente
-                  </button>
+                } @else {
+                  @switch (acao(item)?.tipo) {
+                    @case ('avancar') {
+                      <button mat-button type="button" class="acao-lead" (click)="$event.stopPropagation(); avancar(item)">
+                        {{ proximo(item)?.nome }} <mat-icon iconPositionEnd>arrow_forward</mat-icon>
+                      </button>
+                    }
+                    @case ('cliente') {
+                      <button mat-flat-button type="button" class="acao-lead" (click)="$event.stopPropagation(); virarCliente(item)">
+                        <mat-icon>person_add</mat-icon> Virar cliente
+                      </button>
+                    }
+                  }
                 }
               </footer>
             </article>
@@ -510,7 +547,13 @@ export function textoDias(dias: number): string {
     </div>
   `,
   styles: `
-    .quadro { align-items: start; }
+    .totais { display: grid; gap: 24px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+    .dica { display: flex; align-items: center; gap: 4px; }
+    .dica .mat-icon { font-size: 14px; width: 14px; height: 14px; }
+    .quadro { display: grid; gap: 24px; align-items: start; grid-template-columns: minmax(0, 1fr); }
+    @media (min-width: 768px) {
+      .quadro { align-items: stretch; grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(260px, 1fr); overflow-x: auto; padding-bottom: 8px; }
+    }
     .coluna {
       background: var(--mat-card-elevated-container-color, var(--color-light));
       border: 1px solid var(--color-border);
@@ -518,7 +561,12 @@ export function textoDias(dias: number): string {
       border-radius: 12px;
       padding: 16px;
       min-height: 200px;
+      transition: outline-color 0.15s ease, background-color 0.15s ease;
+      outline: 2px dashed transparent;
+      outline-offset: -2px;
     }
+    .coluna.cdk-drop-list-dragging { outline-color: var(--cor-estagio); }
+    .coluna.cdk-drop-list-dragging .vazio { display: none; }
     .contador { border-radius: 999px; padding: 0 8px; font-size: 0.75rem; font-weight: 600; line-height: 20px; }
     .lead {
       background: var(--mat-sys-surface);
@@ -531,6 +579,9 @@ export function textoDias(dias: number): string {
       transition: box-shadow 0.15s ease, transform 0.15s ease;
     }
     .lead:hover, .lead:focus-visible { box-shadow: 0 6px 18px rgb(0 0 0 / 0.08); transform: translateY(-1px); outline: none; }
+    .lead.cdk-drag-preview { box-shadow: 0 12px 28px rgb(0 0 0 / 0.18); transform: rotate(2deg); }
+    .lead.cdk-drag-placeholder { opacity: 0.35; }
+    .cdk-drag-animating { transition: transform 200ms ease; }
     .lead h4 { margin: 0; padding-top: 6px; overflow-wrap: anywhere; }
     .menu-lead { margin: -6px -8px 0 0; flex: none; }
     .detalhes { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
@@ -551,9 +602,11 @@ export class OportunidadesPage implements OnInit {
   private readonly dialog = inject(MatDialog);
   private readonly toast = inject(ToastService);
   private readonly auth = inject(AuthService);
-  protected readonly estagios = ESTAGIOS_FUNIL;
   protected readonly tipos = TIPOS;
   protected readonly status = STATUS;
+  /** No celular o cartão não arrasta: o caminho é o menu "Mover para…". */
+  protected readonly toque = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+  protected readonly estagios = signal<EstagioFunil[]>([]);
   protected readonly lista = signal<Oportunidade[]>([]);
   protected readonly filtros = this.fb.nonNullable.group({
     nome: [''],
@@ -563,26 +616,23 @@ export class OportunidadesPage implements OnInit {
     dataAte: this.fb.control<Date | null>(null),
   });
 
-  /** Leads ainda em negociação (Contato inicial e Orçamento enviado). */
+  /** Leads ainda em negociação: todos os estágios abertos. */
   protected readonly emAberto = computed(() => {
-    const abertos = this.lista().filter((i) => i.estagio === 'Contato inicial' || i.estagio === 'Orçamento enviado');
+    const abertos = this.lista().filter((i) => i.tipoEstagio === 'Aberto');
     return { qtd: abertos.length, valor: abertos.reduce((acc, i) => acc + (i.valorProposta ?? 0), 0) };
   });
 
   ngOnInit(): void {
+    this.carregarEstagios();
     this.carregar();
   }
 
-  protected cor(estagio: string): string {
-    return APARENCIA_ESTAGIO[estagio]?.cor ?? 'primary';
+  protected icone(estagio: EstagioFunil, indice: number): string {
+    return iconeEstagio(estagio, indice);
   }
 
-  protected icone(estagio: string): string {
-    return APARENCIA_ESTAGIO[estagio]?.icone ?? 'label';
-  }
-
-  protected ancora(estagio: string): string {
-    return 'estagio-' + this.estagios.indexOf(estagio);
+  protected ancora(estagio: EstagioFunil): string {
+    return 'estagio-' + estagio.id;
   }
 
   protected tipo(valor: string | null): string {
@@ -593,24 +643,38 @@ export class OportunidadesPage implements OnInit {
     return textoDias(diasDesde(item.entradaNoEstagioEm));
   }
 
+  protected acao(item: Oportunidade) {
+    return acaoRapida(this.estagios(), item.estagioId);
+  }
+
+  protected proximo(item: Oportunidade): EstagioFunil | null {
+    const acao = this.acao(item);
+    return acao?.tipo === 'avancar' ? acao.destino : null;
+  }
+
+  protected avancar(item: Oportunidade): void {
+    const destino = this.proximo(item);
+    if (destino) this.mover(item, destino);
+  }
+
   protected whatsapp(telefone: string | null): string | null {
     const digitos = (telefone ?? '').replace(/\D/g, '');
     if (digitos.length < 10) return null;
     return `https://wa.me/${digitos.length <= 11 ? '55' + digitos : digitos}`;
   }
 
-  protected daColuna(estagio: string): Oportunidade[] {
-    return this.lista().filter((item) => item.estagio === estagio);
+  protected daColuna(estagio: EstagioFunil): Oportunidade[] {
+    return this.lista().filter((item) => item.estagioId === estagio.id);
   }
 
-  protected resumo(estagio: string): { qtd: number; valor: number } {
+  protected resumo(estagio: EstagioFunil): { qtd: number; valor: number } {
     const itens = this.daColuna(estagio);
     return { qtd: itens.length, valor: itens.reduce((acc, item) => acc + (item.valorProposta ?? 0), 0) };
   }
 
-  protected rolar(evento: Event, estagio: string): void {
+  protected rolar(evento: Event, estagio: EstagioFunil): void {
     evento.preventDefault();
-    document.getElementById(this.ancora(estagio))?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.getElementById(this.ancora(estagio))?.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'center' });
   }
 
   protected temFiltro(): boolean {
@@ -621,6 +685,18 @@ export class OportunidadesPage implements OnInit {
   protected limpar(): void {
     this.filtros.reset();
     this.carregar();
+  }
+
+  protected gerenciarEstagios(): void {
+    this.negocio.estagiosFunil().subscribe({
+      next: (atuais) =>
+        this.dialog.open(EstagiosFunilDialog, { ...DIALOG, data: atuais }).afterClosed().subscribe((ok) => {
+          if (!ok) return;
+          this.carregarEstagios();
+          this.carregar();
+        }),
+      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+    });
   }
 
   protected abrir(item?: Oportunidade): void {
@@ -635,8 +711,14 @@ export class OportunidadesPage implements OnInit {
     this.dialog.open(OportunidadeDialog, { ...DIALOG, data: null }).afterClosed().subscribe((ok) => ok && this.carregar());
   }
 
-  protected mover(item: Oportunidade, destino: string): void {
-    if (destino === 'Descartado') {
+  /** Soltar o cartão noutra coluna (SPEC-031 §6.2). */
+  protected soltar(evento: CdkDragDrop<EstagioFunil>): void {
+    if (evento.previousContainer === evento.container) return;
+    this.mover(evento.item.data as Oportunidade, evento.container.data);
+  }
+
+  protected mover(item: Oportunidade, destino: EstagioFunil): void {
+    if (destino.tipo === 'Descartado') {
       this.dialog.open(DescarteDialog, { ...DIALOG_PEQUENO, data: item.nome }).afterClosed().subscribe((motivo?: string) => {
         if (motivo) this.gravarMovimento(item, destino, motivo);
       });
@@ -722,13 +804,32 @@ export class OportunidadesPage implements OnInit {
     });
   }
 
-  private gravarMovimento(item: Oportunidade, estagio: string, motivoDescarte?: string): void {
-    this.negocio.moverOportunidade(item.id, { estagio, motivoDescarte }).subscribe({
-      next: () => {
-        this.toast.sucesso(`${item.nome} foi para ${estagio}.`);
-        this.carregar();
-      },
+  private carregarEstagios(): void {
+    this.negocio.estagiosFunil().subscribe({
+      next: (lista) => this.estagios.set(lista),
       error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+    });
+  }
+
+  /** Move já na tela; se a gravação falhar, o cartão volta para a coluna anterior. */
+  private gravarMovimento(item: Oportunidade, destino: EstagioFunil, motivoDescarte?: string): void {
+    const anterior = this.lista();
+    this.lista.set(
+      anterior.map((i) =>
+        i.id === item.id
+          ? { ...i, estagioId: destino.id, estagio: destino.nome, tipoEstagio: destino.tipo, entradaNoEstagioEm: new Date().toISOString(), motivoDescarte: motivoDescarte ?? null }
+          : i,
+      ),
+    );
+    this.negocio.moverOportunidade(item.id, { estagio: destino.id, motivoDescarte }).subscribe({
+      next: (atualizado) => {
+        this.lista.update((l) => l.map((i) => (i.id === atualizado.id ? { ...i, ...atualizado, contatos: i.contatos } : i)));
+        this.toast.sucesso(`${item.nome} foi para ${destino.nome}.`);
+      },
+      error: (erro: unknown) => {
+        this.lista.set(anterior);
+        this.toast.erro(`Não deu para mover ${item.nome}. ${mensagemDeErro(erro)}`);
+      },
     });
   }
 

@@ -95,6 +95,10 @@ Atualize este arquivo: marque o que ficou pronto e anote as dúvidas para o usu�
 - [x] SPEC-030 (bloco 7) — aprovada em 18/11/2026
 - [x] SPEC-020 v2 (parte do bloco 16: quadro em cartões e lead → cliente) — aprovada e implementada em 20/11/2026
 - [x] SPEC-031 (resto do bloco 16, funil) — aprovada em 20/11/2026 com as sugestões da §17; implementar na ordem A, B, C, D
+  - [x] Parte A (estágios configuráveis e arrastar) — implementada em 20/11/2026
+  - [ ] Parte B (retorno, origem e contato repetido)
+  - [ ] Parte C (proposta por link)
+  - [ ] Parte D (ajustes do formulário; depende das assistentes, RF-045)
 
 Respondidas em 18/11/2026 (registradas nas specs): "Esta semana"/"Para conferir" descartadas; "N" da Hoje = tarefas ativas com prazo hoje; respostas abaixo do esperado = menos de 2 meses e 50% sem resposta; Resultado vira Saldo; cobrar sem Pix pede a chave; contratos viram tela própria com campos de mesclagem (SPEC-030 v2).
 

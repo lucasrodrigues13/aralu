@@ -28,13 +28,15 @@ public sealed class LeadRsvpServico(IDados dados)
             return Resultado<OportunidadeLeitura>.Erro(Codigos.Indisponivel, "Indisponível.");
         }
 
+        var primeiro = OportunidadeServico.PrimeiroAberto(await dados.ListarEstagiosFunilAsync(contaId, ct));
         var agora = DateTimeOffset.UtcNow;
         var oportunidade = new Oportunidade
         {
             Id = Guid.NewGuid(),
             ContaId = contaId,
             Nome = lead.NomeConvite,
-            Estagio = EstagioOportunidade.ContatoInicial,
+            EstagioFunilId = primeiro.Id,
+            EstagioFunil = primeiro,
             Fonte = "RSVP",
             Responsavel = contaId,
             CriadoEm = agora,

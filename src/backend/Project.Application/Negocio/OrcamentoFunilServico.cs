@@ -167,11 +167,17 @@ public sealed class OrcamentoFunilServico(IDados dados)
         if (moverParaOrcamentoEnviado == true)
         {
             var oportunidade = await dados.ObterOportunidadeAsync(contaId, item.OportunidadeId, ct);
-            if (oportunidade is not null &&
-                oportunidade.Estagio is EstagioOportunidade.ContatoInicial)
+            if (oportunidade?.EstagioFunil is { Tipo: TipoEstagioFunil.Aberto } atual)
             {
-                oportunidade.Estagio = EstagioOportunidade.OrcamentoEnviado;
-                oportunidade.EntradaNoEstagioEm = DateTimeOffset.UtcNow;
+                // SPEC-031: vai para "Orçamento enviado" se esse estágio existir e o lead estiver antes dele.
+                var estagios = await dados.ListarEstagiosFunilAsync(contaId, ct);
+                var alvo = estagios.FirstOrDefault(e =>
+                    e.Tipo == TipoEstagioFunil.Aberto &&
+                    string.Equals(e.Nome, EstagiosFunil.NomeOrcamentoEnviado, StringComparison.OrdinalIgnoreCase));
+                if (alvo is not null && atual.Ordem < alvo.Ordem)
+                {
+                    OportunidadeServico.ColocarNoEstagio(oportunidade, alvo);
+                }
             }
         }
 

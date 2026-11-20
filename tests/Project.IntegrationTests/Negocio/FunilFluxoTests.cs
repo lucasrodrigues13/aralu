@@ -161,6 +161,87 @@ public class FunilFluxoTests
         Assert.Contains(lista, item => item.GetProperty("id").GetGuid() == leadId && item.GetProperty("clienteId").GetGuid() == clienteId);
     }
 
+    [Fact]
+    public async Task Dona_configura_estagios_e_leads_acompanham()
+    {
+        var dono = await Entrar();
+        var outra = await Entrar();
+
+        var padrao = (await Ler(await dono.GetAsync("/api/v1/estagios-funil"))).EnumerateArray().ToArray();
+        Assert.Equal(["Contato inicial", "Orçamento enviado", "Contratado", "Descartado"], padrao.Select(e => e.GetProperty("nome").GetString()));
+        Assert.Equal(["Aberto", "Aberto", "Contratado", "Descartado"], padrao.Select(e => e.GetProperty("tipo").GetString()));
+        var contatoId = padrao[0].GetProperty("id").GetGuid();
+        var orcamentoId = padrao[1].GetProperty("id").GetGuid();
+
+        var lead = await Ler(await dono.PostAsJsonAsync("/api/v1/oportunidades", new
+        {
+            nome = "Casamento Duda",
+            estagio = orcamentoId.ToString(),
+            valorProposta = 5000,
+            contatos = new[] { new { nome = "Duda" } },
+        }));
+        var leadId = lead.GetProperty("id").GetGuid();
+        Assert.Equal("Orçamento enviado", lead.GetProperty("estagio").GetString());
+        Assert.Equal(orcamentoId, lead.GetProperty("estagioId").GetGuid());
+
+        // Outra conta não usa estágio desta.
+        Assert.Equal(HttpStatusCode.BadRequest, (await outra.PostAsJsonAsync("/api/v1/oportunidades", new
+        {
+            nome = "Intrusa",
+            estagio = orcamentoId.ToString(),
+            contatos = new[] { new { nome = "X" } },
+        })).StatusCode);
+
+        var novosAbertos = new object[]
+        {
+            new { id = contatoId, nome = "Primeiro contato", cor = "info" },
+            new { id = (Guid?)null, nome = "Reunião marcada", cor = "primary" },
+        };
+
+        // Excluir estágio com lead sem dizer o destino não grava.
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PutAsJsonAsync("/api/v1/estagios-funil", new { abertos = novosAbertos })).StatusCode);
+        // Nome repetido com estágio fixo, cor fora da paleta e mais de oito abertos não gravam.
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PutAsJsonAsync("/api/v1/estagios-funil", new
+        {
+            abertos = new[] { new { nome = "Contratado", cor = "info" } },
+            exclusoes = new[] { new { id = orcamentoId, destinoId = contatoId } },
+        })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PutAsJsonAsync("/api/v1/estagios-funil", new
+        {
+            abertos = new[] { new { nome = "Novo", cor = "#123456" } },
+        })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PutAsJsonAsync("/api/v1/estagios-funil", new
+        {
+            abertos = Enumerable.Range(1, 9).Select(i => new { nome = $"Etapa {i}", cor = "info" }).ToArray(),
+        })).StatusCode);
+
+        var salvos = (await Ler(await dono.PutAsJsonAsync("/api/v1/estagios-funil", new
+        {
+            abertos = novosAbertos,
+            corContratado = "secondary",
+            exclusoes = new[] { new { id = orcamentoId, destinoId = contatoId } },
+        }))).EnumerateArray().ToArray();
+        Assert.Equal(["Primeiro contato", "Reunião marcada", "Contratado", "Descartado"], salvos.Select(e => e.GetProperty("nome").GetString()));
+        Assert.Equal("secondary", salvos[2].GetProperty("cor").GetString());
+        Assert.Equal(1, salvos[0].GetProperty("quantidade").GetInt32());
+
+        var movido = await Ler(await dono.GetAsync($"/api/v1/oportunidades/{leadId}"));
+        Assert.Equal("Primeiro contato", movido.GetProperty("estagio").GetString());
+
+        // Mover pelo id do estágio novo, e o painel da Hoje usa os estágios da conta.
+        var reuniaoId = salvos[1].GetProperty("id").GetGuid();
+        var naReuniao = await Ler(await dono.PostAsJsonAsync($"/api/v1/oportunidades/{leadId}/mover", new { estagio = reuniaoId.ToString() }));
+        Assert.Equal("Reunião marcada", naReuniao.GetProperty("estagio").GetString());
+
+        var funil = (await Ler(await dono.GetAsync("/api/v1/painel"))).GetProperty("funil").EnumerateArray().ToArray();
+        Assert.Equal(["Primeiro contato", "Reunião marcada", "Contratado", "Descartado"], funil.Select(e => e.GetProperty("estagio").GetString()));
+        Assert.Contains(funil, e => e.GetProperty("estagio").GetString() == "Reunião marcada" && e.GetProperty("valor").GetDecimal() == 5000);
+
+        // A outra conta continua com os padrões.
+        var daOutra = (await Ler(await outra.GetAsync("/api/v1/estagios-funil"))).EnumerateArray().ToArray();
+        Assert.Equal("Contato inicial", daOutra[0].GetProperty("nome").GetString());
+    }
+
     private static string ContaId(HttpClient cliente)
     {
         var token = cliente.DefaultRequestHeaders.Authorization!.Parameter!;

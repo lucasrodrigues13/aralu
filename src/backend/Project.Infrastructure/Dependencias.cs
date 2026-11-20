@@ -65,6 +65,7 @@ public static class Dependencias
         services.AddScoped<ConviteServico>();
         services.AddScoped<AgendaServico>();
         services.AddScoped<OportunidadeServico>();
+        services.AddScoped<EstagioFunilServico>();
         services.AddScoped<LeadRsvpServico>();
         services.AddScoped<ContratoFunilServico>();
         services.AddScoped<OrcamentoFunilServico>();

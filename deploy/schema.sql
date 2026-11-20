@@ -2234,3 +2234,105 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261120171515_EstagiosDoFunil') THEN
+    CREATE TABLE "EstagiosFunil" (
+        "Id" uuid NOT NULL,
+        "ContaId" text NOT NULL,
+        "Nome" character varying(40) NOT NULL,
+        "Cor" character varying(20) NOT NULL,
+        "Ordem" integer NOT NULL,
+        "Tipo" character varying(20) NOT NULL,
+        CONSTRAINT "PK_EstagiosFunil" PRIMARY KEY ("Id")
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261120171515_EstagiosDoFunil') THEN
+    ALTER TABLE "Oportunidades" ADD "EstagioFunilId" uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261120171515_EstagiosDoFunil') THEN
+    INSERT INTO "EstagiosFunil" ("Id", "ContaId", "Nome", "Cor", "Ordem", "Tipo")
+    SELECT gen_random_uuid(), c."ContaId", p.nome, p.cor, p.ordem, p.tipo
+    FROM (SELECT DISTINCT "ContaId" FROM "Oportunidades") c
+    CROSS JOIN (VALUES
+        ('Contato inicial', 'info', 0, 'Aberto'),
+        ('Orçamento enviado', 'warning', 1, 'Aberto'),
+        ('Contratado', 'success', 2, 'Contratado'),
+        ('Descartado', 'error', 3, 'Descartado')
+    ) AS p(nome, cor, ordem, tipo);
+
+    UPDATE "Oportunidades" o
+    SET "EstagioFunilId" = e."Id"
+    FROM "EstagiosFunil" e
+    WHERE e."ContaId" = o."ContaId"
+      AND e."Ordem" = CASE o."Estagio"
+          WHEN 'ContatoInicial' THEN 0
+          WHEN 'OrcamentoEnviado' THEN 1
+          WHEN 'Contratado' THEN 2
+          WHEN 'Descartado' THEN 3
+          ELSE 0
+      END;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261120171515_EstagiosDoFunil') THEN
+    ALTER TABLE "Oportunidades" ALTER COLUMN "EstagioFunilId" SET NOT NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261120171515_EstagiosDoFunil') THEN
+    ALTER TABLE "Oportunidades" DROP COLUMN "Estagio";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261120171515_EstagiosDoFunil') THEN
+    CREATE INDEX "IX_Oportunidades_EstagioFunilId" ON "Oportunidades" ("EstagioFunilId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261120171515_EstagiosDoFunil') THEN
+    CREATE INDEX "IX_EstagiosFunil_ContaId" ON "EstagiosFunil" ("ContaId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261120171515_EstagiosDoFunil') THEN
+    CREATE UNIQUE INDEX "IX_EstagiosFunil_ContaId_Tipo" ON "EstagiosFunil" ("ContaId", "Tipo") WHERE "Tipo" <> 'Aberto';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261120171515_EstagiosDoFunil') THEN
+    ALTER TABLE "Oportunidades" ADD CONSTRAINT "FK_Oportunidades_EstagiosFunil_EstagioFunilId" FOREIGN KEY ("EstagioFunilId") REFERENCES "EstagiosFunil" ("Id") ON DELETE RESTRICT;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261120171515_EstagiosDoFunil') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261120171515_EstagiosDoFunil', '10.0.4');
+    END IF;
+END $EF$;
+COMMIT;
+

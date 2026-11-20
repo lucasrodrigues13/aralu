@@ -1403,6 +1403,45 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.ToTable("ContratosFunil");
                 });
 
+            modelBuilder.Entity("Project.Domain.Funil.EstagioFunil", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ContaId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Cor")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<int>("Ordem")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContaId");
+
+                    b.HasIndex("ContaId", "Tipo")
+                        .IsUnique()
+                        .HasFilter("\"Tipo\" <> 'Aberto'");
+
+                    b.ToTable("EstagiosFunil", (string)null);
+                });
+
             modelBuilder.Entity("Project.Domain.Funil.LeadRsvp", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1608,9 +1647,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<string>("EstadoRecepcao")
                         .HasColumnType("text");
 
-                    b.Property<string>("Estagio")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("EstagioFunilId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Fonte")
                         .HasColumnType("text");
@@ -1675,6 +1713,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ContaId");
+
+                    b.HasIndex("EstagioFunilId");
 
                     b.ToTable("Oportunidades");
                 });
@@ -2775,6 +2815,17 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .HasForeignKey("OportunidadeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Project.Domain.Funil.Oportunidade", b =>
+                {
+                    b.HasOne("Project.Domain.Funil.EstagioFunil", "EstagioFunil")
+                        .WithMany()
+                        .HasForeignKey("EstagioFunilId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("EstagioFunil");
                 });
 
             modelBuilder.Entity("Project.Domain.Modelos.ItemCronograma", b =>

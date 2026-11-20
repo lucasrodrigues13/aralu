@@ -50,9 +50,10 @@ public sealed class RelatorioFunilServico(IDados dados)
 
         var porEntrada = await dados.ListarOportunidadesPorEntradaEstagioAsync(contaId, inicioUtc, fimUtc, ct);
         var porCriacao = await dados.ListarOportunidadesPorCriacaoAsync(contaId, inicioUtc, fimUtc, ct);
+        var estagios = EstagiosFunil.Ordenar(await dados.ListarEstagiosFunilAsync(contaId, ct));
 
-        var fechados = porEntrada.Where(o => o.Estagio == EstagioOportunidade.Contratado).ToArray();
-        var perdidos = porEntrada.Where(o => o.Estagio == EstagioOportunidade.Descartado).ToArray();
+        var fechados = porEntrada.Where(o => o.EstagioFunil?.Tipo == TipoEstagioFunil.Contratado).ToArray();
+        var perdidos = porEntrada.Where(o => o.EstagioFunil?.Tipo == TipoEstagioFunil.Descartado).ToArray();
 
         var catalogo = new CatalogoRelatoriosFunil(
             [
@@ -61,10 +62,10 @@ public sealed class RelatorioFunilServico(IDados dados)
             ],
             Agrupar(porCriacao, o => o.Fonte ?? "(sem fonte)"),
             Agrupar(porCriacao, o => o.ServicoProduto ?? "(sem serviço)"),
-            RotulosEstagio.Todos.Select(estagio =>
+            estagios.Select(estagio =>
             {
-                var itens = porCriacao.Where(o => o.Estagio == estagio).ToArray();
-                return new LinhaRelatorioFunil(RotulosEstagio.Texto(estagio), itens.Length, itens.Sum(o => o.ValorProposta ?? 0));
+                var itens = porCriacao.Where(o => o.EstagioFunilId == estagio.Id).ToArray();
+                return new LinhaRelatorioFunil(estagio.Nome, itens.Length, itens.Sum(o => o.ValorProposta ?? 0));
             }).ToArray(),
             porCriacao
                 .GroupBy(o => (Uf: o.Uf ?? "(sem UF)", Cidade: o.Cidade ?? "(sem cidade)"))
@@ -76,7 +77,7 @@ public sealed class RelatorioFunilServico(IDados dados)
                 porCriacao.Where(o => o.DataPrevista is not null),
                 o => o.DataPrevista!.Value.ToString("yyyy-MM-dd")),
             Agrupar(
-                porEntrada.Where(o => o.Estagio == EstagioOportunidade.Descartado),
+                porEntrada.Where(o => o.EstagioFunil?.Tipo == TipoEstagioFunil.Descartado),
                 o => o.MotivoDescarte ?? "(sem motivo)"),
             await MontarRsvpAsync(contaId, inicioUtc, fimUtc, ct));
 
