@@ -1,14 +1,14 @@
 # 003. Tarefas do evento
 
-**Status: aprovada (versão 3, 18/11/2026).** A versão 2 está no histórico do Git. O código segue esta spec, exceto a seção 17. Fonte: pedido de 18/11/2026 para a aba Tarefas do evento seguir a lista de eventos. RF-061 e [produto-v1.md](../produto-v1.md) 5.5 acompanham esta versão.
+**Status: aprovada (versão 4, 21/11/2026).** A versão 3 (aprovada em 18/11/2026) está no histórico do Git e é o que o código faz hoje; a v4 só acrescenta prazo e responsável por item da checklist (§6.8, card #21 do Trello). Fonte da v3: pedido de 18/11/2026 para a aba Tarefas do evento seguir a lista de eventos. RF-061 e [produto-v1.md](../produto-v1.md) 5.5 acompanham a v3.
 
 ## 1. Identificador e nome
 
-SPEC-003. Tarefas do evento (v3).
+SPEC-003. Tarefas do evento (v4).
 
 ## 2. Objetivo
 
-Deixar as tarefas do evento numa lista igual à lista de eventos, com criação e edição em modal, vários responsáveis, visibilidade para o casal, prioridade, checklist e anexos.
+Deixar as tarefas do evento numa lista igual à lista de eventos, com criação e edição em modal, vários responsáveis, visibilidade para o casal, prioridade, checklist (cada item com prazo e responsável próprios) e anexos.
 
 ## 3. Requisitos relacionados
 
@@ -76,12 +76,24 @@ Pendente, em andamento, concluída e atrasada aparecem na coluna da tabela e no 
 
 Lista de tarefas de todos os eventos da conta, com filtros: situação, responsável, prazo, evento, serviço, tags. Visões: lista, quadro por situação, quadro por dia.
 
+### 6.8. Prazo e responsável por item da checklist (novo na v4)
+
+1. Cada item da checklist pode ter, além do texto, um **prazo** (data) e um **responsável**. Os dois são opcionais; item sem nenhum dos dois continua como hoje.
+2. O prazo do item é independente do prazo da tarefa: itens da mesma tarefa podem ter datas diferentes entre si e diferentes da tarefa. Nenhuma das datas limita a outra.
+3. O responsável do item é **uma pessoa só**, escolhida na mesma lista do responsável da tarefa: a dona, o casal ou uma assistente ativa. Assistente removida segue aparecendo no item em que já estava, marcada "(removida)", e some da lista de escolha para novos itens (SPEC-032).
+4. No modal de criar e editar a tarefa, cada linha da checklist tem o texto, o campo de prazo e o seletor de responsável (os dois podem ficar vazios). Salvar grava texto, prazo e responsável de todos os itens junto com a tarefa.
+5. Na checklist expandida (tabela e leitura), o item mostra o prazo (dia/mês) e o nome do responsável ao lado do texto. Item com prazo anterior a hoje, nem feito nem cancelado, mostra o prazo em destaque de atraso. Prazo e responsável se alteram só no modal de edição; marcar feito ou cancelado continua gravando na hora.
+6. A ordem dos itens não muda: segue a ordem em que foram escritos, não o prazo.
+7. A tarefa e o agrupamento da §6.2 continuam usando só o prazo da tarefa; o prazo do item não move a tarefa de grupo.
+8. Aplicar modelo (SPEC-012) e tarefas criadas por outras telas continuam gerando itens sem prazo e sem responsável.
+
 ## 7. Fluxos alternativos
 
 - Título vazio: o modal não grava e o campo mostra o erro.
 - Fechar o modal sem salvar: nada é gravado.
 - Evento concluído ou cancelado: o botão "Nova tarefa" não aparece; não cria nem edita; só consulta (ou bloqueia — §17).
-- Casal tenta editar campo que não é "marcar feita": indisponível.
+- Casal tenta editar campo que não é "marcar feita": indisponível, inclusive prazo e responsável do item.
+- Responsável do item aponta para assistente que não é da conta: recusado, nada é gravado.
 - Sem tarefas, ou filtro sem resultado: a lista diz que não há tarefa para mostrar.
 - Aplicar modelo (SPEC-012): tarefas novas entram com grupo copiado e responsáveis = Organizer.
 
@@ -89,13 +101,13 @@ Lista de tarefas de todos os eventos da conta, com filtros: situação, respons�
 
 - Situação inicial: pendente. Atrasada pode continuar manual neste rascunho; cálculo automático fica na §17.
 - Prazo é data concreta no evento (não "dias antes").
-- Mudar a data do evento e mover prazos: SPEC-012 §6.6 (já implementado).
+- Mudar a data do evento e mover prazos: SPEC-012 §6.6 (já implementado). Prazos dos itens: pendência da v4, §17, ponto 7.
 - O grupo de texto (SPEC-012) é opcional, até 80 caracteres; exibido na lista.
 - Comentários e perguntas: thread simples na tarefa (autor, texto, data). Sem menções neste corte, salvo decisão na §17.
 
 ## 9. Validações
 
-Título obrigatório. Prazo, se houver, data válida. Prioridade e visibilidade nos enums. Até N responsáveis (limite na §17). Anexo: JPG, JPEG, PNG ou PDF até 5 MB.
+Título obrigatório. Prazo, se houver, data válida. Prazo de item, se houver, data válida. Responsável de item, se houver, uma das opções da §6.8 (dona, casal ou assistente da conta). Prioridade e visibilidade nos enums. Até N responsáveis (limite na §17). Anexo: JPG, JPEG, PNG ou PDF até 5 MB.
 
 ## 10. Estados
 
@@ -103,7 +115,7 @@ Pendente → qualquer das quatro; concluída pode voltar. Sem estado "arquivada"
 
 ## 11. Dados necessários
 
-Título; descrição opcional; prazo; situação; grupo (texto); responsáveis (lista); visibilidade; prioridade; checklist (itens com feito, cancelado ou pendente); anexos; comentários; serviço do evento opcional; evento; conta.
+Título; descrição opcional; prazo; situação; grupo (texto); responsáveis (lista); visibilidade; prioridade; checklist (itens com texto, feito, cancelado ou pendente, prazo opcional e responsável opcional); anexos; comentários; serviço do evento opcional; evento; conta.
 
 ## 12. Interface
 
@@ -123,10 +135,14 @@ Validação no campo, dentro do modal. Outra conta: indisponível. Falha ao grav
 6. Checklist e anexos começam recolhidos. Na tabela, a seta da tarefa expande a checklist abaixo da linha; marcar um item como feito ou cancelado (riscado) grava na hora.
 7. Filtros da lista geral isolam por evento e situação.
 8. Outra conta não vê as tarefas.
+9. (v4) No modal, cada item da checklist aceita prazo e responsável. Dois itens da mesma tarefa com prazos diferentes aparecem cada um com a própria data na checklist expandida, na tabela e na leitura.
+10. (v4) Item sem prazo e sem responsável continua funcionando e não mostra nada a mais. Tarefas e itens antigos abrem sem erro.
+11. (v4) Item não feito e não cancelado com prazo anterior a hoje mostra o prazo em destaque; ao marcar feito ou cancelar, o destaque some.
+12. (v4) Responsável de item que é assistente removida continua visível no item, com "(removida)".
 
 ## 15. Cenários de teste
 
-Abrir "Nova tarefa" e fechar sem salvar (nada é criado). Criar só com título e ver a linha na tabela. Filtro de situação. Abrir leitura sem editar. Dois responsáveis. Prioridade. Visibilidade. Checklist. Isolamento entre contas. Tarefa com grupo vindo do modelo. Evento concluído sem o botão "Nova tarefa".
+Abrir "Nova tarefa" e fechar sem salvar (nada é criado). Criar só com título e ver a linha na tabela. Filtro de situação. Abrir leitura sem editar. Dois responsáveis. Prioridade. Visibilidade. Checklist. Isolamento entre contas. Tarefa com grupo vindo do modelo. Evento concluído sem o botão "Nova tarefa". (v4) Criar tarefa com três itens de prazos e responsáveis diferentes e reabrir (tudo gravado); editar tirando prazo e responsável de um item (limpos); prazo de item inválido (recusado); assistente de outra conta como responsável do item (recusado); item atrasado em destaque; marcar o item feito sem apagar prazo e responsável; casal não altera prazo nem responsável do item.
 
 ## 16. Dependências
 
@@ -142,3 +158,11 @@ Decidido em 18/11/2026: as visões "Esta semana" e "Para conferir" ficam descart
 4. Regra automática "Contratar X" sem vínculo explícito ao serviço.
 5. Comentários vs "perguntas" como tipos distintos ou um só fio.
 6. O que o casal pode fazer além de marcar feita (só bloco 11 decide a UI).
+
+
+Decidido em 21/11/2026 (v4, card #21):
+
+7. Mudar a data do evento: os prazos dos itens abertos (nem feitos, nem cancelados, com prazo) das tarefas não concluídas andam junto na mesma pergunta "Mover" / "Manter" da SPEC-012 §6.6, pela mesma diferença em dias. Itens feitos, cancelados ou sem prazo, e itens de tarefa concluída, não mudam.
+8. O responsável do item é uma pessoa só.
+9. Item atrasado só ganha destaque na checklist; a Hoje e o filtro de responsável não consideram o responsável do item.
+10. Concluir a tarefa não fecha os itens pendentes.

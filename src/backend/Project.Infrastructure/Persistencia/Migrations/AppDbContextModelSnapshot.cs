@@ -2458,6 +2458,15 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<int>("Ordem")
                         .HasColumnType("integer");
 
+                    b.Property<DateOnly?>("Prazo")
+                        .HasColumnType("date");
+
+                    b.Property<string>("ResponsavelPapel")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ResponsavelReferenciaId")
+                        .HasColumnType("text");
+
                     b.Property<Guid>("TarefaId")
                         .HasColumnType("uuid");
 

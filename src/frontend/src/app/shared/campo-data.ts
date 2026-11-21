@@ -18,13 +18,14 @@ import { MatInputModule } from '@angular/material/input';
   styles: `:host { display: block; min-width: 0; }`,
   template: `
     <div class="campo">
-      <mat-label class="font-semibold mb-2 block">{{ rotulo }}</mat-label>
+      @if (rotulo) { <mat-label class="font-semibold mb-2 block">{{ rotulo }}</mat-label> }
       <mat-form-field appearance="outline" class="w-full">
       <input
         matInput
         [matDatepicker]="picker"
         [formControl]="controle"
         placeholder="dd/mm/aaaa"
+        [attr.aria-label]="ariaLabel || rotulo"
       />
       <mat-datepicker-toggle matIconSuffix [for]="picker" />
       <mat-datepicker #picker />
@@ -34,6 +35,7 @@ import { MatInputModule } from '@angular/material/input';
 })
 export class CampoDataComponent implements ControlValueAccessor {
   @Input() rotulo = 'Data';
+  @Input() ariaLabel = '';
 
   protected readonly controle = new FormControl<Date | null>(null);
 

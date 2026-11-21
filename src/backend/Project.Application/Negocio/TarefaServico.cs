@@ -6,7 +6,12 @@ namespace Project.Application.Negocio;
 
 public sealed record ResponsavelPedido(PapelResponsavel Papel, string? ReferenciaId = null);
 
-public sealed record ItemChecklistPedido(string? Texto, bool Feito, bool Cancelado = false);
+public sealed record ItemChecklistPedido(
+    string? Texto,
+    bool Feito,
+    bool Cancelado = false,
+    DateOnly? Prazo = null,
+    ResponsavelPedido? Responsavel = null);
 
 public sealed record MarcarItemChecklist(bool Feito, bool Cancelado);
 
@@ -27,7 +32,13 @@ public sealed record ComentarioPedido(string? Texto);
 
 public sealed record ResponsavelLeitura(PapelResponsavel Papel, string? ReferenciaId);
 
-public sealed record ItemChecklistLeitura(Guid Id, string Texto, bool Feito, bool Cancelado);
+public sealed record ItemChecklistLeitura(
+    Guid Id,
+    string Texto,
+    bool Feito,
+    bool Cancelado,
+    DateOnly? Prazo,
+    ResponsavelLeitura? Responsavel);
 
 public sealed record AnexoTarefaLeitura(Guid Id, Guid ArquivoId, string Nome, string TipoConteudo, DateTimeOffset EnviadoEm);
 
@@ -184,7 +195,8 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
             return Resultado<TarefaLeitura>.Erro(responsaveis.Codigo, responsaveis.Mensagem);
         }
 
-        if (pedido.Checklist is not null && ValidarChecklist(pedido.Checklist) is Falha checklist)
+        if (pedido.Checklist is not null
+            && ValidarChecklist(pedido.Checklist, await ReferenciasPermitidasAsync(contaId, null, ct)) is Falha checklist)
         {
             return Resultado<TarefaLeitura>.Erro(checklist.Codigo, checklist.Mensagem);
         }
@@ -211,7 +223,7 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
             ServicoEventoId = pedido.AtualizarServico ? pedido.ServicoEventoId : null,
         };
         AplicarResponsaveis(tarefa, contaId, pedido.Responsaveis);
-        AplicarChecklist(tarefa, pedido.Checklist);
+        AplicarChecklist(tarefa, contaId, pedido.Checklist);
         await dados.InserirTarefaAsync(tarefa, ct);
         return Resultado<TarefaLeitura>.Sucesso(await LerUmaAsync(contaId, tarefa, hoje, ct));
     }
@@ -263,7 +275,8 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
             return Resultado<TarefaLeitura>.Erro(responsaveis.Codigo, responsaveis.Mensagem);
         }
 
-        if (pedido.Checklist is not null && ValidarChecklist(pedido.Checklist) is Falha checklist)
+        if (pedido.Checklist is not null
+            && ValidarChecklist(pedido.Checklist, await ReferenciasDosItensPermitidasAsync(contaId, tarefa, ct)) is Falha checklist)
         {
             return Resultado<TarefaLeitura>.Erro(checklist.Codigo, checklist.Mensagem);
         }
@@ -301,7 +314,7 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
 
         if (pedido.Checklist is not null)
         {
-            await dados.SubstituirChecklistAsync(tarefa.Id, MontarChecklist(tarefa, pedido.Checklist), ct);
+            await dados.SubstituirChecklistAsync(tarefa.Id, MontarChecklist(tarefa, contaId, pedido.Checklist), ct);
         }
 
         await dados.SalvarTarefaAsync(ct);
@@ -430,7 +443,13 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
             responsaveis,
             tarefa.Checklist
                 .OrderBy(item => item.Ordem)
-                .Select(item => new ItemChecklistLeitura(item.Id, item.Texto, item.Feito, item.Cancelado))
+                .Select(item => new ItemChecklistLeitura(
+                    item.Id,
+                    item.Texto,
+                    item.Feito,
+                    item.Cancelado,
+                    item.Prazo,
+                    item.ResponsavelPapel is PapelResponsavel papel ? new ResponsavelLeitura(papel, item.ResponsavelReferenciaId) : null))
                 .ToArray(),
             tarefa.Comentarios
                 .OrderBy(item => item.CriadoEm)
@@ -484,17 +503,17 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
         return ativas;
     }
 
-    private static void AplicarChecklist(Tarefa tarefa, IReadOnlyList<ItemChecklistPedido>? pedidos)
+    private static void AplicarChecklist(Tarefa tarefa, string contaId, IReadOnlyList<ItemChecklistPedido>? pedidos)
     {
         if (pedidos is null)
         {
             return;
         }
 
-        tarefa.Checklist.AddRange(MontarChecklist(tarefa, pedidos));
+        tarefa.Checklist.AddRange(MontarChecklist(tarefa, contaId, pedidos));
     }
 
-    private static List<ItemChecklistTarefa> MontarChecklist(Tarefa tarefa, IReadOnlyList<ItemChecklistPedido> pedidos)
+    private static List<ItemChecklistTarefa> MontarChecklist(Tarefa tarefa, string contaId, IReadOnlyList<ItemChecklistPedido> pedidos)
     {
         var ordem = 0;
         return pedidos.Select(pedido => new ItemChecklistTarefa
@@ -505,6 +524,14 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
             Feito = pedido.Feito && !pedido.Cancelado,
             Cancelado = pedido.Cancelado,
             Ordem = ordem++,
+            Prazo = pedido.Prazo,
+            ResponsavelPapel = pedido.Responsavel?.Papel,
+            ResponsavelReferenciaId = pedido.Responsavel?.Papel switch
+            {
+                PapelResponsavel.Organizer => contaId,
+                PapelResponsavel.Assistente => pedido.Responsavel.ReferenciaId,
+                _ => null,
+            },
         }).ToList();
     }
 
@@ -547,13 +574,35 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
         return null;
     }
 
-    private static Falha? ValidarChecklist(IReadOnlyList<ItemChecklistPedido> pedidos)
+    private static Falha? ValidarChecklist(IReadOnlyList<ItemChecklistPedido> pedidos, IReadOnlySet<string> assistentesPermitidas)
     {
         if (pedidos.Any(item => Domain.Comum.Texto.Limpo(item.Texto) is null))
         {
             return new Falha(Codigos.Validacao, "Informe o texto do item da checklist.");
         }
 
+        foreach (var responsavel in pedidos.Select(item => item.Responsavel).OfType<ResponsavelPedido>())
+        {
+            if (!Enum.IsDefined(responsavel.Papel) || responsavel.Papel == PapelResponsavel.Equipe)
+            {
+                return new Falha(Codigos.Validacao, "Escolha o responsável do item.");
+            }
+
+            if (responsavel.Papel == PapelResponsavel.Assistente
+                && (responsavel.ReferenciaId is null || !assistentesPermitidas.Contains(responsavel.ReferenciaId)))
+            {
+                return new Falha(Codigos.Validacao, "Escolha uma assistente ativa da conta para o item.");
+            }
+        }
+
         return null;
+    }
+
+    /// <summary>Assistentes permitidas nos itens: as da tarefa mais as que já estão em algum item dela (SPEC-003 §6.8).</summary>
+    private async Task<HashSet<string>> ReferenciasDosItensPermitidasAsync(string contaId, Tarefa tarefa, CancellationToken ct)
+    {
+        var permitidas = await ReferenciasPermitidasAsync(contaId, tarefa, ct);
+        permitidas.UnionWith(await dados.ReferenciasDosItensAsync(tarefa.Id, ct));
+        return permitidas;
     }
 }

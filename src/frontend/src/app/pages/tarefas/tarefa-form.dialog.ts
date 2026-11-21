@@ -102,13 +102,24 @@ export interface TarefaFormDados {
         <div class="sm:col-span-2 flex flex-col gap-2" formArrayName="checklist">
           <span class="font-semibold mb-2 block">Checklist</span>
           @for (item of checklist.controls; track item; let i = $index) {
-            <div class="item-lista flex items-center gap-2" [class.line-through]="item.get('cancelado')?.value" [formGroupName]="i">
-              <mat-checkbox formControlName="feito" [attr.aria-label]="'Marcar item ' + (i + 1) + ' como feito'" />
-              <mat-form-field appearance="outline" class="flex-1 min-w-0">
-                <input matInput formControlName="texto" placeholder="Descreva o item" required [attr.aria-label]="'Item ' + (i + 1)" />
-                @if (item.get('texto')?.invalid) { <mat-error>Preencha ou remova o item.</mat-error> }
-              </mat-form-field>
-              <button mat-icon-button type="button" aria-label="Remover item" (click)="removerItem(i)"><mat-icon>delete</mat-icon></button>
+            <div class="item-lista flex flex-col gap-1" [class.line-through]="item.get('cancelado')?.value" [formGroupName]="i">
+              <div class="flex items-center gap-2">
+                <mat-checkbox formControlName="feito" [attr.aria-label]="'Marcar item ' + (i + 1) + ' como feito'" />
+                <mat-form-field appearance="outline" class="flex-1 min-w-0">
+                  <input matInput formControlName="texto" placeholder="Descreva o item" required [attr.aria-label]="'Item ' + (i + 1)" />
+                  @if (item.get('texto')?.invalid) { <mat-error>Preencha ou remova o item.</mat-error> }
+                </mat-form-field>
+                <button mat-icon-button type="button" aria-label="Remover item" (click)="removerItem(i)"><mat-icon>delete</mat-icon></button>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 pl-10">
+                <app-campo-data rotulo="" [ariaLabel]="'Prazo do item ' + (i + 1)" formControlName="prazo" />
+                <mat-form-field appearance="outline" class="w-full">
+                  <mat-select formControlName="responsavel" [attr.aria-label]="'Responsável do item ' + (i + 1)">
+                    <mat-option value="">Sem responsável</mat-option>
+                    @for (papel of papeis(); track papel.valor) { <mat-option [value]="papel.valor">{{ papel.rotulo }}</mat-option> }
+                  </mat-select>
+                </mat-form-field>
+              </div>
             </div>
           }
           <div>
@@ -150,7 +161,7 @@ export class TarefaFormDialog implements OnInit {
     visibilidade: this.dados.tarefa?.visibilidade ?? 'SoEu',
     grupo: this.dados.tarefa?.grupo ?? '',
     servicoEventoId: this.dados.tarefa?.servicoEventoId ?? '',
-    checklist: this.fb.array((this.dados.tarefa?.checklist ?? []).map((item) => this.item(item.texto, item.feito, item.cancelado))),
+    checklist: this.fb.array((this.dados.tarefa?.checklist ?? []).map((item) => this.item(item.texto, item.feito, item.cancelado, deIsoParaData(item.prazo), item.responsavel ? chaveResponsavel(item.responsavel) : ''))),
   });
 
   protected get checklist(): FormArray {
@@ -158,7 +169,10 @@ export class TarefaFormDialog implements OnInit {
   }
 
   ngOnInit(): void {
-    const atuais = (this.dados.tarefa?.responsaveis ?? []).map((item) => chaveResponsavel(item));
+    const atuais = [
+      ...(this.dados.tarefa?.responsaveis ?? []).map((item) => chaveResponsavel(item)),
+      ...(this.dados.tarefa?.checklist ?? []).flatMap((item) => (item.responsavel ? [chaveResponsavel(item.responsavel)] : [])),
+    ];
     this.assistentes.nomes().subscribe({
       next: (nomes) => this.papeis.set(opcoesResponsavel(nomes, this.auth.ehAssistente() ? 'Dona da conta' : 'Eu', atuais)),
       error: () => undefined,
@@ -172,7 +186,7 @@ export class TarefaFormDialog implements OnInit {
   }
 
   protected adicionarItem(): void {
-    this.checklist.push(this.item('', false, false));
+    this.checklist.push(this.item('', false, false, null, ''));
     setTimeout(() => {
       const campos = this.elemento.nativeElement.querySelectorAll<HTMLInputElement>('.item-lista input');
       campos[campos.length - 1]?.focus();
@@ -202,7 +216,13 @@ export class TarefaFormDialog implements OnInit {
       servicoEventoId: valor.servicoEventoId || null,
       atualizarServico: true,
       responsaveis: valor.responsaveis.map((chave) => pedidoResponsavel(chave)),
-      checklist: valor.checklist.map((item) => ({ texto: item.texto.trim(), feito: item.feito, cancelado: item.cancelado })),
+      checklist: valor.checklist.map((item) => ({
+        texto: item.texto.trim(),
+        feito: item.feito,
+        cancelado: item.cancelado,
+        prazo: deDataParaIso(item.prazo),
+        responsavel: item.responsavel ? pedidoResponsavel(item.responsavel) : null,
+      })),
     };
     const destino = this.dados.tarefa
       ? this.negocio.atualizarTarefa(this.dados.tarefa.id, pedido)
@@ -221,7 +241,13 @@ export class TarefaFormDialog implements OnInit {
     campo?.focus();
   }
 
-  private item(texto: string, feito: boolean, cancelado: boolean) {
-    return this.fb.nonNullable.group({ texto: [texto, [Validators.required, Validators.pattern(/\S/)]], feito, cancelado });
+  private item(texto: string, feito: boolean, cancelado: boolean, prazo: Date | null, responsavel: string) {
+    return this.fb.nonNullable.group({
+      texto: [texto, [Validators.required, Validators.pattern(/\S/)]],
+      feito,
+      cancelado,
+      prazo: this.fb.control<Date | null>(prazo),
+      responsavel,
+    });
   }
 }

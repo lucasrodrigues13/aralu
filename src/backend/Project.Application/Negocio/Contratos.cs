@@ -131,6 +131,12 @@ public interface IDados
 
     Task<bool> MarcarItemChecklistAsync(Guid tarefaId, Guid itemId, bool feito, bool cancelado, CancellationToken ct);
 
+    /// <summary>Referências (assistentes) já gravadas nos itens da checklist da tarefa.</summary>
+    Task<IReadOnlyList<string>> ReferenciasDosItensAsync(Guid tarefaId, CancellationToken ct);
+
+    /// <summary>Move o prazo dos itens abertos das tarefas não concluídas do evento (SPEC-012 §6.6).</summary>
+    Task MoverPrazosDosItensAsync(string contaId, Guid eventoId, int dias, CancellationToken ct);
+
     Task InserirAnexoTarefaAsync(AnexoTarefa anexo, CancellationToken ct);
 
     /// <summary>Remove o anexo da tarefa e devolve o arquivo dele, ou null se não existir.</summary>

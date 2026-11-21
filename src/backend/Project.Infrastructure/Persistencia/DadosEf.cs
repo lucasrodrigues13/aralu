@@ -426,6 +426,29 @@ public sealed class DadosEf(AppDbContext banco) : IDados
                 set => set.SetProperty(item => item.Feito, feito).SetProperty(item => item.Cancelado, cancelado),
                 ct) > 0;
 
+    public async Task<IReadOnlyList<string>> ReferenciasDosItensAsync(Guid tarefaId, CancellationToken ct) =>
+        await banco.Set<ItemChecklistTarefa>().AsNoTracking()
+            .Where(item => item.TarefaId == tarefaId && item.ResponsavelReferenciaId != null)
+            .Select(item => item.ResponsavelReferenciaId!)
+            .ToListAsync(ct);
+
+    public async Task MoverPrazosDosItensAsync(string contaId, Guid eventoId, int dias, CancellationToken ct)
+    {
+        var itens = await banco.Set<ItemChecklistTarefa>()
+            .Where(item => item.Prazo != null && !item.Feito && !item.Cancelado
+                && banco.Tarefas.Any(tarefa => tarefa.Id == item.TarefaId
+                    && tarefa.ContaId == contaId
+                    && tarefa.EventoId == eventoId
+                    && tarefa.Situacao != SituacaoTarefa.Concluida))
+            .ToListAsync(ct);
+        foreach (var item in itens)
+        {
+            item.DeslocarPrazo(dias);
+        }
+
+        await banco.SaveChangesAsync(ct);
+    }
+
     public async Task InserirAnexoTarefaAsync(AnexoTarefa anexo, CancellationToken ct)
     {
         banco.Set<AnexoTarefa>().Add(anexo);

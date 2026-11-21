@@ -1,6 +1,6 @@
 # 012. Modelos de evento
 
-**Status: aprovada (versão 2, 18/11/2026).** O código deve seguir esta spec; a versão 1 está no histórico do Git. Fonte: [produto-v1.md](../produto-v1.md) 5.3 e 5.4, plano do cliente, Cerimonial Fácil e Ivola.
+**Status: aprovada (versão 2, 18/11/2026; §6.6 ampliada em 21/11/2026 para os itens da checklist, SPEC-003 v4).** O código deve seguir esta spec; a versão 1 está no histórico do Git. Fonte: [produto-v1.md](../produto-v1.md) 5.3 e 5.4, plano do cliente, Cerimonial Fácil e Ivola.
 
 ## 1. Identificador e nome
 
@@ -63,9 +63,9 @@ Usuário autenticado, SPEC-001. Para aplicar um modelo ou salvar como modelo, o 
 
 ### 6.6. Mudar a data do evento
 
-1. Ao salvar no Editar evento uma data diferente da anterior, e havendo tarefas não concluídas com prazo, um modal pergunta: "Mover os prazos das tarefas não concluídas junto com a data?".
+1. Ao salvar no Editar evento uma data diferente da anterior, e havendo tarefas não concluídas com prazo, ou itens de checklist abertos com prazo nessas tarefas, um modal pergunta: "Mover os prazos das tarefas não concluídas junto com a data?".
 2. "Mover" soma a cada um desses prazos a mesma diferença em dias entre a data nova e a antiga. "Manter" não mexe em nenhum prazo.
-3. Tarefas concluídas e tarefas sem prazo nunca mudam. Evento que passa a não ter data não abre o modal.
+3. Tarefas concluídas e tarefas sem prazo nunca mudam. O mesmo vale para os itens da checklist (SPEC-003 §6.8): "Mover" soma a diferença em dias ao prazo dos itens não feitos e não cancelados que têm prazo, nas tarefas não concluídas; itens feitos, cancelados, sem prazo ou de tarefa concluída não mudam. Evento que passa a não ter data não abre o modal.
 
 ## 7. Fluxos alternativos
 

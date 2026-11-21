@@ -405,6 +405,7 @@ public sealed class EventoServico(IDados dados, IConsultaCep cep)
             }
 
             await dados.SalvarTarefaAsync(ct);
+            await dados.MoverPrazosDosItensAsync(contaId, id, delta, ct);
         }
 
         evento.Nome = nome;
