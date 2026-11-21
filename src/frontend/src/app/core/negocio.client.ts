@@ -410,6 +410,8 @@ export interface Cliente {
   telefoneFixo: string | null;
   documento: string | null;
   profissao: string | null;
+  estadoCivil?: string | null;
+  nacionalidade?: string | null;
   inscricaoMunicipal: string | null;
   religiao: string | null;
   observacao: string | null;
@@ -1220,10 +1222,10 @@ export class NegocioClient {
     });
   }
 
-  responderProposta(token: string, tipo: RespostaProposta, mensagem: string | null) {
+  responderProposta(token: string, tipo: RespostaProposta, mensagem: string | null, contratante?: DadosContratante | null) {
     return this.http.post<PropostaPublica>(
       `${this.base}/api/v1/publico/propostas/${encodeURIComponent(token)}/resposta`,
-      { tipo, mensagem },
+      { tipo, mensagem, contratante: contratante ?? null },
       { headers: cabecalhoVisitante() },
     );
   }
@@ -1353,6 +1355,8 @@ export interface ContatoOportunidade {
   nome: string;
   telefone: string | null;
   email: string | null;
+  /** Contato que assina o contrato. */
+  contratante?: boolean;
 }
 
 export interface Oportunidade {
@@ -1411,6 +1415,9 @@ export interface Oportunidade {
   /** Proposta mais recente enviada por link (SPEC-031 §6.6); null quando não houve envio. */
   proposta: PropostaResumo | null;
   criadoPor?: string | null;
+  contratante?: DadosContratante | null;
+  /** Nome, CPF/CNPJ, estado civil, nacionalidade, e-mail, celular e endereço completo preenchidos (SPEC-049). */
+  dadosContratoCompletos?: boolean;
 }
 
 export type SituacaoProposta = 'NaoAberta' | 'Aberta' | 'Aceita' | 'Duvidas' | 'Recusada';
@@ -1421,6 +1428,8 @@ export interface PropostaResumo {
   abertaEm: string | null;
   mensagem: string | null;
   respondidaEm: string | null;
+  /** Token do link da tela de aceite (só a assessoria vê). */
+  tokenLink?: string | null;
 }
 
 export type RespostaProposta = 'Aceitar' | 'Duvidas' | 'Recusar';
@@ -1446,6 +1455,8 @@ export interface PropostaPublica {
   daPropriaConta?: boolean;
   /** Parcelas do orçamento, mostradas antes do aceite (SPEC-042). */
   parcelas?: ParcelaOrcamento[] | null;
+  /** O que a assessoria já sabe do contratante, para pré-preencher o aceite (SPEC-049). */
+  contratante?: DadosContratante | null;
 }
 
 export interface LeadRsvp {
@@ -1663,4 +1674,48 @@ export interface ResumoEvento {
   valorPago: number;
   cliente: { id: string; nome: string; ddi: string; celular: string } | null;
   alertas: AlertaEvento[];
+}
+
+/** Quem assina o contrato (SPEC-049). O documento é o campo único CPF/CNPJ, sem máscara. */
+export interface DadosContratante {
+  nome: string | null;
+  documento: string | null;
+  /** yyyy-MM-dd. */
+  nascimento: string | null;
+  profissao: string | null;
+  estadoCivil: string | null;
+  nacionalidade: string | null;
+  email: string | null;
+  celular: string | null;
+  cep: string | null;
+  endereco: string | null;
+  numero: string | null;
+  bairro: string | null;
+  cidade: string | null;
+  estado: string | null;
+  complemento: string | null;
+  pais: string | null;
+}
+
+export const ESTADOS_CIVIS = ['Solteiro(a)', 'Casado(a)', 'União estável', 'Separado(a)', 'Divorciado(a)', 'Viúvo(a)'] as const;
+
+/** Campos que faltam para gerar o contrato (mesma regra da API). */
+export function faltaParaContrato(d: Partial<DadosContratante> | null | undefined): string[] {
+  const falta: string[] = [];
+  const exige = (valor: string | null | undefined, rotulo: string) => {
+    if (!valor || !valor.trim()) falta.push(rotulo);
+  };
+  exige(d?.nome, 'nome completo');
+  exige(d?.documento, 'CPF/CNPJ');
+  exige(d?.estadoCivil, 'estado civil');
+  exige(d?.nacionalidade, 'nacionalidade');
+  exige(d?.email, 'e-mail');
+  exige(d?.celular, 'celular');
+  exige(d?.cep, 'CEP');
+  exige(d?.endereco, 'endereço');
+  exige(d?.numero, 'número');
+  exige(d?.bairro, 'bairro');
+  exige(d?.cidade, 'cidade');
+  exige(d?.estado, 'estado');
+  return falta;
 }

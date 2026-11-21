@@ -2,6 +2,8 @@
 
 **Status: aprovada (versão 2, 20/11/2026).** O código segue esta spec. A versão 1 está no histórico do Git. Fonte da v2: pedido do usuário de 20/11/2026 para o quadro seguir o molde da tela Hoje, com leads em cartões, e para o lead virar cliente no fim do funil (seções 6.1, 6.2 e 8.1). Estágios configuráveis, arrastar, data de retorno, origem em lista fechada, aviso de contato repetido e proposta por link (RF-075) continuam para o bloco 16.
 
+> **Revisão de 21/11/2026 (card #43, [SPEC-049](049-dados-do-contratante-na-oportunidade.md)):** a oportunidade guarda os dados do contratante, o modal foi reorganizado (contato, evento, locais, comercial, dados para contrato), "Virar cliente" (§6.2) abre o cadastro preenchido com todos esses dados e descartar apaga CPF/CNPJ, nascimento e endereço.
+
 ## 1. Identificador e nome
 
 SPEC-020. Oportunidades do funil.

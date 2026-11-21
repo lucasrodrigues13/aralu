@@ -2,6 +2,8 @@
 
 **Status: aprovada.** O código segue esta spec. Incremento sobre a SPEC-006. Fonte observada: [inventario-referencia.md](../inventario-referencia.md) §1.7 e §5.
 
+> **Revisão de 21/11/2026 (card #43, [SPEC-049](049-dados-do-contratante-na-oportunidade.md)):** o cadastro de cliente ganha **estado civil** (lista fechada) e **nacionalidade** (texto), na aba Dados pessoais. Colunas novas em `Clientes`.
+
 ## 1. Identificador e nome
 
 SPEC-009. Cadastro completo de cliente.

@@ -9,7 +9,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTabsModule } from '@angular/material/tabs';
 import { mensagemDeErro } from '../../core/mensagem-erro';
-import { Cliente, NegocioClient, PAPEIS, ROTULO_PAPEL } from '../../core/negocio.client';
+import { Cliente, ESTADOS_CIVIS, NegocioClient, PAPEIS, ROTULO_PAPEL } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { CampoDataComponent } from '../../shared/campo-data';
 import { deDataParaIso, deIsoParaData } from '../../shared/data';
@@ -61,6 +61,19 @@ import { aplicarMascara } from '../../shared/mascaras';
             <div class="campo">
               <mat-label class="font-semibold mb-2 block">Profissão</mat-label>
               <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Profissão'" matInput formControlName="profissao" /></mat-form-field>
+            </div>
+            <div class="campo">
+              <mat-label class="font-semibold mb-2 block">Estado civil</mat-label>
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-select [attr.aria-label]="'Estado civil'" formControlName="estadoCivil">
+                  <mat-option [value]="''">—</mat-option>
+                  @for (e of estadosCivis; track e) { <mat-option [value]="e">{{ e }}</mat-option> }
+                </mat-select>
+              </mat-form-field>
+            </div>
+            <div class="campo">
+              <mat-label class="font-semibold mb-2 block">Nacionalidade</mat-label>
+              <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Nacionalidade'" matInput formControlName="nacionalidade" /></mat-form-field>
             </div>
             <div class="campo">
               <mat-label class="font-semibold mb-2 block">Inscrição municipal</mat-label>
@@ -153,6 +166,7 @@ export class ClienteFormDialog {
   private readonly negocio = inject(NegocioClient);
   private readonly toast = inject(ToastService);
   protected readonly papeis = PAPEIS;
+  protected readonly estadosCivis = ESTADOS_CIVIS;
   protected readonly formulario = this.fb.nonNullable.group({
     nome: [this.dados?.nome ?? '', Validators.required],
     papel: [this.edicao ? (this.dados?.papel ?? '') : (this.dados?.papel ?? 'Noiva'), Validators.required],
@@ -163,6 +177,8 @@ export class ClienteFormDialog {
     telefoneFixo: aplicarMascara(this.dados?.telefoneFixo ?? '', 'telefone'),
     documento: aplicarMascara(this.dados?.documento ?? '', 'documento'),
     profissao: this.dados?.profissao ?? '',
+    estadoCivil: this.dados?.estadoCivil ?? '',
+    nacionalidade: this.dados?.nacionalidade ?? '',
     inscricaoMunicipal: this.dados?.inscricaoMunicipal ?? '',
     religiao: this.dados?.religiao ?? '',
     observacao: this.dados?.observacao ?? '',

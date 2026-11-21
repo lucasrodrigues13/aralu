@@ -218,6 +218,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<string>("Estado")
                         .HasColumnType("text");
 
+                    b.Property<string>("EstadoCivil")
+                        .HasColumnType("text");
+
                     b.Property<string>("Facebook")
                         .HasColumnType("text");
 
@@ -228,6 +231,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Instagram")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Nacionalidade")
                         .HasColumnType("text");
 
                     b.Property<DateOnly?>("Nascimento")
@@ -1363,6 +1369,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("Contratante")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Email")
                         .HasColumnType("text");
 
@@ -1658,6 +1667,54 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
                     b.Property<bool>("ContatoRepetido")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("ContratanteBairro")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ContratanteCelular")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ContratanteCep")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ContratanteCidade")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ContratanteComplemento")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ContratanteDocumento")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ContratanteEmail")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ContratanteEndereco")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ContratanteEstado")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ContratanteEstadoCivil")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ContratanteNacionalidade")
+                        .HasColumnType("text");
+
+                    b.Property<DateOnly?>("ContratanteNascimento")
+                        .HasColumnType("date");
+
+                    b.Property<string>("ContratanteNome")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ContratanteNumero")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ContratantePais")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ContratanteProfissao")
+                        .HasColumnType("text");
 
                     b.Property<DateTimeOffset>("CriadoEm")
                         .HasColumnType("timestamp with time zone");

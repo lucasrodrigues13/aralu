@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -7,7 +7,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { mensagemDeErro } from '../../core/mensagem-erro';
-import { NegocioClient, PropostaPublica, RespostaProposta } from '../../core/negocio.client';
+import { faltaParaContrato, NegocioClient, PropostaPublica, RespostaProposta } from '../../core/negocio.client';
+import { ContratanteCamposComponent, contratantePedido, grupoContratante, preencherContratante } from '../../shared/contratante-campos';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { GdDinheiroPipe } from '../../shared/gd-dinheiro.pipe';
 
@@ -22,7 +23,7 @@ const RESPONDIDO: Record<RespostaProposta, { titulo: string; texto: string; icon
 /** Proposta aberta pelo lead, sem login (SPEC-031 §6.6). Pensada para o celular. */
 @Component({
   selector: 'app-proposta-publica',
-  imports: [ReactiveFormsModule, MatCardModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule, GdDataPipe, GdDinheiroPipe],
+  imports: [ReactiveFormsModule, ContratanteCamposComponent, MatCardModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule, GdDataPipe, GdDinheiroPipe],
   template: `
     <main class="pagina">
       @if (carregando()) {
@@ -79,6 +80,9 @@ const RESPONDIDO: Record<RespostaProposta, { titulo: string; texto: string; icon
               @if (tipo === 'Aceitar') {
                 <h2>Aceitar a proposta?</h2>
                 <p class="text-sm text-muted mb-4">A assessoria será avisada e entra em contato para fechar.</p>
+                <h3 class="dados-contrato">Dados para o contrato</h3>
+                <p class="text-sm text-muted mb-4">Para fechar, preencha mais dados para gerar o contrato. Os campos com * são necessários.</p>
+                <app-contratante-campos [grupo]="contratante" [obrigatorios]="true" [consultarCep]="false" />
               } @else {
                 <h2>{{ tipo === 'Duvidas' ? 'Qual é a sua dúvida?' : 'Quer contar o motivo?' }}</h2>
                 <mat-form-field appearance="outline" class="w-full">
@@ -132,6 +136,7 @@ const RESPONDIDO: Record<RespostaProposta, { titulo: string; texto: string; icon
     .topo { border-bottom: 1px solid var(--mat-sys-outline-variant); padding-bottom: 16px; margin-bottom: 16px; }
     h1 { font-size: 20px; margin: 4px 0; overflow-wrap: anywhere; }
     h2 { font-size: 17px; margin: 0 0 12px; }
+    .dados-contrato { font-size: 15px; font-weight: 600; margin: 16px 0 4px; }
     .texto { white-space: pre-wrap; font-size: 15px; line-height: 1.7; overflow-wrap: anywhere; }
     .valor { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--mat-sys-outline-variant); }
     .valor strong { font-size: 22px; }
@@ -160,6 +165,7 @@ export class PropostaPublicaPage implements OnInit {
   protected readonly enviando = signal(false);
   protected readonly erro = signal('');
   protected readonly mensagem = new FormControl('', { nonNullable: true });
+  protected readonly contratante = grupoContratante(inject(FormBuilder));
   private token = '';
 
   ngOnInit(): void {
@@ -167,6 +173,7 @@ export class PropostaPublicaPage implements OnInit {
     this.negocio.propostaPublica(this.token).subscribe({
       next: (p) => {
         this.proposta.set(p);
+        preencherContratante(this.contratante, p.contratante);
         this.carregando.set(false);
       },
       error: () => this.carregando.set(false),
@@ -188,9 +195,16 @@ export class PropostaPublicaPage implements OnInit {
       this.erro.set('Escreva a sua dúvida.');
       return;
     }
+    if (tipo === 'Aceitar') {
+      const falta = faltaParaContrato(contratantePedido(this.contratante));
+      if (falta.length) {
+        this.erro.set('Para fechar, preencha mais dados para gerar o contrato. Falta: ' + falta.join(', ') + '.');
+        return;
+      }
+    }
     this.enviando.set(true);
     this.erro.set('');
-    this.negocio.responderProposta(this.token, tipo, tipo === 'Aceitar' ? null : texto || null).subscribe({
+    this.negocio.responderProposta(this.token, tipo, tipo === 'Aceitar' ? null : texto || null, tipo === 'Aceitar' ? contratantePedido(this.contratante) : null).subscribe({
       next: (p) => {
         this.proposta.set(p);
         this.escolha.set(null);
