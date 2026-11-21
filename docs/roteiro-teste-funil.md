@@ -206,7 +206,7 @@ Isso alimenta o relatório de motivos (Ato 10).
 
 1. Faça: **Novo contrato**, oportunidade da Marina, escolha o modelo de contrato. Salve.
 2. Confira: o contrato nasce em **Em andamento**. Sem oportunidade ou sem conteúdo, não grava.
-3. Faça: edite o texto. Use **Enviar** (ícone de avião). Confira: registra o envio e continua em Em andamento (enviar não assina).
+3. Faça: edite o texto. Use **Enviar** (ícone de avião). **Enviar é só um registro**: o sistema não manda nada ao cliente (você envia por fora, pelo WhatsApp ou e-mail). Confira: aparece o aviso "Envio registrado", a coluna **Situação** passa de "Não enviado" para "Enviado em {data}", e o contrato continua em Em andamento (enviar não assina).
 4. Faça: **Assinar** (ícone de caneta). Confira: vai para a aba **Assinados**. É registro manual; não é assinatura eletrônica com validade jurídica.
 5. Faça: **Cancelar** um contrato (em andamento ou já assinado). Confira: vai para **Cancelados**.
 6. Faça: exclua um contrato em andamento. Contrato assinado não volta a Em andamento.

@@ -136,6 +136,18 @@ export class ContratoFunilDialog implements OnInit {
             <th mat-header-cell *matHeaderCellDef>Criado em</th>
             <td mat-cell *matCellDef="let item">{{ item.criadoEm | gdData }}</td>
           </ng-container>
+          <ng-container matColumnDef="envio">
+            <th mat-header-cell *matHeaderCellDef>Situação</th>
+            <td mat-cell *matCellDef="let item">
+              @if (item.assinadoEm) {
+                <span class="text-sm">Assinado em {{ item.assinadoEm | gdData }}</span>
+              } @else if (item.enviadoEm) {
+                <span class="text-sm">Enviado em {{ item.enviadoEm | gdData }}</span>
+              } @else if (item.situacao === 'EmAndamento') {
+                <span class="text-xs text-muted">Não enviado</span>
+              }
+            </td>
+          </ng-container>
           <ng-container matColumnDef="acoes">
             <th mat-header-cell *matHeaderCellDef class="text-end! whitespace-nowrap">Ações</th>
             <td mat-cell *matCellDef="let item" class="text-end! whitespace-nowrap">
@@ -173,7 +185,7 @@ export class ContratosFunilPage implements OnInit {
   protected readonly situacao = signal('EmAndamento');
   protected readonly busca = signal('');
   protected readonly lista = signal<ContratoFunil[]>([]);
-  protected readonly colunas = ['oportunidade', 'criadoEm', 'acoes'];
+  protected readonly colunas = ['oportunidade', 'criadoEm', 'envio', 'acoes'];
 
   ngOnInit(): void {
     this.carregar();
@@ -190,7 +202,7 @@ export class ContratosFunilPage implements OnInit {
 
   protected enviar(item: ContratoFunil): void {
     this.negocio.enviarContratoFunil(item.id).subscribe({
-      next: () => { this.toast.sucesso('Contrato enviado.'); this.carregar(); },
+      next: () => { this.toast.sucesso('Envio registrado. O contrato continua em andamento até ser assinado.'); this.carregar(); },
       error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
     });
   }
