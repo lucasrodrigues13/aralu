@@ -14,8 +14,16 @@ const perfilVazio = {
   documento: '',
   celular: '',
   nascimento: null,
+  pais: null,
+  cep: null,
   endereco: '',
+  numero: null,
+  complemento: null,
+  bairro: null,
+  cidade: null,
+  estado: null,
   fotoId: null,
+  chavePix: null,
 };
 
 describe('PerfilPage', () => {
@@ -55,6 +63,17 @@ describe('PerfilPage', () => {
     expect(raiz.querySelector('mat-card-title')?.textContent).toContain('Editar Ana Lima');
     expect(raiz.textContent).toContain('Enviar foto');
     expect(raiz.textContent).not.toContain('Remover');
+  });
+
+  it('mostra o endereço estruturado e o CEP preenche os campos', () => {
+    const raiz = montar({ ...perfilVazio, cep: '01001-000', endereco: 'Praça da Sé', numero: '10', cidade: 'São Paulo', estado: 'SP' });
+
+    const valor = (rotulo: string) => (raiz.querySelector(`input[aria-label="${rotulo}"]`) as HTMLInputElement).value;
+    expect(valor('CEP')).toBe('01001-000');
+    expect(valor('Endereço')).toBe('Praça da Sé');
+    expect(valor('Número')).toBe('10');
+    expect(valor('Cidade')).toBe('São Paulo');
+    expect(raiz.querySelector('textarea')).toBeNull();
   });
 
   it('com foto mostra Alterar e Remover', () => {

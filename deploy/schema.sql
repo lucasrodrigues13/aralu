@@ -2931,3 +2931,70 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121213938_EnderecoEstruturadoDoPerfil') THEN
+    ALTER TABLE "Perfis" ADD "Bairro" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121213938_EnderecoEstruturadoDoPerfil') THEN
+    ALTER TABLE "Perfis" ADD "Cep" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121213938_EnderecoEstruturadoDoPerfil') THEN
+    ALTER TABLE "Perfis" ADD "Cidade" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121213938_EnderecoEstruturadoDoPerfil') THEN
+    ALTER TABLE "Perfis" ADD "Complemento" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121213938_EnderecoEstruturadoDoPerfil') THEN
+    ALTER TABLE "Perfis" ADD "Estado" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121213938_EnderecoEstruturadoDoPerfil') THEN
+    ALTER TABLE "Perfis" ADD "Numero" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121213938_EnderecoEstruturadoDoPerfil') THEN
+    ALTER TABLE "Perfis" ADD "Pais" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121213938_EnderecoEstruturadoDoPerfil') THEN
+    UPDATE "Perfis" SET "Endereco" = NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121213938_EnderecoEstruturadoDoPerfil') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261121213938_EnderecoEstruturadoDoPerfil', '10.0.4');
+    END IF;
+END $EF$;
+COMMIT;
+

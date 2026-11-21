@@ -54,6 +54,17 @@ public static partial class Mesclagem
             return valores.TryGetValue(marca, out var valor) && !string.IsNullOrWhiteSpace(valor) ? valor! : Vazio;
         });
 
+    /// <summary>Valores das marcas contratada_* a partir do perfil; o endereço é montado dos campos estruturados (SPEC-038).</summary>
+    public static IReadOnlyDictionary<string, string?> ValoresDaContratada(Perfil.PerfilAssessoria? perfil) =>
+        new Dictionary<string, string?>
+        {
+            ["contratada_nome"] = perfil?.NomeEmpresa,
+            ["contratada_documento"] = perfil?.Documento,
+            ["contratada_endereco"] = perfil?.EnderecoCompleto(),
+            ["contratada_responsavel"] = perfil?.Responsavel,
+            ["contratada_pix"] = perfil?.ChavePix,
+        };
+
     public static IReadOnlyDictionary<string, string?> Exemplos() =>
         Campos.ToDictionary(campo => campo.Marca, campo => (string?)campo.Exemplo);
 
