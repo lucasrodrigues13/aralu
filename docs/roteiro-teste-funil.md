@@ -8,8 +8,8 @@ Os nomes dos botões vêm do código atual. Se algum texto estiver diferente na 
 
 ## Antes de começar
 
-- [ ] Use uma conta de teste, não uma conta de cliente real.
-- [ ] Abra duas janelas do navegador: uma normal (você, a cerimonialista) e uma anônima (o cliente, sem login). Os links públicos devem ser abertos na anônima.
+- [x] Use uma conta de teste, não uma conta de cliente real.
+- [x] Abra duas janelas do navegador: uma normal (você, a cerimonialista) e uma anônima (o cliente, sem login). Os links públicos devem ser abertos na anônima.
 - [ ] Tenha um segundo e-mail para convidar uma assistente (Ato 11) e para receber e-mails de teste.
 - [ ] Dados fictícios usados abaixo (troque se quiser):
   - Casal: **Marina Alves** (noiva, contato principal) e **Rafael Costa** (noivo).

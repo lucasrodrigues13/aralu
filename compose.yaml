@@ -53,7 +53,12 @@ services:
       DataProtection__KeysPath: /keys
       Storage__Root: /storage
       PublicUrl: http://localhost:8080
+      Email__Username: ${EMAIL_USERNAME:-}
       Email__Password: ${EMAIL_PASSWORD:-}
+      Email__From: ${EMAIL_FROM:-}
+      Email__TenantId: ${EMAIL_TENANT_ID:-}
+      Email__ClientId: ${EMAIL_CLIENT_ID:-}
+      Email__ClientSecret: ${EMAIL_CLIENT_SECRET:-}
       Bootstrap__Enabled: "false"
       ForwardedHeaders__KnownNetworks__0: 172.16.0.0/12
       ForwardedHeaders__KnownNetworks__1: 10.0.0.0/8

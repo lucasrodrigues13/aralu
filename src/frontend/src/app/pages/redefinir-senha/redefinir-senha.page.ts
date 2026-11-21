@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -44,6 +44,7 @@ export class RedefinirSenhaPage {
   private readonly fb = inject(FormBuilder);
   private readonly conta = inject(ContaClient);
   private readonly rota = inject(ActivatedRoute);
+  private readonly roteador = inject(Router);
   private readonly toast = inject(ToastService);
   protected readonly enviando = signal(false);
   protected readonly formulario = this.fb.nonNullable.group({
@@ -70,6 +71,7 @@ export class RedefinirSenhaPage {
       next: (resposta) => {
         this.toast.sucesso(resposta.mensagem);
         this.enviando.set(false);
+        void this.roteador.navigateByUrl('/entrar');
       },
       error: (erro: unknown) => {
         this.toast.erro(mensagemDeErro(erro));

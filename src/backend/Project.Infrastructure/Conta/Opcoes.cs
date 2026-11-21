@@ -16,6 +16,16 @@ public sealed class EmailOpcoes
     public string Password { get; set; } = "";
     public string From { get; set; } = "";
     public bool StartTls { get; set; } = true;
+
+    // OAuth2 (Entra ID, client credentials). Quando TenantId, ClientId e ClientSecret estão
+    // preenchidos, o envio usa token e ignora Password.
+    public string TenantId { get; set; } = "";
+    public string ClientId { get; set; } = "";
+    public string ClientSecret { get; set; } = "";
+
+    public bool UsaOAuth => !string.IsNullOrWhiteSpace(TenantId)
+        && !string.IsNullOrWhiteSpace(ClientId)
+        && !string.IsNullOrWhiteSpace(ClientSecret);
 }
 
 public sealed class BootstrapOpcoes
