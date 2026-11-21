@@ -50,7 +50,7 @@ Legenda de "Banco": **M** = migration (entra na fila do banco), **—** = sem mi
 | 4 | #38 Modelos de Contrato: tela única | #37 | M | casca, modelos-funil, contratos | pronto no branch `claude/card-38-modelos-7f472c` (SPEC-039, migration `ModelosDeContratoUnificados`; modelos do funil migrados para a tela única e tabela `ModelosContratoFunil` apagada); juntar na main; integração só ao fim das ondas |
 | 5 | #29 Gráficos de orçamento | #28 (mesma tela) | — | evento-fornecedores | pendente |
 | 5 | #30 Aba Contratos do evento | #28, #34, #36 | — | evento-contratos | pendente |
-| 5 | #33 Gestão Financeira: parcelas do mês | #32, #41 | — | pagamentos/gestão financeira | pendente |
+| 5 | #33 Gestão Financeira: parcelas do mês | #32, #41 | — | pagamentos/gestão financeira | pronto no branch `claude/card-33-parcelas-mes-0b0355` (SPEC-044, sem migration; só frontend; sem comprovante do recebimento) |
 | 5 | #43 Oportunidade: dados do contratante | #42, #45 | M | oportunidades, clientes, proposta | pendente |
 | 5 | #44 Orçamento com parcelas | #41 | — | orçamentos-funil, proposta-publica | pronto no branch `claude/card-44-orcamento-80152a` (SPEC-042) |
 | 6 | #20 Resumo absorve Tarefas | #21, #31, #28, #30 | ? | evento-home, tarefas | pendente |
