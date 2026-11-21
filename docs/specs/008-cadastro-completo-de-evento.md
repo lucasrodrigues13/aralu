@@ -1,6 +1,6 @@
 # 008. Cadastro e resumo do evento
 
-**Status: rascunho (versão 4, card #19 do Trello "Simplificar o cadastro de evento").** Aguarda aprovação do dono do projeto; até lá o código segue a versão 3 (aprovada em 18/11/2026, no histórico do Git). A v4 enxuga a criação: sem pacote, casamento com um nome só e busca de clientes sem vínculo. O restante segue [produto-v1.md](../produto-v1.md) 5.3.
+**Status: aprovada (versão 4, card #19 "Simplificar o cadastro de evento").** A versão 3 (18/11/2026) está no histórico do Git. A v4 enxuga a criação: sem pacote, casamento com um nome só e busca de clientes sem vínculo. O restante segue [produto-v1.md](../produto-v1.md) 5.3.
 
 ## 1. Identificador e nome
 
@@ -160,6 +160,6 @@ SPEC-001, SPEC-002 (lista e situações), SPEC-003 (tarefas), SPEC-004 e SPEC-01
 
 - Os limites de 60 dias (serviço sem fornecedor) e 30 dias (convidados sem resposta) são propostos aqui e podem ser ajustados.
 - "Momentos" do roteiro no cartão do pacote entram quando o roteiro no evento existir (RF-092).
-- Sem modelo na criação, o caminho para aplicar um modelo depois (RF-053) ainda não tem spec; até lá, evento novo nasce vazio.
+- Sem modelo na criação, o modelo se aplica depois pelo menu "Aplicar modelo" do evento (SPEC-012).
 - O endpoint atual de valor da assessoria continua até o Dinheiro do evento substituí-lo; a tela deixa de chamá-lo.
 - Tamanho máximo dos textos não definido.

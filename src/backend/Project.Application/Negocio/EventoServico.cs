@@ -203,10 +203,7 @@ public sealed class EventoServico(IDados dados, IConsultaCep cep)
         var nome = NomeDoEvento.Montar(tipoEvento, pedido.PrimeiroNome, pedido.SegundoNome);
         if (nome is null)
         {
-            var mensagem = tipoEvento == TipoEvento.Casamento
-                ? "Informe os dois nomes do casamento."
-                : "Informe o nome.";
-            return Resultado<EventoDetalhe>.Erro(Codigos.Validacao, mensagem);
+            return Resultado<EventoDetalhe>.Erro(Codigos.Validacao, "Informe o nome.");
         }
 
         var numeros = ValidarNumeros(pedido);
@@ -364,10 +361,7 @@ public sealed class EventoServico(IDados dados, IConsultaCep cep)
         var nome = NomeDoEvento.Montar(evento.Tipo, pedido.PrimeiroNome, pedido.SegundoNome);
         if (nome is null)
         {
-            var mensagem = evento.Tipo == TipoEvento.Casamento
-                ? "Informe os dois nomes do casamento."
-                : "Informe o nome.";
-            return Resultado<EventoDetalhe>.Erro(Codigos.Validacao, mensagem);
+            return Resultado<EventoDetalhe>.Erro(Codigos.Validacao, "Informe o nome.");
         }
 
         var numeros = ValidarNumeros(pedido);

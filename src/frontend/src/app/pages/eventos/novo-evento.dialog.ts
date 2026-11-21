@@ -1,8 +1,6 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { MatChipsModule } from '@angular/material/chips';
-import { MatListModule } from '@angular/material/list';
-import { MatCardModule } from '@angular/material/card';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -11,11 +9,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { Router } from '@angular/router';
 import { mensagemDeErro } from '../../core/mensagem-erro';
-import { Cliente, Modelo, NegocioClient, TIPOS } from '../../core/negocio.client';
+import { Cliente, NegocioClient, TIPOS } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { CampoDataComponent } from '../../shared/campo-data';
 import { CampoHoraComponent } from '../../shared/campo-hora';
 import { deDataParaIso } from '../../shared/data';
+import { clientesParaNovoEvento, vinculoDoCliente } from './clientes-do-novo-evento';
 import { MascaraDirective } from '../../shared/mascara.directive';
 import { horaParaApi, soDigitos } from '../../shared/mascaras';
 
@@ -33,7 +32,7 @@ const NOVO_CLIENTE = '__novo__';
 /** Criação curta do evento num modal só (SPEC-008 v2, 6.1). */
 @Component({
   selector: 'app-novo-evento',
-  imports: [MatChipsModule, MatListModule, MatCardModule, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatAutocompleteModule, CampoDataComponent, CampoHoraComponent, MascaraDirective],
+  imports: [MatChipsModule, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatAutocompleteModule, CampoDataComponent, CampoHoraComponent, MascaraDirective],
   template: `
     <h2 mat-dialog-title>Novo evento</h2>
     <p class="text-muted text-sm px-6 -mt-2 mb-4">Só o tipo e o nome são obrigatórios. O resto pode ficar para depois.</p>
@@ -52,42 +51,10 @@ const NOVO_CLIENTE = '__novo__';
         </div>
 
         @if (tipo()) {
-          <div class="sm:col-span-2">
-            <mat-label class="font-semibold mb-2 block">Pacote</mat-label>
-            <mat-card class="border! border-border! shadow-none mb-0!">
-              <mat-selection-list [multiple]="false" (selectionChange)="modeloId.set($event.options[0].value)" aria-label="Pacote">
-                @for (modelo of modelosDoTipo(); track modelo.id) {
-                  <mat-list-option [value]="modelo.id" [selected]="modeloId() === modelo.id">
-                    <span matListItemTitle class="font-semibold">{{ modelo.nome }}</span>
-                    <span matListItemLine>{{ contagem(modelo) }}</span>
-                  </mat-list-option>
-                }
-                <mat-list-option value="" [selected]="modeloId() === ''">
-                  <span matListItemTitle class="font-semibold">Começar vazio</span>
-                  <span matListItemLine>Sem tarefas nem serviços</span>
-                </mat-list-option>
-              </mat-selection-list>
-            </mat-card>
-            @if (modelosDoTipo().length === 0) {
-              <p class="text-sm text-muted mt-2">Crie modelos em Modelos de evento para já começar com tarefas e serviços.</p>
-            }
+          <div class="campo sm:col-span-2">
+            <mat-label class="font-semibold mb-2 block">{{ rotuloNome() }} <span class="text-error">*</span></mat-label>
+            <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="rotuloNome()" matInput formControlName="primeiroNome" required /></mat-form-field>
           </div>
-
-          @if (tipo() === 'Casamento') {
-            <div class="campo">
-              <mat-label class="font-semibold mb-2 block">Nome da noiva</mat-label>
-              <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Nome da noiva'" matInput formControlName="primeiroNome" required /></mat-form-field>
-            </div>
-            <div class="campo">
-              <mat-label class="font-semibold mb-2 block">Nome do noivo</mat-label>
-              <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Nome do noivo'" matInput formControlName="segundoNome" required /></mat-form-field>
-            </div>
-          } @else {
-            <div class="campo sm:col-span-2">
-              <mat-label class="font-semibold mb-2 block">{{ rotuloNome() }}</mat-label>
-              <mat-form-field appearance="outline" class="w-full"><input matInput formControlName="primeiroNome" required /></mat-form-field>
-            </div>
-          }
           <app-campo-data rotulo="Data" formControlName="data" />
           <app-campo-hora rotulo="Horário" formControlName="hora" />
           <div class="campo">
@@ -110,7 +77,7 @@ const NOVO_CLIENTE = '__novo__';
             />
             <mat-autocomplete #listaClientes="matAutocomplete" (optionSelected)="escolherCliente($event.option.value)">
               @for (cliente of clientesFiltrados(); track cliente.id) {
-                <mat-option [value]="cliente.id">{{ cliente.nome }} <span class="block text-xs text-muted">· {{ cliente.celular }}</span></mat-option>
+                <mat-option [value]="cliente.id">{{ cliente.nome }} <span class="block text-xs text-muted">· {{ cliente.celular }}@if (vinculo(cliente); as evento) { · já está em {{ evento }}}</span></mat-option>
               }
               <mat-option [value]="novoCliente">
                 <mat-icon>person_add</mat-icon> Cadastrar novo{{ busca() ? ': ' + busca() : '' }}
@@ -151,23 +118,16 @@ export class NovoEventoDialog implements OnInit {
   protected readonly tipos = TIPOS;
   protected readonly novoCliente = NOVO_CLIENTE;
   protected readonly tipo = signal('');
-  protected readonly modeloId = signal('');
-  protected readonly modelos = signal<Modelo[]>([]);
   protected readonly clientes = signal<Cliente[]>([]);
   protected readonly clienteEscolhido = signal<Cliente | null>(null);
   protected readonly cadastrandoCliente = signal(false);
   protected readonly busca = signal('');
   protected readonly salvando = signal(false);
-  protected readonly modelosDoTipo = computed(() => this.modelos().filter((modelo) => modelo.tipo === this.tipo()));
-  protected readonly clientesFiltrados = computed(() => {
-    const termo = normalizar(this.busca());
-    return this.clientes().filter((cliente) => !termo || normalizar(cliente.nome).includes(termo)).slice(0, 8);
-  });
-  protected readonly rotuloNome = computed(() => (this.tipo() === 'Corporativo' || this.tipo() === 'Formatura' ? 'Nome do evento' : 'Nome'));
+  protected readonly clientesFiltrados = computed(() => clientesParaNovoEvento(this.clientes(), this.busca()));
+  protected readonly rotuloNome = computed(() => 'Nome do evento');
 
   protected readonly form = this.fb.nonNullable.group({
     primeiroNome: '',
-    segundoNome: '',
     data: this.fb.control<Date | null>(null),
     hora: '',
     convidados: '',
@@ -178,10 +138,6 @@ export class NovoEventoDialog implements OnInit {
   });
 
   ngOnInit(): void {
-    this.negocio.modelos().subscribe({
-      next: (lista) => this.modelos.set(lista),
-      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
-    });
     this.negocio.clientes().subscribe({ next: (lista) => this.clientes.set(lista), error: () => this.clientes.set([]) });
     this.form.controls.buscaCliente.valueChanges.subscribe((valor) => {
       // Ao escolher uma opção o campo recebe o id; o texto exibido é tratado em escolherCliente.
@@ -195,16 +151,12 @@ export class NovoEventoDialog implements OnInit {
     return ICONES[tipo] ?? 'event';
   }
 
-  protected contagem(modelo: Modelo): string {
-    const tarefas = modelo.tarefas.length;
-    const servicos = modelo.servicos.length;
-    return `${tarefas} ${tarefas === 1 ? 'tarefa' : 'tarefas'} · ${servicos} ${servicos === 1 ? 'serviço' : 'serviços'}`;
+  protected vinculo(cliente: Cliente): string {
+    return vinculoDoCliente(cliente);
   }
 
   protected escolherTipo(tipo: string): void {
     this.tipo.set(tipo);
-    const doTipo = this.modelos().filter((modelo) => modelo.tipo === tipo);
-    this.modeloId.set(doTipo.length === 1 ? doTipo[0].id : '');
   }
 
   protected escolherCliente(valor: string): void {
@@ -226,9 +178,9 @@ export class NovoEventoDialog implements OnInit {
       this.toast.erro('Escolha o tipo do evento.');
       return;
     }
-    if (!valor.primeiroNome.trim() || (this.tipo() === 'Casamento' && !valor.segundoNome.trim())) {
+    if (!valor.primeiroNome.trim()) {
       this.form.markAllAsTouched();
-      this.toast.erro(this.tipo() === 'Casamento' ? 'Informe os dois nomes.' : 'Informe o nome.');
+      this.toast.erro('Informe o nome.');
       return;
     }
     if (this.cadastrandoCliente() && (!valor.clienteNome.trim() || soDigitos(valor.clienteWhatsApp).length < 10)) {
@@ -239,9 +191,8 @@ export class NovoEventoDialog implements OnInit {
     const convidados = valor.convidados === '' ? null : Number(valor.convidados);
     const pedido = {
       tipo: this.tipo(),
-      modeloId: this.modeloId() || null,
       primeiroNome: valor.primeiroNome,
-      segundoNome: this.tipo() === 'Casamento' ? valor.segundoNome : null,
+      segundoNome: null,
       data: deDataParaIso(valor.data),
       hora: horaParaApi(valor.hora),
       convidadosEstimados: Number.isFinite(convidados) ? convidados : null,
@@ -262,8 +213,4 @@ export class NovoEventoDialog implements OnInit {
       },
     });
   }
-}
-
-function normalizar(texto: string): string {
-  return texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
 }
