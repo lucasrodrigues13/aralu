@@ -1,6 +1,6 @@
 # 018. Serviços e fornecedores
 
-**Status: rascunho (revisão do card #27: busca e "Cadastrar novo serviço" no seletor de serviços do fornecedor; aguarda aprovação do dono do projeto).** Fonte: [inventario-referencia.md](../inventario-referencia.md) §1.9, §1.10, §1.11, §1.12 e §1.13. Catálogo de modelos de serviço do funil permanece na SPEC-026.
+**Status: aprovada (revisão do card #27: busca e "Cadastrar novo serviço" no seletor de serviços do fornecedor).** O código segue esta spec. Fonte: [inventario-referencia.md](../inventario-referencia.md) §1.9, §1.10, §1.11, §1.12 e §1.13. Catálogo de modelos de serviço do funil permanece na SPEC-026.
 
 ## 1. Identificador e nome
 
