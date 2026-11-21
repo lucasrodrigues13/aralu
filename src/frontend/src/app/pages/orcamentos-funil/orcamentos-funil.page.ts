@@ -20,6 +20,7 @@ import { CampoDinheiroComponent } from '../../shared/campo-dinheiro';
 import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { linkProposta, SELO_PROPOSTA, whatsappProposta } from '../../shared/proposta';
+import { ParcelasOrcamentoDialog } from './parcelas-orcamento.dialog';
 
 @Component({
   selector: 'app-orcamento-funil-dialog',
@@ -295,6 +296,7 @@ export class RespostaManualDialog {
             <td mat-cell *matCellDef="let item" class="text-end! whitespace-nowrap">
               @if (item.situacao === 'EmAndamento') {
                 <button mat-icon-button type="button" matTooltip="Editar" (click)="abrir(item)"><mat-icon>edit</mat-icon></button>
+                <button mat-icon-button type="button" matTooltip="Parcelas" (click)="parcelar(item)"><mat-icon>payments</mat-icon></button>
                 <button mat-icon-button type="button" matTooltip="Enviar proposta" (click)="enviar(item)"><mat-icon>send</mat-icon></button>
                 <button mat-icon-button type="button" matTooltip="Registrar resposta" (click)="responder(item)"><mat-icon>mark_email_read</mat-icon></button>
                 <button mat-icon-button type="button" matTooltip="Cancelar" (click)="cancelar(item)"><mat-icon>cancel</mat-icon></button>
@@ -343,6 +345,14 @@ export class OrcamentosFunilPage implements OnInit {
 
   protected abrir(item?: OrcamentoFunil): void {
     this.dialog.open(OrcamentoFunilDialog, { ...DIALOG, data: item ?? null }).afterClosed().subscribe((ok) => ok && this.carregar());
+  }
+
+  protected parcelar(item: OrcamentoFunil): void {
+    if (!item.valor || item.valor <= 0) {
+      this.toast.erro('Informe o valor do orçamento antes de parcelar.');
+      return;
+    }
+    this.dialog.open(ParcelasOrcamentoDialog, { ...DIALOG, data: item }).afterClosed().subscribe((ok) => ok && this.carregar());
   }
 
   /** Gera o link e abre as opções de envio (SPEC-031 §6.6). */

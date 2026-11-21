@@ -54,7 +54,8 @@ public sealed record PropostaPublica(
     string? Resposta,
     string? RespostaMensagem,
     DateTimeOffset? RespostaEm,
-    bool DaPropriaConta = false);
+    bool DaPropriaConta = false,
+    IReadOnlyList<ParcelaOrcamentoLeitura>? Parcelas = null);
 
 public sealed record ResponderProposta(string? Tipo, string? Mensagem);
 
@@ -250,6 +251,17 @@ public sealed class OrcamentoFunilServico(IDados dados)
         await dados.SubstituirParcelasOrcamentoAsync(item.Id, novas, ct);
         item.Parcelas.Clear();
         item.Parcelas.AddRange(novas);
+        if (item.TokenLink is not null)
+        {
+            // SPEC-041 §17, ponto 1: mudar as parcelas depois de enviar vale como mudar a proposta; o aceite
+            // anterior não vale para o novo parcelamento e a proposta volta a "ainda não foi aberta".
+            item.AbertoEm = null;
+            item.Resposta = null;
+            item.RespostaMensagem = null;
+            item.RespostaEm = null;
+            await dados.SalvarNegocioAsync(ct);
+        }
+
         return Resultado<OrcamentoFunilLeitura>.Sucesso(await LerAsync(contaId, item, ct));
     }
 
@@ -557,7 +569,11 @@ public sealed class OrcamentoFunilServico(IDados dados)
             item.ValidoAte,
             item.Resposta?.ToString(),
             item.RespostaMensagem,
-            item.RespostaEm);
+            item.RespostaEm,
+            Parcelas: item.Parcelas
+                .OrderBy(parcela => parcela.Numero)
+                .Select(parcela => new ParcelaOrcamentoLeitura(parcela.Numero, parcela.Vencimento, parcela.Valor, parcela.Entrada))
+                .ToArray());
     }
 
     private async Task<Resultado<OrcamentoFunilLeitura>> MudarAsync(

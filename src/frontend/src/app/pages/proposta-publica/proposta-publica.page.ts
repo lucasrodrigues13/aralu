@@ -42,6 +42,19 @@ const RESPONDIDO: Record<RespostaProposta, { titulo: string; texto: string; icon
                 <strong>{{ p.valor | gdDinheiro }}</strong>
               </div>
             }
+            @if (p.parcelas && p.parcelas.length > 0) {
+              <div class="parcelas">
+                <h2>Forma de pagamento</h2>
+                <ul>
+                  @for (parcela of p.parcelas; track parcela.numero) {
+                    <li>
+                      <span>{{ parcela.entrada ? 'Entrada' : 'Parcela ' + parcela.numero }} · {{ parcela.vencimento | gdData }}</span>
+                      <strong>{{ parcela.valor | gdDinheiro }}</strong>
+                    </li>
+                  }
+                </ul>
+              </div>
+            }
           </mat-card-content></mat-card>
 
           @if (p.daPropriaConta) {
@@ -122,6 +135,9 @@ const RESPONDIDO: Record<RespostaProposta, { titulo: string; texto: string; icon
     .texto { white-space: pre-wrap; font-size: 15px; line-height: 1.7; overflow-wrap: anywhere; }
     .valor { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--mat-sys-outline-variant); }
     .valor strong { font-size: 22px; }
+    .parcelas { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--mat-sys-outline-variant); }
+    .parcelas ul { list-style: none; margin: 0; padding: 0; }
+    .parcelas li { display: flex; justify-content: space-between; gap: 16px; padding: 6px 0; font-size: 14px; }
     .botoes { display: grid; gap: 12px; }
     @media (min-width: 560px) { .botoes { grid-template-columns: repeat(3, 1fr); } }
     .botoes button { min-height: 44px; }
