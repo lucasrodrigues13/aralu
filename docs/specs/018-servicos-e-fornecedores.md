@@ -2,6 +2,8 @@
 
 **Status: aprovada (revisão do card #27: busca e "Cadastrar novo serviço" no seletor de serviços do fornecedor).** O código segue esta spec. Fonte: [inventario-referencia.md](../inventario-referencia.md) §1.9, §1.10, §1.11, §1.12 e §1.13. Catálogo de modelos de serviço do funil permanece na SPEC-026.
 
+> **Card #29 (21/11/2026, [SPEC-047](047-graficos-de-orcamento-no-evento.md)).** O modal "Planejamento de budget" (§12) foi substituído por cards com gráficos no topo da aba Fornecedores; os números e as regras do §8 não mudaram. O critério 6 vale para os gráficos (indicadores e barras), não mais para um modal; o estimado e os subitens seguem editáveis pelo botão "Estimado" de cada serviço.
+
 > **Card #41 (21/11/2026, [SPEC-040](040-parcelas-por-documento.md)).** `ParcelaServico` saiu do banco. Ao contratar, o sistema cria o `ContratoFornecedor` do serviço, com as parcelas a pagar (mesma estrutura e mesmo gerador). A leitura do serviço (`parcelas`), a aba Fornecedores, a aba Dinheiro do evento, a tela Pagamentos e a tela Hoje leem dele. O serviço "Assessoria e Organização" e `POST /eventos/{id}/assessoria` saíram.
 
 > **Card #28 (21/11/2026, [SPEC-045](045-contratar-fornecedor-e-contrato-assinado.md)).** "Adicionar fornecedor" escolhe o fornecedor e depois os serviços (marcação múltipla). **Contratar** pede só o valor, sem parcelas (o parcelamento é feito na aba Dinheiro, SPEC-043), e aceita o contrato assinado, guardado no `ContratoFornecedor`. Onde esta spec diz que Contratar gera parcelas (itens 4 e 58 da seção 6, item 5 da 14, e o cenário da seção 15), vale a SPEC-045. Contratar de novo mantém o contrato existente.
