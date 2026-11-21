@@ -5,7 +5,7 @@ function escapar(texto: string): string {
 }
 
 /**
- * "Ver como fica" (SPEC-030 §6.1): troca cada {{marca}} conhecida pelo exemplo, destacado em <mark>.
+ * "Ver como fica" (SPEC-030 v3 §6.1): troca cada {{marca}} conhecida pelo exemplo, destacado em <mark>.
  * O texto é escapado antes, então só o <mark> e o <br> entram como HTML.
  */
 export function previaDestacada(texto: string, campos: CampoMesclagem[]): string {

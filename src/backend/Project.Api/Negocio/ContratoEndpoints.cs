@@ -6,7 +6,7 @@ using Project.Application.Negocio;
 
 namespace Project.Api.Negocio;
 
-/// <summary>Contratos da conta, do modelo e do evento, e leitura sem login (SPEC-030 v2).</summary>
+/// <summary>Cadastro de contratos da conta, sem vínculo com modelo nem evento (SPEC-030 v3).</summary>
 public static class ContratoEndpoints
 {
     private static readonly string[] AdminOuOrganizer = [Papeis.Admin, Papeis.Organizer];
@@ -22,17 +22,6 @@ public static class ContratoEndpoints
         cadastro.MapPut("/{id:guid}", Atualizar);
         cadastro.MapDelete("/{id:guid}", Excluir);
 
-        var api = app.MapGroup("/api/v1").RequireAuthorization(AssistenteEndpoints.PoliticaFinanceiro);
-        api.AddEndpointFilter(EscopoAssistente.Filtro);
-        api.MapGet("/modelos/{id:guid}/contratos", DoModelo);
-        api.MapPut("/modelos/{id:guid}/contratos", VincularAoModelo);
-        api.MapGet("/eventos/{id:guid}/contratos", DoEvento);
-        api.MapPost("/eventos/{id:guid}/contratos/{contratoId:guid}", AdicionarAoEvento);
-        api.MapDelete("/eventos/{id:guid}/contratos/{contratoId:guid}", RemoverDoEvento);
-        api.MapGet("/eventos/{id:guid}/contratos/{contratoId:guid}/texto", Preenchido);
-        api.MapPost("/eventos/{id:guid}/contratos/{contratoId:guid}/enviar", Enviar);
-
-        app.MapGet("/api/v1/publico/contratos/{token}", Publico);
     }
 
     private static Task<IResult> Listar(ClaimsPrincipal usuario, ContratoServico servico, CancellationToken ct) =>
@@ -49,30 +38,6 @@ public static class ContratoEndpoints
 
     private static Task<IResult> Excluir(Guid id, ClaimsPrincipal usuario, ContratoServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.ExcluirAsync(conta, id, ct)));
-
-    private static Task<IResult> DoModelo(Guid id, ClaimsPrincipal usuario, ContratoServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.DoModeloAsync(conta, id, ct)));
-
-    private static Task<IResult> VincularAoModelo(Guid id, VincularContratos pedido, ClaimsPrincipal usuario, ContratoServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.VincularAoModeloAsync(conta, id, pedido, ct)));
-
-    private static Task<IResult> DoEvento(Guid id, ClaimsPrincipal usuario, ContratoServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.DoEventoAsync(conta, id, ct)));
-
-    private static Task<IResult> AdicionarAoEvento(Guid id, Guid contratoId, ClaimsPrincipal usuario, ContratoServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.AdicionarAoEventoAsync(conta, id, contratoId, ct)));
-
-    private static Task<IResult> RemoverDoEvento(Guid id, Guid contratoId, ClaimsPrincipal usuario, ContratoServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.RemoverDoEventoAsync(conta, id, contratoId, ct)));
-
-    private static Task<IResult> Preenchido(Guid id, Guid contratoId, ClaimsPrincipal usuario, ContratoServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.PreenchidoAsync(conta, id, contratoId, Hoje(), ct)));
-
-    private static Task<IResult> Enviar(Guid id, Guid contratoId, ClaimsPrincipal usuario, ContratoServico servico, IConfiguration configuracao, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.EnviarAsync(conta, id, contratoId, configuracao["PublicUrl"] ?? "", ct)));
-
-    private static Task<IResult> Publico(string token, ContratoServico servico, CancellationToken ct) =>
-        De(servico.PublicoAsync(token, Hoje(), ct));
 
     private static Task<IResult> ComConta(ClaimsPrincipal usuario, Func<string, Task<IResult>> acao)
     {
@@ -101,6 +66,4 @@ public static class ContratoEndpoints
                     _ => StatusCodes.Status400BadRequest,
                 });
     }
-
-    private static DateOnly Hoje() => DateOnly.FromDateTime(DateTime.UtcNow);
 }

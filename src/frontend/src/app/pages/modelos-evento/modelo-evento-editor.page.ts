@@ -9,8 +9,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTabsModule } from '@angular/material/tabs';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { ContratoClient, ContratoResumo } from '../../core/contrato.client';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import {
   Briefing,
@@ -30,7 +28,7 @@ import { ImportarTarefasModeloDialog } from './importar-tarefas-modelo.dialog';
 
 @Component({
   selector: 'app-modelo-evento-editor',
-  imports: [MatCardModule, ReactiveFormsModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatTabsModule, MatIconModule, MatCheckboxModule, CampoDinheiroComponent],
+  imports: [MatCardModule, ReactiveFormsModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatTabsModule, MatIconModule, CampoDinheiroComponent],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6 flex flex-wrap items-center justify-between gap-4">
@@ -192,20 +190,6 @@ import { ImportarTarefasModeloDialog } from './importar-tarefas-modelo.dialog';
                 </mat-form-field>
               </div>
             </mat-tab>
-            <mat-tab label="Contratos">
-              <p class="text-sm text-muted mb-4">Os contratos marcados entram nos eventos criados a partir deste modelo.</p>
-              @if (contratos().length === 0) {
-                <p class="text-center text-muted py-10">Nenhum contrato cadastrado. Cadastre em <a routerLink="/contratos">Contratos</a>.</p>
-              } @else {
-                <div class="flex flex-col gap-1">
-                  @for (contrato of contratos(); track contrato.id) {
-                    <mat-checkbox [checked]="contratosDoModelo().has(contrato.id)" (change)="marcarContrato(contrato.id, $event.checked)">
-                      {{ contrato.nome }}
-                    </mat-checkbox>
-                  }
-                </div>
-              }
-            </mat-tab>
             <mat-tab label="RSVP e Mensagens">
               <div class="campo w-full sm:w-80">
                 <mat-label class="font-semibold mb-2 block">Modelo de mensagem</mat-label>
@@ -241,9 +225,6 @@ export class ModeloEventoEditorPage implements OnInit {
   protected readonly inspiracoes = signal<Inspiracao[]>([]);
   protected readonly mensagens = signal<MensagemModelo[]>([]);
   private readonly vinculosMap = signal<Record<string, string>>({});
-  private readonly contratoClient = inject(ContratoClient);
-  protected readonly contratos = signal<ContratoResumo[]>([]);
-  protected readonly contratosDoModelo = signal<ReadonlySet<string>>(new Set());
   private id = '';
 
   protected readonly form = this.fb.group({
@@ -278,8 +259,6 @@ export class ModeloEventoEditorPage implements OnInit {
     this.negocio.roteiros().subscribe({ next: (lista) => this.roteiros.set(lista) });
     this.negocio.inspiracoes().subscribe({ next: (lista) => this.inspiracoes.set(lista) });
     this.negocio.mensagens().subscribe({ next: (lista) => this.mensagens.set(lista) });
-    this.contratoClient.listar().subscribe({ next: (lista) => this.contratos.set(lista) });
-    this.contratoClient.doModelo(this.id).subscribe({ next: (ids) => this.contratosDoModelo.set(new Set(ids)) });
     this.negocio.modelo(this.id).subscribe({
       next: (modelo) => {
         this.form.patchValue({
@@ -375,14 +354,6 @@ export class ModeloEventoEditorPage implements OnInit {
     return exibirPrazo(prazoParaDias(qtd, raw.unidade));
   }
 
-  protected marcarContrato(id: string, marcado: boolean): void {
-    this.contratosDoModelo.update((atual) => {
-      const proximo = new Set(atual);
-      if (marcado) proximo.add(id); else proximo.delete(id);
-      return proximo;
-    });
-  }
-
   protected salvar(): void {
     const valor = this.form.getRawValue() as {
       nome: string | null;
@@ -411,12 +382,7 @@ export class ModeloEventoEditorPage implements OnInit {
       }),
       vinculos,
     }).subscribe({
-      next: () => {
-        this.contratoClient.vincularAoModelo(this.id, [...this.contratosDoModelo()]).subscribe({
-          next: () => this.toast.sucesso('Modelo salvo.'),
-          error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
-        });
-      },
+      next: () => this.toast.sucesso('Modelo salvo.'),
       error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
     });
   }

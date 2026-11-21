@@ -7,12 +7,12 @@ public class MesclagemTests
     [Fact]
     public void Troca_marcas_conhecidas_e_deixa_linha_quando_falta_dado()
     {
-        var texto = "Contratante: {{contratante_nome}}, CPF {{ contratante_documento }}. Valor {{contrato_valor}}.";
-        var valores = new Dictionary<string, string?> { ["contratante_nome"] = "Ana Souza", ["contrato_valor"] = "R$ 10,00" };
+        var texto = "Contratante: {{contratante_nome}}, CPF {{ contratante_documento }}. Pix {{contratada_pix}}.";
+        var valores = new Dictionary<string, string?> { ["contratante_nome"] = "Ana Souza", ["contratada_pix"] = "a@b.com" };
 
         var preenchido = Mesclagem.Preencher(texto, valores);
 
-        Assert.Equal("Contratante: Ana Souza, CPF ________. Valor R$ 10,00.", preenchido);
+        Assert.Equal("Contratante: Ana Souza, CPF ________. Pix a@b.com.", preenchido);
     }
 
     [Fact]
@@ -22,12 +22,19 @@ public class MesclagemTests
     }
 
     [Fact]
-    public void Link_vale_ate_expirar()
+    public void Campos_nao_dependem_do_evento()
     {
-        var agora = DateTimeOffset.UtcNow;
-        var link = new LinkLeituraContrato { ExpiraEm = agora.Add(Mesclagem.ValidadeLink) };
+        var marcas = Mesclagem.Campos.Select(campo => campo.Marca).ToArray();
 
-        Assert.True(link.Valido(agora));
-        Assert.False(link.Valido(agora.AddDays(8)));
+        Assert.DoesNotContain(marcas, marca => marca.StartsWith("evento_", StringComparison.Ordinal));
+        Assert.DoesNotContain("contrato_valor", marcas);
+        Assert.DoesNotContain("contrato_parcelas", marcas);
+        Assert.Contains("contratante_nome", marcas);
+    }
+
+    [Fact]
+    public void Marca_removida_fica_no_texto()
+    {
+        Assert.Equal("{{evento_nome}}", Mesclagem.Preencher("{{evento_nome}}", new Dictionary<string, string?> { ["evento_nome"] = "X" }));
     }
 }
