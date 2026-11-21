@@ -117,6 +117,7 @@ public class AssistentesFluxoTests
             nome = "Lead pendente",
             estagio = "Contato inicial",
             contatos = new[] { new { nome = "Lia", telefone = "11977770002", email = "lia2@ex.com" } },
+                contratante = ContratanteDeTeste.Completo,
         }));
         var tarefaFunil = await Ler(await dona.PostAsJsonAsync("/api/v1/tarefas-funil", new
         {
@@ -254,13 +255,19 @@ public class AssistentesFluxoTests
                 nome,
                 estagio = "Contato inicial",
                 contatos = new[] { new { nome = "Lia", telefone = "11977770002", email = "lia2@ex.com" } },
+                contratante = ContratanteDeTeste.Completo,
             }))).GetProperty("id").GetGuid();
 
         async Task<Guid> Orcamento(HttpClient quem, Guid lead) =>
             (await Ler(await quem.PostAsJsonAsync("/api/v1/orcamentos-funil", new { oportunidadeId = lead, conteudo = "Proposta" }))).GetProperty("id").GetGuid();
 
-        async Task<Guid> Contrato(HttpClient quem, Guid lead) =>
-            (await Ler(await quem.PostAsJsonAsync("/api/v1/contratos-funil", new { oportunidadeId = lead, conteudo = "Contrato" }))).GetProperty("id").GetGuid();
+        async Task<Guid> Contrato(HttpClient quem, Guid lead)
+        {
+            // Contrato só nasce com orçamento aprovado (SPEC-050).
+            var aprovado = await Orcamento(quem, lead);
+            Assert.Equal(HttpStatusCode.OK, (await quem.PostAsJsonAsync($"/api/v1/orcamentos-funil/{aprovado}/responder", new { tipo = "Aceitar" })).StatusCode);
+            return (await Ler(await quem.PostAsJsonAsync("/api/v1/contratos-funil", new { oportunidadeId = lead, conteudo = "Contrato" }))).GetProperty("id").GetGuid();
+        }
 
         async Task<Guid> Tarefa(HttpClient quem, Guid lead) =>
             (await Ler(await quem.PostAsJsonAsync("/api/v1/tarefas-funil", new

@@ -90,12 +90,25 @@ public class FunilFluxoTests
         }));
         Assert.Contains("Casamento Ana", orcamento.GetProperty("conteudo").GetString());
 
+        // O lead descartado perdeu os dados sensíveis; o contrato sai de outra oportunidade com orçamento aprovado (SPEC-050).
+        var fechando = await Ler(await dono.PostAsJsonAsync("/api/v1/oportunidades", new
+        {
+            nome = "Casamento Bia",
+            estagio = "Contato inicial",
+            contatos = new[] { new { nome = "Bia", telefone = "11999990000" } },
+            contratante = ContratanteDeTeste.Completo,
+        }));
+        var fechandoId = fechando.GetProperty("id").GetGuid();
+        var semAprovar = await dono.PostAsJsonAsync("/api/v1/contratos-funil", new { oportunidadeId = fechandoId, modeloId = modeloContrato.GetProperty("id").GetGuid() });
+        Assert.Equal(HttpStatusCode.BadRequest, semAprovar.StatusCode);
+        var proposta = await Ler(await dono.PostAsJsonAsync("/api/v1/orcamentos-funil", new { oportunidadeId = fechandoId, conteudo = "Proposta", valor = 5000 }));
+        Assert.Equal(HttpStatusCode.OK, (await dono.PostAsJsonAsync($"/api/v1/orcamentos-funil/{proposta.GetProperty("id").GetGuid()}/responder", new { tipo = "Aceitar" })).StatusCode);
         var contrato = await Ler(await dono.PostAsJsonAsync("/api/v1/contratos-funil", new
         {
-            oportunidadeId,
+            oportunidadeId = fechandoId,
             modeloId = modeloContrato.GetProperty("id").GetGuid(),
         }));
-        Assert.Contains("Casamento Ana", contrato.GetProperty("conteudo").GetString());
+        Assert.Equal("Contrato de Maria da Silva", contrato.GetProperty("conteudo").GetString());
         Assert.Single((await Ler(await dono.GetAsync("/api/v1/contratos-funil/modelos"))).EnumerateArray());
 
         var tarefa = await Ler(await dono.PostAsJsonAsync("/api/v1/tarefas-funil", new

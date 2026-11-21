@@ -22,14 +22,19 @@ public class MesclagemTests
     }
 
     [Fact]
-    public void Campos_nao_dependem_do_evento()
+    public void Lista_unica_traz_as_tags_do_card_39()
     {
         var marcas = Mesclagem.Campos.Select(campo => campo.Marca).ToArray();
 
-        Assert.DoesNotContain(marcas, marca => marca.StartsWith("evento_", StringComparison.Ordinal));
-        Assert.DoesNotContain("contrato_valor", marcas);
-        Assert.DoesNotContain("contrato_parcelas", marcas);
-        Assert.Contains("contratante_nome", marcas);
+        string[] esperadas =
+        [
+            "contratante_nome", "contratante_documento", "contratante_endereco", "contratante_email", "contratante_telefone",
+            "contratante_estado_civil", "contratante_nacionalidade", "contratada_nome", "contratada_endereco",
+            "evento_tipo", "evento_data", "evento_local_cerimonia", "evento_local_recepcao", "evento_convidados",
+            "contrato_valor", "contrato_parcelas", "data_hoje",
+        ];
+        Assert.All(esperadas, marca => Assert.Contains(marca, marcas));
+        Assert.Equal(marcas.Length, marcas.Distinct().Count());
     }
 
     [Fact]

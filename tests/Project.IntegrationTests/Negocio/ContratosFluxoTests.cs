@@ -32,7 +32,10 @@ public class ContratosFluxoTests
         Assert.Equal(HttpStatusCode.NotFound, (await outra.GetAsync($"/api/v1/contratos/{contratoId}")).StatusCode);
 
         var campos = await Ler(await dono.GetAsync("/api/v1/contratos/campos"));
-        Assert.DoesNotContain(campos.GetProperty("campos").EnumerateArray(), item => item.GetProperty("marca").GetString()!.StartsWith("evento_"));
+        var marcas = campos.GetProperty("campos").EnumerateArray().Select(item => item.GetProperty("marca").GetString()).ToArray();
+        Assert.Contains("evento_data", marcas);
+        Assert.Contains("contrato_valor", marcas);
+        Assert.Contains("contrato_parcelas", marcas);
 
         var modelo = await Ler(await dono.PostAsJsonAsync("/api/v1/modelos", new { nome = "Casamento clássico", tipo = "Casamento" }));
         var modeloId = modelo.GetProperty("id").GetGuid();

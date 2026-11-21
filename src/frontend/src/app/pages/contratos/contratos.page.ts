@@ -128,7 +128,7 @@ export class ContratoDialog {
       <div class="p-6 flex flex-wrap items-center justify-between gap-4">
       <div>
         <mat-card-title class="mb-0">Modelos de Contrato</mat-card-title>
-        <mat-card-subtitle>Modelos dos contratos que você envia aos clientes, para orçamentos aprovados. Os campos puxam os dados do cliente e da sua empresa.</mat-card-subtitle>
+        <mat-card-subtitle>Modelos dos contratos que você envia aos clientes, para orçamentos aprovados. Os campos puxam os dados do contratante, do evento, do orçamento aprovado e da sua empresa.</mat-card-subtitle>
       </div>
       <button mat-flat-button type="button" (click)="abrir()"><mat-icon>add</mat-icon> Novo modelo</button>
     </div>
