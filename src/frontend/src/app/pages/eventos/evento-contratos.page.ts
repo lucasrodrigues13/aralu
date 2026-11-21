@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -12,7 +13,7 @@ import { montarContratosDoEvento } from './contratos-do-evento';
 /** Aba Contratos do evento: contratos de fornecedor enviados ao sistema, pelo organizador ou pelo casal (SPEC-048). */
 @Component({
   selector: 'app-evento-contratos',
-  imports: [MatCardModule, MatButtonModule, MatIconModule, EventoAbasComponent],
+  imports: [DatePipe, MatCardModule, MatButtonModule, MatIconModule, EventoAbasComponent],
   template: `
     <app-evento-abas [eventoId]="id" />
     <mat-card class="cardWithShadow">
@@ -36,6 +37,8 @@ import { montarContratosDoEvento } from './contratos-do-evento';
                   <th class="py-2 pr-4">Fornecedor</th>
                   <th class="py-2 pr-4">Serviço</th>
                   <th class="py-2 pr-4">Arquivo</th>
+                  <th class="py-2 pr-4">Enviado por</th>
+                  <th class="py-2 pr-4">Data</th>
                   <th class="py-2 text-end"><span class="sr-only">Ações</span></th>
                 </tr>
               </thead>
@@ -45,6 +48,8 @@ import { montarContratosDoEvento } from './contratos-do-evento';
                     <td class="py-2 pr-4">{{ contrato.fornecedores.length ? contrato.fornecedores.join(', ') : '—' }}</td>
                     <td class="py-2 pr-4">{{ contrato.servico }}</td>
                     <td class="py-2 pr-4"><mat-icon class="align-middle mr-1">description</mat-icon>{{ contrato.nome }}</td>
+                    <td class="py-2 pr-4">{{ contrato.enviadoPor ?? "—" }}</td>
+                    <td class="py-2 pr-4">{{ contrato.enviadoEm ? (contrato.enviadoEm | date: "dd/MM/yyyy") : "—" }}</td>
                     <td class="py-2 text-end whitespace-nowrap">
                       <button mat-stroked-button type="button" (click)="abrir(contrato.arquivoId, false)"><mat-icon>open_in_new</mat-icon> Abrir</button>
                       <button mat-stroked-button type="button" class="ml-2" (click)="abrir(contrato.arquivoId, true, contrato.nome)"><mat-icon>download</mat-icon> Baixar</button>

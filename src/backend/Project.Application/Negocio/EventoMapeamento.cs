@@ -86,7 +86,9 @@ public static class EventoMapeamento
                             arquivoId,
                             servico.Contrato.ContratoAssinadoNome ?? "contrato",
                             servico.Contrato.ContratoAssinadoTipoConteudo ?? "application/octet-stream")
-                        : null))
+                        : null,
+                    servico.Contrato?.ContratoAssinadoEnviadoPor,
+                    servico.Contrato?.ContratoAssinadoEnviadoEm))
                 .ToArray(),
             tarefas.Count(tarefa => tarefa.Situacao == SituacaoTarefa.Concluida),
             tarefas.Count,

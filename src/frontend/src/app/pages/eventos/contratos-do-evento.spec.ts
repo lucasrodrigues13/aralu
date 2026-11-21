@@ -11,7 +11,7 @@ function servico(parcial: Partial<EventoServico>): EventoServico {
 describe('contratos-do-evento', () => {
   it('lista só serviços com contrato enviado, com o fornecedor contratado, por serviço', () => {
     const lista = montarContratosDoEvento([
-      servico({ id: '1', nome: 'Música', contratoAssinado: { arquivoId: 'a1', nome: 'm.pdf', tipoConteudo: 'application/pdf' },
+      servico({ id: '1', nome: 'Música', contratoAssinado: { arquivoId: 'a1', nome: 'm.pdf', tipoConteudo: 'application/pdf' }, contratoAssinadoPor: 'Casal', contratoAssinadoEm: '2026-11-20',
         fornecedores: [{ id: 'v', fornecedorId: 'f', fornecedor: 'DJ Léo', etapa: 'Contratado', valorOrcamento: null, observacoes: null }] }),
       servico({ id: '2', nome: 'Buffet' }),
       servico({ id: '3', nome: 'Bolo', contratoAssinado: { arquivoId: 'a3', nome: 'b.png', tipoConteudo: 'image/png' },
@@ -21,6 +21,9 @@ describe('contratos-do-evento', () => {
     expect(lista[0].fornecedores).toEqual([]);
     expect(lista[1].fornecedores).toEqual(['DJ Léo']);
     expect(lista[1].arquivoId).toBe('a1');
+    expect(lista[1].enviadoPor).toBe('Casal');
+    expect(lista[1].enviadoEm).toBe('2026-11-20');
+    expect(lista[0].enviadoPor).toBeNull();
   });
 
   it('sem contratos: lista vazia', () => {

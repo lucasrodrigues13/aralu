@@ -248,6 +248,7 @@ public static class Mapa
         contratoFornecedor.Property(item => item.ComprovanteNome).HasMaxLength(260);
         contratoFornecedor.Property(item => item.ContratoAssinadoNome).HasMaxLength(260);
         contratoFornecedor.Property(item => item.ContratoAssinadoTipoConteudo).HasMaxLength(100);
+        contratoFornecedor.Property(item => item.ContratoAssinadoEnviadoPor).HasMaxLength(20);
         contratoFornecedor.Property(item => item.ComprovanteTipoConteudo).HasMaxLength(100);
 
         var recebimento = modelBuilder.Entity<Project.Domain.Dinheiro.RecebimentoParcela>();

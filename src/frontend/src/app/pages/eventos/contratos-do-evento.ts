@@ -8,6 +8,10 @@ export interface ContratoDoEvento {
   arquivoId: string;
   nome: string;
   tipoConteudo: string;
+  /** "Organizadora", "Casal" ou nulo (contrato enviado antes do registro). */
+  enviadoPor: string | null;
+  /** Data do envio (AAAA-MM-DD) ou nulo. */
+  enviadoEm: string | null;
 }
 
 /** Contratos de fornecedor enviados ao sistema no evento: um arquivo por serviço (SPEC-048 §6). */
@@ -21,6 +25,8 @@ export function montarContratosDoEvento(servicos: EventoServico[]): ContratoDoEv
       arquivoId: servico.contratoAssinado!.arquivoId,
       nome: servico.contratoAssinado!.nome,
       tipoConteudo: servico.contratoAssinado!.tipoConteudo,
+      enviadoPor: servico.contratoAssinadoPor ?? null,
+      enviadoEm: servico.contratoAssinadoEm ?? null,
     }))
     .sort((a, b) => a.servico.localeCompare(b.servico, 'pt-BR'));
 }

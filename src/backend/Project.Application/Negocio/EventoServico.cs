@@ -71,7 +71,9 @@ public sealed record ServicoLeitura(
     IReadOnlyList<ParcelaLeitura> Parcelas,
     IReadOnlyList<SubitemLeitura> Subitens,
     IReadOnlyList<FornecedorNoServicoLeitura> Fornecedores,
-    ComprovantePagamentoLeitura? ContratoAssinado = null);
+    ComprovantePagamentoLeitura? ContratoAssinado = null,
+    string? ContratoAssinadoPor = null,
+    DateOnly? ContratoAssinadoEm = null);
 
 public sealed record LocalLeitura(
     string? Nome,

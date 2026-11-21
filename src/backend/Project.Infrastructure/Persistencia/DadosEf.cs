@@ -341,14 +341,16 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         await banco.SaveChangesAsync(ct);
     }
 
-    public Task GravarContratoAssinadoAsync(Guid servicoId, Guid? arquivoId, string? nome, string? tipoConteudo, CancellationToken ct) =>
+    public Task GravarContratoAssinadoAsync(Guid servicoId, Guid? arquivoId, string? nome, string? tipoConteudo, string? enviadoPor, DateOnly? enviadoEm, CancellationToken ct) =>
         banco.Set<ContratoFornecedor>()
             .Where(item => item.ServicoId == servicoId)
             .ExecuteUpdateAsync(
                 atualizacao => atualizacao
                     .SetProperty(item => item.ContratoAssinadoArquivoId, arquivoId)
                     .SetProperty(item => item.ContratoAssinadoNome, nome)
-                    .SetProperty(item => item.ContratoAssinadoTipoConteudo, tipoConteudo),
+                    .SetProperty(item => item.ContratoAssinadoTipoConteudo, tipoConteudo)
+                    .SetProperty(item => item.ContratoAssinadoEnviadoPor, enviadoPor)
+                    .SetProperty(item => item.ContratoAssinadoEnviadoEm, enviadoEm),
                 ct);
 
     public Task AtualizarEtapaNegociacaoAsync(

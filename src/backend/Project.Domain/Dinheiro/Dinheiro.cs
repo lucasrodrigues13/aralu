@@ -104,6 +104,11 @@ public sealed class ContratoFornecedor
 
     public string? ContratoAssinadoTipoConteudo { get; set; }
 
+    /// <summary>Quem enviou o contrato assinado: "Organizadora" ou "Casal" (SPEC-048). Nulo em contratos anteriores ao campo.</summary>
+    public string? ContratoAssinadoEnviadoPor { get; set; }
+
+    public DateOnly? ContratoAssinadoEnviadoEm { get; set; }
+
     public bool EstaPago => Parcelas.Count > 0 ? Parcelas.All(parcela => parcela.Situacao == SituacaoParcela.Pago) : Pago;
 
     /// <summary>Marca ou desmarca o pagamento inteiro: todas as parcelas ou, sem parcelas, o próprio contrato.</summary>

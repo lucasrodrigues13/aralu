@@ -455,7 +455,8 @@ public sealed class FornecedorServico(IDados dados, Arquivos.IArmazenamentoArqui
         Stream conteudo,
         string? nomeArquivo,
         DateOnly hoje,
-        CancellationToken ct)
+        CancellationToken ct,
+        bool peloCasal = false)
     {
         var servico = await dados.ObterServicoEventoAsync(contaId, eventoId, servicoId, ct);
         if (servico?.Contrato is null)
@@ -471,7 +472,7 @@ public sealed class FornecedorServico(IDados dados, Arquivos.IArmazenamentoArqui
 
         var arquivo = guardado.Valor!;
         var nome = arquivo.NomeOriginal.Length > 260 ? arquivo.NomeOriginal[..260] : arquivo.NomeOriginal;
-        await dados.GravarContratoAssinadoAsync(servico.Id, arquivo.Id, nome, arquivo.TipoConteudo, ct);
+        await dados.GravarContratoAssinadoAsync(servico.Id, arquivo.Id, nome, arquivo.TipoConteudo, peloCasal ? "Casal" : "Organizadora", hoje, ct);
         if (servico.Contrato.ContratoAssinadoArquivoId is Guid anterior)
         {
             await armazenamento.DescartarAsync(anterior, ct);
@@ -493,7 +494,7 @@ public sealed class FornecedorServico(IDados dados, Arquivos.IArmazenamentoArqui
             return Resultado<EventoDetalhe>.Erro(Codigos.Indisponivel, "Indisponível.");
         }
 
-        await dados.GravarContratoAssinadoAsync(servico.Id, null, null, null, ct);
+        await dados.GravarContratoAssinadoAsync(servico.Id, null, null, null, null, null, ct);
         await armazenamento.DescartarAsync(arquivoId, ct);
         return await DetalheEventoAsync(contaId, eventoId, hoje, ct);
     }
