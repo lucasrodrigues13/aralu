@@ -58,9 +58,11 @@ public class ModeloImportacaoFluxoTests
             primeiroNome = "Ana",
             segundoNome = "Bruno",
             data = "2027-06-20",
-            modeloId,
         }));
         var eventoId = evento.GetProperty("id").GetGuid();
+        // A criação não copia mais o modelo (SPEC-037): o evento nasce sem tarefas e o modelo entra por "aplicar modelo".
+        Assert.Equal(0, (await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/tarefas"))).GetArrayLength());
+        await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/aplicar-modelo", new { modeloId }));
         var tarefas1 = await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/tarefas"));
         Assert.Equal(3, tarefas1.GetArrayLength());
 

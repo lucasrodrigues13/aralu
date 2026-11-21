@@ -399,9 +399,7 @@ export interface Cliente {
   ddi: string;
   celular: string;
   telefoneFixo: string | null;
-  cpf: string | null;
-  rg: string | null;
-  cnpj: string | null;
+  documento: string | null;
   profissao: string | null;
   inscricaoMunicipal: string | null;
   religiao: string | null;
@@ -436,7 +434,6 @@ export interface Convidado {
   genero: string | null;
   faixa: string | null;
   custo: string | null;
-  rg: string | null;
   cpf: string | null;
   observacao: string | null;
   principal: boolean;

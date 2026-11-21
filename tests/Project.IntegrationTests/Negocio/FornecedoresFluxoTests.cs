@@ -36,11 +36,9 @@ public class FornecedoresFluxoTests
         Assert.True(fornecedor.GetProperty("completo").GetBoolean());
         Assert.Empty((await Ler(await outra.GetAsync("/api/v1/fornecedores"))).EnumerateArray());
         Assert.Equal(HttpStatusCode.NotFound, (await outra.GetAsync($"/api/v1/fornecedores/{fornecedorId}")).StatusCode);
-
-        var modelo = await Ler(await dono.PostAsJsonAsync("/api/v1/modelos", new { nome = "Festa", tipo = "Aniversario" }));
         var evento = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new
         {
-            modeloId = modelo.GetProperty("id").GetGuid(),
+            tipo = "Aniversario",
             primeiroNome = "Helena",
             orcamentoEstimado = 20000,
             convidadosEstimados = 100,

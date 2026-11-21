@@ -55,16 +55,8 @@ import { aplicarMascara } from '../../shared/mascaras';
               <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Telefone fixo'" matInput formControlName="telefoneFixo" gdMascara="telefone" /></mat-form-field>
             </div>
             <div class="campo">
-              <mat-label class="font-semibold mb-2 block">CPF</mat-label>
-              <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'CPF'" matInput formControlName="cpf" gdMascara="cpf" /></mat-form-field>
-            </div>
-            <div class="campo">
-              <mat-label class="font-semibold mb-2 block">RG</mat-label>
-              <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'RG'" matInput formControlName="rg" /></mat-form-field>
-            </div>
-            <div class="campo">
-              <mat-label class="font-semibold mb-2 block">CNPJ</mat-label>
-              <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'CNPJ'" matInput formControlName="cnpj" gdMascara="cnpj" /></mat-form-field>
+              <mat-label class="font-semibold mb-2 block">CPF/CNPJ</mat-label>
+              <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'CPF/CNPJ'" matInput formControlName="documento" gdMascara="documento" /></mat-form-field>
             </div>
             <div class="campo">
               <mat-label class="font-semibold mb-2 block">Profissão</mat-label>
@@ -169,9 +161,7 @@ export class ClienteFormDialog {
     ddi: this.dados?.ddi ?? '+55',
     celular: [aplicarMascara(this.dados?.celular ?? '', 'celular'), Validators.required],
     telefoneFixo: aplicarMascara(this.dados?.telefoneFixo ?? '', 'telefone'),
-    cpf: aplicarMascara(this.dados?.cpf ?? '', 'cpf'),
-    rg: this.dados?.rg ?? '',
-    cnpj: aplicarMascara(this.dados?.cnpj ?? '', 'cnpj'),
+    documento: aplicarMascara(this.dados?.documento ?? '', 'documento'),
     profissao: this.dados?.profissao ?? '',
     inscricaoMunicipal: this.dados?.inscricaoMunicipal ?? '',
     religiao: this.dados?.religiao ?? '',

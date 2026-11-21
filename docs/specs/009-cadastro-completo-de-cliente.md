@@ -58,7 +58,7 @@ Cliente cadastrado, com zero ou mais eventos. Sem situação de convite. Sem con
 
 ## 11. Dados necessários
 
-Dados pessoais: foto, nome completo, papel, nascimento, e-mail, DDI, celular, telefone fixo, CPF, RG, CNPJ, profissão, inscrição municipal, religião, observação.
+Dados pessoais: foto, nome completo, papel, nascimento, e-mail, DDI, celular, telefone fixo, CPF/CNPJ (campo único, SPEC-037; o RG saiu), profissão, inscrição municipal, religião, observação.
 
 Redes: Facebook, Instagram.
 

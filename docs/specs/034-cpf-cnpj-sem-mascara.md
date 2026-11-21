@@ -95,4 +95,4 @@ Decisões tomadas por serem a opção mais simples e conservadora (o dono pode r
 5. **Chave Pix tipo CPF/CNPJ** do fornecedor é gravada sem máscara (a chave Pix de CPF/CNPJ é só os caracteres).
 6. **Documentos nos contratos:** os campos `contratante_documento` e `contratada_documento` passam a sair sem máscara até o #39 / #43 decidirem o formato de exibição no contrato.
 7. **Migration sem volta:** `Down` não faz nada, porque a máscara é só de exibição.
-8. **RG:** não mexe aqui; sai no #42.
+8. **RG:** não mexe aqui; saiu no #42 ([SPEC-037](037-rg-fora-e-documento-unico-do-cliente.md)), que também juntou CPF e CNPJ do cliente em um campo único.

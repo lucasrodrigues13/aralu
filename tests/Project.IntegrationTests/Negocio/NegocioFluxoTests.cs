@@ -35,7 +35,7 @@ public class NegocioFluxoTests
 
         var criado = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new
         {
-            modeloId,
+            tipo = "Casamento",
             primeiroNome = "Ana",
             segundoNome = "Bruno",
             data = "2027-06-20",
@@ -48,8 +48,12 @@ public class NegocioFluxoTests
         }));
         Assert.Equal("Ana & Bruno", criado.GetProperty("nome").GetString());
         Assert.Equal("EmAndamento", criado.GetProperty("situacao").GetString());
-        Assert.Contains(criado.GetProperty("servicos").EnumerateArray(), servico => servico.GetProperty("nome").GetString() == "Buffet");
         var eventoId = criado.GetProperty("id").GetGuid();
+
+        // A criação não copia mais o modelo (SPEC-037); o pacote entra por "aplicar modelo".
+        await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/aplicar-modelo", new { modeloId }));
+        var comModelo = await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}"));
+        Assert.Contains(comModelo.GetProperty("servicos").EnumerateArray(), servico => servico.GetProperty("nome").GetString() == "Buffet");
 
         Assert.Equal(HttpStatusCode.NotFound, (await outra.GetAsync($"/api/v1/eventos/{eventoId}")).StatusCode);
 
@@ -163,7 +167,7 @@ public class NegocioFluxoTests
         Assert.NotEqual("Casa Norte", perfilAlheio.GetProperty("nomeEmpresa").GetString());
 
         var modelo = await Ler(await dono.PostAsJsonAsync("/api/v1/modelos", new { nome = "Aniversário", tipo = "Aniversario" }));
-        var evento = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new { modeloId = modelo.GetProperty("id").GetGuid(), primeiroNome = "Helena" }));
+        var evento = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new { tipo = "Aniversario", primeiroNome = "Helena" }));
         var eventoId = evento.GetProperty("id").GetGuid();
         var semNome = await dono.PostAsJsonAsync("/api/v1/clientes", new { papel = "Noiva", email = "ana@exemplo.com", celular = "11999999999" });
         Assert.Equal(HttpStatusCode.BadRequest, semNome.StatusCode);
@@ -380,8 +384,7 @@ public class NegocioFluxoTests
     {
         var dono = await Entrar();
         var outra = await Entrar();
-        var modelo = await Ler(await dono.PostAsJsonAsync("/api/v1/modelos", new { nome = "Formatura", tipo = "Formatura" }));
-        var evento = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new { modeloId = modelo.GetProperty("id").GetGuid(), primeiroNome = "Turma" }));
+        var evento = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new { tipo = "Formatura", primeiroNome = "Turma" }));
         var eventoId = evento.GetProperty("id").GetGuid();
 
         Assert.Equal(HttpStatusCode.BadRequest, (await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/convites", new { nome = "Mesa 1" })).StatusCode);
@@ -439,8 +442,7 @@ public class NegocioFluxoTests
     public async Task Painel_conta_os_eventos_e_imagem_respeita_o_arquivo()
     {
         var dono = await Entrar();
-        var modelo = await Ler(await dono.PostAsJsonAsync("/api/v1/modelos", new { nome = "Corporativo", tipo = "Corporativo" }));
-        var evento = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new { modeloId = modelo.GetProperty("id").GetGuid(), primeiroNome = "Empresa" }));
+        var evento = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new { tipo = "Corporativo", primeiroNome = "Empresa" }));
         var eventoId = evento.GetProperty("id").GetGuid();
         var painel = await Ler(await dono.GetAsync("/api/v1/painel"));
         Assert.True(painel.GetProperty("emAndamento").GetInt32() >= 1);

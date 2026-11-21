@@ -23,10 +23,9 @@ public class ClienteAcessoFluxoTests
     public async Task Organizer_concede_acesso_client_vinculado_e_flag_nega_tarefas()
     {
         var dono = await EntrarOrganizer();
-        var modelo = await Ler(await dono.PostAsJsonAsync("/api/v1/modelos", new { nome = "Modelo", tipo = "Aniversario" }));
         var evento = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new
         {
-            modeloId = modelo.GetProperty("id").GetGuid(),
+            tipo = "Aniversario",
             primeiroNome = "Festa",
         }));
         var eventoId = evento.GetProperty("id").GetGuid();
@@ -106,10 +105,9 @@ public class ClienteAcessoFluxoTests
     {
         var dono = await EntrarOrganizer();
         var outro = await EntrarOrganizer();
-        var modelo = await Ler(await dono.PostAsJsonAsync("/api/v1/modelos", new { nome = "Modelo", tipo = "Aniversario" }));
         var evento = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new
         {
-            modeloId = modelo.GetProperty("id").GetGuid(),
+            tipo = "Aniversario",
             primeiroNome = "Privado",
         }));
         var eventoId = evento.GetProperty("id").GetGuid();

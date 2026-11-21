@@ -37,7 +37,7 @@ Legenda de "Banco": **M** = migration (entra na fila do banco), **—** = sem mi
 | 1 | #27 Serviço no cadastro de fornecedor | — | — | fornecedor-form.dialog | pronto no branch `claude/card-27-servico-fornecedor-529f2c` (b0313cf); juntado na main; integração só ao fim das ondas |
 | 1 | #21 Tarefas: data por item | — | M | tarefas, ItemChecklistTarefa | pronto no branch `claude/card-21-tarefas-item-ce4d93` (b7a2dc9, migration `PrazoEResponsavelDoItemDaTarefa`); juntado na main; integração só ao fim das ondas |
 | 2 | #45 CPF/CNPJ sem máscara, CNPJ alfanumérico | #27 (mesmo cadastro de fornecedor) | M | Mascaras, cliente, perfil, fornecedor | pronto no branch `claude/card-45-cnpj-97a449` (SPEC-034, migration `DocumentosSemMascara` só de dados); juntar na main; integração só ao fim das ondas |
-| 2 | #42 RG fora; CPF/CNPJ único no cliente | #45 | ? | cliente-form, convidado | pendente |
+| 2 | #42 RG fora; CPF/CNPJ único no cliente | #45 | M | cliente-form, convidado | pronto no branch `claude/card-42-rg-bc864f` (SPEC-037, migration `RgEModeloDoEventoFora`; inclui a saída de `Evento.ModeloId`); juntar na main; integração só ao fim das ondas |
 | 2 | #36 Remover vínculo contrato-evento | — | — | contratos, modelos-evento | pronto no branch `claude/card-36-vinculo-31e1bb` (commit abaixo); sem migration; integração só ao fim das ondas |
 | 2 | #37 Menu: modelos no grupo Modelos | — | — | casca.component | pronto no branch `claude/card-37-menu-134f0a` (SPEC-035); integração só ao fim das ondas |
 | 2 | Limpeza do legado (sem card) | #22, #36 | M | banco, convites, contratos | pronto no branch `claude/limpeza-legado-d2d8b3` (SPEC-036, migration `LimpezaDoLegado`); juntar na main; integração só ao fim das ondas |

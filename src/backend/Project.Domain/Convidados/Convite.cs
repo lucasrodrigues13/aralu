@@ -45,8 +45,6 @@ public sealed class Convidado
 
     public CustoConvidado? Custo { get; set; }
 
-    public string? Rg { get; set; }
-
     public string? Cpf { get; set; }
 
     public string? Observacao { get; set; }

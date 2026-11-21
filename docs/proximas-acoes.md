@@ -135,6 +135,5 @@ Respondidas em 18/11/2026 (registradas nas specs): "Esta semana"/"Para conferir"
 
 Dúvidas para o usuário:
 
-- SPEC-036 §6 (21/11/2026): a API ainda cria evento com `modeloId` (copia serviços e tarefas do modelo e grava `Evento.ModeloId`), embora a tela e a SPEC-008 v4 não escolham mais pacote na criação. Remover isso (campo, coluna e criação por modelo) exige ajustar três testes de integração. Remover?
 - SPEC-003 §17: atrasada automática, exclusão de tarefa.
 - SPEC-030 §17: plataforma de assinatura eletrônica (pendência). Rascunho aberto em 21/11/2026 como [SPEC-033](specs/033-assinatura-eletronica.md), com a revisão da tela de contratos do funil; falta escolher o fornecedor e o nível de validade jurídica.
