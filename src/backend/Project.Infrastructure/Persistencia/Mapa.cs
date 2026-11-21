@@ -81,6 +81,8 @@ public static class Mapa
         modelBuilder.Entity<ResponsavelTarefa>().Property(item => item.Papel).HasConversion<string>();
         modelBuilder.Entity<ResponsavelTarefa>().ToTable("ResponsaveisTarefa");
         modelBuilder.Entity<ItemChecklistTarefa>().ToTable("ItensChecklistTarefa");
+        modelBuilder.Entity<ItemChecklistTarefa>().Property(item => item.ResponsavelPapel).HasConversion<string>();
+        modelBuilder.Entity<ItemChecklistTarefa>().Ignore(item => item.PrazoMovivel);
         modelBuilder.Entity<ComentarioTarefa>().ToTable("ComentariosTarefa");
 
         modelBuilder.Entity<Cliente>().Property(cliente => cliente.Papel).HasConversion<string>();

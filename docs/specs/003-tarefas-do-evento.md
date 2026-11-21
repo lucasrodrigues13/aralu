@@ -1,6 +1,6 @@
 # 003. Tarefas do evento
 
-**Status: rascunho (versão 4, 21/11/2026), aguardando aprovação do dono.** A versão 3 (aprovada em 18/11/2026) está no histórico do Git e é o que o código faz hoje; a v4 só acrescenta prazo e responsável por item da checklist (§6.8, card #21 do Trello). Fonte da v3: pedido de 18/11/2026 para a aba Tarefas do evento seguir a lista de eventos. RF-061 e [produto-v1.md](../produto-v1.md) 5.5 acompanham a v3.
+**Status: aprovada (versão 4, 21/11/2026).** A versão 3 (aprovada em 18/11/2026) está no histórico do Git e é o que o código faz hoje; a v4 só acrescenta prazo e responsável por item da checklist (§6.8, card #21 do Trello). Fonte da v3: pedido de 18/11/2026 para a aba Tarefas do evento seguir a lista de eventos. RF-061 e [produto-v1.md](../produto-v1.md) 5.5 acompanham a v3.
 
 ## 1. Identificador e nome
 
@@ -159,9 +159,10 @@ Decidido em 18/11/2026: as visões "Esta semana" e "Para conferir" ficam descart
 5. Comentários vs "perguntas" como tipos distintos ou um só fio.
 6. O que o casal pode fazer além de marcar feita (só bloco 11 decide a UI).
 
-Pontos da v4 (card #21) **a decidir pelo dono**, cada um com a proposta usada acima:
 
-7. Mudar a data do evento (SPEC-012 §6.6): os prazos dos itens não feitos e não cancelados andam junto com os prazos das tarefas? Proposta: sim, na mesma pergunta "Mover" / "Manter", pela mesma diferença em dias; itens feitos, cancelados ou sem prazo nunca mudam. Hoje a §6.6 da SPEC-012 só trata o prazo da tarefa.
-8. Responsável do item: uma pessoa (proposta) ou várias, como na tarefa?
-9. Item atrasado: só o destaque na checklist (proposta) ou a Hoje e o filtro "responsável" da lista também passam a considerar o responsável do item?
-10. Concluir a tarefa fecha os itens pendentes? Hoje não fecha e continua assim (proposta).
+Decidido em 21/11/2026 (v4, card #21):
+
+7. Mudar a data do evento: os prazos dos itens abertos (nem feitos, nem cancelados, com prazo) das tarefas não concluídas andam junto na mesma pergunta "Mover" / "Manter" da SPEC-012 §6.6, pela mesma diferença em dias. Itens feitos, cancelados ou sem prazo, e itens de tarefa concluída, não mudam.
+8. O responsável do item é uma pessoa só.
+9. Item atrasado só ganha destaque na checklist; a Hoje e o filtro de responsável não consideram o responsável do item.
+10. Concluir a tarefa não fecha os itens pendentes.

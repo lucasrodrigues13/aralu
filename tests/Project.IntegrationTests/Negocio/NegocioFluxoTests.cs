@@ -262,6 +262,91 @@ public class NegocioFluxoTests
     }
 
     [Fact]
+    public async Task Item_da_checklist_guarda_prazo_e_responsavel_e_recusa_assistente_alheia()
+    {
+        var dono = await Entrar();
+        var evento = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new { tipo = "Casamento", primeiroNome = "Leo", segundoNome = "Mia" }));
+        var eventoId = evento.GetProperty("id").GetGuid();
+        var tarefa = await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/tarefas", new
+        {
+            titulo = "Montar lista",
+            checklist = new object[]
+            {
+                new { texto = "Padrinhos", feito = false, prazo = "2027-05-01", responsavel = new { papel = "Casal" } },
+                new { texto = "Pajens", feito = false, prazo = "2027-05-10", responsavel = new { papel = "Organizer" } },
+                new { texto = "Mesas", feito = false },
+            },
+        }));
+        var itens = tarefa.GetProperty("checklist");
+        Assert.Equal("2027-05-01", itens[0].GetProperty("prazo").GetString());
+        Assert.Equal("Casal", itens[0].GetProperty("responsavel").GetProperty("papel").GetString());
+        Assert.Equal("2027-05-10", itens[1].GetProperty("prazo").GetString());
+        Assert.Equal("Organizer", itens[1].GetProperty("responsavel").GetProperty("papel").GetString());
+        Assert.Equal(JsonValueKind.Null, itens[2].GetProperty("prazo").ValueKind);
+        Assert.Equal(JsonValueKind.Null, itens[2].GetProperty("responsavel").ValueKind);
+
+        var alheia = await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/tarefas", new
+        {
+            titulo = "Outra",
+            checklist = new object[] { new { texto = "Item", feito = false, responsavel = new { papel = "Assistente", referenciaId = Guid.NewGuid().ToString() } } },
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, alheia.StatusCode);
+    }
+
+    [Fact]
+    public async Task Mudar_a_data_move_so_prazos_de_itens_abertos_de_tarefas_nao_concluidas()
+    {
+        var dono = await Entrar();
+        var evento = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new
+        {
+            tipo = "Casamento",
+            primeiroNome = "Teo",
+            segundoNome = "Bia",
+            data = "2027-06-20",
+        }));
+        var eventoId = evento.GetProperty("id").GetGuid();
+        var aberta = await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/tarefas", new
+        {
+            titulo = "Aberta",
+            checklist = new object[]
+            {
+                new { texto = "Aberto", feito = false, prazo = "2027-05-01" },
+                new { texto = "Feito", feito = true, prazo = "2027-05-02" },
+                new { texto = "Cancelado", feito = false, cancelado = true, prazo = "2027-05-03" },
+                new { texto = "Sem prazo", feito = false },
+            },
+        }));
+        var concluida = await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/tarefas", new
+        {
+            titulo = "Concluida",
+            checklist = new object[] { new { texto = "Aberto", feito = false, prazo = "2027-05-04" } },
+        }));
+        Assert.True((await dono.PutAsJsonAsync($"/api/v1/tarefas/{concluida.GetProperty("id").GetGuid()}", new
+        {
+            titulo = "Concluida",
+            situacao = "Concluida",
+            checklist = new object[] { new { texto = "Aberto", feito = false, prazo = "2027-05-04" } },
+        })).IsSuccessStatusCode);
+
+        Assert.True((await dono.PutAsJsonAsync($"/api/v1/eventos/{eventoId}", new
+        {
+            primeiroNome = "Teo",
+            segundoNome = "Bia",
+            data = "2027-06-30",
+            moverPrazos = true,
+        })).IsSuccessStatusCode);
+
+        var tarefas = await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/tarefas"));
+        var porTitulo = tarefas.EnumerateArray().ToDictionary(item => item.GetProperty("titulo").GetString()!);
+        var itens = porTitulo["Aberta"].GetProperty("checklist");
+        Assert.Equal("2027-05-11", itens[0].GetProperty("prazo").GetString());
+        Assert.Equal("2027-05-02", itens[1].GetProperty("prazo").GetString());
+        Assert.Equal("2027-05-03", itens[2].GetProperty("prazo").GetString());
+        Assert.Equal(JsonValueKind.Null, itens[3].GetProperty("prazo").ValueKind);
+        Assert.Equal("2027-05-04", porTitulo["Concluida"].GetProperty("checklist")[0].GetProperty("prazo").GetString());
+    }
+
+    [Fact]
     public async Task Anexo_da_tarefa_aceita_pdf_recusa_outro_tipo_e_remove()
     {
         var dono = await Entrar();

@@ -340,6 +340,8 @@ export interface ItemChecklistTarefa {
   texto: string;
   feito: boolean;
   cancelado: boolean;
+  prazo: string | null;
+  responsavel: ResponsavelTarefa | null;
 }
 
 export interface ComentarioTarefa {

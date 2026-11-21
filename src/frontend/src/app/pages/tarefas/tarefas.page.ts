@@ -179,7 +179,7 @@ import { ChecklistTarefaComponent, progressoChecklist } from './checklist-tarefa
                       @if (aberta(tarefa)) {
                         <tr class="linha-detalhe">
                           <td class="detalhe" colspan="6">
-                            <app-checklist-tarefa [tarefa]="tarefa" [editavel]="tarefa.eventoEmAndamento" (mudou)="atualizar($event)" />
+                            <app-checklist-tarefa [tarefa]="tarefa" [opcoes]="papeis()" [editavel]="tarefa.eventoEmAndamento" (mudou)="atualizar($event)" />
                           </td>
                         </tr>
                       }
@@ -271,7 +271,7 @@ import { ChecklistTarefaComponent, progressoChecklist } from './checklist-tarefa
             <ng-container matColumnDef="detalhe">
               <td mat-cell *matCellDef="let tarefa" class="detalhe" [attr.colspan]="colunas.length">
                 @if (aberta(tarefa)) {
-                  <app-checklist-tarefa [tarefa]="tarefa" [editavel]="tarefa.eventoEmAndamento" (mudou)="atualizar($event)" />
+                  <app-checklist-tarefa [tarefa]="tarefa" [opcoes]="papeis()" [editavel]="tarefa.eventoEmAndamento" (mudou)="atualizar($event)" />
                 }
               </td>
             </ng-container>

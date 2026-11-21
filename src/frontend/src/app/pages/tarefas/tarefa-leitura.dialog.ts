@@ -50,7 +50,7 @@ export type AcaoLeitura = 'editar' | 'mudou' | false;
         @if (tarefa().checklist.length === 0) {
           <p class="text-center text-muted py-10">Nenhum item.</p>
         } @else {
-          <app-checklist-tarefa [tarefa]="tarefa()" [editavel]="tarefa().eventoEmAndamento" (mudou)="checklistMudou($event)" />
+          <app-checklist-tarefa [tarefa]="tarefa()" [opcoes]="opcoes()" [editavel]="tarefa().eventoEmAndamento" (mudou)="checklistMudou($event)" />
         }
       }
 

@@ -216,7 +216,10 @@ export class EventoFormPage implements OnInit {
 
     this.negocio.tarefasDoEvento(this.id).subscribe({
       next: (tarefas) => {
-        const afetadas = tarefas.some((t) => t.situacao !== 'Concluida' && !!t.prazo);
+        // SPEC-012 §6.6: também conta tarefa sem prazo que tenha item aberto com prazo.
+        const afetadas = tarefas.some(
+          (t) => t.situacao !== 'Concluida' && (!!t.prazo || t.checklist.some((item) => !!item.prazo && !item.feito && !item.cancelado)),
+        );
         if (!afetadas) {
           this.gravar(null);
           return;
