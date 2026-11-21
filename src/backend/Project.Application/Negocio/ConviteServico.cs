@@ -578,10 +578,10 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
             return Resultado<Convidado>.Erro(Codigos.Validacao, "Há um valor de convidado que não faz parte da lista.");
         }
 
-        var cpf = Mascaras.Cpf(pedido.Cpf);
+        var cpf = Documentos.Cpf(pedido.Cpf);
         if (cpf == "")
         {
-            return Resultado<Convidado>.Erro(Codigos.Validacao, "O CPF deve seguir a máscara 000.000.000-00.");
+            return Resultado<Convidado>.Erro(Codigos.Validacao, "Informe um CPF válido.");
         }
 
         return Resultado<Convidado>.Sucesso(new Convidado

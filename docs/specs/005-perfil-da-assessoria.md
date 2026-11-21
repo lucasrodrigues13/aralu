@@ -42,7 +42,7 @@ Organizer autenticado com e-mail confirmado.
 
 - Há um perfil por conta de Organizer.
 - O e-mail é o da autenticação e permanece somente leitura, como na tela vista.
-- CPF ou CNPJ é um único campo de documento. Não foi vista validação de dígito.
+- CPF ou CNPJ é um único campo de documento. Desde a SPEC-034 o documento é validado (CPF ou CNPJ, inclusive alfanumérico, com dígitos verificadores) e gravado sem máscara.
 - Endereço é um único texto. A exploração não separou CEP, rua, cidade ou estado.
 - Estes dados não criam evento, contato de cliente nem conta Identity.
 - A foto é opcional. JPG, PNG ou WebP de até 5 MB, o mesmo limite das outras imagens. Sem foto gravada, não há miniatura.

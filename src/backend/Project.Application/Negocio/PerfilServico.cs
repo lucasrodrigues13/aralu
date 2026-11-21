@@ -43,10 +43,16 @@ public sealed class PerfilServico(IDados dados)
             return Resultado<PerfilLeitura>.Erro(Codigos.Validacao, "A data de nascimento não pode ser futura.");
         }
 
+        var documento = Documentos.CpfOuCnpj(pedido.Documento);
+        if (documento == "")
+        {
+            return Resultado<PerfilLeitura>.Erro(Codigos.Validacao, "Informe um CPF ou CNPJ válido.");
+        }
+
         var perfil = await ObterOuCriarAsync(contaId, ct);
         perfil.NomeEmpresa = TextoLimpo(pedido.NomeEmpresa);
         perfil.Responsavel = TextoLimpo(pedido.Responsavel);
-        perfil.Documento = TextoLimpo(pedido.Documento);
+        perfil.Documento = documento;
         perfil.Celular = TextoLimpo(pedido.Celular);
         perfil.Nascimento = pedido.Nascimento;
         perfil.Endereco = TextoLimpo(pedido.Endereco);

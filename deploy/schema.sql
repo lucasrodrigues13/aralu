@@ -2744,3 +2744,70 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121211856_DocumentosSemMascara') THEN
+    UPDATE "Clientes" SET "Cpf" = UPPER(REGEXP_REPLACE("Cpf", '[^0-9A-Za-z]', '', 'g')) WHERE "Cpf" IS NOT NULL AND LENGTH(REGEXP_REPLACE("Cpf", '[^0-9A-Za-z]', '', 'g')) IN (11, 14) AND "Cpf" <> UPPER(REGEXP_REPLACE("Cpf", '[^0-9A-Za-z]', '', 'g'));
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121211856_DocumentosSemMascara') THEN
+    UPDATE "Clientes" SET "Cnpj" = UPPER(REGEXP_REPLACE("Cnpj", '[^0-9A-Za-z]', '', 'g')) WHERE "Cnpj" IS NOT NULL AND LENGTH(REGEXP_REPLACE("Cnpj", '[^0-9A-Za-z]', '', 'g')) IN (11, 14) AND "Cnpj" <> UPPER(REGEXP_REPLACE("Cnpj", '[^0-9A-Za-z]', '', 'g'));
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121211856_DocumentosSemMascara') THEN
+    UPDATE "Convidados" SET "Cpf" = UPPER(REGEXP_REPLACE("Cpf", '[^0-9A-Za-z]', '', 'g')) WHERE "Cpf" IS NOT NULL AND LENGTH(REGEXP_REPLACE("Cpf", '[^0-9A-Za-z]', '', 'g')) IN (11, 14) AND "Cpf" <> UPPER(REGEXP_REPLACE("Cpf", '[^0-9A-Za-z]', '', 'g'));
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121211856_DocumentosSemMascara') THEN
+    UPDATE "Fornecedores" SET "Cpf" = UPPER(REGEXP_REPLACE("Cpf", '[^0-9A-Za-z]', '', 'g')) WHERE "Cpf" IS NOT NULL AND LENGTH(REGEXP_REPLACE("Cpf", '[^0-9A-Za-z]', '', 'g')) IN (11, 14) AND "Cpf" <> UPPER(REGEXP_REPLACE("Cpf", '[^0-9A-Za-z]', '', 'g'));
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121211856_DocumentosSemMascara') THEN
+    UPDATE "Fornecedores" SET "Cnpj" = UPPER(REGEXP_REPLACE("Cnpj", '[^0-9A-Za-z]', '', 'g')) WHERE "Cnpj" IS NOT NULL AND LENGTH(REGEXP_REPLACE("Cnpj", '[^0-9A-Za-z]', '', 'g')) IN (11, 14) AND "Cnpj" <> UPPER(REGEXP_REPLACE("Cnpj", '[^0-9A-Za-z]', '', 'g'));
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121211856_DocumentosSemMascara') THEN
+    UPDATE "Fornecedores" SET "DocumentosBancarios" = UPPER(REGEXP_REPLACE("DocumentosBancarios", '[^0-9A-Za-z]', '', 'g')) WHERE "DocumentosBancarios" IS NOT NULL AND LENGTH(REGEXP_REPLACE("DocumentosBancarios", '[^0-9A-Za-z]', '', 'g')) IN (11, 14) AND "DocumentosBancarios" <> UPPER(REGEXP_REPLACE("DocumentosBancarios", '[^0-9A-Za-z]', '', 'g'));
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121211856_DocumentosSemMascara') THEN
+    UPDATE "Fornecedores" SET "PixChave" = UPPER(REGEXP_REPLACE("PixChave", '[^0-9A-Za-z]', '', 'g')) WHERE "PixChave" IS NOT NULL AND "PixTipo" IN ('Cpf', 'Cnpj') AND LENGTH(REGEXP_REPLACE("PixChave", '[^0-9A-Za-z]', '', 'g')) IN (11, 14) AND "PixChave" <> UPPER(REGEXP_REPLACE("PixChave", '[^0-9A-Za-z]', '', 'g'));
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121211856_DocumentosSemMascara') THEN
+    UPDATE "Perfis" SET "Documento" = UPPER(REGEXP_REPLACE("Documento", '[^0-9A-Za-z]', '', 'g')) WHERE "Documento" IS NOT NULL AND LENGTH(REGEXP_REPLACE("Documento", '[^0-9A-Za-z]', '', 'g')) IN (11, 14) AND "Documento" <> UPPER(REGEXP_REPLACE("Documento", '[^0-9A-Za-z]', '', 'g'));
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121211856_DocumentosSemMascara') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261121211856_DocumentosSemMascara', '10.0.4');
+    END IF;
+END $EF$;
+COMMIT;
+

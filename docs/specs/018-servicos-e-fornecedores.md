@@ -80,7 +80,7 @@ Conta autenticada, SPEC-001. Para ações no evento: evento da mesma conta, SPEC
 
 ## 9. Validações
 
-Nome do fornecedor obrigatório. Pelo menos um serviço oferecido. E-mail, se informado, formato válido. CNPJ/CPF, se informados, máscara coerente. Valores monetários ≥ 0. Quantidade de subitem e de parcelas: inteiro > 0 quando o fluxo as exige. CEP completo pode preencher país, endereço, estado, cidade e bairro. O CEP é o primeiro campo do endereço. Fornecedor/serviço/evento de outra conta: rejeitado sem vazar dado.
+Nome do fornecedor obrigatório. Pelo menos um serviço oferecido. E-mail, se informado, formato válido. CNPJ/CPF e o CPF/CNPJ dos dados bancários, se informados, são válidos (dígitos verificadores; CNPJ pode ser alfanumérico) e gravados sem máscara (SPEC-034). Valores monetários ≥ 0. Quantidade de subitem e de parcelas: inteiro > 0 quando o fluxo as exige. CEP completo pode preencher país, endereço, estado, cidade e bairro. O CEP é o primeiro campo do endereço. Fornecedor/serviço/evento de outra conta: rejeitado sem vazar dado.
 
 ## 10. Estados
 
