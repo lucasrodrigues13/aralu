@@ -1,6 +1,6 @@
 # 010. Convites e convidados completo
 
-**Status: rascunho.** Revisão do card #22 (seção 18) aguarda aprovação; o restante já estava aprovado. Incremento sobre a SPEC-004. Fonte observada: [inventario-referencia.md](../inventario-referencia.md) §2. O telefone do convite é escolha deste produto: aponta para o convidado principal.
+**Status: aprovada.** O código segue esta spec, inclusive a revisão do card #22 (seção 18). Incremento sobre a SPEC-004. Fonte observada: [inventario-referencia.md](../inventario-referencia.md) §2. O telefone do convite é escolha deste produto: aponta para o convidado principal.
 
 ## 1. Identificador e nome
 
@@ -104,9 +104,9 @@ Formulário público de RSVP. Resultado de uma importação real. Envio efetivo 
 
 Muda: a aba Convidados perde os cards Totais (faixa e custo), Transfer do evento e Grupos. Os cards por situação, hoje só das situações que têm convidados, passam a ser três fixos e substituem os Totais. Não muda: banco, API e regras de transfer, grupo, faixa e custo. Nada é apagado e não há migration.
 
-A decidir pelo dono do projeto:
+Decisões do dono do projeto:
 
-1. **Usa transfer no convite.** Sem o card Transfer o evento não liga mais o transfer, e o campo nunca aparece. Proposta: retirar o campo do modal de convite junto com o card.
-2. **Grupo do convite.** Sem o card Grupos não há onde criar grupo, e a conta nova não tem nenhum (não há grupos padrão). Opções: (a) manter só o seletor com os grupos existentes; (b) retirar o seletor do modal; (c) criar grupo dentro do seletor. Proposta: (a); criar grupo fica para outro card.
-3. **Clique no card.** Proposta: clicar num card aplica o filtro de situação da lista; clicar de novo limpa.
-4. **Portaria.** O último parágrafo de "Implementar checagem na portaria do evento", origem do card, não está nos docs do repositório. Confirmar se pede algo além dos três cards.
+1. **Usa transfer no convite.** Retirado do modal de convite junto com o card Transfer.
+2. **Grupo do convite.** Fica só o seletor com os grupos existentes. Criar grupo fica para outro card.
+3. **Clique no card.** Clicar num card aplica o filtro de situação da lista; clicar de novo limpa.
+4. **Portaria.** O texto de origem pedia apenas cards separados para pendentes, confirmados e não confirmados. Nada além dos três cards.

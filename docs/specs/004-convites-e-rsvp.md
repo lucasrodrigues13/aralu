@@ -1,6 +1,6 @@
 # 004. Convites e RSVP
 
-**Status: rascunho.** Só o item 6 do fluxo muda (card #22, SPEC-010 seção 18); o resto já estava aprovado.
+**Status: aprovada.** O código segue esta spec. O item 6 do fluxo foi revisto no card #22 (SPEC-010 seção 18).
 
 ## 1. Identificador e nome
 
