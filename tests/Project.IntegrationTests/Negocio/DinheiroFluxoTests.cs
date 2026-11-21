@@ -81,6 +81,48 @@ public class DinheiroFluxoTests
     }
 
     [Fact]
+    public async Task Gestao_financeira_define_o_parcelamento_do_contrato_ate_o_primeiro_recebimento()
+    {
+        var dono = await Entrar();
+        var outra = await Entrar();
+        var oportunidade = await Ler(await dono.PostAsJsonAsync("/api/v1/oportunidades", new { nome = "Casamento Bia e Leo", estagio = "Contato inicial" }));
+        var oportunidadeId = oportunidade.GetProperty("id").GetGuid();
+        var orcamento = await Ler(await dono.PostAsJsonAsync("/api/v1/orcamentos-funil", new { oportunidadeId, conteudo = "Proposta", valor = 6000 }));
+        var orcamentoId = orcamento.GetProperty("id").GetGuid();
+
+        // Sem orçamento aceito, não há valor para parcelar.
+        var semAceite = await Ler(await dono.PostAsJsonAsync("/api/v1/contratos-funil", new { oportunidadeId, conteudo = "Contrato" }));
+        var semAceiteUrl = $"/api/v1/contratos-funil/{semAceite.GetProperty("id").GetGuid()}/parcelas";
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PutAsJsonAsync(semAceiteUrl, new { quantidadeParcelas = 1, primeiraParcela = "2027-01-10" })).StatusCode);
+
+        Assert.Equal(HttpStatusCode.OK, (await dono.PostAsJsonAsync($"/api/v1/orcamentos-funil/{orcamentoId}/responder", new { tipo = "Aceitar" })).StatusCode);
+        var url = semAceiteUrl;
+
+        // À vista (uma parcela) e depois em três: a segunda definição substitui a primeira.
+        var avista = await Ler(await dono.PutAsJsonAsync(url, new { quantidadeParcelas = 1, primeiraParcela = "2027-01-10" }));
+        Assert.Equal(1, avista.GetProperty("parcelas").GetArrayLength());
+        Assert.Equal(6000m, avista.GetProperty("valorTotal").GetDecimal());
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PutAsJsonAsync(url, new { quantidadeParcelas = 0, primeiraParcela = "2027-01-10" })).StatusCode);
+        var emTres = await Ler(await dono.PutAsJsonAsync(url, new { quantidadeParcelas = 3, primeiraParcela = "2027-01-10" }));
+        var parcelas = emTres.GetProperty("parcelas");
+        Assert.Equal(3, parcelas.GetArrayLength());
+        Assert.Equal(2000m, parcelas[0].GetProperty("valor").GetDecimal());
+
+        // Com recebimento registrado, não refaz; depois de desfeito, refaz.
+        var recebimento = $"{url}/{parcelas[0].GetProperty("id").GetGuid()}/recebimentos";
+        Assert.Equal(HttpStatusCode.OK, (await dono.PostAsJsonAsync(recebimento, new { valor = 500, forma = "Pix", data = "2027-01-10" })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PutAsJsonAsync(url, new { quantidadeParcelas = 2, primeiraParcela = "2027-01-10" })).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await dono.DeleteAsync($"{recebimento}/ultimo")).StatusCode);
+        Assert.Equal(2, (await Ler(await dono.PutAsJsonAsync(url, new { quantidadeParcelas = 2, primeiraParcela = "2027-01-10" }))).GetProperty("parcelas").GetArrayLength());
+
+        Assert.Equal(HttpStatusCode.NotFound, (await outra.PutAsJsonAsync(url, new { quantidadeParcelas = 1, primeiraParcela = "2027-01-10" })).StatusCode);
+
+        // Cancelado não parcela.
+        Assert.Equal(HttpStatusCode.OK, (await dono.PostAsync($"/api/v1/contratos-funil/{semAceite.GetProperty("id").GetGuid()}/cancelar", null)).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PutAsJsonAsync(url, new { quantidadeParcelas = 1, primeiraParcela = "2027-01-10" })).StatusCode);
+    }
+
+    [Fact]
     public async Task Despesa_planilha_de_budget_e_isolamento_do_dinheiro_do_evento()
     {
         var dono = await Entrar();
@@ -95,7 +137,6 @@ public class DinheiroFluxoTests
 
         var planilha = await dono.GetAsync($"/api/v1/eventos/{eventoId}/budget/planilha");
         Assert.Equal(HttpStatusCode.OK, planilha.StatusCode);
-        Assert.Equal(200, (int)(await outra.GetAsync("/api/v1/pagamentos")).StatusCode);
     }
 
     [Fact]

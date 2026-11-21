@@ -411,6 +411,9 @@ public interface IDados
     /// <summary>Orçamento aceito pelo lead (resposta Aceitar), o mais recente, com as parcelas; base do contrato (SPEC-040).</summary>
     Task<OrcamentoFunil?> OrcamentoAprovadoDaOportunidadeAsync(string contaId, Guid oportunidadeId, CancellationToken ct);
 
+    /// <summary>Troca as parcelas do contrato com o cliente (só sem recebimentos; SPEC-041).</summary>
+    Task SubstituirParcelasContratoAsync(Guid contratoId, IReadOnlyList<ParcelaContrato> parcelas, CancellationToken ct);
+
     Task SubstituirParcelasOrcamentoAsync(Guid orcamentoId, IReadOnlyList<ParcelaOrcamento> parcelas, CancellationToken ct);
 
     /// <summary>Só adiciona ao contexto; grava no próximo <c>SalvarNegocioAsync</c>.</summary>

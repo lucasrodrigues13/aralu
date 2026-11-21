@@ -27,7 +27,6 @@ public class AssistentesFluxoTests
         Assert.Equal(HttpStatusCode.Forbidden, (await assistente.GetAsync("/api/v1/perfil")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await assistente.GetAsync("/api/v1/assistentes")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await assistente.GetAsync("/api/v1/contratos")).StatusCode);
-        Assert.Equal(HttpStatusCode.Forbidden, (await assistente.GetAsync("/api/v1/pagamentos")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await assistente.GetAsync("/api/v1/eventos")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await assistente.GetAsync("/api/v1/hoje")).StatusCode);
 
@@ -49,7 +48,6 @@ public class AssistentesFluxoTests
             somenteDela = false,
         })).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await assistente.GetAsync($"/api/v1/eventos/{id}/dinheiro")).StatusCode);
-        Assert.Equal(HttpStatusCode.OK, (await assistente.GetAsync("/api/v1/pagamentos")).StatusCode);
     }
 
     [Fact]
@@ -340,14 +338,13 @@ public class AssistentesFluxoTests
             await ContratarFornecedorComParcelas(dona, id);
         }
 
-        async Task<Guid[]> EventosDosPagamentos(HttpClient quem) =>
-            (await Ler(await quem.GetAsync("/api/v1/pagamentos"))).EnumerateArray()
-                .Select(item => item.GetProperty("eventoId").GetGuid()).Distinct().ToArray();
+        async Task<HttpStatusCode> DinheiroDe(HttpClient quem, Guid eventoId) =>
+            (await quem.GetAsync($"/api/v1/eventos/{eventoId}/dinheiro")).StatusCode;
 
-        Assert.Equal(new[] { marcado }, await EventosDosPagamentos(restrita));
-        var vistosPorTodos = await EventosDosPagamentos(todos);
-        Assert.Contains(marcado, vistosPorTodos);
-        Assert.Contains(outro, vistosPorTodos);
+        Assert.Equal(HttpStatusCode.OK, await DinheiroDe(restrita, marcado));
+        Assert.Equal(HttpStatusCode.NotFound, await DinheiroDe(restrita, outro));
+        Assert.Equal(HttpStatusCode.OK, await DinheiroDe(todos, marcado));
+        Assert.Equal(HttpStatusCode.OK, await DinheiroDe(todos, outro));
         Assert.Equal(2, (await Ler(await dona.GetAsync("/api/v1/eventos/estatisticas"))).GetProperty("total").GetInt32());
         Assert.Equal(2, (await Ler(await todos.GetAsync("/api/v1/eventos/estatisticas"))).GetProperty("total").GetInt32());
         var estatisticas = await Ler(await restrita.GetAsync("/api/v1/eventos/estatisticas"));

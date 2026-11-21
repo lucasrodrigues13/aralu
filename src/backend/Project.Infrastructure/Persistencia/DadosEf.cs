@@ -1496,6 +1496,13 @@ public sealed class DadosEf(AppDbContext banco) : IDados
             .OrderByDescending(item => item.RespostaEm)
             .FirstOrDefaultAsync(ct);
 
+    public async Task SubstituirParcelasContratoAsync(Guid contratoId, IReadOnlyList<ParcelaContrato> parcelas, CancellationToken ct)
+    {
+        await banco.Set<ParcelaContrato>().Where(parcela => parcela.ContratoFunilId == contratoId).ExecuteDeleteAsync(ct);
+        banco.Set<ParcelaContrato>().AddRange(parcelas);
+        await banco.SaveChangesAsync(ct);
+    }
+
     public async Task SubstituirParcelasOrcamentoAsync(Guid orcamentoId, IReadOnlyList<ParcelaOrcamento> parcelas, CancellationToken ct)
     {
         await banco.Set<ParcelaOrcamento>().Where(parcela => parcela.OrcamentoFunilId == orcamentoId).ExecuteDeleteAsync(ct);

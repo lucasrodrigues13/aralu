@@ -22,7 +22,6 @@ public static class DinheiroEndpoints
         api.MapGet("/eventos/{id:guid}/budget/planilha", PlanilhaBudget);
         api.MapPost("/eventos/{id:guid}/dinheiro/comprovantes", EnviarComprovante).DisableAntiforgery();
         api.MapDelete("/eventos/{id:guid}/dinheiro/comprovantes/{comprovanteId:guid}", ExcluirComprovante);
-        api.MapGet("/pagamentos", Pagamentos);
         app.MapGet("/api/v1/hoje", (ClaimsPrincipal usuario, HojeServico servico, Project.Infrastructure.Persistencia.AppDbContext banco, CancellationToken ct) =>
             ComConta(usuario, async conta => Results.Ok(await servico.ObterAsync(
                 conta,
@@ -67,9 +66,6 @@ public static class DinheiroEndpoints
 
     private static Task<IResult> ExcluirComprovante(Guid id, Guid comprovanteId, ClaimsPrincipal usuario, DinheiroServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.ExcluirComprovanteAsync(conta, id, comprovanteId, ct)));
-
-    private static Task<IResult> Pagamentos(ClaimsPrincipal usuario, DinheiroServico servico, Project.Infrastructure.Persistencia.AppDbContext banco, CancellationToken ct) =>
-        ComConta(usuario, async conta => Results.Ok(await servico.PagamentosAsync(conta, ct, await EscopoAssistente.LiberadosAsync(usuario, banco, ct))));
 
     private static Task<IResult> PlanilhaBudget(Guid id, ClaimsPrincipal usuario, DinheiroServico servico, CancellationToken ct) =>
         ComConta(usuario, async conta =>

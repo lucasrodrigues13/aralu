@@ -45,15 +45,18 @@ describe('CascaComponent', () => {
     expect(texto).toContain('Eventos');
     expect(texto).not.toContain('Perfil');
     expect(texto).not.toContain('Assistentes');
-    expect(texto).not.toContain('Pagamentos');
+    expect(texto).not.toContain('Gestão Financeira');
     expect(texto).toContain('Assistente de Aralu Eventos');
   });
 
-  it('mostra Perfil, Assistentes e Pagamentos para a dona', () => {
+  it('mostra Perfil, Assistentes e Gestão Financeira para a dona, e esta no grupo Principal (SPEC-041)', () => {
     const texto = (montar(false).nativeElement as HTMLElement).textContent ?? '';
     expect(texto).toContain('Perfil');
     expect(texto).toContain('Assistentes');
-    expect(texto).toContain('Pagamentos');
+    expect(texto).toContain('Gestão Financeira');
+    expect(texto).not.toContain('Pagamentos');
+    expect(texto.indexOf('Principal')).toBeLessThan(texto.indexOf('Gestão Financeira'));
+    expect(texto.indexOf('Gestão Financeira')).toBeLessThan(texto.indexOf('Gestão de eventos'));
   });
 
   it('em tela estreita deixa o menu fechado e oferece abrir e fechar', () => {

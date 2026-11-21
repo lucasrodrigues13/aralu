@@ -54,10 +54,10 @@ Valem para todas as telas. Vêm do PDF (seções "Por que assim" e "Não fazer")
 | Grupo | Itens |
 |---|---|
 | Hoje | Hoje |
-| Eventos | Eventos, Tarefas (todos os eventos), Pagamentos (todos os eventos), Anexos (todos os eventos), Aniversários |
+| Eventos | Eventos, Tarefas (todos os eventos), Anexos (todos os eventos), Aniversários |
 | Comercial | Funil de vendas (oportunidades, oportunidades de RSVP, orçamentos, contratos, tarefas, relatórios) |
 | Agenda | Minha agenda |
-| Dinheiro | Financeiro da empresa, Relatórios |
+| Dinheiro | Financeiro da empresa, Relatórios. **Gestão Financeira** (contratos por cliente, SPEC-041) já está no grupo Principal do menu |
 | Cadastros | Clientes, Fornecedores, Equipe |
 | Conta | Perfil, Marca e página pública, Pix, Ajustes |
 | **Modelos** (último grupo; decidido em 21/11/2026; pronto no card #37, SPEC-035, que traz a ordem real do menu) | Todos os modelos num só grupo: evento, briefing, roteiro, cronograma, inspirações, mensagens, serviços do funil, orçamento do funil e **Modelos de Contrato** (feitos; o de contrato é a tela única do card #38, SPEC-039). O que se configura uma vez e muda pouco fica por último |
@@ -202,11 +202,11 @@ Separar o que **ela recebe** do casal do que o **casal paga** aos fornecedores (
 | Item | Estado | Fonte |
 |---|---|---|
 | **Parcelas por documento (decidido em 21/11/2026):** não existe mais `ParcelaCasal` (nem `ParcelaServico`); os dados antigos podem ser perdidos. As parcelas nascem no **orçamento** do funil (entrada, número de parcelas e vencimentos, mostradas na proposta por link), são copiadas para o **contrato** com o cliente quando ele é gerado, e o **contrato de fornecedor** tem as suas. As três têm a mesma estrutura (valor, vencimento, entrada, recebido ou pago, comprovante). **Implementado (card #41, [SPEC-040](specs/040-parcelas-por-documento.md)):** `ParcelaOrcamento`, `ParcelaContrato` (copiada do orçamento aprovado ao criar o contrato) e `ContratoFornecedor` com `ParcelaContratoFornecedor`; `ParcelaCasal`, `ParcelaServico`, `Evento.ValorContrato`, o serviço Assessoria e Organização e `POST /eventos/{id}/assessoria` saíram do banco e da API, com perda dos dados. O comprovante por parcela e o arquivo assinado do fornecedor entram com os cards #31 e #28 | Feito (sem comprovante por parcela) | PDF, CF, G, usuário |
-| **Cobrar**: abre o WhatsApp com mensagem e Pix; texto muda se é lembrete, se vence hoje ou se atrasou. Agora na parcela do **contrato com o cliente** (diálogo Parcelas do contrato, tela Contratos do funil, SPEC-040) até a Gestão Financeira (card #32) | Pronto (SPEC-040) | PDF, CF |
+| **Cobrar**: abre o WhatsApp com mensagem e Pix; texto muda se é lembrete, se vence hoje ou se atrasou. Agora na parcela do **contrato com o cliente** (diálogo Parcelas do contrato, aberto da Gestão Financeira, SPEC-041; antes ficava na tela Contratos do funil) | Pronto (SPEC-040) | PDF, CF |
 | **Recebi**: valor, forma e data; aceita parcial; **Desfazer**. Na parcela do contrato com o cliente (SPEC-040) | Pronto (SPEC-040) | PDF, CF |
-| Totais Contrato, Recebido e Saldo (contrato − recebido; decidido em 18/11/2026). Saíram da aba Dinheiro do evento; estão no diálogo Parcelas do contrato (SPEC-040) e a Gestão Financeira (card #32) os mostra por cliente | Pronto (SPEC-040) | CF |
+| Totais Contrato, Recebido e Saldo (contrato − recebido; decidido em 18/11/2026). Saíram da aba Dinheiro do evento; estão no diálogo Parcelas do contrato (SPEC-040) e a Gestão Financeira (SPEC-041) os mostra por cliente, com o parcelamento do contrato (1 parcela = à vista) | Pronto (SPEC-040) | CF |
 | Parcelas a fornecedores com entrada, forma, juros, comprovante, pago por. Hoje são as parcelas do `ContratoFornecedor` (SPEC-040); pagar com comprovante é do card #31 | Pronto (SPEC-018, SPEC-040) | G (SPEC-018) |
-| Pagamentos do evento por mês e por fornecedor. **Pagamentos de todos os eventos: fora** (decidido em 21/11/2026; a tela Pagamentos vira a Gestão Financeira da organizadora) | Novo | AV |
+| Pagamentos do evento por mês e por fornecedor. **Pagamentos de todos os eventos: fora** (decidido em 21/11/2026; a tela Pagamentos saiu e deu lugar à Gestão Financeira da organizadora, SPEC-041) | Pronto (SPEC-041) | AV |
 | Despesas e entradas do evento por categoria | Novo | CF |
 | Comprovantes e documentos do evento | Novo | CF, AV |
 | Planejamento de budget com exportação para Excel | Ajustar (sem exportação) | AV, G |

@@ -215,13 +215,6 @@ public sealed class DinheiroServico(IDadosDinheiro dados, IPlanilhaBudget planil
         return Resultado<DinheiroEventoLeitura>.Sucesso(await LerAsync(contaId, evento, ct));
     }
 
-    /// <summary>Parcelas a fornecedores de todos os eventos da conta (RF-097).</summary>
-    public async Task<IReadOnlyList<PagamentoFornecedorLeitura>> PagamentosAsync(string contaId, CancellationToken ct, IReadOnlySet<Guid>? liberados = null)
-    {
-        var todos = await dados.PagamentosFornecedoresAsync(contaId, null, ct);
-        return liberados is null ? todos : todos.Where(item => liberados.Contains(item.EventoId)).ToArray();
-    }
-
     public async Task<Resultado<(string Nome, byte[] Conteudo)>> PlanilhaBudgetAsync(string contaId, Guid eventoId, CancellationToken ct)
     {
         var evento = await dados.ObterEventoAsync(contaId, eventoId, ct);

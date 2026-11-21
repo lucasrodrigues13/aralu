@@ -31,8 +31,8 @@ Usuário autenticado na casca.
 
 | # | Grupo | Itens |
 |---|---|---|
-| 1 | Principal | Hoje, Perfil (só dona), Assistentes (só dona) |
-| 2 | Gestão de eventos | Eventos, Tarefas, Clientes, Serviços e fornecedores, Pagamentos (financeiro) |
+| 1 | Principal | Hoje, Perfil (só dona), Assistentes (só dona), **Gestão Financeira** (financeiro; card #32, [SPEC-041](041-gestao-financeira.md)) |
+| 2 | Gestão de eventos | Eventos, Tarefas, Clientes, Serviços e fornecedores (o item Pagamentos saiu no card #32) |
 | 3 | Agenda | Minha agenda |
 | 4 | Funil de vendas | Oportunidades, Oportunidades de RSVP, Contratos (do funil), Orçamentos, Tarefas do funil, Relatórios, **Modelos de contrato** (ver §7.1) |
 | 5 | **Modelos** (último) | Modelos de evento, Contratos (só dona), Modelos de briefing, Modelos de roteiro, Modelos de cronograma, Modelos de inspirações, Modelos de mensagens, **Modelos de serviços**, **Modelo de orçamento** |
@@ -70,7 +70,7 @@ Nenhum novo.
 
 - Dona, tela larga: a ordem dos cabeçalhos do menu é a do critério 1.
 - Dona: os dois itens movidos estão sob o cabeçalho Modelos e a lista do Funil de vendas não os traz.
-- Assistente sem financeiro: sem Perfil, Assistentes e Pagamentos; o grupo Modelos continua visível.
+- Assistente sem financeiro: sem Perfil, Assistentes e Gestão Financeira; o grupo Modelos continua visível.
 - Tela estreita: menu fechado e abrir/fechar funcionando (já testado).
 
 ## 13. Dependências

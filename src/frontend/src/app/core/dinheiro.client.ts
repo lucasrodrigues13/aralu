@@ -146,8 +146,4 @@ export class DinheiroClient {
   baixarArquivo(arquivoId: string) {
     return this.http.get(`${this.base}/api/v1/arquivos/${arquivoId}`, { responseType: 'blob' });
   }
-
-  pagamentos() {
-    return this.http.get<PagamentoFornecedor[]>(`${this.base}/api/v1/pagamentos`);
-  }
 }
