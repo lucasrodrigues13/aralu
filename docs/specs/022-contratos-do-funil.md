@@ -88,4 +88,4 @@ SPEC-001, SPEC-020 e SPEC-028.
 
 ## 17. Premissas e pontos não definidos
 
-Canal exato do envio (e-mail ou outro) além do registro de que foi enviado. Assinatura eletrônica com validade jurídica fica fora deste corte.
+Canal exato do envio (e-mail ou outro) além do registro de que foi enviado. Assinatura eletrônica com validade jurídica fica fora deste corte; a tela será revisitada pela [SPEC-033](033-assinatura-eletronica.md), ainda pendente.

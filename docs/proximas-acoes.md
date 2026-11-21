@@ -134,4 +134,4 @@ Respondidas em 18/11/2026 (registradas nas specs): "Esta semana"/"Para conferir"
 Dúvidas para o usuário:
 
 - SPEC-003 §17: atrasada automática, exclusão de tarefa.
-- SPEC-030 §17: plataforma de assinatura eletrônica (pendência).
+- SPEC-030 §17: plataforma de assinatura eletrônica (pendência). Rascunho aberto em 21/11/2026 como [SPEC-033](specs/033-assinatura-eletronica.md), com a revisão da tela de contratos do funil; falta escolher o fornecedor e o nível de validade jurídica.

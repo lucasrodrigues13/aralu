@@ -136,7 +136,7 @@ SPEC-001 (papéis), SPEC-005 (Perfil e Pix), SPEC-006/009 (cliente), SPEC-008 (e
 
 ## 17. Premissas e pontos não definidos
 
-1. **Pendência: assinatura eletrônica.** Escolher a plataforma (ex.: Clicksign, ZapSign, D4Sign, DocuSign) e definir o fluxo: quem assina, ordem, estados (aguardando, assinado, recusado), cópia congelada do texto na hora do envio e retorno do documento assinado. Até lá não há assinatura nem simulação.
+1. **Pendência: assinatura eletrônica.** Escolher a plataforma (ex.: Clicksign, ZapSign, D4Sign, DocuSign) e definir o fluxo: quem assina, ordem, estados (aguardando, assinado, recusado), cópia congelada do texto na hora do envio e retorno do documento assinado. Até lá não há assinatura nem simulação. Rascunho em [SPEC-033](033-assinatura-eletronica.md).
 2. Validade de 7 dias para o link de leitura (premissa; ajustar se o usuário pedir outro prazo).
 3. Se o casal com link do casal (bloco 11) vê os contratos direto no link, sem e-mail.
 4. Lista de campos de mesclagem além da §6.2.
