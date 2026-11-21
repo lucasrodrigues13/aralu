@@ -26,6 +26,11 @@ public sealed class Cliente
 
     public string? Profissao { get; set; }
 
+    /// <summary>Item de <c>EstadosCivis.Lista</c> (card #43).</summary>
+    public string? EstadoCivil { get; set; }
+
+    public string? Nacionalidade { get; set; }
+
     public string? InscricaoMunicipal { get; set; }
 
     public string? Religiao { get; set; }

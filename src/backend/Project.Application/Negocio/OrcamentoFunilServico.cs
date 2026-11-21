@@ -37,7 +37,8 @@ public sealed record PropostaResumo(
     string Situacao,
     DateTimeOffset? AbertaEm,
     string? Mensagem,
-    DateTimeOffset? RespondidaEm);
+    DateTimeOffset? RespondidaEm,
+    string? TokenLink = null);
 
 /// <summary>
 /// O que a página pública da proposta mostra. <c>Estado</c>: Disponivel, Vencida ou Cancelada.
@@ -55,9 +56,11 @@ public sealed record PropostaPublica(
     string? RespostaMensagem,
     DateTimeOffset? RespostaEm,
     bool DaPropriaConta = false,
-    IReadOnlyList<ParcelaOrcamentoLeitura>? Parcelas = null);
+    IReadOnlyList<ParcelaOrcamentoLeitura>? Parcelas = null,
+    ContratanteDados? Contratante = null);
 
-public sealed record ResponderProposta(string? Tipo, string? Mensagem);
+/// <summary>Resposta à proposta. <c>Contratante</c> só vale no aceite pelo link (SPEC-049).</summary>
+public sealed record ResponderProposta(string? Tipo, string? Mensagem, ContratanteDados? Contratante = null);
 
 public sealed class OrcamentoFunilServico(IDados dados)
 {
@@ -405,6 +408,39 @@ public sealed class OrcamentoFunilServico(IDados dados)
                 "Você está logada na conta da assessoria. A resposta é do lead: abra o link numa janela anônima para testar.");
         }
 
+        // Aceitar pede os dados do contratante, para gerar o contrato (SPEC-049 §6.3).
+        if (Enum.TryParse<RespostaProposta>(pedido.Tipo, true, out var tipo) && tipo == RespostaProposta.Aceitar)
+        {
+            var oportunidade = await dados.ObterOportunidadeAsync(item.ContaId, item.OportunidadeId, ct);
+            if (oportunidade is null)
+            {
+                return Resultado<PropostaPublica>.Erro(Codigos.Indisponivel, "Link inválido.");
+            }
+
+            if (oportunidade.EstagioFunil?.Tipo == TipoEstagioFunil.Descartado)
+            {
+                return Resultado<PropostaPublica>.Erro(Codigos.Validacao, "Esta proposta não aceita mais resposta.");
+            }
+
+            var normalizado = ContratanteRegras.Normalizar(
+                pedido.Contratante ?? ContratanteRegras.Ler(oportunidade),
+                hoje.AddDays(1));
+            if (!normalizado.Ok)
+            {
+                return Resultado<PropostaPublica>.Erro(normalizado.Falha!.Codigo, normalizado.Falha.Mensagem);
+            }
+
+            var faltam = ContratanteRegras.Faltando(normalizado.Valor!);
+            if (faltam.Count > 0)
+            {
+                return Resultado<PropostaPublica>.Erro(
+                    Codigos.Validacao,
+                    $"{ContratanteRegras.Justificativa} Falta: {string.Join(", ", faltam)}.");
+            }
+
+            ContratanteRegras.Aplicar(oportunidade, normalizado.Valor!);
+        }
+
         if (await GravarRespostaAsync(item, pedido, hoje, agora, lead: true, ct) is { } falha)
         {
             return Resultado<PropostaPublica>.Erro(Codigos.Validacao, falha);
@@ -528,7 +564,7 @@ public sealed class OrcamentoFunilServico(IDados dados)
     public static PropostaResumo? Resumo(OrcamentoFunil? item) =>
         item is null || SituacaoProposta(item) is not { } situacao
             ? null
-            : new PropostaResumo(item.Id, situacao, item.AbertoEm, item.RespostaMensagem, item.RespostaEm);
+            : new PropostaResumo(item.Id, situacao, item.AbertoEm, item.RespostaMensagem, item.RespostaEm, item.TokenLink);
 
     private async Task<OrcamentoFunil?> PorTokenAsync(string token, CancellationToken ct)
     {
@@ -559,6 +595,7 @@ public sealed class OrcamentoFunilServico(IDados dados)
         }
 
         var nomes = await dados.NomesOportunidadesAsync(item.ContaId, [item.OportunidadeId], ct);
+        var oportunidade = await dados.ObterOportunidadeAsync(item.ContaId, item.OportunidadeId, ct);
         return new PropostaPublica(
             "Disponivel",
             empresa,
@@ -573,7 +610,8 @@ public sealed class OrcamentoFunilServico(IDados dados)
             Parcelas: item.Parcelas
                 .OrderBy(parcela => parcela.Numero)
                 .Select(parcela => new ParcelaOrcamentoLeitura(parcela.Numero, parcela.Vencimento, parcela.Valor, parcela.Entrada))
-                .ToArray());
+                .ToArray(),
+            Contratante: oportunidade is null ? null : ContratanteRegras.Ler(oportunidade));
     }
 
     private async Task<Resultado<OrcamentoFunilLeitura>> MudarAsync(

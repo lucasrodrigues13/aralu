@@ -6,6 +6,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CdkDrag, CdkDragDrop, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialog, MatDialogModule, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -30,15 +31,16 @@ import { ToastService } from '../../core/toast.service';
 import { CampoDataComponent } from '../../shared/campo-data';
 import { CampoHoraComponent } from '../../shared/campo-hora';
 import { BriefingLeadDialog } from './briefing-lead.dialog';
-import { horaParaApi } from '../../shared/mascaras';
+import { aplicarMascara, horaParaApi } from '../../shared/mascaras';
 import { CampoDinheiroComponent } from '../../shared/campo-dinheiro';
+import { ContratanteCamposComponent, contratantePedido, grupoContratante } from '../../shared/contratante-campos';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { deDataParaIso, deIsoParaData } from '../../shared/data';
 import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { GdDinheiroPipe } from '../../shared/gd-dinheiro.pipe';
 import { grupoLocal, localPedido, LocalCamposComponent } from '../../shared/local-campos';
-import { SELO_PROPOSTA } from '../../shared/proposta';
+import { linkProposta, SELO_PROPOSTA } from '../../shared/proposta';
 import { OpcaoResponsavel, opcoesEquipe } from '../../shared/responsaveis';
 import { STATUS } from '../../shared/status';
 import { ClienteFormDialog } from '../clientes/cliente-form.dialog';
@@ -46,106 +48,16 @@ import { EstagiosFunilDialog } from './estagios-funil.dialog';
 
 @Component({
   selector: 'app-oportunidade-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, CampoDataComponent, CampoHoraComponent, CampoDinheiroComponent, LocalCamposComponent],
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatCheckboxModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, CampoDataComponent, CampoHoraComponent, CampoDinheiroComponent, LocalCamposComponent, ContratanteCamposComponent],
   template: `
     <h2 mat-dialog-title>{{ dados ? 'Editar oportunidade' : 'Nova oportunidade' }}</h2>
     <mat-dialog-content>
       <form class="grid grid-cols-1 gap-4" [formGroup]="form">
-        <h3>Sobre a oportunidade</h3>
+        <h3>Contato</h3>
         <div class="campo">
-          <mat-label class="font-semibold mb-2 block">Nome</mat-label>
+          <mat-label class="font-semibold mb-2 block">Nome da oportunidade</mat-label>
           <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Nome'" matInput formControlName="nome" /></mat-form-field>
         </div>
-        <div class="campo">
-          <mat-label class="font-semibold mb-2 block">Estágio</mat-label>
-          <mat-form-field appearance="outline" class="w-full">
-          <mat-select [attr.aria-label]="'Estágio'" formControlName="estagio">
-            @for (e of estagios(); track e.id) { <mat-option [value]="e.id">{{ e.nome }}</mat-option> }
-          </mat-select>
-        </mat-form-field>
-        </div>
-        <div class="campo">
-          <mat-label class="font-semibold mb-2 block">Origem</mat-label>
-          <mat-form-field appearance="outline" class="w-full">
-            <mat-select aria-label="Origem" formControlName="fonte">
-              <mat-option [value]="''">—</mat-option>
-              @for (o of origens; track o) { <mat-option [value]="o">{{ o }}</mat-option> }
-            </mat-select>
-          </mat-form-field>
-        </div>
-        @if (form.controls.fonte.value === 'Outro') {
-          <div class="campo">
-            <mat-label class="font-semibold mb-2 block">De onde veio?</mat-label>
-            <mat-form-field appearance="outline" class="w-full"><input aria-label="De onde veio" matInput formControlName="fonteOutro" placeholder="Ex.: TikTok, panfleto" /></mat-form-field>
-          </div>
-        }
-        <app-campo-dinheiro rotulo="Valor da proposta" formControlName="valorProposta" />
-        <div class="grid grid-cols-2 gap-4">
-          <app-campo-data formControlName="retornarEm" rotulo="Retornar em" />
-          <div class="campo">
-            <mat-label class="font-semibold mb-2 block">Hora (opcional)</mat-label>
-            <mat-form-field appearance="outline" class="w-full"><input aria-label="Hora do retorno" matInput type="time" formControlName="retornarHora" /></mat-form-field>
-          </div>
-        </div>
-        <div class="campo">
-          <mat-label class="font-semibold mb-2 block">Responsável</mat-label>
-          <mat-form-field appearance="outline" class="w-full">
-            <mat-select [attr.aria-label]="'Responsável'" formControlName="responsavel">
-              @for (o of equipe(); track o.valor) { <mat-option [value]="o.valor">{{ o.rotulo }}</mat-option> }
-            </mat-select>
-          </mat-form-field>
-        </div>
-        <div class="campo">
-          <mat-label class="font-semibold mb-2 block">Serviço/produto</mat-label>
-          <mat-form-field appearance="outline" class="w-full">
-          <mat-select [attr.aria-label]="'Serviço/produto'" formControlName="modeloServicoFunilId">
-            <mat-option [value]="null">Texto livre</mat-option>
-            @for (s of servicos(); track s.id) { <mat-option [value]="s.id">{{ s.nome }}</mat-option> }
-          </mat-select>
-        </mat-form-field>
-        </div>
-        <div class="campo">
-          <mat-label class="font-semibold mb-2 block">Serviço (texto)</mat-label>
-          <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Serviço (texto)'" matInput formControlName="servicoProduto" /></mat-form-field>
-        </div>
-        @if (ehDescarte()) {
-          <div class="campo">
-            <mat-label class="font-semibold mb-2 block">Motivo do descarte</mat-label>
-            <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Motivo do descarte'" matInput formControlName="motivoDescarte" /></mat-form-field>
-          </div>
-        }
-        <h3>Sobre o evento</h3>
-        <div class="campo">
-          <mat-label class="font-semibold mb-2 block">Tipo</mat-label>
-          <mat-form-field appearance="outline" class="w-full">
-          <mat-select [attr.aria-label]="'Tipo'" formControlName="tipoEvento">
-            <mat-option [value]="null">—</mat-option>
-            @for (t of tipos; track t.valor) { <mat-option [value]="t.valor">{{ t.rotulo }}</mat-option> }
-          </mat-select>
-        </mat-form-field>
-        </div>
-        <div>
-          <app-campo-data formControlName="dataPrevista" rotulo="Data prevista" />
-          @if (dataOcupada()) {
-            <div class="aviso-repetido bg-light-warning mt-2" role="status">
-              <mat-icon class="text-warning">event_busy</mat-icon>
-              <p>Já há compromisso na agenda nesta data. Você pode gravar mesmo assim.</p>
-            </div>
-          }
-        </div>
-        <div class="campo">
-          <mat-label class="font-semibold mb-2 block">Convidados</mat-label>
-          <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Convidados'" matInput type="number" formControlName="quantidadeConvidados" /></mat-form-field>
-        </div>
-        <app-campo-hora rotulo="Horário do convite" formControlName="horaConvite" />
-        <app-campo-hora rotulo="Horário da cerimônia" formControlName="horaCerimonia" />
-        <app-campo-hora rotulo="Horário da recepção" formControlName="horaRecepcao" />
-        <app-campo-hora rotulo="Horário da festa" formControlName="horaFesta" />
-        <h3>Cerimônia</h3>
-        <app-local-campos [grupo]="form.controls.cerimonia" />
-        <h3>Recepção</h3>
-        <app-local-campos [grupo]="form.controls.recepcao" />
-        <h3>Contatos</h3>
         @if (repetidos().length) {
           <div class="aviso-repetido bg-light-warning" role="status">
             <mat-icon class="text-warning">warning</mat-icon>
@@ -175,10 +87,126 @@ import { EstagiosFunilDialog } from './estagios-funil.dialog';
                 <mat-label class="font-semibold mb-2 block">E-mail</mat-label>
                 <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'E-mail'" matInput formControlName="email" /></mat-form-field>
               </div>
+              <mat-checkbox formControlName="contratante" (change)="marcarContratante(i, $event.checked)">É o contratante (quem assina o contrato)</mat-checkbox>
             </div>
           }
         </div>
         <button mat-stroked-button type="button" (click)="addContato()">+ Contato</button>
+
+        <h3>Evento</h3>
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Tipo</mat-label>
+          <mat-form-field appearance="outline" class="w-full">
+          <mat-select [attr.aria-label]="'Tipo'" formControlName="tipoEvento">
+            <mat-option [value]="null">—</mat-option>
+            @for (t of tipos; track t.valor) { <mat-option [value]="t.valor">{{ t.rotulo }}</mat-option> }
+          </mat-select>
+        </mat-form-field>
+        </div>
+        <div>
+          <app-campo-data formControlName="dataPrevista" rotulo="Data prevista" />
+          @if (dataOcupada()) {
+            <div class="aviso-repetido bg-light-warning mt-2" role="status">
+              <mat-icon class="text-warning">event_busy</mat-icon>
+              <p>Já há compromisso na agenda nesta data. Você pode gravar mesmo assim.</p>
+            </div>
+          }
+        </div>
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Convidados</mat-label>
+          <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Convidados'" matInput type="number" formControlName="quantidadeConvidados" /></mat-form-field>
+        </div>
+        <app-campo-hora rotulo="Horário do convite" formControlName="horaConvite" />
+        <app-campo-hora rotulo="Horário da cerimônia" formControlName="horaCerimonia" />
+        <app-campo-hora rotulo="Horário da recepção" formControlName="horaRecepcao" />
+        <app-campo-hora rotulo="Horário da festa" formControlName="horaFesta" />
+
+        <h3>Locais</h3>
+        <h4>Cerimônia</h4>
+        <app-local-campos [grupo]="form.controls.cerimonia" />
+        <h4>Recepção</h4>
+        <app-local-campos [grupo]="form.controls.recepcao" />
+
+        <h3>Comercial</h3>
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Estágio</mat-label>
+          <mat-form-field appearance="outline" class="w-full">
+          <mat-select [attr.aria-label]="'Estágio'" formControlName="estagio">
+            @for (e of estagios(); track e.id) { <mat-option [value]="e.id">{{ e.nome }}</mat-option> }
+          </mat-select>
+        </mat-form-field>
+        </div>
+        @if (ehDescarte()) {
+          <div class="campo">
+            <mat-label class="font-semibold mb-2 block">Motivo do descarte</mat-label>
+            <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Motivo do descarte'" matInput formControlName="motivoDescarte" /></mat-form-field>
+          </div>
+          <div class="aviso-repetido bg-light-warning" role="status">
+            <mat-icon class="text-warning">delete_sweep</mat-icon>
+            <p>Ao salvar como descartado, o CPF/CNPJ, o nascimento e o endereço do contratante são apagados.</p>
+          </div>
+        }
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Origem</mat-label>
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-select aria-label="Origem" formControlName="fonte">
+              <mat-option [value]="''">—</mat-option>
+              @for (o of origens; track o) { <mat-option [value]="o">{{ o }}</mat-option> }
+            </mat-select>
+          </mat-form-field>
+        </div>
+        @if (form.controls.fonte.value === 'Outro') {
+          <div class="campo">
+            <mat-label class="font-semibold mb-2 block">De onde veio?</mat-label>
+            <mat-form-field appearance="outline" class="w-full"><input aria-label="De onde veio" matInput formControlName="fonteOutro" placeholder="Ex.: TikTok, panfleto" /></mat-form-field>
+          </div>
+        }
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Serviço/produto</mat-label>
+          <mat-form-field appearance="outline" class="w-full">
+          <mat-select [attr.aria-label]="'Serviço/produto'" formControlName="modeloServicoFunilId">
+            <mat-option [value]="null">Texto livre</mat-option>
+            @for (s of servicos(); track s.id) { <mat-option [value]="s.id">{{ s.nome }}</mat-option> }
+          </mat-select>
+        </mat-form-field>
+        </div>
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Serviço (texto)</mat-label>
+          <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Serviço (texto)'" matInput formControlName="servicoProduto" /></mat-form-field>
+        </div>
+        <app-campo-dinheiro rotulo="Valor da proposta" formControlName="valorProposta" />
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Responsável</mat-label>
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-select [attr.aria-label]="'Responsável'" formControlName="responsavel">
+              @for (o of equipe(); track o.valor) { <mat-option [value]="o.valor">{{ o.rotulo }}</mat-option> }
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <app-campo-data formControlName="retornarEm" rotulo="Retornar em" />
+          <div class="campo">
+            <mat-label class="font-semibold mb-2 block">Hora (opcional)</mat-label>
+            <mat-form-field appearance="outline" class="w-full"><input aria-label="Hora do retorno" matInput type="time" formControlName="retornarHora" /></mat-form-field>
+          </div>
+        </div>
+
+        <h3>Dados para contrato <span class="text-xs text-muted font-normal">(opcional)</span></h3>
+        <p class="text-sm text-muted">
+          O contrato só é gerado com estes dados completos. O cliente também pode preenchê-los ao aceitar a proposta pelo link.
+        </p>
+        <div class="flex flex-wrap items-center gap-2">
+          <button mat-stroked-button type="button" [disabled]="!linkAceite()" (click)="copiarLinkAceite()">
+            <mat-icon>link</mat-icon> Copiar link da tela de aceite
+          </button>
+          @if (!linkAceite()) {
+            <span class="text-xs text-muted">O link existe depois de enviar o orçamento por link.</span>
+          }
+        </div>
+        @if (dados && dados.dadosContratoCompletos) {
+          <p class="text-sm text-success"><mat-icon class="selo-ok">check_circle</mat-icon> Dados completos para o contrato.</p>
+        }
+        <app-contratante-campos [grupo]="form.controls.contratante" />
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
@@ -187,7 +215,10 @@ import { EstagiosFunilDialog } from './estagios-funil.dialog';
     </mat-dialog-actions>
   `,
   styles: `
-    h3 { margin: 12px 0 4px; font-size: 0.95rem; }
+    h3 { margin: 20px 0 4px; font-size: 1rem; font-weight: 600; padding-top: 12px; border-top: 1px solid var(--color-border); }
+    h3:first-child { border-top: 0; padding-top: 0; margin-top: 0; }
+    h4 { margin: 4px 0 0; font-size: 0.875rem; font-weight: 600; }
+    .selo-ok { font-size: 16px; width: 16px; height: 16px; vertical-align: -3px; }
     .contato { display: grid; gap: 8px; }
     .aviso-repetido { display: flex; gap: 10px; align-items: flex-start; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; font-size: 0.875rem; }
     .aviso-repetido p { margin: 0 0 4px; }
@@ -253,12 +284,14 @@ export class OportunidadeDialog implements OnInit {
       estado: this.dados?.estadoRecepcao,
       cidade: this.dados?.cidadeRecepcao,
     }),
+    contratante: grupoContratante(this.fb, this.dados?.contratante),
     contatos: this.fb.array(
-      (this.dados?.contatos?.length ? this.dados.contatos : [{ nome: '', telefone: '', email: '' }]).map((c) =>
+      (this.dados?.contatos?.length ? this.dados.contatos : [{ nome: '', telefone: '', email: '', contratante: false }]).map((c) =>
         this.fb.nonNullable.group({
           nome: [c.nome ?? '', Validators.required],
           telefone: [c.telefone ?? ''],
           email: [c.email ?? ''],
+          contratante: [c.contratante ?? false],
         }),
       ),
     ),
@@ -343,7 +376,33 @@ export class OportunidadeDialog implements OnInit {
   }
 
   protected addContato(): void {
-    this.contatos.push(this.fb.nonNullable.group({ nome: ['', Validators.required], telefone: [''], email: [''] }));
+    this.contatos.push(this.fb.nonNullable.group({ nome: ['', Validators.required], telefone: [''], email: [''], contratante: [false] }));
+  }
+
+  /** Só um contato assina o contrato; marcar um desmarca os outros e preenche o que estiver vazio nos dados do contratante. */
+  protected marcarContratante(indice: number, marcado: boolean): void {
+    if (!marcado) return;
+    this.contatos.controls.forEach((c, i) => {
+      if (i !== indice) c.patchValue({ contratante: false });
+    });
+    const contato = this.contatos.at(indice).value as { nome: string; telefone: string; email: string };
+    const grupo = this.form.controls.contratante;
+    if (!grupo.controls.nome.value.trim() && contato.nome) grupo.controls.nome.setValue(contato.nome);
+    if (!grupo.controls.email.value.trim() && contato.email) grupo.controls.email.setValue(contato.email);
+    if (!grupo.controls.celular.value.trim() && contato.telefone) {
+      grupo.controls.celular.setValue(aplicarMascara(contato.telefone, 'celular'));
+    }
+  }
+
+  /** Link da tela de aceite: existe depois que o orçamento foi enviado por link. */
+  protected linkAceite(): string | null {
+    const token = this.dados?.proposta?.tokenLink;
+    return token ? linkProposta(token) : null;
+  }
+
+  protected copiarLinkAceite(): void {
+    const url = this.linkAceite();
+    if (url) copiarTexto(url, () => this.toast.sucesso('Link da tela de aceite copiado.'), () => this.toast.erro(`Não foi possível copiar. Link: ${url}`));
   }
 
   protected salvar(): void {
@@ -398,6 +457,7 @@ export class OportunidadeDialog implements OnInit {
         estadoRecepcao: recepcao.estado,
         cidadeRecepcao: recepcao.cidade,
         contatos: v.contatos,
+        contratante: contratantePedido(this.form.controls.contratante),
       };
       const req = this.dados
         ? this.negocio.atualizarOportunidade(this.dados.id, pedido)
@@ -423,6 +483,7 @@ export class OportunidadeDialog implements OnInit {
     <h2 mat-dialog-title>Descartar oportunidade</h2>
     <mat-dialog-content>
       <p class="text-sm text-muted mb-4">{{ dados.nome }} sai do funil ativo. O motivo vai para o relatório de descartes.</p>
+      <p class="text-sm mb-4"><strong>Atenção:</strong> ao descartar, o CPF/CNPJ, o nascimento e o endereço do contratante são apagados e não dá para recuperar.</p>
       @if (dados.sugestao) {
         <p class="text-sm mb-4">O lead recusou a proposta. Confira o motivo antes de descartar.</p>
       }
@@ -514,6 +575,15 @@ const DIAS_CURTOS = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
 function dataLocal(iso: string): Date {
   const [ano, mes, dia] = iso.slice(0, 10).split('-').map(Number);
   return new Date(ano, mes - 1, dia);
+}
+
+/** Copia o texto; sem contexto seguro (http fora de localhost) cai no plano B da seleção. */
+function copiarTexto(texto: string, copiado: () => void, falhou: () => void): void {
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(texto).then(copiado, () => (copiarPorSelecao(texto) ? copiado() : falhou()));
+  } else {
+    (copiarPorSelecao(texto) ? copiado : falhou)();
+  }
 }
 
 /** Plano B quando o navigator.clipboard não está disponível ou é negado. */
@@ -1064,15 +1134,30 @@ export class OportunidadesPage implements OnInit {
    * Ao salvar, o lead fica ligado ao cliente e vai para Contratado.
    */
   protected virarCliente(item: Oportunidade): void {
-    const contato = item.contatos[0];
-    const telefone = (contato?.telefone ?? '').replace(/\D/g, '');
+    // O cadastro abre com tudo o que a oportunidade já sabe (SPEC-049 §6.5); o contratante vem antes do primeiro contato.
+    const contato = item.contatos.find((c) => c.contratante) ?? item.contatos[0];
+    const c = item.contratante;
+    const telefone = (c?.celular || contato?.telefone || '').replace(/\D/g, '');
+    const temEndereco = !!(c?.cep || c?.endereco || c?.cidade);
     const inicial: Partial<Cliente> = {
-      nome: contato?.nome ?? item.nome,
-      email: contato?.email ?? '',
+      nome: c?.nome || contato?.nome || item.nome,
+      email: c?.email || contato?.email || '',
       celular: telefone.length > 11 && telefone.startsWith('55') ? telefone.slice(2) : telefone,
+      documento: c?.documento ?? null,
+      nascimento: c?.nascimento ?? null,
+      profissao: c?.profissao ?? null,
+      estadoCivil: c?.estadoCivil ?? null,
+      nacionalidade: c?.nacionalidade ?? null,
       observacao: `Veio do funil: ${item.nome}${item.fonte ? ` (origem: ${item.fonte})` : ''}.`,
-      cidade: item.cidade ?? undefined,
-      estado: item.uf ?? undefined,
+      cep: c?.cep ?? undefined,
+      endereco: c?.endereco ?? undefined,
+      numero: c?.numero ?? undefined,
+      bairro: c?.bairro ?? undefined,
+      complemento: c?.complemento ?? undefined,
+      pais: c?.pais ?? undefined,
+      // Sem endereço do contratante, mantém a cidade e o estado do evento como antes.
+      cidade: (temEndereco ? c?.cidade : item.cidade) ?? undefined,
+      estado: (temEndereco ? c?.estado : item.uf) ?? undefined,
     };
     this.dialog.open(ClienteFormDialog, { ...DIALOG, data: inicial }).afterClosed().subscribe((cliente?: Cliente) => {
       if (!cliente) return;

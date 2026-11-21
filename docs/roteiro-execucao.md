@@ -51,7 +51,7 @@ Legenda de "Banco": **M** = migration (entra na fila do banco), **—** = sem mi
 | 5 | #29 Gráficos de orçamento | #28 (mesma tela) | — | evento-fornecedores | pronto no branch `claude/card-29-graficos-8b5bdc` (SPEC-047, sem migration; só frontend, nada apagado do banco nem da API); juntar na main; integração só ao fim das ondas |
 | 5 | #30 Aba Contratos do evento | #28, #34, #36 | — | evento-contratos | pendente |
 | 5 | #33 Gestão Financeira: parcelas do mês | #32, #41 | — | pagamentos/gestão financeira | pronto no branch `claude/card-33-parcelas-mes-0b0355` (SPEC-044, sem migration; só frontend; sem comprovante do recebimento) |
-| 5 | #43 Oportunidade: dados do contratante | #42, #45 | M | oportunidades, clientes, proposta | pendente |
+| 5 | #43 Oportunidade: dados do contratante | #42, #45 | M | oportunidades, clientes, proposta | pronto no branch `claude/card-43-contratante-34ab4b` (SPEC-049, migration `DadosDoContratante`, só colunas novas; nada apagado do banco); juntar na main; integração só ao fim das ondas |
 | 5 | #44 Orçamento com parcelas | #41 | — | orçamentos-funil, proposta-publica | pronto no branch `claude/card-44-orcamento-80152a` (SPEC-042) |
 | 6 | #20 Resumo absorve Tarefas | #21, #31, #28, #30 | ? | evento-home, tarefas | pendente |
 | 6 | #23 Link para o casal cadastrar convites | #22, #34 | M | convidados, link do casal | pendente |

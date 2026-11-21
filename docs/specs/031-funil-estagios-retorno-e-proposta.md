@@ -2,6 +2,8 @@
 
 **Status: aprovada (20/11/2026).** O código segue esta spec, em quatro partes (§17, ponto 1). Fonte: [produto-v1.md](../produto-v1.md) §5.13 (o que ainda não está pronto) e RF-075. Completa a SPEC-020 v2 (quadro em cartões e lead que vira cliente). O usuário aprovou em 20/11/2026 todas as sugestões da §17, que agora são decisões. **Partes A (estágios configuráveis e arrastar), B (retorno, origem e contato repetido), C (proposta por link) e D (ajustes do formulário) implementadas em 20/11/2026.** Como a parte C ficou no código está na §18 e como a parte D ficou, na §19.
 
+> **Revisão de 21/11/2026 (card #43, [SPEC-049](049-dados-do-contratante-na-oportunidade.md)):** ao tocar em Aceitar na proposta por link, a tela pede os dados do contratante para gerar o contrato (nome, CPF/CNPJ, estado civil, nacionalidade, e-mail, celular e endereço completo); sem eles o aceite não grava.
+
 ## 1. Identificador e nome
 
 SPEC-031. Funil: estágios configuráveis, arrastar, retorno, origem, contato repetido e proposta por link.

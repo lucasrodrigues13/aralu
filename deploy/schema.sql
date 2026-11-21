@@ -3350,3 +3350,147 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121233611_DadosDoContratante') THEN
+    ALTER TABLE "Oportunidades" ADD "ContratanteBairro" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121233611_DadosDoContratante') THEN
+    ALTER TABLE "Oportunidades" ADD "ContratanteCelular" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121233611_DadosDoContratante') THEN
+    ALTER TABLE "Oportunidades" ADD "ContratanteCep" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121233611_DadosDoContratante') THEN
+    ALTER TABLE "Oportunidades" ADD "ContratanteCidade" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121233611_DadosDoContratante') THEN
+    ALTER TABLE "Oportunidades" ADD "ContratanteComplemento" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121233611_DadosDoContratante') THEN
+    ALTER TABLE "Oportunidades" ADD "ContratanteDocumento" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121233611_DadosDoContratante') THEN
+    ALTER TABLE "Oportunidades" ADD "ContratanteEmail" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121233611_DadosDoContratante') THEN
+    ALTER TABLE "Oportunidades" ADD "ContratanteEndereco" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121233611_DadosDoContratante') THEN
+    ALTER TABLE "Oportunidades" ADD "ContratanteEstado" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121233611_DadosDoContratante') THEN
+    ALTER TABLE "Oportunidades" ADD "ContratanteEstadoCivil" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121233611_DadosDoContratante') THEN
+    ALTER TABLE "Oportunidades" ADD "ContratanteNacionalidade" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121233611_DadosDoContratante') THEN
+    ALTER TABLE "Oportunidades" ADD "ContratanteNascimento" date;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121233611_DadosDoContratante') THEN
+    ALTER TABLE "Oportunidades" ADD "ContratanteNome" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121233611_DadosDoContratante') THEN
+    ALTER TABLE "Oportunidades" ADD "ContratanteNumero" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121233611_DadosDoContratante') THEN
+    ALTER TABLE "Oportunidades" ADD "ContratantePais" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121233611_DadosDoContratante') THEN
+    ALTER TABLE "Oportunidades" ADD "ContratanteProfissao" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121233611_DadosDoContratante') THEN
+    ALTER TABLE "ContatoOportunidade" ADD "Contratante" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121233611_DadosDoContratante') THEN
+    ALTER TABLE "Clientes" ADD "EstadoCivil" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121233611_DadosDoContratante') THEN
+    ALTER TABLE "Clientes" ADD "Nacionalidade" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121233611_DadosDoContratante') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261121233611_DadosDoContratante', '10.0.4');
+    END IF;
+END $EF$;
+COMMIT;
+

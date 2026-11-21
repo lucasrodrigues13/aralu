@@ -102,6 +102,70 @@ public sealed class Oportunidade
     public DateTimeOffset EntradaNoEstagioEm { get; set; }
 
     public List<ContatoOportunidade> Contatos { get; set; } = [];
+
+    // Dados do contratante (SPEC-049): quem assina o contrato. Vazios até a dona ou o lead preencherem.
+    public string? ContratanteNome { get; set; }
+
+    /// <summary>CPF (11) ou CNPJ (14) sem máscara, em maiúsculas (SPEC-034).</summary>
+    public string? ContratanteDocumento { get; set; }
+
+    public DateOnly? ContratanteNascimento { get; set; }
+
+    public string? ContratanteProfissao { get; set; }
+
+    /// <summary>Item de <see cref="EstadosCivis.Lista"/>.</summary>
+    public string? ContratanteEstadoCivil { get; set; }
+
+    public string? ContratanteNacionalidade { get; set; }
+
+    public string? ContratanteEmail { get; set; }
+
+    public string? ContratanteCelular { get; set; }
+
+    public string? ContratanteCep { get; set; }
+
+    public string? ContratanteEndereco { get; set; }
+
+    public string? ContratanteNumero { get; set; }
+
+    public string? ContratanteBairro { get; set; }
+
+    public string? ContratanteCidade { get; set; }
+
+    public string? ContratanteEstado { get; set; }
+
+    public string? ContratanteComplemento { get; set; }
+
+    public string? ContratantePais { get; set; }
+
+    /// <summary>
+    /// Lead descartado perde os dados sensíveis do contratante (CPF/CNPJ, nascimento e endereço).
+    /// Nome, e-mail e celular ficam para o histórico do funil.
+    /// </summary>
+    public void LimparDadosSensiveis()
+    {
+        ContratanteDocumento = null;
+        ContratanteNascimento = null;
+        ContratanteCep = null;
+        ContratanteEndereco = null;
+        ContratanteNumero = null;
+        ContratanteBairro = null;
+        ContratanteCidade = null;
+        ContratanteEstado = null;
+        ContratanteComplemento = null;
+        ContratantePais = null;
+    }
+}
+
+/// <summary>Estado civil do contratante e do cliente: lista fechada.</summary>
+public static class EstadosCivis
+{
+    public static readonly IReadOnlyList<string> Lista =
+        ["Solteiro(a)", "Casado(a)", "União estável", "Separado(a)", "Divorciado(a)", "Viúvo(a)"];
+
+    /// <summary>Item da lista (sem diferenciar maiúsculas) ou nulo.</summary>
+    public static string? Item(string? valor) =>
+        Lista.FirstOrDefault(item => string.Equals(item, valor?.Trim(), StringComparison.OrdinalIgnoreCase));
 }
 
 public sealed class ContatoOportunidade
@@ -115,4 +179,7 @@ public sealed class ContatoOportunidade
     public string? Telefone { get; set; }
 
     public string? Email { get; set; }
+
+    /// <summary>Contato que assina o contrato. No máximo um por oportunidade.</summary>
+    public bool Contratante { get; set; }
 }

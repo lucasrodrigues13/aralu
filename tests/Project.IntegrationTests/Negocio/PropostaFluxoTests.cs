@@ -155,8 +155,31 @@ public class PropostaFluxoTests
         Assert.Equal("Orçamento enviado", lead.GetProperty("estagio").GetString());
 
         // Aceitar: vale a última resposta e o lead não vai sozinho para Contratado.
-        await Ler(await anonimo.PostAsJsonAsync(resposta, new { tipo = "Aceitar" }));
+        // O aceite pede os dados do contratante (SPEC-049): sem eles, não grava.
+        Assert.Equal(HttpStatusCode.BadRequest, (await anonimo.PostAsJsonAsync(resposta, new { tipo = "Aceitar" })).StatusCode);
+        Assert.Equal("Recusada", (await Lead(dono, oportunidadeId)).GetProperty("proposta").GetProperty("situacao").GetString());
+        await Ler(await anonimo.PostAsJsonAsync(resposta, new
+        {
+            tipo = "Aceitar",
+            contratante = new
+            {
+                nome = "Maria da Silva",
+                documento = "529.982.247-25",
+                estadoCivil = "Solteiro(a)",
+                nacionalidade = "Brasileira",
+                email = "maria@exemplo.com",
+                celular = "11977776666",
+                cep = "01001-000",
+                endereco = "Praça da Sé",
+                numero = "1",
+                bairro = "Sé",
+                cidade = "São Paulo",
+                estado = "SP",
+            },
+        }));
         lead = await Lead(dono, oportunidadeId);
+        Assert.Equal("52998224725", lead.GetProperty("contratante").GetProperty("documento").GetString());
+        Assert.True(lead.GetProperty("dadosContratoCompletos").GetBoolean());
         Assert.Equal("Aceita", lead.GetProperty("proposta").GetProperty("situacao").GetString());
         Assert.Equal("Orçamento enviado", lead.GetProperty("estagio").GetString());
         var orcamento = await Ler(await dono.GetAsync($"/api/v1/orcamentos-funil/{orcamentoId}"));
@@ -165,6 +188,15 @@ public class PropostaFluxoTests
         var opcoes = new DbContextOptionsBuilder<AppDbContext>().UseNpgsql(_banco.Conexao).Options;
         await using var banco = new AppDbContext(opcoes);
         Assert.Equal(3, await banco.RespostasPropostaFunil.CountAsync(item => item.OrcamentoFunilId == orcamentoId));
+
+        // Descartar apaga CPF/CNPJ, nascimento e endereço do contratante (SPEC-049 §8).
+        var descartado = await Ler(await dono.PostAsJsonAsync(
+            $"/api/v1/oportunidades/{oportunidadeId}/mover",
+            new { estagio = "Descartado", motivoDescarte = "Desistiu" }));
+        var contratante = descartado.GetProperty("contratante");
+        Assert.Equal(JsonValueKind.Null, contratante.GetProperty("documento").ValueKind);
+        Assert.Equal(JsonValueKind.Null, contratante.GetProperty("cep").ValueKind);
+        Assert.Equal("Maria da Silva", contratante.GetProperty("nome").GetString());
     }
 
     [Fact]

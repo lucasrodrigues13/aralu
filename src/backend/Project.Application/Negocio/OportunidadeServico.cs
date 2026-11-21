@@ -4,7 +4,7 @@ using Project.Domain.Funil;
 
 namespace Project.Application.Negocio;
 
-public sealed record ContatoOportunidadeLeitura(Guid Id, string Nome, string? Telefone, string? Email);
+public sealed record ContatoOportunidadeLeitura(Guid Id, string Nome, string? Telefone, string? Email, bool Contratante = false);
 
 public sealed record OportunidadeLeitura(
     Guid Id,
@@ -53,9 +53,11 @@ public sealed record OportunidadeLeitura(
     TimeOnly? HoraCerimonia = null,
     TimeOnly? HoraRecepcao = null,
     TimeOnly? HoraFesta = null,
-    string? CriadoPor = null);
+    string? CriadoPor = null,
+    ContratanteDados? Contratante = null,
+    bool DadosContratoCompletos = false);
 
-public sealed record ContatoOportunidadePedido(string? Nome, string? Telefone, string? Email);
+public sealed record ContatoOportunidadePedido(string? Nome, string? Telefone, string? Email, bool Contratante = false);
 
 public sealed record SalvarOportunidade(
     string? Nome,
@@ -95,7 +97,8 @@ public sealed record SalvarOportunidade(
     TimeOnly? HoraConvite = null,
     TimeOnly? HoraCerimonia = null,
     TimeOnly? HoraRecepcao = null,
-    TimeOnly? HoraFesta = null);
+    TimeOnly? HoraFesta = null,
+    ContratanteDados? Contratante = null);
 
 public sealed record MoverOportunidade(string? Estagio, string? MotivoDescarte);
 
@@ -231,6 +234,17 @@ public sealed class OportunidadeServico(IDados dados)
         item.Uf = novo.Uf;
         item.Cidade = novo.Cidade;
         item.MotivoDescarte = novo.MotivoDescarte;
+        if (pedido.Contratante is not null)
+        {
+            // Sem o bloco no pedido, os dados do contratante ficam como estão.
+            ContratanteRegras.Aplicar(item, ContratanteRegras.Ler(novo));
+        }
+
+        if (item.EstagioFunil?.Tipo == TipoEstagioFunil.Descartado)
+        {
+            item.LimparDadosSensiveis();
+        }
+
         item.Contatos.Clear();
         foreach (var contato in novo.Contatos)
         {
@@ -276,6 +290,11 @@ public sealed class OportunidadeServico(IDados dados)
         }
 
         ColocarNoEstagio(item, estagio);
+        if (estagio.Tipo == TipoEstagioFunil.Descartado)
+        {
+            // Lead descartado não guarda CPF/CNPJ, nascimento nem endereço (SPEC-049 §8).
+            item.LimparDadosSensiveis();
+        }
 
         await dados.SalvarNegocioAsync(ct);
         return Resultado<OportunidadeLeitura>.Sucesso(Ler(item));
@@ -560,12 +579,30 @@ public sealed class OportunidadeServico(IDados dados)
                 Nome = Domain.Comum.Texto.Limpo(contato.Nome) ?? "",
                 Telefone = Domain.Comum.Texto.Limpo(contato.Telefone),
                 Email = Domain.Comum.Texto.Limpo(contato.Email),
+                Contratante = contato.Contratante,
             })
             .Where(contato => !string.IsNullOrWhiteSpace(contato.Nome))
             .ToList();
         if (contatos.Count == 0)
         {
             return Resultado<Oportunidade>.Erro(Codigos.Validacao, "Informe ao menos um contato.");
+        }
+
+        if (contatos.Count(contato => contato.Contratante) > 1)
+        {
+            return Resultado<Oportunidade>.Erro(Codigos.Validacao, "Marque só um contato como contratante.");
+        }
+
+        ContratanteDados? contratante = null;
+        if (pedido.Contratante is not null)
+        {
+            var normalizado = ContratanteRegras.Normalizar(pedido.Contratante, DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1));
+            if (!normalizado.Ok)
+            {
+                return Resultado<Oportunidade>.Erro(normalizado.Falha!.Codigo, normalizado.Falha.Mensagem);
+            }
+
+            contratante = normalizado.Valor;
         }
 
         if (pedido.ValorProposta is < 0)
@@ -631,7 +668,7 @@ public sealed class OportunidadeServico(IDados dados)
             tipo = lido;
         }
 
-        return Resultado<Oportunidade>.Sucesso(new Oportunidade
+        var montada = new Oportunidade
         {
             Id = id,
             ContaId = contaId,
@@ -678,7 +715,13 @@ public sealed class OportunidadeServico(IDados dados)
             CriadoEm = existente?.CriadoEm ?? DateTimeOffset.UtcNow,
             EntradaNoEstagioEm = existente?.EntradaNoEstagioEm ?? DateTimeOffset.UtcNow,
             Contatos = contatos,
-        });
+        };
+        if (contratante is not null)
+        {
+            ContratanteRegras.Aplicar(montada, contratante);
+        }
+
+        return Resultado<Oportunidade>.Sucesso(montada);
     }
 
     internal static OportunidadeLeitura Ler(Oportunidade item) => Ler(item, null);
@@ -728,7 +771,7 @@ public sealed class OportunidadeServico(IDados dados)
             item.MotivoDescarte,
             item.CriadoEm,
             item.EntradaNoEstagioEm,
-            item.Contatos.Select(c => new ContatoOportunidadeLeitura(c.Id, c.Nome, c.Telefone, c.Email)).ToArray(),
+            item.Contatos.Select(c => new ContatoOportunidadeLeitura(c.Id, c.Nome, c.Telefone, c.Email, c.Contratante)).ToArray(),
             item.ClienteId,
             item.EstagioFunilId,
             item.EstagioFunil?.Tipo.ToString() ?? "",
@@ -741,6 +784,8 @@ public sealed class OportunidadeServico(IDados dados)
             horarios.Cerimonia,
             horarios.Recepcao,
             horarios.Festa,
-            item.CriadoPor);
+            item.CriadoPor,
+            ContratanteRegras.Ler(item),
+            ContratanteRegras.Faltando(ContratanteRegras.Ler(item)).Count == 0);
     }
 }

@@ -37,7 +37,9 @@ public sealed record NovoCliente(
     string? Bairro,
     string? Complemento,
     bool? AcessoPlataforma = null,
-    PermissoesClientePedido? Permissoes = null);
+    PermissoesClientePedido? Permissoes = null,
+    string? EstadoCivil = null,
+    string? Nacionalidade = null);
 
 public sealed record PermissoesClienteLeitura(
     bool Convidados,
@@ -77,7 +79,9 @@ public sealed record ClienteLeitura(
     bool AcessoPlataforma,
     string? UsuarioId,
     PermissoesClienteLeitura Permissoes,
-    IReadOnlyList<EventoVinculado> Eventos);
+    IReadOnlyList<EventoVinculado> Eventos,
+    string? EstadoCivil = null,
+    string? Nacionalidade = null);
 
 public sealed record EventoVinculado(Guid Id, string Nome);
 
@@ -166,6 +170,8 @@ public sealed class ClienteServico(IDados dados, Cep.IConsultaCep cep, IContaCli
         cliente.Cpf = origem.Cpf;
         cliente.Cnpj = origem.Cnpj;
         cliente.Profissao = origem.Profissao;
+        cliente.EstadoCivil = origem.EstadoCivil;
+        cliente.Nacionalidade = origem.Nacionalidade;
         cliente.InscricaoMunicipal = origem.InscricaoMunicipal;
         cliente.Religiao = origem.Religiao;
         cliente.Observacao = origem.Observacao;
@@ -346,6 +352,12 @@ public sealed class ClienteServico(IDados dados, Cep.IConsultaCep cep, IContaCli
         var cpf = documento?.Length == 11 ? documento : null;
         var cnpj = documento?.Length == 14 ? documento : null;
 
+        var estadoCivil = Domain.Comum.Texto.Limpo(pedido.EstadoCivil);
+        if (estadoCivil is not null && (estadoCivil = Project.Domain.Funil.EstadosCivis.Item(estadoCivil)) is null)
+        {
+            return Resultado<Cliente>.Erro(Codigos.Validacao, "Escolha o estado civil na lista.");
+        }
+
         var cep = Mascaras.Cep(pedido.Cep);
         if (cep == "")
         {
@@ -368,6 +380,8 @@ public sealed class ClienteServico(IDados dados, Cep.IConsultaCep cep, IContaCli
             Cpf = cpf,
             Cnpj = cnpj,
             Profissao = Domain.Comum.Texto.Limpo(pedido.Profissao),
+            EstadoCivil = estadoCivil,
+            Nacionalidade = Domain.Comum.Texto.Limpo(pedido.Nacionalidade),
             InscricaoMunicipal = Domain.Comum.Texto.Limpo(pedido.InscricaoMunicipal),
             Religiao = Domain.Comum.Texto.Limpo(pedido.Religiao),
             Observacao = Domain.Comum.Texto.Limpo(pedido.Observacao),
@@ -454,6 +468,8 @@ public sealed class ClienteServico(IDados dados, Cep.IConsultaCep cep, IContaCli
                 cliente.PermiteRsvp,
                 cliente.PermiteMapa,
                 cliente.PermiteContrato),
-            eventos.Select(evento => new EventoVinculado(evento.Id, evento.Nome)).ToArray());
+            eventos.Select(evento => new EventoVinculado(evento.Id, evento.Nome)).ToArray(),
+            cliente.EstadoCivil,
+            cliente.Nacionalidade);
     }
 }
