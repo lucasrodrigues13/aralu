@@ -38,7 +38,7 @@ public class ContratosFluxoTests
         var modeloId = modelo.GetProperty("id").GetGuid();
         Assert.Equal(HttpStatusCode.NotFound, (await dono.GetAsync($"/api/v1/modelos/{modeloId}/contratos")).StatusCode);
 
-        var evento = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new { modeloId, tipo = "Casamento", primeiroNome = "Lia", segundoNome = "Caio" }));
+        var evento = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new { tipo = "Casamento", primeiroNome = "Lia", segundoNome = "Caio" }));
         var eventoId = evento.GetProperty("id").GetGuid();
         Assert.Equal(HttpStatusCode.NotFound, (await dono.GetAsync($"/api/v1/eventos/{eventoId}/contratos")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await _banco.Fabrica.CreateClient().GetAsync("/api/v1/publico/contratos/qualquer")).StatusCode);

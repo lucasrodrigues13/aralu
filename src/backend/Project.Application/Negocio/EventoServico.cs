@@ -18,7 +18,6 @@ public sealed record LocalPedido(
     string? Bairro);
 
 public sealed record SalvarEvento(
-    Guid? ModeloId,
     string? PrimeiroNome,
     string? SegundoNome,
     DateOnly? Data,
@@ -177,25 +176,10 @@ public sealed class EventoServico(IDados dados, IConsultaCep cep)
 
     public async Task<Resultado<EventoDetalhe>> CriarAsync(string contaId, SalvarEvento pedido, DateOnly hoje, CancellationToken ct)
     {
-        ModeloEvento? modelo = null;
-        if (pedido.ModeloId is Guid modeloId)
-        {
-            modelo = await dados.ObterModeloAsync(contaId, modeloId, ct);
-            if (modelo is null)
-            {
-                return Resultado<EventoDetalhe>.Erro(Codigos.Validacao, "Escolha um modelo da conta.");
-            }
-        }
-
-        var tipo = pedido.Tipo ?? modelo?.Tipo;
+        var tipo = pedido.Tipo;
         if (tipo is not TipoEvento tipoEvento || !Enum.IsDefined(tipoEvento))
         {
             return Resultado<EventoDetalhe>.Erro(Codigos.Validacao, "Escolha o tipo do evento.");
-        }
-
-        if (modelo is not null && modelo.Tipo != tipoEvento)
-        {
-            return Resultado<EventoDetalhe>.Erro(Codigos.Validacao, "O modelo escolhido é de outro tipo de evento.");
         }
 
         var nome = NomeDoEvento.Montar(tipoEvento, pedido.PrimeiroNome, pedido.SegundoNome);
@@ -254,7 +238,6 @@ public sealed class EventoServico(IDados dados, IConsultaCep cep)
         {
             Id = Guid.NewGuid(),
             ContaId = contaId,
-            ModeloId = modelo?.Id,
             Nome = nome,
             PrimeiroNome = Domain.Comum.Texto.Limpo(pedido.PrimeiroNome),
             SegundoNome = Domain.Comum.Texto.Limpo(pedido.SegundoNome),
@@ -279,42 +262,6 @@ public sealed class EventoServico(IDados dados, IConsultaCep cep)
             QuantidadeDamas = pedido.QuantidadeDamas,
         };
 
-        var ordem = 0;
-        foreach (var servico in modelo?.Servicos ?? [])
-        {
-            evento.Servicos.Add(new ServicoEvento
-            {
-                Id = Guid.NewGuid(),
-                EventoId = evento.Id,
-                Nome = servico.Nome,
-                ValorEstimado = servico.ValorEstimado,
-                Ordem = ordem++,
-            });
-        }
-
-        var tarefas = (modelo?.Tarefas ?? []).Select(tarefa =>
-        {
-            DateOnly? prazo = null;
-            if (tarefa.DiasAntes is int dias && evento.Data is DateOnly data)
-            {
-                prazo = data.AddDays(-dias);
-            }
-
-            var tarefaId = Guid.NewGuid();
-            return new Tarefa
-            {
-                Id = tarefaId,
-                EventoId = evento.Id,
-                ContaId = contaId,
-                Titulo = tarefa.Titulo,
-                Grupo = tarefa.Grupo,
-                Prazo = prazo,
-                Situacao = SituacaoTarefa.Pendente,
-                ResponsavelContaId = contaId,
-                Responsaveis = [ResponsavelTarefa.Organizer(tarefaId, contaId)],
-            };
-        }).ToArray();
-
         var agenda = evento.SalvarNaAgenda && evento.Data is not null
             ? new CompromissoAgenda
             {
@@ -333,7 +280,7 @@ public sealed class EventoServico(IDados dados, IConsultaCep cep)
             cliente.Vinculos.Add(new VinculoCliente { ClienteId = cliente.Id, EventoId = evento.Id });
         }
 
-        await dados.InserirEventoAsync(evento, tarefas, agenda, clienteNovo, ct);
+        await dados.InserirEventoAsync(evento, [], agenda, clienteNovo, ct);
         await dados.SubstituirTagsAsync(evento, LimparTags(pedido.Tags), ct);
         return Resultado<EventoDetalhe>.Sucesso(await DetalheAsync(contaId, evento, hoje, ct));
     }

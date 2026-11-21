@@ -14,7 +14,6 @@ public sealed record ConvidadoPedido(
     GeneroConvidado? Genero,
     FaixaEtaria? Faixa,
     CustoConvidado? Custo,
-    string? Rg,
     string? Cpf,
     string? Observacao);
 
@@ -36,7 +35,6 @@ public sealed record ConvidadoLeitura(
     GeneroConvidado? Genero,
     FaixaEtaria? Faixa,
     CustoConvidado? Custo,
-    string? Rg,
     string? Cpf,
     string? Observacao,
     bool Principal);
@@ -523,7 +521,6 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
             Genero = pedido.Genero,
             Faixa = pedido.Faixa,
             Custo = pedido.Custo,
-            Rg = Domain.Comum.Texto.Limpo(pedido.Rg),
             Cpf = cpf,
             Observacao = Domain.Comum.Texto.Limpo(pedido.Observacao),
         });
@@ -666,7 +663,6 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
         destino.Genero = origem.Genero;
         destino.Faixa = origem.Faixa;
         destino.Custo = origem.Custo;
-        destino.Rg = origem.Rg;
         destino.Cpf = origem.Cpf;
         destino.Observacao = origem.Observacao;
     }
@@ -698,7 +694,6 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
         convidado.Genero,
         convidado.Faixa,
         convidado.Custo,
-        convidado.Rg,
         convidado.Cpf,
         convidado.Observacao,
         convidado.Id == principalId);

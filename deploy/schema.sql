@@ -2899,3 +2899,35 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121213500_RgEModeloDoEventoFora') THEN
+    ALTER TABLE "Eventos" DROP COLUMN "ModeloId";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121213500_RgEModeloDoEventoFora') THEN
+    ALTER TABLE "Convidados" DROP COLUMN "Rg";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121213500_RgEModeloDoEventoFora') THEN
+    ALTER TABLE "Clientes" DROP COLUMN "Rg";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121213500_RgEModeloDoEventoFora') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261121213500_RgEModeloDoEventoFora', '10.0.4');
+    END IF;
+END $EF$;
+COMMIT;
+

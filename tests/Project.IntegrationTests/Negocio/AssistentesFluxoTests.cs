@@ -438,10 +438,9 @@ public class AssistentesFluxoTests
 
     private static async Task<JsonElement> CriarEvento(HttpClient cliente, string nome)
     {
-        var modelo = await Ler(await cliente.PostAsJsonAsync("/api/v1/modelos", new { nome = $"Modelo {nome}", tipo = "Aniversario" }));
         return await Ler(await cliente.PostAsJsonAsync("/api/v1/eventos", new
         {
-            modeloId = modelo.GetProperty("id").GetGuid(),
+            tipo = "Aniversario",
             primeiroNome = nome,
         }));
     }

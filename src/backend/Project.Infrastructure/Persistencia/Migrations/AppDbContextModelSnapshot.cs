@@ -276,9 +276,6 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<string>("Religiao")
                         .HasColumnType("text");
 
-                    b.Property<string>("Rg")
-                        .HasColumnType("text");
-
                     b.Property<string>("TelefoneFixo")
                         .HasColumnType("text");
 
@@ -374,9 +371,6 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Observacao")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Rg")
                         .HasColumnType("text");
 
                     b.Property<string>("Situacao")
@@ -696,9 +690,6 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
                     b.Property<TimeOnly?>("InicioRecepcao")
                         .HasColumnType("time without time zone");
-
-                    b.Property<Guid?>("ModeloId")
-                        .HasColumnType("uuid");
 
                     b.Property<string>("Nome")
                         .IsRequired()

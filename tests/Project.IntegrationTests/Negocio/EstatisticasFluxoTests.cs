@@ -20,24 +20,21 @@ public class EstatisticasFluxoTests
     {
         var dono = await Entrar();
         var outra = await Entrar();
-        var modelo = await Ler(await dono.PostAsJsonAsync("/api/v1/modelos", new { nome = "Stats", tipo = "Aniversario" }));
-        var modeloId = modelo.GetProperty("id").GetGuid();
-
         var andamento = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new
         {
-            modeloId,
+            tipo = "Aniversario",
             primeiroNome = "Andamento",
             data = $"{DateTime.UtcNow.Year}-03-10",
         }));
         var concluido = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new
         {
-            modeloId,
+            tipo = "Aniversario",
             primeiroNome = "Concluido",
             data = $"{DateTime.UtcNow.Year}-04-10",
         }));
         var cancelado = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new
         {
-            modeloId,
+            tipo = "Aniversario",
             primeiroNome = "Cancelado",
             data = $"{DateTime.UtcNow.Year}-05-10",
         }));

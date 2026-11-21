@@ -22,8 +22,6 @@ public sealed class Cliente
 
     public string? Cpf { get; set; }
 
-    public string? Rg { get; set; }
-
     public string? Cnpj { get; set; }
 
     public string? Profissao { get; set; }

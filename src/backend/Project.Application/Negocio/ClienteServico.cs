@@ -21,9 +21,7 @@ public sealed record NovoCliente(
     string? Ddi,
     string? Celular,
     string? TelefoneFixo,
-    string? Cpf,
-    string? Rg,
-    string? Cnpj,
+    string? Documento,
     string? Profissao,
     string? InscricaoMunicipal,
     string? Religiao,
@@ -59,9 +57,7 @@ public sealed record ClienteLeitura(
     string Ddi,
     string Celular,
     string? TelefoneFixo,
-    string? Cpf,
-    string? Rg,
-    string? Cnpj,
+    string? Documento,
     string? Profissao,
     string? InscricaoMunicipal,
     string? Religiao,
@@ -168,7 +164,6 @@ public sealed class ClienteServico(IDados dados, Cep.IConsultaCep cep, IContaCli
         cliente.Celular = origem.Celular;
         cliente.TelefoneFixo = origem.TelefoneFixo;
         cliente.Cpf = origem.Cpf;
-        cliente.Rg = origem.Rg;
         cliente.Cnpj = origem.Cnpj;
         cliente.Profissao = origem.Profissao;
         cliente.InscricaoMunicipal = origem.InscricaoMunicipal;
@@ -341,17 +336,15 @@ public sealed class ClienteServico(IDados dados, Cep.IConsultaCep cep, IContaCli
             return Resultado<Cliente>.Erro(Codigos.Validacao, "A data de nascimento não pode ser futura.");
         }
 
-        var cpf = Documentos.Cpf(pedido.Cpf);
-        if (cpf == "")
+        // Campo único "CPF/CNPJ" (SPEC-037): 11 caracteres vão para a coluna do CPF, 14 para a do CNPJ.
+        var documento = Documentos.CpfOuCnpj(pedido.Documento);
+        if (documento == "")
         {
-            return Resultado<Cliente>.Erro(Codigos.Validacao, "Informe um CPF válido.");
+            return Resultado<Cliente>.Erro(Codigos.Validacao, "Informe um CPF ou CNPJ válido.");
         }
 
-        var cnpj = Documentos.Cnpj(pedido.Cnpj);
-        if (cnpj == "")
-        {
-            return Resultado<Cliente>.Erro(Codigos.Validacao, "Informe um CNPJ válido.");
-        }
+        var cpf = documento?.Length == 11 ? documento : null;
+        var cnpj = documento?.Length == 14 ? documento : null;
 
         var cep = Mascaras.Cep(pedido.Cep);
         if (cep == "")
@@ -373,7 +366,6 @@ public sealed class ClienteServico(IDados dados, Cep.IConsultaCep cep, IContaCli
             Celular = Domain.Comum.Texto.Limpo(pedido.Celular)!,
             TelefoneFixo = Domain.Comum.Texto.Limpo(pedido.TelefoneFixo),
             Cpf = cpf,
-            Rg = Domain.Comum.Texto.Limpo(pedido.Rg),
             Cnpj = cnpj,
             Profissao = Domain.Comum.Texto.Limpo(pedido.Profissao),
             InscricaoMunicipal = Domain.Comum.Texto.Limpo(pedido.InscricaoMunicipal),
@@ -435,9 +427,7 @@ public sealed class ClienteServico(IDados dados, Cep.IConsultaCep cep, IContaCli
             cliente.Ddi,
             cliente.Celular,
             cliente.TelefoneFixo,
-            cliente.Cpf,
-            cliente.Rg,
-            cliente.Cnpj,
+            cliente.Cpf ?? cliente.Cnpj,
             cliente.Profissao,
             cliente.InscricaoMunicipal,
             cliente.Religiao,

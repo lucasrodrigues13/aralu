@@ -281,7 +281,7 @@ Fica na 1.0 e ganha o que faltou (D).
 | **Parcelas no orçamento**: entrada, número de parcelas e vencimentos, exibidos na proposta por link antes do aceite (decidido em 21/11/2026) | Novo | usuário |
 | **Dados do contratante na oportunidade**: nome, CPF/CNPJ (campo único com máscara dupla), estado civil, nacionalidade, nascimento, profissão, e-mail, celular e endereço completo, sem RG. Pedidos quando o lead está disposto a fechar ("Para fechar, preencha mais dados para gerar o contrato"); o contrato só é gerado com eles completos. Quem preenche: o cliente, pela tela de aceite da proposta; num lead manual, a organizadora coleta e preenche, ou copia o link da tela de aceite e envia ao cliente. Estado civil e nacionalidade entram também no cadastro de cliente. Assim o lead só vira cliente ao fechar, com o cadastro pré-preenchido (sobram redes sociais e dados menos relevantes). Dados sensíveis são excluídos se o lead for descartado (decidido em 21/11/2026) | Novo | usuário |
 | Cadastro de oportunidade reorganizado: informações relacionadas em sequência (contato, evento, locais, comercial, dados para contrato) | Ajustar | usuário |
-| **RG removido** do cadastro de cliente e de convidado: não é mais exigido no Brasil; vale o CPF (21/11/2026) | Ajustar | usuário |
+| **RG removido** do cadastro de cliente e de convidado: não é mais exigido no Brasil; vale o CPF (21/11/2026). Cadastro de cliente com **CPF/CNPJ em campo único** com máscara dupla ([SPEC-037](specs/037-rg-fora-e-documento-unico-do-cliente.md)) | Pronto | usuário |
 
 ### 5.14. Financeiro da empresa
 

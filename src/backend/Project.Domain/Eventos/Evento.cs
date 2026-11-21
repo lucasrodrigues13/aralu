@@ -11,8 +11,6 @@ public sealed class Evento
     /// <summary>Dia de referência de "Para conferir" (SPEC-003 §6.2). Nulo em eventos anteriores a este campo.</summary>
     public DateTimeOffset? CriadoEm { get; set; }
 
-    public Guid? ModeloId { get; set; }
-
     public string Nome { get; set; } = "";
 
     public string? PrimeiroNome { get; set; }

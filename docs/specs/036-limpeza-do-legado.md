@@ -52,7 +52,7 @@ Conferido: o transfer saiu da 1.0 ([produto-v1.md](../produto-v1.md) 5.7, linha 
 
 ## 6. O que NÃO sai (e por quê)
 
-- **`Evento.ModeloId` e a criação de evento com `modeloId` na API** (card #19, SPEC-008 v4): a tela não manda mais o modelo, mas a API ainda aceita (copia serviços e tarefas do modelo) e três testes de integração dependem disso. Não foi combinado remover e a integração só roda no fim das ondas. Fica como pergunta ao dono em [proximas-acoes.md](../proximas-acoes.md).
+- **`Evento.ModeloId` e a criação de evento com `modeloId` na API**: saíram no card #42 (decisão do dono, [SPEC-037](037-rg-fora-e-documento-unico-do-cliente.md), migration `RgEModeloDoEventoFora`). A criação de evento exige `tipo` e não copia mais o modelo.
 - **Forma de pagamento `Transferencia`** (SPEC-029): é pagamento por transferência bancária, outra coisa; segue em uso.
 - **Campos "grupo" de tarefa e de modelo, grupos de prazo da tarefa e "grupos" do menu**: homônimos, em uso.
 - **Resíduos do card #37**: o card só mexeu na ordem do menu (frontend); não deixou nada no banco nem na API.
@@ -88,4 +88,4 @@ SPEC-030 v3, SPEC-010 §18, SPEC-008 v4, regra 7 do roteiro.
 
 ## 13. Pendências
 
-Remover `Evento.ModeloId` e a criação por modelo na API: decisão do dono (seção 6).
+Nenhuma. A remoção de `Evento.ModeloId` foi feita no card #42 (SPEC-037).
