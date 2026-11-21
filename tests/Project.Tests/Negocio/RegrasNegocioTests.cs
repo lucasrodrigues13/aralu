@@ -10,7 +10,10 @@ public class RegrasNegocioTests
     public void Casamento_une_os_dois_nomes_com_e_comercial()
     {
         Assert.Equal("Ana & Bruno", NomeDoEvento.Montar(TipoEvento.Casamento, " Ana ", "Bruno"));
-        Assert.Null(NomeDoEvento.Montar(TipoEvento.Casamento, "Ana", " "));
+        Assert.Equal("Ana", NomeDoEvento.Montar(TipoEvento.Casamento, "Ana", " "));
+        Assert.Equal("Maria e João", NomeDoEvento.Montar(TipoEvento.Casamento, " Maria e João ", null));
+        Assert.Equal("Bruno", NomeDoEvento.Montar(TipoEvento.Casamento, null, "Bruno"));
+        Assert.Null(NomeDoEvento.Montar(TipoEvento.Casamento, " ", " "));
         Assert.Equal("Helena", NomeDoEvento.Montar(TipoEvento.Aniversario, " Helena ", null));
     }
 
