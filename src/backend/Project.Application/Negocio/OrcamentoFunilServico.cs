@@ -347,20 +347,67 @@ public sealed class OrcamentoFunilServico(IDados dados)
                 "Você está logada na conta da assessoria. A resposta é do lead: abra o link numa janela anônima para testar.");
         }
 
+        if (await GravarRespostaAsync(item, pedido, hoje, agora, lead: true, ct) is { } falha)
+        {
+            return Resultado<PropostaPublica>.Erro(Codigos.Validacao, falha);
+        }
+
+        return Resultado<PropostaPublica>.Sucesso(await LerPublicaAsync(item, agora, ct));
+    }
+
+    /// <summary>
+    /// Resposta que a assessoria registra por ligação ou conversa (o cliente respondeu fora do link).
+    /// Segue as mesmas regras da resposta pelo link, mas não conta como abertura do link.
+    /// </summary>
+    public async Task<Resultado<OrcamentoFunilLeitura>> RegistrarRespostaAsync(
+        string contaId,
+        Guid id,
+        ResponderProposta pedido,
+        DateOnly hoje,
+        CancellationToken ct)
+    {
+        var item = await dados.ObterOrcamentoFunilAsync(contaId, id, ct);
+        if (item is null)
+        {
+            return Resultado<OrcamentoFunilLeitura>.Erro(Codigos.Indisponivel, "Indisponível.");
+        }
+
+        if (item.Situacao != SituacaoOrcamentoFunil.EmAndamento)
+        {
+            return Resultado<OrcamentoFunilLeitura>.Erro(Codigos.Validacao, "Só orçamentos em andamento podem receber resposta.");
+        }
+
+        if (await GravarRespostaAsync(item, pedido, hoje, DateTimeOffset.UtcNow, lead: false, ct) is { } falha)
+        {
+            return Resultado<OrcamentoFunilLeitura>.Erro(Codigos.Validacao, falha);
+        }
+
+        return Resultado<OrcamentoFunilLeitura>.Sucesso(await LerAsync(contaId, item, ct));
+    }
+
+    /// <summary>Valida, aplica e grava a resposta. Devolve a mensagem de erro, ou nulo se gravou.</summary>
+    private async Task<string?> GravarRespostaAsync(
+        OrcamentoFunil item,
+        ResponderProposta pedido,
+        DateOnly hoje,
+        DateTimeOffset agora,
+        bool lead,
+        CancellationToken ct)
+    {
         if (!Enum.TryParse<RespostaProposta>(pedido.Tipo, true, out var tipo) || !Enum.IsDefined(tipo))
         {
-            return Resultado<PropostaPublica>.Erro(Codigos.Validacao, "Escolha uma resposta.");
+            return "Escolha uma resposta.";
         }
 
         var mensagem = Domain.Comum.Texto.Limpo(pedido.Mensagem);
         if (tipo == RespostaProposta.Duvidas && mensagem is null)
         {
-            return Resultado<PropostaPublica>.Erro(Codigos.Validacao, "Escreva a sua dúvida.");
+            return lead ? "Escreva a sua dúvida." : "Escreva a dúvida do cliente.";
         }
 
         if (mensagem is { Length: > LimiteMensagem })
         {
-            return Resultado<PropostaPublica>.Erro(Codigos.Validacao, $"A mensagem pode ter até {LimiteMensagem} caracteres.");
+            return $"A mensagem pode ter até {LimiteMensagem} caracteres.";
         }
 
         if (tipo == RespostaProposta.Aceitar)
@@ -368,7 +415,11 @@ public sealed class OrcamentoFunilServico(IDados dados)
             mensagem = null;
         }
 
-        item.AbertoEm ??= agora;
+        if (lead)
+        {
+            item.AbertoEm ??= agora;
+        }
+
         item.Resposta = tipo;
         item.RespostaMensagem = mensagem;
         item.RespostaEm = agora;
@@ -402,11 +453,11 @@ public sealed class OrcamentoFunilServico(IDados dados)
         }
 
         await dados.SalvarNegocioAsync(ct);
-        return Resultado<PropostaPublica>.Sucesso(await LerPublicaAsync(item, agora, ct));
+        return null;
     }
 
     public static string? SituacaoProposta(OrcamentoFunil item) =>
-        item.TokenLink is null || item.Situacao == SituacaoOrcamentoFunil.Cancelado
+        (item.TokenLink is null && item.Resposta is null) || item.Situacao == SituacaoOrcamentoFunil.Cancelado
             ? null
             : item.Resposta switch
             {

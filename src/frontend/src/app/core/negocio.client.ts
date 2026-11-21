@@ -1206,8 +1206,9 @@ export class NegocioClient {
     );
   }
 
-  responderOrcamentoFunil(id: string) {
-    return this.http.post<OrcamentoFunil>(`${this.base}/api/v1/orcamentos-funil/${id}/responder`, {});
+  /** A assessoria registra o que o cliente respondeu fora do link (ligação, conversa). */
+  responderOrcamentoFunil(id: string, tipo: RespostaProposta, mensagem: string | null) {
+    return this.http.post<OrcamentoFunil>(`${this.base}/api/v1/orcamentos-funil/${id}/responder`, { tipo, mensagem });
   }
 
   cancelarOrcamentoFunil(id: string) {

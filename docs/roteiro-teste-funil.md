@@ -167,13 +167,19 @@ Teste cada resposta, em ordem. Para repetir, o lead pode mudar a resposta enquan
 
 1. Abra o link anônimo. Confira: aparece a marca da conta, o texto e o valor. No cartão do funil passa a "Aberta em {data}" (só a primeira abertura conta).
 2. **Tenho dúvidas**: escreva uma mensagem (obrigatória, até 1.000 caracteres).
-   - Confira: a mensagem aparece no cartão; o retorno do lead fica marcado para hoje; o orçamento continua em Em andamento.
+   - Confira: a mensagem aparece no cartão; o retorno do lead fica marcado para hoje; o orçamento continua em **Em andamento** (só dúvida mantém a conversa aberta).
+   - Faça: ainda com esse orçamento em Em andamento, **edite o texto ou o valor** e salve. Confira: a proposta volta a "ainda não foi aberta" e a mensagem sai do cartão (fica no histórico). O link continua o mesmo. Só mudar o conteúdo ou o valor faz isso.
+   - Faça: abra o link de novo na janela anônima para seguir com o próximo passo (a abertura conta de novo).
 3. **Não vou seguir**: informe um motivo.
    - Confira: o cartão mostra "Recusada" com a mensagem. O botão **Descartar** abre o modal de descarte já com o motivo do lead. Só descarta se você confirmar.
 4. **Aceitar**: confirme.
    - Confira: selo **Aceitou** no cartão e na lista de orçamentos; o orçamento vai para **Respondidos**. O lead **não** vai sozinho para Contratado.
-5. Faça: edite o texto ou o valor do orçamento já enviado. Confira: a proposta volta a "ainda não foi aberta" e a resposta sai do cartão (fica no histórico). Só mudar o conteúdo ou o valor faz isso.
-6. Faça: **Registrar resposta** manualmente em outro orçamento (ligação do cliente). Confira: vai para Respondidos.
+5. Faça: tente editar o orçamento que o lead aceitou (ou recusou), que já está em **Respondidos**. Confira: bloqueia com "Só orçamentos em andamento podem ser editados". Se a tela estava aberta antes da resposta, recarregue: o orçamento muda para a aba Respondidos.
+6. Faça: em outro orçamento, toque em **Registrar resposta** (ligação ou conversa com o cliente). Abre um quadro para escolher o que o cliente respondeu. Teste as três:
+   - **Aceitou a proposta**: vai para Respondidos, com o selo **Aceitou** no cartão e na lista.
+   - **Tem dúvidas**: exige a dúvida. O orçamento continua em Em andamento, o cartão mostra a dúvida e o retorno do lead fica para hoje.
+   - **Não vai seguir**: motivo opcional. Vai para Respondidos e o cartão mostra "Recusada".
+   - Confira: registrar pela assessoria **não** conta como abertura do link ("ainda não foi aberta" continua).
 7. Faça: **Cancelar** um orçamento e abra o link dele. Confira: "Esta proposta não está mais disponível".
 8. Faça: reenvie uma proposta. Confira: o link é o mesmo e a validade volta a contar 30 dias.
 9. Faça: exclua um orçamento em andamento. Excluir respondido não é permitido.

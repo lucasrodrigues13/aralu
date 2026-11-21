@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -12,7 +12,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { mensagemDeErro } from '../../core/mensagem-erro';
-import { ModeloOrcamentoFunil, NegocioClient, Oportunidade, OrcamentoFunil } from '../../core/negocio.client';
+import { ModeloOrcamentoFunil, NegocioClient, Oportunidade, OrcamentoFunil, RespostaProposta } from '../../core/negocio.client';
 import { AuthService } from '../../core/auth.service';
 import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
@@ -172,6 +172,78 @@ export class EnviarPropostaDialog implements OnInit {
   }
 }
 
+/** A assessoria registra o que o cliente respondeu por fora do link (ligação, WhatsApp, conversa). */
+@Component({
+  selector: 'app-resposta-manual-dialog',
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule],
+  template: `
+    <h2 mat-dialog-title>Registrar resposta</h2>
+    <mat-dialog-content>
+      <p class="text-sm text-muted mb-4">{{ dados.oportunidadeNome }}: o que o cliente respondeu?</p>
+      <div class="campo">
+        <mat-label class="font-semibold mb-2 block">Resposta</mat-label>
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-select aria-label="Resposta" [formControl]="tipo">
+            @for (o of opcoes; track o.valor) { <mat-option [value]="o.valor">{{ o.rotulo }}</mat-option> }
+          </mat-select>
+        </mat-form-field>
+      </div>
+      @if (tipo.value && tipo.value !== 'Aceitar') {
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">{{ tipo.value === 'Duvidas' ? 'Qual é a dúvida?' : 'Motivo (opcional)' }}</mat-label>
+          <mat-form-field appearance="outline" class="w-full">
+            <textarea matInput rows="4" [formControl]="mensagem" maxlength="1000"
+              [attr.aria-label]="tipo.value === 'Duvidas' ? 'Dúvida' : 'Motivo'"></textarea>
+          </mat-form-field>
+        </div>
+      }
+      <p class="text-xs text-muted">
+        @if (tipo.value === 'Duvidas') { O orçamento continua em andamento e o retorno do lead fica para hoje. }
+        @else if (tipo.value) { O orçamento vai para Respondidos. }
+      </p>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-button type="button" mat-dialog-close>Cancelar</button>
+      <button mat-flat-button type="button" [disabled]="!tipo.value || enviando()" (click)="registrar()">Registrar</button>
+    </mat-dialog-actions>
+  `,
+})
+export class RespostaManualDialog {
+  private readonly negocio = inject(NegocioClient);
+  private readonly toast = inject(ToastService);
+  protected readonly dados = inject<OrcamentoFunil>(MAT_DIALOG_DATA);
+  private readonly ref = inject(MatDialogRef<RespostaManualDialog, boolean>);
+  protected readonly opcoes: { valor: RespostaProposta; rotulo: string }[] = [
+    { valor: 'Aceitar', rotulo: 'Aceitou a proposta' },
+    { valor: 'Duvidas', rotulo: 'Tem dúvidas' },
+    { valor: 'Recusar', rotulo: 'Não vai seguir' },
+  ];
+  protected readonly tipo = new FormControl<RespostaProposta | null>(null);
+  protected readonly mensagem = new FormControl('', { nonNullable: true });
+  protected readonly enviando = signal(false);
+
+  protected registrar(): void {
+    const tipo = this.tipo.value;
+    if (!tipo) return;
+    const texto = this.mensagem.value.trim();
+    if (tipo === 'Duvidas' && !texto) {
+      this.toast.erro('Escreva a dúvida do cliente.');
+      return;
+    }
+    this.enviando.set(true);
+    this.negocio.responderOrcamentoFunil(this.dados.id, tipo, tipo === 'Aceitar' ? null : texto || null).subscribe({
+      next: () => {
+        this.toast.sucesso('Resposta registrada.');
+        this.ref.close(true);
+      },
+      error: (erro: unknown) => {
+        this.toast.erro(mensagemDeErro(erro));
+        this.enviando.set(false);
+      },
+    });
+  }
+}
+
 @Component({
   selector: 'app-orcamentos-funil',
   imports: [MatButtonToggleModule, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatCheckboxModule, MatTooltipModule, GdDataPipe],
@@ -289,10 +361,7 @@ export class OrcamentosFunilPage implements OnInit {
   }
 
   protected responder(item: OrcamentoFunil): void {
-    this.negocio.responderOrcamentoFunil(item.id).subscribe({
-      next: () => { this.toast.sucesso('Resposta registrada.'); this.carregar(); },
-      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
-    });
+    this.dialog.open(RespostaManualDialog, { ...DIALOG_PEQUENO, data: item }).afterClosed().subscribe((ok) => ok && this.carregar());
   }
 
   protected cancelar(item: OrcamentoFunil): void {

@@ -1392,8 +1392,15 @@ public static class NegocioEndpoints
         CancellationToken ct) =>
         De(servico.ResponderPublicaAsync(token, Conta(usuario) ?? visitante, pedido, DateOnly.FromDateTime(DateTime.UtcNow), ct));
 
-    private static Task<IResult> ResponderOrcamentoFunil(Guid id, ClaimsPrincipal usuario, OrcamentoFunilServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.ResponderAsync(conta, id, ct)));
+    private static Task<IResult> ResponderOrcamentoFunil(
+        Guid id,
+        ClaimsPrincipal usuario,
+        OrcamentoFunilServico servico,
+        CancellationToken ct,
+        ResponderProposta? pedido = null) =>
+        ComConta(usuario, conta => pedido?.Tipo is null
+            ? De(servico.ResponderAsync(conta, id, ct))
+            : De(servico.RegistrarRespostaAsync(conta, id, pedido, Hoje(), ct)));
 
     private static Task<IResult> CancelarOrcamentoFunil(Guid id, ClaimsPrincipal usuario, OrcamentoFunilServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.CancelarAsync(conta, id, ct)));

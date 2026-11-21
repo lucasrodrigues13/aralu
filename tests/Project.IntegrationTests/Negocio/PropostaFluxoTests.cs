@@ -94,6 +94,37 @@ public class PropostaFluxoTests
     }
 
     [Fact]
+    public async Task Assessoria_registra_a_resposta_do_cliente_por_fora_do_link()
+    {
+        var dono = await Entrar();
+        var (oportunidadeId, orcamentoId) = await CriarLeadComOrcamento(dono, "Casamento Gabi");
+        await Enviar(dono, orcamentoId);
+        var url = $"/api/v1/orcamentos-funil/{orcamentoId}/responder";
+
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PostAsJsonAsync(url, new { tipo = "Talvez" })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PostAsJsonAsync(url, new { tipo = "Duvidas", mensagem = " " })).StatusCode);
+
+        // Dúvida: segue em andamento e aparece no cartão, sem contar como abertura do link.
+        var duvida = await Ler(await dono.PostAsJsonAsync(url, new { tipo = "Duvidas", mensagem = "Aceita parcelar?" }));
+        Assert.Equal("EmAndamento", duvida.GetProperty("situacao").GetString());
+        var proposta = (await Lead(dono, oportunidadeId)).GetProperty("proposta");
+        Assert.Equal("Duvidas", proposta.GetProperty("situacao").GetString());
+        Assert.Equal("Aceita parcelar?", proposta.GetProperty("mensagem").GetString());
+        Assert.Equal(JsonValueKind.Null, proposta.GetProperty("abertaEm").ValueKind);
+
+        // Aceite: vai para Respondidos e não aceita outra resposta.
+        var aceite = await Ler(await dono.PostAsJsonAsync(url, new { tipo = "Aceitar" }));
+        Assert.Equal("Respondido", aceite.GetProperty("situacao").GetString());
+        Assert.Equal("Aceita", (await Lead(dono, oportunidadeId)).GetProperty("proposta").GetProperty("situacao").GetString());
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PostAsJsonAsync(url, new { tipo = "Recusar" })).StatusCode);
+
+        // Sem corpo, como a tela antiga fazia, só marca como respondido.
+        var (_, outro) = await CriarLeadComOrcamento(dono, "Casamento Hugo");
+        var antigo = await Ler(await dono.PostAsJsonAsync($"/api/v1/orcamentos-funil/{outro}/responder", new { }));
+        Assert.Equal("Respondido", antigo.GetProperty("situacao").GetString());
+    }
+
+    [Fact]
     public async Task Tres_respostas_e_vale_a_ultima()
     {
         var dono = await Entrar();
