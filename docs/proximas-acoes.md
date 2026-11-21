@@ -2,6 +2,8 @@
 
 Roteiro para continuar o trabalho em outra sessão. Siga na ordem. Na dúvida, pare e pergunte ao usuário: não invente regra.
 
+> **Desde 21/11/2026 o trabalho segue os cards do Trello**, copiados em [tarefas-trello.md](tarefas-trello.md), na ordem e com o paralelismo de [roteiro-execucao.md](roteiro-execucao.md). Onde este arquivo e o roteiro divergirem, vale o roteiro. As seções 1, 2 e 6 deste arquivo continuam valendo.
+
 ## 0. Próxima tarefa (atualizada em 20/11/2026)
 
 A SPEC-032 (assistentes) e a SPEC-031 parte D (ajustes do formulário do funil) estão **implementadas e commitadas na `main`**. Backend: 102 testes de unidade e 54 de integração passando. Frontend: `ng build` e 63 testes passando. O usuário ainda não conferiu na tela.
