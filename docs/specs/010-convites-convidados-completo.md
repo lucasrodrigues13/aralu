@@ -27,7 +27,7 @@ Evento da conta do Organizer, SPEC-002. A SPEC-004 continua valendo para situaç
 1. O Organizer cria grupos pelo nome.
 2. Cria um convite com nome e, se quiser, grupo e observação.
 
-3. Inclui pelo menos um convidado: nome obrigatório; DDI, celular, RSVP, mesa, gênero, faixa, custo, RG e CPF opcionais.
+3. Inclui pelo menos um convidado: nome obrigatório; DDI, celular, RSVP, mesa, gênero, faixa, custo, RG e CPF opcionais (CPF validado e gravado sem máscara, SPEC-034).
 4. No convite, escolhe o telefone de um convidado deste convite. Esse convidado fica principal e o telefone do convite passa a ser o dele.
 5. ~~Com transfer ativo no evento, o convite pergunta se usa o serviço e, se sim, o local de origem.~~ Retirado da aba (seção 18).
 6. A lista filtra por situação, telefone e observação. No topo da aba, três cards contam os convidados: Pendentes, Confirmados e Não confirmados.

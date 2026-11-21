@@ -84,7 +84,7 @@ Valem para todas as telas. Vêm do PDF (seções "Por que assim" e "Não fazer")
 | Cadastro, confirmação, login, senha, lockout, logout | Pronto | G (SPEC-001) |
 | Perfil da empresa com foto | Pronto | G (SPEC-005) |
 | **Endereço do perfil estruturado** (CEP preenche os demais campos, salvo em campos separados e não como texto livre), usado na contratada dos contratos (decidido em 21/11/2026) | Ajustar | usuário |
-| **CPF e CNPJ guardados sem máscara**, como texto no banco, em todo o sistema; o **CNPJ aceita letras** (formato alfanumérico que começa a valer no Brasil). A máscara é só de exibição (decidido em 21/11/2026) | Ajustar | usuário |
+| **CPF e CNPJ guardados sem máscara**, como texto no banco, em todo o sistema; o **CNPJ aceita letras** (formato alfanumérico que começa a valer no Brasil). A máscara é só de exibição (decidido em 21/11/2026). **Feito** em 21/11/2026 ([SPEC-034](specs/034-cpf-cnpj-sem-mascara.md)): validação dos dígitos verificadores (CNPJ pela regra do SERPRO), migration que normaliza o que já estava gravado | Pronto | usuário |
 | Marca: logo, nome, WhatsApp e cor, usados no link do casal, RSVP e página pública | Novo | PDF, CF |
 | Chave Pix (tipo, chave, CPF/CNPJ) usada na cobrança e no contrato | Novo | PDF, CF |
 | Página pública com apresentação, cidade, Instagram, tipos de evento, portfólio, depoimentos e botão de orçamento que cai no funil | Novo | D, CF |

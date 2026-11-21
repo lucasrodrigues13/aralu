@@ -1,8 +1,26 @@
-import { aplicarDinheiro, aplicarHora, aplicarMascara, dinheiroParaNumero, horaParaApi, numeroParaDinheiro } from './mascaras';
+import { aplicarDinheiro, aplicarHora, aplicarMascara, dinheiroParaNumero, horaParaApi, limparDocumento, numeroParaDinheiro } from './mascaras';
 
 describe('aplicarMascara', () => {
   it('formata CPF', () => {
     expect(aplicarMascara('52998224725', 'cpf')).toBe('529.982.247-25');
+  });
+
+  it('formata CNPJ numérico e alfanumérico, só número nos 2 últimos', () => {
+    expect(aplicarMascara('11222333000181', 'cnpj')).toBe('11.222.333/0001-81');
+    expect(aplicarMascara('12abc34501de35', 'cnpj')).toBe('12.ABC.345/01DE-35');
+    expect(aplicarMascara('12ABC34501DEXY', 'cnpj')).toBe('12.ABC.345/01DE');
+  });
+
+  it('documento começa como CPF e vira CNPJ com letra ou mais de 11 caracteres', () => {
+    expect(aplicarMascara('52998224725', 'documento')).toBe('529.982.247-25');
+    expect(aplicarMascara('529982247250', 'documento')).toBe('52.998.224/7250');
+    expect(aplicarMascara('12ABC', 'documento')).toBe('12.ABC');
+    expect(aplicarMascara('12.abc.345/01de-35', 'documento')).toBe('12.ABC.345/01DE-35');
+  });
+
+  it('limpa o documento para guardar sem máscara', () => {
+    expect(limparDocumento('12.abc.345/01de-35')).toBe('12ABC34501DE35');
+    expect(limparDocumento('529.982.247-25')).toBe('52998224725');
   });
 
   it('formata celular', () => {

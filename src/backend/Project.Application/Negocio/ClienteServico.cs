@@ -341,16 +341,16 @@ public sealed class ClienteServico(IDados dados, Cep.IConsultaCep cep, IContaCli
             return Resultado<Cliente>.Erro(Codigos.Validacao, "A data de nascimento não pode ser futura.");
         }
 
-        var cpf = Mascaras.Cpf(pedido.Cpf);
+        var cpf = Documentos.Cpf(pedido.Cpf);
         if (cpf == "")
         {
-            return Resultado<Cliente>.Erro(Codigos.Validacao, "O CPF deve seguir a máscara 000.000.000-00.");
+            return Resultado<Cliente>.Erro(Codigos.Validacao, "Informe um CPF válido.");
         }
 
-        var cnpj = Mascaras.Cnpj(pedido.Cnpj);
+        var cnpj = Documentos.Cnpj(pedido.Cnpj);
         if (cnpj == "")
         {
-            return Resultado<Cliente>.Erro(Codigos.Validacao, "O CNPJ deve seguir a máscara 00.000.000/0000-00.");
+            return Resultado<Cliente>.Erro(Codigos.Validacao, "Informe um CNPJ válido.");
         }
 
         var cep = Mascaras.Cep(pedido.Cep);

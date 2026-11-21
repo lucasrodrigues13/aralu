@@ -15,9 +15,41 @@ export function soDigitos(valor: string): string {
   return valor.replace(/\D/g, '');
 }
 
+/** Documento sem máscara: só A-Z e 0-9, em maiúsculas (é assim que CPF e CNPJ são gravados). */
+export function limparDocumento(valor: string): string {
+  return valor.replace(/[^0-9A-Za-z]/g, '').toUpperCase();
+}
+
+/** CNPJ alfanumérico: 12 primeiras posições aceitam letra e número; as 2 últimas (verificadores) só número. */
+function limparCnpj(valor: string): string {
+  let resultado = '';
+  for (const c of limparDocumento(valor)) {
+    if (resultado.length >= 14) {
+      break;
+    }
+    if (resultado.length >= 12 && !/[0-9]/.test(c)) {
+      continue;
+    }
+    resultado += c;
+  }
+  return resultado;
+}
+
 export function aplicarMascara(valor: string, tipo: TipoMascara): string {
   if (tipo === 'pixAleatoria') {
     return mascararChaveAleatoria(valor);
+  }
+
+  if (tipo === 'cnpj') {
+    return mascarar(limparCnpj(valor), [2, 5, 8, 12], ['.', '.', '/', '-']);
+  }
+
+  if (tipo === 'documento') {
+    // Começa como CPF; letra ou mais de 11 caracteres vira CNPJ.
+    const limpo = limparDocumento(valor);
+    return /[A-Z]/.test(limpo) || limpo.length > 11
+      ? aplicarMascara(limpo, 'cnpj')
+      : aplicarMascara(limpo, 'cpf');
   }
 
   const digitos = soDigitos(valor);
@@ -25,18 +57,12 @@ export function aplicarMascara(valor: string, tipo: TipoMascara): string {
   switch (tipo) {
     case 'cpf':
       return mascarar(digitos.slice(0, 11), [3, 6, 9], ['.', '.', '-']);
-    case 'cnpj':
-      return mascarar(digitos.slice(0, 14), [2, 5, 8, 12], ['.', '.', '/', '-']);
     case 'celular':
       return mascararTelefone(digitos.slice(0, 11), true);
     case 'telefone':
       return mascararTelefone(digitos.slice(0, 10), false);
     case 'cep':
       return mascarar(digitos.slice(0, 8), [5], ['-']);
-    case 'documento':
-      return digitos.length > 11
-        ? aplicarMascara(digitos, 'cnpj')
-        : aplicarMascara(digitos, 'cpf');
     case 'dinheiro':
       return aplicarDinheiro(digitos);
     case 'agencia':

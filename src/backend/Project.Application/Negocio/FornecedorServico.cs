@@ -569,6 +569,30 @@ public sealed class FornecedorServico(IDados dados)
             return Resultado<Fornecedor>.Erro(Codigos.Validacao, "Use um número maior ou igual a zero.");
         }
 
+        var cnpj = Documentos.Cnpj(pedido.Cnpj);
+        if (cnpj == "")
+        {
+            return Resultado<Fornecedor>.Erro(Codigos.Validacao, "Informe um CNPJ válido.");
+        }
+
+        var cpf = Documentos.Cpf(pedido.Cpf);
+        if (cpf == "")
+        {
+            return Resultado<Fornecedor>.Erro(Codigos.Validacao, "Informe um CPF válido.");
+        }
+
+        var documentoBancario = Documentos.CpfOuCnpj(pedido.DocumentosBancarios);
+        if (documentoBancario == "")
+        {
+            return Resultado<Fornecedor>.Erro(Codigos.Validacao, "Informe um CPF ou CNPJ válido para os dados bancários.");
+        }
+
+        var pixChave = Domain.Comum.Texto.Limpo(pedido.PixChave);
+        if (pixChave is not null && pedido.PixTipo is "Cpf" or "Cnpj")
+        {
+            pixChave = Documentos.Limpar(pixChave);
+        }
+
         var fornecedor = new Fornecedor
         {
             Id = id,
@@ -576,8 +600,8 @@ public sealed class FornecedorServico(IDados dados)
             Nome = nome,
             FotoId = pedido.FotoId,
             RazaoSocial = Domain.Comum.Texto.Limpo(pedido.RazaoSocial),
-            Cnpj = Mascaras.Cnpj(pedido.Cnpj) is { Length: > 0 } cnpj ? cnpj : Domain.Comum.Texto.Limpo(pedido.Cnpj),
-            Cpf = Mascaras.Cpf(pedido.Cpf) is { Length: > 0 } cpf ? cpf : Domain.Comum.Texto.Limpo(pedido.Cpf),
+            Cnpj = cnpj,
+            Cpf = cpf,
             NomeResponsavel = Domain.Comum.Texto.Limpo(pedido.NomeResponsavel),
             PrecoDe = pedido.PrecoDe,
             PrecoAte = pedido.PrecoAte,
@@ -599,9 +623,9 @@ public sealed class FornecedorServico(IDados dados)
             ContaBancaria = Domain.Comum.Texto.Limpo(pedido.ContaBancaria),
             TitularConta = Domain.Comum.Texto.Limpo(pedido.TitularConta),
             TipoConta = Domain.Comum.Texto.Limpo(pedido.TipoConta),
-            DocumentosBancarios = Domain.Comum.Texto.Limpo(pedido.DocumentosBancarios),
+            DocumentosBancarios = documentoBancario,
             PixTipo = Domain.Comum.Texto.Limpo(pedido.PixTipo),
-            PixChave = Domain.Comum.Texto.Limpo(pedido.PixChave),
+            PixChave = pixChave,
             Diferencial = Domain.Comum.Texto.Limpo(pedido.Diferencial),
             DiferencialVisivelCliente = pedido.DiferencialVisivelCliente ?? false,
             InformacoesGerais = Domain.Comum.Texto.Limpo(pedido.InformacoesGerais),

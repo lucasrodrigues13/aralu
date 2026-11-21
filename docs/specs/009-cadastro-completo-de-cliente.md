@@ -50,7 +50,7 @@ Organizer autenticado. Para vincular, evento da mesma conta, SPEC-002.
 
 ## 9. Validações
 
-Nome completo, papel, e-mail, DDI e celular obrigatórios. E-mail com formato válido. CPF, CNPJ e CEP, se preenchidos, seguem a máscara da tela. Tamanho máximo dos textos não foi definido.
+Nome completo, papel, e-mail, DDI e celular obrigatórios. E-mail com formato válido. CPF e CNPJ, se preenchidos, são válidos (dígitos verificadores) e gravados sem máscara, com CNPJ alfanumérico (SPEC-034). CEP, se preenchido, segue a máscara da tela. Tamanho máximo dos textos não foi definido.
 
 ## 10. Estados
 
