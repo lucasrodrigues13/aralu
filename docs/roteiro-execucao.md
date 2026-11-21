@@ -52,7 +52,7 @@ Legenda de "Banco": **M** = migration (entra na fila do banco), **—** = sem mi
 | 5 | #30 Aba Contratos do evento | #28, #34, #36 | — | evento-contratos | pendente |
 | 5 | #33 Gestão Financeira: parcelas do mês | #32, #41 | — | pagamentos/gestão financeira | pendente |
 | 5 | #43 Oportunidade: dados do contratante | #42, #45 | M | oportunidades, clientes, proposta | pendente |
-| 5 | #44 Orçamento com parcelas | #41 | — | orçamentos-funil, proposta-publica | feito |
+| 5 | #44 Orçamento com parcelas | #41 | — | orçamentos-funil, proposta-publica | pronto no branch `claude/card-44-orcamento-80152a` (SPEC-042) |
 | 6 | #20 Resumo absorve Tarefas | #21, #31, #28, #30 | ? | evento-home, tarefas | pendente |
 | 6 | #23 Link para o casal cadastrar convites | #22, #34 | M | convidados, link do casal | pendente |
 | 6 | #24 RSVP com prazo | #22 (#23 ajuda) | M | rsvp, convidados | pendente |

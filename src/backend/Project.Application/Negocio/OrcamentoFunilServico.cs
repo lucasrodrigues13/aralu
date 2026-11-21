@@ -253,7 +253,7 @@ public sealed class OrcamentoFunilServico(IDados dados)
         item.Parcelas.AddRange(novas);
         if (item.TokenLink is not null)
         {
-            // SPEC-041 §17, ponto 1: mudar as parcelas depois de enviar vale como mudar a proposta; o aceite
+            // SPEC-042 §17, ponto 1: mudar as parcelas depois de enviar vale como mudar a proposta; o aceite
             // anterior não vale para o novo parcelamento e a proposta volta a "ainda não foi aberta".
             item.AbertoEm = null;
             item.Resposta = null;

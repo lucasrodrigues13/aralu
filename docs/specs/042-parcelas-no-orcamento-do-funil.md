@@ -4,7 +4,7 @@
 
 ## 1. Identificador e nome
 
-SPEC-041. Parcelas no orçamento do funil.
+SPEC-042. Parcelas no orçamento do funil.
 
 ## 2. Objetivo
 

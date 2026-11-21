@@ -15,7 +15,7 @@ import { deDataParaIso } from '../../shared/data';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { GdDinheiroPipe } from '../../shared/gd-dinheiro.pipe';
 
-/** Parcelar o orçamento do funil: entrada, número de parcelas e vencimentos (SPEC-041 §6.1). */
+/** Parcelar o orçamento do funil: entrada, número de parcelas e vencimentos (SPEC-042 §6.1). */
 @Component({
   selector: 'app-parcelas-orcamento-dialog',
   imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule, CampoDataComponent, CampoDinheiroComponent, GdDataPipe, GdDinheiroPipe],
