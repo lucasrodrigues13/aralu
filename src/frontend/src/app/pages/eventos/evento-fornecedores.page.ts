@@ -2,6 +2,7 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
+import { DecimalPipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
@@ -27,6 +28,7 @@ import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { ComprovanteDialog } from '../dinheiro/comprovante.dialog';
 import { GdDinheiroPipe } from '../../shared/gd-dinheiro.pipe';
 import { EventoAbasComponent } from './evento-abas.component';
+import { BarraServico, GraficoOrcamento, montarBarrasPorServico, montarGraficoOrcamento } from './orcamento-graficos';
 import { VincularFornecedorDados, VincularFornecedorDialog, VincularFornecedorPedido } from './vincular-fornecedor.dialog';
 
 interface ContratarResultado {
@@ -203,45 +205,6 @@ export class SubitensDialog {
   }
 }
 
-@Component({
-  selector: 'app-budget-dialog',
-  imports: [MatCardModule, MatDialogModule, MatButtonModule, GdDinheiroPipe],
-  template: `
-    <h2 mat-dialog-title>Planejamento de orçamento</h2>
-    <mat-dialog-content>
-      @if (budget) {
-        <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 mb-6">
-          <div><mat-card class="shadow-none text-center mb-0! h-full bg-light-primary"><mat-card-content><h4 class="text-sm font-semibold text-primary">Orçamento</h4><h6 class="text-xl font-semibold text-primary mt-2!">{{ budget.budget | gdDinheiro }}</h6></mat-card-content></mat-card></div>
-          <div><mat-card class="shadow-none text-center mb-0! h-full bg-light-primary"><mat-card-content><h4 class="text-sm font-semibold text-primary">Estimado</h4><h6 class="text-xl font-semibold text-primary mt-2!">{{ budget.estimado | gdDinheiro }}</h6></mat-card-content></mat-card></div>
-          <div><mat-card class="shadow-none text-center mb-0! h-full bg-light-primary"><mat-card-content><h4 class="text-sm font-semibold text-primary">Contratado</h4><h6 class="text-xl font-semibold text-primary mt-2!">{{ budget.contratado | gdDinheiro }}</h6></mat-card-content></mat-card></div>
-          <div><mat-card class="shadow-none text-center mb-0! h-full bg-light-primary"><mat-card-content><h4 class="text-sm font-semibold text-primary">Prova real</h4><h6 class="text-xl font-semibold text-primary mt-2!">{{ budget.provaReal | gdDinheiro }}</h6></mat-card-content></mat-card></div>
-          @if (budget.custoPorConvidado !== null) {
-            <div><mat-card class="shadow-none text-center mb-0! h-full bg-light-primary"><mat-card-content><h4 class="text-sm font-semibold text-primary">Por convidado</h4><h6 class="text-xl font-semibold text-primary mt-2!">{{ budget.custoPorConvidado | gdDinheiro }}</h6></mat-card-content></mat-card></div>
-          }
-        </div>
-        <table class="tabela">
-          <thead><tr><th>Serviço</th><th>Estimado</th><th>Contratado</th></tr></thead>
-          <tbody>
-            @for (s of budget.servicos; track s.id) {
-              <tr>
-                <td>{{ s.nome }}</td>
-                <td>{{ s.estimado | gdDinheiro }}</td>
-                <td>{{ s.contratado | gdDinheiro }}</td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      }
-    </mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button mat-stroked-button type="button" mat-dialog-close>Fechar</button>
-    </mat-dialog-actions>
-  `,
-})
-export class BudgetDialog {
-  protected readonly budget = inject<BudgetEvento>(MAT_DIALOG_DATA);
-}
-
 type Vinculo = EventoServico['fornecedores'][number];
 
 interface LinhaFornecedor {
@@ -262,7 +225,7 @@ const CLASSE_ETAPA: Record<string, string> = {
 /** Aba Fornecedores do evento: serviços, negociação, parcelas e orçamento (SPEC-018; SPEC-008 v2, 8.2). */
 @Component({
   selector: 'app-evento-fornecedores',
-  imports: [MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, MatMenuModule, GdDinheiroPipe, EventoAbasComponent],
+  imports: [MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, MatMenuModule, GdDinheiroPipe, DecimalPipe, EventoAbasComponent],
   template: `
     <app-evento-abas [eventoId]="id" />
     <mat-card class="cardWithShadow">
@@ -272,11 +235,63 @@ const CLASSE_ETAPA: Record<string, string> = {
         <mat-card-subtitle>{{ evento()?.nome }} · serviços, negociação e pagamentos.</mat-card-subtitle>
       </div>
       <div class="flex flex-wrap gap-2">
-        <button mat-stroked-button type="button" (click)="abrirBudget()"><mat-icon>request_quote</mat-icon> Orçamento</button>
         <button mat-stroked-button type="button" (click)="adicionarServico()"><mat-icon>playlist_add</mat-icon> Adicionar serviço</button>
         <button mat-flat-button type="button" (click)="vincular()"><mat-icon>add</mat-icon> Adicionar fornecedor</button>
       </div>
     </div>
+    @if (graficos(); as g) {
+      <section class="px-6 pb-6" aria-label="Orçamento do evento">
+        <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4 mb-4">
+          <div class="indicador"><span class="rotulo">Orçamento</span><strong>{{ g.dados.budget | gdDinheiro }}</strong></div>
+          <div class="indicador"><span class="rotulo">Estimado</span><strong>{{ g.dados.estimado | gdDinheiro }}</strong></div>
+          <div class="indicador"><span class="rotulo">Contratado</span><strong>{{ g.dados.contratado | gdDinheiro }}</strong></div>
+          <div class="indicador"><span class="rotulo">Prova real</span><strong>{{ g.dados.provaReal | gdDinheiro }}</strong></div>
+          @if (g.dados.custoPorConvidado !== null) {
+            <div class="indicador"><span class="rotulo">Por convidado</span><strong>{{ g.dados.custoPorConvidado | gdDinheiro }}</strong></div>
+          }
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="grafico">
+            <h4 class="titulo">Contratado e estimado frente ao orçamento</h4>
+            @if (g.orcamento.vazio) {
+              <p class="text-sm text-muted">Informe o estimado dos serviços para ver os gráficos.</p>
+            } @else {
+              <div class="barra" role="img" [attr.aria-label]="descricaoBarra(g.orcamento)">
+                @for (fatia of g.orcamento.fatias; track fatia.chave) {
+                  @if (fatia.largura > 0) { <span class="fatia" [class]="'fatia ' + fatia.chave" [style.width.%]="fatia.largura"></span> }
+                }
+              </div>
+              <ul class="legenda">
+                @for (fatia of g.orcamento.fatias; track fatia.chave) {
+                  <li><span [class]="'ponto ' + fatia.chave"></span>{{ fatia.rotulo }}: <strong>{{ fatia.valor | gdDinheiro }}</strong>
+                    @if (fatia.percentualDoOrcamento !== null) { <span class="text-muted">({{ fatia.percentualDoOrcamento | number: '1.0-0' }}%)</span> }
+                  </li>
+                }
+              </ul>
+              @if (g.orcamento.excesso > 0) {
+                <p class="text-sm text-error font-semibold mt-2">Acima do orçamento em {{ g.orcamento.excesso | gdDinheiro }}.</p>
+              }
+              @if (g.orcamento.semOrcamento) {
+                <p class="text-xs text-muted mt-2">Orçamento do evento não informado.</p>
+              }
+            }
+          </div>
+          <div class="grafico">
+            <h4 class="titulo">Por serviço</h4>
+            <ul class="servicos">
+              @for (barra of g.servicos; track barra.id) {
+                <li role="img" [attr.aria-label]="descricaoServico(barra)">
+                  <span class="nome-servico">{{ barra.nome }}</span>
+                  <span class="linha"><span class="trilho"><span class="fatia estimado" [style.width.%]="barra.larguraEstimado"></span></span><span class="num">{{ barra.estimado | gdDinheiro }}</span></span>
+                  <span class="linha"><span class="trilho"><span class="fatia contratado" [style.width.%]="barra.larguraContratado"></span></span><span class="num">{{ barra.contratado | gdDinheiro }}</span></span>
+                </li>
+              }
+            </ul>
+            <p class="legenda-servicos"><span class="ponto estimado"></span>Estimado <span class="ponto contratado"></span>Contratado</p>
+          </div>
+        </div>
+      </section>
+    }
     <mat-card-content class="border-t border-border">
     @if (evento(); as atual) {
           <div class="flex flex-wrap items-end gap-4 mb-6">
@@ -401,6 +416,26 @@ const CLASSE_ETAPA: Record<string, string> = {
   `,
   styles: `
     .nome { display: block; font-weight: 500; }
+    .indicador { border-radius: 8px; padding: 12px 16px; text-align: center; background: rgba(128,128,128,.12); }
+    .indicador .rotulo { display: block; font-size: 12px; opacity: .75; }
+    .indicador strong { display: block; font-size: 18px; margin-top: 4px; }
+    .grafico { border: 1px solid rgba(128,128,128,.25); border-radius: 8px; padding: 16px; }
+    .titulo { font-weight: 600; margin: 0 0 12px; }
+    .barra { display: flex; height: 22px; border-radius: 6px; overflow: hidden; background: rgba(128,128,128,.18); }
+    .fatia.contratado, .ponto.contratado { background: #2e7d32; }
+    .fatia.estimado, .ponto.estimado { background: #f9a825; }
+    .fatia.restante, .ponto.restante { background: rgba(128,128,128,.45); }
+    .ponto.excesso { background: #c62828; }
+    .ponto { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
+    .legenda { list-style: none; padding: 0; margin: 12px 0 0; display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+    .servicos { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }
+    .nome-servico { display: block; font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+    .linha { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
+    .trilho { flex: 1; height: 10px; border-radius: 5px; background: rgba(128,128,128,.18); overflow: hidden; display: block; }
+    .trilho .fatia { display: block; height: 100%; }
+    .num { min-width: 90px; text-align: right; font-size: 12px; white-space: nowrap; }
+    .legenda-servicos { font-size: 12px; margin: 12px 0 0; }
+    .legenda-servicos .ponto:not(:first-child) { margin-left: 12px; }
     td.servico { vertical-align: top; min-width: 200px; }
     .servico-acoes { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0 0 -12px; }
     .servico-acoes button { height: 28px; font-size: 12px; color: var(--mat-sys-surface-container-lowest); }
@@ -422,6 +457,13 @@ export class EventoFornecedoresPage implements OnInit {
   protected readonly semFornecedor = SEM_FORNECEDOR;
   protected readonly busca = signal('');
   protected readonly etapa = signal('');
+  protected readonly budget = signal<BudgetEvento | null>(null);
+  protected readonly graficos = computed<{ dados: BudgetEvento; orcamento: GraficoOrcamento; servicos: BarraServico[] } | null>(() => {
+    const dados = this.budget();
+    return dados && dados.servicos.length > 0
+      ? { dados, orcamento: montarGraficoOrcamento(dados), servicos: montarBarrasPorServico(dados) }
+      : null;
+  });
   protected id = '';
 
   protected readonly linhas = computed(() => {
@@ -609,11 +651,12 @@ export class EventoFornecedoresPage implements OnInit {
     });
   }
 
-  protected abrirBudget(): void {
-    this.negocio.budget(this.id).subscribe({
-      next: (budget) => this.dialog.open(BudgetDialog, { ...DIALOG, data: budget }),
-      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
-    });
+  protected descricaoBarra(grafico: GraficoOrcamento): string {
+    return grafico.fatias.map((fatia) => `${fatia.rotulo}: ${formatarReais(fatia.valor)}`).join('; ');
+  }
+
+  protected descricaoServico(barra: BarraServico): string {
+    return `${barra.nome}: estimado ${formatarReais(barra.estimado)}, contratado ${formatarReais(barra.contratado)}`;
   }
 
   /** Um vínculo em Orçamento por serviço marcado; serviços novos são criados antes (SPEC-045 §6.1). */
@@ -654,7 +697,16 @@ export class EventoFornecedoresPage implements OnInit {
       next: (evento) => this.evento.set(evento),
       error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
     });
+    this.negocio.budget(this.id).subscribe({
+      next: (dados) => this.budget.set(dados),
+      // Complementar: sem permissão do financeiro (403) ou em falha, o bloco só não aparece (SPEC-047 §7).
+      error: () => this.budget.set(null),
+    });
   }
+}
+
+function formatarReais(valor: number): string {
+  return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
 function normalizar(texto: string): string {

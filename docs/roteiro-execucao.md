@@ -48,7 +48,7 @@ Legenda de "Banco": **M** = migration (entra na fila do banco), **—** = sem mi
 | 4 | #28 Contratar fornecedor, anexar contrato | #31, #41 | M | evento-fornecedores | pronto no branch `claude/card-28-contratar-623d18` (SPEC-045, migration `ContratoAssinadoDoFornecedor`; Contratar sem parcelas, contrato assinado em `ContratoFornecedor`; nada apagado do banco); juntar na main; integração só ao fim das ondas |
 | 4 | #34 Link do casal: financeiro do evento | #31, #28 | M | link público, evento | pronto no branch `claude/card-34-link-casal-fe992e` (SPEC-046, migration `LinkDoCasal`, só cria `LinksCasal`; nada apagado); juntar na main; integração só ao fim das ondas |
 | 4 | #38 Modelos de Contrato: tela única | #37 | M | casca, modelos-funil, contratos | pronto no branch `claude/card-38-modelos-7f472c` (SPEC-039, migration `ModelosDeContratoUnificados`; modelos do funil migrados para a tela única e tabela `ModelosContratoFunil` apagada); juntar na main; integração só ao fim das ondas |
-| 5 | #29 Gráficos de orçamento | #28 (mesma tela) | — | evento-fornecedores | pendente |
+| 5 | #29 Gráficos de orçamento | #28 (mesma tela) | — | evento-fornecedores | pronto no branch `claude/card-29-graficos-8b5bdc` (SPEC-047, sem migration; só frontend, nada apagado do banco nem da API); juntar na main; integração só ao fim das ondas |
 | 5 | #30 Aba Contratos do evento | #28, #34, #36 | — | evento-contratos | pendente |
 | 5 | #33 Gestão Financeira: parcelas do mês | #32, #41 | — | pagamentos/gestão financeira | pronto no branch `claude/card-33-parcelas-mes-0b0355` (SPEC-044, sem migration; só frontend; sem comprovante do recebimento) |
 | 5 | #43 Oportunidade: dados do contratante | #42, #45 | M | oportunidades, clientes, proposta | pendente |
