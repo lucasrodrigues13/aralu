@@ -83,6 +83,26 @@ describe('CascaComponent', () => {
     expect(raiz.querySelector('mat-sidenav')?.classList.contains('mat-drawer-opened')).toBe(true);
   });
 
+  it('ordena os grupos com Modelos por último e põe os modelos do funil em Modelos (SPEC-034)', () => {
+    const raiz = montar(false).nativeElement as HTMLElement;
+    const grupos = Array.from(raiz.querySelectorAll('.nav-caption')).map((e) => e.textContent?.trim());
+    expect(grupos).toEqual(['Principal', 'Gestão de eventos', 'Agenda', 'Funil de vendas', 'Modelos']);
+
+    const itensDe = (rotulo: string) => {
+      const itens: string[] = [];
+      let atual = Array.from(raiz.querySelectorAll('.nav-caption')).find((e) => e.textContent?.trim() === rotulo)?.nextElementSibling;
+      while (atual && !atual.classList.contains('nav-caption')) {
+        itens.push(atual.textContent?.trim() ?? '');
+        atual = atual.nextElementSibling;
+      }
+      return itens;
+    };
+    expect(itensDe('Modelos').some((t) => t.includes('Modelos de serviços'))).toBe(true);
+    expect(itensDe('Modelos').some((t) => t.includes('Modelo de orçamento'))).toBe(true);
+    expect(itensDe('Funil de vendas').some((t) => t.includes('Modelos de serviços') || t.includes('Modelo de orçamento'))).toBe(false);
+    expect(itensDe('Funil de vendas').some((t) => t.includes('Modelos de contrato'))).toBe(true);
+  });
+
   it('em tela larga não mostra Novo evento na barra superior', () => {
     const raiz = montar(false).nativeElement as HTMLElement;
     const topo = raiz.querySelector('.topbar');

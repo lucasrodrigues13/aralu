@@ -205,18 +205,6 @@ export class CascaComponent {
       ],
     },
     {
-      rotulo: 'Modelos',
-      itens: [
-        { rotulo: 'Modelos de evento', icone: 'content_copy', rota: '/modelos-evento' },
-        { rotulo: 'Contratos', icone: 'gavel', rota: '/contratos', soDona: true },
-        { rotulo: 'Modelos de briefing', icone: 'quiz', rota: '/modelos-briefing' },
-        { rotulo: 'Modelos de roteiro', icone: 'schedule', rota: '/modelos-roteiro' },
-        { rotulo: 'Modelos de cronograma', icone: 'view_timeline', rota: '/modelos-cronograma' },
-        { rotulo: 'Modelos de inspirações', icone: 'photo_library', rota: '/modelos-inspiracoes' },
-        { rotulo: 'Modelos de mensagens', icone: 'sms', rota: '/modelos-mensagens' },
-      ],
-    },
-    {
       rotulo: 'Agenda',
       itens: [{ rotulo: 'Minha agenda', icone: 'calendar_month', rota: '/agenda' }],
     },
@@ -229,9 +217,21 @@ export class CascaComponent {
         { rotulo: 'Orçamentos', icone: 'request_quote', rota: '/orcamentos-funil' },
         { rotulo: 'Tarefas do funil', icone: 'checklist', rota: '/tarefas-funil' },
         { rotulo: 'Relatórios', icone: 'analytics', rota: '/relatorios-funil' },
+        { rotulo: 'Modelos de contrato', icone: 'article', rota: '/modelos-contrato-funil' },
+      ],
+    },
+    {
+      rotulo: 'Modelos',
+      itens: [
+        { rotulo: 'Modelos de evento', icone: 'content_copy', rota: '/modelos-evento' },
+        { rotulo: 'Contratos', icone: 'gavel', rota: '/contratos', soDona: true },
+        { rotulo: 'Modelos de briefing', icone: 'quiz', rota: '/modelos-briefing' },
+        { rotulo: 'Modelos de roteiro', icone: 'schedule', rota: '/modelos-roteiro' },
+        { rotulo: 'Modelos de cronograma', icone: 'view_timeline', rota: '/modelos-cronograma' },
+        { rotulo: 'Modelos de inspirações', icone: 'photo_library', rota: '/modelos-inspiracoes' },
+        { rotulo: 'Modelos de mensagens', icone: 'sms', rota: '/modelos-mensagens' },
         { rotulo: 'Modelos de serviços', icone: 'category', rota: '/modelos-servicos-funil' },
         { rotulo: 'Modelo de orçamento', icone: 'receipt_long', rota: '/modelos-orcamento-funil' },
-        { rotulo: 'Modelos de contrato', icone: 'article', rota: '/modelos-contrato-funil' },
       ],
     },
   ];
