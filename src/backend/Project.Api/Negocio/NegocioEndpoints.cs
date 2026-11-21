@@ -592,18 +592,11 @@ public static class NegocioEndpoints
         SalvarEvento pedido,
         ClaimsPrincipal usuario,
         EventoServico servico,
-        ContratoServico contratos,
         AppDbContext banco,
         CancellationToken ct) =>
         ComConta(usuario, async conta =>
         {
             var resultado = await servico.CriarAsync(conta, pedido, Hoje(), ct);
-            if (resultado.Ok && pedido.ModeloId is Guid modeloId)
-            {
-                // SPEC-030 §6.3: o evento criado do modelo já vem com os contratos do modelo.
-                await contratos.CopiarDoModeloAsync(conta, resultado.Valor!.Id, modeloId, ct);
-            }
-
             // SPEC-032 §17, ponto 1: o evento criado por uma assistente "só os dela" já nasce com ela marcada.
             if (resultado.Ok && EscopoAssistente.AssistenteId(usuario) is Guid criadora)
             {

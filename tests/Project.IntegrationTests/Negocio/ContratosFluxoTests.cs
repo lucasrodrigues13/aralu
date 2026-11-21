@@ -16,7 +16,7 @@ public class ContratosFluxoTests
     public ContratosFluxoTests(BancoFixture banco) => _banco = banco;
 
     [Fact]
-    public async Task Contrato_vai_do_modelo_ao_evento_e_o_casal_le_pelo_link()
+    public async Task Contrato_e_so_da_conta_e_nao_tem_vinculo_com_modelo_nem_evento()
     {
         var dono = await Entrar();
         var outra = await Entrar();
@@ -25,48 +25,25 @@ public class ContratosFluxoTests
         var contrato = await Ler(await dono.PostAsJsonAsync("/api/v1/contratos", new
         {
             nome = "Prestação de serviços",
-            texto = "Contratante: {{contratante_nome}} ({{contratante_documento}}). Evento {{evento_nome}}. Valor {{contrato_valor}}.",
+            texto = "Contratante: {{contratante_nome}} ({{contratante_documento}}).",
         }));
         var contratoId = contrato.GetProperty("id").GetGuid();
         Assert.Empty((await Ler(await outra.GetAsync("/api/v1/contratos"))).EnumerateArray());
+        Assert.Equal(HttpStatusCode.NotFound, (await outra.GetAsync($"/api/v1/contratos/{contratoId}")).StatusCode);
+
+        var campos = await Ler(await dono.GetAsync("/api/v1/contratos/campos"));
+        Assert.DoesNotContain(campos.GetProperty("campos").EnumerateArray(), item => item.GetProperty("marca").GetString()!.StartsWith("evento_"));
 
         var modelo = await Ler(await dono.PostAsJsonAsync("/api/v1/modelos", new { nome = "Casamento clássico", tipo = "Casamento" }));
         var modeloId = modelo.GetProperty("id").GetGuid();
-        await Ler(await dono.PutAsJsonAsync($"/api/v1/modelos/{modeloId}/contratos", new { contratoIds = new[] { contratoId } }));
-        Assert.Equal(HttpStatusCode.NotFound, (await outra.PutAsJsonAsync($"/api/v1/modelos/{modeloId}/contratos", new { contratoIds = new[] { contratoId } })).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await dono.GetAsync($"/api/v1/modelos/{modeloId}/contratos")).StatusCode);
 
         var evento = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new { modeloId, tipo = "Casamento", primeiroNome = "Lia", segundoNome = "Caio" }));
         var eventoId = evento.GetProperty("id").GetGuid();
-        var doEvento = await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/contratos"));
-        Assert.Equal(contratoId, doEvento.GetProperty("contratos")[0].GetProperty("id").GetGuid());
+        Assert.Equal(HttpStatusCode.NotFound, (await dono.GetAsync($"/api/v1/eventos/{eventoId}/contratos")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await _banco.Fabrica.CreateClient().GetAsync("/api/v1/publico/contratos/qualquer")).StatusCode);
 
-        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/contratos/{contratoId}/enviar", new { })).StatusCode);
-
-        var cliente = await Ler(await dono.PostAsJsonAsync("/api/v1/clientes", new { nome = "Lia Souza", papel = "Noiva", email = "lia@exemplo.com", ddi = "+55", celular = "11988887777", cpf = "12345678900" }));
-        await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/clientes", new { clienteId = cliente.GetProperty("id").GetGuid() }));
-        await Ler(await dono.PutAsJsonAsync($"/api/v1/eventos/{eventoId}/dinheiro/contrato", new { valor = 5000, quantidadeParcelas = 1, primeiraParcela = "2027-01-10" }));
-
-        var texto = await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/contratos/{contratoId}/texto"));
-        var preenchido = texto.GetProperty("texto").GetString()!;
-        Assert.Contains("Lia Souza", preenchido);
-        Assert.Contains("5.000,00", preenchido);
-        Assert.DoesNotContain("{{", preenchido);
-
-        var envio = await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/contratos/{contratoId}/enviar", new { }));
-        Assert.Equal("lia@exemplo.com", envio.GetProperty("email").GetString());
-        var mensagem = _banco.Fabrica.Email.Mensagens.Last(item => item.Email == "lia@exemplo.com" && item.Tipo == "texto");
-        var token = mensagem.Corpo.Split("/contrato/")[1].Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)[0].Trim();
-
-        var anonimo = _banco.Fabrica.CreateClient();
-        var publico = await Ler(await anonimo.GetAsync($"/api/v1/publico/contratos/{token}"));
-        Assert.Contains("Lia Souza", publico.GetProperty("texto").GetString());
-        Assert.Equal(HttpStatusCode.NotFound, (await anonimo.GetAsync("/api/v1/publico/contratos/token-invalido")).StatusCode);
-
-        Assert.Equal(HttpStatusCode.NotFound, (await outra.GetAsync($"/api/v1/eventos/{eventoId}/contratos/{contratoId}/texto")).StatusCode);
-
-        var removido = await Ler(await dono.DeleteAsync($"/api/v1/eventos/{eventoId}/contratos/{contratoId}"));
-        Assert.Empty(removido.GetProperty("contratos").EnumerateArray());
-        Assert.Equal(HttpStatusCode.NotFound, (await dono.GetAsync($"/api/v1/eventos/{eventoId}/contratos/{contratoId}/texto")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await dono.DeleteAsync($"/api/v1/contratos/{contratoId}")).StatusCode);
     }
 
     private async Task<HttpClient> Entrar()

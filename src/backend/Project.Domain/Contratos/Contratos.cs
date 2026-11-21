@@ -19,7 +19,7 @@ public sealed class ContratoConta
     public DateTimeOffset AtualizadoEm { get; set; }
 }
 
-/// <summary>Contrato vinculado a um modelo de evento (SPEC-030 §6.3).</summary>
+/// <summary>Legado sem uso (SPEC-030 v3): vínculo removido da tela e da API. Fica mapeado para a tabela não ser apagada.</summary>
 public sealed class ContratoDoModelo
 {
     public Guid ModeloId { get; set; }
@@ -27,7 +27,7 @@ public sealed class ContratoDoModelo
     public Guid ContratoId { get; set; }
 }
 
-/// <summary>Contrato vinculado a um evento (SPEC-030 §6.4).</summary>
+/// <summary>Legado sem uso (SPEC-030 v3): vínculo removido da tela e da API. Fica mapeado para a tabela não ser apagada.</summary>
 public sealed class ContratoDoEvento
 {
     public Guid EventoId { get; set; }
@@ -35,7 +35,7 @@ public sealed class ContratoDoEvento
     public Guid ContratoId { get; set; }
 }
 
-/// <summary>Link de leitura sem login enviado por e-mail (SPEC-030 §6.5).</summary>
+/// <summary>Legado sem uso (SPEC-030 v3): link de leitura removido. Fica mapeado para a tabela não ser apagada.</summary>
 public sealed class LinkLeituraContrato
 {
     public Guid Id { get; set; }
@@ -53,8 +53,6 @@ public sealed class LinkLeituraContrato
     public DateTimeOffset CriadoEm { get; set; }
 
     public DateTimeOffset ExpiraEm { get; set; }
-
-    public bool Valido(DateTimeOffset agora) => agora < ExpiraEm;
 }
 
 public sealed record CampoMesclagem(string Marca, string Rotulo, string Exemplo);
@@ -63,8 +61,6 @@ public sealed record CampoMesclagem(string Marca, string Rotulo, string Exemplo)
 public static partial class Mesclagem
 {
     public const string Vazio = "________";
-
-    public static readonly TimeSpan ValidadeLink = TimeSpan.FromDays(7);
 
     public static readonly IReadOnlyList<CampoMesclagem> Campos =
     [
@@ -78,13 +74,6 @@ public static partial class Mesclagem
         new("contratada_endereco", "Contratada: endereço", "Av. Central, 50, São Paulo/SP"),
         new("contratada_responsavel", "Contratada: responsável", "Maria Lima"),
         new("contratada_pix", "Contratada: chave Pix", "contato@cerimonial.com"),
-        new("evento_nome", "Evento: nome", "Ana & Rui"),
-        new("evento_tipo", "Evento: tipo", "Casamento"),
-        new("evento_data", "Evento: data", "21/11/2027"),
-        new("evento_local", "Evento: local", "Espaço Jardim"),
-        new("evento_convidados", "Evento: convidados estimados", "150"),
-        new("contrato_valor", "Contrato: valor", "R$ 9.000,00"),
-        new("contrato_parcelas", "Contrato: parcelas", "Entrada: 01/12/2026 - R$ 3.000,00\nParcela 1: 10/01/2027 - R$ 2.000,00"),
         new("data_hoje", "Data de hoje por extenso", "18 de novembro de 2026"),
     ];
 

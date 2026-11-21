@@ -38,7 +38,7 @@ Legenda de "Banco": **M** = migration (entra na fila do banco), **—** = sem mi
 | 1 | #21 Tarefas: data por item | — | M | tarefas, ItemChecklistTarefa | pronto no branch `claude/card-21-tarefas-item-ce4d93` (b7a2dc9, migration `PrazoEResponsavelDoItemDaTarefa`); juntado na main; integração só ao fim das ondas |
 | 2 | #45 CPF/CNPJ sem máscara, CNPJ alfanumérico | #27 (mesmo cadastro de fornecedor) | M | Mascaras, cliente, perfil, fornecedor | pendente |
 | 2 | #42 RG fora; CPF/CNPJ único no cliente | #45 | ? | cliente-form, convidado | pendente |
-| 2 | #36 Remover vínculo contrato-evento | — | — | contratos, modelos-evento | pendente |
+| 2 | #36 Remover vínculo contrato-evento | — | — | contratos, modelos-evento | pronto no branch `claude/card-36-vinculo-31e1bb` (commit abaixo); sem migration; integração só ao fim das ondas |
 | 2 | #37 Menu: modelos no grupo Modelos | — | — | casca.component | pendente |
 | 2 | #46 Endereço estruturado no Perfil | #45 (fila do banco) | M | perfil | pendente |
 | 3 | #41 Banco de parcelas por documento | #21, #45, #46 (fila do banco) | M | Dinheiro, Contratos, Fornecedores, Hoje | pendente |

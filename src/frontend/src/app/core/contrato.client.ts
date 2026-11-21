@@ -18,34 +18,7 @@ export interface Contrato extends ContratoResumo {
   texto: string;
 }
 
-export interface ContratoEvento {
-  id: string;
-  nome: string;
-  ultimoEnvio: string | null;
-  expiraEm: string | null;
-  enviadoPara: string | null;
-}
-
-export interface ContratosEvento {
-  emailCliente: string | null;
-  contratos: ContratoEvento[];
-}
-
-export interface ContratoPreenchido {
-  id: string;
-  nome: string;
-  texto: string;
-  empresa: string | null;
-}
-
-export interface ContratoPublico {
-  nome: string;
-  texto: string;
-  empresa: string | null;
-  expiraEm: string;
-}
-
-/** Contratos da conta, do modelo e do evento (SPEC-030 v2). */
+/** Contratos da conta, sem vínculo com modelo nem evento (SPEC-030 v3). */
 @Injectable({ providedIn: 'root' })
 export class ContratoClient {
   private readonly http = inject(HttpClient);
@@ -71,37 +44,5 @@ export class ContratoClient {
 
   excluir(id: string) {
     return this.http.delete(`${this.base}/api/v1/contratos/${id}`);
-  }
-
-  doModelo(modeloId: string) {
-    return this.http.get<string[]>(`${this.base}/api/v1/modelos/${modeloId}/contratos`);
-  }
-
-  vincularAoModelo(modeloId: string, contratoIds: string[]) {
-    return this.http.put<string[]>(`${this.base}/api/v1/modelos/${modeloId}/contratos`, { contratoIds });
-  }
-
-  doEvento(eventoId: string) {
-    return this.http.get<ContratosEvento>(`${this.base}/api/v1/eventos/${eventoId}/contratos`);
-  }
-
-  adicionarAoEvento(eventoId: string, contratoId: string) {
-    return this.http.post<ContratosEvento>(`${this.base}/api/v1/eventos/${eventoId}/contratos/${contratoId}`, {});
-  }
-
-  removerDoEvento(eventoId: string, contratoId: string) {
-    return this.http.delete<ContratosEvento>(`${this.base}/api/v1/eventos/${eventoId}/contratos/${contratoId}`);
-  }
-
-  preenchido(eventoId: string, contratoId: string) {
-    return this.http.get<ContratoPreenchido>(`${this.base}/api/v1/eventos/${eventoId}/contratos/${contratoId}/texto`);
-  }
-
-  enviar(eventoId: string, contratoId: string) {
-    return this.http.post<{ email: string; expiraEm: string }>(`${this.base}/api/v1/eventos/${eventoId}/contratos/${contratoId}/enviar`, {});
-  }
-
-  publico(token: string) {
-    return this.http.get<ContratoPublico>(`${this.base}/api/v1/publico/contratos/${token}`);
   }
 }

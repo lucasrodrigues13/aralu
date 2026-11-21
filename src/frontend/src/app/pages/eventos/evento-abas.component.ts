@@ -47,6 +47,5 @@ export class EventoAbasComponent {
     { rotulo: 'Convidados', rota: 'convidados' },
     { rotulo: 'Fornecedores', rota: 'fornecedores' },
     { rotulo: 'Dinheiro', rota: 'dinheiro', financeiro: true },
-    { rotulo: 'Contratos', rota: 'contratos', financeiro: true },
   ];
 }
