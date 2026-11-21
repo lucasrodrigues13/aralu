@@ -18,7 +18,7 @@ Trocar os registros manuais "Enviar" e "Assinar" por um fluxo real: a plataforma
 
 ## 4. Requisitos relacionados
 
-RF-075 (contratos do funil, SPEC-022), RF-098 (contrato do evento, SPEC-030), SPEC-028 (modelo de contrato do funil), SPEC-020 (oportunidade e cliente), SPEC-031 (proposta por link, que já tem link público e estados).
+RF-075 (contratos do funil, SPEC-022), RF-098 (contrato do evento, SPEC-030), SPEC-039 (modelos de contrato, tela única), SPEC-020 (oportunidade e cliente), SPEC-031 (proposta por link, que já tem link público e estados).
 
 ## 5. Atores e permissões
 
@@ -100,7 +100,7 @@ Envio feliz até Assinado. Recusa. Expiração. Cancelar envio pendente. Reenvio
 
 ## 16. Dependências
 
-SPEC-022 (contratos do funil), SPEC-030 (contratos do evento), SPEC-028 (modelo), armazenamento de arquivos do sistema, configuração de segredos do servidor, rota pública para receber webhooks (sem login, validada por assinatura do fornecedor), e-mail da conta (SPEC-001) para avisos.
+SPEC-022 (contratos do funil), SPEC-030 (contratos do evento), SPEC-039 (modelo), armazenamento de arquivos do sistema, configuração de segredos do servidor, rota pública para receber webhooks (sem login, validada por assinatura do fornecedor), e-mail da conta (SPEC-001) para avisos.
 
 ## 17. Premissas e pontos não definidos
 

@@ -27,14 +27,3 @@ public sealed class ModeloOrcamentoFunil
 
     public string? CorSecundaria { get; set; }
 }
-
-public sealed class ModeloContratoFunil
-{
-    public Guid Id { get; set; }
-
-    public string ContaId { get; set; } = "";
-
-    public string Nome { get; set; } = "";
-
-    public string Texto { get; set; } = "";
-}

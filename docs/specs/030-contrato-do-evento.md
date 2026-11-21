@@ -8,11 +8,11 @@ SPEC-030. Contratos (cadastro de contratos da conta). O nome do arquivo (`030-co
 
 ## 2. Objetivo
 
-Cadastrar contratos da conta (nome e texto com campos de mesclagem), para o organizador usar com os clientes. O contrato **não se liga a modelo de evento nem a evento**. O envio ao cliente é só pelo contrato do funil ([SPEC-022](022-contratos-do-funil.md), ação "Enviar") e, depois, pela assinatura eletrônica ([SPEC-033](033-assinatura-eletronica.md)). Os modelos de contrato são unificados na tela única "Modelos de Contrato" pelo card #38; até lá a tela Contratos continua como está, sem vínculo.
+Cadastrar contratos da conta (nome e texto com campos de mesclagem), para o organizador usar com os clientes. O contrato **não se liga a modelo de evento nem a evento**. O envio ao cliente é só pelo contrato do funil ([SPEC-022](022-contratos-do-funil.md), ação "Enviar") e, depois, pela assinatura eletrônica ([SPEC-033](033-assinatura-eletronica.md)). A tela Contratos é a tela única **"Modelos de Contrato"** (grupo Modelos), unificada com os modelos do funil no card #38 ([SPEC-039](039-modelos-de-contrato-tela-unica.md)); o contrato do funil escolhe o modelo dela.
 
 ## 3. Requisitos relacionados
 
-RF-098 (contrato). RF-087 / RF-088 (nome, documento e Pix da conta no texto). SPEC-012 (modelo de evento: perde a aba Contratos). SPEC-028 (modelo de contrato do funil, não muda aqui). SPEC-022 (contrato do funil, não muda aqui). Contratos de fornecedor: card #30 (aba Contratos do evento lista só arquivos de fornecedor).
+RF-098 (contrato). RF-087 / RF-088 (nome, documento e Pix da conta no texto). SPEC-012 (modelo de evento: perde a aba Contratos). SPEC-028 (modelo de contrato do funil, substituída pela SPEC-039). SPEC-022 (contrato do funil, não muda aqui). Contratos de fornecedor: card #30 (aba Contratos do evento lista só arquivos de fornecedor).
 
 ## 4. Atores e permissões
 
@@ -106,7 +106,7 @@ Validação no campo. Outra conta: indisponível.
 3. O editor do modelo de evento não tem aba Contratos; evento criado do modelo nasce sem contratos.
 4. O evento não tem aba Contratos nem rota `/eventos/:id/contratos`.
 5. Os endpoints removidos respondem 404; `/contrato/:token` não existe mais.
-6. As três tabelas legadas continuam no banco; o snapshot de migrations não muda.
+6. As três tabelas de vínculo e de link deixaram de existir (SPEC-036).
 7. Outra conta não vê contratos de outra conta.
 
 ## 15. Cenários de teste

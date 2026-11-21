@@ -21,10 +21,6 @@ public sealed record SalvarModeloOrcamentoFunil(
     string? CorPrimaria,
     string? CorSecundaria);
 
-public sealed record ModeloContratoFunilLeitura(Guid Id, string Nome, string Texto, IReadOnlyList<string> Parametros);
-
-public sealed record SalvarModeloContratoFunil(string? Nome, string? Texto);
-
 public static class TokensFunil
 {
     public static readonly string[] Todos =
@@ -246,98 +242,4 @@ public sealed class ModeloOrcamentoFunilServico(IDados dados)
 
     private static ModeloOrcamentoFunilLeitura Ler(ModeloOrcamentoFunil item) =>
         new(item.Id, item.Nome, item.Texto, item.CorPrimaria, item.CorSecundaria, TokensFunil.Todos);
-}
-
-public sealed class ModeloContratoFunilServico(IDados dados)
-{
-    public async Task<IReadOnlyList<ModeloContratoFunilLeitura>> ListarAsync(string contaId, string? nome, CancellationToken ct)
-    {
-        var itens = await dados.ListarModelosContratoFunilAsync(contaId, nome, ct);
-        return itens.Select(Ler).ToArray();
-    }
-
-    public async Task<Resultado<ModeloContratoFunilLeitura>> ObterAsync(string contaId, Guid id, CancellationToken ct)
-    {
-        var item = await dados.ObterModeloContratoFunilAsync(contaId, id, ct);
-        return item is null
-            ? Resultado<ModeloContratoFunilLeitura>.Erro(Codigos.Indisponivel, "Indisponível.")
-            : Resultado<ModeloContratoFunilLeitura>.Sucesso(Ler(item));
-    }
-
-    public async Task<Resultado<ModeloContratoFunilLeitura>> CriarAsync(
-        string contaId,
-        SalvarModeloContratoFunil pedido,
-        CancellationToken ct)
-    {
-        var montado = Montar(contaId, Guid.NewGuid(), pedido);
-        if (!montado.Ok)
-        {
-            return Resultado<ModeloContratoFunilLeitura>.Erro(montado.Falha!.Codigo, montado.Falha.Mensagem);
-        }
-
-        await dados.InserirModeloContratoFunilAsync(montado.Valor!, ct);
-        return Resultado<ModeloContratoFunilLeitura>.Sucesso(Ler(montado.Valor!));
-    }
-
-    public async Task<Resultado<ModeloContratoFunilLeitura>> AtualizarAsync(
-        string contaId,
-        Guid id,
-        SalvarModeloContratoFunil pedido,
-        CancellationToken ct)
-    {
-        var item = await dados.ObterModeloContratoFunilAsync(contaId, id, ct);
-        if (item is null)
-        {
-            return Resultado<ModeloContratoFunilLeitura>.Erro(Codigos.Indisponivel, "Indisponível.");
-        }
-
-        var montado = Montar(contaId, item.Id, pedido);
-        if (!montado.Ok)
-        {
-            return Resultado<ModeloContratoFunilLeitura>.Erro(montado.Falha!.Codigo, montado.Falha.Mensagem);
-        }
-
-        item.Nome = montado.Valor!.Nome;
-        item.Texto = montado.Valor.Texto;
-        await dados.SalvarNegocioAsync(ct);
-        return Resultado<ModeloContratoFunilLeitura>.Sucesso(Ler(item));
-    }
-
-    public async Task<Resultado<bool>> ExcluirAsync(string contaId, Guid id, CancellationToken ct)
-    {
-        var item = await dados.ObterModeloContratoFunilAsync(contaId, id, ct);
-        if (item is null)
-        {
-            return Resultado<bool>.Erro(Codigos.Indisponivel, "Indisponível.");
-        }
-
-        await dados.RemoverModeloContratoFunilAsync(item, ct);
-        return Resultado<bool>.Sucesso(true);
-    }
-
-    private static Resultado<ModeloContratoFunil> Montar(string contaId, Guid id, SalvarModeloContratoFunil pedido)
-    {
-        var nome = Domain.Comum.Texto.Limpo(pedido.Nome);
-        var texto = Domain.Comum.Texto.Limpo(pedido.Texto);
-        if (nome is null)
-        {
-            return Resultado<ModeloContratoFunil>.Erro(Codigos.Validacao, "Informe o nome do modelo.");
-        }
-
-        if (texto is null)
-        {
-            return Resultado<ModeloContratoFunil>.Erro(Codigos.Validacao, "Informe o texto do modelo.");
-        }
-
-        return Resultado<ModeloContratoFunil>.Sucesso(new ModeloContratoFunil
-        {
-            Id = id,
-            ContaId = contaId,
-            Nome = nome,
-            Texto = texto,
-        });
-    }
-
-    private static ModeloContratoFunilLeitura Ler(ModeloContratoFunil item) =>
-        new(item.Id, item.Nome, item.Texto, TokensFunil.Todos);
 }

@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Project.Application.Comum;
 using Project.Domain.Funil;
 
@@ -17,8 +18,19 @@ public sealed record ContratoFunilLeitura(
 
 public sealed record SalvarContratoFunil(Guid? OportunidadeId, string? Conteudo, Guid? ModeloId);
 
-public sealed class ContratoFunilServico(IDados dados)
+/// <summary>Modelo de contrato da tela única "Modelos de Contrato" (SPEC-039), como o contrato do funil o enxerga.</summary>
+public sealed record ModeloParaContratoFunil(Guid Id, string Nome, string Texto);
+
+/// <summary>Contratos das oportunidades. O modelo vem da tela única de modelos de contrato (SPEC-039).</summary>
+public sealed partial class ContratoFunilServico(IDados dados, IDadosContrato modelos)
 {
+    /// <summary>Modelos da conta para escolher ao criar o contrato (a assistente também escolhe, sem abrir a tela de modelos).</summary>
+    public async Task<IReadOnlyList<ModeloParaContratoFunil>> ModelosAsync(string contaId, CancellationToken ct) =>
+        (await modelos.ListarAsync(contaId, ct))
+            .OrderBy(item => item.Nome, StringComparer.CurrentCultureIgnoreCase)
+            .Select(item => new ModeloParaContratoFunil(item.Id, item.Nome, item.Texto))
+            .ToArray();
+
     public async Task<IReadOnlyList<ContratoFunilLeitura>> ListarAsync(
         string contaId,
         string? situacao,
@@ -64,7 +76,7 @@ public sealed class ContratoFunilServico(IDados dados)
         Guid? modeloId = pedido.ModeloId;
         if (conteudo is null && modeloId is Guid mid)
         {
-            var modelo = await dados.ObterModeloContratoFunilAsync(contaId, mid, ct);
+            var modelo = await modelos.ObterAsync(contaId, mid, ct);
             if (modelo is null)
             {
                 return Resultado<ContratoFunilLeitura>.Erro(Codigos.Validacao, "Modelo inválido.");
@@ -74,7 +86,7 @@ public sealed class ContratoFunilServico(IDados dados)
         }
         else if (conteudo is not null && modeloId is Guid mid2)
         {
-            var modelo = await dados.ObterModeloContratoFunilAsync(contaId, mid2, ct);
+            var modelo = await modelos.ObterAsync(contaId, mid2, ct);
             if (modelo is null)
             {
                 return Resultado<ContratoFunilLeitura>.Erro(Codigos.Validacao, "Modelo inválido.");
@@ -213,8 +225,12 @@ public sealed class ContratoFunilServico(IDados dados)
         return Resultado<ContratoFunilLeitura>.Sucesso(Ler(item, nomes.GetValueOrDefault(item.OportunidadeId, "")));
     }
 
+    /// <summary>Só o nome do contratante é preenchido aqui; as demais marcas ficam para o card #39.</summary>
     private static string AplicarTokens(string texto, string nomeOportunidade) =>
-        texto.Replace("#nome_oportunidade", nomeOportunidade, StringComparison.OrdinalIgnoreCase);
+        MarcaContratanteNome().Replace(texto, nomeOportunidade);
+
+    [GeneratedRegex(@"\{\{\s*contratante_nome\s*\}\}", RegexOptions.IgnoreCase)]
+    private static partial Regex MarcaContratanteNome();
 
     private static ContratoFunilLeitura Ler(ContratoFunil item, string oportunidadeNome) =>
         new(

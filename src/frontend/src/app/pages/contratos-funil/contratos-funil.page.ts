@@ -10,7 +10,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { mensagemDeErro } from '../../core/mensagem-erro';
-import { ContratoFunil, ModeloContratoFunil, NegocioClient, Oportunidade } from '../../core/negocio.client';
+import { ContratoFunil, ModeloParaContratoFunil, NegocioClient, Oportunidade } from '../../core/negocio.client';
 import { AuthService } from '../../core/auth.service';
 import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
@@ -62,7 +62,7 @@ export class ContratoFunilDialog implements OnInit {
   protected readonly dados = inject<ContratoFunil | null>(MAT_DIALOG_DATA);
   protected readonly ref = inject(MatDialogRef<ContratoFunilDialog, boolean>);
   protected readonly oportunidades = signal<Oportunidade[]>([]);
-  protected readonly modelos = signal<ModeloContratoFunil[]>([]);
+  protected readonly modelos = signal<ModeloParaContratoFunil[]>([]);
   protected readonly form = this.fb.nonNullable.group({
     oportunidadeId: [this.dados?.oportunidadeId ?? '', Validators.required],
     modeloId: [this.dados?.modeloId ?? null as string | null],
@@ -71,14 +71,14 @@ export class ContratoFunilDialog implements OnInit {
 
   ngOnInit(): void {
     this.negocio.oportunidades().subscribe({ next: (lista) => this.oportunidades.set(lista) });
-    this.negocio.modelosContratoFunil().subscribe({ next: (lista) => this.modelos.set(lista) });
+    this.negocio.modelosParaContratoFunil().subscribe({ next: (lista) => this.modelos.set(lista) });
   }
 
   protected aplicarModelo(id: string | null): void {
     const modelo = this.modelos().find((m) => m.id === id);
     if (!modelo) return;
     const opp = this.oportunidades().find((o) => o.id === this.form.controls.oportunidadeId.value);
-    this.form.controls.conteudo.setValue(modelo.texto.replace(/#nome_oportunidade/gi, opp?.nome ?? ''));
+    this.form.controls.conteudo.setValue(modelo.texto.replace(/\{\{\s*contratante_nome\s*\}\}/gi, opp?.nome ?? ''));
   }
 
   protected salvar(): void {

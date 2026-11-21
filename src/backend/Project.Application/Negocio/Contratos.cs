@@ -454,13 +454,5 @@ public interface IDados
 
     Task RemoverModeloOrcamentoFunilAsync(ModeloOrcamentoFunil modelo, CancellationToken ct);
 
-    Task<IReadOnlyList<ModeloContratoFunil>> ListarModelosContratoFunilAsync(string contaId, string? nome, CancellationToken ct);
-
-    Task<ModeloContratoFunil?> ObterModeloContratoFunilAsync(string contaId, Guid id, CancellationToken ct);
-
-    Task InserirModeloContratoFunilAsync(ModeloContratoFunil modelo, CancellationToken ct);
-
-    Task RemoverModeloContratoFunilAsync(ModeloContratoFunil modelo, CancellationToken ct);
-
     Task<(string ContaId, string Nome)?> ResumoEventoPorIdAsync(Guid eventoId, CancellationToken ct);
 }

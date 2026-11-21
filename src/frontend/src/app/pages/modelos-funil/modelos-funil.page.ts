@@ -9,18 +9,13 @@ import { MatInputModule } from '@angular/material/input';
 import { MatTableModule } from '@angular/material/table';
 import { Observable } from 'rxjs';
 import { mensagemDeErro } from '../../core/mensagem-erro';
-import {
-  ModeloContratoFunil,
-  ModeloOrcamentoFunil,
-  ModeloServicoFunil,
-  NegocioClient,
-} from '../../core/negocio.client';
+import { ModeloOrcamentoFunil, ModeloServicoFunil, NegocioClient } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { CampoDinheiroComponent } from '../../shared/campo-dinheiro';
 import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 
-type TipoModelo = 'servico' | 'orcamento' | 'contrato';
+type TipoModelo = 'servico' | 'orcamento';
 
 @Component({
   selector: 'app-modelo-funil-dialog',
@@ -73,17 +68,15 @@ export class ModeloFunilDialog {
   private readonly fb = inject(FormBuilder);
   private readonly negocio = inject(NegocioClient);
   private readonly toast = inject(ToastService);
-  protected readonly dados = inject<{ tipo: TipoModelo; item: ModeloServicoFunil | ModeloOrcamentoFunil | ModeloContratoFunil | null }>(MAT_DIALOG_DATA);
+  protected readonly dados = inject<{ tipo: TipoModelo; item: ModeloServicoFunil | ModeloOrcamentoFunil | null }>(MAT_DIALOG_DATA);
   protected readonly ref = inject(MatDialogRef<ModeloFunilDialog, boolean>);
-  /** Orçamento: lista fechada (SPEC-031 §17, ponto 12). Os outros modelos mantêm a lista anterior. */
-  protected readonly parametros = this.dados.tipo === 'orcamento'
-    ? ['#nome_oportunidade', '#tipo_evento', '#data_evento', '#convidados', '#local_cerimonia', '#local_recepcao', '#valor', '#validade', '#nome_assessoria']
-    : ['#nome_oportunidade', '#data_prevista', '#horario', '#local_cerimonia', '#local_recepcao', '#quantidade_convidados', '#valor_proposta'];
+  /** Orçamento: lista fechada (SPEC-031 §17, ponto 12). */
+  protected readonly parametros = ['#nome_oportunidade', '#tipo_evento', '#data_evento', '#convidados', '#local_cerimonia', '#local_recepcao', '#valor', '#validade', '#nome_assessoria'];
   protected readonly form = this.fb.nonNullable.group({
     nome: [(this.dados.item as { nome?: string } | null)?.nome ?? '', Validators.required],
     descricao: [(this.dados.item as ModeloServicoFunil | null)?.descricao ?? ''],
     valor: [(this.dados.item as ModeloServicoFunil | null)?.valor ?? null as number | null],
-    texto: [(this.dados.item as ModeloOrcamentoFunil | ModeloContratoFunil | null)?.texto ?? ''],
+    texto: [(this.dados.item as ModeloOrcamentoFunil | null)?.texto ?? ''],
     corPrimaria: [(this.dados.item as ModeloOrcamentoFunil | null)?.corPrimaria ?? ''],
     corSecundaria: [(this.dados.item as ModeloOrcamentoFunil | null)?.corSecundaria ?? ''],
   });
@@ -103,16 +96,13 @@ export class ModeloFunilDialog {
     }
     const v = this.form.getRawValue();
     const id = this.dados.item?.id;
-    let req: Observable<ModeloServicoFunil | ModeloOrcamentoFunil | ModeloContratoFunil>;
+    let req: Observable<ModeloServicoFunil | ModeloOrcamentoFunil>;
     if (this.dados.tipo === 'servico') {
       const pedido = { nome: v.nome, descricao: v.descricao || null, valor: v.valor };
       req = id ? this.negocio.atualizarModeloServicoFunil(id, pedido) : this.negocio.criarModeloServicoFunil(pedido);
-    } else if (this.dados.tipo === 'orcamento') {
+    } else {
       const pedido = { nome: v.nome, texto: v.texto, corPrimaria: v.corPrimaria || null, corSecundaria: v.corSecundaria || null };
       req = id ? this.negocio.atualizarModeloOrcamentoFunil(id, pedido) : this.negocio.criarModeloOrcamentoFunil(pedido);
-    } else {
-      const pedido = { nome: v.nome, texto: v.texto };
-      req = id ? this.negocio.atualizarModeloContratoFunil(id, pedido) : this.negocio.criarModeloContratoFunil(pedido);
     }
     req.subscribe({
       next: () => {
@@ -178,32 +168,20 @@ export class ModelosFunilPage implements OnInit {
   private readonly negocio = inject(NegocioClient);
   private readonly dialog = inject(MatDialog);
   private readonly toast = inject(ToastService);
-  protected readonly lista = signal<Array<ModeloServicoFunil | ModeloOrcamentoFunil | ModeloContratoFunil>>([]);
+  protected readonly lista = signal<Array<ModeloServicoFunil | ModeloOrcamentoFunil>>([]);
   protected readonly busca = signal('');
   protected readonly colunas = ['nome', 'detalhe', 'acoes'];
 
   get rotuloNovo(): string {
-    return this.tipo === 'servico'
-      ? 'Novo Modelo de Serviço/Produto'
-      : this.tipo === 'orcamento'
-        ? 'Novo Modelo de Orçamento'
-        : 'Novo Modelo de Contrato';
+    return this.tipo === 'servico' ? 'Novo Modelo de Serviço/Produto' : 'Novo Modelo de Orçamento';
   }
 
   get titulo(): string {
-    return this.tipo === 'servico'
-      ? 'Modelos de Serviços/Produtos'
-      : this.tipo === 'orcamento'
-        ? 'Modelo de orçamento'
-        : 'Modelos de contrato';
+    return this.tipo === 'servico' ? 'Modelos de Serviços/Produtos' : 'Modelo de orçamento';
   }
 
   get apoio(): string {
-    return this.tipo === 'servico'
-      ? 'Catálogo usado nas oportunidades do funil.'
-      : this.tipo === 'orcamento'
-        ? 'Biblioteca de textos para orçamentos do funil.'
-        : 'Biblioteca de textos para contratos do funil.';
+    return this.tipo === 'servico' ? 'Catálogo usado nas oportunidades do funil.' : 'Biblioteca de textos para orçamentos do funil.';
   }
 
   get vazio(): string {
@@ -214,7 +192,7 @@ export class ModelosFunilPage implements OnInit {
     this.carregar();
   }
 
-  protected detalhe(item: ModeloServicoFunil | ModeloOrcamentoFunil | ModeloContratoFunil): string {
+  protected detalhe(item: ModeloServicoFunil | ModeloOrcamentoFunil): string {
     if ('descricao' in item) return item.descricao ?? '';
     if ('texto' in item) return item.texto;
     return '';
@@ -225,7 +203,7 @@ export class ModelosFunilPage implements OnInit {
     this.carregar();
   }
 
-  protected abrir(item?: ModeloServicoFunil | ModeloOrcamentoFunil | ModeloContratoFunil): void {
+  protected abrir(item?: ModeloServicoFunil | ModeloOrcamentoFunil): void {
     this.dialog
       .open(ModeloFunilDialog, { ...DIALOG, data: { tipo: this.tipo, item: item ?? null } })
       .afterClosed()
@@ -239,11 +217,7 @@ export class ModelosFunilPage implements OnInit {
     }).afterClosed().subscribe((ok) => {
       if (!ok) return;
       const req: Observable<unknown> =
-        this.tipo === 'servico'
-          ? this.negocio.excluirModeloServicoFunil(item.id)
-          : this.tipo === 'orcamento'
-            ? this.negocio.excluirModeloOrcamentoFunil(item.id)
-            : this.negocio.excluirModeloContratoFunil(item.id);
+        this.tipo === 'servico' ? this.negocio.excluirModeloServicoFunil(item.id) : this.negocio.excluirModeloOrcamentoFunil(item.id);
       req.subscribe({
         next: () => {
           this.toast.sucesso('Modelo excluído.');
@@ -255,12 +229,8 @@ export class ModelosFunilPage implements OnInit {
   }
 
   private carregar(): void {
-    const req: Observable<Array<ModeloServicoFunil | ModeloOrcamentoFunil | ModeloContratoFunil>> =
-      this.tipo === 'servico'
-        ? this.negocio.modelosServicoFunil(this.busca())
-        : this.tipo === 'orcamento'
-          ? this.negocio.modelosOrcamentoFunil(this.busca())
-          : this.negocio.modelosContratoFunil(this.busca());
+    const req: Observable<Array<ModeloServicoFunil | ModeloOrcamentoFunil>> =
+      this.tipo === 'servico' ? this.negocio.modelosServicoFunil(this.busca()) : this.negocio.modelosOrcamentoFunil(this.busca());
     req.subscribe({
       next: (lista) => this.lista.set(lista),
       error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
@@ -273,6 +243,3 @@ export class ModelosServicosFunilPage {}
 
 @Component({ selector: 'app-modelos-orcamento-funil', imports: [ModelosFunilPage], template: `<app-modelos-funil tipo="orcamento" />` })
 export class ModelosOrcamentoFunilPage {}
-
-@Component({ selector: 'app-modelos-contrato-funil', imports: [ModelosFunilPage], template: `<app-modelos-funil tipo="contrato" />` })
-export class ModelosContratoFunilPage {}

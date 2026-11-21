@@ -75,10 +75,10 @@ public class FunilFluxoTests
             nome = "Padrão",
             texto = "Proposta para #nome_oportunidade",
         }));
-        var modeloContrato = await Ler(await dono.PostAsJsonAsync("/api/v1/modelos-contrato-funil", new
+        var modeloContrato = await Ler(await dono.PostAsJsonAsync("/api/v1/contratos", new
         {
             nome = "Cláusulas",
-            texto = "Contrato de #nome_oportunidade",
+            texto = "Contrato de {{contratante_nome}}",
         }));
 
         await Ler(await dono.PostAsJsonAsync($"/api/v1/oportunidades/{oportunidadeId}/mover", new { estagio = "Contato inicial" }));
@@ -96,6 +96,7 @@ public class FunilFluxoTests
             modeloId = modeloContrato.GetProperty("id").GetGuid(),
         }));
         Assert.Contains("Casamento Ana", contrato.GetProperty("conteudo").GetString());
+        Assert.Single((await Ler(await dono.GetAsync("/api/v1/contratos-funil/modelos"))).EnumerateArray());
 
         var tarefa = await Ler(await dono.PostAsJsonAsync("/api/v1/tarefas-funil", new
         {

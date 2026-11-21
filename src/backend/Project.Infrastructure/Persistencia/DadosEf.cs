@@ -1646,36 +1646,6 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         await banco.SaveChangesAsync(ct);
     }
 
-    public async Task<IReadOnlyList<ModeloContratoFunil>> ListarModelosContratoFunilAsync(
-        string contaId,
-        string? nome,
-        CancellationToken ct)
-    {
-        var consulta = banco.ModelosContratoFunil.AsNoTracking().Where(item => item.ContaId == contaId);
-        if (!string.IsNullOrWhiteSpace(nome))
-        {
-            var texto = nome.Trim();
-            consulta = consulta.Where(item => EF.Functions.ILike(item.Nome, $"%{texto}%"));
-        }
-
-        return await consulta.OrderBy(item => item.Nome).ToListAsync(ct);
-    }
-
-    public Task<ModeloContratoFunil?> ObterModeloContratoFunilAsync(string contaId, Guid id, CancellationToken ct) =>
-        banco.ModelosContratoFunil.FirstOrDefaultAsync(item => item.ContaId == contaId && item.Id == id, ct);
-
-    public async Task InserirModeloContratoFunilAsync(ModeloContratoFunil modelo, CancellationToken ct)
-    {
-        banco.ModelosContratoFunil.Add(modelo);
-        await banco.SaveChangesAsync(ct);
-    }
-
-    public async Task RemoverModeloContratoFunilAsync(ModeloContratoFunil modelo, CancellationToken ct)
-    {
-        banco.ModelosContratoFunil.Remove(modelo);
-        await banco.SaveChangesAsync(ct);
-    }
-
     public async Task<(string ContaId, string Nome)?> ResumoEventoPorIdAsync(Guid eventoId, CancellationToken ct)
     {
         var evento = await banco.Eventos.AsNoTracking()

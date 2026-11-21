@@ -100,7 +100,7 @@ describe('CascaComponent', () => {
     expect(itensDe('Modelos').some((t) => t.includes('Modelos de serviços'))).toBe(true);
     expect(itensDe('Modelos').some((t) => t.includes('Modelo de orçamento'))).toBe(true);
     expect(itensDe('Funil de vendas').some((t) => t.includes('Modelos de serviços') || t.includes('Modelo de orçamento'))).toBe(false);
-    expect(itensDe('Funil de vendas').some((t) => t.includes('Modelos de contrato'))).toBe(true);
+    expect(itensDe('Funil de vendas').some((t) => t.includes('Modelos de contrato'))).toBe(false);
   });
 
   it('em tela larga não mostra Novo evento na barra superior', () => {
