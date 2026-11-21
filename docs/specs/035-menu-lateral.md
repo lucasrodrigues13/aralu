@@ -4,7 +4,7 @@
 
 ## 1. Identificador e nome
 
-SPEC-034. Menu lateral da casca (computador) e acesso a ele no celular.
+SPEC-035. Menu lateral da casca (computador) e acesso a ele no celular.
 
 ## 2. Objetivo
 
