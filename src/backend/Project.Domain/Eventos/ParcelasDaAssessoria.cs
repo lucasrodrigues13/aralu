@@ -10,8 +10,6 @@ public sealed record ParcelaCalculada(int Numero, DateOnly Vencimento, decimal V
 
 public static class ParcelasDaAssessoria
 {
-    public const string NomeServico = "Assessoria e Organização";
-
     public static IReadOnlyList<ParcelaCalculada> Calcular(
         decimal total,
         int quantidade,

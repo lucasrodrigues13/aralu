@@ -2,6 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { API_BASE_URL } from './api-base-url';
 import { contaDoVisitante } from './auth.service';
+import { FormaPagamento, ParcelaContrato, ParcelaOrcamento } from './dinheiro.client';
 
 export interface Painel {
   emAndamento: number;
@@ -869,10 +870,6 @@ export class NegocioClient {
     return this.http.post<EventoDetalhe>(`${this.base}/api/v1/eventos/${id}/cancelar`, {});
   }
 
-  assessoria(id: string, pedido: unknown) {
-    return this.http.post<EventoDetalhe>(`${this.base}/api/v1/eventos/${id}/assessoria`, pedido);
-  }
-
   imagemEvento(id: string, arquivo: File) {
     const dados = new FormData();
     dados.append('arquivo', arquivo);
@@ -1138,12 +1135,28 @@ export class NegocioClient {
     return this.http.get<ContratoFunil[]>(`${this.base}/api/v1/contratos-funil`, { params });
   }
 
+  contratoFunil(id: string) {
+    return this.http.get<ContratoFunil>(`${this.base}/api/v1/contratos-funil/${id}`);
+  }
+
   criarContratoFunil(pedido: unknown) {
     return this.http.post<ContratoFunil>(`${this.base}/api/v1/contratos-funil`, pedido);
   }
 
   atualizarContratoFunil(id: string, pedido: unknown) {
     return this.http.put<ContratoFunil>(`${this.base}/api/v1/contratos-funil/${id}`, pedido);
+  }
+
+  receberParcelaContratoFunil(id: string, parcelaId: string, pedido: { valor: number; forma: FormaPagamento; data: string }) {
+    return this.http.post<ContratoFunil>(`${this.base}/api/v1/contratos-funil/${id}/parcelas/${parcelaId}/recebimentos`, pedido);
+  }
+
+  desfazerRecebimentoContratoFunil(id: string, parcelaId: string) {
+    return this.http.delete<ContratoFunil>(`${this.base}/api/v1/contratos-funil/${id}/parcelas/${parcelaId}/recebimentos/ultimo`);
+  }
+
+  definirParcelasOrcamentoFunil(id: string, pedido: PedidoParcelas) {
+    return this.http.put<OrcamentoFunil>(`${this.base}/api/v1/orcamentos-funil/${id}/parcelas`, pedido);
   }
 
   enviarContratoFunil(id: string) {
@@ -1437,6 +1450,14 @@ export interface ContratoFunil {
   assinadoEm: string | null;
   modeloId: string | null;
   criadoPor?: string | null;
+  /** Parcelas a receber do cliente, copiadas do orçamento aprovado (SPEC-040). */
+  parcelas: ParcelaContrato[];
+  valorTotal: number;
+  recebido: number;
+  saldo: number;
+  /** Só na leitura de um contrato: telefone do contato e chave Pix, usados no "Cobrar". */
+  oportunidadeTelefone?: string | null;
+  chavePix?: string | null;
 }
 
 export interface OrcamentoFunil {
@@ -1457,6 +1478,16 @@ export interface OrcamentoFunil {
   respostaMensagem: string | null;
   respostaEm: string | null;
   criadoPor?: string | null;
+  parcelas: ParcelaOrcamento[];
+}
+
+export interface PedidoParcelas {
+  quantidadeParcelas: number;
+  primeiraParcela: string | null;
+  comEntrada: boolean;
+  baseEntrada: 'Valor' | 'Porcentagem' | null;
+  valorEntrada: number | null;
+  dataEntrada: string | null;
 }
 
 export interface TarefaFunil {

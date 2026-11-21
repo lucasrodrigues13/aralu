@@ -35,7 +35,7 @@ export interface Hoje {
   tarefasHoje: number;
   tarefasAtrasadas: number;
   tarefasSemana: number;
-  cobrancas: { eventoId: string; evento: string; parcela: string; vencimento: string; saldo: number; atrasada: boolean }[];
+  cobrancas: { contratoId: string; oportunidade: string; parcela: string; vencimento: string; saldo: number; atrasada: boolean }[];
   respostasConvidados: { pendentes: number; sim: number; nao: number };
   pagamentosSemana: number;
   valorPagamentosSemana: number;
@@ -189,19 +189,19 @@ function lerPulados(): string[] {
         <mat-card class="cardWithShadow col-span-12 lg:col-span-8" id="cobrancas">
           <mat-card-content>
             <mat-card-title>Cobranças a fazer</mat-card-title>
-            <mat-card-subtitle>Parcelas do casal vencidas ou vencendo nos próximos 7 dias</mat-card-subtitle>
+            <mat-card-subtitle>Parcelas dos contratos com clientes vencidas ou vencendo nos próximos 7 dias</mat-card-subtitle>
             @if (d.cobrancas.length === 0) {
-              <p class="text-center text-muted py-10">Nenhuma parcela do casal vencida ou vencendo nos próximos 7 dias.</p>
+              <p class="text-center text-muted py-10">Nenhuma parcela de contrato vencida ou vencendo nos próximos 7 dias.</p>
             } @else {
               <div class="relative overflow-auto mt-4">
                 <table class="tabela">
                   <thead>
-                    <tr><th>Evento</th><th>Parcela</th><th class="text-end!">Saldo</th><th class="text-end!">Situação</th></tr>
+                    <tr><th>Contrato</th><th>Parcela</th><th class="text-end!">Saldo</th><th class="text-end!">Situação</th></tr>
                   </thead>
                   <tbody>
                     @for (item of d.cobrancas; track $index) {
                       <tr>
-                        <td><a [routerLink]="['/eventos', item.eventoId, 'dinheiro']">{{ item.evento }}</a></td>
+                        <td><a routerLink="/contratos-funil">{{ item.oportunidade }}</a></td>
                         <td>{{ item.parcela }}<span class="block text-xs text-muted">{{ item.vencimento | gdData }}</span></td>
                         <td class="text-end!"><span class="valor">{{ item.saldo | gdDinheiro }}</span></td>
                         <td class="text-end!">

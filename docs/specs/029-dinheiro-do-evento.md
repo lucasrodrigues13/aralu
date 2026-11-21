@@ -2,6 +2,8 @@
 
 **Status: aprovada (18/11/2026).** O código deve seguir esta spec. Fonte: [produto-v1.md](../produto-v1.md) 5.9 e 5.1 (Pix), RF-095, RF-096, RF-097, RF-088. Os itens 2, 4 e 6 da seção 17 foram decididos em 18/11/2026. Implementada em 18/11/2026. Comprovantes decididos em 18/11/2026 (§6.6).
 
+> **Versão 2 (card #41, 21/11/2026, [SPEC-040](040-parcelas-por-documento.md)).** As parcelas do casal (§6.1 a §6.4: contrato, Cobrar, Recebi e totais) deixaram a aba Dinheiro do evento: viraram **parcelas do contrato com o cliente** (`Contrato.Parcelas`, copiadas do orçamento aprovado), com Cobrar, Recebi e Desfazer no diálogo Parcelas do contrato da tela Contratos (funil). `ParcelaCasal` e `Evento.ValorContrato` saíram do banco e da API. A aba Dinheiro do evento fica com pagamentos a fornecedores (`ContratoFornecedor.Parcelas`), despesas e entradas, comprovantes e a exportação do orçamento. O texto das seções 6.1 a 6.4 vale como regra de Cobrar, Recebi e Desfazer, agora no contrato.
+
 ## 1. Identificador e nome
 
 SPEC-029. Dinheiro do evento.

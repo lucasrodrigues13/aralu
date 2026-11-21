@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Project.Application.Negocio;
 using Project.Domain.Clientes;
 using Project.Domain.Convidados;
+using Project.Domain.Dinheiro;
 using Project.Domain.Eventos;
 using Project.Domain.Fornecedores;
 using Project.Domain.Funil;
@@ -128,7 +129,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
     public Task<Evento?> ObterEventoAsync(string contaId, Guid id, CancellationToken ct) =>
         banco.Eventos
             .Include(evento => evento.Tags)
-            .Include(evento => evento.Servicos).ThenInclude(servico => servico.Parcelas)
+            .Include(evento => evento.Servicos).ThenInclude(servico => servico.Contrato).ThenInclude(contrato => contrato!.Parcelas)
             .Include(evento => evento.Servicos).ThenInclude(servico => servico.Subitens)
             .Include(evento => evento.Servicos).ThenInclude(servico => servico.Fornecedores)
             .FirstOrDefaultAsync(evento => evento.Id == id && evento.ContaId == contaId, ct);
@@ -211,11 +212,6 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         await banco.SaveChangesAsync(ct);
     }
 
-    public Task<bool> TemAssessoriaAsync(Guid eventoId, CancellationToken ct) =>
-        banco.Set<ServicoEvento>().AnyAsync(
-            servico => servico.EventoId == eventoId && servico.Nome == ParcelasDaAssessoria.NomeServico && servico.Contratado,
-            ct);
-
     public async Task AdicionarServicoAsync(ServicoEvento servico, CancellationToken ct)
     {
         banco.Set<ServicoEvento>().Add(servico);
@@ -224,7 +220,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
 
     public Task<ServicoEvento?> ObterServicoEventoAsync(string contaId, Guid eventoId, Guid servicoId, CancellationToken ct) =>
         banco.Set<ServicoEvento>().AsNoTracking()
-            .Include(servico => servico.Parcelas)
+            .Include(servico => servico.Contrato).ThenInclude(contrato => contrato!.Parcelas)
             .Include(servico => servico.Subitens)
             .Include(servico => servico.Fornecedores)
             .FirstOrDefaultAsync(
@@ -334,10 +330,10 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         }
     }
 
-    public async Task SubstituirParcelasAsync(Guid servicoId, IReadOnlyList<ParcelaServico> parcelas, CancellationToken ct)
+    public async Task SubstituirContratoFornecedorAsync(Guid servicoId, ContratoFornecedor contrato, CancellationToken ct)
     {
-        await banco.Set<ParcelaServico>().Where(parcela => parcela.ServicoId == servicoId).ExecuteDeleteAsync(ct);
-        banco.Set<ParcelaServico>().AddRange(parcelas);
+        await banco.Set<ContratoFornecedor>().Where(item => item.ServicoId == servicoId).ExecuteDeleteAsync(ct);
+        banco.Set<ContratoFornecedor>().Add(contrato);
         await banco.SaveChangesAsync(ct);
     }
 
@@ -1388,7 +1384,9 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         DateOnly? criadoAte,
         CancellationToken ct)
     {
-        var consulta = banco.ContratosFunil.AsNoTracking().Where(item => item.ContaId == contaId);
+        var consulta = banco.ContratosFunil.AsNoTracking()
+            .Include(item => item.Parcelas).ThenInclude(parcela => parcela.Recebimentos)
+            .Where(item => item.ContaId == contaId);
         if (situacao is SituacaoContratoFunil filtro)
         {
             consulta = consulta.Where(item => item.Situacao == filtro);
@@ -1420,7 +1418,9 @@ public sealed class DadosEf(AppDbContext banco) : IDados
     }
 
     public Task<ContratoFunil?> ObterContratoFunilAsync(string contaId, Guid id, CancellationToken ct) =>
-        banco.ContratosFunil.FirstOrDefaultAsync(item => item.ContaId == contaId && item.Id == id, ct);
+        banco.ContratosFunil
+            .Include(item => item.Parcelas).ThenInclude(parcela => parcela.Recebimentos)
+            .FirstOrDefaultAsync(item => item.ContaId == contaId && item.Id == id, ct);
 
     public async Task InserirContratoFunilAsync(ContratoFunil contrato, CancellationToken ct)
     {
@@ -1442,7 +1442,9 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         DateOnly? criadoAte,
         CancellationToken ct)
     {
-        var consulta = banco.OrcamentosFunil.AsNoTracking().Where(item => item.ContaId == contaId);
+        var consulta = banco.OrcamentosFunil.AsNoTracking()
+            .Include(item => item.Parcelas)
+            .Where(item => item.ContaId == contaId);
         if (situacao is SituacaoOrcamentoFunil filtro)
         {
             consulta = consulta.Where(item => item.Situacao == filtro);
@@ -1474,13 +1476,38 @@ public sealed class DadosEf(AppDbContext banco) : IDados
     }
 
     public Task<OrcamentoFunil?> ObterOrcamentoFunilAsync(string contaId, Guid id, CancellationToken ct) =>
-        banco.OrcamentosFunil.FirstOrDefaultAsync(item => item.ContaId == contaId && item.Id == id, ct);
+        banco.OrcamentosFunil
+            .Include(item => item.Parcelas)
+            .FirstOrDefaultAsync(item => item.ContaId == contaId && item.Id == id, ct);
 
     public async Task InserirOrcamentoFunilAsync(OrcamentoFunil orcamento, CancellationToken ct)
     {
         banco.OrcamentosFunil.Add(orcamento);
         await banco.SaveChangesAsync(ct);
     }
+
+    public async Task<OrcamentoFunil?> OrcamentoAprovadoDaOportunidadeAsync(string contaId, Guid oportunidadeId, CancellationToken ct) =>
+        await banco.OrcamentosFunil.AsNoTracking()
+            .Include(item => item.Parcelas)
+            .Where(item => item.ContaId == contaId
+                && item.OportunidadeId == oportunidadeId
+                && item.Situacao != SituacaoOrcamentoFunil.Cancelado
+                && item.Resposta == RespostaProposta.Aceitar)
+            .OrderByDescending(item => item.RespostaEm)
+            .FirstOrDefaultAsync(ct);
+
+    public async Task SubstituirParcelasOrcamentoAsync(Guid orcamentoId, IReadOnlyList<ParcelaOrcamento> parcelas, CancellationToken ct)
+    {
+        await banco.Set<ParcelaOrcamento>().Where(parcela => parcela.OrcamentoFunilId == orcamentoId).ExecuteDeleteAsync(ct);
+        banco.Set<ParcelaOrcamento>().AddRange(parcelas);
+        await banco.SaveChangesAsync(ct);
+    }
+
+    public void AdicionarRecebimentoParcela(RecebimentoParcela recebimento) =>
+        banco.Set<RecebimentoParcela>().Add(recebimento);
+
+    public void RemoverRecebimentoParcela(RecebimentoParcela recebimento) =>
+        banco.Set<RecebimentoParcela>().Remove(recebimento);
 
     public async Task RemoverOrcamentoFunilAsync(OrcamentoFunil orcamento, CancellationToken ct)
     {
@@ -1489,7 +1516,9 @@ public sealed class DadosEf(AppDbContext banco) : IDados
     }
 
     public Task<OrcamentoFunil?> OrcamentoFunilPorTokenAsync(string token, CancellationToken ct) =>
-        banco.OrcamentosFunil.FirstOrDefaultAsync(item => item.TokenLink == token, ct);
+        banco.OrcamentosFunil
+            .Include(item => item.Parcelas)
+            .FirstOrDefaultAsync(item => item.TokenLink == token, ct);
 
     public void AdicionarRespostaProposta(RespostaPropostaFunil resposta) =>
         banco.RespostasPropostaFunil.Add(resposta);

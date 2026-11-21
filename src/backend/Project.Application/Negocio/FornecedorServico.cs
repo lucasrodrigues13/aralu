@@ -1,4 +1,5 @@
 using Project.Application.Comum;
+using Project.Domain.Dinheiro;
 using Project.Domain.Eventos;
 using Project.Domain.Fornecedores;
 
@@ -454,19 +455,21 @@ public sealed class FornecedorServico(IDados dados)
         await dados.AtualizarEtapaNegociacaoAsync(vinculo.Id, EtapaNegociacao.Contratado, valor, ct);
         await dados.MarcarServicoContratadoAsync(servico.Id, true, valor, ct);
         await dados.ConcluirTarefasLigadasAsync(contaId, servico.Id, ct);
-        await dados.SubstituirParcelasAsync(
-            servico.Id,
-            parcelas.Select(parcela => new ParcelaServico
+        var contrato = new ContratoFornecedor
+        {
+            Id = Guid.NewGuid(),
+            ServicoId = servico.Id,
+            Parcelas = parcelas.Select(parcela => new ParcelaContratoFornecedor
             {
                 Id = Guid.NewGuid(),
-                ServicoId = servico.Id,
                 Numero = parcela.Numero,
                 Vencimento = parcela.Vencimento,
                 Valor = parcela.Valor,
                 Entrada = parcela.Entrada,
                 Situacao = SituacaoParcela.Pendente,
-            }).ToArray(),
-            ct);
+            }).ToList(),
+        };
+        await dados.SubstituirContratoFornecedorAsync(servico.Id, contrato, ct);
         return await DetalheEventoAsync(contaId, eventoId, hoje, ct);
     }
 

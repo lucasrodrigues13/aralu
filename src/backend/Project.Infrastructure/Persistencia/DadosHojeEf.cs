@@ -106,18 +106,27 @@ public sealed class DadosHojeEf(AppDbContext banco) : IDadosHoje
                 grupo.Count(item => item.Situacao == SituacaoConvidado.NaoComparecera)))
             .ToListAsync(ct);
 
-    public async Task<IReadOnlyList<ParcelaHojeDado>> CobrancasAsync(string contaId, IReadOnlyCollection<Guid> eventoIds, DateOnly ate, CancellationToken ct)
+    public async Task<IReadOnlyList<ParcelaHojeDado>> CobrancasAsync(string contaId, DateOnly ate, CancellationToken ct)
     {
-        var parcelas = await banco.Set<ParcelaCasal>().AsNoTracking()
-            .Include(parcela => parcela.Recebimentos)
-            .Where(parcela => eventoIds.Contains(parcela.EventoId) && parcela.Vencimento <= ate)
+        var contratos = await banco.ContratosFunil.AsNoTracking()
+            .Include(contrato => contrato.Parcelas).ThenInclude(parcela => parcela.Recebimentos)
+            .Where(contrato => contrato.ContaId == contaId
+                && contrato.Situacao != SituacaoContratoFunil.Cancelado
+                && contrato.Parcelas.Any(parcela => parcela.Vencimento <= ate))
             .ToListAsync(ct);
-        var nomes = await banco.Eventos.AsNoTracking()
-            .Where(evento => evento.ContaId == contaId && eventoIds.Contains(evento.Id))
-            .ToDictionaryAsync(evento => evento.Id, evento => evento.Nome, ct);
-        return parcelas
-            .Where(parcela => parcela.Saldo > 0 && nomes.ContainsKey(parcela.EventoId))
-            .Select(parcela => new ParcelaHojeDado(parcela.EventoId, nomes[parcela.EventoId], parcela.Numero, parcela.Entrada, parcela.Vencimento, parcela.Saldo))
+        var nomes = await banco.Oportunidades.AsNoTracking()
+            .Where(oportunidade => oportunidade.ContaId == contaId && contratos.Select(contrato => contrato.OportunidadeId).Contains(oportunidade.Id))
+            .ToDictionaryAsync(oportunidade => oportunidade.Id, oportunidade => oportunidade.Nome, ct);
+        return contratos
+            .SelectMany(contrato => contrato.Parcelas
+                .Where(parcela => parcela.Vencimento <= ate && parcela.Saldo > 0)
+                .Select(parcela => new ParcelaHojeDado(
+                    contrato.Id,
+                    nomes.GetValueOrDefault(contrato.OportunidadeId, ""),
+                    parcela.Numero,
+                    parcela.Entrada,
+                    parcela.Vencimento,
+                    parcela.Saldo)))
             .ToArray();
     }
 
@@ -130,7 +139,7 @@ public sealed class DadosHojeEf(AppDbContext banco) : IDadosHoje
         await banco.Eventos.AsNoTracking()
             .Where(evento => evento.ContaId == contaId && eventoIds.Contains(evento.Id))
             .SelectMany(evento => evento.Servicos)
-            .SelectMany(servico => servico.Parcelas)
+            .Select(servico => servico.Contrato).Where(contrato => contrato != null).SelectMany(contrato => contrato!.Parcelas)
             .Where(parcela => parcela.Situacao == SituacaoParcela.Pendente && parcela.Vencimento >= de && parcela.Vencimento <= ate)
             .Select(parcela => new PagamentoSemanaDado(parcela.Vencimento, parcela.Valor))
             .ToListAsync(ct);

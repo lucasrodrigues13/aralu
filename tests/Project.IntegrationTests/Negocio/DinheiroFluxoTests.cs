@@ -16,18 +16,24 @@ public class DinheiroFluxoTests
     public DinheiroFluxoTests(BancoFixture banco) => _banco = banco;
 
     [Fact]
-    public async Task Parcelas_do_casal_recebi_desfazer_despesa_e_isolamento()
+    public async Task Parcelas_nascem_no_orcamento_vao_para_o_contrato_e_o_cliente_paga_ali()
     {
         var dono = await Entrar();
         var outra = await Entrar();
-        var evento = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new { tipo = "Casamento", primeiroNome = "Ana", segundoNome = "Rui" }));
-        var eventoId = evento.GetProperty("id").GetGuid();
-
-        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PutAsJsonAsync($"/api/v1/eventos/{eventoId}/dinheiro/contrato", new { valor = 0, quantidadeParcelas = 2, primeiraParcela = "2027-01-10" })).StatusCode);
-
-        var comParcelas = await Ler(await dono.PutAsJsonAsync($"/api/v1/eventos/{eventoId}/dinheiro/contrato", new
+        var oportunidade = await Ler(await dono.PostAsJsonAsync("/api/v1/oportunidades", new
         {
-            valor = 9000,
+            nome = "Casamento Ana e Rui",
+            estagio = "Contato inicial",
+            contatos = new[] { new { nome = "Ana", telefone = "11977776666" } },
+        }));
+        var oportunidadeId = oportunidade.GetProperty("id").GetGuid();
+        var orcamento = await Ler(await dono.PostAsJsonAsync("/api/v1/orcamentos-funil", new { oportunidadeId, conteudo = "Proposta", valor = 9000 }));
+        var orcamentoId = orcamento.GetProperty("id").GetGuid();
+        var urlParcelas = $"/api/v1/orcamentos-funil/{orcamentoId}/parcelas";
+
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PutAsJsonAsync(urlParcelas, new { quantidadeParcelas = 0, primeiraParcela = "2027-01-10" })).StatusCode);
+        var comParcelas = await Ler(await dono.PutAsJsonAsync(urlParcelas, new
+        {
             quantidadeParcelas = 3,
             primeiraParcela = "2027-01-10",
             comEntrada = true,
@@ -35,32 +41,57 @@ public class DinheiroFluxoTests
             valorEntrada = 3000,
             dataEntrada = "2026-12-01",
         }));
-        Assert.Equal(9000m, comParcelas.GetProperty("valorContrato").GetDecimal());
-        var parcelas = comParcelas.GetProperty("parcelas");
-        Assert.Equal(4, parcelas.GetArrayLength());
-        Assert.True(parcelas[0].GetProperty("entrada").GetBoolean());
-        Assert.Equal(2000m, parcelas[1].GetProperty("valor").GetDecimal());
-        var entradaId = parcelas[0].GetProperty("id").GetGuid();
+        var doOrcamento = comParcelas.GetProperty("parcelas");
+        Assert.Equal(4, doOrcamento.GetArrayLength());
+        Assert.True(doOrcamento[0].GetProperty("entrada").GetBoolean());
+        Assert.Equal(2000m, doOrcamento[1].GetProperty("valor").GetDecimal());
+        Assert.Equal(HttpStatusCode.NotFound, (await outra.PutAsJsonAsync(urlParcelas, new { quantidadeParcelas = 1, primeiraParcela = "2027-01-10" })).StatusCode);
 
-        var demais = await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/dinheiro/parcelas/{entradaId}/recebimentos", new { valor = 3500, forma = "Pix", data = "2026-12-01" });
+        // Contrato gerado sem orçamento aceito: nasce sem parcelas.
+        var semAceite = await Ler(await dono.PostAsJsonAsync("/api/v1/contratos-funil", new { oportunidadeId, conteudo = "Contrato" }));
+        Assert.Empty(semAceite.GetProperty("parcelas").EnumerateArray());
+
+        // Orçamento aceito: o contrato novo copia as parcelas.
+        Assert.Equal(HttpStatusCode.OK, (await dono.PostAsJsonAsync($"/api/v1/orcamentos-funil/{orcamentoId}/responder", new { tipo = "Aceitar" })).StatusCode);
+        var contrato = await Ler(await dono.PostAsJsonAsync("/api/v1/contratos-funil", new { oportunidadeId, conteudo = "Contrato" }));
+        var contratoId = contrato.GetProperty("id").GetGuid();
+        var parcelas = contrato.GetProperty("parcelas");
+        Assert.Equal(4, parcelas.GetArrayLength());
+        Assert.Equal(9000m, contrato.GetProperty("valorTotal").GetDecimal());
+        var entradaId = parcelas[0].GetProperty("id").GetGuid();
+        var urlRecebimento = $"/api/v1/contratos-funil/{contratoId}/parcelas/{entradaId}/recebimentos";
+
+        var demais = await dono.PostAsJsonAsync(urlRecebimento, new { valor = 3500, forma = "Pix", data = "2026-12-01" });
         Assert.Equal(HttpStatusCode.BadRequest, demais.StatusCode);
 
-        var parcial = await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/dinheiro/parcelas/{entradaId}/recebimentos", new { valor = 1000, forma = "Pix", data = "2026-12-01" }));
+        var parcial = await Ler(await dono.PostAsJsonAsync(urlRecebimento, new { valor = 1000, forma = "Pix", data = "2026-12-01" }));
         Assert.Equal(1000m, parcial.GetProperty("recebido").GetDecimal());
         Assert.Equal(8000m, parcial.GetProperty("saldo").GetDecimal());
         Assert.Equal("Parcial", parcial.GetProperty("parcelas")[0].GetProperty("situacao").GetString());
+        Assert.Equal("11977776666", parcial.GetProperty("oportunidadeTelefone").GetString());
 
-        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PutAsJsonAsync($"/api/v1/eventos/{eventoId}/dinheiro/contrato", new { valor = 5000, quantidadeParcelas = 1, primeiraParcela = "2027-01-10" })).StatusCode);
-
-        var desfeito = await Ler(await dono.DeleteAsync($"/api/v1/eventos/{eventoId}/dinheiro/parcelas/{entradaId}/recebimentos/ultimo"));
+        var desfeito = await Ler(await dono.DeleteAsync($"{urlRecebimento}/ultimo"));
         Assert.Equal(0m, desfeito.GetProperty("recebido").GetDecimal());
-        Assert.Equal(HttpStatusCode.BadRequest, (await dono.DeleteAsync($"/api/v1/eventos/{eventoId}/dinheiro/parcelas/{entradaId}/recebimentos/ultimo")).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.DeleteAsync($"{urlRecebimento}/ultimo")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await outra.PostAsJsonAsync(urlRecebimento, new { valor = 10, forma = "Pix", data = "2026-12-01" })).StatusCode);
+
+        // A tela Hoje cobra a entrada, que está vencida desde 01/12/2026 ou dentro da semana, conforme a data de hoje.
+        var painel = await Ler(await dono.GetAsync("/api/v1/hoje"));
+        Assert.All(painel.GetProperty("cobrancas").EnumerateArray(), item => Assert.Equal(contratoId, item.GetProperty("contratoId").GetGuid()));
+    }
+
+    [Fact]
+    public async Task Despesa_planilha_de_budget_e_isolamento_do_dinheiro_do_evento()
+    {
+        var dono = await Entrar();
+        var outra = await Entrar();
+        var evento = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new { tipo = "Casamento", primeiroNome = "Ana", segundoNome = "Rui" }));
+        var eventoId = evento.GetProperty("id").GetGuid();
 
         var comDespesa = await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/dinheiro/lancamentos", new { tipo = "Despesa", categoria = "Transporte", valor = 150, data = "2026-11-20" }));
         Assert.Equal(150m, comDespesa.GetProperty("despesas").GetDecimal());
 
         Assert.Equal(HttpStatusCode.NotFound, (await outra.GetAsync($"/api/v1/eventos/{eventoId}/dinheiro")).StatusCode);
-        Assert.Equal(HttpStatusCode.NotFound, (await outra.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/dinheiro/parcelas/{entradaId}/recebimentos", new { valor = 10, forma = "Pix", data = "2026-12-01" })).StatusCode);
 
         var planilha = await dono.GetAsync($"/api/v1/eventos/{eventoId}/budget/planilha");
         Assert.Equal(HttpStatusCode.OK, planilha.StatusCode);

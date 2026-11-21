@@ -71,7 +71,7 @@ Valem para todas as telas. Vêm do PDF (seções "Por que assim" e "Não fazer")
 | Resumo | Cartões por área |
 | Planejar | Tarefas, Fornecedores e serviços, Roteiro, Cronograma, Briefing, Inspirações, Notas e observações |
 | Convidados | Convites e convidados, RSVP e mensagens, Mesas |
-| Dinheiro | Parcelas do casal, Pagamentos a fornecedores, Despesas, Contrato, Budget |
+| Dinheiro | Pagamentos a fornecedores, Despesas, Comprovantes, Budget (as parcelas do cliente estão no contrato, SPEC-040) |
 | Casal | Link do casal, o que ele vê, aprovações |
 | Evento | Dados, Equipe do dia, Anexos |
 
@@ -201,11 +201,11 @@ Separar o que **ela recebe** do casal do que o **casal paga** aos fornecedores (
 
 | Item | Estado | Fonte |
 |---|---|---|
-| **Parcelas por documento (decidido em 21/11/2026):** não existe mais `ParcelaCasal` (nem `ParcelaServico`); os dados antigos podem ser perdidos. As parcelas nascem no **orçamento** do funil (entrada, número de parcelas e vencimentos, mostradas na proposta por link), são copiadas para o **contrato** com o cliente quando ele é gerado, e o **contrato de fornecedor** tem as suas. As três têm a mesma estrutura (valor, vencimento, entrada, recebido ou pago, comprovante) | Ajustar | PDF, CF, G, usuário |
-| **Cobrar**: abre o WhatsApp com mensagem e Pix; texto muda se é lembrete, se vence hoje ou se atrasou | Novo | PDF, CF |
-| **Recebi**: valor, forma e data; aceita parcial; **Desfazer** | Novo | PDF, CF |
-| Totais Contrato, Recebido e Saldo (contrato − recebido; decidido em 18/11/2026) | Novo | CF |
-| Parcelas a fornecedores com entrada, forma, juros, comprovante, pago por | Pronto | G (SPEC-018) |
+| **Parcelas por documento (decidido em 21/11/2026):** não existe mais `ParcelaCasal` (nem `ParcelaServico`); os dados antigos podem ser perdidos. As parcelas nascem no **orçamento** do funil (entrada, número de parcelas e vencimentos, mostradas na proposta por link), são copiadas para o **contrato** com o cliente quando ele é gerado, e o **contrato de fornecedor** tem as suas. As três têm a mesma estrutura (valor, vencimento, entrada, recebido ou pago, comprovante). **Implementado (card #41, [SPEC-040](specs/040-parcelas-por-documento.md)):** `ParcelaOrcamento`, `ParcelaContrato` (copiada do orçamento aprovado ao criar o contrato) e `ContratoFornecedor` com `ParcelaContratoFornecedor`; `ParcelaCasal`, `ParcelaServico`, `Evento.ValorContrato`, o serviço Assessoria e Organização e `POST /eventos/{id}/assessoria` saíram do banco e da API, com perda dos dados. O comprovante por parcela e o arquivo assinado do fornecedor entram com os cards #31 e #28 | Feito (sem comprovante por parcela) | PDF, CF, G, usuário |
+| **Cobrar**: abre o WhatsApp com mensagem e Pix; texto muda se é lembrete, se vence hoje ou se atrasou. Agora na parcela do **contrato com o cliente** (diálogo Parcelas do contrato, tela Contratos do funil, SPEC-040) até a Gestão Financeira (card #32) | Pronto (SPEC-040) | PDF, CF |
+| **Recebi**: valor, forma e data; aceita parcial; **Desfazer**. Na parcela do contrato com o cliente (SPEC-040) | Pronto (SPEC-040) | PDF, CF |
+| Totais Contrato, Recebido e Saldo (contrato − recebido; decidido em 18/11/2026). Saíram da aba Dinheiro do evento; estão no diálogo Parcelas do contrato (SPEC-040) e a Gestão Financeira (card #32) os mostra por cliente | Pronto (SPEC-040) | CF |
+| Parcelas a fornecedores com entrada, forma, juros, comprovante, pago por. Hoje são as parcelas do `ContratoFornecedor` (SPEC-040); pagar com comprovante é do card #31 | Pronto (SPEC-018, SPEC-040) | G (SPEC-018) |
 | Pagamentos do evento por mês e por fornecedor. **Pagamentos de todos os eventos: fora** (decidido em 21/11/2026; a tela Pagamentos vira a Gestão Financeira da organizadora) | Novo | AV |
 | Despesas e entradas do evento por categoria | Novo | CF |
 | Comprovantes e documentos do evento | Novo | CF, AV |
@@ -278,7 +278,7 @@ Fica na 1.0 e ganha o que faltou (D).
 | Tarefas comerciais com vários responsáveis e observação formatada | Pronto (20/11/2026) | AV (SPEC-031 parte D) |
 | Modelos de briefing no funil | Pronto (20/11/2026), como roteiro interno | AV (SPEC-031 parte D) |
 | Parâmetros do modelo de orçamento alinhados à referência | Pronto (20/11/2026) | AV (SPEC-031 parte D) |
-| **Parcelas no orçamento**: entrada, número de parcelas e vencimentos, exibidos na proposta por link antes do aceite (decidido em 21/11/2026) | Novo | usuário |
+| **Parcelas no orçamento**: entrada, número de parcelas e vencimentos, exibidos na proposta por link antes do aceite (decidido em 21/11/2026). Modelo e API prontos (card #41, SPEC-040: `PUT /orcamentos-funil/{id}/parcelas`); tela e proposta por link no card #44 | Novo (API pronta) | usuário |
 | **Dados do contratante na oportunidade**: nome, CPF/CNPJ (campo único com máscara dupla), estado civil, nacionalidade, nascimento, profissão, e-mail, celular e endereço completo, sem RG. Pedidos quando o lead está disposto a fechar ("Para fechar, preencha mais dados para gerar o contrato"); o contrato só é gerado com eles completos. Quem preenche: o cliente, pela tela de aceite da proposta; num lead manual, a organizadora coleta e preenche, ou copia o link da tela de aceite e envia ao cliente. Estado civil e nacionalidade entram também no cadastro de cliente. Assim o lead só vira cliente ao fechar, com o cadastro pré-preenchido (sobram redes sociais e dados menos relevantes). Dados sensíveis são excluídos se o lead for descartado (decidido em 21/11/2026) | Novo | usuário |
 | Cadastro de oportunidade reorganizado: informações relacionadas em sequência (contato, evento, locais, comercial, dados para contrato) | Ajustar | usuário |
 | **RG removido** do cadastro de cliente e de convidado: não é mais exigido no Brasil; vale o CPF (21/11/2026). Cadastro de cliente com **CPF/CNPJ em campo único** com máscara dupla ([SPEC-037](specs/037-rg-fora-e-documento-unico-do-cliente.md)) | Pronto | usuário |
@@ -387,7 +387,7 @@ Baseada no PDF (base → uso diário → diferencial), com o que já existe.
 3. ~~Modelos: prazos legíveis, importar colando, salvar como modelo.~~ **Pronto** (SPEC-012 v2).
 4. Tarefas: lista do evento com "Nova tarefa" em modal, vários responsáveis, visibilidade, prioridade e checklist. **Em código** (SPEC-003 v3). A seção 17 da spec continua sem decisão. Anexos: JPG, PNG ou PDF até 5 MB, fotos reduzidas.
 5. ~~Tela Hoje.~~ **Pronto** (SPEC-007 v2).
-6. ~~Dinheiro do evento: parcelas do casal, cobrar, recebi, Pix.~~ **Pronto** (SPEC-029), menos comprovantes.
+6. ~~Dinheiro do evento: parcelas do casal, cobrar, recebi, Pix.~~ **Pronto** (SPEC-029), menos comprovantes. As parcelas do casal viraram parcelas do contrato (card #41, SPEC-040).
 7. ~~Contratos: cadastro com campos de mesclagem, vínculo ao modelo, leitura por link.~~ **Pronto** (SPEC-030 v2). Assinatura pendente.
 8. Convidados: colar lista, mesas.
 9. Fornecedores: duas etapas, horário de chegada, mensagens.

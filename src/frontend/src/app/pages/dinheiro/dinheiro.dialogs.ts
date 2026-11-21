@@ -1,17 +1,15 @@
 import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import {
-  DefinirContratoCasal,
   FORMAS_PAGAMENTO,
   FormaPagamento,
   LancamentoEvento,
-  ParcelaCasal,
+  ParcelaContrato,
   TipoLancamento,
 } from '../../core/dinheiro.client';
 import { CampoDataComponent } from '../../shared/campo-data';
@@ -20,95 +18,6 @@ import { deDataParaIso, deIsoParaData } from '../../shared/data';
 import { GdDinheiroPipe } from '../../shared/gd-dinheiro.pipe';
 
 const BASE = [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule];
-
-/** Valor do contrato com o casal, entrada e parcelas (SPEC-029 §6.1). */
-@Component({
-  selector: 'app-contrato-casal-dialog',
-  imports: [MatFormFieldModule, ...BASE, MatCheckboxModule, CampoDataComponent, CampoDinheiroComponent],
-  template: `
-    <h2 mat-dialog-title>Contrato com o casal</h2>
-    <p class="text-muted text-sm px-6 -mt-2 mb-4">Valor, entrada e parcelas. As parcelas do casal são geradas de novo ao salvar.</p>
-    <mat-dialog-content>
-      <form id="contrato-casal" class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4" [formGroup]="form" (ngSubmit)="salvar()">
-        <app-campo-dinheiro rotulo="Valor do contrato" formControlName="valor" />
-        <div class="campo">
-          <mat-label class="font-semibold mb-2 block">Número de parcelas</mat-label>
-          <mat-form-field appearance="outline" class="w-full">
-          <input [attr.aria-label]="'Número de parcelas'" matInput type="number" min="1" max="120" formControlName="quantidadeParcelas" required />
-          @if (form.controls.quantidadeParcelas.invalid) { <mat-error>De 1 a 120.</mat-error> }
-        </mat-form-field>
-        </div>
-        <app-campo-data rotulo="Vencimento da 1ª parcela" formControlName="primeiraParcela" />
-        <mat-checkbox class="sm:col-span-2" formControlName="comEntrada">Tem entrada</mat-checkbox>
-        @if (form.controls.comEntrada.value) {
-          <div class="campo">
-            <mat-label class="font-semibold mb-2 block">Entrada em</mat-label>
-            <mat-form-field appearance="outline" class="w-full">
-            <mat-select [attr.aria-label]="'Entrada em'" formControlName="baseEntrada">
-              <mat-option value="Valor">Valor (R$)</mat-option>
-              <mat-option value="Porcentagem">Porcentagem (%)</mat-option>
-            </mat-select>
-          </mat-form-field>
-          </div>
-          @if (form.controls.baseEntrada.value === 'Porcentagem') {
-            <div class="campo">
-              <mat-label class="font-semibold mb-2 block">Entrada (%)</mat-label>
-              <mat-form-field appearance="outline" class="w-full">
-              <input [attr.aria-label]="'Entrada (%)'" matInput type="number" min="1" max="100" formControlName="valorEntrada" />
-              <span matTextSuffix>%</span>
-            </mat-form-field>
-            </div>
-          } @else {
-            <app-campo-dinheiro rotulo="Valor da entrada" formControlName="valorEntrada" />
-          }
-          <app-campo-data rotulo="Data da entrada" formControlName="dataEntrada" />
-        }
-      </form>
-      @if (erro) { <p class="text-error text-xs">{{ erro }}</p> }
-    </mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button mat-stroked-button type="button" (click)="ref.close()">Cancelar</button>
-      <button mat-flat-button type="submit" form="contrato-casal">Gerar parcelas</button>
-    </mat-dialog-actions>
-  `,
-})
-export class ContratoCasalDialog {
-  protected readonly ref = inject(MatDialogRef<ContratoCasalDialog, DefinirContratoCasal>);
-  private readonly dados = inject<{ valor: number | null }>(MAT_DIALOG_DATA);
-  private readonly fb = inject(FormBuilder);
-  protected erro = '';
-  protected readonly form = this.fb.group({
-    valor: this.fb.control<number | null>(this.dados.valor, Validators.required),
-    quantidadeParcelas: this.fb.control<number>(1, [Validators.required, Validators.min(1), Validators.max(120)]),
-    primeiraParcela: this.fb.control<Date | null>(null, Validators.required),
-    comEntrada: false,
-    baseEntrada: this.fb.control<'Valor' | 'Porcentagem'>('Valor'),
-    valorEntrada: this.fb.control<number | null>(null),
-    dataEntrada: this.fb.control<Date | null>(null),
-  });
-
-  protected salvar(): void {
-    const valor = this.form.getRawValue();
-    if (this.form.invalid || !valor.valor || valor.valor <= 0) {
-      this.form.markAllAsTouched();
-      this.erro = 'Informe o valor, o número de parcelas e o vencimento da 1ª parcela.';
-      return;
-    }
-    if (valor.comEntrada && (!valor.valorEntrada || !valor.dataEntrada)) {
-      this.erro = 'Informe o valor e a data da entrada.';
-      return;
-    }
-    this.ref.close({
-      valor: valor.valor,
-      quantidadeParcelas: Number(valor.quantidadeParcelas),
-      primeiraParcela: deDataParaIso(valor.primeiraParcela),
-      comEntrada: !!valor.comEntrada,
-      baseEntrada: valor.comEntrada ? valor.baseEntrada : null,
-      valorEntrada: valor.comEntrada ? valor.valorEntrada : null,
-      dataEntrada: valor.comEntrada ? deDataParaIso(valor.dataEntrada) : null,
-    });
-  }
-}
 
 /** "Recebi": valor (aceita parcial), forma e data (SPEC-029 §6.3). */
 @Component({
@@ -141,7 +50,7 @@ export class ContratoCasalDialog {
   `,
 })
 export class ReceberDialog {
-  protected readonly dados = inject<ParcelaCasal>(MAT_DIALOG_DATA);
+  protected readonly dados = inject<ParcelaContrato>(MAT_DIALOG_DATA);
   protected readonly ref = inject(MatDialogRef<ReceberDialog, { valor: number; forma: FormaPagamento; data: string }>);
   private readonly fb = inject(FormBuilder);
   protected readonly formas = FORMAS_PAGAMENTO;

@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using Project.Application.Comum;
+using Project.Domain.Dinheiro;
 using Project.Domain.Funil;
 
 namespace Project.Application.Negocio;
@@ -21,7 +22,8 @@ public sealed record OrcamentoFunilLeitura(
     string? SituacaoProposta = null,
     string? RespostaMensagem = null,
     DateTimeOffset? RespostaEm = null,
-    string? CriadoPor = null);
+    string? CriadoPor = null,
+    IReadOnlyList<ParcelaOrcamentoLeitura>? Parcelas = null);
 
 public sealed record SalvarOrcamentoFunil(
     Guid? OportunidadeId,
@@ -191,6 +193,13 @@ public sealed class OrcamentoFunilServico(IDados dados)
         }
 
         var mudou = item.Conteudo != conteudo || item.Valor != pedido.Valor;
+        if (item.Valor != pedido.Valor && item.Parcelas.Count > 0)
+        {
+            // As parcelas foram calculadas sobre o valor antigo: o organizador define de novo (SPEC-040).
+            await dados.SubstituirParcelasOrcamentoAsync(item.Id, [], ct);
+            item.Parcelas.Clear();
+        }
+
         item.Conteudo = conteudo;
         item.Valor = pedido.Valor;
         if (mudou && item.TokenLink is not null)
@@ -204,6 +213,43 @@ public sealed class OrcamentoFunilServico(IDados dados)
         }
 
         await dados.SalvarNegocioAsync(ct);
+        return Resultado<OrcamentoFunilLeitura>.Sucesso(await LerAsync(contaId, item, ct));
+    }
+
+    /// <summary>Define as parcelas do orçamento a partir do valor dele (SPEC-040). Substitui as anteriores.</summary>
+    public async Task<Resultado<OrcamentoFunilLeitura>> DefinirParcelasAsync(string contaId, Guid id, PedidoParcelas pedido, CancellationToken ct)
+    {
+        var item = await dados.ObterOrcamentoFunilAsync(contaId, id, ct);
+        if (item is null)
+        {
+            return Resultado<OrcamentoFunilLeitura>.Erro(Codigos.Indisponivel, "Indisponível.");
+        }
+
+        if (item.Situacao != SituacaoOrcamentoFunil.EmAndamento)
+        {
+            return Resultado<OrcamentoFunilLeitura>.Erro(Codigos.Validacao, "Só orçamentos em andamento podem ser parcelados.");
+        }
+
+        var calculadas = ParcelasDosDocumentos.Gerar(item.Valor, pedido);
+        if (!calculadas.Ok)
+        {
+            return Resultado<OrcamentoFunilLeitura>.Erro(calculadas.Falha!.Codigo, calculadas.Falha.Mensagem);
+        }
+
+        var novas = calculadas.Valor!
+            .Select(parcela => new ParcelaOrcamento
+            {
+                Id = Guid.NewGuid(),
+                OrcamentoFunilId = item.Id,
+                Numero = parcela.Numero,
+                Vencimento = parcela.Vencimento,
+                Valor = parcela.Valor,
+                Entrada = parcela.Entrada,
+            })
+            .ToArray();
+        await dados.SubstituirParcelasOrcamentoAsync(item.Id, novas, ct);
+        item.Parcelas.Clear();
+        item.Parcelas.AddRange(novas);
         return Resultado<OrcamentoFunilLeitura>.Sucesso(await LerAsync(contaId, item, ct));
     }
 
@@ -563,5 +609,9 @@ public sealed class OrcamentoFunilServico(IDados dados)
             SituacaoProposta(item),
             item.RespostaMensagem,
             item.RespostaEm,
-            item.CriadoPor);
+            item.CriadoPor,
+            item.Parcelas
+                .OrderBy(parcela => parcela.Numero)
+                .Select(parcela => new ParcelaOrcamentoLeitura(parcela.Numero, parcela.Vencimento, parcela.Valor, parcela.Entrada))
+                .ToArray());
 }

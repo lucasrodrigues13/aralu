@@ -2,6 +2,8 @@
 
 **Status: aprovada (revisão do card #27: busca e "Cadastrar novo serviço" no seletor de serviços do fornecedor).** O código segue esta spec. Fonte: [inventario-referencia.md](../inventario-referencia.md) §1.9, §1.10, §1.11, §1.12 e §1.13. Catálogo de modelos de serviço do funil permanece na SPEC-026.
 
+> **Card #41 (21/11/2026, [SPEC-040](040-parcelas-por-documento.md)).** `ParcelaServico` saiu do banco. Ao contratar, o sistema cria o `ContratoFornecedor` do serviço, com as parcelas a pagar (mesma estrutura e mesmo gerador). A leitura do serviço (`parcelas`), a aba Fornecedores, a aba Dinheiro do evento, a tela Pagamentos e a tela Hoje leem dele. O serviço "Assessoria e Organização" e `POST /eventos/{id}/assessoria` saíram.
+
 ## 1. Identificador e nome
 
 SPEC-018. Serviços e fornecedores.

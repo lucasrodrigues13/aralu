@@ -16,9 +16,6 @@ public static class DinheiroEndpoints
         var api = app.MapGroup("/api/v1").RequireAuthorization(AssistenteEndpoints.PoliticaFinanceiro);
         api.AddEndpointFilter(EscopoAssistente.Filtro);
         api.MapGet("/eventos/{id:guid}/dinheiro", Obter);
-        api.MapPut("/eventos/{id:guid}/dinheiro/contrato", DefinirContrato);
-        api.MapPost("/eventos/{id:guid}/dinheiro/parcelas/{parcelaId:guid}/recebimentos", Receber);
-        api.MapDelete("/eventos/{id:guid}/dinheiro/parcelas/{parcelaId:guid}/recebimentos/ultimo", Desfazer);
         api.MapPost("/eventos/{id:guid}/dinheiro/lancamentos", CriarLancamento);
         api.MapPut("/eventos/{id:guid}/dinheiro/lancamentos/{lancamentoId:guid}", AtualizarLancamento);
         api.MapDelete("/eventos/{id:guid}/dinheiro/lancamentos/{lancamentoId:guid}", ExcluirLancamento);
@@ -37,25 +34,16 @@ public static class DinheiroEndpoints
     }
 
     private static Task<IResult> Obter(Guid id, ClaimsPrincipal usuario, DinheiroServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.ObterAsync(conta, id, Hoje(), ct)));
-
-    private static Task<IResult> DefinirContrato(Guid id, DefinirContratoCasal pedido, ClaimsPrincipal usuario, DinheiroServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.DefinirContratoAsync(conta, id, pedido, Hoje(), ct)));
-
-    private static Task<IResult> Receber(Guid id, Guid parcelaId, ReceberParcela pedido, ClaimsPrincipal usuario, DinheiroServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.ReceberAsync(conta, id, parcelaId, pedido, Hoje(), ct)));
-
-    private static Task<IResult> Desfazer(Guid id, Guid parcelaId, ClaimsPrincipal usuario, DinheiroServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.DesfazerRecebimentoAsync(conta, id, parcelaId, Hoje(), ct)));
+        ComConta(usuario, conta => De(servico.ObterAsync(conta, id, ct)));
 
     private static Task<IResult> CriarLancamento(Guid id, SalvarLancamento pedido, ClaimsPrincipal usuario, DinheiroServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.SalvarLancamentoAsync(conta, id, null, pedido, Hoje(), ct)));
+        ComConta(usuario, conta => De(servico.SalvarLancamentoAsync(conta, id, null, pedido, ct)));
 
     private static Task<IResult> AtualizarLancamento(Guid id, Guid lancamentoId, SalvarLancamento pedido, ClaimsPrincipal usuario, DinheiroServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.SalvarLancamentoAsync(conta, id, lancamentoId, pedido, Hoje(), ct)));
+        ComConta(usuario, conta => De(servico.SalvarLancamentoAsync(conta, id, lancamentoId, pedido, ct)));
 
     private static Task<IResult> ExcluirLancamento(Guid id, Guid lancamentoId, ClaimsPrincipal usuario, DinheiroServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.ExcluirLancamentoAsync(conta, id, lancamentoId, Hoje(), ct)));
+        ComConta(usuario, conta => De(servico.ExcluirLancamentoAsync(conta, id, lancamentoId, ct)));
 
     private static Task<IResult> EnviarComprovante(Guid id, HttpRequest request, ClaimsPrincipal usuario, DinheiroServico servico, CancellationToken ct) =>
         ComConta(usuario, async conta =>
@@ -74,11 +62,11 @@ public static class DinheiroEndpoints
             }
 
             await using var fluxo = arquivo.OpenReadStream();
-            return await De(servico.EnviarComprovanteAsync(conta, id, fluxo, arquivo.FileName, formulario["descricao"].ToString(), Hoje(), ct));
+            return await De(servico.EnviarComprovanteAsync(conta, id, fluxo, arquivo.FileName, formulario["descricao"].ToString(), ct));
         });
 
     private static Task<IResult> ExcluirComprovante(Guid id, Guid comprovanteId, ClaimsPrincipal usuario, DinheiroServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.ExcluirComprovanteAsync(conta, id, comprovanteId, Hoje(), ct)));
+        ComConta(usuario, conta => De(servico.ExcluirComprovanteAsync(conta, id, comprovanteId, ct)));
 
     private static Task<IResult> Pagamentos(ClaimsPrincipal usuario, DinheiroServico servico, Project.Infrastructure.Persistencia.AppDbContext banco, CancellationToken ct) =>
         ComConta(usuario, async conta => Results.Ok(await servico.PagamentosAsync(conta, ct, await EscopoAssistente.LiberadosAsync(usuario, banco, ct))));

@@ -1,4 +1,4 @@
-import { ParcelaCasal } from '../../core/dinheiro.client';
+import { ParcelaContrato } from '../../core/dinheiro.client';
 
 const moeda = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -8,7 +8,7 @@ function data(iso: string): string {
 }
 
 /** Texto do "Cobrar" (SPEC-029 §6.2): muda se é lembrete, se vence hoje ou se atrasou. */
-export function textoCobranca(parcela: ParcelaCasal, nome: string, chavePix: string | null): string {
+export function textoCobranca(parcela: ParcelaContrato, nome: string, chavePix: string | null): string {
   const quem = nome.trim() ? `Olá, ${nome.trim().split(/\s+/)[0]}!` : 'Olá!';
   const qual = parcela.entrada ? 'a entrada' : `a parcela ${parcela.numero}`;
   const valor = moeda.format(parcela.saldo > 0 ? parcela.saldo : parcela.valor);

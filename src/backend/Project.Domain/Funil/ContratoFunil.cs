@@ -29,4 +29,7 @@ public sealed class ContratoFunil
     public DateTimeOffset? AssinadoEm { get; set; }
 
     public Guid? ModeloId { get; set; }
+
+    /// <summary>Parcelas a receber do cliente, copiadas do orçamento aprovado ao gerar o contrato (SPEC-040).</summary>
+    public List<Project.Domain.Dinheiro.ParcelaContrato> Parcelas { get; set; } = [];
 }

@@ -461,6 +461,23 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.ToTable("ComprovantesEvento", (string)null);
                 });
 
+            modelBuilder.Entity("Project.Domain.Dinheiro.ContratoFornecedor", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ServicoId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ServicoId")
+                        .IsUnique();
+
+                    b.ToTable("ContratosFornecedor", (string)null);
+                });
+
             modelBuilder.Entity("Project.Domain.Dinheiro.LancamentoEvento", b =>
                 {
                     b.Property<Guid>("Id")
@@ -496,17 +513,17 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.ToTable("LancamentosEvento", (string)null);
                 });
 
-            modelBuilder.Entity("Project.Domain.Dinheiro.ParcelaCasal", b =>
+            modelBuilder.Entity("Project.Domain.Dinheiro.ParcelaContrato", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<Guid>("ContratoFunilId")
+                        .HasColumnType("uuid");
+
                     b.Property<bool>("Entrada")
                         .HasColumnType("boolean");
-
-                    b.Property<Guid>("EventoId")
-                        .HasColumnType("uuid");
 
                     b.Property<int>("Numero")
                         .HasColumnType("integer");
@@ -520,9 +537,71 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("EventoId");
+                    b.HasIndex("ContratoFunilId");
 
-                    b.ToTable("ParcelasCasal", (string)null);
+                    b.ToTable("ParcelasContrato", (string)null);
+                });
+
+            modelBuilder.Entity("Project.Domain.Dinheiro.ParcelaContratoFornecedor", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ContratoFornecedorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Entrada")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("Numero")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Situacao")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("Valor")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<DateOnly>("Vencimento")
+                        .HasColumnType("date");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContratoFornecedorId");
+
+                    b.ToTable("ParcelasContratoFornecedor", (string)null);
+                });
+
+            modelBuilder.Entity("Project.Domain.Dinheiro.ParcelaOrcamento", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Entrada")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("Numero")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("OrcamentoFunilId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Valor")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<DateOnly>("Vencimento")
+                        .HasColumnType("date");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrcamentoFunilId");
+
+                    b.ToTable("ParcelasOrcamento", (string)null);
                 });
 
             modelBuilder.Entity("Project.Domain.Dinheiro.RecebimentoParcela", b =>
@@ -737,10 +816,6 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<decimal?>("ValorContrato")
-                        .HasPrecision(12, 2)
-                        .HasColumnType("numeric(12,2)");
-
                     b.HasKey("Id");
 
                     b.ToTable("Eventos");
@@ -836,39 +911,6 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Modelos");
-                });
-
-            modelBuilder.Entity("Project.Domain.Eventos.ParcelaServico", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<bool>("Entrada")
-                        .HasColumnType("boolean");
-
-                    b.Property<int>("Numero")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("ServicoId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Situacao")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<decimal>("Valor")
-                        .HasPrecision(12, 2)
-                        .HasColumnType("numeric(12,2)");
-
-                    b.Property<DateOnly>("Vencimento")
-                        .HasColumnType("date");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ServicoId");
-
-                    b.ToTable("ParcelaServico");
                 });
 
             modelBuilder.Entity("Project.Domain.Eventos.ServicoEvento", b =>
@@ -2626,6 +2668,15 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Project.Domain.Dinheiro.ContratoFornecedor", b =>
+                {
+                    b.HasOne("Project.Domain.Eventos.ServicoEvento", null)
+                        .WithOne("Contrato")
+                        .HasForeignKey("Project.Domain.Dinheiro.ContratoFornecedor", "ServicoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Project.Domain.Dinheiro.LancamentoEvento", b =>
                 {
                     b.HasOne("Project.Domain.Eventos.Evento", null)
@@ -2635,18 +2686,36 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Project.Domain.Dinheiro.ParcelaCasal", b =>
+            modelBuilder.Entity("Project.Domain.Dinheiro.ParcelaContrato", b =>
                 {
-                    b.HasOne("Project.Domain.Eventos.Evento", null)
-                        .WithMany()
-                        .HasForeignKey("EventoId")
+                    b.HasOne("Project.Domain.Funil.ContratoFunil", null)
+                        .WithMany("Parcelas")
+                        .HasForeignKey("ContratoFunilId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Project.Domain.Dinheiro.ParcelaContratoFornecedor", b =>
+                {
+                    b.HasOne("Project.Domain.Dinheiro.ContratoFornecedor", null)
+                        .WithMany("Parcelas")
+                        .HasForeignKey("ContratoFornecedorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Project.Domain.Dinheiro.ParcelaOrcamento", b =>
+                {
+                    b.HasOne("Project.Domain.Funil.OrcamentoFunil", null)
+                        .WithMany("Parcelas")
+                        .HasForeignKey("OrcamentoFunilId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
             modelBuilder.Entity("Project.Domain.Dinheiro.RecebimentoParcela", b =>
                 {
-                    b.HasOne("Project.Domain.Dinheiro.ParcelaCasal", null)
+                    b.HasOne("Project.Domain.Dinheiro.ParcelaContrato", null)
                         .WithMany("Recebimentos")
                         .HasForeignKey("ParcelaId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -2782,15 +2851,6 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 {
                     b.HasOne("Project.Domain.Eventos.ServicoModelo", null)
                         .WithMany("Itens")
-                        .HasForeignKey("ServicoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Project.Domain.Eventos.ParcelaServico", b =>
-                {
-                    b.HasOne("Project.Domain.Eventos.ServicoEvento", null)
-                        .WithMany("Parcelas")
                         .HasForeignKey("ServicoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -3053,7 +3113,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Navigation("Convidados");
                 });
 
-            modelBuilder.Entity("Project.Domain.Dinheiro.ParcelaCasal", b =>
+            modelBuilder.Entity("Project.Domain.Dinheiro.ContratoFornecedor", b =>
+                {
+                    b.Navigation("Parcelas");
+                });
+
+            modelBuilder.Entity("Project.Domain.Dinheiro.ParcelaContrato", b =>
                 {
                     b.Navigation("Recebimentos");
                 });
@@ -3074,9 +3139,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
             modelBuilder.Entity("Project.Domain.Eventos.ServicoEvento", b =>
                 {
-                    b.Navigation("Fornecedores");
+                    b.Navigation("Contrato");
 
-                    b.Navigation("Parcelas");
+                    b.Navigation("Fornecedores");
 
                     b.Navigation("Subitens");
                 });
@@ -3102,9 +3167,19 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Navigation("Itens");
                 });
 
+            modelBuilder.Entity("Project.Domain.Funil.ContratoFunil", b =>
+                {
+                    b.Navigation("Parcelas");
+                });
+
             modelBuilder.Entity("Project.Domain.Funil.Oportunidade", b =>
                 {
                     b.Navigation("Contatos");
+                });
+
+            modelBuilder.Entity("Project.Domain.Funil.OrcamentoFunil", b =>
+                {
+                    b.Navigation("Parcelas");
                 });
 
             modelBuilder.Entity("Project.Domain.Funil.TarefaFunil", b =>

@@ -12,7 +12,7 @@ public sealed record ConvidadosEventoDado(Guid EventoId, int Total, int Pendente
 /// <summary>Cartão "Respostas de convidados" (SPEC-007 §6.3): pendentes, sim e não.</summary>
 public sealed record RespostasConvidadosHoje(int Pendentes, int Sim, int Nao);
 
-public sealed record ParcelaHojeDado(Guid EventoId, string Evento, int Numero, bool Entrada, DateOnly Vencimento, decimal Saldo);
+public sealed record ParcelaHojeDado(Guid ContratoId, string Oportunidade, int Numero, bool Entrada, DateOnly Vencimento, decimal Saldo);
 
 public sealed record PagamentoSemanaDado(DateOnly Vencimento, decimal Valor);
 
@@ -42,7 +42,7 @@ public interface IDadosHoje
 
     Task<IReadOnlyList<ConvidadosEventoDado>> ConvidadosAsync(string contaId, IReadOnlyCollection<Guid> eventoIds, CancellationToken ct);
 
-    Task<IReadOnlyList<ParcelaHojeDado>> CobrancasAsync(string contaId, IReadOnlyCollection<Guid> eventoIds, DateOnly ate, CancellationToken ct);
+    Task<IReadOnlyList<ParcelaHojeDado>> CobrancasAsync(string contaId, DateOnly ate, CancellationToken ct);
 
     Task<IReadOnlyList<PagamentoSemanaDado>> PagamentosPendentesAsync(string contaId, IReadOnlyCollection<Guid> eventoIds, DateOnly de, DateOnly ate, CancellationToken ct);
 
@@ -52,7 +52,7 @@ public interface IDadosHoje
     Task<IReadOnlyList<RetornoFunilHoje>> RetornosFunilAsync(string contaId, DateOnly ate, CancellationToken ct);
 }
 
-public sealed record CobrancaHoje(Guid EventoId, string Evento, string Parcela, DateOnly Vencimento, decimal Saldo, bool Atrasada);
+public sealed record CobrancaHoje(Guid ContratoId, string Oportunidade, string Parcela, DateOnly Vencimento, decimal Saldo, bool Atrasada);
 
 public sealed record ProximoEventoHoje(Guid Id, string Nome, DateOnly Data, int Dias);
 
@@ -122,7 +122,7 @@ public sealed class HojeServico(IDadosHoje dados, PainelServico painel)
         var ids = eventos.Select(evento => evento.Id).ToArray();
         var tarefas = await dados.TarefasAsync(contaId, ids, ct);
         var convidados = (await dados.ConvidadosAsync(contaId, ids, ct)).ToDictionary(item => item.EventoId);
-        var cobrancas = comFinanceiro ? await dados.CobrancasAsync(contaId, ids, hoje.AddDays(7), ct) : [];
+        var cobrancas = comFinanceiro && eventosLiberados is null ? await dados.CobrancasAsync(contaId, hoje.AddDays(7), ct) : [];
         var pagamentos = comFinanceiro ? await dados.PagamentosPendentesAsync(contaId, ids, hoje, hoje.AddDays(6), ct) : [];
         var funil = (await painel.ObterAsync(contaId, ct)).Funil;
 
@@ -162,8 +162,8 @@ public sealed class HojeServico(IDadosHoje dados, PainelServico painel)
             cobrancas
                 .OrderBy(item => item.Vencimento)
                 .Select(item => new CobrancaHoje(
-                    item.EventoId,
-                    item.Evento,
+                    item.ContratoId,
+                    item.Oportunidade,
                     item.Entrada ? "Entrada" : $"Parcela {item.Numero}",
                     item.Vencimento,
                     item.Saldo,
