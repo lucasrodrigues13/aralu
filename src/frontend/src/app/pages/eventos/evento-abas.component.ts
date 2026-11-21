@@ -43,7 +43,6 @@ export class EventoAbasComponent {
   });
   private readonly abas = [
     { rotulo: 'Resumo', rota: '' },
-    { rotulo: 'Tarefas', rota: 'tarefas' },
     { rotulo: 'Convidados', rota: 'convidados' },
     { rotulo: 'Fornecedores', rota: 'fornecedores' },
     { rotulo: 'Contratos', rota: 'contratos' },

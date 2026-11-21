@@ -1,11 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
-import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
+import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
+import { AssistentesClient } from '../../core/assistentes.client';
 import { NegocioClient, Tarefa } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
-import { TarefasPage } from './tarefas.page';
+import { EventoTarefasComponent } from './evento-tarefas.component';
 
 function tarefa(parcial: Partial<Tarefa> & Pick<Tarefa, 'id' | 'titulo'>): Tarefa {
   return {
@@ -33,21 +34,12 @@ function tarefa(parcial: Partial<Tarefa> & Pick<Tarefa, 'id' | 'titulo'>): Taref
 
 function montar(situacaoEvento: string, tarefas: Tarefa[], dialogo: Pick<MatDialog, 'open'> = {
   open: () => ({ afterClosed: () => of(false) }) as never,
-}): ComponentFixture<TarefasPage> {
+}): ComponentFixture<EventoTarefasComponent> {
   TestBed.configureTestingModule({
-    imports: [TarefasPage],
+    imports: [EventoTarefasComponent],
     providers: [
       provideRouter([]),
       provideNoopAnimations(),
-      {
-        provide: ActivatedRoute,
-        useValue: {
-          snapshot: {
-            paramMap: convertToParamMap({ id: 'evento-1' }),
-            queryParamMap: convertToParamMap({}),
-          },
-        },
-      },
       {
         provide: NegocioClient,
         useValue: {
@@ -56,15 +48,17 @@ function montar(situacaoEvento: string, tarefas: Tarefa[], dialogo: Pick<MatDial
         },
       },
       { provide: MatDialog, useValue: dialogo },
+      { provide: AssistentesClient, useValue: { nomes: () => of([]) } },
       { provide: ToastService, useValue: { erro: () => undefined, sucesso: () => undefined } },
     ],
   });
-  const fixture = TestBed.createComponent(TarefasPage);
+  const fixture = TestBed.createComponent(EventoTarefasComponent);
+  fixture.componentRef.setInput('eventoId', 'evento-1');
   fixture.detectChanges();
   return fixture;
 }
 
-describe('TarefasPage na aba do evento', () => {
+describe('Tarefas do evento no Resumo', () => {
   afterEach(() => TestBed.resetTestingModule());
 
   it('agrupa as tarefas pela distância até o evento', () => {
@@ -107,5 +101,19 @@ describe('TarefasPage na aba do evento', () => {
     botao.click();
 
     expect(dados).toEqual({ eventoId: 'evento-1' });
+  });
+
+  it('mostrarAtrasadas filtra só as atrasadas', () => {
+    const fixture = montar('EmAndamento', [
+      tarefa({ id: '1', titulo: 'Velha', prazo: '2020-01-01' }),
+      tarefa({ id: '2', titulo: 'Concluída velha', prazo: '2020-01-01', situacao: 'Concluida' }),
+      tarefa({ id: '3', titulo: 'Futura', prazo: '2099-01-01' }),
+    ]);
+    fixture.componentInstance.mostrarAtrasadas();
+    fixture.detectChanges();
+    const linhas = [...(fixture.nativeElement as HTMLElement).querySelectorAll('tr.linha-tarefa')].map((linha) => linha.textContent ?? '');
+
+    expect(linhas.length).toBe(1);
+    expect(linhas[0]).toContain('Velha');
   });
 });

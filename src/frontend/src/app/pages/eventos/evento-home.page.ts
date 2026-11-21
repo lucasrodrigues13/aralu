@@ -22,6 +22,7 @@ import { EventoAbasComponent } from './evento-abas.component';
 import { AplicarModeloDialog } from './aplicar-modelo.dialog';
 import { EventoFormPage } from './evento-form.page';
 import { LinkCasalDialog } from './link-casal.dialog';
+import { EventoTarefasComponent } from '../tarefas/evento-tarefas.component';
 import { SalvarComoModeloDialog } from './salvar-como-modelo.dialog';
 
 /** Clientes do evento: vincular existente, cadastrar novo ou desvincular. */
@@ -126,7 +127,7 @@ export class ClientesEventoDialog implements OnInit {
 /** Resumo do evento: cabeçalho, alertas e cartões (SPEC-008 v2, 6.2). */
 @Component({
   selector: 'app-evento-home',
-  imports: [RouterLink, MatCardModule, MatButtonModule, MatIconModule, MatMenuModule, GdDataPipe, GdDinheiroPipe, GdHoraPipe, EventoAbasComponent],
+  imports: [RouterLink, MatCardModule, MatButtonModule, MatIconModule, MatMenuModule, GdDataPipe, GdDinheiroPipe, GdHoraPipe, EventoAbasComponent, EventoTarefasComponent],
   template: `
     <app-evento-abas [eventoId]="id" />
     @if (evento(); as atual) {
@@ -204,7 +205,7 @@ export class ClientesEventoDialog implements OnInit {
         }
 
         <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-6 mb-6">
-          <a class="block no-underline" [routerLink]="['/eventos', id, 'tarefas']">
+          <button class="block w-full p-0 border-0 bg-transparent text-left cursor-pointer" type="button" (click)="tarefasDoEvento()?.irParaLista()">
             <mat-card class="shadow-none text-center mb-0! h-full bg-light-primary card-hover">
               <mat-card-content>
                 <mat-icon class="text-primary">checklist</mat-icon>
@@ -213,7 +214,7 @@ export class ClientesEventoDialog implements OnInit {
                 <span class="block text-xs text-primary mt-1">{{ r.tarefasConcluidas }} de {{ r.tarefas }} feitas · {{ r.tarefasAtrasadas }} {{ r.tarefasAtrasadas === 1 ? 'atrasada' : 'atrasadas' }}</span>
               </mat-card-content>
             </mat-card>
-          </a>
+          </button>
           <a class="block no-underline" [routerLink]="['/eventos', id, 'convidados']">
             <mat-card class="shadow-none text-center mb-0! h-full bg-light-info card-hover">
               <mat-card-content>
@@ -258,6 +259,7 @@ export class ClientesEventoDialog implements OnInit {
           </button>
         </div>
       }
+      <app-evento-tarefas [eventoId]="id" (mudou)="carregarResumo()" />
     }
   `,
 })
@@ -273,6 +275,7 @@ export class EventoHomePage implements OnInit, OnDestroy {
   protected readonly foto = signal<string | null>(null);
   private fotoAtual: string | null = null;
   private readonly arquivo = viewChild<ElementRef<HTMLInputElement>>('arquivo');
+  protected readonly tarefasDoEvento = viewChild(EventoTarefasComponent);
   protected id = '';
   protected readonly status = STATUS;
 
@@ -332,7 +335,7 @@ export class EventoHomePage implements OnInit, OnDestroy {
   protected resolver(alerta: AlertaEvento): void {
     switch (alerta.destino) {
       case 'TarefasAtrasadas':
-        void this.router.navigate(['/eventos', this.id, 'tarefas'], { queryParams: { filtro: 'atrasadas' } });
+        this.tarefasDoEvento()?.mostrarAtrasadas();
         break;
       case 'Fornecedores':
         void this.router.navigate(['/eventos', this.id, 'fornecedores']);
@@ -415,7 +418,10 @@ export class EventoHomePage implements OnInit, OnDestroy {
       ...DIALOG,
       data: { eventoId: this.id, tipo: atual.tipo },
     }).afterClosed().subscribe((ok) => {
-      if (ok) this.recarregar();
+      if (ok) {
+        this.recarregar();
+        this.tarefasDoEvento()?.recarregar();
+      }
     });
   }
 
@@ -450,7 +456,7 @@ export class EventoHomePage implements OnInit, OnDestroy {
     this.carregarResumo();
   }
 
-  private carregarResumo(): void {
+  protected carregarResumo(): void {
     this.negocio.resumoEvento(this.id).subscribe({
       next: (resumo) => this.resumo.set(resumo),
       error: () => this.resumo.set(null),
