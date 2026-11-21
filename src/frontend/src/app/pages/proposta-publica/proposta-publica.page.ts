@@ -44,6 +44,15 @@ const RESPONDIDO: Record<RespostaProposta, { titulo: string; texto: string; icon
             }
           </mat-card-content></mat-card>
 
+          @if (p.daPropriaConta) {
+            <mat-card class="cardWithShadow mt-4 bg-light-warning" role="status"><mat-card-content>
+              <h2><mat-icon class="align-middle">visibility_off</mat-icon> Você está vendo como assessoria</h2>
+              <p class="text-sm">
+                Esta abertura não conta e a resposta é do lead. Para testar a resposta, abra este link numa janela anônima.
+              </p>
+            </mat-card-content></mat-card>
+          }
+
           <mat-card class="cardWithShadow mt-4"><mat-card-content>
             @if (p.resposta && !escolha()) {
               <div class="respondido">
@@ -76,9 +85,9 @@ const RESPONDIDO: Record<RespostaProposta, { titulo: string; texto: string; icon
             } @else {
               <h2>O que você achou?</h2>
               <div class="botoes">
-                <button mat-flat-button type="button" (click)="escolher('Aceitar')"><mat-icon>thumb_up</mat-icon> Aceitar</button>
-                <button mat-stroked-button type="button" (click)="escolher('Duvidas')"><mat-icon>help</mat-icon> Tenho dúvidas</button>
-                <button mat-button type="button" (click)="escolher('Recusar')">Não vou seguir</button>
+                <button mat-flat-button type="button" [disabled]="p.daPropriaConta" (click)="escolher('Aceitar')"><mat-icon>thumb_up</mat-icon> Aceitar</button>
+                <button mat-stroked-button type="button" [disabled]="p.daPropriaConta" (click)="escolher('Duvidas')"><mat-icon>help</mat-icon> Tenho dúvidas</button>
+                <button mat-button type="button" [disabled]="p.daPropriaConta" (click)="escolher('Recusar')">Não vou seguir</button>
               </div>
             }
           </mat-card-content></mat-card>

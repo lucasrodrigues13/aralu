@@ -454,6 +454,13 @@ public sealed class OportunidadeServico(IDados dados)
         return Resultado<OportunidadeLeitura>.Sucesso(Ler(item));
     }
 
+    public Task<IReadOnlyDictionary<string, string>> NomesResponsaveisAsync(string contaId, CancellationToken ct) =>
+        dados.NomesResponsaveisAsync(contaId, ct);
+
+    /// <summary>Nome do responsável; valores que não são id (texto digitado antes) saem como estão.</summary>
+    public static string NomeResponsavel(IReadOnlyDictionary<string, string> nomes, string? valor) =>
+        valor is not null && nomes.TryGetValue(valor, out var nome) ? nome : valor ?? "";
+
     public async Task<ChecagemDataLeitura> ChecarDataAsync(string contaId, DateOnly data, CancellationToken ct) =>
         new(await dados.TemCompromissoNaDataAsync(contaId, data, ct));
 

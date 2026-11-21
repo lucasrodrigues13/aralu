@@ -1228,6 +1228,19 @@ public sealed class DadosEf(AppDbContext banco) : IDados
             .ToArray();
     }
 
+    public async Task<IReadOnlyDictionary<string, string>> NomesResponsaveisAsync(string contaId, CancellationToken ct)
+    {
+        var nomes = await banco.Assistentes.AsNoTracking()
+            .Where(item => item.ContaId == contaId)
+            .ToDictionaryAsync(item => item.Id.ToString(), item => item.Nome, ct);
+        var dona = await banco.Perfis.AsNoTracking()
+            .Where(item => item.ContaId == contaId)
+            .Select(item => item.Responsavel ?? item.NomeEmpresa)
+            .FirstOrDefaultAsync(ct);
+        nomes[contaId] = string.IsNullOrWhiteSpace(dona) ? "Dona da conta" : dona;
+        return nomes;
+    }
+
     public void AdicionarContatoOportunidade(ContatoOportunidade contato) => banco.Set<ContatoOportunidade>().Add(contato);
 
     public void AdicionarEstagioFunil(EstagioFunil estagio) => banco.EstagiosFunil.Add(estagio);

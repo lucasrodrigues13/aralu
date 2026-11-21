@@ -1294,10 +1294,11 @@ public static class NegocioEndpoints
                 conta,
                 new FiltroOportunidades(nome, responsavel, tipoEvento, dataDe, dataAte, ordenacao),
                 ct);
+            var nomes = await servico.NomesResponsaveisAsync(conta, ct);
             var csv = "Nome;Estagio;Valor;Responsavel;Fonte;Servico\n" + string.Join(
                 "\n",
                 lista.Select(item =>
-                    $"{EscaparCsv(item.Nome)};{EscaparCsv(item.Estagio)};{item.ValorProposta};{EscaparCsv(item.Responsavel)};{EscaparCsv(OrigensFunil.Texto(item.Fonte, item.FonteOutro))};{EscaparCsv(item.ServicoProduto)}"));
+                    $"{EscaparCsv(item.Nome)};{EscaparCsv(item.Estagio)};{item.ValorProposta};{EscaparCsv(OportunidadeServico.NomeResponsavel(nomes, item.Responsavel))};{EscaparCsv(OrigensFunil.Texto(item.Fonte, item.FonteOutro))};{EscaparCsv(item.ServicoProduto)}"));
             return Results.Text(csv, "text/csv");
         });
 
@@ -1369,17 +1370,27 @@ public static class NegocioEndpoints
     private static Task<IResult> EnviarOrcamentoFunil(Guid id, ClaimsPrincipal usuario, OrcamentoFunilServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.EnviarAsync(conta, id, ct)));
 
-    /// <summary>Sem login. Se a própria dona estiver logada, a abertura não conta (SPEC-031 §8).</summary>
-    private static Task<IResult> PropostaPublica(string token, ClaimsPrincipal usuario, OrcamentoFunilServico servico, CancellationToken ct) =>
-        De(servico.PublicaAsync(token, Conta(usuario), ct));
+    /// <summary>
+    /// Sem login. Se a própria dona estiver logada, a abertura não conta (SPEC-031 §8). A página manda também a
+    /// marca "X-Aralu-Visitante" (conta logada neste navegador), porque o login não passa para outra aba.
+    /// A marca só tira poder (não conta abertura, bloqueia resposta), então não precisa de prova.
+    /// </summary>
+    private static Task<IResult> PropostaPublica(
+        string token,
+        ClaimsPrincipal usuario,
+        [FromHeader(Name = "X-Aralu-Visitante")] string? visitante,
+        OrcamentoFunilServico servico,
+        CancellationToken ct) =>
+        De(servico.PublicaAsync(token, Conta(usuario) ?? visitante, ct));
 
     private static Task<IResult> ResponderPropostaPublica(
         string token,
         ResponderProposta pedido,
         ClaimsPrincipal usuario,
+        [FromHeader(Name = "X-Aralu-Visitante")] string? visitante,
         OrcamentoFunilServico servico,
         CancellationToken ct) =>
-        De(servico.ResponderPublicaAsync(token, Conta(usuario), pedido, DateOnly.FromDateTime(DateTime.UtcNow), ct));
+        De(servico.ResponderPublicaAsync(token, Conta(usuario) ?? visitante, pedido, DateOnly.FromDateTime(DateTime.UtcNow), ct));
 
     private static Task<IResult> ResponderOrcamentoFunil(Guid id, ClaimsPrincipal usuario, OrcamentoFunilServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.ResponderAsync(conta, id, ct)));

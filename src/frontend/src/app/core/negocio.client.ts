@@ -1,6 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { API_BASE_URL } from './api-base-url';
+import { contaDoVisitante } from './auth.service';
 
 export interface Painel {
   emAndamento: number;
@@ -1192,14 +1193,17 @@ export class NegocioClient {
 
   /** Página pública da proposta, sem login. */
   propostaPublica(token: string) {
-    return this.http.get<PropostaPublica>(`${this.base}/api/v1/publico/propostas/${encodeURIComponent(token)}`);
+    return this.http.get<PropostaPublica>(`${this.base}/api/v1/publico/propostas/${encodeURIComponent(token)}`, {
+      headers: cabecalhoVisitante(),
+    });
   }
 
   responderProposta(token: string, tipo: RespostaProposta, mensagem: string | null) {
-    return this.http.post<PropostaPublica>(`${this.base}/api/v1/publico/propostas/${encodeURIComponent(token)}/resposta`, {
-      tipo,
-      mensagem,
-    });
+    return this.http.post<PropostaPublica>(
+      `${this.base}/api/v1/publico/propostas/${encodeURIComponent(token)}/resposta`,
+      { tipo, mensagem },
+      { headers: cabecalhoVisitante() },
+    );
   }
 
   responderOrcamentoFunil(id: string) {
@@ -1410,6 +1414,12 @@ export interface PropostaResumo {
 
 export type RespostaProposta = 'Aceitar' | 'Duvidas' | 'Recusar';
 
+/** Diz à API que quem abre a página pública é a conta logada neste navegador (ver contaDoVisitante). */
+function cabecalhoVisitante(): Record<string, string> {
+  const conta = contaDoVisitante();
+  return conta ? { 'X-Aralu-Visitante': conta } : {};
+}
+
 export interface PropostaPublica {
   estado: 'Disponivel' | 'Vencida' | 'Cancelada';
   empresa: string | null;
@@ -1421,6 +1431,8 @@ export interface PropostaPublica {
   resposta: RespostaProposta | null;
   respostaMensagem: string | null;
   respostaEm: string | null;
+  /** A assessoria abriu o próprio link (logada): não conta como abertura e não pode responder. */
+  daPropriaConta?: boolean;
 }
 
 export interface LeadRsvp {

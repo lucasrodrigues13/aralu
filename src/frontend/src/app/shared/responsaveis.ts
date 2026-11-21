@@ -37,6 +37,28 @@ export function opcoesResponsavel(
   ];
 }
 
+/**
+ * Equipe da conta para o responsável da oportunidade: a dona (id da conta) e as assistentes (id delas).
+ * `incluir` mantém valores já gravados que não estão mais na lista (assistente removida ou texto antigo).
+ */
+export function opcoesEquipe(
+  contaId: string | null,
+  assistentes: NomeAssistente[],
+  rotuloDona: string,
+  incluir: string[] = [],
+): OpcaoResponsavel[] {
+  const base: OpcaoResponsavel[] = [
+    ...(contaId ? [{ valor: contaId, rotulo: rotuloDona }] : []),
+    ...assistentes
+      .filter((item) => !item.removida || incluir.includes(item.id))
+      .map((item) => ({ valor: item.id, rotulo: item.removida ? `${item.nome} (removida)` : item.nome })),
+  ];
+  const extras = incluir
+    .filter((valor) => valor && !base.some((opcao) => opcao.valor === valor))
+    .map((valor) => ({ valor, rotulo: valor }));
+  return [...base, ...extras];
+}
+
 export function rotuloResponsavel(item: ResponsavelItem, opcoes: OpcaoResponsavel[]): string {
   const chave = chaveResponsavel(item);
   return opcoes.find((opcao) => opcao.valor === chave)?.rotulo ?? (item.papel === 'Assistente' ? 'Assistente' : item.papel);

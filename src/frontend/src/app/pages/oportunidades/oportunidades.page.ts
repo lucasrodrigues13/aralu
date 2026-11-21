@@ -13,6 +13,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { AssistentesClient } from '../../core/assistentes.client';
 import { AuthService } from '../../core/auth.service';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import {
@@ -38,6 +39,7 @@ import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { GdDinheiroPipe } from '../../shared/gd-dinheiro.pipe';
 import { grupoLocal, localPedido, LocalCamposComponent } from '../../shared/local-campos';
 import { SELO_PROPOSTA } from '../../shared/proposta';
+import { OpcaoResponsavel, opcoesEquipe } from '../../shared/responsaveis';
 import { STATUS } from '../../shared/status';
 import { ClienteFormDialog } from '../clientes/cliente-form.dialog';
 import { EstagiosFunilDialog } from './estagios-funil.dialog';
@@ -87,7 +89,11 @@ import { EstagiosFunilDialog } from './estagios-funil.dialog';
         </div>
         <div class="campo">
           <mat-label class="font-semibold mb-2 block">Responsável</mat-label>
-          <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Responsável'" matInput formControlName="responsavel" /></mat-form-field>
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-select [attr.aria-label]="'Responsável'" formControlName="responsavel">
+              @for (o of equipe(); track o.valor) { <mat-option [value]="o.valor">{{ o.rotulo }}</mat-option> }
+            </mat-select>
+          </mat-form-field>
         </div>
         <div class="campo">
           <mat-label class="font-semibold mb-2 block">Serviço/produto</mat-label>
@@ -191,6 +197,8 @@ import { EstagiosFunilDialog } from './estagios-funil.dialog';
 export class OportunidadeDialog implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly negocio = inject(NegocioClient);
+  private readonly assistentes = inject(AssistentesClient);
+  private readonly auth = inject(AuthService);
   private readonly toast = inject(ToastService);
   protected readonly dados = inject<Oportunidade | null>(MAT_DIALOG_DATA);
   protected readonly ref = inject(MatDialogRef<OportunidadeDialog, boolean>);
@@ -200,6 +208,10 @@ export class OportunidadeDialog implements OnInit {
   protected readonly origens = ORIGENS_FUNIL;
   protected readonly repetidos = signal<ContatoRepetido[]>([]);
   protected readonly dataOcupada = signal(false);
+  private readonly rotuloDona = this.auth.ehAssistente() ? 'Dona da conta' : 'Eu';
+  protected readonly equipe = signal<OpcaoResponsavel[]>(
+    opcoesEquipe(this.auth.contaId(), [], this.rotuloDona, this.dados?.responsavel ? [this.dados.responsavel] : []),
+  );
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   protected readonly form = this.fb.nonNullable.group({
@@ -210,7 +222,7 @@ export class OportunidadeDialog implements OnInit {
     retornarEm: this.fb.control<Date | null>(deIsoParaData(this.dados?.retornarEm)),
     retornarHora: [(this.dados?.retornarHora ?? '').slice(0, 5)],
     valorProposta: this.fb.control<number | null>(this.dados?.valorProposta ?? null),
-    responsavel: [this.dados?.responsavel ?? ''],
+    responsavel: [this.dados?.responsavel ?? this.auth.contaId() ?? ''],
     modeloServicoFunilId: [this.dados?.modeloServicoFunilId ?? null as string | null],
     servicoProduto: [this.dados?.servicoProduto ?? ''],
     motivoDescarte: [this.dados?.motivoDescarte ?? ''],
@@ -260,6 +272,11 @@ export class OportunidadeDialog implements OnInit {
     this.negocio.modelosServicoFunil().subscribe({
       next: (lista) => this.servicos.set(lista),
       error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+    });
+    this.assistentes.nomes().subscribe({
+      next: (nomes) =>
+        this.equipe.set(opcoesEquipe(this.auth.contaId(), nomes, this.rotuloDona, this.dados?.responsavel ? [this.dados.responsavel] : [])),
+      error: () => undefined,
     });
     this.vigiarContatoRepetido();
     this.vigiarDataOcupada();
@@ -641,7 +658,10 @@ export function textoDias(dias: number): string {
           <div class="campo w-full sm:w-48">
             <mat-label class="font-semibold mb-2 block">Responsável</mat-label>
             <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
-              <input matInput aria-label="Responsável" formControlName="responsavel" />
+              <mat-select aria-label="Responsável" formControlName="responsavel">
+                <mat-option [value]="''">Todos</mat-option>
+                @for (o of equipe(); track o.valor) { <mat-option [value]="o.valor">{{ o.rotulo }}</mat-option> }
+              </mat-select>
             </mat-form-field>
           </div>
           <div class="flex gap-2">
@@ -868,6 +888,10 @@ export class OportunidadesPage implements OnInit {
   protected readonly toque = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
   protected readonly estagios = signal<EstagioFunil[]>([]);
   protected readonly lista = signal<Oportunidade[]>([]);
+  private readonly assistentes = inject(AssistentesClient);
+  protected readonly equipe = signal<OpcaoResponsavel[]>(
+    opcoesEquipe(this.auth.contaId(), [], this.auth.ehAssistente() ? 'Dona da conta' : 'Eu'),
+  );
   protected readonly filtros = this.fb.nonNullable.group({
     nome: [''],
     responsavel: [''],
@@ -883,6 +907,10 @@ export class OportunidadesPage implements OnInit {
   });
 
   ngOnInit(): void {
+    this.assistentes.nomes().subscribe({
+      next: (nomes) => this.equipe.set(opcoesEquipe(this.auth.contaId(), nomes, this.auth.ehAssistente() ? 'Dona da conta' : 'Eu')),
+      error: () => undefined,
+    });
     this.carregarEstagios();
     this.carregar();
     // "?abrir=id" abre o lead (link do aviso de contato repetido e do card da Hoje).
@@ -1089,7 +1117,7 @@ export class OportunidadesPage implements OnInit {
   }
 
   protected copiarLinkLead(): void {
-    const contaId = this.contaDoToken();
+    const contaId = this.auth.contaId();
     if (!contaId) {
       this.toast.erro('Não foi possível montar o link.');
       return;
@@ -1150,20 +1178,5 @@ export class OportunidadesPage implements OnInit {
       dataDe: deDataParaIso(v.dataDe) ?? undefined,
       dataAte: deDataParaIso(v.dataAte) ?? undefined,
     };
-  }
-
-  private contaDoToken(): string | null {
-    const token = this.auth.token();
-    if (!token) return null;
-    try {
-      // JWT usa base64url (- e _); o atob só entende base64 comum.
-      const base64 = (token.split('.')[1] ?? '').replace(/-/g, '+').replace(/_/g, '/');
-      const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
-      const payload = JSON.parse(new TextDecoder().decode(bytes)) as { sub?: string; organizer_id?: string };
-      // Assistente e admin assumindo conta: a conta é a da dona (organizer_id), não a do usuário logado.
-      return payload.organizer_id ?? payload.sub ?? null;
-    } catch {
-      return null;
-    }
   }
 }

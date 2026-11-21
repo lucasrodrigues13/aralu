@@ -51,6 +51,7 @@ public sealed class RelatorioFunilServico(IDados dados)
         var porEntrada = await dados.ListarOportunidadesPorEntradaEstagioAsync(contaId, inicioUtc, fimUtc, ct);
         var porCriacao = await dados.ListarOportunidadesPorCriacaoAsync(contaId, inicioUtc, fimUtc, ct);
         var estagios = EstagiosFunil.Ordenar(await dados.ListarEstagiosFunilAsync(contaId, ct));
+        var nomes = await dados.NomesResponsaveisAsync(contaId, ct);
 
         var fechados = porEntrada.Where(o => o.EstagioFunil?.Tipo == TipoEstagioFunil.Contratado).ToArray();
         var perdidos = porEntrada.Where(o => o.EstagioFunil?.Tipo == TipoEstagioFunil.Descartado).ToArray();
@@ -72,7 +73,7 @@ public sealed class RelatorioFunilServico(IDados dados)
                 .Select(g => new RegiaoRelatorioFunil(g.Key.Uf, g.Key.Cidade, g.Count(), g.Sum(o => o.ValorProposta ?? 0)))
                 .OrderBy(g => g.Uf).ThenBy(g => g.Cidade)
                 .ToArray(),
-            Agrupar(porCriacao, o => o.Responsavel),
+            Agrupar(porCriacao, o => OportunidadeServico.NomeResponsavel(nomes, o.Responsavel)),
             Agrupar(
                 porCriacao.Where(o => o.DataPrevista is not null),
                 o => o.DataPrevista!.Value.ToString("yyyy-MM-dd")),

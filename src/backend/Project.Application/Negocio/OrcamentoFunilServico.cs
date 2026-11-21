@@ -51,7 +51,8 @@ public sealed record PropostaPublica(
     DateTimeOffset? ValidoAte,
     string? Resposta,
     string? RespostaMensagem,
-    DateTimeOffset? RespostaEm);
+    DateTimeOffset? RespostaEm,
+    bool DaPropriaConta = false);
 
 public sealed record ResponderProposta(string? Tipo, string? Mensagem);
 
@@ -315,7 +316,8 @@ public sealed class OrcamentoFunilServico(IDados dados)
             await dados.SalvarNegocioAsync(ct);
         }
 
-        return Resultado<PropostaPublica>.Sucesso(await LerPublicaAsync(item, agora, ct));
+        return Resultado<PropostaPublica>.Sucesso(
+            await LerPublicaAsync(item, agora, ct) with { DaPropriaConta = DaPropriaConta(item, contaDoVisitante) });
     }
 
     /// <summary>Resposta do lead (SPEC-031 §6.6, itens 5 e 7). Vale a última; todas ficam no histórico.</summary>

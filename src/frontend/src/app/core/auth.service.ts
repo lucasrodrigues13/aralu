@@ -2,6 +2,20 @@ import { Injectable, signal } from '@angular/core';
 
 const CHAVE = 'aralu.sessao';
 const CHAVE_CONTA = 'aralu.conta-admin';
+const CHAVE_VISITANTE = 'aralu.visitante';
+
+/**
+ * Conta logada neste navegador, em qualquer aba. O login fica em sessionStorage (não passa para outra aba),
+ * então a página pública da proposta usa esta marca para saber que quem abriu o link é a assessoria, não o lead.
+ * Janela anônima não enxerga a marca.
+ */
+export function contaDoVisitante(): string | null {
+  try {
+    return localStorage.getItem(CHAVE_VISITANTE);
+  } catch {
+    return null;
+  }
+}
 
 export interface Sessao {
   token: string;
@@ -60,10 +74,31 @@ export class AuthService {
     return this.sessao()?.token ?? null;
   }
 
+  /** Id da conta (da dona): organizer_id para assistente e admin; para a dona, o próprio usuário. */
+  contaId(): string | null {
+    const token = this.token();
+    if (!token) return null;
+    try {
+      // JWT usa base64url (- e _); o atob só entende base64 comum.
+      const base64 = (token.split('.')[1] ?? '').replace(/-/g, '+').replace(/_/g, '/');
+      const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+      const payload = JSON.parse(new TextDecoder().decode(bytes)) as { sub?: string; organizer_id?: string };
+      return payload.organizer_id ?? payload.sub ?? null;
+    } catch {
+      return null;
+    }
+  }
+
   guardar(sessao: Sessao): void {
     sessionStorage.setItem(CHAVE, JSON.stringify(sessao));
     this.sessao.set(sessao);
     this.permissoes.set(null);
+    try {
+      const conta = this.contaId();
+      if (conta) localStorage.setItem(CHAVE_VISITANTE, conta);
+    } catch {
+      // sem localStorage a marca só deixa de valer em outras abas
+    }
   }
 
   selecionarConta(conta: { id: string; email: string } | null): void {
@@ -88,6 +123,11 @@ export class AuthService {
   sair(): void {
     sessionStorage.removeItem(CHAVE);
     sessionStorage.removeItem(CHAVE_CONTA);
+    try {
+      localStorage.removeItem(CHAVE_VISITANTE);
+    } catch {
+      // ver guardar()
+    }
     this.contaSelecionada.set(null);
     this.sessao.set(null);
     this.permissoes.set(null);

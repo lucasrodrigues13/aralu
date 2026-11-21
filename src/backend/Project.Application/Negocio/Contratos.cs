@@ -319,6 +319,12 @@ public interface IDados
     Task<IReadOnlyList<ContatoNaConta>> ListarContatosDaContaAsync(string contaId, CancellationToken ct);
 
     /// <summary>
+    /// Nome de quem pode ser responsável, por id: a dona (id da conta) e todas as assistentes da conta,
+    /// inclusive removidas. Usado nos relatórios e no CSV, que guardam o id e mostram o nome.
+    /// </summary>
+    Task<IReadOnlyDictionary<string, string>> NomesResponsaveisAsync(string contaId, CancellationToken ct);
+
+    /// <summary>
     /// Marca o contato como novo. Sem isso o EF, ao ver um Id já preenchido numa coleção rastreada,
     /// tenta um UPDATE e falha com DbUpdateConcurrencyException.
     /// </summary>

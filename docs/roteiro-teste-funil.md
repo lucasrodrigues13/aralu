@@ -160,7 +160,7 @@ Para a aula: tarefa do funil é comercial (ligar, marcar reunião). Tarefa do ev
    - Abre um modal com o **link da proposta**, **Copiar link** e **Enviar pelo WhatsApp** (texto pronto).
    - O lead vai sozinho para **Orçamento enviado**, se estava num estágio aberto antes dele (a regra depende de o estágio com esse nome existir).
    - O cartão mostra "Proposta ainda não foi aberta".
-5. Faça (você, logada): abra o link da proposta. Confira: **não conta como aberta**, e responder é bloqueado com a orientação de usar janela anônima.
+5. Faça (você, logada): abra o link da proposta. Pode ser em outra aba do mesmo navegador (se você entrou depois desta versão; senão, saia e entre de novo). Confira: aparece o aviso "Você está vendo como assessoria", os botões de resposta ficam desabilitados, e a proposta **não conta como aberta**. Para testar a resposta, use janela anônima.
 
 ### 5.1 O cliente responde (janela anônima)
 Teste cada resposta, em ordem. Para repetir, o lead pode mudar a resposta enquanto o link vale.
