@@ -69,6 +69,31 @@ public class PropostaFluxoTests
     }
 
     [Fact]
+    public async Task Dona_em_outra_aba_marcada_pelo_cabecalho_nao_conta_e_nao_responde()
+    {
+        var dono = await Entrar();
+        var contaId = (await Ler(await dono.GetAsync("/api/v1/conta/area"))).GetProperty("usuarioId").GetString()!;
+        var (oportunidadeId, orcamentoId) = await CriarLeadComOrcamento(dono, "Casamento Fabi");
+        var token = await Enviar(dono, orcamentoId);
+
+        // Outra aba: sem o login, só com a marca do navegador.
+        var outraAba = _banco.Fabrica.CreateClient();
+        outraAba.DefaultRequestHeaders.Add("X-Aralu-Visitante", contaId);
+
+        var pagina = await Ler(await outraAba.GetAsync($"/api/v1/publico/propostas/{token}"));
+        Assert.True(pagina.GetProperty("daPropriaConta").GetBoolean());
+        Assert.Equal("NaoAberta", (await Lead(dono, oportunidadeId)).GetProperty("proposta").GetProperty("situacao").GetString());
+        Assert.Equal(
+            HttpStatusCode.Forbidden,
+            (await outraAba.PostAsJsonAsync($"/api/v1/publico/propostas/{token}/resposta", new { tipo = "Aceitar" })).StatusCode);
+
+        // Marca de outra conta não vale como a dona.
+        var outraConta = _banco.Fabrica.CreateClient();
+        outraConta.DefaultRequestHeaders.Add("X-Aralu-Visitante", Guid.NewGuid().ToString());
+        Assert.False((await Ler(await outraConta.GetAsync($"/api/v1/publico/propostas/{token}"))).GetProperty("daPropriaConta").GetBoolean());
+    }
+
+    [Fact]
     public async Task Tres_respostas_e_vale_a_ultima()
     {
         var dono = await Entrar();

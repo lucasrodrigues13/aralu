@@ -38,6 +38,20 @@ export class AuthService {
   readonly contaSelecionada = signal<{ id: string; email: string } | null>(this.lerConta());
   readonly permissoes = signal<Permissoes | null>(null);
 
+  constructor() {
+    // Sessão que já existia antes da marca (login feito antes desta versão) também ganha a marca.
+    this.marcarVisitante();
+  }
+
+  private marcarVisitante(): void {
+    try {
+      const conta = this.contaId();
+      if (conta) localStorage.setItem(CHAVE_VISITANTE, conta);
+    } catch {
+      // sem localStorage a marca só deixa de valer em outras abas
+    }
+  }
+
   autenticado(): boolean {
     return !!this.sessao()?.token;
   }
@@ -93,12 +107,7 @@ export class AuthService {
     sessionStorage.setItem(CHAVE, JSON.stringify(sessao));
     this.sessao.set(sessao);
     this.permissoes.set(null);
-    try {
-      const conta = this.contaId();
-      if (conta) localStorage.setItem(CHAVE_VISITANTE, conta);
-    } catch {
-      // sem localStorage a marca só deixa de valer em outras abas
-    }
+    this.marcarVisitante();
   }
 
   selecionarConta(conta: { id: string; email: string } | null): void {
