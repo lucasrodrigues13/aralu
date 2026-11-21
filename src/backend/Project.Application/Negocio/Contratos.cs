@@ -318,6 +318,12 @@ public interface IDados
     /// <summary>Telefones e e-mails dos leads e clientes da conta, para o aviso de contato repetido.</summary>
     Task<IReadOnlyList<ContatoNaConta>> ListarContatosDaContaAsync(string contaId, CancellationToken ct);
 
+    /// <summary>
+    /// Marca o contato como novo. Sem isso o EF, ao ver um Id já preenchido numa coleção rastreada,
+    /// tenta um UPDATE e falha com DbUpdateConcurrencyException.
+    /// </summary>
+    void AdicionarContatoOportunidade(ContatoOportunidade contato);
+
     void AdicionarEstagioFunil(EstagioFunil estagio);
 
     void RemoverEstagioFunil(EstagioFunil estagio);

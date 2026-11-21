@@ -234,6 +234,7 @@ public sealed class OportunidadeServico(IDados dados)
         item.Contatos.Clear();
         foreach (var contato in novo.Contatos)
         {
+            dados.AdicionarContatoOportunidade(contato);
             item.Contatos.Add(contato);
         }
 

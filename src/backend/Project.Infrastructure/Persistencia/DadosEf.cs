@@ -1228,6 +1228,8 @@ public sealed class DadosEf(AppDbContext banco) : IDados
             .ToArray();
     }
 
+    public void AdicionarContatoOportunidade(ContatoOportunidade contato) => banco.Set<ContatoOportunidade>().Add(contato);
+
     public void AdicionarEstagioFunil(EstagioFunil estagio) => banco.EstagiosFunil.Add(estagio);
 
     public void RemoverEstagioFunil(EstagioFunil estagio) => banco.EstagiosFunil.Remove(estagio);
