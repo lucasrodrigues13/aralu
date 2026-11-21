@@ -10,41 +10,9 @@ public sealed class DadosDinheiroEf(AppDbContext banco) : IDadosDinheiro
 {
     public Task<Evento?> ObterEventoAsync(string contaId, Guid eventoId, CancellationToken ct) =>
         banco.Eventos
-            .Include(evento => evento.Servicos).ThenInclude(servico => servico.Parcelas)
+            .Include(evento => evento.Servicos).ThenInclude(servico => servico.Contrato).ThenInclude(contrato => contrato!.Parcelas)
             .Include(evento => evento.Servicos).ThenInclude(servico => servico.Subitens)
             .FirstOrDefaultAsync(evento => evento.Id == eventoId && evento.ContaId == contaId, ct);
-
-    public async Task<IReadOnlyList<ParcelaCasal>> ParcelasAsync(Guid eventoId, CancellationToken ct) =>
-        await banco.Set<ParcelaCasal>()
-            .Include(parcela => parcela.Recebimentos)
-            .Where(parcela => parcela.EventoId == eventoId)
-            .OrderBy(parcela => parcela.Numero)
-            .ToListAsync(ct);
-
-    public async Task SubstituirParcelasAsync(Guid eventoId, IReadOnlyList<ParcelaCasal> parcelas, CancellationToken ct)
-    {
-        await banco.Set<ParcelaCasal>().Where(parcela => parcela.EventoId == eventoId).ExecuteDeleteAsync(ct);
-        banco.Set<ParcelaCasal>().AddRange(parcelas);
-    }
-
-    public Task<ParcelaCasal?> ObterParcelaAsync(string contaId, Guid eventoId, Guid parcelaId, CancellationToken ct) =>
-        banco.Set<ParcelaCasal>()
-            .Include(parcela => parcela.Recebimentos)
-            .Where(parcela => parcela.Id == parcelaId && parcela.EventoId == eventoId)
-            .Where(parcela => banco.Eventos.Any(evento => evento.Id == parcela.EventoId && evento.ContaId == contaId))
-            .FirstOrDefaultAsync(ct);
-
-    public Task InserirRecebimentoAsync(RecebimentoParcela recebimento, CancellationToken ct)
-    {
-        banco.Set<RecebimentoParcela>().Add(recebimento);
-        return Task.CompletedTask;
-    }
-
-    public Task RemoverRecebimentoAsync(RecebimentoParcela recebimento, CancellationToken ct)
-    {
-        banco.Set<RecebimentoParcela>().Remove(recebimento);
-        return Task.CompletedTask;
-    }
 
     public async Task<IReadOnlyList<LancamentoEvento>> LancamentosAsync(Guid eventoId, CancellationToken ct) =>
         await banco.Set<LancamentoEvento>().Where(item => item.EventoId == eventoId).ToListAsync(ct);
@@ -76,7 +44,7 @@ public sealed class DadosDinheiroEf(AppDbContext banco) : IDadosDinheiro
         }
 
         var lista = await eventos
-            .Include(evento => evento.Servicos).ThenInclude(servico => servico.Parcelas)
+            .Include(evento => evento.Servicos).ThenInclude(servico => servico.Contrato).ThenInclude(contrato => contrato!.Parcelas)
             .Include(evento => evento.Servicos).ThenInclude(servico => servico.Fornecedores)
             .AsSplitQuery()
             .ToListAsync(ct);
@@ -92,7 +60,7 @@ public sealed class DadosDinheiroEf(AppDbContext banco) : IDadosDinheiro
             .ToDictionaryAsync(fornecedor => fornecedor.Id, fornecedor => fornecedor.Nome, ct);
 
         return lista
-            .SelectMany(evento => evento.Servicos.SelectMany(servico => servico.Parcelas.Select(parcela =>
+            .SelectMany(evento => evento.Servicos.SelectMany(servico => (servico.Contrato?.Parcelas ?? []).Select(parcela =>
             {
                 var contratado = servico.Fornecedores.FirstOrDefault(vinculo => vinculo.Etapa == EtapaNegociacao.Contratado);
                 string? fornecedor = null;
@@ -117,9 +85,6 @@ public sealed class DadosDinheiroEf(AppDbContext banco) : IDadosDinheiro
             .ThenBy(item => item.Evento)
             .ToArray();
     }
-
-    public Task<string?> ChavePixAsync(string contaId, CancellationToken ct) =>
-        banco.Perfis.Where(perfil => perfil.ContaId == contaId).Select(perfil => perfil.ChavePix).FirstOrDefaultAsync(ct);
 
     public async Task<IReadOnlyList<ComprovanteEvento>> ComprovantesAsync(Guid eventoId, CancellationToken ct) =>
         await banco.Set<ComprovanteEvento>().Where(item => item.EventoId == eventoId).ToListAsync(ct);

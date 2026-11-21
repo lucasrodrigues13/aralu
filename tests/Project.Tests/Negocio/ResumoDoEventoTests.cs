@@ -1,6 +1,7 @@
 using Project.Application.Comum;
 using Project.Application.Negocio;
 using Project.Domain.Convidados;
+using Project.Domain.Dinheiro;
 using Project.Domain.Eventos;
 using Project.Domain.Fornecedores;
 using Project.Domain.Tarefas;
@@ -15,7 +16,7 @@ public class ResumoDoEventoTests
     [Fact]
     public void Evento_vazio_sem_data_so_alerta_a_falta_de_data()
     {
-        var resumo = ResumoDoEvento.Calcular(Conta, Evento(null), [], [], null, Hoje);
+        var resumo = ResumoDoEvento.Calcular(Evento(null), [], [], null, Hoje);
 
         Assert.Equal(0, resumo.Tarefas);
         Assert.Equal(0, resumo.Servicos);
@@ -32,7 +33,7 @@ public class ResumoDoEventoTests
         evento.Servicos.Add(Servico(contratado: false, parcelas: [Parcela(Hoje.AddDays(-1)), Parcela(Hoje.AddDays(3))]));
         Tarefa[] tarefas = [Tarefa(Hoje.AddDays(-2), SituacaoTarefa.Pendente), Tarefa(Hoje.AddDays(-2), SituacaoTarefa.Concluida)];
 
-        var resumo = ResumoDoEvento.Calcular(Conta, evento, tarefas, [SituacaoConvidado.Pendente], null, Hoje);
+        var resumo = ResumoDoEvento.Calcular(evento, tarefas, [SituacaoConvidado.Pendente], null, Hoje);
 
         Assert.Equal(["tarefas-atrasadas", "pagamentos-vencidos", "pagamentos-semana"], resumo.Alertas.Select(alerta => alerta.Codigo));
         Assert.Equal("1 tarefa atrasada", resumo.Alertas[0].Texto);
@@ -45,33 +46,16 @@ public class ResumoDoEventoTests
     {
         var longe = Evento(Hoje.AddDays(90));
         longe.Servicos.Add(Servico(contratado: false));
-        Assert.Empty(ResumoDoEvento.Calcular(Conta, longe, [], [SituacaoConvidado.Pendente], null, Hoje).Alertas);
+        Assert.Empty(ResumoDoEvento.Calcular(longe, [], [SituacaoConvidado.Pendente], null, Hoje).Alertas);
 
         var perto = Evento(Hoje.AddDays(45));
         perto.Servicos.Add(Servico(contratado: false));
-        var alertas = ResumoDoEvento.Calcular(Conta, perto, [], [SituacaoConvidado.Pendente], null, Hoje).Alertas;
+        var alertas = ResumoDoEvento.Calcular(perto, [], [SituacaoConvidado.Pendente], null, Hoje).Alertas;
         Assert.Equal(["servicos-sem-fornecedor"], alertas.Select(alerta => alerta.Codigo));
 
         var muitoPerto = Evento(Hoje.AddDays(20));
-        var convidados = ResumoDoEvento.Calcular(Conta, muitoPerto, [], [SituacaoConvidado.Pendente, SituacaoConvidado.Pendente], null, Hoje).Alertas;
+        var convidados = ResumoDoEvento.Calcular(muitoPerto, [], [SituacaoConvidado.Pendente, SituacaoConvidado.Pendente], null, Hoje).Alertas;
         Assert.Equal("2 convidados sem resposta", Assert.Single(convidados).Texto);
-    }
-
-    [Fact]
-    public void Servico_da_propria_assessoria_fica_fora_dos_fornecedores()
-    {
-        var evento = Evento(Hoje.AddDays(10));
-        var assessoria = Servico(contratado: true, valor: 15000m, parcelas: [Parcela(Hoje.AddDays(-5))]);
-        assessoria.FornecedorContaId = Conta;
-        evento.Servicos.Add(assessoria);
-        evento.Servicos.Add(Servico(contratado: true, valor: 4000m, parcelas: [Parcela(Hoje.AddDays(-30), SituacaoParcela.Pago, 1000m)]));
-
-        var resumo = ResumoDoEvento.Calcular(Conta, evento, [], [], null, Hoje);
-
-        Assert.Equal(1, resumo.Servicos);
-        Assert.Equal(4000m, resumo.ValorContratado);
-        Assert.Equal(1000m, resumo.ValorPago);
-        Assert.Empty(resumo.Alertas);
     }
 
     [Fact]
@@ -79,7 +63,7 @@ public class ResumoDoEventoTests
     {
         var evento = Evento(null);
         evento.Situacao = SituacaoEvento.Concluido;
-        Assert.Empty(ResumoDoEvento.Calcular(Conta, evento, [Tarefa(Hoje.AddDays(-1), SituacaoTarefa.Pendente)], [], null, Hoje).Alertas);
+        Assert.Empty(ResumoDoEvento.Calcular(evento, [Tarefa(Hoje.AddDays(-1), SituacaoTarefa.Pendente)], [], null, Hoje).Alertas);
     }
 
     [Theory]
@@ -116,16 +100,16 @@ public class ResumoDoEventoTests
         Data = data,
     };
 
-    private static ServicoEvento Servico(bool contratado, decimal? valor = null, ParcelaServico[]? parcelas = null) => new()
+    private static ServicoEvento Servico(bool contratado, decimal? valor = null, ParcelaContratoFornecedor[]? parcelas = null) => new()
     {
         Id = Guid.NewGuid(),
         Nome = "Buffet",
         Contratado = contratado,
         ValorContratado = valor,
-        Parcelas = (parcelas ?? []).ToList(),
+        Contrato = parcelas is null ? null : new ContratoFornecedor { Id = Guid.NewGuid(), Parcelas = parcelas.ToList() },
     };
 
-    private static ParcelaServico Parcela(DateOnly vencimento, SituacaoParcela situacao = SituacaoParcela.Pendente, decimal valor = 500m) => new()
+    private static ParcelaContratoFornecedor Parcela(DateOnly vencimento, SituacaoParcela situacao = SituacaoParcela.Pendente, decimal valor = 500m) => new()
     {
         Id = Guid.NewGuid(),
         Vencimento = vencimento,

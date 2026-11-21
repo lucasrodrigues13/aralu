@@ -16,6 +16,7 @@ import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
+import { ParcelasContratoDialog } from './parcelas-contrato.dialog';
 
 @Component({
   selector: 'app-contrato-funil-dialog',
@@ -162,6 +163,9 @@ export class ContratoFunilDialog implements OnInit {
               } @else if (item.situacao === 'Assinado') {
                 <button mat-icon-button type="button" (click)="cancelar(item)"><mat-icon>cancel</mat-icon></button>
               }
+              @if (item.situacao !== 'Cancelado' && auth.podeVerFinanceiro()) {
+                <button mat-icon-button type="button" aria-label="Parcelas do contrato" title="Parcelas do contrato" (click)="parcelas(item)"><mat-icon>payments</mat-icon></button>
+              }
             </td>
           </ng-container>
           <tr mat-header-row *matHeaderRowDef="colunas"></tr>
@@ -198,6 +202,10 @@ export class ContratosFunilPage implements OnInit {
 
   protected abrir(item?: ContratoFunil): void {
     this.dialog.open(ContratoFunilDialog, { ...DIALOG, data: item ?? null }).afterClosed().subscribe((ok) => ok && this.carregar());
+  }
+
+  protected parcelas(item: ContratoFunil): void {
+    this.dialog.open(ParcelasContratoDialog, { ...DIALOG, width: 'min(840px, calc(100vw - 32px))', data: item }).afterClosed().subscribe(() => this.carregar());
   }
 
   protected enviar(item: ContratoFunil): void {

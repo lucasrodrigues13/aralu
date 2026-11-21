@@ -3030,3 +3030,152 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121215559_ParcelasPorDocumento') THEN
+    DELETE FROM "RecebimentosParcela";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121215559_ParcelasPorDocumento') THEN
+    DELETE FROM "ServicoEvento" s USING "Eventos" e WHERE e."Id" = s."EventoId" AND s."Nome" = 'Assessoria e Organização' AND s."FornecedorContaId" = e."ContaId";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121215559_ParcelasPorDocumento') THEN
+    ALTER TABLE "RecebimentosParcela" DROP CONSTRAINT "FK_RecebimentosParcela_ParcelasCasal_ParcelaId";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121215559_ParcelasPorDocumento') THEN
+    DROP TABLE "ParcelasCasal";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121215559_ParcelasPorDocumento') THEN
+    DROP TABLE "ParcelaServico";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121215559_ParcelasPorDocumento') THEN
+    ALTER TABLE "Eventos" DROP COLUMN "ValorContrato";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121215559_ParcelasPorDocumento') THEN
+    CREATE TABLE "ContratosFornecedor" (
+        "Id" uuid NOT NULL,
+        "ServicoId" uuid NOT NULL,
+        CONSTRAINT "PK_ContratosFornecedor" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_ContratosFornecedor_ServicoEvento_ServicoId" FOREIGN KEY ("ServicoId") REFERENCES "ServicoEvento" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121215559_ParcelasPorDocumento') THEN
+    CREATE TABLE "ParcelasContrato" (
+        "Id" uuid NOT NULL,
+        "ContratoFunilId" uuid NOT NULL,
+        "Numero" integer NOT NULL,
+        "Vencimento" date NOT NULL,
+        "Valor" numeric(12,2) NOT NULL,
+        "Entrada" boolean NOT NULL,
+        CONSTRAINT "PK_ParcelasContrato" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_ParcelasContrato_ContratosFunil_ContratoFunilId" FOREIGN KEY ("ContratoFunilId") REFERENCES "ContratosFunil" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121215559_ParcelasPorDocumento') THEN
+    CREATE TABLE "ParcelasOrcamento" (
+        "Id" uuid NOT NULL,
+        "OrcamentoFunilId" uuid NOT NULL,
+        "Numero" integer NOT NULL,
+        "Vencimento" date NOT NULL,
+        "Valor" numeric(12,2) NOT NULL,
+        "Entrada" boolean NOT NULL,
+        CONSTRAINT "PK_ParcelasOrcamento" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_ParcelasOrcamento_OrcamentosFunil_OrcamentoFunilId" FOREIGN KEY ("OrcamentoFunilId") REFERENCES "OrcamentosFunil" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121215559_ParcelasPorDocumento') THEN
+    CREATE TABLE "ParcelasContratoFornecedor" (
+        "Id" uuid NOT NULL,
+        "ContratoFornecedorId" uuid NOT NULL,
+        "Numero" integer NOT NULL,
+        "Vencimento" date NOT NULL,
+        "Valor" numeric(12,2) NOT NULL,
+        "Entrada" boolean NOT NULL,
+        "Situacao" text NOT NULL,
+        CONSTRAINT "PK_ParcelasContratoFornecedor" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_ParcelasContratoFornecedor_ContratosFornecedor_ContratoForn~" FOREIGN KEY ("ContratoFornecedorId") REFERENCES "ContratosFornecedor" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121215559_ParcelasPorDocumento') THEN
+    CREATE UNIQUE INDEX "IX_ContratosFornecedor_ServicoId" ON "ContratosFornecedor" ("ServicoId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121215559_ParcelasPorDocumento') THEN
+    CREATE INDEX "IX_ParcelasContrato_ContratoFunilId" ON "ParcelasContrato" ("ContratoFunilId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121215559_ParcelasPorDocumento') THEN
+    CREATE INDEX "IX_ParcelasContratoFornecedor_ContratoFornecedorId" ON "ParcelasContratoFornecedor" ("ContratoFornecedorId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121215559_ParcelasPorDocumento') THEN
+    CREATE INDEX "IX_ParcelasOrcamento_OrcamentoFunilId" ON "ParcelasOrcamento" ("OrcamentoFunilId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121215559_ParcelasPorDocumento') THEN
+    ALTER TABLE "RecebimentosParcela" ADD CONSTRAINT "FK_RecebimentosParcela_ParcelasContrato_ParcelaId" FOREIGN KEY ("ParcelaId") REFERENCES "ParcelasContrato" ("Id") ON DELETE CASCADE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121215559_ParcelasPorDocumento') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261121215559_ParcelasPorDocumento', '10.0.4');
+    END IF;
+END $EF$;
+COMMIT;
+

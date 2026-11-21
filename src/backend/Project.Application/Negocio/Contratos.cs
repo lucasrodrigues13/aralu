@@ -1,5 +1,6 @@
 using Project.Domain.Clientes;
 using Project.Domain.Convidados;
+using Project.Domain.Dinheiro;
 using Project.Domain.Eventos;
 using Project.Domain.Fornecedores;
 using Project.Domain.Funil;
@@ -88,8 +89,6 @@ public interface IDados
 
     Task SincronizarAgendaAsync(Evento evento, CancellationToken ct);
 
-    Task<bool> TemAssessoriaAsync(Guid eventoId, CancellationToken ct);
-
     Task AdicionarServicoAsync(ServicoEvento servico, CancellationToken ct);
 
     Task<ServicoEvento?> ObterServicoEventoAsync(string contaId, Guid eventoId, Guid servicoId, CancellationToken ct);
@@ -102,7 +101,7 @@ public interface IDados
 
     Task SubstituirSubitensAsync(Guid servicoId, IReadOnlyList<SubitemServico> subitens, decimal? valorEstimado, CancellationToken ct);
 
-    Task SubstituirParcelasAsync(Guid servicoId, IReadOnlyList<ParcelaServico> parcelas, CancellationToken ct);
+    Task SubstituirContratoFornecedorAsync(Guid servicoId, ContratoFornecedor contrato, CancellationToken ct);
 
     Task AtualizarEtapaNegociacaoAsync(Guid vinculoId, EtapaNegociacao etapa, decimal? valorOrcamento, CancellationToken ct);
 
@@ -408,6 +407,16 @@ public interface IDados
     Task InserirOrcamentoFunilAsync(OrcamentoFunil orcamento, CancellationToken ct);
 
     Task RemoverOrcamentoFunilAsync(OrcamentoFunil orcamento, CancellationToken ct);
+
+    /// <summary>Orçamento aceito pelo lead (resposta Aceitar), o mais recente, com as parcelas; base do contrato (SPEC-040).</summary>
+    Task<OrcamentoFunil?> OrcamentoAprovadoDaOportunidadeAsync(string contaId, Guid oportunidadeId, CancellationToken ct);
+
+    Task SubstituirParcelasOrcamentoAsync(Guid orcamentoId, IReadOnlyList<ParcelaOrcamento> parcelas, CancellationToken ct);
+
+    /// <summary>Só adiciona ao contexto; grava no próximo <c>SalvarNegocioAsync</c>.</summary>
+    void AdicionarRecebimentoParcela(RecebimentoParcela recebimento);
+
+    void RemoverRecebimentoParcela(RecebimentoParcela recebimento);
 
     /// <summary>Proposta por link, sem conta: busca pelo token (SPEC-031 §6.6).</summary>
     Task<OrcamentoFunil?> OrcamentoFunilPorTokenAsync(string token, CancellationToken ct);

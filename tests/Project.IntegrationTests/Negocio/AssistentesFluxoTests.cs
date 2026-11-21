@@ -337,13 +337,7 @@ public class AssistentesFluxoTests
         Assert.Equal(HttpStatusCode.OK, (await dona.PutAsJsonAsync($"/api/v1/eventos/{marcado}/assistentes", new { assistentes = new[] { restritaId } })).StatusCode);
         foreach (var id in new[] { marcado, outro })
         {
-            Assert.Equal(HttpStatusCode.OK, (await dona.PostAsJsonAsync($"/api/v1/eventos/{id}/assessoria", new
-            {
-                valorTotal = 4000,
-                quantidadeParcelas = 2,
-                primeiraParcela = "2026-12-10",
-                comEntrada = false,
-            })).StatusCode);
+            await ContratarFornecedorComParcelas(dona, id);
         }
 
         async Task<Guid[]> EventosDosPagamentos(HttpClient quem) =>
@@ -434,6 +428,33 @@ public class AssistentesFluxoTests
         Assert.Contains("Assistant", sessao!.Papeis);
         cliente.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", sessao.Token);
         return (cliente, convite.GetProperty("id").GetGuid(), email);
+    }
+
+    /// <summary>Cria serviço, fornecedor e contrata (valor 4000 em 2 parcelas): gera o contrato do fornecedor com parcelas.</summary>
+    private static async Task ContratarFornecedorComParcelas(HttpClient dona, Guid eventoId)
+    {
+        var servicoConta = await Ler(await dona.PostAsJsonAsync("/api/v1/servicos-conta", new { nome = $"Serviço {Guid.NewGuid():N}" }));
+        var fornecedor = await Ler(await dona.PostAsJsonAsync("/api/v1/fornecedores", new
+        {
+            nome = "Fornecedor Teste",
+            servicoContaIds = new[] { servicoConta.GetProperty("id").GetGuid() },
+            emails = new[] { new { endereco = "forn@exemplo.com" } },
+            telefones = new[] { new { numero = "11999990000", movel = true } },
+        }));
+        var fornecedorId = fornecedor.GetProperty("id").GetGuid();
+        var comServico = await Ler(await dona.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/servicos", new { nome = "Banda" }));
+        var servicoId = comServico.GetProperty("servicos").EnumerateArray()
+            .Single(item => item.GetProperty("nome").GetString() == "Banda")
+            .GetProperty("id").GetGuid();
+        var comFornecedor = await Ler(await dona.PostAsJsonAsync(
+            $"/api/v1/eventos/{eventoId}/servicos/{servicoId}/fornecedores",
+            new { fornecedorId, etapa = "Orcamento" }));
+        var vinculoId = comFornecedor.GetProperty("servicos").EnumerateArray()
+            .Single(item => item.GetProperty("id").GetGuid() == servicoId)
+            .GetProperty("fornecedores").EnumerateArray().Single().GetProperty("id").GetGuid();
+        Assert.Equal(HttpStatusCode.OK, (await dona.PostAsJsonAsync(
+            $"/api/v1/eventos/{eventoId}/servicos/{servicoId}/fornecedores/{vinculoId}/contratar",
+            new { valor = 4000, quantidadeParcelas = 2, primeiraParcela = "2026-12-10", comEntrada = false })).StatusCode);
     }
 
     private static async Task<JsonElement> CriarEvento(HttpClient cliente, string nome)

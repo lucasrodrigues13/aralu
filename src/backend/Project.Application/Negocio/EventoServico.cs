@@ -47,15 +47,6 @@ public sealed record SalvarEvento(
 /// <summary>Cliente criado junto com o evento: só nome e WhatsApp (SPEC-008 v2).</summary>
 public sealed record ClienteRapido(string? Nome, string? WhatsApp);
 
-public sealed record AssessoriaPedido(
-    decimal? ValorTotal,
-    int? QuantidadeParcelas,
-    DateOnly? PrimeiraParcela,
-    bool ComEntrada,
-    BaseEntrada? BaseEntrada,
-    decimal? ValorEntrada,
-    DateOnly? DataEntrada);
-
 public sealed record ParcelaLeitura(int Numero, DateOnly Vencimento, decimal Valor, bool Entrada, SituacaoParcela Situacao);
 
 public sealed record SubitemLeitura(Guid Id, string Descricao, int Quantidade, decimal ValorUnitario, decimal Total);
@@ -403,66 +394,6 @@ public sealed class EventoServico(IDados dados, IConsultaCep cep)
         return Resultado<EventoDetalhe>.Sucesso(await DetalheAsync(contaId, evento, hoje, ct));
     }
 
-    public async Task<Resultado<EventoDetalhe>> DefinirAssessoriaAsync(
-        string contaId,
-        Guid id,
-        AssessoriaPedido pedido,
-        DateOnly hoje,
-        CancellationToken ct)
-    {
-        var evento = await dados.ObterEventoAsync(contaId, id, ct);
-        if (evento is null)
-        {
-            return Resultado<EventoDetalhe>.Erro(Codigos.Indisponivel, "Indisponível.");
-        }
-
-        if (await dados.TemAssessoriaAsync(evento.Id, ct))
-        {
-            return Resultado<EventoDetalhe>.Erro(Codigos.Validacao, "O valor da assessoria já foi informado.");
-        }
-
-        if (pedido.ValorTotal is not decimal total || total <= 0
-            || pedido.QuantidadeParcelas is not int quantidade || quantidade <= 0
-            || pedido.PrimeiraParcela is not DateOnly primeira)
-        {
-            return Resultado<EventoDetalhe>.Erro(Codigos.Validacao, "Informe o valor total, a quantidade de parcelas e a data da primeira parcela.");
-        }
-
-        var parcelas = ParcelasDaAssessoria.Calcular(
-            total,
-            quantidade,
-            primeira,
-            pedido.ComEntrada,
-            pedido.BaseEntrada,
-            pedido.ValorEntrada,
-            pedido.DataEntrada);
-        if (parcelas.Count == 0)
-        {
-            return Resultado<EventoDetalhe>.Erro(Codigos.Validacao, "A entrada informada não fecha com o valor total.");
-        }
-
-        var servico = new ServicoEvento
-        {
-            Id = Guid.NewGuid(),
-            EventoId = evento.Id,
-            Nome = ParcelasDaAssessoria.NomeServico,
-            FornecedorContaId = contaId,
-            Contratado = true,
-            ValorContratado = total,
-            Parcelas = parcelas.Select(parcela => new ParcelaServico
-            {
-                Id = Guid.NewGuid(),
-                Numero = parcela.Numero,
-                Vencimento = parcela.Vencimento,
-                Valor = parcela.Valor,
-                Entrada = parcela.Entrada,
-                Situacao = SituacaoParcela.Pendente,
-            }).ToList(),
-        };
-        await dados.AdicionarServicoAsync(servico, ct);
-        return await ObterAsync(contaId, id, hoje, ct);
-    }
-
     public async Task<Resultado<Guid?>> GuardarImagemAsync(string contaId, Guid id, Guid imagemId, CancellationToken ct)
     {
         var evento = await dados.ObterEventoAsync(contaId, id, ct);
@@ -541,7 +472,6 @@ public sealed class EventoServico(IDados dados, IConsultaCep cep)
         var convites = await dados.ListarConvitesAsync(contaId, evento.Id, ct);
         var clientesDoEvento = await dados.ClientesDoEventoAsync(contaId, evento.Id, ct);
         return Resultado<ResumoEvento>.Sucesso(ResumoDoEvento.Calcular(
-            contaId,
             evento,
             tarefas,
             convites.SelectMany(convite => convite.Convidados).Select(convidado => convidado.Situacao).ToArray(),

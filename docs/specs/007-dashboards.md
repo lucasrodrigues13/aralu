@@ -2,6 +2,8 @@
 
 **Status: aprovada (versão 2, 18/11/2026).** Substitui a SPEC-007 de dashboards. O código deve seguir esta spec. Fonte: [produto-v1.md](../produto-v1.md) 5.2, RF-080 a RF-082. Os itens 1 e 2 da seção 17 foram decididos em 18/11/2026. Implementada em 18/11/2026 (rota `/hoje`), sem o cartão "Retornos do funil" (§17, item 7).
 
+> **Card #41 (21/11/2026, [SPEC-040](040-parcelas-por-documento.md)).** O card "Cobranças a fazer" da tela Hoje lista parcelas de **contratos com clientes** (não cancelados), não mais parcelas do casal presas ao evento: a coluna Evento virou Contrato e o link vai para a tela Contratos. Pagamentos da semana e alertas do Resumo leem as parcelas do contrato do fornecedor.
+
 ## 1. Identificador e nome
 
 SPEC-007. Tela Hoje (substitui Dashboards).

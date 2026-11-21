@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { API_BASE_URL } from './api-base-url';
 
-export type SituacaoParcelaCasal = 'AReceber' | 'Parcial' | 'Recebida' | 'Atrasada';
+export type SituacaoParcelaContrato = 'AReceber' | 'Parcial' | 'Recebida' | 'Atrasada';
 export type TipoCobranca = 'Lembrete' | 'VenceHoje' | 'Atrasada';
 export type FormaPagamento = 'Pix' | 'Dinheiro' | 'Cartao' | 'Transferencia' | 'Boleto' | 'Outro';
 export type TipoLancamento = 'Despesa' | 'Entrada';
@@ -17,7 +17,7 @@ export const FORMAS_PAGAMENTO: { valor: FormaPagamento; rotulo: string }[] = [
   { valor: 'Outro', rotulo: 'Outro' },
 ];
 
-export const SITUACOES_PARCELA_CASAL: Record<SituacaoParcelaCasal, { rotulo: string; classe: string }> = {
+export const SITUACOES_PARCELA_CONTRATO: Record<SituacaoParcelaContrato, { rotulo: string; classe: string }> = {
   AReceber: { rotulo: 'A receber', classe: STATUS.neutro },
   Parcial: { rotulo: 'Parcial', classe: STATUS.info },
   Recebida: { rotulo: 'Recebida', classe: STATUS.sucesso },
@@ -31,7 +31,8 @@ export interface RecebimentoParcela {
   data: string;
 }
 
-export interface ParcelaCasal {
+/** Parcela do contrato com o cliente (SPEC-040): o que o cliente paga à organizadora. */
+export interface ParcelaContrato {
   id: string;
   numero: number;
   vencimento: string;
@@ -39,9 +40,17 @@ export interface ParcelaCasal {
   entrada: boolean;
   recebido: number;
   saldo: number;
-  situacao: SituacaoParcelaCasal;
+  situacao: SituacaoParcelaContrato;
   cobranca: TipoCobranca;
   recebimentos: RecebimentoParcela[];
+}
+
+/** Parcela do orçamento do funil (SPEC-040). */
+export interface ParcelaOrcamento {
+  numero: number;
+  vencimento: string;
+  valor: number;
+  entrada: boolean;
 }
 
 export interface LancamentoEvento {
@@ -93,29 +102,14 @@ export function validarComprovante(arquivo: { name: string; size: number }): str
 }
 
 export interface DinheiroEvento {
-  valorContrato: number | null;
-  recebido: number;
-  saldo: number;
   despesas: number;
   entradas: number;
-  chavePix: string | null;
-  parcelas: ParcelaCasal[];
   pagamentosFornecedores: PagamentoFornecedor[];
   lancamentos: LancamentoEvento[];
   comprovantes: ComprovanteEvento[];
 }
 
-export interface DefinirContratoCasal {
-  valor: number | null;
-  quantidadeParcelas: number;
-  primeiraParcela: string | null;
-  comEntrada: boolean;
-  baseEntrada: 'Valor' | 'Porcentagem' | null;
-  valorEntrada: number | null;
-  dataEntrada: string | null;
-}
-
-/** Dinheiro do evento e pagamentos da conta (SPEC-029). */
+/** Dinheiro do evento (SPEC-029 v2): pagamentos a fornecedores, despesas e comprovantes. */
 @Injectable({ providedIn: 'root' })
 export class DinheiroClient {
   private readonly http = inject(HttpClient);
@@ -123,18 +117,6 @@ export class DinheiroClient {
 
   obter(eventoId: string) {
     return this.http.get<DinheiroEvento>(`${this.base}/api/v1/eventos/${eventoId}/dinheiro`);
-  }
-
-  definirContrato(eventoId: string, pedido: DefinirContratoCasal) {
-    return this.http.put<DinheiroEvento>(`${this.base}/api/v1/eventos/${eventoId}/dinheiro/contrato`, pedido);
-  }
-
-  receber(eventoId: string, parcelaId: string, pedido: { valor: number; forma: FormaPagamento; data: string }) {
-    return this.http.post<DinheiroEvento>(`${this.base}/api/v1/eventos/${eventoId}/dinheiro/parcelas/${parcelaId}/recebimentos`, pedido);
-  }
-
-  desfazer(eventoId: string, parcelaId: string) {
-    return this.http.delete<DinheiroEvento>(`${this.base}/api/v1/eventos/${eventoId}/dinheiro/parcelas/${parcelaId}/recebimentos/ultimo`);
   }
 
   salvarLancamento(eventoId: string, id: string | null, pedido: Omit<LancamentoEvento, 'id'>) {

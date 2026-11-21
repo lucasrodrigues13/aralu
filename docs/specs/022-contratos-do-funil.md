@@ -2,6 +2,8 @@
 
 **Status: aprovada.** O código segue esta spec.
 
+> **Card #41 (21/11/2026, [SPEC-040](040-parcelas-por-documento.md)).** O contrato copia as parcelas do orçamento aprovado ao ser criado e as expõe (`parcelas`, `valorTotal`, `recebido`, `saldo`), com Cobrar, Recebi e Desfazer (`POST/DELETE /contratos-funil/{id}/parcelas/{parcelaId}/recebimentos`).
+
 ## 1. Identificador e nome
 
 SPEC-022. Contratos do funil.

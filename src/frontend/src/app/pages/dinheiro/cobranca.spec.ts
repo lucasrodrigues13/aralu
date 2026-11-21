@@ -1,7 +1,7 @@
-import { ParcelaCasal } from '../../core/dinheiro.client';
+import { ParcelaContrato } from '../../core/dinheiro.client';
 import { linkWhatsapp, textoCobranca } from './cobranca';
 
-function parcela(cobranca: ParcelaCasal['cobranca']): ParcelaCasal {
+function parcela(cobranca: ParcelaContrato['cobranca']): ParcelaContrato {
   return {
     id: '1', numero: 2, vencimento: '2026-12-10', valor: 1500, entrada: false, recebido: 0, saldo: 1500,
     situacao: 'AReceber', cobranca, recebimentos: [],

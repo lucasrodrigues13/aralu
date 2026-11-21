@@ -44,15 +44,13 @@ public static class Mapa
         var servicoEvento = modelBuilder.Entity<ServicoEvento>();
         servicoEvento.Property(servico => servico.ValorEstimado).HasPrecision(12, 2);
         servicoEvento.Property(servico => servico.ValorContratado).HasPrecision(12, 2);
-        servicoEvento.HasMany(servico => servico.Parcelas).WithOne().HasForeignKey(parcela => parcela.ServicoId).OnDelete(DeleteBehavior.Cascade);
+        servicoEvento.HasOne(servico => servico.Contrato).WithOne().HasForeignKey<Project.Domain.Dinheiro.ContratoFornecedor>(contrato => contrato.ServicoId).OnDelete(DeleteBehavior.Cascade);
         servicoEvento.HasMany(servico => servico.Subitens).WithOne().HasForeignKey(item => item.ServicoId).OnDelete(DeleteBehavior.Cascade);
         servicoEvento.HasMany(servico => servico.Fornecedores).WithOne().HasForeignKey(item => item.ServicoId).OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<SubitemServico>().Property(item => item.ValorUnitario).HasPrecision(12, 2);
         modelBuilder.Entity<FornecedorNoServico>().Property(item => item.Etapa).HasConversion<string>();
         modelBuilder.Entity<FornecedorNoServico>().Property(item => item.ValorOrcamento).HasPrecision(12, 2);
-        modelBuilder.Entity<ParcelaServico>().Property(parcela => parcela.Valor).HasPrecision(12, 2);
-        modelBuilder.Entity<ParcelaServico>().Property(parcela => parcela.Situacao).HasConversion<string>();
 
         var assistente = modelBuilder.Entity<Assistente>();
         assistente.ToTable("Assistentes");
@@ -210,16 +208,33 @@ public static class Mapa
 
     private static void MapearDinheiro(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Evento>().Property(item => item.ValorContrato).HasPrecision(12, 2);
+        var parcelaOrcamento = modelBuilder.Entity<Project.Domain.Dinheiro.ParcelaOrcamento>();
+        parcelaOrcamento.ToTable("ParcelasOrcamento");
+        parcelaOrcamento.Property(item => item.Valor).HasPrecision(12, 2);
+        parcelaOrcamento.HasIndex(item => item.OrcamentoFunilId);
+        modelBuilder.Entity<Project.Domain.Funil.OrcamentoFunil>()
+            .HasMany(item => item.Parcelas).WithOne().HasForeignKey(item => item.OrcamentoFunilId).OnDelete(DeleteBehavior.Cascade);
 
-        var parcela = modelBuilder.Entity<Project.Domain.Dinheiro.ParcelaCasal>();
-        parcela.ToTable("ParcelasCasal");
+        var parcela = modelBuilder.Entity<Project.Domain.Dinheiro.ParcelaContrato>();
+        parcela.ToTable("ParcelasContrato");
         parcela.Property(item => item.Valor).HasPrecision(12, 2);
         parcela.Ignore(item => item.Recebido);
         parcela.Ignore(item => item.Saldo);
-        parcela.HasIndex(item => item.EventoId);
-        parcela.HasOne<Evento>().WithMany().HasForeignKey(item => item.EventoId).OnDelete(DeleteBehavior.Cascade);
+        parcela.HasIndex(item => item.ContratoFunilId);
+        modelBuilder.Entity<Project.Domain.Funil.ContratoFunil>()
+            .HasMany(item => item.Parcelas).WithOne().HasForeignKey(item => item.ContratoFunilId).OnDelete(DeleteBehavior.Cascade);
         parcela.HasMany(item => item.Recebimentos).WithOne().HasForeignKey(item => item.ParcelaId).OnDelete(DeleteBehavior.Cascade);
+
+        var contratoFornecedor = modelBuilder.Entity<Project.Domain.Dinheiro.ContratoFornecedor>();
+        contratoFornecedor.ToTable("ContratosFornecedor");
+        contratoFornecedor.HasIndex(item => item.ServicoId).IsUnique();
+        contratoFornecedor.HasMany(item => item.Parcelas).WithOne().HasForeignKey(item => item.ContratoFornecedorId).OnDelete(DeleteBehavior.Cascade);
+
+        var parcelaFornecedor = modelBuilder.Entity<Project.Domain.Dinheiro.ParcelaContratoFornecedor>();
+        parcelaFornecedor.ToTable("ParcelasContratoFornecedor");
+        parcelaFornecedor.Property(item => item.Valor).HasPrecision(12, 2);
+        parcelaFornecedor.Property(item => item.Situacao).HasConversion<string>();
+        parcelaFornecedor.HasIndex(item => item.ContratoFornecedorId);
 
         var recebimento = modelBuilder.Entity<Project.Domain.Dinheiro.RecebimentoParcela>();
         recebimento.ToTable("RecebimentosParcela");

@@ -59,7 +59,7 @@ public static class EventoMapeamento
                     servico.OcultoParaClient,
                     servico.Ordem,
                     servico.ServicoContaId,
-                    servico.Parcelas
+                    (servico.Contrato?.Parcelas ?? [])
                         .OrderBy(parcela => parcela.Numero)
                         .Select(parcela => new ParcelaLeitura(
                             parcela.Numero,

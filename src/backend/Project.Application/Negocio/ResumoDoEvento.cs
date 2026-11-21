@@ -44,7 +44,6 @@ public static class ResumoDoEvento
     public const int MaximoAlertas = 3;
 
     public static ResumoEvento Calcular(
-        string contaId,
         Evento evento,
         IReadOnlyList<Tarefa> tarefas,
         IReadOnlyList<SituacaoConvidado> convidados,
@@ -53,12 +52,11 @@ public static class ResumoDoEvento
     {
         var atrasadas = tarefas.Count(tarefa => EstaAtrasada(tarefa, hoje));
 
-        // O serviço da própria assessoria é o que ela recebe, não o que paga: fica fora.
-        var servicos = evento.Servicos.Where(servico => servico.FornecedorContaId != contaId).ToArray();
+        var servicos = evento.Servicos.ToArray();
         var contratados = servicos.Count(servico => servico.Contratado);
         var semFornecedor = servicos.Length - contratados;
         var parcelasPendentes = servicos
-            .SelectMany(servico => servico.Parcelas)
+            .SelectMany(servico => servico.Contrato?.Parcelas ?? [])
             .Where(parcela => parcela.Situacao == SituacaoParcela.Pendente)
             .ToArray();
         var vencidas = parcelasPendentes.Count(parcela => parcela.Vencimento < hoje);
@@ -113,7 +111,7 @@ public static class ResumoDoEvento
             semFornecedor,
             evento.OrcamentoEstimado ?? SomaOuNulo(servicos.Select(servico => servico.ValorEstimado)),
             servicos.Where(servico => servico.Contratado).Sum(servico => servico.ValorContratado ?? 0m),
-            servicos.SelectMany(servico => servico.Parcelas).Where(parcela => parcela.Situacao == SituacaoParcela.Pago).Sum(parcela => parcela.Valor),
+            servicos.SelectMany(servico => servico.Contrato?.Parcelas ?? []).Where(parcela => parcela.Situacao == SituacaoParcela.Pago).Sum(parcela => parcela.Valor),
             cliente is null ? null : new ClienteDoResumo(cliente.Id, cliente.Nome, cliente.Ddi, cliente.Celular),
             alertas.Take(MaximoAlertas).ToArray());
     }

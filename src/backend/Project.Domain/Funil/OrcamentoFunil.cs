@@ -58,6 +58,9 @@ public sealed class OrcamentoFunil
 
     public DateTimeOffset? RespostaEm { get; set; }
 
+    /// <summary>Parcelas combinadas no orçamento (SPEC-040). Vazio = sem parcelamento.</summary>
+    public List<Project.Domain.Dinheiro.ParcelaOrcamento> Parcelas { get; set; } = [];
+
     public bool LinkValido(DateTimeOffset agora) =>
         TokenLink is not null && ValidoAte is DateTimeOffset ate && agora < ate;
 }

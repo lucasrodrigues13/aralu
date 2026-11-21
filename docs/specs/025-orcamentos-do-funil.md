@@ -2,6 +2,8 @@
 
 **Status: aprovada.** O código segue esta spec.
 
+> **Card #41 (21/11/2026, [SPEC-040](040-parcelas-por-documento.md)).** O orçamento ganha parcelas (`PUT /orcamentos-funil/{id}/parcelas`, a partir do valor dele; mudar o valor apaga as parcelas). A tela para defini-las e a exibição na proposta por link são do card #44.
+
 ## 1. Identificador e nome
 
 SPEC-025. Orçamentos do funil.

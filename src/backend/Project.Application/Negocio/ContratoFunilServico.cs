@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using Project.Application.Comum;
+using Project.Domain.Dinheiro;
 using Project.Domain.Funil;
 
 namespace Project.Application.Negocio;
@@ -14,7 +15,13 @@ public sealed record ContratoFunilLeitura(
     DateTimeOffset? EnviadoEm,
     DateTimeOffset? AssinadoEm,
     Guid? ModeloId,
-    string? CriadoPor = null);
+    string? CriadoPor = null,
+    IReadOnlyList<ParcelaContratoLeitura>? Parcelas = null,
+    decimal ValorTotal = 0,
+    decimal Recebido = 0,
+    decimal Saldo = 0,
+    string? OportunidadeTelefone = null,
+    string? ChavePix = null);
 
 public sealed record SalvarContratoFunil(Guid? OportunidadeId, string? Conteudo, Guid? ModeloId);
 
@@ -61,7 +68,7 @@ public sealed partial class ContratoFunilServico(IDados dados, IDadosContrato mo
         }
 
         var nomes = await dados.NomesOportunidadesAsync(contaId, [item.OportunidadeId], ct);
-        return Resultado<ContratoFunilLeitura>.Sucesso(Ler(item, nomes.GetValueOrDefault(item.OportunidadeId, "")));
+        return Resultado<ContratoFunilLeitura>.Sucesso(await LerComDetalheAsync(contaId, item, nomes.GetValueOrDefault(item.OportunidadeId, ""), ct));
     }
 
     public async Task<Resultado<ContratoFunilLeitura>> CriarAsync(string contaId, SalvarContratoFunil pedido, CancellationToken ct, string? criadoPor = null)
@@ -98,6 +105,7 @@ public sealed partial class ContratoFunilServico(IDados dados, IDadosContrato mo
             return Resultado<ContratoFunilLeitura>.Erro(Codigos.Validacao, "Informe o conteúdo do contrato.");
         }
 
+        var aprovado = await dados.OrcamentoAprovadoDaOportunidadeAsync(contaId, oportunidadeId, ct);
         var item = new ContratoFunil
         {
             Id = Guid.NewGuid(),
@@ -108,6 +116,17 @@ public sealed partial class ContratoFunilServico(IDados dados, IDadosContrato mo
             CriadoEm = DateTimeOffset.UtcNow,
             ModeloId = modeloId,
             CriadoPor = criadoPor,
+            Parcelas = (aprovado?.Parcelas ?? [])
+                .OrderBy(parcela => parcela.Numero)
+                .Select(parcela => new ParcelaContrato
+                {
+                    Id = Guid.NewGuid(),
+                    Numero = parcela.Numero,
+                    Vencimento = parcela.Vencimento,
+                    Valor = parcela.Valor,
+                    Entrada = parcela.Entrada,
+                })
+                .ToList(),
         };
         await dados.InserirContratoFunilAsync(item, ct);
         return Resultado<ContratoFunilLeitura>.Sucesso(Ler(item, oportunidade.Nome));
@@ -232,8 +251,106 @@ public sealed partial class ContratoFunilServico(IDados dados, IDadosContrato mo
     [GeneratedRegex(@"\{\{\s*contratante_nome\s*\}\}", RegexOptions.IgnoreCase)]
     private static partial Regex MarcaContratanteNome();
 
-    private static ContratoFunilLeitura Ler(ContratoFunil item, string oportunidadeNome) =>
-        new(
+    /// <summary>Registra o que o cliente pagou de uma parcela do contrato (SPEC-040; antigo "Recebi").</summary>
+    public async Task<Resultado<ContratoFunilLeitura>> ReceberAsync(
+        string contaId,
+        Guid contratoId,
+        Guid parcelaId,
+        ReceberParcela pedido,
+        CancellationToken ct)
+    {
+        var item = await dados.ObterContratoFunilAsync(contaId, contratoId, ct);
+        var parcela = item?.Parcelas.FirstOrDefault(p => p.Id == parcelaId);
+        if (item is null || parcela is null)
+        {
+            return Resultado<ContratoFunilLeitura>.Erro(Codigos.Indisponivel, "Indisponível.");
+        }
+
+        if (item.Situacao == SituacaoContratoFunil.Cancelado)
+        {
+            return Resultado<ContratoFunilLeitura>.Erro(Codigos.Validacao, "Contrato cancelado.");
+        }
+
+        if (pedido.Valor is not decimal valor || valor <= 0)
+        {
+            return Resultado<ContratoFunilLeitura>.Erro(Codigos.Validacao, "Informe o valor recebido.");
+        }
+
+        if (valor > parcela.Saldo)
+        {
+            return Resultado<ContratoFunilLeitura>.Erro(Codigos.Validacao, "O valor passa do que falta receber nesta parcela.");
+        }
+
+        if (pedido.Forma is not FormaPagamento forma || !Enum.IsDefined(forma))
+        {
+            return Resultado<ContratoFunilLeitura>.Erro(Codigos.Validacao, "Escolha a forma de pagamento.");
+        }
+
+        if (pedido.Data is not DateOnly data)
+        {
+            return Resultado<ContratoFunilLeitura>.Erro(Codigos.Validacao, "Informe a data do recebimento.");
+        }
+
+        var recebimento = new RecebimentoParcela
+        {
+            Id = Guid.NewGuid(),
+            ParcelaId = parcela.Id,
+            Valor = decimal.Round(valor, 2, MidpointRounding.AwayFromZero),
+            Forma = forma,
+            Data = data,
+            CriadoEm = DateTimeOffset.UtcNow,
+        };
+        dados.AdicionarRecebimentoParcela(recebimento);
+        await dados.SalvarNegocioAsync(ct);
+        parcela.Recebimentos.Add(recebimento);
+        return await LerAposMudancaAsync(contaId, item, ct);
+    }
+
+    /// <summary>Desfaz o último recebimento da parcela.</summary>
+    public async Task<Resultado<ContratoFunilLeitura>> DesfazerRecebimentoAsync(
+        string contaId,
+        Guid contratoId,
+        Guid parcelaId,
+        CancellationToken ct)
+    {
+        var item = await dados.ObterContratoFunilAsync(contaId, contratoId, ct);
+        var parcela = item?.Parcelas.FirstOrDefault(p => p.Id == parcelaId);
+        if (item is null || parcela is null)
+        {
+            return Resultado<ContratoFunilLeitura>.Erro(Codigos.Indisponivel, "Indisponível.");
+        }
+
+        var ultimo = parcela.Recebimentos.OrderByDescending(r => r.CriadoEm).FirstOrDefault();
+        if (ultimo is null)
+        {
+            return Resultado<ContratoFunilLeitura>.Erro(Codigos.Validacao, "Esta parcela não tem recebimento para desfazer.");
+        }
+
+        dados.RemoverRecebimentoParcela(ultimo);
+        await dados.SalvarNegocioAsync(ct);
+        parcela.Recebimentos.Remove(ultimo);
+        return await LerAposMudancaAsync(contaId, item, ct);
+    }
+
+    private async Task<Resultado<ContratoFunilLeitura>> LerAposMudancaAsync(string contaId, ContratoFunil item, CancellationToken ct)
+    {
+        var nomes = await dados.NomesOportunidadesAsync(contaId, [item.OportunidadeId], ct);
+        return Resultado<ContratoFunilLeitura>.Sucesso(
+            await LerComDetalheAsync(contaId, item, nomes.GetValueOrDefault(item.OportunidadeId, ""), ct));
+    }
+
+    /// <summary>Leitura de um contrato só: traz também o telefone do contato e a chave Pix, que o "Cobrar" usa.</summary>
+    private async Task<ContratoFunilLeitura> LerComDetalheAsync(string contaId, ContratoFunil item, string oportunidadeNome, CancellationToken ct)
+    {
+        var oportunidade = await dados.ObterOportunidadeAsync(contaId, item.OportunidadeId, ct);
+        var perfil = await dados.ObterPerfilAsync(contaId, ct);
+        return Ler(item, oportunidadeNome) with { OportunidadeTelefone = oportunidade?.Contatos.Select(contato => contato.Telefone).FirstOrDefault(telefone => !string.IsNullOrWhiteSpace(telefone)), ChavePix = perfil?.ChavePix };
+    }
+
+    private static ContratoFunilLeitura Ler(ContratoFunil item, string oportunidadeNome)
+    {
+        var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
+        return new(
             item.Id,
             item.OportunidadeId,
             oportunidadeNome,
@@ -243,5 +360,10 @@ public sealed partial class ContratoFunilServico(IDados dados, IDadosContrato mo
             item.EnviadoEm,
             item.AssinadoEm,
             item.ModeloId,
-            item.CriadoPor);
+            item.CriadoPor,
+            item.Parcelas.OrderBy(parcela => parcela.Numero).Select(parcela => ParcelasDosDocumentos.Ler(parcela, hoje)).ToArray(),
+            item.Parcelas.Sum(parcela => parcela.Valor),
+            item.Parcelas.Sum(parcela => parcela.Recebido),
+            item.Parcelas.Sum(parcela => parcela.Saldo));
+    }
 }

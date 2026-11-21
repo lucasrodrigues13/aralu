@@ -27,9 +27,6 @@ public sealed class Evento
 
     public decimal? OrcamentoEstimado { get; set; }
 
-    /// <summary>Valor do contrato com o casal (SPEC-029). As parcelas do casal saem dele.</summary>
-    public decimal? ValorContrato { get; set; }
-
     public int? ConvidadosEstimados { get; set; }
 
     public TimeOnly? TempoFesta { get; set; }
@@ -116,7 +113,8 @@ public sealed class ServicoEvento
 
     public int Ordem { get; set; }
 
-    public List<ParcelaServico> Parcelas { get; set; } = [];
+    /// <summary>Contrato com o fornecedor, com as parcelas a pagar (SPEC-040). Nulo enquanto o serviço não foi contratado.</summary>
+    public Project.Domain.Dinheiro.ContratoFornecedor? Contrato { get; set; }
 
     public List<SubitemServico> Subitens { get; set; } = [];
 
@@ -149,23 +147,6 @@ public sealed class FornecedorNoServico
     public decimal? ValorOrcamento { get; set; }
 
     public string? Observacoes { get; set; }
-}
-
-public sealed class ParcelaServico
-{
-    public Guid Id { get; set; }
-
-    public Guid ServicoId { get; set; }
-
-    public int Numero { get; set; }
-
-    public DateOnly Vencimento { get; set; }
-
-    public decimal Valor { get; set; }
-
-    public bool Entrada { get; set; }
-
-    public SituacaoParcela Situacao { get; set; }
 }
 
 public sealed class CompromissoAgenda
