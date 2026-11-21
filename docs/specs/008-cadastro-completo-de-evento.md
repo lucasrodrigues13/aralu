@@ -1,10 +1,10 @@
 # 008. Cadastro e resumo do evento
 
-**Status: aprovada (versão 3, 18/11/2026).** A versão 2 está no histórico do Git. O código segue esta spec. Fonte: pedido de 18/11/2026 para tirar o "Novo evento" da barra superior; o restante segue [produto-v1.md](../produto-v1.md) 5.3.
+**Status: rascunho (versão 4, card #19 do Trello "Simplificar o cadastro de evento").** Aguarda aprovação do dono do projeto; até lá o código segue a versão 3 (aprovada em 18/11/2026, no histórico do Git). A v4 enxuga a criação: sem pacote, casamento com um nome só e busca de clientes sem vínculo. O restante segue [produto-v1.md](../produto-v1.md) 5.3.
 
 ## 1. Identificador e nome
 
-SPEC-008. Cadastro e resumo do evento (v3).
+SPEC-008. Cadastro e resumo do evento (v4).
 
 ## 2. Objetivo
 
@@ -12,9 +12,9 @@ Criar um evento em menos de um minuto, num modal só, e abrir o evento num resum
 
 ## 3. Requisitos relacionados
 
-RF-049 (criação curta), RF-050 (resumo do evento), RF-053 (modelo aplicado na criação), RF-055 (cliente do evento), RF-074 (evento na agenda).
+RF-049 (criação curta), RF-050 (resumo do evento), RF-055 (cliente do evento), RF-074 (evento na agenda).
 
-Fora desta spec, cada um com a sua: dinheiro do casal (RF-095), roteiro (RF-092), equipe do dia (RF-051), link do casal (RF-056), observações (RF-107), salvar como modelo (RF-105), visão em tabela da lista de eventos (SPEC-002).
+Fora desta spec, cada um com a sua: aplicar modelo de evento (pacote) a um evento já criado (RF-053; a criação deixa de aplicar modelo), dinheiro do casal (RF-095), roteiro (RF-092), equipe do dia (RF-051), link do casal (RF-056), observações (RF-107), salvar como modelo (RF-105), visão em tabela da lista de eventos (SPEC-002).
 
 ## 4. Atores e permissões
 
@@ -34,10 +34,10 @@ Usuário autenticado, SPEC-001. Modelo de evento **não** é pré-condição.
 
 1. "Novo evento" no cabeçalho da lista de eventos abre o modal de criação. No celular, o "+" da barra inferior também abre. A barra superior fica com o título da área e o botão de tema; não há "Novo evento" ao lado do tema.
 2. O usuário escolhe o **tipo** em cartões: Casamento, 15 anos, Aniversário, Corporativo, Formatura.
-3. Abaixo do tipo aparecem os **pacotes**: os modelos de evento da conta daquele tipo, cada um num cartão com o nome do modelo e "N tarefas · N serviços". Há também o cartão "Começar vazio". Se o tipo tem um só modelo, ele já vem escolhido.
-4. O usuário informa o **nome**: no casamento, os dois nomes; nos outros tipos, um nome.
+3. Não há escolha de pacote nem de modelo na criação. O evento nasce sem tarefas e sem serviços. Aplicar um modelo a um evento existente fica para a edição, em spec própria.
+4. O usuário informa o **nome do evento**, igual para todos os tipos, inclusive casamento: um campo só, sem nome da noiva e do noivo na criação.
 5. Opcionais, na mesma tela: **data** (digitável ou pelo calendário), **horário**, **convidados estimados** e **local**.
-6. Opcional: **cliente**. Um campo de busca encontra um cliente da conta pelo nome; se não existir, "Cadastrar novo" abre dois campos, nome e WhatsApp.
+6. Opcional: **cliente**. Um campo de busca encontra um cliente da conta pelo nome. Sem texto digitado, a lista mostra só clientes **sem vínculo com nenhum evento**. Ao digitar, a busca pelo nome também encontra clientes que já têm vínculo com outro evento, e o organizador pode escolher um deles (um cliente pode estar em mais de um evento); esses aparecem com o nome do evento em que estão. Se não existir, "Cadastrar novo" abre dois campos, nome e WhatsApp.
 7. "Criar evento" grava e abre o resumo do novo evento. O aviso diz "Evento criado".
 
 ### 6.2. Resumo do evento
@@ -55,10 +55,8 @@ A primeira aba do evento passa a se chamar **Resumo** e mostra, de cima para bai
 ## 7. Fluxos alternativos
 
 - Sem tipo ou sem nome: não grava; o campo mostra o erro.
-- Casamento com um nome só: não grava ("Informe os dois nomes").
-- "Começar vazio": o evento nasce sem tarefas e sem serviços.
-- Tipo sem modelo na conta: só aparece "Começar vazio", com a dica "Crie modelos em Modelos de evento".
-- Sem data: o modelo é aplicado, mas as tarefas ficam sem prazo; o evento não entra na agenda.
+- Sem data: o evento não entra na agenda.
+- Todos os clientes já vinculados e nada digitado: a lista mostra só "Cadastrar novo"; digitar o nome ainda encontra os vinculados.
 - Cliente novo com WhatsApp inválido: não grava; o erro aparece no campo.
 - Fechar o modal sem criar: nada é gravado.
 - Evento de outra conta ou inexistente: mensagem de indisponível, sem revelar se existe.
@@ -67,9 +65,10 @@ A primeira aba do evento passa a se chamar **Resumo** e mostra, de cima para bai
 
 ### 8.1. Criação
 
-- Obrigatórios: tipo e nome. Modelo não é obrigatório.
-- O nome do casamento é a junção dos dois nomes com `&`.
-- O modelo escolhido cria os serviços e as tarefas do modelo, com prazo calculado em "dias antes" da data (SPEC-012).
+- Obrigatórios: tipo e nome. A criação não recebe modelo.
+- O nome do evento é o texto digitado, em qualquer tipo. Na edição de casamento, o nome da noiva e o do noivo continuam opcionais: com os dois preenchidos, o nome do evento é a junção deles com `&`; com só um, é esse nome.
+- Cliente existente escolhido na criação pode já ter vínculo com outro evento; o vínculo novo não desfaz o antigo.
+- O transfer não faz parte da criação; fica só na aba Convidados (SPEC-010).
 - Evento com data entra na agenda da conta. A opção de tirar da agenda fica na edição.
 - O valor da assessoria e as parcelas do casal **não** são pedidos na criação. Eles ficam no Dinheiro do evento (RF-095). O passo de valor da assessoria logo após salvar deixa de existir.
 - Cliente novo criado aqui grava só nome e WhatsApp e fica vinculado ao evento. O papel e os outros dados são completados depois em Clientes (SPEC-009); o papel nasce vazio.
@@ -108,7 +107,7 @@ Os cartões de Dinheiro do casal, Roteiro, Equipe, Link do casal e Notas entram 
 
 ## 9. Validações
 
-Tipo é um dos cinco. Nome sem só espaços; no casamento, os dois. Data e hora válidas, se preenchidas; a data aceita `dd/mm/aaaa` digitada. Convidados estimados inteiro maior ou igual a zero. Modelo, se escolhido, é da conta e do mesmo tipo. Cliente existente é da conta. Cliente novo: nome obrigatório e WhatsApp com DDD válido.
+Tipo é um dos cinco. Nome sem só espaços, igual para todos os tipos. Data e hora válidas, se preenchidas; a data aceita `dd/mm/aaaa` digitada. Convidados estimados inteiro maior ou igual a zero. Cliente existente é da conta. Cliente novo: nome obrigatório e WhatsApp com DDD válido.
 
 ## 10. Estados
 
@@ -116,7 +115,7 @@ Não muda a máquina da SPEC-002: o evento nasce em andamento; concluir e cancel
 
 ## 11. Dados necessários
 
-Criar: tipo, modelo (opcional), primeiro nome, segundo nome (casamento), data, horário, convidados estimados, local, cliente existente **ou** cliente novo (nome, WhatsApp).
+Criar: tipo, nome, data, horário, convidados estimados, local, cliente existente **ou** cliente novo (nome, WhatsApp).
 
 Editar, Informações gerais: foto, nomes, data, horário (convite), budget estimado, senha do site, tags, três notificações, salvar na agenda.
 
@@ -137,11 +136,11 @@ Campo inválido fica no modal com a mensagem no campo. Falha ao gravar não cria
 ## 14. Critérios de aceite
 
 1. Com tipo e nome, o evento é criado em andamento e o resumo abre.
-2. Sem modelo ("Começar vazio"), o evento é criado sem tarefas e sem serviços.
-3. Com modelo e data, as tarefas nascem com prazo em "dias antes" e os serviços do modelo aparecem em Fornecedores.
-4. Casamento com dois nomes vira "Nome & Nome"; com um nome, não grava.
+2. A criação não mostra pacotes; o evento nasce sem tarefas e sem serviços.
+3. Casamento pede só o nome do evento, como os outros tipos; "Maria e João" é gravado como digitado.
+4. A criação não mostra opção de transfer.
 5. A criação não pede valor da assessoria nem parcelas.
-6. Cliente existente escolhido na busca fica vinculado; cliente novo com nome e WhatsApp é criado e vinculado.
+6. Cliente existente escolhido na busca fica vinculado; cliente novo com nome e WhatsApp é criado e vinculado. Sem digitar, a lista só tem clientes sem evento; digitando o nome, aparece também cliente já vinculado a outro evento, e escolhê-lo vincula ao novo evento.
 7. Evento com data aparece na Minha agenda.
 8. O resumo mostra os cinco cartões com os números reais e até três alertas na ordem da seção 8.3.
 9. Cada alerta e cada "Abrir" leva à tela certa.
@@ -151,15 +150,16 @@ Campo inválido fica no modal com a mensagem no campo. Falha ao gravar não cria
 
 ## 15. Cenários de teste
 
-Criar só com tipo e nome. Criar casamento com um nome (erro). Criar com modelo e data; conferir prazos e serviços. Criar com "Começar vazio". Criar com cliente existente e com cliente novo; WhatsApp inválido. Resumo de evento sem nada (zeros, alerta "Evento sem data"). Resumo com tarefa atrasada, parcela vencida, parcela da semana, serviço sem contratado a 45 dias e convidados pendentes a 20 dias: conferir os três primeiros alertas. Isolamento entre contas. No computador, a barra superior só tem o tema; "Novo evento" aparece no cabeçalho da lista. No celular, o "+" abre o mesmo modal.
+Criar só com tipo e nome, em cada tipo (casamento inclusive: um campo de nome). Conferir que não há pacote nem transfer. Editar casamento com os dois nomes (vira "A & B") e com um só. Criar com cliente sem vínculo, com cliente já vinculado achado pela busca e com cliente novo; WhatsApp inválido; lista sem busca sem clientes vinculados. Resumo de evento sem nada (zeros, alerta "Evento sem data"). Resumo com tarefa atrasada, parcela vencida, parcela da semana, serviço sem contratado a 45 dias e convidados pendentes a 20 dias: conferir os três primeiros alertas. Isolamento entre contas. No computador, a barra superior só tem o tema; "Novo evento" aparece no cabeçalho da lista. No celular, o "+" abre o mesmo modal.
 
 ## 16. Dependências
 
-SPEC-001, SPEC-002 (lista e situações), SPEC-003 (tarefas), SPEC-004 e SPEC-010 (convidados), SPEC-006 e SPEC-009 (clientes), SPEC-012 (modelos), SPEC-018 (serviços, fornecedores e parcelas).
+SPEC-001, SPEC-002 (lista e situações), SPEC-003 (tarefas), SPEC-004 e SPEC-010 (convidados), SPEC-006 e SPEC-009 (clientes), SPEC-018 (serviços, fornecedores e parcelas).
 
 ## 17. Premissas e pontos não definidos
 
 - Os limites de 60 dias (serviço sem fornecedor) e 30 dias (convidados sem resposta) são propostos aqui e podem ser ajustados.
 - "Momentos" do roteiro no cartão do pacote entram quando o roteiro no evento existir (RF-092).
+- Sem modelo na criação, o caminho para aplicar um modelo depois (RF-053) ainda não tem spec; até lá, evento novo nasce vazio.
 - O endpoint atual de valor da assessoria continua até o Dinheiro do evento substituí-lo; a tela deixa de chamá-lo.
 - Tamanho máximo dos textos não definido.
