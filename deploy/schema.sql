@@ -3494,3 +3494,28 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121234328_QuemEnviouOContratoDoFornecedor') THEN
+    ALTER TABLE "ContratosFornecedor" ADD "ContratoAssinadoEnviadoEm" date;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121234328_QuemEnviouOContratoDoFornecedor') THEN
+    ALTER TABLE "ContratosFornecedor" ADD "ContratoAssinadoEnviadoPor" character varying(20);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121234328_QuemEnviouOContratoDoFornecedor') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261121234328_QuemEnviouOContratoDoFornecedor', '10.0.4');
+    END IF;
+END $EF$;
+COMMIT;
+

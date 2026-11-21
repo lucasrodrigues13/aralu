@@ -105,7 +105,7 @@ public interface IDados
     Task GarantirContratoFornecedorAsync(Guid servicoId, CancellationToken ct);
 
     /// <summary>Guarda (ou limpa, com arquivo nulo) o contrato assinado do contrato de fornecedor do serviço.</summary>
-    Task GravarContratoAssinadoAsync(Guid servicoId, Guid? arquivoId, string? nome, string? tipoConteudo, CancellationToken ct);
+    Task GravarContratoAssinadoAsync(Guid servicoId, Guid? arquivoId, string? nome, string? tipoConteudo, string? enviadoPor, DateOnly? enviadoEm, CancellationToken ct);
 
     Task AtualizarEtapaNegociacaoAsync(Guid vinculoId, EtapaNegociacao etapa, decimal? valorOrcamento, CancellationToken ct);
 

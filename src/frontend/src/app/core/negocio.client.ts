@@ -335,6 +335,9 @@ export interface EventoServico {
   }[];
   /** Contrato assinado pelo fornecedor e pelo casal, anexado pelo organizador (SPEC-045). */
   contratoAssinado: { arquivoId: string; nome: string; tipoConteudo: string } | null;
+  /** "Organizadora" ou "Casal"; nulo em contratos enviados antes do registro (SPEC-048). */
+  contratoAssinadoPor?: string | null;
+  contratoAssinadoEm?: string | null;
 }
 
 export interface ResponsavelTarefa {

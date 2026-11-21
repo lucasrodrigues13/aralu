@@ -1,6 +1,6 @@
 # 048. Aba Contratos do evento: contratos de fornecedor
 
-**Status: aprovada (21/11/2026; aprovação antecipada do dono do projeto, repassada pela sessão que abriu o card #30, com as opções mais simples e conservadoras nos pontos em aberto).** Fonte: card #30 do Trello; [produto-v1.md](../produto-v1.md) 5.10. Usa a [SPEC-045](045-contratar-fornecedor-e-contrato-assinado.md) (contrato assinado do fornecedor) e a [SPEC-046](046-link-do-casal-financeiro.md) (o casal sobe o contrato pelo link). Cria a aba que a [SPEC-030](030-contrato-do-evento.md) v3 §6.3 deixou para este card.
+**Status: aprovada (21/11/2026; aprovação antecipada do dono do projeto, repassada pela sessão que abriu o card #30, com as opções mais simples e conservadoras nos pontos em aberto).** Fonte: card #30 do Trello; [produto-v1.md](../produto-v1.md) 5.10. Usa a [SPEC-045](045-contratar-fornecedor-e-contrato-assinado.md) (contrato assinado do fornecedor) e a [SPEC-046](046-link-do-casal-financeiro.md) (o casal sobe o contrato pelo link). Cria a aba (e registra quem enviou e a data, com a migration `QuemEnviouOContratoDoFornecedor`) que a [SPEC-030](030-contrato-do-evento.md) v3 §6.3 deixou para este card.
 
 ## 1. Identificador e nome
 
@@ -29,7 +29,7 @@ Evento da conta.
 ## 6. Fluxo principal
 
 1. O evento ganha a aba **Contratos** (entre Fornecedores e Dinheiro), rota `/eventos/:id/contratos`.
-2. A aba mostra uma tabela com **Fornecedor**, **Serviço** e **Arquivo** (nome do arquivo) e as ações **Abrir** (nova janela) e **Baixar**. Um contrato por serviço contratado que tenha arquivo.
+2. A aba mostra uma tabela com **Fornecedor**, **Serviço**, **Arquivo**, **Enviado por** (Organizadora ou Casal) e **Data** do envio, e as ações **Abrir** (nova janela) e **Baixar**. Um contrato por serviço contratado que tenha arquivo.
 3. A lista vem do detalhe do evento (`servicos[].contratoAssinado`), então inclui o que o casal subir pelo link (as duas origens gravam no mesmo lugar, SPEC-045 §8 e SPEC-046 §8).
 4. Sem contratos: texto explicando que o contrato assinado é anexado na aba Fornecedores e que o do casal também aparece aqui.
 5. **Anexar, substituir e excluir** continuam na aba Fornecedores (menu da linha contratada, SPEC-045 §6.4). A aba Contratos é só leitura.
@@ -42,8 +42,8 @@ Evento da conta.
 
 ## 8. Regras de negócio
 
-- Fonte única: `ContratoFornecedor.ContratoAssinado*` (um arquivo por serviço). **Sem migration e sem mudança de API.**
-- Nada é apagado do banco nem da API (regra 7 do roteiro: não há funcionalidade removida neste card).
+- Fonte: `ContratoFornecedor.ContratoAssinado*` (um arquivo por serviço). **Banco (migration `QuemEnviouOContratoDoFornecedor`, uma só):** `ContratosFornecedor` ganha `ContratoAssinadoEnviadoPor` (texto até 20: "Organizadora" ou "Casal") e `ContratoAssinadoEnviadoEm` (data), gravados em `FornecedorServico.EnviarContratoAssinadoAsync` (organizadora; o link do casal chama o mesmo método com `peloCasal`) e limpos ao excluir. `ServicoLeitura` ganha `contratoAssinadoPor` e `contratoAssinadoEm`. Contratos já enviados antes ficam com os dois nulos e a aba mostra "—". `deploy/schema.sql` regerado.
+- Nada é apagado do banco nem da API (a migration só acrescenta colunas).
 
 ## 9. Validações
 
@@ -55,7 +55,7 @@ Serviço com contrato enviado ou sem.
 
 ## 11. Dados necessários
 
-Os de leitura já existentes: serviço, fornecedor contratado, arquivo (id, nome, tipo).
+Serviço, fornecedor contratado, arquivo (id, nome, tipo), quem enviou e data do envio.
 
 ## 12. Interface
 
@@ -74,7 +74,7 @@ Aviso por toast; evento de outra conta indisponível.
 
 ## 15. Cenários de teste
 
-Unitário (Angular, `montarContratosDoEvento`): lista só serviços com contrato, fornecedor só quando contratado, ordem por serviço, vazio. Sem mudança de backend; os fluxos de envio já são cobertos nas SPEC-045 e 046.
+Unitário (Angular, `montarContratosDoEvento`): quem enviou e data, lista só serviços com contrato, fornecedor só quando contratado, ordem por serviço, vazio. Os fluxos de envio já são cobertos nas SPEC-045 e 046.
 
 ## 16. Dependências
 
@@ -84,7 +84,7 @@ SPEC-045, SPEC-046, SPEC-030 v3. Depois: #20 (Resumo do evento aponta para os co
 
 Decididos nesta entrega pela opção mais simples e conservadora (a conferir pelo dono):
 
-1. **"Quem enviou (organizador ou casal)" e "data do envio" NÃO são mostrados.** O banco não registra nem autor nem data do envio (o `ContratoFornecedor` e o registro do arquivo não têm esses campos) e o card exige **sem migration**. A aba mostra fornecedor, serviço e arquivo. **Para ter os dois, é preciso uma migration** em `ContratosFornecedor` (por exemplo `ContratoAssinadoEnviadoPor` e `ContratoAssinadoEnviadoEm`), gravada nos dois caminhos (`FornecedorServico.EnviarContratoAssinadoAsync`, pela organizadora e pelo link). Fica pendente, para entrar na fila do banco se o dono quiser.
+1. **"Quem enviou" e data do envio** foram acrescentados depois (autorização do dono, 21/11/2026): primeira entrega saiu sem eles por exigirem migration. Valor guardado como texto simples ("Organizadora" ou "Casal"); o casal não é identificado por nome (SPEC-046 §17.6). Contratos enviados antes da migration mostram "—".
 2. **Um contrato por serviço**, não por fornecedor: é como a SPEC-045 guarda o arquivo. Dois fornecedores contratados no mesmo serviço aparecem na mesma linha, separados por vírgula.
 3. **Aba só de leitura.** Enviar, substituir e excluir ficam na aba Fornecedores; não duplicamos a ação.
 4. **A aba aparece para todos que veem o evento** (inclusive Assistant), como Fornecedores; não depende da permissão do financeiro.

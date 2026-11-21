@@ -140,7 +140,7 @@ public sealed class LinkCasalServico(
         AgirAsync(token, ct, (conta, evento) => dinheiro.ExcluirComprovanteAsync(conta, evento, servicoId, parcelaId, ct));
 
     public Task<Resultado<CasalLeitura>> EnviarContratoAssinadoAsync(string token, Guid servicoId, Stream conteudo, string? nome, DateOnly hoje, CancellationToken ct) =>
-        AgirComContratoAsync(token, ct, (conta, evento) => fornecedores.EnviarContratoAssinadoAsync(conta, evento, servicoId, conteudo, nome, hoje, ct));
+        AgirComContratoAsync(token, ct, (conta, evento) => fornecedores.EnviarContratoAssinadoAsync(conta, evento, servicoId, conteudo, nome, hoje, ct, peloCasal: true));
 
     public Task<Resultado<CasalLeitura>> ExcluirContratoAssinadoAsync(string token, Guid servicoId, DateOnly hoje, CancellationToken ct) =>
         AgirComContratoAsync(token, ct, (conta, evento) => fornecedores.ExcluirContratoAssinadoAsync(conta, evento, servicoId, hoje, ct));

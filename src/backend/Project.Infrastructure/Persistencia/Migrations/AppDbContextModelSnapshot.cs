@@ -453,6 +453,13 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<Guid?>("ContratoAssinadoArquivoId")
                         .HasColumnType("uuid");
 
+                    b.Property<DateOnly?>("ContratoAssinadoEnviadoEm")
+                        .HasColumnType("date");
+
+                    b.Property<string>("ContratoAssinadoEnviadoPor")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.Property<string>("ContratoAssinadoNome")
                         .HasMaxLength(260)
                         .HasColumnType("character varying(260)");
