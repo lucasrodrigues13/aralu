@@ -290,6 +290,58 @@ public class DinheiroFluxoTests
         Assert.Equal(JsonValueKind.Null, semComprovante.GetProperty("comprovante").ValueKind);
     }
 
+    [Fact]
+    public async Task Contrato_assinado_anexa_substitui_exclui_e_contratar_de_novo_mantem_pagos_e_comprovantes()
+    {
+        var dono = await Entrar();
+        var outra = await Entrar();
+        var (eventoId, servicoId) = await EventoComFornecedorContratado(dono, 2);
+        var urlServico = $"/api/v1/eventos/{eventoId}/servicos/{servicoId}";
+        var urlPagamento = $"/api/v1/eventos/{eventoId}/dinheiro/pagamentos/{servicoId}";
+
+        // Anexar, trocar (o arquivo antigo some), recusar tipo inválido e isolar por conta.
+        using var primeiro = Pdf("contrato.pdf");
+        var anexado = await Ler(await dono.PostAsync($"{urlServico}/contrato-assinado", primeiro));
+        var arquivoId = ServicoDe(anexado, servicoId).GetProperty("contratoAssinado").GetProperty("arquivoId").GetGuid();
+        Assert.Equal(HttpStatusCode.OK, (await dono.GetAsync($"/api/v1/arquivos/{arquivoId}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await outra.GetAsync($"/api/v1/arquivos/{arquivoId}")).StatusCode);
+        using var alheio = Pdf("alheio.pdf");
+        Assert.Equal(HttpStatusCode.NotFound, (await outra.PostAsync($"{urlServico}/contrato-assinado", alheio)).StatusCode);
+        using var texto = new MultipartFormDataContent { { new ByteArrayContent(System.Text.Encoding.ASCII.GetBytes("texto")), "arquivo", "contrato.txt" } };
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PostAsync($"{urlServico}/contrato-assinado", texto)).StatusCode);
+        using var segundo = Pdf("contrato-2.pdf");
+        var trocado = await Ler(await dono.PostAsync($"{urlServico}/contrato-assinado", segundo));
+        Assert.Equal("contrato-2.pdf", ServicoDe(trocado, servicoId).GetProperty("contratoAssinado").GetProperty("nome").GetString());
+        Assert.Equal(HttpStatusCode.NotFound, (await dono.GetAsync($"/api/v1/arquivos/{arquivoId}")).StatusCode);
+
+        // Pagar uma parcela e comprovar; voltar para orçamento e contratar de novo mantém tudo.
+        var parcelas = Pagamento(await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/dinheiro"))).GetProperty("parcelas").EnumerateArray().ToArray();
+        await Ler(await dono.PutAsJsonAsync($"{urlPagamento}/parcelas/{parcelas[0].GetProperty("id").GetGuid()}/pago", new { pago = true }));
+        using var recibo = Pdf("recibo.pdf");
+        await Ler(await dono.PostAsync($"{urlPagamento}/parcelas/{parcelas[0].GetProperty("id").GetGuid()}/comprovante", recibo));
+        var vinculoId = ServicoDe(await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}")), servicoId)
+            .GetProperty("fornecedores")[0].GetProperty("id").GetGuid();
+        await Ler(await dono.PostAsJsonAsync($"{urlServico}/fornecedores/{vinculoId}/voltar", new { }));
+
+        // Valor diferente da soma das parcelas é recusado; o mesmo valor mantém o contrato.
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PostAsJsonAsync($"{urlServico}/fornecedores/{vinculoId}/contratar", new { valor = 3000 })).StatusCode);
+        var recontratado = await Ler(await dono.PostAsJsonAsync($"{urlServico}/fornecedores/{vinculoId}/contratar", new { valor = 4000 }));
+        Assert.Equal("contrato-2.pdf", ServicoDe(recontratado, servicoId).GetProperty("contratoAssinado").GetProperty("nome").GetString());
+        var pagamento = Pagamento(await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/dinheiro")));
+        var mantidas = pagamento.GetProperty("parcelas").EnumerateArray().ToArray();
+        Assert.Equal(2, mantidas.Length);
+        Assert.True(mantidas[0].GetProperty("paga").GetBoolean());
+        Assert.Equal("recibo.pdf", mantidas[0].GetProperty("comprovante").GetProperty("nome").GetString());
+
+        // Excluir apaga o arquivo e some da leitura.
+        var excluido = await Ler(await dono.DeleteAsync($"{urlServico}/contrato-assinado"));
+        Assert.Equal(JsonValueKind.Null, ServicoDe(excluido, servicoId).GetProperty("contratoAssinado").ValueKind);
+        Assert.Equal(HttpStatusCode.NotFound, (await dono.DeleteAsync($"{urlServico}/contrato-assinado")).StatusCode);
+    }
+
+    private static JsonElement ServicoDe(JsonElement evento, Guid servicoId) =>
+        evento.GetProperty("servicos").EnumerateArray().Single(item => item.GetProperty("id").GetGuid() == servicoId);
+
     private static MultipartFormDataContent Pdf(string nome) =>
         new() { { new ByteArrayContent(System.Text.Encoding.ASCII.GetBytes("%PDF-1.4\n%%EOF")), "arquivo", nome } };
 
@@ -321,7 +373,14 @@ public class DinheiroFluxoTests
             .GetProperty("fornecedores").EnumerateArray().Single().GetProperty("id").GetGuid();
         Assert.Equal(HttpStatusCode.OK, (await dono.PostAsJsonAsync(
             $"/api/v1/eventos/{eventoId}/servicos/{servicoId}/fornecedores/{vinculoId}/contratar",
-            new { valor = 4000, quantidadeParcelas = parcelas, primeiraParcela = "2026-12-10", comEntrada = false })).StatusCode);
+            new { valor = 4000 })).StatusCode);
+        if (parcelas > 0)
+        {
+            Assert.Equal(HttpStatusCode.OK, (await dono.PutAsJsonAsync(
+                $"/api/v1/eventos/{eventoId}/dinheiro/pagamentos/{servicoId}/parcelamento",
+                new { quantidadeParcelas = parcelas, primeiraParcela = "2026-12-10", comEntrada = false })).StatusCode);
+        }
+
         return (eventoId, servicoId);
     }
 

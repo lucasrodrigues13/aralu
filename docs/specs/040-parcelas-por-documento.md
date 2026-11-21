@@ -44,7 +44,7 @@ Usuário autenticado (SPEC-001). Para parcelar o orçamento: valor do orçamento
 ### 6.3. Contrato com o fornecedor (`ContratoFornecedor`, `ParcelaContratoFornecedor`)
 
 1. Um `ContratoFornecedor` por serviço do evento (índice único), com as parcelas a pagar.
-2. Hoje ele nasce em **Contratar** (como as parcelas nasciam): valor, quantidade, 1ª parcela e entrada. Contratar de novo substitui o contrato e as parcelas.
+2. Ele nasce em **Contratar**, sem parcelas (SPEC-045; antes pedia valor, quantidade, 1ª parcela e entrada). As parcelas se definem na aba Dinheiro (SPEC-043). Contratar de novo mantém o contrato e as parcelas.
 3. O que muda de tela: as parcelas aparecem como antes na aba Fornecedores, na aba Dinheiro do evento (Pagamentos a fornecedores), na tela Pagamentos e na tela Hoje (pagamentos da semana). O arquivo assinado e o pagamento com comprovante entram com os cards #28 e #31.
 
 ### 6.4. Tela Hoje

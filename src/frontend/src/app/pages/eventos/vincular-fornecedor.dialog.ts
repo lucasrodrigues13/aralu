@@ -17,50 +17,36 @@ export interface VincularFornecedorDados {
   servicoId?: string;
 }
 
-export interface VincularFornecedorPedido {
+/** Um serviço marcado: um serviço do evento (`servicoId`) ou um serviço novo, que o fornecedor presta (`novoServico`). */
+export interface EscolhaDeServico {
   servicoId: string | null;
   novoServico: string | null;
+}
+
+export interface VincularFornecedorPedido {
   fornecedorId: string;
+  servicos: EscolhaDeServico[];
   etapa: string;
 }
 
-const NOVO_SERVICO = '__novo__';
+interface OpcaoServico {
+  chave: string;
+  nome: string;
+  servicoId: string | null;
+  novo: boolean;
+  jaVinculado: boolean;
+  presta: boolean;
+}
 
-/** Vincula um fornecedor do cadastro a um serviço do evento (SPEC-018). */
+/** Vincula um fornecedor do cadastro a serviços do evento: primeiro o fornecedor, depois os serviços (SPEC-045 §6.1). */
 @Component({
   selector: 'app-vincular-fornecedor',
   imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatAutocompleteModule, MatIconModule],
   template: `
     <h2 mat-dialog-title>Adicionar fornecedor</h2>
-    <p class="text-muted text-sm px-6 -mt-2 mb-4">Escolha um fornecedor do seu cadastro e o serviço do evento. Ele entra na etapa Orçamento.</p>
+    <p class="text-muted text-sm px-6 -mt-2 mb-4">Escolha o fornecedor e, na sequência, os serviços dele neste evento. Ele entra na etapa Orçamento.</p>
     <mat-dialog-content>
       <form id="vincular-fornecedor" class="grid grid-cols-1 gap-4" [formGroup]="form" (ngSubmit)="confirmar()">
-        <div class="campo">
-          <mat-label class="font-semibold mb-2 block">Serviço</mat-label>
-          <mat-form-field appearance="outline" class="w-full">
-          <mat-select [attr.aria-label]="'Serviço'" formControlName="servicoId" required>
-            @for (servico of dados.servicos; track servico.id) {
-              <mat-option [value]="servico.id">{{ servico.nome }}</mat-option>
-            }
-            <mat-option [value]="novo"><mat-icon>add</mat-icon> Novo serviço…</mat-option>
-          </mat-select>
-          @if (form.controls.servicoId.invalid) { <mat-error>Escolha o serviço.</mat-error> }
-        </mat-form-field>
-        </div>
-
-        @if (ehNovoServico()) {
-          <div class="campo">
-            <mat-label class="font-semibold mb-2 block">Nome do novo serviço</mat-label>
-            <mat-form-field appearance="outline" class="w-full">
-            <input [attr.aria-label]="'Nome do novo serviço'" matInput formControlName="novoServico" [matAutocomplete]="sugestoes" placeholder="Ex.: Buffet, Fotografia" required />
-            <mat-autocomplete #sugestoes="matAutocomplete">
-              @for (nome of sugestoesServico(); track nome) { <mat-option [value]="nome">{{ nome }}</mat-option> }
-            </mat-autocomplete>
-            @if (form.controls.novoServico.invalid) { <mat-error>Informe o nome do serviço.</mat-error> }
-          </mat-form-field>
-          </div>
-        }
-
         <div class="campo">
           <mat-label class="font-semibold mb-2 block">Fornecedor</mat-label>
           <mat-form-field appearance="outline" class="w-full">
@@ -74,11 +60,9 @@ const NOVO_SERVICO = '__novo__';
           />
           <mat-autocomplete #listaFornecedores="matAutocomplete" [displayWith]="nomeFornecedor" autoActiveFirstOption>
             @for (fornecedor of fornecedoresFiltrados(); track fornecedor.id) {
-              <mat-option [value]="fornecedor" [disabled]="jaVinculado(fornecedor.id)">
+              <mat-option [value]="fornecedor">
                 <span class="opcao-nome">{{ fornecedor.nome }}</span>
-                <span class="block text-xs text-muted">
-                  {{ jaVinculado(fornecedor.id) ? 'Já está neste serviço' : (fornecedor.servicos.join(', ') || 'Sem serviço informado') }}
-                </span>
+                <span class="block text-xs text-muted">{{ fornecedor.servicos.join(', ') || 'Sem serviço informado' }}</span>
               </mat-option>
             } @empty {
               <mat-option disabled>Nenhum fornecedor encontrado.</mat-option>
@@ -94,6 +78,23 @@ const NOVO_SERVICO = '__novo__';
           </button>
         </div>
 
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Serviços</mat-label>
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-select [attr.aria-label]="'Serviços'" formControlName="servicos" multiple [disabled]="!fornecedorEscolhido()">
+              @for (opcao of opcoes(); track opcao.chave) {
+                <mat-option [value]="opcao.chave" [disabled]="opcao.jaVinculado">
+                  {{ opcao.nome }}
+                  @if (opcao.jaVinculado) { <span class="text-xs text-muted"> · Já está neste serviço</span> }
+                  @else if (opcao.novo) { <span class="text-xs text-muted"> · novo no evento</span> }
+                  @else if (opcao.presta) { <span class="text-xs text-muted"> · ele presta</span> }
+                </mat-option>
+              }
+            </mat-select>
+            @if (form.controls.servicos.invalid && form.controls.servicos.touched) { <mat-error>Marque ao menos um serviço.</mat-error> }
+          </mat-form-field>
+          @if (!fornecedorEscolhido()) { <p class="text-xs text-muted">Escolha o fornecedor para ver os serviços.</p> }
+        </div>
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
@@ -111,57 +112,64 @@ export class VincularFornecedorDialog {
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly negocio = inject(NegocioClient);
-  protected readonly novo = NOVO_SERVICO;
   private readonly fornecedores = signal<FornecedorResumo[]>(this.dados.fornecedores);
-  private readonly servicosConta = signal<string[]>([]);
 
   protected readonly form = this.fb.group({
-    servicoId: [this.dados.servicoId ?? this.dados.servicos[0]?.id ?? NOVO_SERVICO, Validators.required],
-    novoServico: [''],
     fornecedor: this.fb.control<FornecedorResumo | string | null>(null, [Validators.required, (controle) =>
       controle.value && typeof controle.value === 'object' ? null : { escolha: true }]),
+    servicos: this.fb.nonNullable.control<string[]>([], [(controle) => (controle.value as string[]).length > 0 ? null : { vazio: true }]),
   });
 
-  private readonly servicoId = toSignal(this.form.controls.servicoId.valueChanges, { initialValue: this.form.controls.servicoId.value });
   private readonly busca = toSignal(this.form.controls.fornecedor.valueChanges, { initialValue: null });
-  private readonly novoServico = toSignal(this.form.controls.novoServico.valueChanges, { initialValue: '' });
 
-  protected readonly ehNovoServico = computed(() => this.servicoId() === NOVO_SERVICO);
+  protected readonly fornecedorEscolhido = computed<FornecedorResumo | null>(() => {
+    const valor = this.busca();
+    return valor && typeof valor === 'object' ? valor : null;
+  });
 
   protected readonly fornecedoresFiltrados = computed(() => {
     const valor = this.busca();
     const termo = typeof valor === 'string' ? normalizar(valor) : '';
-    const servico = this.dados.servicos.find((item) => item.id === this.servicoId());
-    const alvo = normalizar(servico?.nome ?? this.novoServico() ?? '');
     return this.fornecedores()
       .filter((item) => !termo || normalizar(item.nome).includes(termo) || item.servicos.some((s) => normalizar(s).includes(termo)))
-      .sort((a, b) => Number(atende(b, alvo)) - Number(atende(a, alvo)) || a.nome.localeCompare(b.nome, 'pt-BR'));
+      .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
   });
 
-  protected readonly sugestoesServico = computed(() => {
-    const termo = normalizar(this.novoServico() ?? '');
-    const usados = new Set(this.dados.servicos.map((item) => normalizar(item.nome)));
-    return this.servicosConta()
-      .filter((nome) => !usados.has(normalizar(nome)) && (!termo || normalizar(nome).includes(termo)))
-      .slice(0, 8);
+  /** Serviços do evento mais os que o fornecedor presta e ainda não existem no evento; os dele vêm primeiro. */
+  protected readonly opcoes = computed<OpcaoServico[]>(() => {
+    const fornecedor = this.fornecedorEscolhido();
+    if (!fornecedor) {
+      return [];
+    }
+    const presta = new Set(fornecedor.servicos.map(normalizar));
+    const nomesDoEvento = new Set(this.dados.servicos.map((item) => normalizar(item.nome)));
+    const doEvento: OpcaoServico[] = this.dados.servicos.map((servico) => ({
+      chave: servico.id,
+      nome: servico.nome,
+      servicoId: servico.id,
+      novo: false,
+      jaVinculado: servico.fornecedores.some((item) => item.fornecedorId === fornecedor.id),
+      presta: presta.has(normalizar(servico.nome)),
+    }));
+    const novos: OpcaoServico[] = fornecedor.servicos
+      .filter((nome) => !nomesDoEvento.has(normalizar(nome)))
+      .map((nome) => ({ chave: `novo:${nome}`, nome, servicoId: null, novo: true, jaVinculado: false, presta: true }));
+    return [...doEvento, ...novos].sort((a, b) => Number(b.presta) - Number(a.presta));
   });
 
   constructor() {
-    this.atualizarValidacaoNovoServico(this.form.controls.servicoId.value);
-    this.form.controls.servicoId.valueChanges.subscribe((valor) => this.atualizarValidacaoNovoServico(valor));
-    this.negocio.servicosConta().subscribe({
-      next: (lista) => this.servicosConta.set(lista.map((item) => item.nome)),
-      error: () => this.servicosConta.set([]),
+    // Ao escolher o fornecedor, os serviços dele (livres) vêm marcados; o serviço de origem também.
+    this.form.controls.fornecedor.valueChanges.subscribe(() => {
+      const opcoes = this.opcoes();
+      const origem = this.dados.servicoId;
+      this.form.controls.servicos.setValue(
+        opcoes.filter((opcao) => !opcao.jaVinculado && (opcao.presta || opcao.chave === origem)).map((opcao) => opcao.chave),
+      );
     });
   }
 
   protected readonly nomeFornecedor = (valor: FornecedorResumo | string | null): string =>
     !valor ? '' : typeof valor === 'string' ? valor : valor.nome;
-
-  protected jaVinculado(fornecedorId: string): boolean {
-    const servico = this.dados.servicos.find((item) => item.id === this.servicoId());
-    return !!servico?.fornecedores.some((item) => item.fornecedorId === fornecedorId);
-  }
 
   protected cadastrarFornecedor(): void {
     const antes = new Set(this.fornecedores().map((item) => item.id));
@@ -186,27 +194,18 @@ export class VincularFornecedorDialog {
     }
     const valor = this.form.getRawValue();
     const fornecedor = valor.fornecedor as FornecedorResumo;
-    const novo = valor.servicoId === NOVO_SERVICO;
+    const marcadas = new Set(valor.servicos);
     this.ref.close({
-      servicoId: novo ? null : valor.servicoId,
-      novoServico: novo ? (valor.novoServico ?? '').trim() : null,
       fornecedorId: fornecedor.id,
-      // Entra em Orçamento; Contratar (valor e parcelas) fica na lista.
+      servicos: this.opcoes()
+        .filter((opcao) => marcadas.has(opcao.chave))
+        .map((opcao) => ({ servicoId: opcao.servicoId, novoServico: opcao.novo ? opcao.nome : null })),
+      // Entra em Orçamento; Contratar (valor e contrato assinado) fica na lista.
       etapa: 'Orcamento',
     });
-  }
-
-  private atualizarValidacaoNovoServico(servicoId: string | null): void {
-    const controle = this.form.controls.novoServico;
-    controle.setValidators(servicoId === NOVO_SERVICO ? [Validators.required, Validators.pattern(/\S/)] : null);
-    controle.updateValueAndValidity({ emitEvent: false });
   }
 }
 
 function normalizar(texto: string): string {
   return texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
-}
-
-function atende(fornecedor: FornecedorResumo, servico: string): boolean {
-  return !!servico && fornecedor.servicos.some((item) => normalizar(item) === servico);
 }

@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { validarComprovante } from '../../core/dinheiro.client';
 
@@ -9,7 +9,7 @@ import { validarComprovante } from '../../core/dinheiro.client';
   selector: 'app-comprovante-dialog',
   imports: [MatDialogModule, MatButtonModule, MatIconModule],
   template: `
-    <h2 mat-dialog-title>Enviar comprovante</h2>
+    <h2 mat-dialog-title>{{ dados?.titulo ?? "Enviar comprovante" }}</h2>
     <p class="text-muted text-sm px-6 -mt-2 mb-4">JPG, JPEG, PNG ou PDF de até 5 MB. Fotos são reduzidas ao guardar, sem perder a leitura.</p>
     <mat-dialog-content>
       <form id="comprovante" class="grid grid-cols-1 gap-4" (submit)="enviar(); $event.preventDefault()">
@@ -26,6 +26,7 @@ import { validarComprovante } from '../../core/dinheiro.client';
   `,
 })
 export class ComprovanteDialog {
+  protected readonly dados = inject<{ titulo?: string } | null>(MAT_DIALOG_DATA, { optional: true });
   protected readonly ref = inject(MatDialogRef<ComprovanteDialog, File>);
   protected readonly arquivo = signal<File | null>(null);
   protected readonly erro = signal('');

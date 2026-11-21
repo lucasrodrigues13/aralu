@@ -333,6 +333,8 @@ export interface EventoServico {
     valorOrcamento: number | null;
     observacoes: string | null;
   }[];
+  /** Contrato assinado pelo fornecedor e pelo casal, anexado pelo organizador (SPEC-045). */
+  contratoAssinado: { arquivoId: string; nome: string; tipoConteudo: string } | null;
 }
 
 export interface ResponsavelTarefa {
@@ -829,6 +831,17 @@ export class NegocioClient {
       `${this.base}/api/v1/eventos/${eventoId}/servicos/${servicoId}/fornecedores/${vinculoId}/contratar`,
       pedido,
     );
+  }
+
+  /** Anexa (ou troca) o contrato assinado do serviço contratado. */
+  enviarContratoAssinado(eventoId: string, servicoId: string, arquivo: File) {
+    const dados = new FormData();
+    dados.append('arquivo', arquivo);
+    return this.http.post<EventoDetalhe>(`${this.base}/api/v1/eventos/${eventoId}/servicos/${servicoId}/contrato-assinado`, dados);
+  }
+
+  excluirContratoAssinado(eventoId: string, servicoId: string) {
+    return this.http.delete<EventoDetalhe>(`${this.base}/api/v1/eventos/${eventoId}/servicos/${servicoId}/contrato-assinado`);
   }
 
   budget(eventoId: string) {

@@ -451,7 +451,10 @@ public class AssistentesFluxoTests
             .GetProperty("fornecedores").EnumerateArray().Single().GetProperty("id").GetGuid();
         Assert.Equal(HttpStatusCode.OK, (await dona.PostAsJsonAsync(
             $"/api/v1/eventos/{eventoId}/servicos/{servicoId}/fornecedores/{vinculoId}/contratar",
-            new { valor = 4000, quantidadeParcelas = 2, primeiraParcela = "2026-12-10", comEntrada = false })).StatusCode);
+            new { valor = 4000 })).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await dona.PutAsJsonAsync(
+            $"/api/v1/eventos/{eventoId}/dinheiro/pagamentos/{servicoId}/parcelamento",
+            new { quantidadeParcelas = 2, primeiraParcela = "2026-12-10", comEntrada = false })).StatusCode);
     }
 
     private static async Task<JsonElement> CriarEvento(HttpClient cliente, string nome)

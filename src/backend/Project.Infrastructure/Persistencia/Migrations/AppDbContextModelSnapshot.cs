@@ -444,6 +444,17 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<Guid?>("ContratoAssinadoArquivoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ContratoAssinadoNome")
+                        .HasMaxLength(260)
+                        .HasColumnType("character varying(260)");
+
+                    b.Property<string>("ContratoAssinadoTipoConteudo")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<bool>("Pago")
                         .HasColumnType("boolean");
 

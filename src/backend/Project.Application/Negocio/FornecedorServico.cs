@@ -112,14 +112,8 @@ public sealed record SubitemPedido(string? Descricao, int? Quantidade, decimal? 
 
 public sealed record AdicionarFornecedorServico(Guid? FornecedorId, EtapaNegociacao? Etapa);
 
-public sealed record ContratarFornecedorPedido(
-    decimal? Valor,
-    int? QuantidadeParcelas,
-    DateOnly? PrimeiraParcela,
-    bool ComEntrada,
-    BaseEntrada? BaseEntrada,
-    decimal? ValorEntrada,
-    DateOnly? DataEntrada);
+/// <summary>Contratar: só o valor. O parcelamento é feito depois, na aba Dinheiro (SPEC-045).</summary>
+public sealed record ContratarFornecedorPedido(decimal? Valor);
 
 public sealed record BudgetServicoLinha(Guid Id, string Nome, decimal Estimado, decimal Contratado);
 
@@ -131,7 +125,7 @@ public sealed record BudgetEvento(
     decimal? CustoPorConvidado,
     IReadOnlyList<BudgetServicoLinha> Servicos);
 
-public sealed class FornecedorServico(IDados dados)
+public sealed class FornecedorServico(IDados dados, Arquivos.IArmazenamentoArquivo armazenamento)
 {
     public async Task<IReadOnlyList<ServicoContaLeitura>> ListarServicosAsync(string contaId, string? nome, CancellationToken ct)
     {
@@ -392,6 +386,7 @@ public sealed class FornecedorServico(IDados dados)
         if (etapa == EtapaNegociacao.Contratado)
         {
             await dados.MarcarServicoContratadoAsync(servico.Id, true, servico.ValorContratado, ct);
+            await dados.GarantirContratoFornecedorAsync(servico.Id, ct);
             await dados.ConcluirTarefasLigadasAsync(contaId, servico.Id, ct);
         }
 
@@ -432,44 +427,74 @@ public sealed class FornecedorServico(IDados dados)
             return Resultado<EventoDetalhe>.Erro(Codigos.Indisponivel, "Indisponível.");
         }
 
-        if (pedido.Valor is not decimal valor || valor < 0
-            || pedido.QuantidadeParcelas is not int quantidade || quantidade <= 0
-            || pedido.PrimeiraParcela is not DateOnly primeira)
+        if (pedido.Valor is not decimal valor || valor < 0)
         {
-            return Resultado<EventoDetalhe>.Erro(Codigos.Validacao, "Informe o valor, a quantidade de parcelas e a data da primeira parcela.");
+            return Resultado<EventoDetalhe>.Erro(Codigos.Validacao, "Informe o valor do contrato.");
         }
 
-        var parcelas = ParcelasDaAssessoria.Calcular(
-            valor,
-            quantidade,
-            primeira,
-            pedido.ComEntrada,
-            pedido.BaseEntrada,
-            pedido.ValorEntrada,
-            pedido.DataEntrada);
-        if (parcelas.Count == 0)
+        // Contratar de novo mantém o contrato (parcelas, pagos, comprovantes); o valor não pode destoar das parcelas.
+        if (servico.Contrato is { Parcelas.Count: > 0 } existente && existente.Parcelas.Sum(parcela => parcela.Valor) != valor)
         {
-            return Resultado<EventoDetalhe>.Erro(Codigos.Validacao, "A entrada informada não fecha com o valor total.");
+            return Resultado<EventoDetalhe>.Erro(
+                Codigos.Validacao,
+                "O pagamento está parcelado e o valor não bate com as parcelas. Refaça o parcelamento na aba Dinheiro antes.");
         }
 
         await dados.AtualizarEtapaNegociacaoAsync(vinculo.Id, EtapaNegociacao.Contratado, valor, ct);
         await dados.MarcarServicoContratadoAsync(servico.Id, true, valor, ct);
+        await dados.GarantirContratoFornecedorAsync(servico.Id, ct);
         await dados.ConcluirTarefasLigadasAsync(contaId, servico.Id, ct);
-        var contrato = new ContratoFornecedor
+        return await DetalheEventoAsync(contaId, eventoId, hoje, ct);
+    }
+
+    /// <summary>Guarda o contrato assinado do serviço contratado e apaga o anterior (SPEC-045 §6.4).</summary>
+    public async Task<Resultado<EventoDetalhe>> EnviarContratoAssinadoAsync(
+        string contaId,
+        Guid eventoId,
+        Guid servicoId,
+        Stream conteudo,
+        string? nomeArquivo,
+        DateOnly hoje,
+        CancellationToken ct)
+    {
+        var servico = await dados.ObterServicoEventoAsync(contaId, eventoId, servicoId, ct);
+        if (servico?.Contrato is null)
         {
-            Id = Guid.NewGuid(),
-            ServicoId = servico.Id,
-            Parcelas = parcelas.Select(parcela => new ParcelaContratoFornecedor
-            {
-                Id = Guid.NewGuid(),
-                Numero = parcela.Numero,
-                Vencimento = parcela.Vencimento,
-                Valor = parcela.Valor,
-                Entrada = parcela.Entrada,
-                Situacao = SituacaoParcela.Pendente,
-            }).ToList(),
-        };
-        await dados.SubstituirContratoFornecedorAsync(servico.Id, contrato, ct);
+            return Resultado<EventoDetalhe>.Erro(Codigos.Indisponivel, "Indisponível.");
+        }
+
+        var guardado = await armazenamento.GuardarDocumentoAsync(conteudo, nomeArquivo, contaId, ct);
+        if (!guardado.Ok)
+        {
+            return Resultado<EventoDetalhe>.Erro(guardado.Falha!.Codigo, guardado.Falha.Mensagem);
+        }
+
+        var arquivo = guardado.Valor!;
+        var nome = arquivo.NomeOriginal.Length > 260 ? arquivo.NomeOriginal[..260] : arquivo.NomeOriginal;
+        await dados.GravarContratoAssinadoAsync(servico.Id, arquivo.Id, nome, arquivo.TipoConteudo, ct);
+        if (servico.Contrato.ContratoAssinadoArquivoId is Guid anterior)
+        {
+            await armazenamento.DescartarAsync(anterior, ct);
+        }
+
+        return await DetalheEventoAsync(contaId, eventoId, hoje, ct);
+    }
+
+    public async Task<Resultado<EventoDetalhe>> ExcluirContratoAssinadoAsync(
+        string contaId,
+        Guid eventoId,
+        Guid servicoId,
+        DateOnly hoje,
+        CancellationToken ct)
+    {
+        var servico = await dados.ObterServicoEventoAsync(contaId, eventoId, servicoId, ct);
+        if (servico?.Contrato?.ContratoAssinadoArquivoId is not Guid arquivoId)
+        {
+            return Resultado<EventoDetalhe>.Erro(Codigos.Indisponivel, "Indisponível.");
+        }
+
+        await dados.GravarContratoAssinadoAsync(servico.Id, null, null, null, ct);
+        await armazenamento.DescartarAsync(arquivoId, ct);
         return await DetalheEventoAsync(contaId, eventoId, hoje, ct);
     }
 
@@ -526,6 +551,7 @@ public sealed class FornecedorServico(IDados dados)
         if (destino == EtapaNegociacao.Contratado)
         {
             await dados.MarcarServicoContratadoAsync(servico.Id, true, servico.ValorContratado, ct);
+            await dados.GarantirContratoFornecedorAsync(servico.Id, ct);
             await dados.ConcluirTarefasLigadasAsync(contaId, servico.Id, ct);
         }
         else if (!servico.Fornecedores.Any(item => item.Id != vinculo.Id && item.Etapa == EtapaNegociacao.Contratado))

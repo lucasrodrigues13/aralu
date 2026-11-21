@@ -3267,3 +3267,45 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121231235_ContratoAssinadoDoFornecedor') THEN
+    ALTER TABLE "ContratosFornecedor" ADD "ContratoAssinadoArquivoId" uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121231235_ContratoAssinadoDoFornecedor') THEN
+    ALTER TABLE "ContratosFornecedor" ADD "ContratoAssinadoNome" character varying(260);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121231235_ContratoAssinadoDoFornecedor') THEN
+    ALTER TABLE "ContratosFornecedor" ADD "ContratoAssinadoTipoConteudo" character varying(100);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121231235_ContratoAssinadoDoFornecedor') THEN
+    INSERT INTO "ContratosFornecedor" ("Id", "ServicoId", "Pago")
+    SELECT gen_random_uuid(), s."Id", FALSE
+    FROM "ServicoEvento" s
+    WHERE s."Contratado" AND NOT EXISTS (SELECT 1 FROM "ContratosFornecedor" c WHERE c."ServicoId" = s."Id");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121231235_ContratoAssinadoDoFornecedor') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261121231235_ContratoAssinadoDoFornecedor', '10.0.4');
+    END IF;
+END $EF$;
+COMMIT;
+

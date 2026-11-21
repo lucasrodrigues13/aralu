@@ -330,12 +330,26 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         }
     }
 
-    public async Task SubstituirContratoFornecedorAsync(Guid servicoId, ContratoFornecedor contrato, CancellationToken ct)
+    public async Task GarantirContratoFornecedorAsync(Guid servicoId, CancellationToken ct)
     {
-        await banco.Set<ContratoFornecedor>().Where(item => item.ServicoId == servicoId).ExecuteDeleteAsync(ct);
-        banco.Set<ContratoFornecedor>().Add(contrato);
+        if (await banco.Set<ContratoFornecedor>().AnyAsync(item => item.ServicoId == servicoId, ct))
+        {
+            return;
+        }
+
+        banco.Set<ContratoFornecedor>().Add(new ContratoFornecedor { Id = Guid.NewGuid(), ServicoId = servicoId });
         await banco.SaveChangesAsync(ct);
     }
+
+    public Task GravarContratoAssinadoAsync(Guid servicoId, Guid? arquivoId, string? nome, string? tipoConteudo, CancellationToken ct) =>
+        banco.Set<ContratoFornecedor>()
+            .Where(item => item.ServicoId == servicoId)
+            .ExecuteUpdateAsync(
+                atualizacao => atualizacao
+                    .SetProperty(item => item.ContratoAssinadoArquivoId, arquivoId)
+                    .SetProperty(item => item.ContratoAssinadoNome, nome)
+                    .SetProperty(item => item.ContratoAssinadoTipoConteudo, tipoConteudo),
+                ct);
 
     public Task AtualizarEtapaNegociacaoAsync(
         Guid vinculoId,

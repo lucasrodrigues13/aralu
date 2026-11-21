@@ -65,6 +65,8 @@ public static class NegocioEndpoints
         api.MapPost("/eventos/{id:guid}/servicos/{servicoId:guid}/fornecedores/{vinculoId:guid}/avancar", AvancarEtapa).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/eventos/{id:guid}/servicos/{servicoId:guid}/fornecedores/{vinculoId:guid}/voltar", VoltarEtapa).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/eventos/{id:guid}/servicos/{servicoId:guid}/fornecedores/{vinculoId:guid}/contratar", ContratarFornecedor).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/eventos/{id:guid}/servicos/{servicoId:guid}/contrato-assinado", EnviarContratoAssinado).DisableAntiforgery().RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapDelete("/eventos/{id:guid}/servicos/{servicoId:guid}/contrato-assinado", ExcluirContratoAssinado).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapGet("/eventos/{id:guid}/budget", Budget).RequireAuthorization(AssistenteEndpoints.PoliticaFinanceiro);
         api.MapGet("/eventos/{id:guid}/resumo", ResumoEvento).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapGet("/eventos/{id:guid}/assistentes", AssistentesDoEvento).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
@@ -515,6 +517,35 @@ public static class NegocioEndpoints
         FornecedorServico servico,
         CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.ContratarAsync(conta, id, servicoId, vinculoId, pedido, Hoje(), ct)));
+
+    private static Task<IResult> EnviarContratoAssinado(
+        Guid id,
+        Guid servicoId,
+        HttpRequest request,
+        ClaimsPrincipal usuario,
+        FornecedorServico servico,
+        CancellationToken ct) =>
+        ComConta(usuario, async conta =>
+        {
+            const string invalido = "O arquivo não foi aceito. Use JPG, JPEG, PNG ou PDF de até 5 MB.";
+            if (!request.HasFormContentType)
+            {
+                return Falha(new Falha(Codigos.Validacao, invalido));
+            }
+
+            var formulario = await request.ReadFormAsync(ct);
+            var arquivo = formulario.Files.GetFile("arquivo");
+            if (arquivo is null || arquivo.Length == 0 || arquivo.Length > 5 * 1024 * 1024)
+            {
+                return Falha(new Falha(Codigos.Validacao, invalido));
+            }
+
+            await using var fluxo = arquivo.OpenReadStream();
+            return await De(servico.EnviarContratoAssinadoAsync(conta, id, servicoId, fluxo, arquivo.FileName, Hoje(), ct));
+        });
+
+    private static Task<IResult> ExcluirContratoAssinado(Guid id, Guid servicoId, ClaimsPrincipal usuario, FornecedorServico servico, CancellationToken ct) =>
+        ComConta(usuario, conta => De(servico.ExcluirContratoAssinadoAsync(conta, id, servicoId, Hoje(), ct)));
 
     private static Task<IResult> Budget(Guid id, ClaimsPrincipal usuario, FornecedorServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.BudgetAsync(conta, id, ct)));
