@@ -306,6 +306,57 @@ public sealed partial class ContratoFunilServico(IDados dados, IDadosContrato mo
         return await LerAposMudancaAsync(contaId, item, ct);
     }
 
+    /// <summary>
+    /// Define (ou refaz) o parcelamento do contrato na Gestão Financeira (SPEC-041). O total é o valor do orçamento
+    /// aprovado da oportunidade; "à vista" é uma parcela só. Só vale enquanto não há recebimento registrado.
+    /// </summary>
+    public async Task<Resultado<ContratoFunilLeitura>> DefinirParcelasAsync(string contaId, Guid id, PedidoParcelas pedido, CancellationToken ct)
+    {
+        var item = await dados.ObterContratoFunilAsync(contaId, id, ct);
+        if (item is null)
+        {
+            return Resultado<ContratoFunilLeitura>.Erro(Codigos.Indisponivel, "Indisponível.");
+        }
+
+        if (item.Situacao == SituacaoContratoFunil.Cancelado)
+        {
+            return Resultado<ContratoFunilLeitura>.Erro(Codigos.Validacao, "Contrato cancelado.");
+        }
+
+        if (item.Parcelas.Any(parcela => parcela.Recebimentos.Count > 0))
+        {
+            return Resultado<ContratoFunilLeitura>.Erro(Codigos.Validacao, "Já há recebimento registrado: desfaça os recebimentos antes de refazer o parcelamento.");
+        }
+
+        var aprovado = await dados.OrcamentoAprovadoDaOportunidadeAsync(contaId, item.OportunidadeId, ct);
+        if (aprovado?.Valor is not decimal total || total <= 0)
+        {
+            return Resultado<ContratoFunilLeitura>.Erro(Codigos.Validacao, "Este contrato não tem orçamento aprovado com valor para parcelar.");
+        }
+
+        var calculadas = ParcelasDosDocumentos.Gerar(total, pedido);
+        if (!calculadas.Ok)
+        {
+            return Resultado<ContratoFunilLeitura>.Erro(calculadas.Falha!.Codigo, calculadas.Falha.Mensagem);
+        }
+
+        var novas = calculadas.Valor!
+            .Select(parcela => new ParcelaContrato
+            {
+                Id = Guid.NewGuid(),
+                ContratoFunilId = item.Id,
+                Numero = parcela.Numero,
+                Vencimento = parcela.Vencimento,
+                Valor = parcela.Valor,
+                Entrada = parcela.Entrada,
+            })
+            .ToArray();
+        await dados.SubstituirParcelasContratoAsync(item.Id, novas, ct);
+        item.Parcelas.Clear();
+        item.Parcelas.AddRange(novas);
+        return await LerAposMudancaAsync(contaId, item, ct);
+    }
+
     /// <summary>Desfaz o último recebimento da parcela.</summary>
     public async Task<Resultado<ContratoFunilLeitura>> DesfazerRecebimentoAsync(
         string contaId,

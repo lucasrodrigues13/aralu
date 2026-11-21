@@ -38,7 +38,7 @@ Usuário autenticado (SPEC-001). Para parcelar o orçamento: valor do orçamento
 
 1. Ao criar o contrato do funil, o sistema procura o **orçamento aprovado** da oportunidade (o mais recente com resposta Aceitar, não cancelado) e **copia** suas parcelas para o contrato. Sem orçamento aprovado ou sem parcelas, o contrato nasce sem parcelas.
 2. A leitura do contrato traz as parcelas, o **valor total** (soma), o **recebido** e o **saldo**. A leitura de um contrato só traz também o telefone do contato e a chave Pix, que o "Cobrar" usa.
-3. **Cobrar** (texto muda se é lembrete, se vence hoje ou se atrasou, e leva a chave Pix; sem chave no Perfil, o modal pede), **Recebi** (valor parcial, forma, data; não passa do saldo) e **Desfazer último recebimento** seguem a SPEC-029 §6.2 e §6.3, agora no diálogo **Parcelas do contrato**, aberto pelo ícone de pagamentos na tela Contratos (funil). Endpoints: `POST /contratos-funil/{id}/parcelas/{parcelaId}/recebimentos` e `DELETE .../recebimentos/ultimo`.
+3. **Cobrar** (texto muda se é lembrete, se vence hoje ou se atrasou, e leva a chave Pix; sem chave no Perfil, o modal pede), **Recebi** (valor parcial, forma, data; não passa do saldo) e **Desfazer último recebimento** seguem a SPEC-029 §6.2 e §6.3, agora no diálogo **Parcelas do contrato**, aberto da Gestão Financeira ([SPEC-041](041-gestao-financeira.md); no card #41 abria da tela Contratos do funil). Endpoints: `POST /contratos-funil/{id}/parcelas/{parcelaId}/recebimentos` e `DELETE .../recebimentos/ultimo`.
 4. Contrato cancelado não recebe.
 
 ### 6.3. Contrato com o fornecedor (`ContratoFornecedor`, `ParcelaContratoFornecedor`)
@@ -110,9 +110,9 @@ Card #41. SPEC-018, SPEC-025, SPEC-022, SPEC-029, SPEC-007 (Hoje). Quem usa depo
 
 Decididos nesta entrega pela opção mais simples e conservadora (a conferir pelo dono):
 
-1. **Onde ficam Cobrar e Recebi.** O card diz que mudam, sem dizer a tela. Ficam num diálogo na tela Contratos (funil), até o card #32 criar a Gestão Financeira.
+1. **Onde ficam Cobrar e Recebi.** O card diz que mudam, sem dizer a tela. Ficavam num diálogo na tela Contratos (funil), até o card #32 criar a Gestão Financeira. **Atualizado no card #32 ([SPEC-041](041-gestao-financeira.md)): o diálogo foi para a Gestão Financeira e saiu da tela Contratos.**
 2. **O que é "orçamento aprovado".** O orçamento com resposta Aceitar (pelo link ou registrada pela organizadora), não cancelado, o mais recente. Respondido "sem corpo" (marcação antiga) não conta.
-3. **Parcela só do orçamento ao gerar o contrato.** Não há edição das parcelas direto no contrato; muda-se o orçamento e gera-se um contrato novo.
+3. **Parcela só do orçamento ao gerar o contrato.** Não havia edição das parcelas direto no contrato; mudava-se o orçamento e gerava-se um contrato novo. **Atualizado no card #32 (SPEC-041 §17.2): a Gestão Financeira define ou refaz o parcelamento do contrato, só sem recebimento registrado, sobre o valor do orçamento aprovado.**
 4. **Quais contratos cobram.** Todo contrato não cancelado (assinado ou não), para a organizadora poder registrar o que o cliente pagou sem depender do botão Assinar.
 5. **ContratoFornecedor mínimo.** Só `Id` e o serviço (único); o arquivo do contrato assinado e o comprovante por parcela entram com os cards #28 e #31, que têm migration própria.
 6. **Evento.ValorContrato saiu.** Só servia às parcelas do casal.

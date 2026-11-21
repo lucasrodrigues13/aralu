@@ -15,7 +15,7 @@ import { ChavePixDialog, ReceberDialog } from '../dinheiro/dinheiro.dialogs';
 
 /**
  * Parcelas do contrato com o cliente (SPEC-040): cobrar pelo WhatsApp, registrar o que o cliente pagou
- * ("Recebi", aceita valor parcial) e desfazer o último recebimento. Antes isso ficava na aba Dinheiro do evento.
+ * ("Recebi", aceita valor parcial) e desfazer o último recebimento. Aberto da Gestão Financeira (SPEC-041); antes ficava na tela Contratos do funil e, antes, na aba Dinheiro do evento.
  */
 @Component({
   selector: 'app-parcelas-contrato-dialog',

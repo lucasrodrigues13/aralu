@@ -52,7 +52,7 @@ export const routes: Routes = [
       { path: 'tarefas', loadComponent: () => import('./pages/tarefas/tarefas.page').then((m) => m.TarefasPage) },
       { path: 'clientes', loadComponent: () => import('./pages/clientes/clientes.page').then((m) => m.ClientesPage) },
       { path: 'convidados', redirectTo: 'eventos', pathMatch: 'full' },
-      { path: 'pagamentos', canActivate: [financeiroGuard], loadComponent: () => import('./pages/dinheiro/pagamentos.page').then((m) => m.PagamentosPage) },
+      { path: 'gestao-financeira', canActivate: [financeiroGuard], loadComponent: () => import('./pages/gestao-financeira/gestao-financeira.page').then((m) => m.GestaoFinanceiraPage) },
       { path: 'assistentes', canActivate: [donaGuard], loadComponent: () => import('./pages/assistentes/assistentes.page').then((m) => m.AssistentesPage) },
       { path: 'sem-acesso', loadComponent: () => import('./pages/atalhos/sem-acesso.page').then((m) => m.SemAcessoPage) },
       { path: 'anexos', loadComponent: () => import('./pages/atalhos/em-breve.page').then((m) => m.EmBrevePage) },

@@ -43,7 +43,7 @@ Legenda de "Banco": **M** = migration (entra na fila do banco), **—** = sem mi
 | 2 | Limpeza do legado (sem card) | #22, #36 | M | banco, convites, contratos | pronto no branch `claude/limpeza-legado-d2d8b3` (SPEC-036, migration `LimpezaDoLegado`); juntar na main; integração só ao fim das ondas |
 | 2 | #46 Endereço estruturado no Perfil | #45 (fila do banco) | M | perfil | pronto no branch `claude/card-46-perfil-29d6b2` (SPEC-038, migration `EnderecoEstruturadoDoPerfil`; texto antigo do endereço apagado); juntar na main; integração só ao fim das ondas |
 | 3 | #41 Banco de parcelas por documento | #21, #45, #46 (fila do banco) | M | Dinheiro, Contratos, Fornecedores, Hoje | pronto no branch `claude/card-41-parcelas-296365` (SPEC-040, migration `ParcelasPorDocumento`; `ParcelaCasal` e `ParcelaServico` apagadas, dados perdidos); juntar na main; integração só ao fim das ondas |
-| 4 | #32 Gestão Financeira: mover Pagamentos | #41 | ? | casca, pagamentos, contratos | pendente |
+| 4 | #32 Gestão Financeira: mover Pagamentos | #41 | — | casca, pagamentos, contratos | pronto no branch `claude/card-32-gestao-24c71c` (SPEC-041, sem migration; tela Pagamentos e `GET /pagamentos` apagados; `PUT /contratos-funil/{id}/parcelas` novo); juntar na main; integração só ao fim das ondas |
 | 4 | #31 Dinheiro do evento: pagamentos a fornecedores | #32, #41 | M | evento-dinheiro | pendente |
 | 4 | #28 Contratar fornecedor, anexar contrato | #31, #41 | M | evento-fornecedores | pendente |
 | 4 | #34 Link do casal: financeiro do evento | #31, #28 | M | link público, evento | pendente |

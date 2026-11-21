@@ -56,7 +56,7 @@ Sempre visíveis: **Contrato**, **Recebido** e **Saldo**. Saldo = valor do contr
 
 ### 6.5. Pagamentos a fornecedores
 
-Continuam os da SPEC-018 (parcelas do serviço). Nesta aba aparecem por mês e por fornecedor no evento. A lista de **todos os eventos** fica numa tela Pagamentos da conta (RF-097).
+Continuam os da SPEC-018 (parcelas do serviço). Nesta aba aparecem por mês e por fornecedor no evento. ~~A lista de todos os eventos ficava numa tela Pagamentos da conta (RF-097).~~ **Saiu no card #32 ([SPEC-041](041-gestao-financeira.md)):** a tela e `GET /api/v1/pagamentos` não existem mais; o menu Principal tem a Gestão Financeira, só com contratos de clientes.
 
 ### 6.6. Despesas, comprovantes e budget
 

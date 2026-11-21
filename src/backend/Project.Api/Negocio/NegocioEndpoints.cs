@@ -145,6 +145,7 @@ public static class NegocioEndpoints
         api.MapPost("/contratos-funil/{id:guid}/cancelar", CancelarContratoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/contratos-funil/{id:guid}/parcelas/{parcelaId:guid}/recebimentos", ReceberParcelaContratoFunil).RequireAuthorization(AssistenteEndpoints.PoliticaFinanceiro);
         api.MapDelete("/contratos-funil/{id:guid}/parcelas/{parcelaId:guid}/recebimentos/ultimo", DesfazerRecebimentoContratoFunil).RequireAuthorization(AssistenteEndpoints.PoliticaFinanceiro);
+        api.MapPut("/contratos-funil/{id:guid}/parcelas", DefinirParcelasContratoFunil).RequireAuthorization(AssistenteEndpoints.PoliticaFinanceiro);
         api.MapDelete("/contratos-funil/{id:guid}", ExcluirContratoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
 
         api.MapGet("/orcamentos-funil/parametros", () => Results.Ok(ParametrosOrcamento.Lista)).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
@@ -1336,6 +1337,9 @@ public static class NegocioEndpoints
 
     private static Task<IResult> DesfazerRecebimentoContratoFunil(Guid id, Guid parcelaId, ClaimsPrincipal usuario, ContratoFunilServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.DesfazerRecebimentoAsync(conta, id, parcelaId, ct)));
+
+    private static Task<IResult> DefinirParcelasContratoFunil(Guid id, PedidoParcelas pedido, ClaimsPrincipal usuario, ContratoFunilServico servico, CancellationToken ct) =>
+        ComConta(usuario, conta => De(servico.DefinirParcelasAsync(conta, id, pedido, ct)));
 
     private static Task<IResult> DefinirParcelasOrcamentoFunil(Guid id, PedidoParcelas pedido, ClaimsPrincipal usuario, OrcamentoFunilServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.DefinirParcelasAsync(conta, id, pedido, ct)));

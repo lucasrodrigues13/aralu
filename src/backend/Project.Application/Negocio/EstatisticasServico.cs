@@ -15,7 +15,6 @@ public sealed record RankingServico(int Posicao, string Servico, int Quantidade)
 public sealed record ResumoEstatisticas(
     int TarefasSemana,
     int AniversariosHoje,
-    string RotuloPagamentos,
     string RotuloTarefas,
     string RotuloAnexos,
     string RotuloEquipe,
@@ -98,7 +97,6 @@ public sealed class EstatisticasServico(IDados dados)
         var resumo = new ResumoEstatisticas(
             tarefasSemana,
             0,
-            "Pagamentos",
             "Tarefas",
             "Anexos",
             "Equipe escalada",

@@ -154,7 +154,7 @@ function lerPulados(): string[] {
           </mat-card>
         </a>
         @if (auth.podeVerFinanceiro()) {
-        <a class="block no-underline" routerLink="/pagamentos">
+        <a class="block no-underline" routerLink="/eventos">
           <mat-card class="shadow-none text-center mb-0! h-full bg-light-success card-hover">
             <mat-card-content>
               <mat-icon class="text-success">payments</mat-icon>
@@ -201,7 +201,7 @@ function lerPulados(): string[] {
                   <tbody>
                     @for (item of d.cobrancas; track $index) {
                       <tr>
-                        <td><a routerLink="/contratos-funil">{{ item.oportunidade }}</a></td>
+                        <td><a routerLink="/gestao-financeira">{{ item.oportunidade }}</a></td>
                         <td>{{ item.parcela }}<span class="block text-xs text-muted">{{ item.vencimento | gdData }}</span></td>
                         <td class="text-end!"><span class="valor">{{ item.saldo | gdDinheiro }}</span></td>
                         <td class="text-end!">

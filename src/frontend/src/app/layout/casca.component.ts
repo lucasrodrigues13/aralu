@@ -166,7 +166,7 @@ function telaEstreita(): boolean {
       <a routerLink="/eventos" routerLinkActive="ativo"><mat-icon>celebration</mat-icon>Eventos</a>
       <button type="button" class="novo" (click)="novoEvento()" aria-label="Novo evento"><mat-icon>add</mat-icon></button>
       @if (auth.podeVerFinanceiro()) {
-        <a routerLink="/pagamentos" routerLinkActive="ativo"><mat-icon>payments</mat-icon>Dinheiro</a>
+        <a routerLink="/gestao-financeira" routerLinkActive="ativo"><mat-icon>payments</mat-icon>Financeiro</a>
       }
       <button type="button" (click)="menuAberto.set(true)" aria-label="Mais opções"><mat-icon>menu</mat-icon>Mais</button>
     </nav>
@@ -192,6 +192,7 @@ export class CascaComponent {
         { rotulo: 'Hoje', icone: 'today', rota: '/hoje' },
         { rotulo: 'Perfil', icone: 'apartment', rota: '/perfil', soDona: true },
         { rotulo: 'Assistentes', icone: 'support_agent', rota: '/assistentes', soDona: true },
+        { rotulo: 'Gestão Financeira', icone: 'account_balance_wallet', rota: '/gestao-financeira', financeiro: true },
       ],
     },
     {
@@ -201,7 +202,6 @@ export class CascaComponent {
         { rotulo: 'Tarefas', icone: 'task_alt', rota: '/tarefas' },
         { rotulo: 'Clientes', icone: 'group', rota: '/clientes' },
         { rotulo: 'Serviços e fornecedores', icone: 'storefront', rota: '/fornecedores' },
-        { rotulo: 'Pagamentos', icone: 'payments', rota: '/pagamentos', financeiro: true },
       ],
     },
     {

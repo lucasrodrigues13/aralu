@@ -117,7 +117,6 @@ export interface EstatisticasEventos {
   resumo: {
     tarefasSemana: number;
     aniversariosHoje: number;
-    rotuloPagamentos: string;
     rotuloTarefas: string;
     rotuloAnexos: string;
     rotuloEquipe: string;
@@ -1153,6 +1152,11 @@ export class NegocioClient {
 
   desfazerRecebimentoContratoFunil(id: string, parcelaId: string) {
     return this.http.delete<ContratoFunil>(`${this.base}/api/v1/contratos-funil/${id}/parcelas/${parcelaId}/recebimentos/ultimo`);
+  }
+
+  /** Define ou refaz o parcelamento do contrato (Gestão Financeira, SPEC-041); 1 parcela = à vista. */
+  definirParcelasContratoFunil(id: string, pedido: PedidoParcelas) {
+    return this.http.put<ContratoFunil>(`${this.base}/api/v1/contratos-funil/${id}/parcelas`, pedido);
   }
 
   definirParcelasOrcamentoFunil(id: string, pedido: PedidoParcelas) {

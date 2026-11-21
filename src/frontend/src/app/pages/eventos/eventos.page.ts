@@ -33,16 +33,7 @@ import { NovoEventoDialog } from './novo-evento.dialog';
   imports: [ReactiveFormsModule, RouterLink, MatButtonModule, MatButtonToggleModule, MatCardModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, MatTableModule, CampoDataComponent, GdDataPipe],
   template: `
     @if (estatisticas(); as stats) {
-      <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-6 mb-6">
-        <a routerLink="/pagamentos" class="no-underline">
-          <mat-card class="shadow-none text-center mb-0! bg-light-primary card-hover">
-            <mat-card-content>
-              <mat-icon class="text-primary">payments</mat-icon>
-              <h4 class="text-sm font-semibold text-primary mt-2!">{{ stats.resumo.rotuloPagamentos }}</h4>
-              <h6 class="text-xl font-semibold text-primary mt-2!">—</h6>
-            </mat-card-content>
-          </mat-card>
-        </a>
+      <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 mb-6">
         <a routerLink="/tarefas" [queryParams]="{ semana: 1 }" class="no-underline">
           <mat-card class="shadow-none text-center mb-0! bg-light-warning card-hover">
             <mat-card-content>
