@@ -88,6 +88,14 @@ public static class Mapa
         modelBuilder.Entity<VinculoCliente>().HasOne<Cliente>().WithMany(cliente => cliente.Vinculos).HasForeignKey(vinculo => vinculo.ClienteId).OnDelete(DeleteBehavior.Cascade);
         modelBuilder.Entity<VinculoCliente>().HasOne<Evento>().WithMany().HasForeignKey(vinculo => vinculo.EventoId).OnDelete(DeleteBehavior.Cascade);
 
+        var linkCasal = modelBuilder.Entity<LinkCasal>();
+        linkCasal.ToTable("LinksCasal");
+        linkCasal.Property(item => item.ContaId).HasMaxLength(450);
+        linkCasal.Property(item => item.Token).HasMaxLength(64);
+        linkCasal.HasIndex(item => item.Token).IsUnique();
+        linkCasal.HasIndex(item => item.EventoId).IsUnique();
+        linkCasal.HasOne<Evento>().WithMany().HasForeignKey(item => item.EventoId).OnDelete(DeleteBehavior.Cascade);
+
         modelBuilder.Entity<Convite>().HasIndex(convite => convite.Token).IsUnique();
         modelBuilder.Entity<Convite>().HasOne<Evento>().WithMany().HasForeignKey(convite => convite.EventoId).OnDelete(DeleteBehavior.Cascade);
         modelBuilder.Entity<Convite>().HasMany(convite => convite.Convidados).WithOne().HasForeignKey(convidado => convidado.ConviteId).OnDelete(DeleteBehavior.Cascade);

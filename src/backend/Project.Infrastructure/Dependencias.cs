@@ -54,6 +54,8 @@ public static class Dependencias
         services.AddScoped<PainelServico>();
         services.AddScoped<IDadosDinheiro, DadosDinheiroEf>();
         services.AddScoped<DinheiroServico>();
+        services.AddScoped<IDadosLinkCasal, DadosLinkCasalEf>();
+        services.AddScoped<LinkCasalServico>();
         services.AddScoped<IDadosContrato, DadosContratoEf>();
         services.AddScoped<ContratoServico>();
         services.AddScoped<IDadosHoje, DadosHojeEf>();

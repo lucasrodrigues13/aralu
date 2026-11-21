@@ -21,6 +21,7 @@ import { ClienteFormDialog } from '../clientes/cliente-form.dialog';
 import { EventoAbasComponent } from './evento-abas.component';
 import { AplicarModeloDialog } from './aplicar-modelo.dialog';
 import { EventoFormPage } from './evento-form.page';
+import { LinkCasalDialog } from './link-casal.dialog';
 import { SalvarComoModeloDialog } from './salvar-como-modelo.dialog';
 
 /** Clientes do evento: vincular existente, cadastrar novo ou desvincular. */
@@ -170,6 +171,9 @@ export class ClientesEventoDialog implements OnInit {
               <mat-menu #mais="matMenu" xPosition="before" class="cardWithShadow">
                 @if (foto()) {
                   <button mat-menu-item type="button" (click)="removerFoto()"><mat-icon>hide_image</mat-icon> Remover foto</button>
+                }
+                @if (!auth.ehAssistente()) {
+                  <button mat-menu-item type="button" (click)="linkDoCasal()"><mat-icon>link</mat-icon> Link do casal</button>
                 }
                 @if (atual.situacao === 'EmAndamento') {
                   <button mat-menu-item type="button" (click)="aplicarModelo()"><mat-icon>playlist_add</mat-icon> Aplicar modelo</button>
@@ -413,6 +417,10 @@ export class EventoHomePage implements OnInit, OnDestroy {
     }).afterClosed().subscribe((ok) => {
       if (ok) this.recarregar();
     });
+  }
+
+  protected linkDoCasal(): void {
+    this.dialog.open(LinkCasalDialog, { ...DIALOG, data: { eventoId: this.id } });
   }
 
   protected salvarComoModelo(): void {

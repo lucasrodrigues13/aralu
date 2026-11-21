@@ -4,6 +4,7 @@ import { adminGuard, authGuard, donaGuard, financeiroGuard } from './core/auth.g
 export const routes: Routes = [
   { path: 'rsvp/:token', loadComponent: () => import('./pages/rsvp/rsvp.page').then((m) => m.RsvpPage) },
   { path: 'proposta/:token', loadComponent: () => import('./pages/proposta-publica/proposta-publica.page').then((m) => m.PropostaPublicaPage) },
+  { path: 'casal/:token', loadComponent: () => import('./pages/casal/casal.page').then((m) => m.CasalPage) },
   {
     path: 'lead/:contaId',
     loadComponent: () => import('./pages/lead-publico/lead-publico.page').then((m) => m.LeadPublicoPage),

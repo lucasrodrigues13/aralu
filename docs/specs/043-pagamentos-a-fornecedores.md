@@ -22,7 +22,7 @@ RF-068 (parcelas a fornecedores), RF-096 (comprovantes; a parte de despesas avul
 | Assistant | Só com "pode ver o financeiro" e, se restrita, nos eventos liberados (SPEC-032), como já era. |
 | Outra conta | Não vê (404). |
 
-O casal marcar como pago e subir comprovante pelo link é o card #34, sobre esta estrutura.
+O casal marcar como pago e subir comprovante pelo link é o card #34, sobre esta estrutura (feito na [SPEC-046](046-link-do-casal-financeiro.md); a leitura do pagamento ganhou `contratoAssinado`).
 
 ## 5. Pré-condições
 

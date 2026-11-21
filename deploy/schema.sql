@@ -3309,3 +3309,44 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121232747_LinkDoCasal') THEN
+    CREATE TABLE "LinksCasal" (
+        "Id" uuid NOT NULL,
+        "EventoId" uuid NOT NULL,
+        "ContaId" character varying(450) NOT NULL,
+        "Token" character varying(64) NOT NULL,
+        "FinanceiroLiberado" boolean NOT NULL,
+        "CriadoEm" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_LinksCasal" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_LinksCasal_Eventos_EventoId" FOREIGN KEY ("EventoId") REFERENCES "Eventos" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121232747_LinkDoCasal') THEN
+    CREATE UNIQUE INDEX "IX_LinksCasal_EventoId" ON "LinksCasal" ("EventoId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121232747_LinkDoCasal') THEN
+    CREATE UNIQUE INDEX "IX_LinksCasal_Token" ON "LinksCasal" ("Token");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121232747_LinkDoCasal') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261121232747_LinkDoCasal', '10.0.4');
+    END IF;
+END $EF$;
+COMMIT;
+

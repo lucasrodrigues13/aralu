@@ -29,7 +29,8 @@ public sealed record PagamentoFornecedorLeitura(
     DateOnly? PagoEm,
     DateOnly? Vencimento,
     ComprovantePagamentoLeitura? Comprovante,
-    IReadOnlyList<ParcelaPagamentoLeitura> Parcelas);
+    IReadOnlyList<ParcelaPagamentoLeitura> Parcelas,
+    ComprovantePagamentoLeitura? ContratoAssinado = null);
 
 /// <summary>Dinheiro do evento (SPEC-043): só os pagamentos a fornecedores. O que o cliente paga está no contrato (SPEC-040).</summary>
 public sealed record DinheiroEventoLeitura(
