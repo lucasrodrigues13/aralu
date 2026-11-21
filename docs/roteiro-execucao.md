@@ -10,7 +10,7 @@ Criado em 21/11/2026. Diz **em que ordem** e **com que paralelismo** implementar
 4. **Paralelo só em worktree próprio e com arquivos diferentes.** Dois cards que editam a mesma tela não rodam juntos (ver a coluna "Mexe em" da seção 3).
 5. **Testes e build só quando o card toca código** ([CLAUDE.md](../CLAUDE.md)). Card só de documentação não roda testes nem build.
 6. **Commits na `main` estão liberados** enquanto o produto não vai para produção. **Sem push e sem PR** sem pedido do dono do projeto. Com worktrees paralelos, quem junta os branches é o dono do projeto.
-7. **Não apagar colunas nem tabelas do banco**, exceto onde o card diz que pode (#41, que aceita perder os dados de `ParcelaCasal`).
+7. **Funcionalidade removida sai também do banco e da API** (decidido em 21/11/2026): tabelas, colunas, endpoints, DTOs e testes da funcionalidade removida são apagados na mesma entrega, por migration, mesmo que isso perca dados. A 1.0 não pode ter legado sem uso: depois do lançamento só entram melhorias e funcionalidades novas. Apague só o que foi combinado remover; na dúvida, pergunte.
 8. Nunca renumerar RF. O próximo RF livre é o RF-110 (confira em [requirements.md](requirements.md)).
 
 ## 2. Definição de pronto (igual para todo card)
