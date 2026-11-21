@@ -1,6 +1,6 @@
 # 018. Serviços e fornecedores
 
-**Status: aprovada.** O código segue esta spec. Fonte: [inventario-referencia.md](../inventario-referencia.md) §1.9, §1.10, §1.11, §1.12 e §1.13. Catálogo de modelos de serviço do funil permanece na SPEC-026.
+**Status: aprovada (revisão do card #27: busca e "Cadastrar novo serviço" no seletor de serviços do fornecedor).** O código segue esta spec. Fonte: [inventario-referencia.md](../inventario-referencia.md) §1.9, §1.10, §1.11, §1.12 e §1.13. Catálogo de modelos de serviço do funil permanece na SPEC-026.
 
 ## 1. Identificador e nome
 
@@ -38,6 +38,7 @@ Conta autenticada, SPEC-001. Para ações no evento: evento da mesma conta, SPEC
 1. O Organizer abre Serviços e Fornecedores.
 2. No catálogo, vê fornecedores com nome, serviços oferecidos e situação do cadastro (completo ou incompleto).
 3. Cria ou edita fornecedor no formulário de oito abas (seção 11) e salva. Nome e serviços são obrigatórios.
+3a. No campo Serviços do formulário (seleção múltipla), o Organizer pode marcar quantos serviços quiser. Ao abrir a lista, vê um campo de busca no topo que filtra as opções pelo nome (sem diferenciar maiúsculas e acentos) e, na lista, a opção "Cadastrar novo serviço". Ao escolhê-la, informa só o nome; o serviço é criado na conta e já fica marcado no fornecedor, sem fechar o formulário nem perder o que já foi preenchido. A lista de serviços da conta (item 4) segue disponível.
 4. Na lista de serviços da conta, vê nomes (alguns podem ser Padrão) e pode adicionar serviço com nome.
 5. Pode buscar, filtrar e excluir fornecedor ou serviço da conta, com confirmação na exclusão.
 
@@ -70,6 +71,8 @@ Conta autenticada, SPEC-001. Para ações no evento: evento da mesma conta, SPEC
 - No evento, cada serviço tem fornecedores, tarefas e valores; a home compara estimado e contratado. RF-058.
 - Etapas de negociação: Orçamento e Contratado. Solicitar contrato é ação do contratado, não uma terceira etapa. RF-059.
 - Planejamento de budget: Budget = estimado do evento; Estimado = soma dos estimados dos serviços; Contratado = soma dos contratados; Prova real = Estimado + Contratado; custo por convidado = (Estimado + Contratado) / convidados estimados quando houver convidados. Inventário §1.9.
+- Serviço da conta tem só o nome. Criar serviço com nome já existente na conta devolve o existente, sem duplicar (comportamento atual da API). Cadastrar novo serviço pelo formulário do fornecedor usa a mesma regra e marca o serviço devolvido.
+- A busca do seletor de serviços só filtra as opções exibidas; serviços já marcados continuam marcados mesmo quando o filtro os esconde.
 - Subitens detalham o serviço; com subitens, o estimado do serviço é a soma deles.
 - Parcelas do contratado seguem RF-068 / inventário §1.12.
 - Isolamento por conta. Catálogo `/funnel/models/service` é outro módulo (SPEC-026).
@@ -129,7 +132,7 @@ Valor estimado do serviço; subitem (descrição, quantidade, valor unitário, t
 
 Catálogo `/suppliers` (ou equivalente): lista, busca, filtros, contagens, abas de solicitação de dados e lista de serviços.
 
-Formulário de fornecedor com oito abas e Salvar.
+Formulário de fornecedor com oito abas e Salvar. No campo Serviços da aba Dados: campo "Buscar serviço" no topo da lista (mesmo padrão do seletor de Banco), nenhuma opção encontrada mostra "Nenhum serviço encontrado", e a opção "Cadastrar novo serviço" fica sempre visível ao final da lista, abrindo um pequeno diálogo com o campo Nome.
 
 Aba Fornecedores do evento: tabela Serviço / Fornecedor / Etapa / Valor / Ações, botão Adicionar fornecedor acima da tabela (modal que vincula um fornecedor do cadastro a um serviço do evento) e filtros à direita.
 
@@ -146,6 +149,7 @@ Campo inválido permanece no formulário. Falha ao salvar mantém o anterior. Re
 1. O Organizer cria fornecedor com nome e serviço; sem um dos dois, não grava.
 2. O formulário expõe as oito abas e grava os campos da seção 11.
 3. A lista de serviços da conta permite criar serviço por nome.
+3a. O fornecedor aceita mais de um serviço. No campo Serviços do formulário, a busca filtra as opções pelo nome e "Cadastrar novo serviço" cria o serviço só com nome e o deixa marcado no fornecedor, sem perder os dados já digitados.
 4. No evento, o fornecedor entra em Orçamento, vai a Contratado e pode voltar para Orçamento.
 5. Contratar define a etapa Contratado; o hub aceita valor e geração de parcelas.
 6. Planejamento de budget mostra Budget, Estimado, Contratado, prova real e permite editar estimado e subitens; com subitens, o estimado do serviço é a soma deles.
@@ -155,7 +159,7 @@ Campo inválido permanece no formulário. Falha ao salvar mantém o anterior. Re
 
 ## 15. Cenários de teste
 
-Criar fornecedor "Banda Teste" com serviço Banda. Adicionar ao evento em Orçamento, contratar com valor e parcelas, voltar para Orçamento e contratar de novo. Editar estimado e um subitem no budget. Criar serviço personalizado na conta e marcar no evento. Conta B não vê o fornecedor. Tentar gravar fornecedor sem nome: falha.
+Criar fornecedor "Banda Teste" com serviço Banda. Adicionar ao evento em Orçamento, contratar com valor e parcelas, voltar para Orçamento e contratar de novo. Editar estimado e um subitem no budget. Criar serviço personalizado na conta e marcar no evento. Conta B não vê o fornecedor. No formulário de um fornecedor novo, buscar "ban" mostra só serviços com esse trecho; escolher "Cadastrar novo serviço", digitar "Fotografia" e confirmar deixa Fotografia marcado junto dos já marcados; repetir o nome não cria duplicata. Tentar gravar fornecedor sem nome: falha.
 
 ## 16. Dependências
 

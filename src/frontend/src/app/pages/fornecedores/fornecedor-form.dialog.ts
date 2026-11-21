@@ -1,10 +1,10 @@
 import { HttpBackend, HttpClient } from '@angular/common/http';
-import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -14,7 +14,9 @@ import { mensagemDeErro } from '../../core/mensagem-erro';
 import { Fornecedor, NegocioClient, ServicoConta } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { CampoDinheiroComponent } from '../../shared/campo-dinheiro';
-import { DIALOG_LARGO } from '../../shared/dialog';
+import { DIALOG_LARGO, DIALOG_PEQUENO } from '../../shared/dialog';
+import { NOVO_SERVICO, incluirServico, marcarServico, normalizarBusca, servicoCombina } from './busca-servico';
+import { NovoServicoDialog } from './novo-servico.dialog';
 import { MascaraDirective } from '../../shared/mascara.directive';
 import { TipoMascara, aplicarMascara } from '../../shared/mascaras';
 
@@ -54,10 +56,26 @@ export const DIALOG_FORNECEDOR = DIALOG_LARGO;
                 <div class="campo">
                   <mat-label class="font-semibold mb-2 block">Serviços</mat-label>
                   <mat-form-field appearance="outline" class="w-full">
-                  <mat-select [attr.aria-label]="'Serviços'" formControlName="servicoContaIds" multiple>
+                  <mat-select [attr.aria-label]="'Serviços'" formControlName="servicoContaIds" multiple (openedChange)="aoAbrirServicos($event, buscaServico)" (selectionChange)="aoMudarServicos($event.value)">
+                    <mat-option class="opcao-busca" disabled>
+                      <input
+                        #buscaServico
+                        class="input-busca"
+                        placeholder="Buscar serviço"
+                        aria-label="Buscar serviço"
+                        [value]="termoServico()"
+                        (input)="filtrarServico($event)"
+                        (keydown)="$event.stopPropagation()"
+                        (click)="$event.stopPropagation()"
+                      />
+                    </mat-option>
                     @for (servico of servicos(); track servico.id) {
-                      <mat-option [value]="servico.id">{{ servico.nome }}</mat-option>
+                      <mat-option [value]="servico.id" [class.oculta]="!servicoCombina(servico, termoServico())">{{ servico.nome }}</mat-option>
                     }
+                    @if (nenhumServico()) {
+                      <mat-option disabled>Nenhum serviço encontrado</mat-option>
+                    }
+                    <mat-option [value]="novoServico">Cadastrar novo serviço</mat-option>
                   </mat-select>
                 </mat-form-field>
                 </div>
@@ -343,6 +361,7 @@ export const DIALOG_FORNECEDOR = DIALOG_LARGO;
     }
     .linha.email { grid-template-columns: minmax(0, 1fr) auto; }
     .linha.orcamento { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto auto; }
+    :host ::ng-deep .oculta { display: none; }
     .acao { align-self: flex-start; justify-self: start; }
     .full { width: 100%; }
     @media (max-width: 720px) {
@@ -356,12 +375,20 @@ export const DIALOG_FORNECEDOR = DIALOG_LARGO;
 export class FornecedorFormDialog implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly negocio = inject(NegocioClient);
+  private readonly dialog = inject(MatDialog);
   private readonly toast = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly http = new HttpClient(inject(HttpBackend));
   protected readonly dados = inject<Fornecedor | null>(MAT_DIALOG_DATA);
   protected readonly ref = inject(MatDialogRef<FornecedorFormDialog, boolean>);
   protected readonly servicos = signal<ServicoConta[]>([]);
+  protected readonly termoServico = signal('');
+  protected readonly novoServico = NOVO_SERVICO;
+  protected readonly servicoCombina = servicoCombina;
+  protected readonly nenhumServico = computed(() => {
+    const lista = this.servicos();
+    return lista.length > 0 && !lista.some((servico) => servicoCombina(servico, this.termoServico()));
+  });
   protected readonly bancos = signal<BancoBrasil[]>([]);
   protected readonly termoBanco = signal('');
   protected readonly carregandoBancos = signal(true);
@@ -454,6 +481,34 @@ export class FornecedorFormDialog implements OnInit {
         visivelClientes: [orc.visivelClientes],
       }));
     }
+  }
+
+  protected filtrarServico(evento: Event): void {
+    this.termoServico.set((evento.target as HTMLInputElement).value);
+  }
+
+  protected aoAbrirServicos(aberto: boolean, campo: HTMLInputElement): void {
+    if (!aberto) {
+      return;
+    }
+    this.termoServico.set('');
+    campo.value = '';
+    setTimeout(() => campo.focus());
+  }
+
+  protected aoMudarServicos(valor: string[]): void {
+    if (!valor.includes(NOVO_SERVICO)) {
+      return;
+    }
+    this.form.controls.servicoContaIds.setValue(valor.filter((id) => id !== NOVO_SERVICO));
+    this.dialog.open(NovoServicoDialog, DIALOG_PEQUENO).afterClosed().subscribe((servico?: ServicoConta) => {
+      if (!servico) {
+        return;
+      }
+      this.servicos.update((lista) => incluirServico(lista, servico));
+      const controle = this.form.controls.servicoContaIds;
+      controle.setValue(marcarServico(controle.value ?? [], servico.id));
+    });
   }
 
   protected opcoesTipoConta(): string[] {
@@ -682,8 +737,4 @@ function compararBancos(a: BancoBrasil, b: BancoBrasil): number {
     return -1;
   }
   return a.code - b.code || (a.fullName || '').localeCompare(b.fullName || '', 'pt');
-}
-
-function normalizarBusca(valor: string): string {
-  return valor.trim().toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
 }
