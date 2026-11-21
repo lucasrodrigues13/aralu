@@ -1,6 +1,6 @@
 # 010. Convites e convidados completo
 
-**Status: aprovada.** O código segue esta spec, inclusive a revisão do card #22 (seção 18). Incremento sobre a SPEC-004. Fonte observada: [inventario-referencia.md](../inventario-referencia.md) §2. O telefone do convite é escolha deste produto: aponta para o convidado principal.
+**Status: aprovada.** O código segue esta spec, inclusive a revisão do card #22 (seção 18). **Grupos de convite, transfer e a coluna "Grupo do convite" da planilha foram removidos de vez, inclusive do banco e da API (SPEC-036, 21/11/2026); o modelo de planilha tem 10 colunas.** As menções a grupo e transfer abaixo são histórico e não valem. Incremento sobre a SPEC-004. Fonte observada: [inventario-referencia.md](../inventario-referencia.md) §2. O telefone do convite é escolha deste produto: aponta para o convidado principal.
 
 ## 1. Identificador e nome
 
@@ -107,6 +107,6 @@ Muda: a aba Convidados perde os cards Totais (faixa e custo), Transfer do evento
 Decisões do dono do projeto:
 
 1. **Usa transfer no convite.** Retirado do modal de convite junto com o card Transfer.
-2. **Grupos suspensos (decisão posterior do dono).** Nesta fase não há grupo em lugar nenhum da tela de convidados: sem seletor no convite, sem rótulo na lista, sem criar grupo. Fica em aberto como o recurso volta de forma definitiva. Dados, API e coluna de grupo permanecem no sistema. Vale para as regras de grupo da SPEC-010 (fluxo, seção 8, planilha) e da SPEC-004 (itens de grupo), que ficam sem efeito na tela até nova definição.
+2. **Grupos suspensos (decisão posterior do dono).** Nesta fase não há grupo em lugar nenhum da tela de convidados: sem seletor no convite, sem rótulo na lista, sem criar grupo. Fica em aberto como o recurso volta de forma definitiva. (Revisto em 21/11/2026: dados, API e coluna de grupo foram apagados, SPEC-036; se o recurso voltar, é funcionalidade nova com spec própria.) Vale para as regras de grupo da SPEC-010 (fluxo, seção 8, planilha) e da SPEC-004 (itens de grupo), que ficam sem efeito na tela até nova definição.
 3. **Clique no card.** Clicar num card aplica o filtro de situação da lista; clicar de novo limpa.
 4. **Portaria.** O texto de origem pedia apenas cards separados para pendentes, confirmados e não confirmados. Nada além dos três cards.

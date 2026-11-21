@@ -31,7 +31,7 @@ public class RegrasNegocioTests
     }
 
     [Fact]
-    public void Planilha_free_vira_gratuita_e_o_modelo_tem_11_colunas()
+    public void Planilha_free_vira_gratuita_e_o_modelo_tem_10_colunas()
     {
         Assert.Equal(CustoConvidado.Gratuita, Rotulos.Custo("Free"));
         Assert.Equal(SituacaoConvidado.NaoComparecera, Rotulos.Situacao("Não comparecerá"));
@@ -44,9 +44,9 @@ public class RegrasNegocioTests
 
         Assert.True(linhas.Ok);
         Assert.Empty(linhas.Valor!);
-        Assert.Equal(11, PlanilhaConvites.Colunas.Length);
+        Assert.Equal(10, PlanilhaConvites.Colunas.Length);
         Assert.Equal("Nome do convite *", PlanilhaConvites.Colunas[0]);
-        Assert.Equal("Mesa", PlanilhaConvites.Colunas[10]);
+        Assert.Equal("Mesa", PlanilhaConvites.Colunas[9]);
     }
 
     [Fact]

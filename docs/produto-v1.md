@@ -70,7 +70,7 @@ Valem para todas as telas. Vêm do PDF (seções "Por que assim" e "Não fazer")
 |---|---|
 | Resumo | Cartões por área |
 | Planejar | Tarefas, Fornecedores e serviços, Roteiro, Cronograma, Briefing, Inspirações, Notas e observações |
-| Convidados | Convites e convidados, RSVP e mensagens, Mesas, Grupos e transfer |
+| Convidados | Convites e convidados, RSVP e mensagens, Mesas |
 | Dinheiro | Parcelas do casal, Pagamentos a fornecedores, Despesas, Contrato, Budget |
 | Casal | Link do casal, o que ele vê, aprovações |
 | Evento | Dados, Equipe do dia, Anexos |
@@ -170,8 +170,8 @@ Substitui o dashboard atual (SPEC-007, RF-080 a RF-082).
 
 | Item | Estado | Fonte |
 |---|---|---|
-| Convite por família com convidados; faixa etária; inteira/meia/gratuito; grupos; transfer; planilha; QR; link de RSVP | Pronto | G (SPEC-004, 010) |
-| Aba limpa (card #22): saem os cards Totais, Transfer do evento e Grupos e o campo "Usa transfer" do convite; ficam três cards por situação (Pendentes, Confirmados, Não confirmados) que filtram a lista ao clicar. Sem tela para criar grupo por ora | Pronto (SPEC-010/004, branch `claude/card-22-convidados-limpeza-99eb4e`) | Trello #22 |
+| Convite por família com convidados; faixa etária; inteira/meia/gratuito; planilha; QR; link de RSVP | Pronto | G (SPEC-004, 010) |
+| Aba limpa (card #22): saem os cards Totais, Transfer do evento e Grupos e o campo "Usa transfer" do convite; ficam três cards por situação (Pendentes, Confirmados, Não confirmados) que filtram a lista ao clicar. Grupos de convite e transfer saíram também do banco e da API (SPEC-036, 21/11/2026) | Pronto (SPEC-010/004/036) | Trello #22 |
 | **Colar lista** do WhatsApp com prévia antes de salvar: entende "+ marido", "(3 pessoas)", "Família X - 4", crianças | Novo | D, PDF |
 | **Link sem login para o casal cadastrar os convites** (nome do convite, telefone, e-mail e convidados; a cerimonialista define a data de envio) | Novo (decidido em 21/11/2026, card do Trello) | CF, D |
 | **Confirmação de presença com prazo**: data limite, link expirado, exceção manual da cerimonialista e lista de presença com id único | Novo (decidido em 21/11/2026, card do Trello) | D |
@@ -223,7 +223,7 @@ Separar o que **ela recebe** do casal do que o **casal paga** aos fornecedores (
 |---|---|---|
 | Tela **Modelos de Contrato** (grupo Modelos; Admin e Organizer): única para todo tipo de contrato que a organizadora oferece aos clientes, usada só em orçamentos aprovados. Os campos de mesclagem ficam num seletor com busca e um botão de ajuda (?) que explica como usar e mostra cada campo e de onde o sistema puxa o valor (decidido em 21/11/2026; base na SPEC-030 v2, 18/11/2026) | Ajustar | PDF, CF, usuário |
 | "Ver como fica" com os campos destacados | Novo | PDF, CF |
-| ~~Aba Contratos no modelo de evento: vincula contratos ao modelo; o evento criado do modelo já vem com eles~~ Removido em 21/11/2026: o contrato não tem vínculo com o evento. **Implementado (card #36, SPEC-030 v3):** saíram a aba do modelo, a aba Contratos do evento, o link de leitura por e-mail com sua página pública, os endpoints de vínculo e os campos de mesclagem `evento_*`, `contrato_valor` e `contrato_parcelas` (voltam, o valor e as parcelas, no contrato do funil, card #39). As tabelas `ContratosDoModelo`, `ContratosDoEvento` e `LinksLeituraContrato` ficam no banco como legado | Feito | usuário |
+| ~~Aba Contratos no modelo de evento: vincula contratos ao modelo; o evento criado do modelo já vem com eles~~ Removido em 21/11/2026: o contrato não tem vínculo com o evento. **Implementado (card #36, SPEC-030 v3):** saíram a aba do modelo, a aba Contratos do evento, o link de leitura por e-mail com sua página pública, os endpoints de vínculo e os campos de mesclagem `evento_*`, `contrato_valor` e `contrato_parcelas` (voltam, o valor e as parcelas, no contrato do funil, card #39). As tabelas `ContratosDoModelo`, `ContratosDoEvento` e `LinksLeituraContrato` foram apagadas do banco (SPEC-036) | Feito | usuário |
 | Aba Contratos no evento: **só contratos com fornecedores, enviados como arquivo** (pela organizadora ou pelo casal), com o fornecedor de cada um (decidido em 21/11/2026, card #30). A plataforma só **recebe** o documento: a negociação, a leitura e a assinatura são entre o cliente e o fornecedor, fora do sistema. A organizadora sobe o arquivo (recebido por fora do fornecedor ou do cliente) ou o próprio casal sobe pelo link dele. Não há ler preenchido, imprimir nem enviar link de leitura para contrato de fornecedor. Esses recursos valem só para o contrato da organizadora com o cliente (modelo); ele não tem vínculo com o evento | Ajustar | usuário |
 | **Assinatura eletrônica**: fora até escolher a plataforma (pendência 1). Sem simulação | Pendente | D, usuário |
 | O valor e as parcelas vêm do orçamento aprovado e são copiados para o contrato ao gerá-lo; o contrato só lê. Gerar contrato do funil exige os dados do contratante completos, na oportunidade ou no cliente (que não precisa existir antes do fechamento). Todos os dados do cliente ficam disponíveis como tags; o organizador usa os que quiser (decidido em 21/11/2026) | Ajustar | PDF, usuário |

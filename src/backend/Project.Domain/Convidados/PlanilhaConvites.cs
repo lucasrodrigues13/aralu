@@ -7,7 +7,6 @@ public static class PlanilhaConvites
         "Nome do convite *",
         "DDI",
         "DDD + Telefone para confirmação de presença",
-        "Grupo do convite",
         "Observação do convite",
         "Nome dos convidados *",
         "Gênero",

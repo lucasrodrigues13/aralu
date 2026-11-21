@@ -65,7 +65,7 @@ public sealed class PlanilhaExcel : IPlanilhaConvites
 
                 linhas.Add(new LinhaPlanilha(
                     Celula(0), Celula(1), Celula(2), Celula(3), Celula(4), Celula(5),
-                    Celula(6), Celula(7), Celula(8), Celula(9), Celula(10)));
+                    Celula(6), Celula(7), Celula(8), Celula(9)));
             }
 
             return Resultado<IReadOnlyList<LinhaPlanilha>>.Sucesso(linhas);

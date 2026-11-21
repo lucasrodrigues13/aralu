@@ -45,8 +45,6 @@ public static class EventoMapeamento
             evento.SalvarNaAgenda,
             null,
             evento.ImagemId,
-            evento.TransferAtivo,
-            evento.LocaisTransfer.Select(local => local.Nome).ToArray(),
             LerLocal(evento.Cerimonia ?? new LocalEvento()),
             LerLocal(evento.Recepcao ?? new LocalEvento()),
             evento.Tags.Select(tag => tag.Nome).ToArray(),
