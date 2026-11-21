@@ -5,6 +5,7 @@ import { API_BASE_URL } from './api-base-url';
 export interface CampoMesclagem {
   marca: string;
   rotulo: string;
+  fonte: string;
   exemplo: string;
 }
 
