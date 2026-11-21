@@ -1019,7 +1019,7 @@ export class NegocioClient {
   criarLeadPublico(
     contaId: string,
     pedido: {
-      nome: string;
+      nome?: string | null;
       contatoNome: string;
       telefone?: string | null;
       email?: string | null;

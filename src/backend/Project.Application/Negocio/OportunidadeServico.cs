@@ -392,9 +392,8 @@ public sealed class OportunidadeServico(IDados dados)
         LeadPublicoPedido pedido,
         CancellationToken ct)
     {
-        var nome = Domain.Comum.Texto.Limpo(pedido.Nome) ?? Domain.Comum.Texto.Limpo(pedido.ContatoNome);
-        var contatoNome = Domain.Comum.Texto.Limpo(pedido.ContatoNome) ?? nome;
-        if (nome is null || contatoNome is null)
+        var contatoNome = Domain.Comum.Texto.Limpo(pedido.ContatoNome) ?? Domain.Comum.Texto.Limpo(pedido.Nome);
+        if (contatoNome is null)
         {
             return Resultado<OportunidadeLeitura>.Erro(Codigos.Validacao, "Informe o nome e o contato.");
         }
@@ -414,6 +413,10 @@ public sealed class OportunidadeServico(IDados dados)
         {
             return Resultado<OportunidadeLeitura>.Erro(Codigos.Validacao, "Número de convidados inválido.");
         }
+
+        // O cliente não escolhe o nome da oportunidade: ela nasce como "Casamento Marina".
+        var nome = Domain.Comum.Texto.Limpo(pedido.Nome)
+            ?? (tipo is null ? contatoNome : $"{RotuloTipoLead(tipo.Value)} {contatoNome}");
 
         var agora = DateTimeOffset.UtcNow;
         var primeiro = PrimeiroAberto(await dados.ListarEstagiosFunilAsync(contaId, ct));
@@ -469,6 +472,13 @@ public sealed class OportunidadeServico(IDados dados)
                 estagio.Tipo.ToString());
         }).ToArray();
     }
+
+    private static string RotuloTipoLead(TipoEvento tipo) => tipo switch
+    {
+        TipoEvento.QuinzeAnos => "15 anos",
+        TipoEvento.Aniversario => "Aniversário",
+        _ => tipo.ToString(),
+    };
 
     /// <summary>Primeiro estágio aberto: onde nasce o lead público e o do RSVP.</summary>
     internal static EstagioFunil PrimeiroAberto(IEnumerable<EstagioFunil> estagios) =>

@@ -25,12 +25,6 @@ import { ToastService } from '../../core/toast.service';
           } @else {
             <form class="grid grid-cols-1 gap-4" [formGroup]="form" (ngSubmit)="enviar()">
               <div class="campo">
-                <mat-label class="font-semibold mb-2 block">Que evento você quer fazer?</mat-label>
-                <mat-form-field appearance="outline" class="w-full">
-                <input [attr.aria-label]="'Que evento você quer fazer?'" placeholder="Ex.: Casamento, aniversário de 15 anos" matInput formControlName="nome" />
-              </mat-form-field>
-              </div>
-              <div class="campo">
                 <mat-label class="font-semibold mb-2 block">Seu nome</mat-label>
                 <mat-form-field appearance="outline" class="w-full">
                 <input [attr.aria-label]="'Seu nome'" matInput formControlName="contatoNome" />
@@ -95,7 +89,6 @@ export class LeadPublicoPage implements OnInit {
   protected contaId = '';
   protected readonly enviado = signal(false);
   protected readonly form = this.fb.nonNullable.group({
-    nome: ['', Validators.required],
     contatoNome: ['', Validators.required],
     telefone: [''],
     email: [''],
@@ -113,12 +106,11 @@ export class LeadPublicoPage implements OnInit {
   protected enviar(): void {
     if (this.form.invalid || !this.contaId) {
       this.form.markAllAsTouched();
-      this.toast.erro('Informe o nome e o contato.');
+      this.toast.erro('Informe o seu nome.');
       return;
     }
     const v = this.form.getRawValue();
     this.negocio.criarLeadPublico(this.contaId, {
-      nome: v.nome,
       contatoNome: v.contatoNome,
       telefone: v.telefone || null,
       email: v.email || null,
