@@ -10,8 +10,8 @@ Os nomes dos botões vêm do código atual. Se algum texto estiver diferente na 
 
 - [x] Use uma conta de teste, não uma conta de cliente real.
 - [x] Abra duas janelas do navegador: uma normal (você, a cerimonialista) e uma anônima (o cliente, sem login). Os links públicos devem ser abertos na anônima.
-- [ ] Tenha um segundo e-mail para convidar uma assistente (Ato 11) e para receber e-mails de teste.
-- [ ] Dados fictícios usados abaixo (troque se quiser):
+- [x] Tenha um segundo e-mail para convidar uma assistente (Ato 11) e para receber e-mails de teste.
+- [x] Dados fictícios usados abaixo (troque se quiser):
   - Casal: **Marina Alves** (noiva, contato principal) e **Rafael Costa** (noivo).
   - Evento: **Casamento Marina e Rafael**, 150 convidados, daqui a 8 meses.
   - Telefone: (11) 98888-1111. E-mail: o seu e-mail de teste.
@@ -74,11 +74,13 @@ Três portas de entrada. Teste as três; no vídeo, mostre a mais comum.
 
 ### 2.1 Pelo formulário público do lead
 1. Faça (você): em **Oportunidades**, toque em **Link do lead**. O link é copiado.
-2. Faça (janela anônima): cole o link. Preencha como a Marina: nome, telefone, e-mail, tipo de evento, data prevista, convidados, cidade/UF. Envie.
+2. Faça (janela anônima): cole o link. Preencha como a Marina: **Seu nome** (Marina), **Telefone**, **E-mail**, **Tipo de evento** (Casamento), **Data prevista**, **Convidados** e **Cidade/UF**. Envie.
 3. Faça (você): volte a **Oportunidades** e recarregue.
 4. Confira:
    - O lead aparece no **primeiro estágio aberto** (Contato inicial).
+   - O nome da oportunidade nasce sozinho: **Casamento Marina** (tipo + nome do contato).
    - Origem: **Formulário do site**.
+   - O cartão mostra o tipo e a data prevista; ao abrir, convidados, cidade e UF vêm preenchidos.
    - O cartão do topo "Contato inicial" subiu em 1.
 
 ### 2.2 Pelo cadastro manual (ligação ou WhatsApp)
@@ -99,7 +101,7 @@ Deixe para o Ato 12. Lá o convidado de um casamento diz que quer fazer um event
 ### 2.5 Checagem de data
 1. Faça: em **Minha agenda**, crie um compromisso numa data qualquer (ex.: daqui a 8 meses, sábado).
 2. Faça: na oportunidade da Marina, informe essa mesma data prevista.
-3. Confira: o sistema avisa que já há compromisso na data. Avisa, não bloqueia.
+3. Confira: assim que a data é escolhida, aparece abaixo do campo o aviso "Já há compromisso na agenda nesta data". Avisa, não bloqueia: dá para gravar.
 
 ---
 

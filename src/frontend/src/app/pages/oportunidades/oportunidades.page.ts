@@ -118,7 +118,15 @@ import { EstagiosFunilDialog } from './estagios-funil.dialog';
           </mat-select>
         </mat-form-field>
         </div>
-        <app-campo-data formControlName="dataPrevista" rotulo="Data prevista" />
+        <div>
+          <app-campo-data formControlName="dataPrevista" rotulo="Data prevista" />
+          @if (dataOcupada()) {
+            <div class="aviso-repetido bg-light-warning mt-2" role="status">
+              <mat-icon class="text-warning">event_busy</mat-icon>
+              <p>Já há compromisso na agenda nesta data. Você pode gravar mesmo assim.</p>
+            </div>
+          }
+        </div>
         <div class="campo">
           <mat-label class="font-semibold mb-2 block">Convidados</mat-label>
           <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Convidados'" matInput type="number" formControlName="quantidadeConvidados" /></mat-form-field>
@@ -191,6 +199,7 @@ export class OportunidadeDialog implements OnInit {
   protected readonly estagios = signal<EstagioFunil[]>([]);
   protected readonly origens = ORIGENS_FUNIL;
   protected readonly repetidos = signal<ContatoRepetido[]>([]);
+  protected readonly dataOcupada = signal(false);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   protected readonly form = this.fb.nonNullable.group({
@@ -253,6 +262,7 @@ export class OportunidadeDialog implements OnInit {
       error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
     });
     this.vigiarContatoRepetido();
+    this.vigiarDataOcupada();
     this.negocio.estagiosFunil().subscribe({
       next: (lista) => {
         this.estagios.set(lista);
@@ -280,6 +290,25 @@ export class OportunidadeDialog implements OnInit {
           error: () => this.repetidos.set([]),
         });
       });
+  }
+
+  /** Avisa na hora (sem bloquear) quando já há compromisso na data prevista. */
+  private vigiarDataOcupada(): void {
+    const checar = (data: Date | null) => {
+      const iso = deDataParaIso(data);
+      if (!iso) {
+        this.dataOcupada.set(false);
+        return;
+      }
+      this.negocio.checarDataOportunidade(iso).subscribe({
+        next: (checagem) => this.dataOcupada.set(checagem.temCompromisso),
+        error: () => this.dataOcupada.set(false),
+      });
+    };
+    this.form.controls.dataPrevista.valueChanges
+      .pipe(debounceTime(300), takeUntilDestroyed(this.destroyRef))
+      .subscribe(checar);
+    checar(this.form.controls.dataPrevista.value);
   }
 
   protected irPara(evento: Event, r: ContatoRepetido): void {
@@ -364,18 +393,6 @@ export class OportunidadeDialog implements OnInit {
         error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
       });
     };
-    if (dataIso) {
-      this.negocio.checarDataOportunidade(dataIso).subscribe({
-        next: (checagem) => {
-          if (checagem.temCompromisso) {
-            this.toast.erro('Já há compromisso na agenda nesta data. Você pode gravar mesmo assim.');
-          }
-          gravar();
-        },
-        error: () => gravar(),
-      });
-      return;
-    }
     gravar();
   }
 }
