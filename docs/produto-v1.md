@@ -237,12 +237,12 @@ Substitui o login `Client` com flags (RF-056, SPEC-001/009).
 
 | Item | Estado | Fonte |
 |---|---|---|
-| Link sem senha por evento; trocar link desliga o antigo | Novo | D, CF |
+| Link sem senha por evento; trocar link desliga o antigo. **Implementado (card #34, [SPEC-046](specs/046-link-do-casal-financeiro.md)):** tabela `LinksCasal`; a dona (menu Mais do evento > Link do casal) gera, copia, troca e desativa; a página pública é `/casal/{código}`. É a base que o card de convites (#23) também usa | Feito | D, CF |
 | Marca da cerimonialista e mensagem dela no topo; contagem regressiva | Novo | PDF, WP |
 | "O que o casal vê", por marcação: andamento das tarefas (marcos, não %), parcelas com Pix, fornecedores contratados, convidados, roteiro, fotos | Novo | PDF, CF |
 | Tarefas do casal para ele marcar; só o que tem visibilidade "casal" ou "compartilhada" | Novo | PDF, IV |
 | Valores ocultos como opção | Novo | WP |
-| **Acesso ao financeiro do evento pelo link**, quando a organizadora liberar: o casal marca como paga cada parcela ou pagamento de fornecedor, sobe o contrato assinado do fornecedor e os comprovantes e gerencia as parcelas de fornecedor. Fica de fora a Gestão Financeira da organizadora (decidido em 21/11/2026; card do Trello) | Novo | D |
+| **Acesso ao financeiro do evento pelo link**, quando a organizadora liberar: o casal marca como paga cada parcela ou pagamento de fornecedor, sobe o contrato assinado do fornecedor e os comprovantes e gerencia as parcelas de fornecedor. Fica de fora a Gestão Financeira da organizadora (decidido em 21/11/2026; card do Trello). **Implementado (card #34, SPEC-046):** uma marcação só na janela do link, "O casal acessa o financeiro do evento" (nasce fechada); liberada, a página do casal mostra os pagamentos a fornecedores e deixa marcar parcela ou pagamento como pago (sem confirmação da organizadora, que pode desfazer), parcelar, subir e excluir comprovante e contrato assinado | Feito | D |
 | **Aprovações**: ela pede o ok (cardápio, decoração, convite), o casal aprova ou pede ajuste, ela recebe e-mail | Novo | D, CF |
 | **Código de edição**: o casal edita o que ela liberar sem login | Novo | D, WP |
 | **Depoimento** após o evento, que pode ir para a página pública | Novo | D, CF |

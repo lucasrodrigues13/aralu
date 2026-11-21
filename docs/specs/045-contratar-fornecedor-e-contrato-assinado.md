@@ -21,7 +21,7 @@ RF-058, RF-059 (etapas), RF-068 (parcelas a fornecedores; agora definidas no Din
 | Admin, Organizer, Assistant | Contratar e anexar/abrir/excluir o contrato assinado nos eventos a que têm acesso (mesma regra do Contratar de hoje). |
 | Outra conta | Não vê (404). |
 
-O casal subir o contrato assinado pelo link é o card #34.
+O casal subir o contrato assinado pelo link é o card #34 (feito na [SPEC-046](046-link-do-casal-financeiro.md)).
 
 ## 5. Pré-condições
 

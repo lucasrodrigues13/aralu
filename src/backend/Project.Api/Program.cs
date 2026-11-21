@@ -177,6 +177,7 @@ Project.Api.Conta.AssistenteEndpoints.Mapear(app);
 Project.Api.Conta.AdminEndpoints.Mapear(app);
 NegocioEndpoints.Mapear(app);
 DinheiroEndpoints.Mapear(app);
+CasalEndpoints.Mapear(app);
 ContratoEndpoints.Mapear(app);
 
 await using (var escopo = app.Services.CreateAsyncScope())

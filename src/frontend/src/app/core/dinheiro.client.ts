@@ -82,6 +82,8 @@ export interface PagamentoFornecedor {
   vencimento: string | null;
   comprovante: ComprovantePagamento | null;
   parcelas: ParcelaPagamento[];
+  /** Contrato assinado do fornecedor (SPEC-045); o casal também sobe pelo link (SPEC-046). */
+  contratoAssinado: ComprovantePagamento | null;
 }
 
 /** Comprovantes aceitos (SPEC-029 §6.6). */

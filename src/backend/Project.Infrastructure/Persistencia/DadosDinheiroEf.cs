@@ -76,7 +76,8 @@ public sealed class DadosDinheiroEf(AppDbContext banco) : IDadosDinheiro
                         parcela.Entrada,
                         parcela.Situacao == SituacaoParcela.Pago,
                         parcela.PagoEm,
-                        Comprovante(parcela.ComprovanteArquivoId, parcela.ComprovanteNome, parcela.ComprovanteTipoConteudo))).ToArray());
+                        Comprovante(parcela.ComprovanteArquivoId, parcela.ComprovanteNome, parcela.ComprovanteTipoConteudo))).ToArray(),
+                    Comprovante(contrato?.ContratoAssinadoArquivoId, contrato?.ContratoAssinadoNome, contrato?.ContratoAssinadoTipoConteudo));
             })
             .ToArray();
     }

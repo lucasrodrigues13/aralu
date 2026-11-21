@@ -38,6 +38,8 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<VinculoCliente> Vinculos => Set<VinculoCliente>();
 
+    public DbSet<LinkCasal> LinksCasal => Set<LinkCasal>();
+
     public DbSet<Convite> Convites => Set<Convite>();
 
     public DbSet<Convidado> Convidados => Set<Convidado>();

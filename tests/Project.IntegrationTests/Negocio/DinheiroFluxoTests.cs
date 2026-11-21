@@ -339,6 +339,61 @@ public class DinheiroFluxoTests
         Assert.Equal(HttpStatusCode.NotFound, (await dono.DeleteAsync($"{urlServico}/contrato-assinado")).StatusCode);
     }
 
+    [Fact]
+    public async Task Link_do_casal_libera_o_financeiro_e_o_casal_atua_sem_login()
+    {
+        var dono = await Entrar();
+        var outra = await Entrar();
+        var (eventoId, servicoId) = await EventoComFornecedorContratado(dono, 2);
+        var urlLink = $"/api/v1/eventos/{eventoId}/link-casal";
+
+        // Sem link: nada a ver; outra conta não gerencia.
+        Assert.False((await Ler(await dono.GetAsync(urlLink))).GetProperty("ativo").GetBoolean());
+        Assert.Equal(HttpStatusCode.NotFound, (await outra.PostAsync(urlLink, null)).StatusCode);
+
+        var gerado = await Ler(await dono.PostAsync(urlLink, null));
+        var token = gerado.GetProperty("token").GetString()!;
+        Assert.False(gerado.GetProperty("financeiroLiberado").GetBoolean());
+
+        // Casal sem login, financeiro fechado: vê o evento, não vê valores nem age.
+        var casal = _banco.Fabrica.CreateClient();
+        var baseCasal = $"/api/v1/publico/casal/{token}";
+        var fechado = await Ler(await casal.GetAsync(baseCasal));
+        Assert.False(fechado.GetProperty("financeiroLiberado").GetBoolean());
+        Assert.Equal(JsonValueKind.Null, fechado.GetProperty("financeiro").ValueKind);
+        Assert.Equal(HttpStatusCode.Forbidden, (await casal.PutAsJsonAsync($"{baseCasal}/pagamentos/{servicoId}/pago", new { pago = true })).StatusCode);
+
+        // Liberado: o casal marca parcela e pagamento, sobe comprovante e contrato assinado.
+        Assert.True((await Ler(await dono.PutAsJsonAsync(urlLink, new { financeiroLiberado = true }))).GetProperty("financeiroLiberado").GetBoolean());
+        var aberto = await Ler(await casal.GetAsync(baseCasal));
+        var pagamento = Pagamento(aberto.GetProperty("financeiro"));
+        var parcelaId = pagamento.GetProperty("parcelas")[0].GetProperty("id").GetGuid();
+        var urlPagamento = $"{baseCasal}/pagamentos/{servicoId}";
+
+        var umaPaga = Pagamento((await Ler(await casal.PutAsJsonAsync($"{urlPagamento}/parcelas/{parcelaId}/pago", new { pago = true }))).GetProperty("financeiro"));
+        Assert.True(umaPaga.GetProperty("parcelas")[0].GetProperty("paga").GetBoolean());
+        Assert.False(umaPaga.GetProperty("pago").GetBoolean());
+        var tudoPago = Pagamento((await Ler(await casal.PutAsJsonAsync($"{urlPagamento}/pago", new { pago = true }))).GetProperty("financeiro"));
+        Assert.True(tudoPago.GetProperty("pago").GetBoolean());
+
+        var comComprovante = Pagamento((await Ler(await casal.PostAsync($"{urlPagamento}/parcelas/{parcelaId}/comprovante", Pdf("comprovante.pdf")))).GetProperty("financeiro"));
+        var arquivoId = comComprovante.GetProperty("parcelas")[0].GetProperty("comprovante").GetProperty("arquivoId").GetGuid();
+        Assert.Equal(HttpStatusCode.OK, (await casal.GetAsync($"{baseCasal}/arquivos/{arquivoId}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await casal.GetAsync($"{baseCasal}/arquivos/{Guid.NewGuid()}")).StatusCode);
+
+        var comContrato = Pagamento((await Ler(await casal.PostAsync($"{urlPagamento}/contrato-assinado", Pdf("contrato.pdf")))).GetProperty("financeiro"));
+        Assert.Equal("contrato.pdf", comContrato.GetProperty("contratoAssinado").GetProperty("nome").GetString());
+        var visto = Pagamento((await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/dinheiro"))));
+        Assert.True(visto.GetProperty("pago").GetBoolean());
+
+        // Trocar o link desliga o endereço antigo; desativar apaga.
+        var trocado = await Ler(await dono.PostAsync(urlLink, null));
+        Assert.NotEqual(token, trocado.GetProperty("token").GetString());
+        Assert.Equal(HttpStatusCode.NotFound, (await casal.GetAsync(baseCasal)).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await dono.DeleteAsync(urlLink)).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await casal.GetAsync($"/api/v1/publico/casal/{trocado.GetProperty("token").GetString()}")).StatusCode);
+    }
+
     private static JsonElement ServicoDe(JsonElement evento, Guid servicoId) =>
         evento.GetProperty("servicos").EnumerateArray().Single(item => item.GetProperty("id").GetGuid() == servicoId);
 
