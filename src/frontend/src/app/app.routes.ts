@@ -123,10 +123,6 @@ export const routes: Routes = [
         path: 'modelos-orcamento-funil',
         loadComponent: () => import('./pages/modelos-funil/modelos-funil.page').then((m) => m.ModelosOrcamentoFunilPage),
       },
-      {
-        path: 'modelos-contrato-funil',
-        loadComponent: () => import('./pages/modelos-funil/modelos-funil.page').then((m) => m.ModelosContratoFunilPage),
-      },
       { path: 'conta', loadComponent: () => import('./pages/conta/area-usuario.page').then((m) => m.AreaUsuarioPage) },
       {
         path: 'admin',

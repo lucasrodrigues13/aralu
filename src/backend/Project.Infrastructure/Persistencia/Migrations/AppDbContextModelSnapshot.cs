@@ -1514,31 +1514,6 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.ToTable("MetricasRsvpFunil");
                 });
 
-            modelBuilder.Entity("Project.Domain.Funil.ModeloContratoFunil", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("ContaId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Nome")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Texto")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ContaId");
-
-                    b.ToTable("ModelosContratoFunil");
-                });
-
             modelBuilder.Entity("Project.Domain.Funil.ModeloOrcamentoFunil", b =>
                 {
                     b.Property<Guid>("Id")

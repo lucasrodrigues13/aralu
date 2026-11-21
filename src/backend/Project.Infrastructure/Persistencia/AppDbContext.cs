@@ -82,7 +82,6 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<ModeloOrcamentoFunil> ModelosOrcamentoFunil => Set<ModeloOrcamentoFunil>();
 
-    public DbSet<ModeloContratoFunil> ModelosContratoFunil => Set<ModeloContratoFunil>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

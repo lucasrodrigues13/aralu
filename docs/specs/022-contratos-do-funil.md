@@ -12,7 +12,7 @@ O Organizer gerencia contratos comerciais do funil ligados a oportunidades: cria
 
 ## 3. Requisitos relacionados
 
-RF-075, no recorte de contratos do funil. Modelo de contrato é a SPEC-028. Oportunidade é a SPEC-020. Contrato pedido ao fornecedor no evento permanece em RF-059 e RF-060, fora desta tela. RF-079 fica fora.
+RF-075, no recorte de contratos do funil. Modelo de contrato é a SPEC-039. Oportunidade é a SPEC-020. Contrato pedido ao fornecedor no evento permanece em RF-059 e RF-060, fora desta tela. RF-079 fica fora.
 
 ## 4. Atores e permissões
 
@@ -20,7 +20,7 @@ O `Organizer` opera os contratos da própria conta. Outro `Organizer` não vê. 
 
 ## 5. Pré-condições
 
-Conta autenticada, SPEC-001. Para criar, existe oportunidade da mesma conta, SPEC-020. Modelo opcional vem da SPEC-028.
+Conta autenticada, SPEC-001. Para criar, existe oportunidade da mesma conta, SPEC-020. Modelo opcional vem da SPEC-039.
 
 ## 6. Fluxo principal
 
@@ -45,7 +45,7 @@ Conta autenticada, SPEC-001. Para criar, existe oportunidade da mesma conta, SPE
 - Contrato do funil pertence à conta e a uma oportunidade da mesma conta.
 - Situações: Em andamento, Assinado e Cancelado, espelhadas nas abas.
 - Enviar não assina; assinar não cancela.
-- O modelo da SPEC-028, quando usado, copia o texto para o contrato; depois o contrato tem vida própria.
+- O modelo da SPEC-039, quando usado, copia o texto para o contrato; depois o contrato tem vida própria.
 - Este fluxo é distinto do contrato de fornecedor no evento.
 
 ## 9. Validações
@@ -84,7 +84,7 @@ Abas vazias. Criar, editar, enviar, assinar e cancelar. Busca por oportunidade. 
 
 ## 16. Dependências
 
-SPEC-001, SPEC-020 e SPEC-028.
+SPEC-001, SPEC-020 e SPEC-039.
 
 ## 17. Premissas e pontos não definidos
 

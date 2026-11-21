@@ -21,7 +21,7 @@ import { inserirMarca, previaDestacada } from './mesclagem';
   selector: 'app-contrato-dialog',
   imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatButtonToggleModule, MatFormFieldModule, MatInputModule],
   template: `
-    <h2 mat-dialog-title>{{ dados.contrato ? 'Editar contrato' : 'Novo contrato' }}</h2>
+    <h2 mat-dialog-title>{{ dados.contrato ? 'Editar modelo de contrato' : 'Novo modelo de contrato' }}</h2>
     <p class="text-muted text-sm px-6 -mt-2 mb-4">Clique num campo para inserir no texto. Ele é trocado pelos dados do evento.</p>
     <mat-dialog-content>
       <form id="contrato" class="grid grid-cols-1 gap-4" [formGroup]="form" (ngSubmit)="salvar()">
@@ -127,10 +127,10 @@ export class ContratoDialog {
     <mat-card class="cardWithShadow">
       <div class="p-6 flex flex-wrap items-center justify-between gap-4">
       <div>
-        <mat-card-title class="mb-0">Contratos</mat-card-title>
-        <mat-card-subtitle>Contratos da assessoria com campos que puxam os dados do cliente e do evento.</mat-card-subtitle>
+        <mat-card-title class="mb-0">Modelos de Contrato</mat-card-title>
+        <mat-card-subtitle>Modelos dos contratos que você envia aos clientes, para orçamentos aprovados. Os campos puxam os dados do cliente e da sua empresa.</mat-card-subtitle>
       </div>
-      <button mat-flat-button type="button" (click)="abrir()"><mat-icon>add</mat-icon> Novo contrato</button>
+      <button mat-flat-button type="button" (click)="abrir()"><mat-icon>add</mat-icon> Novo modelo</button>
     </div>
       <mat-card-content class="border-t border-border">
       <div class="flex flex-wrap items-end justify-between gap-4 mb-6">
@@ -143,7 +143,7 @@ export class ContratoDialog {
         </div>
       </div>
       @if (visiveis().length === 0) {
-        <p class="text-center text-muted py-10">{{ contratos().length === 0 ? 'Nenhum contrato cadastrado.' : 'Nenhum contrato com esse nome.' }}</p>
+        <p class="text-center text-muted py-10">{{ contratos().length === 0 ? 'Nenhum modelo cadastrado.' : 'Nenhum modelo com esse nome.' }}</p>
       } @else {
         <table class="tabela">
           <thead><tr><th>Nome</th><th>Atualizado em</th><th class="text-end! whitespace-nowrap">Ações</th></tr></thead>
@@ -189,7 +189,7 @@ export class ContratosPage implements OnInit {
         if (!pedido) return;
         this.contratoClient.salvar(contrato?.id ?? null, pedido).subscribe({
           next: () => {
-            this.toast.sucesso(contrato ? 'Contrato atualizado.' : 'Contrato criado.');
+            this.toast.sucesso(contrato ? 'Modelo atualizado.' : 'Modelo criado.');
             this.carregar();
           },
           error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
@@ -209,15 +209,15 @@ export class ContratosPage implements OnInit {
     this.dialog.open(ConfirmaDialog, {
       ...DIALOG_PEQUENO,
       data: {
-        titulo: 'Excluir contrato',
-        texto: `Excluir "${contrato.nome}"? Ele sai também dos modelos e eventos em que estiver.`,
+        titulo: 'Excluir modelo',
+        texto: `Excluir "${contrato.nome}"? Contratos já criados a partir dele não mudam.`,
         confirmar: 'Excluir',
       },
     }).afterClosed().subscribe((confirmou) => {
       if (!confirmou) return;
       this.contratoClient.excluir(contrato.id).subscribe({
         next: () => {
-          this.toast.sucesso('Contrato excluído.');
+          this.toast.sucesso('Modelo excluído.');
           this.carregar();
         },
         error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),

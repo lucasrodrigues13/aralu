@@ -1286,21 +1286,9 @@ export class NegocioClient {
     return this.http.delete(`${this.base}/api/v1/modelos-orcamento-funil/${id}`);
   }
 
-  modelosContratoFunil(nome = '') {
-    const params = nome ? new HttpParams().set('nome', nome) : undefined;
-    return this.http.get<ModeloContratoFunil[]>(`${this.base}/api/v1/modelos-contrato-funil`, { params });
-  }
-
-  criarModeloContratoFunil(pedido: unknown) {
-    return this.http.post<ModeloContratoFunil>(`${this.base}/api/v1/modelos-contrato-funil`, pedido);
-  }
-
-  atualizarModeloContratoFunil(id: string, pedido: unknown) {
-    return this.http.put<ModeloContratoFunil>(`${this.base}/api/v1/modelos-contrato-funil/${id}`, pedido);
-  }
-
-  excluirModeloContratoFunil(id: string) {
-    return this.http.delete(`${this.base}/api/v1/modelos-contrato-funil/${id}`);
+  /** Modelos da tela única "Modelos de Contrato" (SPEC-039), para escolher ao criar o contrato de uma oportunidade. */
+  modelosParaContratoFunil() {
+    return this.http.get<ModeloParaContratoFunil[]>(`${this.base}/api/v1/contratos-funil/modelos`);
   }
 
   arquivo(id: string) {
@@ -1523,11 +1511,10 @@ export interface ModeloOrcamentoFunil {
   parametros: string[];
 }
 
-export interface ModeloContratoFunil {
+export interface ModeloParaContratoFunil {
   id: string;
   nome: string;
   texto: string;
-  parametros: string[];
 }
 
 export type TipoEstagioFunil = 'Aberto' | 'Contratado' | 'Descartado';

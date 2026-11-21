@@ -41,7 +41,7 @@ Antes: a ordem era Principal, Gestão de eventos, Modelos, Agenda, Funil de vend
 
 ## 7. Fluxos alternativos e regras
 
-1. **Modelos de contrato continua no Funil de vendas** neste card. Ele e o item "Contratos" do grupo Modelos viram uma tela única no card #38, que decide o lugar final. Assim os dois cards não editam o mesmo trecho do menu.
+1. **(Atualizado pelo card #38, [SPEC-039](039-modelos-de-contrato-tela-unica.md): o item "Modelos de contrato" saiu do Funil de vendas e o item "Contratos" do grupo Modelos passou a se chamar "Modelos de Contrato".)** Neste card (#37), "Modelos de contrato" continuava no Funil de vendas. Ele e o item "Contratos" do grupo Modelos viram uma tela única no card #38, que decide o lugar final. Assim os dois cards não editam o mesmo trecho do menu.
 2. Mudam só o grupo e a posição de "Modelos de serviços" e "Modelo de orçamento" (mesmas rotas, mesmos ícones, mesmos nomes) e a ordem dos grupos. Nenhuma rota, tela, permissão ou dado muda.
 3. A visibilidade desses dois itens para a assistente fica como está hoje (aparecem, pois não são "só da dona"); SPEC-032 §8 não os lista e este card não a altera.
 4. Item ativo continua marcado pela rota, em qualquer grupo.

@@ -173,7 +173,6 @@ public static class Mapa
         modelBuilder.Entity<ModeloServicoFunil>().Property(item => item.Descricao).HasMaxLength(200);
         modelBuilder.Entity<ModeloServicoFunil>().Property(item => item.Valor).HasPrecision(12, 2);
         modelBuilder.Entity<ModeloOrcamentoFunil>().HasIndex(item => item.ContaId);
-        modelBuilder.Entity<ModeloContratoFunil>().HasIndex(item => item.ContaId);
     }
 
     private static void MapearBibliotecas(ModelBuilder modelBuilder)

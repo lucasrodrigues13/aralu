@@ -60,7 +60,7 @@ Valem para todas as telas. Vêm do PDF (seções "Por que assim" e "Não fazer")
 | Dinheiro | Financeiro da empresa, Relatórios |
 | Cadastros | Clientes, Fornecedores, Equipe |
 | Conta | Perfil, Marca e página pública, Pix, Ajustes |
-| **Modelos** (último grupo; decidido em 21/11/2026; pronto no card #37, SPEC-035, que traz a ordem real do menu) | Todos os modelos num só grupo: evento, briefing, roteiro, cronograma, inspirações, mensagens, serviços do funil e orçamento do funil (feitos); contrato fica no Funil de vendas até o card #38 O que se configura uma vez e muda pouco fica por último |
+| **Modelos** (último grupo; decidido em 21/11/2026; pronto no card #37, SPEC-035, que traz a ordem real do menu) | Todos os modelos num só grupo: evento, briefing, roteiro, cronograma, inspirações, mensagens, serviços do funil, orçamento do funil e **Modelos de Contrato** (feitos; o de contrato é a tela única do card #38, SPEC-039). O que se configura uma vez e muda pouco fica por último |
 
 **Celular:** barra inferior com **Hoje · Eventos · + Novo · Dinheiro · Mais** (PDF). "Mais" abre os outros grupos.
 
@@ -227,7 +227,7 @@ Separar o que **ela recebe** do casal do que o **casal paga** aos fornecedores (
 | Aba Contratos no evento: **só contratos com fornecedores, enviados como arquivo** (pela organizadora ou pelo casal), com o fornecedor de cada um (decidido em 21/11/2026, card #30). A plataforma só **recebe** o documento: a negociação, a leitura e a assinatura são entre o cliente e o fornecedor, fora do sistema. A organizadora sobe o arquivo (recebido por fora do fornecedor ou do cliente) ou o próprio casal sobe pelo link dele. Não há ler preenchido, imprimir nem enviar link de leitura para contrato de fornecedor. Esses recursos valem só para o contrato da organizadora com o cliente (modelo); ele não tem vínculo com o evento | Ajustar | usuário |
 | **Assinatura eletrônica**: fora até escolher a plataforma (pendência 1). Sem simulação | Pendente | D, usuário |
 | O valor e as parcelas vêm do orçamento aprovado e são copiados para o contrato ao gerá-lo; o contrato só lê. Gerar contrato do funil exige os dados do contratante completos, na oportunidade ou no cliente (que não precisa existir antes do fechamento). Todos os dados do cliente ficam disponíveis como tags; o organizador usa os que quiser (decidido em 21/11/2026) | Ajustar | PDF, usuário |
-| Modelos de contrato do funil (SPEC-028): unificados na tela Modelos de Contrato (21/11/2026) | Ajustar | G |
+| Modelos de contrato do funil (SPEC-028): unificados na tela Modelos de Contrato (21/11/2026). **Implementado (card #38, SPEC-039):** o item e a rota do funil saíram; o contrato do funil escolhe o modelo da tela única; os modelos antigos foram migrados (`#nome_oportunidade` virou `{{contratante_nome}}`, mesmo Id) e a tabela `ModelosContratoFunil` foi apagada | Feito | G |
 
 ### 5.11. Link do casal
 

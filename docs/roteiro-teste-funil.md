@@ -44,8 +44,8 @@ Faça isto antes do cliente chegar. Assim, nos atos seguintes, você só escolhe
 1. Faça: abra **Modelo de orçamento** e crie um modelo usando os parâmetros: `#nome_oportunidade`, `#tipo_evento`, `#data_evento`, `#convidados`, `#local_cerimonia`, `#local_recepcao`, `#valor`, `#validade`, `#nome_assessoria`.
 2. Confira: o editor mostra a lista dos parâmetros disponíveis.
 
-### 1.3 Modelo de contrato do funil
-1. Faça: abra **Modelos de contrato** e crie um modelo com cláusulas simples. Use `#nome_oportunidade` no texto.
+### 1.3 Modelos de Contrato (tela única)
+1. Faça: abra **Modelos > Modelos de Contrato** e crie um modelo com cláusulas simples. Use o campo `{{contratante_nome}}` no texto (SPEC-039).
 2. Confira: nome e texto são obrigatórios; sem um deles não grava.
 
 ### 1.4 Modelo de briefing (roteiro de perguntas)

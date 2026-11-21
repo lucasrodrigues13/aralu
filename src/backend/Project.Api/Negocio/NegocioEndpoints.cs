@@ -137,6 +137,7 @@ public static class NegocioEndpoints
         api.MapPost("/leads-rsvp/{id:guid}/contatar", ContatarLead).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
 
         api.MapGet("/contratos-funil", ContratosFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapGet("/contratos-funil/modelos", ModelosDoContratoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/contratos-funil", CriarContratoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapGet("/contratos-funil/{id:guid}", ContratoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPut("/contratos-funil/{id:guid}", AtualizarContratoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
@@ -168,7 +169,6 @@ public static class NegocioEndpoints
 
         MapearBibliotecaSimples(api, "/modelos-servicos-funil", ModelosServicoFunil, CriarModeloServicoFunil, ModeloServicoFunil, AtualizarModeloServicoFunil, ExcluirModeloServicoFunil);
         MapearBibliotecaSimples(api, "/modelos-orcamento-funil", ModelosOrcamentoFunil, CriarModeloOrcamentoFunil, ModeloOrcamentoFunil, AtualizarModeloOrcamentoFunil, ExcluirModeloOrcamentoFunil);
-        MapearBibliotecaSimples(api, "/modelos-contrato-funil", ModelosContratoFunil, CriarModeloContratoFunil, ModeloContratoFunil, AtualizarModeloContratoFunil, ExcluirModeloContratoFunil);
 
         app.MapGet("/api/v1/rsvp/{token}", AbrirRsvp);
         app.MapPost("/api/v1/rsvp/{token}", ResponderRsvp);
@@ -1311,6 +1311,9 @@ public static class NegocioEndpoints
         CancellationToken ct) =>
         ComConta(usuario, async conta => Results.Ok(await servico.ListarAsync(conta, situacao, busca, criadoDe, criadoAte, ct)));
 
+    private static Task<IResult> ModelosDoContratoFunil(ClaimsPrincipal usuario, ContratoFunilServico servico, CancellationToken ct) =>
+        ComConta(usuario, async conta => Results.Ok(await servico.ModelosAsync(conta, ct)));
+
     private static Task<IResult> CriarContratoFunil(SalvarContratoFunil pedido, ClaimsPrincipal usuario, ContratoFunilServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.CriarAsync(conta, pedido, ct, UsuarioId(usuario))));
 
@@ -1504,21 +1507,6 @@ public static class NegocioEndpoints
         ComConta(usuario, conta => De(servico.AtualizarAsync(conta, id, pedido, ct)));
 
     private static Task<IResult> ExcluirModeloOrcamentoFunil(Guid id, ClaimsPrincipal usuario, ModeloOrcamentoFunilServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.ExcluirAsync(conta, id, ct)));
-
-    private static Task<IResult> ModelosContratoFunil(ClaimsPrincipal usuario, ModeloContratoFunilServico servico, string? nome, CancellationToken ct) =>
-        ComConta(usuario, async conta => Results.Ok(await servico.ListarAsync(conta, nome, ct)));
-
-    private static Task<IResult> CriarModeloContratoFunil(SalvarModeloContratoFunil pedido, ClaimsPrincipal usuario, ModeloContratoFunilServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.CriarAsync(conta, pedido, ct)));
-
-    private static Task<IResult> ModeloContratoFunil(Guid id, ClaimsPrincipal usuario, ModeloContratoFunilServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.ObterAsync(conta, id, ct)));
-
-    private static Task<IResult> AtualizarModeloContratoFunil(Guid id, SalvarModeloContratoFunil pedido, ClaimsPrincipal usuario, ModeloContratoFunilServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.AtualizarAsync(conta, id, pedido, ct)));
-
-    private static Task<IResult> ExcluirModeloContratoFunil(Guid id, ClaimsPrincipal usuario, ModeloContratoFunilServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.ExcluirAsync(conta, id, ct)));
 
     private static Task<IResult> AbrirRsvp(string token, ConviteServico servico, CancellationToken ct) =>

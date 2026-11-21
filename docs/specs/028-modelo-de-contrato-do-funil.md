@@ -1,6 +1,6 @@
 # 028. Modelo de contrato do funil
 
-**Status: aprovada.** O código segue esta spec.
+**Status: substituída pela [SPEC-039](039-modelos-de-contrato-tela-unica.md) (21/11/2026, card #38).** A biblioteca de modelos de contrato do funil deixou de existir: os modelos foram unificados na tela "Modelos de Contrato", e a tabela, a tela e a API `/modelos-contrato-funil` foram apagadas (regra 7 do roteiro). O texto abaixo fica só como histórico.
 
 ## 1. Identificador e nome
 

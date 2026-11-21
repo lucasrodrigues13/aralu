@@ -2998,3 +2998,35 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121214511_ModelosDeContratoUnificados') THEN
+
+    INSERT INTO "ContratosConta" ("Id", "ContaId", "Nome", "Texto", "CriadoEm", "AtualizadoEm")
+    SELECT "Id", "ContaId", LEFT("Nome", 120),
+           regexp_replace("Texto", '#nome_oportunidade', '{{contratante_nome}}', 'gi'),
+           now(), now()
+    FROM "ModelosContratoFunil"
+    WHERE NOT EXISTS (SELECT 1 FROM "ContratosConta" c WHERE c."Id" = "ModelosContratoFunil"."Id");
+
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121214511_ModelosDeContratoUnificados') THEN
+    DROP TABLE "ModelosContratoFunil";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121214511_ModelosDeContratoUnificados') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261121214511_ModelosDeContratoUnificados', '10.0.4');
+    END IF;
+END $EF$;
+COMMIT;
+
