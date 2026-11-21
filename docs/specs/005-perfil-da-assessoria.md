@@ -1,6 +1,6 @@
 # 005. Perfil da assessoria
 
-**Status: aprovada.** O código segue esta spec.
+**Status: aprovada.** O código segue esta spec. O endereço foi estruturado pela [SPEC-038](038-endereco-estruturado-do-perfil.md) (21/11/2026).
 
 ## 1. Identificador e nome
 
@@ -43,7 +43,7 @@ Organizer autenticado com e-mail confirmado.
 - Há um perfil por conta de Organizer.
 - O e-mail é o da autenticação e permanece somente leitura, como na tela vista.
 - CPF ou CNPJ é um único campo de documento. Desde a SPEC-034 o documento é validado (CPF ou CNPJ, inclusive alfanumérico, com dígitos verificadores) e gravado sem máscara.
-- Endereço é um único texto. A exploração não separou CEP, rua, cidade ou estado.
+- Endereço estruturado (CEP, endereço, número, complemento, bairro, cidade, estado e país), com consulta de CEP, conforme a SPEC-038. Não é mais um texto único.
 - Estes dados não criam evento, contato de cliente nem conta Identity.
 - A foto é opcional. JPG, PNG ou WebP de até 5 MB, o mesmo limite das outras imagens. Sem foto gravada, não há miniatura.
 
@@ -78,7 +78,7 @@ Data inválida indica o campo e não salva. Falha ao gravar mantém o perfil ant
 
 ## 15. Cenários de teste
 
-Primeiro salvamento. Segundo salvamento substituindo o nome. Documento e endereço com texto livre. Data futura recusada. Duas contas com perfis diferentes.
+Primeiro salvamento. Segundo salvamento substituindo o nome. Documento e endereço estruturado (SPEC-038). Data futura recusada. Duas contas com perfis diferentes.
 
 ## 16. Dependências
 
@@ -86,4 +86,4 @@ SPEC-001. Nenhuma dependência de evento.
 
 ## 17. Premissas e pontos não definidos
 
-Quais campos além do e-mail são obrigatórios. Validação de CPF e CNPJ. Partes do endereço. Troca de e-mail, que esta tela não faz e a SPEC-001 também não define.
+Quais campos além do e-mail são obrigatórios. Validação de CPF e CNPJ. Troca de e-mail, que esta tela não faz e a SPEC-001 também não define.

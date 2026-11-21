@@ -33,6 +33,32 @@ public class MesclagemTests
     }
 
     [Fact]
+    public void Endereco_da_contratada_vem_dos_campos_estruturados()
+    {
+        var perfil = new Project.Domain.Perfil.PerfilAssessoria
+        {
+            Endereco = "Av. Central",
+            Numero = "50",
+            Complemento = "sala 2",
+            Bairro = "Centro",
+            Cidade = "São Paulo",
+            Estado = "SP",
+            Cep = "01001-000",
+            Pais = "Brasil",
+        };
+
+        var preenchido = Mesclagem.Preencher("{{contratada_endereco}}", Mesclagem.ValoresDaContratada(perfil));
+
+        Assert.Equal("Av. Central, 50, sala 2 - Centro - São Paulo/SP - CEP 01001-000 - Brasil", preenchido);
+    }
+
+    [Fact]
+    public void Endereco_da_contratada_sem_perfil_fica_em_branco()
+    {
+        Assert.Equal(Mesclagem.Vazio, Mesclagem.Preencher("{{contratada_endereco}}", Mesclagem.ValoresDaContratada(null)));
+    }
+
+    [Fact]
     public void Marca_removida_fica_no_texto()
     {
         Assert.Equal("{{evento_nome}}", Mesclagem.Preencher("{{evento_nome}}", new Dictionary<string, string?> { ["evento_nome"] = "X" }));

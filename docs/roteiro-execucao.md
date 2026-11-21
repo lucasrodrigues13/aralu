@@ -41,7 +41,7 @@ Legenda de "Banco": **M** = migration (entra na fila do banco), **—** = sem mi
 | 2 | #36 Remover vínculo contrato-evento | — | — | contratos, modelos-evento | pronto no branch `claude/card-36-vinculo-31e1bb` (commit abaixo); sem migration; integração só ao fim das ondas |
 | 2 | #37 Menu: modelos no grupo Modelos | — | — | casca.component | pronto no branch `claude/card-37-menu-134f0a` (SPEC-035); integração só ao fim das ondas |
 | 2 | Limpeza do legado (sem card) | #22, #36 | M | banco, convites, contratos | pronto no branch `claude/limpeza-legado-d2d8b3` (SPEC-036, migration `LimpezaDoLegado`); juntar na main; integração só ao fim das ondas |
-| 2 | #46 Endereço estruturado no Perfil | #45 (fila do banco) | M | perfil | pendente |
+| 2 | #46 Endereço estruturado no Perfil | #45 (fila do banco) | M | perfil | pronto no branch `claude/card-46-perfil-29d6b2` (SPEC-038, migration `EnderecoEstruturadoDoPerfil`; texto antigo do endereço apagado); juntar na main; integração só ao fim das ondas |
 | 3 | #41 Banco de parcelas por documento | #21, #45, #46 (fila do banco) | M | Dinheiro, Contratos, Fornecedores, Hoje | pendente |
 | 4 | #32 Gestão Financeira: mover Pagamentos | #41 | ? | casca, pagamentos, contratos | pendente |
 | 4 | #31 Dinheiro do evento: pagamentos a fornecedores | #32, #41 | M | evento-dinheiro | pendente |

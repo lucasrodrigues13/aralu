@@ -160,7 +160,12 @@ public class NegocioFluxoTests
         var dono = await Entrar();
         var outra = await Entrar();
         Assert.Equal(HttpStatusCode.BadRequest, (await dono.PutAsJsonAsync("/api/v1/perfil", new { nascimento = "2030-01-01" })).StatusCode);
-        var perfil = await Ler(await dono.PutAsJsonAsync("/api/v1/perfil", new { nomeEmpresa = "Casa Norte", endereco = "Rua 1" }));
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PutAsJsonAsync("/api/v1/perfil", new { cep = "123" })).StatusCode);
+        var perfil = await Ler(await dono.PutAsJsonAsync("/api/v1/perfil", new { nomeEmpresa = "Casa Norte", cep = "01001000", numero = "10", complemento = "sala 2" }));
+        Assert.Equal("01001-000", perfil.GetProperty("cep").GetString());
+        Assert.Equal("Praça da Sé", perfil.GetProperty("endereco").GetString());
+        Assert.Equal("São Paulo", perfil.GetProperty("cidade").GetString());
+        Assert.Equal("10", perfil.GetProperty("numero").GetString());
         Assert.Contains("@", perfil.GetProperty("email").GetString());
         Assert.Equal("Casa Norte", perfil.GetProperty("nomeEmpresa").GetString());
         var perfilAlheio = await Ler(await outra.GetAsync("/api/v1/perfil"));

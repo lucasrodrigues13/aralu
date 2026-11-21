@@ -65,11 +65,55 @@ import { aplicarMascara } from '../../shared/mascaras';
           <mat-card class="cardWithShadow">
             <div class="p-6"><mat-card-title class="mb-0">Endereço</mat-card-title></div>
             <mat-card-content class="border-t border-border">
-              <div class="campo">
-                <mat-label class="font-semibold mb-2 block">Endereço</mat-label>
-                <mat-form-field appearance="outline" class="w-full">
-                  <textarea aria-label="Endereço" matInput rows="4" formControlName="endereco"></textarea>
-                </mat-form-field>
+              <div class="grid grid-cols-12 gap-x-6 gap-y-4">
+                <div class="campo col-span-12 md:col-span-6">
+                  <mat-label class="font-semibold mb-2 block">CEP</mat-label>
+                  <mat-form-field appearance="outline" class="w-full">
+                    <input aria-label="CEP" matInput formControlName="cep" gdMascara="cep" (blur)="completarCep()" />
+                  </mat-form-field>
+                </div>
+                <div class="campo col-span-12 md:col-span-6">
+                  <mat-label class="font-semibold mb-2 block">País</mat-label>
+                  <mat-form-field appearance="outline" class="w-full">
+                    <input aria-label="País" matInput formControlName="pais" />
+                  </mat-form-field>
+                </div>
+                <div class="campo col-span-12 md:col-span-6">
+                  <mat-label class="font-semibold mb-2 block">Endereço</mat-label>
+                  <mat-form-field appearance="outline" class="w-full">
+                    <input aria-label="Endereço" matInput formControlName="endereco" />
+                  </mat-form-field>
+                </div>
+                <div class="campo col-span-12 md:col-span-6">
+                  <mat-label class="font-semibold mb-2 block">Número</mat-label>
+                  <mat-form-field appearance="outline" class="w-full">
+                    <input aria-label="Número" matInput formControlName="numero" />
+                  </mat-form-field>
+                </div>
+                <div class="campo col-span-12 md:col-span-6">
+                  <mat-label class="font-semibold mb-2 block">Complemento</mat-label>
+                  <mat-form-field appearance="outline" class="w-full">
+                    <input aria-label="Complemento" matInput formControlName="complemento" />
+                  </mat-form-field>
+                </div>
+                <div class="campo col-span-12 md:col-span-6">
+                  <mat-label class="font-semibold mb-2 block">Bairro</mat-label>
+                  <mat-form-field appearance="outline" class="w-full">
+                    <input aria-label="Bairro" matInput formControlName="bairro" />
+                  </mat-form-field>
+                </div>
+                <div class="campo col-span-12 md:col-span-6">
+                  <mat-label class="font-semibold mb-2 block">Cidade</mat-label>
+                  <mat-form-field appearance="outline" class="w-full">
+                    <input aria-label="Cidade" matInput formControlName="cidade" />
+                  </mat-form-field>
+                </div>
+                <div class="campo col-span-12 md:col-span-6">
+                  <mat-label class="font-semibold mb-2 block">Estado</mat-label>
+                  <mat-form-field appearance="outline" class="w-full">
+                    <input aria-label="Estado" matInput formControlName="estado" />
+                  </mat-form-field>
+                </div>
               </div>
             </mat-card-content>
           </mat-card>
@@ -144,7 +188,14 @@ export class PerfilPage implements OnInit {
     documento: '',
     celular: '',
     nascimento: this.fb.control<Date | null>(null),
+    cep: '',
+    pais: '',
     endereco: '',
+    numero: '',
+    complemento: '',
+    bairro: '',
+    cidade: '',
+    estado: '',
     chavePix: '',
   });
 
@@ -208,7 +259,14 @@ export class PerfilPage implements OnInit {
       documento: valor.documento ?? '',
       celular: valor.celular ?? '',
       nascimento: deDataParaIso(valor.nascimento),
+      cep: valor.cep ?? '',
+      pais: valor.pais ?? '',
       endereco: valor.endereco ?? '',
+      numero: valor.numero ?? '',
+      complemento: valor.complemento ?? '',
+      bairro: valor.bairro ?? '',
+      cidade: valor.cidade ?? '',
+      estado: valor.estado ?? '',
       chavePix: valor.chavePix ?? '',
     }).subscribe({
       next: (perfil) => {
@@ -216,6 +274,26 @@ export class PerfilPage implements OnInit {
         this.toast.sucesso('Perfil salvo.');
       },
       error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+    });
+  }
+
+  protected completarCep(): void {
+    const digitos = (this.formulario.controls.cep.value ?? '').replace(/D/g, '');
+    if (digitos.length !== 8) {
+      return;
+    }
+
+    this.negocio.cep(digitos).subscribe({
+      next: (endereco) => {
+        this.formulario.patchValue({
+          pais: endereco.pais || 'Brasil',
+          endereco: endereco.endereco,
+          estado: endereco.estado,
+          cidade: endereco.cidade,
+          bairro: endereco.bairro,
+        });
+      },
+      error: () => undefined,
     });
   }
 
@@ -234,7 +312,14 @@ export class PerfilPage implements OnInit {
       documento: aplicarMascara(perfil.documento ?? '', 'documento'),
       celular: aplicarMascara(perfil.celular ?? '', 'celular'),
       nascimento: deIsoParaData(perfil.nascimento),
+      cep: aplicarMascara(perfil.cep ?? '', 'cep'),
+      pais: perfil.pais ?? '',
       endereco: perfil.endereco ?? '',
+      numero: perfil.numero ?? '',
+      complemento: perfil.complemento ?? '',
+      bairro: perfil.bairro ?? '',
+      cidade: perfil.cidade ?? '',
+      estado: perfil.estado ?? '',
       chavePix: perfil.chavePix ?? '',
     });
     if (buscarFoto) {

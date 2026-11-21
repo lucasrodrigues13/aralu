@@ -2212,13 +2212,25 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Bairro")
+                        .HasColumnType("text");
+
                     b.Property<bool>("CapturaLeadRsvp")
                         .HasColumnType("boolean");
 
                     b.Property<string>("Celular")
                         .HasColumnType("text");
 
+                    b.Property<string>("Cep")
+                        .HasColumnType("text");
+
                     b.Property<string>("ChavePix")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Cidade")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Complemento")
                         .HasColumnType("text");
 
                     b.Property<string>("ContaId")
@@ -2231,6 +2243,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<string>("Endereco")
                         .HasColumnType("text");
 
+                    b.Property<string>("Estado")
+                        .HasColumnType("text");
+
                     b.Property<Guid?>("FotoId")
                         .HasColumnType("uuid");
 
@@ -2238,6 +2253,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .HasColumnType("date");
 
                     b.Property<string>("NomeEmpresa")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Numero")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Pais")
                         .HasColumnType("text");
 
                     b.Property<string>("Responsavel")
