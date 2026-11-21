@@ -1018,7 +1018,18 @@ export class NegocioClient {
 
   criarLeadPublico(
     contaId: string,
-    pedido: { nome: string; contatoNome: string; telefone?: string | null; email?: string | null; fonte?: string | null },
+    pedido: {
+      nome: string;
+      contatoNome: string;
+      telefone?: string | null;
+      email?: string | null;
+      fonte?: string | null;
+      tipoEvento?: string | null;
+      dataPrevista?: string | null;
+      quantidadeConvidados?: number | null;
+      cidade?: string | null;
+      uf?: string | null;
+    },
   ) {
     return this.http.post(`${this.base}/api/v1/public/leads/${contaId}`, pedido);
   }

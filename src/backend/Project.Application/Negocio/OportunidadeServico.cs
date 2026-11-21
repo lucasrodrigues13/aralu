@@ -120,7 +120,12 @@ public sealed record LeadPublicoPedido(
     string? ContatoNome,
     string? Telefone,
     string? Email,
-    string? Fonte);
+    string? Fonte,
+    string? TipoEvento = null,
+    DateOnly? DataPrevista = null,
+    int? QuantidadeConvidados = null,
+    string? Cidade = null,
+    string? Uf = null);
 
 public sealed record ChecagemDataLeitura(bool TemCompromisso);
 
@@ -394,6 +399,22 @@ public sealed class OportunidadeServico(IDados dados)
             return Resultado<OportunidadeLeitura>.Erro(Codigos.Validacao, "Informe o nome e o contato.");
         }
 
+        TipoEvento? tipo = null;
+        if (!string.IsNullOrWhiteSpace(pedido.TipoEvento))
+        {
+            if (!Enum.TryParse<TipoEvento>(pedido.TipoEvento, true, out var lido) || !Enum.IsDefined(lido))
+            {
+                return Resultado<OportunidadeLeitura>.Erro(Codigos.Validacao, "Tipo de evento inválido.");
+            }
+
+            tipo = lido;
+        }
+
+        if (pedido.QuantidadeConvidados is < 0)
+        {
+            return Resultado<OportunidadeLeitura>.Erro(Codigos.Validacao, "Número de convidados inválido.");
+        }
+
         var agora = DateTimeOffset.UtcNow;
         var primeiro = PrimeiroAberto(await dados.ListarEstagiosFunilAsync(contaId, ct));
         var item = new Oportunidade
@@ -404,6 +425,11 @@ public sealed class OportunidadeServico(IDados dados)
             EstagioFunilId = primeiro.Id,
             EstagioFunil = primeiro,
             Fonte = OrigensFunil.FormularioSite,
+            TipoEvento = tipo,
+            DataPrevista = pedido.DataPrevista,
+            QuantidadeConvidados = pedido.QuantidadeConvidados,
+            Cidade = Domain.Comum.Texto.Limpo(pedido.Cidade),
+            Uf = Domain.Comum.Texto.Limpo(pedido.Uf)?.ToUpperInvariant(),
             Responsavel = contaId,
             CriadoEm = agora,
             EntradaNoEstagioEm = agora,
