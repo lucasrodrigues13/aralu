@@ -482,6 +482,24 @@ function dataLocal(iso: string): Date {
   return new Date(ano, mes - 1, dia);
 }
 
+/** Plano B quando o navigator.clipboard não está disponível ou é negado. */
+function copiarPorSelecao(texto: string): boolean {
+  const campo = document.createElement('textarea');
+  campo.value = texto;
+  campo.setAttribute('readonly', '');
+  campo.style.position = 'fixed';
+  campo.style.opacity = '0';
+  document.body.appendChild(campo);
+  campo.select();
+  try {
+    return document.execCommand('copy');
+  } catch {
+    return false;
+  } finally {
+    campo.remove();
+  }
+}
+
 /** Retorno vencido, de hoje ou futuro, pela data local. */
 export function situacaoRetorno(iso: string, agora: Date = new Date()): 'atrasado' | 'hoje' | 'futuro' {
   const data = dataLocal(iso).getTime();
@@ -1060,10 +1078,14 @@ export class OportunidadesPage implements OnInit {
       return;
     }
     const url = `${location.origin}/lead/${contaId}`;
-    void navigator.clipboard.writeText(url).then(
-      () => this.toast.sucesso('Link do formulário público copiado.'),
-      () => this.toast.erro(url),
-    );
+    const copiado = () => this.toast.sucesso('Link do formulário público copiado.');
+    const falhou = () => this.toast.erro(`Não foi possível copiar. Link: ${url}`);
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(url).then(copiado, () => (copiarPorSelecao(url) ? copiado() : falhou()));
+    } else {
+      // Sem contexto seguro (http fora de localhost) o navigator.clipboard não existe.
+      (copiarPorSelecao(url) ? copiado : falhou)();
+    }
   }
 
   protected carregar(): void {
@@ -1117,8 +1139,12 @@ export class OportunidadesPage implements OnInit {
     const token = this.auth.token();
     if (!token) return null;
     try {
-      const payload = JSON.parse(atob(token.split('.')[1] ?? '')) as { sub?: string };
-      return payload.sub ?? null;
+      // JWT usa base64url (- e _); o atob só entende base64 comum.
+      const base64 = (token.split('.')[1] ?? '').replace(/-/g, '+').replace(/_/g, '/');
+      const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+      const payload = JSON.parse(new TextDecoder().decode(bytes)) as { sub?: string; organizer_id?: string };
+      // Assistente e admin assumindo conta: a conta é a da dona (organizer_id), não a do usuário logado.
+      return payload.organizer_id ?? payload.sub ?? null;
     } catch {
       return null;
     }
