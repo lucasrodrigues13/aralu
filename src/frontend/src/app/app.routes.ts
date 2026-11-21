@@ -47,6 +47,7 @@ export const routes: Routes = [
       { path: 'eventos/:id/editar', redirectTo: 'eventos/:id', pathMatch: 'full' },
       { path: 'eventos/:id/tarefas', loadComponent: () => import('./pages/tarefas/tarefas.page').then((m) => m.TarefasPage) },
       { path: 'eventos/:id/fornecedores', loadComponent: () => import('./pages/eventos/evento-fornecedores.page').then((m) => m.EventoFornecedoresPage) },
+      { path: 'eventos/:id/contratos', loadComponent: () => import('./pages/eventos/evento-contratos.page').then((m) => m.EventoContratosPage) },
       { path: 'contratos', canActivate: [donaGuard], loadComponent: () => import('./pages/contratos/contratos.page').then((m) => m.ContratosPage) },
       { path: 'eventos/:id/dinheiro', canActivate: [financeiroGuard], loadComponent: () => import('./pages/dinheiro/evento-dinheiro.page').then((m) => m.EventoDinheiroPage) },
       { path: 'eventos/:id/convidados', loadComponent: () => import('./pages/convidados/convidados.page').then((m) => m.ConvidadosPage) },
