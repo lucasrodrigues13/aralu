@@ -64,17 +64,12 @@ public class FornecedoresFluxoTests
             .GetProperty("fornecedores")[0].GetProperty("etapa").GetString());
         var contratado = await Ler(await dono.PostAsJsonAsync(
             $"/api/v1/eventos/{eventoId}/servicos/{servicoId}/fornecedores/{vinculoId}/contratar",
-            new
-            {
-                valor = 5000,
-                quantidadeParcelas = 2,
-                primeiraParcela = "2027-01-10",
-                comEntrada = false,
-            }));
+            new { valor = 5000 }));
         var servicoContratado = contratado.GetProperty("servicos").EnumerateArray()
             .Single(item => item.GetProperty("id").GetGuid() == servicoId);
         Assert.True(servicoContratado.GetProperty("contratado").GetBoolean());
-        Assert.Equal(2, servicoContratado.GetProperty("parcelas").GetArrayLength());
+        Assert.Equal(0, servicoContratado.GetProperty("parcelas").GetArrayLength());
+        Assert.Equal(JsonValueKind.Null, servicoContratado.GetProperty("contratoAssinado").ValueKind);
         Assert.Equal("Contratado", servicoContratado.GetProperty("fornecedores")[0].GetProperty("etapa").GetString());
 
         var comSubitem = await Ler(await dono.PutAsJsonAsync(

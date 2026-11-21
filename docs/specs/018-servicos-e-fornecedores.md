@@ -4,6 +4,8 @@
 
 > **Card #41 (21/11/2026, [SPEC-040](040-parcelas-por-documento.md)).** `ParcelaServico` saiu do banco. Ao contratar, o sistema cria o `ContratoFornecedor` do serviço, com as parcelas a pagar (mesma estrutura e mesmo gerador). A leitura do serviço (`parcelas`), a aba Fornecedores, a aba Dinheiro do evento, a tela Pagamentos e a tela Hoje leem dele. O serviço "Assessoria e Organização" e `POST /eventos/{id}/assessoria` saíram.
 
+> **Card #28 (21/11/2026, [SPEC-045](045-contratar-fornecedor-e-contrato-assinado.md)).** "Adicionar fornecedor" escolhe o fornecedor e depois os serviços (marcação múltipla). **Contratar** pede só o valor, sem parcelas (o parcelamento é feito na aba Dinheiro, SPEC-043), e aceita o contrato assinado, guardado no `ContratoFornecedor`. Onde esta spec diz que Contratar gera parcelas (itens 4 e 58 da seção 6, item 5 da 14, e o cenário da seção 15), vale a SPEC-045. Contratar de novo mantém o contrato existente.
+
 ## 1. Identificador e nome
 
 SPEC-018. Serviços e fornecedores.

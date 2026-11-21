@@ -97,6 +97,13 @@ public sealed class ContratoFornecedor
 
     public string? ComprovanteTipoConteudo { get; set; }
 
+    /// <summary>Contrato assinado pelo fornecedor e pelo casal, anexado pelo organizador (SPEC-045).</summary>
+    public Guid? ContratoAssinadoArquivoId { get; set; }
+
+    public string? ContratoAssinadoNome { get; set; }
+
+    public string? ContratoAssinadoTipoConteudo { get; set; }
+
     public bool EstaPago => Parcelas.Count > 0 ? Parcelas.All(parcela => parcela.Situacao == SituacaoParcela.Pago) : Pago;
 
     /// <summary>Marca ou desmarca o pagamento inteiro: todas as parcelas ou, sem parcelas, o próprio contrato.</summary>

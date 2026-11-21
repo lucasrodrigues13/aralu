@@ -1,15 +1,16 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
-import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialog, MatDialogModule, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { validarComprovante } from '../../core/dinheiro.client';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import {
   BudgetEvento,
@@ -20,57 +21,39 @@ import {
   NegocioClient,
 } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
-import { CampoDataComponent } from '../../shared/campo-data';
 import { CampoDinheiroComponent } from '../../shared/campo-dinheiro';
-import { deDataParaIso } from '../../shared/data';
+import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
+import { ComprovanteDialog } from '../dinheiro/comprovante.dialog';
 import { GdDinheiroPipe } from '../../shared/gd-dinheiro.pipe';
 import { EventoAbasComponent } from './evento-abas.component';
 import { VincularFornecedorDados, VincularFornecedorDialog, VincularFornecedorPedido } from './vincular-fornecedor.dialog';
 
+interface ContratarResultado {
+  valor: number;
+  arquivo: File | null;
+}
+
 @Component({
   selector: 'app-contratar-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule, CampoDataComponent, CampoDinheiroComponent],
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, CampoDinheiroComponent],
   template: `
     <h2 mat-dialog-title>Contratar fornecedor</h2>
-    <p class="text-muted text-sm px-6 -mt-2 mb-4">{{ dados.fornecedor }} · {{ dados.servico }}. Valor e parcelas do contrato.</p>
+    <p class="text-muted text-sm px-6 -mt-2 mb-4">{{ dados.fornecedor }} · {{ dados.servico }}. O parcelamento é feito depois, na aba Dinheiro.</p>
     <mat-dialog-content>
-      <form class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4" [formGroup]="form">
+      <form id="contratar" class="grid grid-cols-1 gap-4" [formGroup]="form" (submit)="confirmar(); $event.preventDefault()">
         <app-campo-dinheiro rotulo="Valor" formControlName="valor" />
         <div class="campo">
-          <mat-label class="font-semibold mb-2 block">Parcelas</mat-label>
-          <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Parcelas'" matInput type="number" min="1" formControlName="quantidadeParcelas" /></mat-form-field>
+          <span class="font-semibold mb-2 block">Contrato assinado (opcional)</span>
+          <input aria-label="Contrato assinado" type="file" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf" (change)="escolher($event)" />
+          <p class="text-xs text-muted mt-1">Arquivo assinado pelo fornecedor e pelo casal. JPG, JPEG, PNG ou PDF de até 5 MB. Também dá para anexar depois.</p>
+          @if (erro()) { <p class="text-error text-xs">{{ erro() }}</p> }
         </div>
-        <app-campo-data rotulo="Primeira parcela" formControlName="primeiraParcela" />
-        <mat-checkbox class="sm:col-span-2" formControlName="comEntrada">Incluir entrada</mat-checkbox>
-        @if (form.controls.comEntrada.value) {
-          <div class="campo">
-            <mat-label class="font-semibold mb-2 block">Base</mat-label>
-            <mat-form-field appearance="outline" class="w-full">
-            <mat-select [attr.aria-label]="'Base'" formControlName="baseEntrada">
-              <mat-option value="Valor">Valor</mat-option>
-              <mat-option value="Porcentagem">Porcentagem</mat-option>
-            </mat-select>
-          </mat-form-field>
-          </div>
-          @if (form.controls.baseEntrada.value === 'Porcentagem') {
-            <div class="campo">
-              <mat-label class="font-semibold mb-2 block">Valor de entrada</mat-label>
-              <mat-form-field appearance="outline" class="w-full">
-              <input [attr.aria-label]="'Valor de entrada'" matInput type="number" min="0" formControlName="valorEntrada" />
-              <span matTextSuffix>%</span>
-            </mat-form-field>
-            </div>
-          } @else {
-            <app-campo-dinheiro rotulo="Valor de entrada" formControlName="valorEntrada" />
-          }
-          <app-campo-data rotulo="Data de entrada" formControlName="dataEntrada" />
-        }
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <button mat-stroked-button type="button" (click)="ref.close()">Cancelar</button>
-      <button mat-flat-button type="button" (click)="confirmar()">Contratar</button>
+      <button mat-flat-button type="submit" form="contratar">Contratar</button>
     </mat-dialog-actions>
   `,
 })
@@ -78,33 +61,30 @@ export class ContratarDialog {
   private readonly fb = inject(FormBuilder);
   private readonly toast = inject(ToastService);
   protected readonly dados = inject<{ fornecedor: string; servico: string; valor: number | null }>(MAT_DIALOG_DATA);
-  protected readonly ref = inject(MatDialogRef<ContratarDialog, unknown>);
+  protected readonly ref = inject(MatDialogRef<ContratarDialog, ContratarResultado>);
+  protected readonly erro = signal('');
+  private arquivo: File | null = null;
   protected readonly form = this.fb.group({
     valor: this.fb.control<number | null>(this.dados.valor, Validators.required),
-    quantidadeParcelas: ['1', Validators.required],
-    primeiraParcela: this.fb.control<Date | null>(null, Validators.required),
-    comEntrada: false,
-    baseEntrada: 'Valor',
-    valorEntrada: this.fb.control<number | null>(null),
-    dataEntrada: this.fb.control<Date | null>(null),
   });
 
+  protected escolher(evento: Event): void {
+    const escolhido = (evento.target as HTMLInputElement).files?.[0] ?? null;
+    const problema = escolhido ? validarComprovante(escolhido) : null;
+    this.erro.set(problema ?? '');
+    this.arquivo = problema ? null : escolhido;
+  }
+
   protected confirmar(): void {
-    if (this.form.invalid) {
+    if (this.form.invalid || this.form.controls.valor.value === null) {
       this.form.markAllAsTouched();
-      this.toast.erro('Informe o valor, as parcelas e a data da primeira parcela.');
+      this.toast.erro('Informe o valor do contrato.');
       return;
     }
-    const valor = this.form.getRawValue();
-    this.ref.close({
-      valor: valor.valor,
-      quantidadeParcelas: Number(valor.quantidadeParcelas),
-      primeiraParcela: deDataParaIso(valor.primeiraParcela),
-      comEntrada: !!valor.comEntrada,
-      baseEntrada: valor.comEntrada ? valor.baseEntrada : null,
-      valorEntrada: valor.comEntrada ? valor.valorEntrada : null,
-      dataEntrada: valor.comEntrada ? deDataParaIso(valor.dataEntrada) : null,
-    });
+    if (this.erro()) {
+      return;
+    }
+    this.ref.close({ valor: this.form.controls.valor.value, arquivo: this.arquivo });
   }
 }
 
@@ -359,7 +339,12 @@ const CLASSE_ETAPA: Record<string, string> = {
                         <span class="nome">{{ vinculo.fornecedor }}</span>
                         @if (vinculo.observacoes) { <span class="block text-xs text-muted">{{ vinculo.observacoes }}</span> }
                       </td>
-                      <td><span [class]="classeEtapa(vinculo.etapa)">{{ rotuloEtapa(vinculo.etapa) }}</span></td>
+                      <td>
+                        <span [class]="classeEtapa(vinculo.etapa)">{{ rotuloEtapa(vinculo.etapa) }}</span>
+                        @if (vinculo.etapa === 'Contratado' && linha.servico.contratoAssinado; as contrato) {
+                          <span class="block text-xs text-muted mt-1"><mat-icon class="mini">verified</mat-icon> {{ contrato.nome }}</span>
+                        }
+                      </td>
                       <td class="text-end! valor">
                         @if (vinculo.etapa === 'Contratado') {
                           {{ linha.servico.valorContratado | gdDinheiro }}
@@ -373,6 +358,21 @@ const CLASSE_ETAPA: Record<string, string> = {
                         @if (vinculo.etapa === 'Contratado') {
                           <button mat-icon-button type="button" aria-label="Mais ações" [matMenuTriggerFor]="menu"><mat-icon>more_vert</mat-icon></button>
                           <mat-menu #menu="matMenu" xPosition="before">
+                            @if (linha.servico.contratoAssinado; as contrato) {
+                              <button mat-menu-item type="button" (click)="abrirContrato(contrato.arquivoId)">
+                                <mat-icon>description</mat-icon> Abrir contrato assinado
+                              </button>
+                              <button mat-menu-item type="button" (click)="anexarContrato(linha.servico)">
+                                <mat-icon>upload_file</mat-icon> Substituir contrato assinado
+                              </button>
+                              <button mat-menu-item type="button" (click)="excluirContrato(linha.servico)">
+                                <mat-icon>delete</mat-icon> Excluir contrato assinado
+                              </button>
+                            } @else {
+                              <button mat-menu-item type="button" (click)="anexarContrato(linha.servico)">
+                                <mat-icon>upload_file</mat-icon> Anexar contrato assinado
+                              </button>
+                            }
                             <button mat-menu-item type="button" (click)="voltar(linha.servico, vinculo.id)">
                               <mat-icon>undo</mat-icon> Voltar para orçamento
                             </button>
@@ -406,6 +406,7 @@ const CLASSE_ETAPA: Record<string, string> = {
     .servico-acoes button { height: 28px; font-size: 12px; color: var(--mat-sys-surface-container-lowest); }
     .servico-acoes mat-icon { font-size: 16px; width: 16px; height: 16px; }
     .valor { font-weight: 600; white-space: nowrap; }
+    .mini { font-size: 14px; width: 14px; height: 14px; vertical-align: middle; }
     /* A célula do serviço ocupa várias linhas: o hover pinta só a linha do fornecedor. */
     tbody tr:hover td.servico { background: transparent !important; }
   `,
@@ -471,26 +472,9 @@ export class EventoFornecedoresPage implements OnInit {
     }
     const dados: VincularFornecedorDados = { servicos: atual.servicos, fornecedores: this.fornecedores(), servicoId: servico?.id };
     this.dialog.open(VincularFornecedorDialog, { ...DIALOG, data: dados }).afterClosed().subscribe((pedido?: VincularFornecedorPedido) => {
-      if (!pedido) {
-        return;
+      if (pedido) {
+        void this.gravarVinculos(pedido, atual);
       }
-      if (pedido.servicoId) {
-        this.gravarVinculo(pedido.servicoId, pedido);
-        return;
-      }
-      const antes = new Set(atual.servicos.map((item) => item.id));
-      this.negocio.adicionarServicoEvento(this.id, pedido.novoServico ?? '').subscribe({
-        next: (evento) => {
-          const criado = evento.servicos.find((item) => !antes.has(item.id));
-          if (!criado) {
-            this.toast.erro('Não foi possível criar o serviço.');
-            this.recarregar();
-            return;
-          }
-          this.gravarVinculo(criado.id, pedido);
-        },
-        error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
-      });
     });
   }
 
@@ -524,17 +508,78 @@ export class EventoFornecedoresPage implements OnInit {
     this.dialog.open(ContratarDialog, {
       ...DIALOG,
       data: { fornecedor: vinculo?.fornecedor ?? '', servico: servico.nome, valor: vinculo?.valorOrcamento ?? null },
-    }).afterClosed().subscribe((pedido) => {
+    }).afterClosed().subscribe((pedido?: ContratarResultado) => {
       if (!pedido) {
         return;
       }
-      this.negocio.contratarFornecedor(this.id, servico.id, vinculoId, pedido).subscribe({
+      this.negocio.contratarFornecedor(this.id, servico.id, vinculoId, { valor: pedido.valor }).subscribe({
         next: () => {
-          this.toast.sucesso('Fornecedor contratado.');
-          this.recarregar();
+          if (!pedido.arquivo) {
+            this.toast.sucesso('Fornecedor contratado.');
+            this.recarregar();
+            return;
+          }
+          this.negocio.enviarContratoAssinado(this.id, servico.id, pedido.arquivo).subscribe({
+            next: () => {
+              this.toast.sucesso('Fornecedor contratado e contrato assinado anexado.');
+              this.recarregar();
+            },
+            error: (erro: unknown) => {
+              this.toast.erro(`Fornecedor contratado, mas o contrato não foi anexado: ${mensagemDeErro(erro)} Anexe pelo menu da linha.`);
+              this.recarregar();
+            },
+          });
         },
         error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
       });
+    });
+  }
+
+  protected anexarContrato(servico: EventoServico): void {
+    this.dialog.open(ComprovanteDialog, { ...DIALOG_PEQUENO, data: { titulo: 'Contrato assinado' } }).afterClosed().subscribe((arquivo?: File) => {
+      if (!arquivo) {
+        return;
+      }
+      this.negocio.enviarContratoAssinado(this.id, servico.id, arquivo).subscribe({
+        next: (evento) => {
+          this.toast.sucesso('Contrato assinado anexado.');
+          this.evento.set(evento);
+        },
+        error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+      });
+    });
+  }
+
+  protected excluirContrato(servico: EventoServico): void {
+    this.dialog.open(ConfirmaDialog, {
+      ...DIALOG_PEQUENO,
+      data: { titulo: 'Excluir contrato assinado', texto: `Excluir "${servico.contratoAssinado?.nome ?? 'contrato'}"? O arquivo é apagado.`, confirmar: 'Excluir' },
+    }).afterClosed().subscribe((confirmou) => {
+      if (!confirmou) {
+        return;
+      }
+      this.negocio.excluirContratoAssinado(this.id, servico.id).subscribe({
+        next: (evento) => {
+          this.toast.sucesso('Contrato assinado excluído.');
+          this.evento.set(evento);
+        },
+        error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+      });
+    });
+  }
+
+  protected abrirContrato(arquivoId: string): void {
+    const janela = window.open('', '_blank');
+    this.negocio.baixarArquivo(arquivoId).subscribe({
+      next: (arquivo) => {
+        const url = URL.createObjectURL(arquivo);
+        if (janela) janela.location.href = url; else window.open(url, '_blank');
+        setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      },
+      error: (erro: unknown) => {
+        janela?.close();
+        this.toast.erro(mensagemDeErro(erro));
+      },
     });
   }
 
@@ -571,17 +616,30 @@ export class EventoFornecedoresPage implements OnInit {
     });
   }
 
-  private gravarVinculo(servicoId: string, pedido: VincularFornecedorPedido): void {
-    this.negocio.adicionarFornecedorServico(this.id, servicoId, pedido.fornecedorId, pedido.etapa).subscribe({
-      next: () => {
-        this.toast.sucesso('Fornecedor adicionado.');
-        this.recarregar();
-      },
-      error: (erro: unknown) => {
-        this.toast.erro(mensagemDeErro(erro));
-        this.recarregar();
-      },
-    });
+  /** Um vínculo em Orçamento por serviço marcado; serviços novos são criados antes (SPEC-045 §6.1). */
+  private async gravarVinculos(pedido: VincularFornecedorPedido, atual: EventoDetalhe): Promise<void> {
+    const existentes = new Set(atual.servicos.map((item) => item.id));
+    let feitos = 0;
+    try {
+      for (const escolha of pedido.servicos) {
+        let servicoId = escolha.servicoId;
+        if (!servicoId) {
+          const evento = await firstValueFrom(this.negocio.adicionarServicoEvento(this.id, escolha.novoServico ?? ''));
+          const criado = evento.servicos.find((item) => !existentes.has(item.id));
+          if (!criado) {
+            throw new Error('Não foi possível criar o serviço.');
+          }
+          existentes.add(criado.id);
+          servicoId = criado.id;
+        }
+        await firstValueFrom(this.negocio.adicionarFornecedorServico(this.id, servicoId, pedido.fornecedorId, pedido.etapa));
+        feitos++;
+      }
+      this.toast.sucesso(feitos === 1 ? 'Fornecedor adicionado.' : `Fornecedor adicionado em ${feitos} serviços.`);
+    } catch (erro) {
+      this.toast.erro(erro instanceof Error ? erro.message : mensagemDeErro(erro));
+    }
+    this.recarregar();
   }
 
   private carregarFornecedores(): void {

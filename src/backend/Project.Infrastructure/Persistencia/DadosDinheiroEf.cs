@@ -38,7 +38,7 @@ public sealed class DadosDinheiroEf(AppDbContext banco) : IDadosDinheiro
             .ToDictionaryAsync(fornecedor => fornecedor.Id, fornecedor => fornecedor.Nome, ct);
 
         return evento.Servicos
-            .Where(servico => servico.Contratado || servico.Contrato is not null)
+            .Where(servico => servico.Contrato is not null)
             .OrderBy(servico => servico.Ordem)
             .Select(servico =>
             {
@@ -79,12 +79,6 @@ public sealed class DadosDinheiroEf(AppDbContext banco) : IDadosDinheiro
                         Comprovante(parcela.ComprovanteArquivoId, parcela.ComprovanteNome, parcela.ComprovanteTipoConteudo))).ToArray());
             })
             .ToArray();
-    }
-
-    public Task InserirContratoAsync(ContratoFornecedor contrato, CancellationToken ct)
-    {
-        banco.Set<ContratoFornecedor>().Add(contrato);
-        return Task.CompletedTask;
     }
 
     public Task SubstituirParcelasAsync(ContratoFornecedor contrato, IReadOnlyList<ParcelaContratoFornecedor> novas, CancellationToken ct)

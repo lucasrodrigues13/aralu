@@ -80,7 +80,13 @@ public static class EventoMapeamento
                         nomesFornecedores.GetValueOrDefault(item.FornecedorId, ""),
                         item.Etapa,
                         item.ValorOrcamento,
-                        item.Observacoes)).ToArray()))
+                        item.Observacoes)).ToArray(),
+                    servico.Contrato is { ContratoAssinadoArquivoId: Guid arquivoId }
+                        ? new ComprovantePagamentoLeitura(
+                            arquivoId,
+                            servico.Contrato.ContratoAssinadoNome ?? "contrato",
+                            servico.Contrato.ContratoAssinadoTipoConteudo ?? "application/octet-stream")
+                        : null))
                 .ToArray(),
             tarefas.Count(tarefa => tarefa.Situacao == SituacaoTarefa.Concluida),
             tarefas.Count,

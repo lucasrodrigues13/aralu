@@ -101,7 +101,11 @@ public interface IDados
 
     Task SubstituirSubitensAsync(Guid servicoId, IReadOnlyList<SubitemServico> subitens, decimal? valorEstimado, CancellationToken ct);
 
-    Task SubstituirContratoFornecedorAsync(Guid servicoId, ContratoFornecedor contrato, CancellationToken ct);
+    /// <summary>Cria o contrato de fornecedor do serviço, sem parcelas, se ainda não existe. Nunca troca um existente (SPEC-045 §6.3).</summary>
+    Task GarantirContratoFornecedorAsync(Guid servicoId, CancellationToken ct);
+
+    /// <summary>Guarda (ou limpa, com arquivo nulo) o contrato assinado do contrato de fornecedor do serviço.</summary>
+    Task GravarContratoAssinadoAsync(Guid servicoId, Guid? arquivoId, string? nome, string? tipoConteudo, CancellationToken ct);
 
     Task AtualizarEtapaNegociacaoAsync(Guid vinculoId, EtapaNegociacao etapa, decimal? valorOrcamento, CancellationToken ct);
 

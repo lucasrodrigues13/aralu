@@ -70,7 +70,8 @@ public sealed record ServicoLeitura(
     Guid? ServicoContaId,
     IReadOnlyList<ParcelaLeitura> Parcelas,
     IReadOnlyList<SubitemLeitura> Subitens,
-    IReadOnlyList<FornecedorNoServicoLeitura> Fornecedores);
+    IReadOnlyList<FornecedorNoServicoLeitura> Fornecedores,
+    ComprovantePagamentoLeitura? ContratoAssinado = null);
 
 public sealed record LocalLeitura(
     string? Nome,

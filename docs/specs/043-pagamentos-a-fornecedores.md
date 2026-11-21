@@ -112,11 +112,11 @@ SPEC-040 (banco), SPEC-041 (parte do casal saiu), SPEC-018, SPEC-029. Depois: #2
 
 Decididos nesta entrega pela opção mais simples e conservadora (a conferir pelo dono):
 
-1. **O que é um "pagamento".** Um por serviço contratado. Serviço contratado sem contrato de fornecedor (caso que o card #28 cria) aparece como pagamento sem parcelas, e o contrato é criado ao primeiro uso.
+1. **O que é um "pagamento".** Um por serviço contratado. Serviço contratado sem contrato de fornecedor (caso que o card #28 cria) aparece como pagamento sem parcelas, e o contrato é criado ao primeiro uso. *(Resolvido pela SPEC-045: o contrato nasce ao contratar e a migration cria o dos serviços já contratados.)*
 2. **Despesas e comprovantes antigos.** O card manda definir o destino antes de remover: ficam **apagados com os dados** (regra 7). Os arquivos físicos do volume e as linhas da tabela `Arquivos` ficam órfãos (limpeza manual; não há migração de dados para a nova estrutura).
 3. **Data do pagamento.** Marcar como pago usa a data de hoje, sem perguntar. Forma de pagamento e "pago por" não existem.
 4. **Comprovante no pagamento inteiro** só quando não há parcelas.
 5. **Refazer parcelamento** só sem parcela paga e sem comprovante.
-6. **Contratar** continua pedindo parcelas até o card #28 tirá-las.
+6. **Contratar** continua pedindo parcelas até o card #28 tirá-las. *(Resolvido pela [SPEC-045](045-contratar-fornecedor-e-contrato-assinado.md): Contratar não pede mais parcelas e contratar de novo mantém o contrato, os pagos e os comprovantes.)*
 7. **Hoje.** O card "Pagamentos da semana" continua e lê só parcelas; pagamento sem parcelas não aparece nele.
 8. **Exportar orçamento** fica (o card só manda tirar os dois boxes).
