@@ -136,7 +136,7 @@ export function cardsPorSituacao(porSituacao: { rotulo: string; quantidade: numb
                     <tr>
                       <td>
                         <strong>{{ item.nome }}</strong>
-                        <span class="block text-xs text-muted">{{ item.grupo }} @if (item.acessada) { · acessada } @if (item.respondida) { · respondida }</span>
+                        <span class="block text-xs text-muted">@if (item.acessada) { acessada } @if (item.respondida) { @if (item.acessada) { · } respondida }</span>
                       </td>
                       <td>{{ item.telefone || '—' }}</td>
                       <td>
@@ -200,16 +200,7 @@ export function cardsPorSituacao(porSituacao: { rotulo: string; quantidade: numb
             <mat-label class="font-semibold mb-2 block">Nome do convite</mat-label>
             <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Nome do convite'" matInput formControlName="nome" placeholder="Ex.: Joana e família" /></mat-form-field>
           </div>
-          <div class="campo">
-            <mat-label class="font-semibold mb-2 block">Grupo</mat-label>
-            <mat-form-field appearance="outline" class="w-full">
-            <mat-select [attr.aria-label]="'Grupo'" formControlName="grupoId">
-              <mat-option value="">Nenhum</mat-option>
-              @for (grupo of grupos(); track grupo.id) { <mat-option [value]="grupo.id">{{ grupo.nome }}</mat-option> }
-            </mat-select>
-          </mat-form-field>
-          </div>
-          <div class="campo">
+          <div class="campo sm:col-span-2">
             <mat-label class="font-semibold mb-2 block">Observação</mat-label>
             <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Observação'" matInput formControlName="observacao" /></mat-form-field>
           </div>
@@ -240,7 +231,6 @@ export class ConvidadosPage implements OnInit {
   private readonly rota = inject(ActivatedRoute);
   private readonly toast = inject(ToastService);
   protected readonly lista = signal<ListaConvites | null>(null);
-  protected readonly grupos = signal<{ id: string; nome: string }[]>([]);
   protected readonly visao = signal('convite');
   protected readonly eventoId = signal('');
   protected readonly cards = computed(() => {
@@ -253,7 +243,7 @@ export class ConvidadosPage implements OnInit {
     nome: '', situacao: '', telefone: '', observacao: '', somenteConfirmados: false,
   });
   protected readonly convite = this.fb.nonNullable.group({
-    nome: '', grupoId: '', observacao: '', convidado: '', ddi: '+55', celular: '',
+    nome: '', observacao: '', convidado: '', ddi: '+55', celular: '',
   });
 
   ngOnInit(): void {
@@ -264,7 +254,6 @@ export class ConvidadosPage implements OnInit {
     if (!id) {
       return;
     }
-    this.negocio.grupos().subscribe({ next: (grupos) => this.grupos.set(grupos) });
     this.carregar();
   }
 
@@ -308,7 +297,6 @@ export class ConvidadosPage implements OnInit {
     const valor = this.convite.getRawValue();
     this.negocio.criarConvite(this.eventoId(), {
       nome: valor.nome,
-      grupoId: valor.grupoId || null,
       observacao: valor.observacao,
       usaTransfer: false,
       localOrigem: '',
