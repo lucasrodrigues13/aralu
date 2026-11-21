@@ -60,7 +60,7 @@ Valem para todas as telas. Vêm do PDF (seções "Por que assim" e "Não fazer")
 | Dinheiro | Financeiro da empresa, Relatórios |
 | Cadastros | Clientes, Fornecedores, Equipe |
 | Conta | Perfil, Marca e página pública, Pix, Ajustes |
-| **Modelos** (último grupo; decidido em 21/11/2026) | Todos os modelos num só grupo: evento, briefing, roteiro, cronograma, inspirações, mensagens, contrato, serviços do funil e orçamento do funil. O que se configura uma vez e muda pouco fica por último |
+| **Modelos** (último grupo; decidido em 21/11/2026; pronto no card #37, SPEC-034, que traz a ordem real do menu) | Todos os modelos num só grupo: evento, briefing, roteiro, cronograma, inspirações, mensagens, serviços do funil e orçamento do funil (feitos); contrato fica no Funil de vendas até o card #38 O que se configura uma vez e muda pouco fica por último |
 
 **Celular:** barra inferior com **Hoje · Eventos · + Novo · Dinheiro · Mais** (PDF). "Mais" abre os outros grupos.
 
