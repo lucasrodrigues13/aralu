@@ -1,6 +1,6 @@
 # 004. Convites e RSVP
 
-**Status: aprovada.** O código segue esta spec.
+**Status: rascunho.** Só o item 6 do fluxo muda (card #22, SPEC-010 seção 18); o resto já estava aprovado.
 
 ## 1. Identificador e nome
 
@@ -37,7 +37,7 @@ Evento em andamento da conta, SPEC-002. O link não é enviado pelo sistema.
 3. Cada convidado nasce pendente.
 4. Preenche, se quiser, faixa, custo, gênero, celular, observação, grupo e transfer.
 5. A lista pode ser vista por convite ou por convidado, com busca e filtros.
-6. Os totais do evento mostram situação, faixa e custo.
+6. O evento mostra os totais por situação. Faixa e custo saíram da aba (SPEC-010, seção 18).
 7. O convite tem um link. A assessoria copia.
 8. A página pública lista os nomes daquele convite.
 9. A pessoa marca cada um como confirmado ou não comparecerá e envia.
