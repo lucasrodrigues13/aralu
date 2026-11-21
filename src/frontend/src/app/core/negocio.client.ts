@@ -448,8 +448,6 @@ export interface Convite {
   id: string;
   eventoId: string;
   nome: string;
-  grupoId: string | null;
-  grupo: string | null;
   observacao: string | null;
   usaTransfer: boolean;
   localOrigem: string | null;
@@ -956,14 +954,6 @@ export class NegocioClient {
     return this.http.get<{ endereco: string; estado: string; cidade: string; bairro: string; pais: string }>(
       `${this.base}/api/v1/cep/${cep}`,
     );
-  }
-
-  grupos() {
-    return this.http.get<{ id: string; nome: string }[]>(`${this.base}/api/v1/grupos`);
-  }
-
-  criarGrupo(nome: string) {
-    return this.http.post<{ id: string; nome: string }>(`${this.base}/api/v1/grupos`, { nome });
   }
 
   convites(eventoId: string, filtro: Record<string, string>) {

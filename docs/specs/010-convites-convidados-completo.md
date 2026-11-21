@@ -24,8 +24,8 @@ Evento da conta do Organizer, SPEC-002. A SPEC-004 continua valendo para situaç
 
 ## 6. Fluxo principal
 
-1. O Organizer cria grupos pelo nome.
-2. Cria um convite com nome e, se quiser, grupo e observação.
+1. ~~O Organizer cria grupos pelo nome.~~ Grupos suspensos (seção 18).
+2. Cria um convite com nome e, se quiser, observação.
 
 3. Inclui pelo menos um convidado: nome obrigatório; DDI, celular, RSVP, mesa, gênero, faixa, custo, RG e CPF opcionais (CPF validado e gravado sem máscara, SPEC-034).
 4. No convite, escolhe o telefone de um convidado deste convite. Esse convidado fica principal e o telefone do convite passa a ser o dele.
@@ -81,7 +81,7 @@ Validação no campo. Convite de outra conta não revela dado. Planilha inválid
 
 1. Convite novo sem convidado não grava.
 2. O convidado grava o próprio celular. No convite, escolher esse telefone marca o convidado como principal e a lista do convite mostra o número dele.
-3. Grupo criado na conta aparece no convite.
+3. ~~Grupo criado na conta aparece no convite.~~ Suspenso: o convite não tem grupo na tela.
 4. A aba Convidados não mostra os cards Totais, Transfer do evento e Grupos, nem o campo Usa transfer no convite.
 5. A aba mostra os cards Pendentes, Confirmados e Não confirmados com a contagem de convidados, inclusive 0.
 6. A planilha padrão tem as 11 colunas da seção 8.
@@ -107,6 +107,6 @@ Muda: a aba Convidados perde os cards Totais (faixa e custo), Transfer do evento
 Decisões do dono do projeto:
 
 1. **Usa transfer no convite.** Retirado do modal de convite junto com o card Transfer.
-2. **Grupo do convite.** Fica só o seletor com os grupos existentes. Criar grupo fica para outro card.
+2. **Grupos suspensos (decisão posterior do dono).** Nesta fase não há grupo em lugar nenhum da tela de convidados: sem seletor no convite, sem rótulo na lista, sem criar grupo. Fica em aberto como o recurso volta de forma definitiva. Dados, API e coluna de grupo permanecem no sistema. Vale para as regras de grupo da SPEC-010 (fluxo, seção 8, planilha) e da SPEC-004 (itens de grupo), que ficam sem efeito na tela até nova definição.
 3. **Clique no card.** Clicar num card aplica o filtro de situação da lista; clicar de novo limpa.
 4. **Portaria.** O texto de origem pedia apenas cards separados para pendentes, confirmados e não confirmados. Nada além dos três cards.

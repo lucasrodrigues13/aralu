@@ -32,7 +32,7 @@ Evento em andamento da conta, SPEC-002. O link não é enviado pelo sistema.
 
 ## 6. Fluxo principal
 
-1. A conta cria os grupos que quiser usar.
+1. ~~A conta cria os grupos que quiser usar.~~ Grupos suspensos (SPEC-010, seção 18).
 2. Cria um convite com nome e inclui convidados com nome.
 3. Cada convidado nasce pendente.
 4. Preenche, se quiser, faixa, custo, gênero, celular, observação, grupo e transfer.
