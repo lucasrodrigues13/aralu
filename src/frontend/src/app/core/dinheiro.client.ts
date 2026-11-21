@@ -6,7 +6,6 @@ import { API_BASE_URL } from './api-base-url';
 export type SituacaoParcelaContrato = 'AReceber' | 'Parcial' | 'Recebida' | 'Atrasada';
 export type TipoCobranca = 'Lembrete' | 'VenceHoje' | 'Atrasada';
 export type FormaPagamento = 'Pix' | 'Dinheiro' | 'Cartao' | 'Transferencia' | 'Boleto' | 'Outro';
-export type TipoLancamento = 'Despesa' | 'Entrada';
 
 export const FORMAS_PAGAMENTO: { valor: FormaPagamento; rotulo: string }[] = [
   { valor: 'Pix', rotulo: 'Pix' },
@@ -53,35 +52,36 @@ export interface ParcelaOrcamento {
   entrada: boolean;
 }
 
-export interface LancamentoEvento {
-  id: string;
-  tipo: TipoLancamento;
-  categoria: string;
-  descricao: string | null;
-  valor: number;
-  data: string;
+export interface ComprovantePagamento {
+  arquivoId: string;
+  nome: string;
+  tipoConteudo: string;
 }
 
+export interface ParcelaPagamento {
+  id: string;
+  numero: number;
+  vencimento: string;
+  valor: number;
+  entrada: boolean;
+  paga: boolean;
+  pagoEm: string | null;
+  comprovante: ComprovantePagamento | null;
+}
+
+/** Um pagamento a fornecedor: o serviço contratado do evento, com ou sem parcelas (SPEC-043). */
 export interface PagamentoFornecedor {
   eventoId: string;
   evento: string;
   servicoId: string;
   servico: string;
   fornecedor: string | null;
-  numero: number;
-  vencimento: string;
   valor: number;
-  entrada: boolean;
-  situacao: string;
-}
-
-export interface ComprovanteEvento {
-  id: string;
-  arquivoId: string;
-  nome: string;
-  tipoConteudo: string;
-  descricao: string | null;
-  enviadoEm: string;
+  pago: boolean;
+  pagoEm: string | null;
+  vencimento: string | null;
+  comprovante: ComprovantePagamento | null;
+  parcelas: ParcelaPagamento[];
 }
 
 /** Comprovantes aceitos (SPEC-029 §6.6). */
@@ -102,14 +102,21 @@ export function validarComprovante(arquivo: { name: string; size: number }): str
 }
 
 export interface DinheiroEvento {
-  despesas: number;
-  entradas: number;
+  contratado: number;
+  pago: number;
   pagamentosFornecedores: PagamentoFornecedor[];
-  lancamentos: LancamentoEvento[];
-  comprovantes: ComprovanteEvento[];
 }
 
-/** Dinheiro do evento (SPEC-029 v2): pagamentos a fornecedores, despesas e comprovantes. */
+export interface PedidoParcelamentoPagamento {
+  quantidadeParcelas: number;
+  primeiraParcela: string | null;
+  comEntrada: boolean;
+  baseEntrada: 'Valor' | 'Porcentagem' | null;
+  valorEntrada: number | null;
+  dataEntrada: string | null;
+}
+
+/** Dinheiro do evento (SPEC-043): pagamentos a fornecedores com parcelas e comprovantes. */
 @Injectable({ providedIn: 'root' })
 export class DinheiroClient {
   private readonly http = inject(HttpClient);
@@ -119,28 +126,44 @@ export class DinheiroClient {
     return this.http.get<DinheiroEvento>(`${this.base}/api/v1/eventos/${eventoId}/dinheiro`);
   }
 
-  salvarLancamento(eventoId: string, id: string | null, pedido: Omit<LancamentoEvento, 'id'>) {
-    const url = `${this.base}/api/v1/eventos/${eventoId}/dinheiro/lancamentos`;
-    return id ? this.http.put<DinheiroEvento>(`${url}/${id}`, pedido) : this.http.post<DinheiroEvento>(url, pedido);
+  private pagamento(eventoId: string, servicoId: string) {
+    return `${this.base}/api/v1/eventos/${eventoId}/dinheiro/pagamentos/${servicoId}`;
   }
 
-  excluirLancamento(eventoId: string, id: string) {
-    return this.http.delete<DinheiroEvento>(`${this.base}/api/v1/eventos/${eventoId}/dinheiro/lancamentos/${id}`);
+  parcelar(eventoId: string, servicoId: string, pedido: PedidoParcelamentoPagamento) {
+    return this.http.put<DinheiroEvento>(`${this.pagamento(eventoId, servicoId)}/parcelamento`, pedido);
+  }
+
+  removerParcelamento(eventoId: string, servicoId: string) {
+    return this.http.delete<DinheiroEvento>(`${this.pagamento(eventoId, servicoId)}/parcelamento`);
+  }
+
+  marcarPagamento(eventoId: string, servicoId: string, pago: boolean) {
+    return this.http.put<DinheiroEvento>(`${this.pagamento(eventoId, servicoId)}/pago`, { pago });
+  }
+
+  marcarParcela(eventoId: string, servicoId: string, parcelaId: string, pago: boolean) {
+    return this.http.put<DinheiroEvento>(`${this.pagamento(eventoId, servicoId)}/parcelas/${parcelaId}/pago`, { pago });
+  }
+
+  /** Comprovante da parcela, ou do pagamento quando `parcelaId` é nulo. */
+  enviarComprovante(eventoId: string, servicoId: string, parcelaId: string | null, arquivo: File) {
+    const dados = new FormData();
+    dados.append('arquivo', arquivo);
+    return this.http.post<DinheiroEvento>(this.comprovante(eventoId, servicoId, parcelaId), dados);
+  }
+
+  excluirComprovante(eventoId: string, servicoId: string, parcelaId: string | null) {
+    return this.http.delete<DinheiroEvento>(this.comprovante(eventoId, servicoId, parcelaId));
+  }
+
+  private comprovante(eventoId: string, servicoId: string, parcelaId: string | null) {
+    const base = this.pagamento(eventoId, servicoId);
+    return parcelaId ? `${base}/parcelas/${parcelaId}/comprovante` : `${base}/comprovante`;
   }
 
   planilhaBudget(eventoId: string) {
     return this.http.get(`${this.base}/api/v1/eventos/${eventoId}/budget/planilha`, { responseType: 'blob' });
-  }
-
-  enviarComprovante(eventoId: string, arquivo: File, descricao: string) {
-    const dados = new FormData();
-    dados.append('arquivo', arquivo);
-    if (descricao.trim()) dados.append('descricao', descricao.trim());
-    return this.http.post<DinheiroEvento>(`${this.base}/api/v1/eventos/${eventoId}/dinheiro/comprovantes`, dados);
-  }
-
-  excluirComprovante(eventoId: string, id: string) {
-    return this.http.delete<DinheiroEvento>(`${this.base}/api/v1/eventos/${eventoId}/dinheiro/comprovantes/${id}`);
   }
 
   baixarArquivo(arquivoId: string) {

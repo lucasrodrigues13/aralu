@@ -123,16 +123,15 @@ public class DinheiroFluxoTests
     }
 
     [Fact]
-    public async Task Despesa_planilha_de_budget_e_isolamento_do_dinheiro_do_evento()
+    public async Task Planilha_de_budget_e_isolamento_do_dinheiro_do_evento()
     {
         var dono = await Entrar();
         var outra = await Entrar();
         var evento = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new { tipo = "Casamento", primeiroNome = "Ana", segundoNome = "Rui" }));
         var eventoId = evento.GetProperty("id").GetGuid();
 
-        var comDespesa = await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/dinheiro/lancamentos", new { tipo = "Despesa", categoria = "Transporte", valor = 150, data = "2026-11-20" }));
-        Assert.Equal(150m, comDespesa.GetProperty("despesas").GetDecimal());
-
+        var dinheiro = await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/dinheiro"));
+        Assert.Empty(dinheiro.GetProperty("pagamentosFornecedores").EnumerateArray());
         Assert.Equal(HttpStatusCode.NotFound, (await outra.GetAsync($"/api/v1/eventos/{eventoId}/dinheiro")).StatusCode);
 
         var planilha = await dono.GetAsync($"/api/v1/eventos/{eventoId}/budget/planilha");
@@ -161,37 +160,169 @@ public class DinheiroFluxoTests
     }
 
     [Fact]
-    public async Task Comprovante_aceita_pdf_recusa_outro_tipo_e_exclui()
+    public async Task Pagamento_parcela_a_parcela_muda_o_pagamento_e_marcar_pagamento_marca_todas()
     {
         var dono = await Entrar();
         var outra = await Entrar();
-        var evento = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new { tipo = "Casamento", primeiroNome = "Gil", segundoNome = "Ana" }));
-        var eventoId = evento.GetProperty("id").GetGuid();
+        var (eventoId, servicoId) = await EventoComFornecedorContratado(dono, 2);
+        var url = $"/api/v1/eventos/{eventoId}/dinheiro/pagamentos/{servicoId}";
+
+        var inicial = Pagamento(await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/dinheiro")));
+        Assert.False(inicial.GetProperty("pago").GetBoolean());
+        Assert.Equal(4000m, inicial.GetProperty("valor").GetDecimal());
+        var parcelas = inicial.GetProperty("parcelas").EnumerateArray().ToArray();
+        Assert.Equal(2, parcelas.Length);
+
+        // Uma parcela paga: o pagamento segue pendente; a segunda: fica pago sozinho.
+        var umaPaga = await Ler(await dono.PutAsJsonAsync($"{url}/parcelas/{parcelas[0].GetProperty("id").GetGuid()}/pago", new { pago = true }));
+        Assert.False(Pagamento(umaPaga).GetProperty("pago").GetBoolean());
+        Assert.Equal(2000m, umaPaga.GetProperty("pago").GetDecimal());
+        var duasPagas = await Ler(await dono.PutAsJsonAsync($"{url}/parcelas/{parcelas[1].GetProperty("id").GetGuid()}/pago", new { pago = true }));
+        Assert.True(Pagamento(duasPagas).GetProperty("pago").GetBoolean());
+        Assert.Equal(4000m, duasPagas.GetProperty("pago").GetDecimal());
+
+        // Desmarcar uma parcela devolve o pagamento a pendente.
+        var desmarcada = await Ler(await dono.PutAsJsonAsync($"{url}/parcelas/{parcelas[0].GetProperty("id").GetGuid()}/pago", new { pago = false }));
+        Assert.False(Pagamento(desmarcada).GetProperty("pago").GetBoolean());
+
+        // Marcar o pagamento marca todas; desfazer volta tudo.
+        var tudo = Pagamento(await Ler(await dono.PutAsJsonAsync($"{url}/pago", new { pago = true })));
+        Assert.True(tudo.GetProperty("pago").GetBoolean());
+        Assert.All(tudo.GetProperty("parcelas").EnumerateArray(), parcela => Assert.True(parcela.GetProperty("paga").GetBoolean()));
+        var desfeito = Pagamento(await Ler(await dono.PutAsJsonAsync($"{url}/pago", new { pago = false })));
+        Assert.All(desfeito.GetProperty("parcelas").EnumerateArray(), parcela => Assert.False(parcela.GetProperty("paga").GetBoolean()));
+
+        Assert.Equal(HttpStatusCode.NotFound, (await outra.PutAsJsonAsync($"{url}/pago", new { pago = true })).StatusCode);
+    }
+
+    [Fact]
+    public async Task Pagamento_pode_ser_parcelado_e_o_parcelamento_so_muda_sem_pagamento()
+    {
+        var dono = await Entrar();
+        var (eventoId, servicoId) = await EventoComFornecedorContratado(dono, 1);
+        var url = $"/api/v1/eventos/{eventoId}/dinheiro/pagamentos/{servicoId}";
+
+        // Sem parcelas: remover o parcelamento; depois marcar pago direto.
+        var semParcelas = Pagamento(await Ler(await dono.DeleteAsync($"{url}/parcelamento")));
+        Assert.Empty(semParcelas.GetProperty("parcelas").EnumerateArray());
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.DeleteAsync($"{url}/parcelamento")).StatusCode);
+        Assert.True(Pagamento(await Ler(await dono.PutAsJsonAsync($"{url}/pago", new { pago = true }))).GetProperty("pago").GetBoolean());
+        Assert.Equal(4000m, (await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/dinheiro"))).GetProperty("pago").GetDecimal());
+
+        // Pago: não parcela. Desfeito: parcela com entrada de 1000 e 3 parcelas.
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PutAsJsonAsync($"{url}/parcelamento", new { quantidadeParcelas = 2, primeiraParcela = "2027-01-10", comEntrada = false })).StatusCode);
+        await Ler(await dono.PutAsJsonAsync($"{url}/pago", new { pago = false }));
+        var parcelado = Pagamento(await Ler(await dono.PutAsJsonAsync($"{url}/parcelamento", new
+        {
+            quantidadeParcelas = 3,
+            primeiraParcela = "2027-01-10",
+            comEntrada = true,
+            baseEntrada = "Valor",
+            valorEntrada = 1000,
+            dataEntrada = "2026-12-01",
+        })));
+        var itens = parcelado.GetProperty("parcelas").EnumerateArray().ToArray();
+        Assert.Equal(4, itens.Length);
+        Assert.True(itens[0].GetProperty("entrada").GetBoolean());
+        Assert.Equal(4000m, itens.Sum(item => item.GetProperty("valor").GetDecimal()));
+
+        // Entrada que não fecha e número fora de 1 a 120 são recusados.
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PutAsJsonAsync($"{url}/parcelamento", new { quantidadeParcelas = 2, primeiraParcela = "2027-01-10", comEntrada = true, baseEntrada = "Valor", valorEntrada = 9000, dataEntrada = "2026-12-01" })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PutAsJsonAsync($"{url}/parcelamento", new { quantidadeParcelas = 121, primeiraParcela = "2027-01-10", comEntrada = false })).StatusCode);
+
+        // Refazer sem pagamento funciona; com parcela paga, refazer e remover são recusados.
+        var refeito = Pagamento(await Ler(await dono.PutAsJsonAsync($"{url}/parcelamento", new { quantidadeParcelas = 2, primeiraParcela = "2027-01-10", comEntrada = false })));
+        Assert.Equal(2, refeito.GetProperty("parcelas").GetArrayLength());
+        await Ler(await dono.PutAsJsonAsync($"{url}/parcelas/{refeito.GetProperty("parcelas")[0].GetProperty("id").GetGuid()}/pago", new { pago = true }));
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PutAsJsonAsync($"{url}/parcelamento", new { quantidadeParcelas = 3, primeiraParcela = "2027-01-10", comEntrada = false })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.DeleteAsync($"{url}/parcelamento")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Comprovante_por_parcela_e_por_pagamento_aceita_pdf_recusa_outro_tipo_substitui_e_exclui()
+    {
+        var dono = await Entrar();
+        var outra = await Entrar();
+        var (eventoId, servicoId) = await EventoComFornecedorContratado(dono, 2);
+        var url = $"/api/v1/eventos/{eventoId}/dinheiro/pagamentos/{servicoId}";
+        var parcelaId = Pagamento(await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/dinheiro"))).GetProperty("parcelas")[0].GetProperty("id").GetGuid();
 
         using var texto = new MultipartFormDataContent { { new ByteArrayContent(System.Text.Encoding.UTF8.GetBytes("oi")), "arquivo", "nota.txt" } };
-        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PostAsync($"/api/v1/eventos/{eventoId}/dinheiro/comprovantes", texto)).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PostAsync($"{url}/parcelas/{parcelaId}/comprovante", texto)).StatusCode);
 
         var grande = new byte[5 * 1024 * 1024 + 10];
         System.Text.Encoding.ASCII.GetBytes("%PDF-1.4").CopyTo(grande, 0);
         using var excesso = new MultipartFormDataContent { { new ByteArrayContent(grande), "arquivo", "grande.pdf" } };
-        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PostAsync($"/api/v1/eventos/{eventoId}/dinheiro/comprovantes", excesso)).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PostAsync($"{url}/parcelas/{parcelaId}/comprovante", excesso)).StatusCode);
 
-        using var pdf = new MultipartFormDataContent
-        {
-            { new ByteArrayContent(System.Text.Encoding.ASCII.GetBytes("%PDF-1.4\n%%EOF")), "arquivo", "recibo.pdf" },
-            { new StringContent("Sinal do buffet"), "descricao" },
-        };
-        var comPdf = await Ler(await dono.PostAsync($"/api/v1/eventos/{eventoId}/dinheiro/comprovantes", pdf));
-        var comprovante = comPdf.GetProperty("comprovantes")[0];
+        // Pagamento parcelado: o comprovante é da parcela.
+        using var inteiro = Pdf("recibo-total.pdf");
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PostAsync($"{url}/comprovante", inteiro)).StatusCode);
+
+        using var primeiro = Pdf("recibo.pdf");
+        var comPdf = Pagamento(await Ler(await dono.PostAsync($"{url}/parcelas/{parcelaId}/comprovante", primeiro)));
+        var comprovante = comPdf.GetProperty("parcelas")[0].GetProperty("comprovante");
         Assert.Equal("recibo.pdf", comprovante.GetProperty("nome").GetString());
         Assert.Equal("application/pdf", comprovante.GetProperty("tipoConteudo").GetString());
-
         var arquivoId = comprovante.GetProperty("arquivoId").GetGuid();
         Assert.Equal(HttpStatusCode.OK, (await dono.GetAsync($"/api/v1/arquivos/{arquivoId}")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await outra.GetAsync($"/api/v1/arquivos/{arquivoId}")).StatusCode);
+        using var alheio = Pdf("alheio.pdf");
+        Assert.Equal(HttpStatusCode.NotFound, (await outra.PostAsync($"{url}/parcelas/{parcelaId}/comprovante", alheio)).StatusCode);
 
-        var semComprovante = await Ler(await dono.DeleteAsync($"/api/v1/eventos/{eventoId}/dinheiro/comprovantes/{comprovante.GetProperty("id").GetGuid()}"));
-        Assert.Empty(semComprovante.GetProperty("comprovantes").EnumerateArray());
+        // Com comprovante, não refaz o parcelamento; enviar outro substitui e apaga o arquivo anterior.
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PutAsJsonAsync($"{url}/parcelamento", new { quantidadeParcelas = 3, primeiraParcela = "2027-01-10", comEntrada = false })).StatusCode);
+        using var novo = Pdf("novo.pdf");
+        var substituido = Pagamento(await Ler(await dono.PostAsync($"{url}/parcelas/{parcelaId}/comprovante", novo)));
+        Assert.Equal("novo.pdf", substituido.GetProperty("parcelas")[0].GetProperty("comprovante").GetProperty("nome").GetString());
+        Assert.Equal(HttpStatusCode.NotFound, (await dono.GetAsync($"/api/v1/arquivos/{arquivoId}")).StatusCode);
+
+        var excluido = Pagamento(await Ler(await dono.DeleteAsync($"{url}/parcelas/{parcelaId}/comprovante")));
+        Assert.Equal(JsonValueKind.Null, excluido.GetProperty("parcelas")[0].GetProperty("comprovante").ValueKind);
+        Assert.Equal(HttpStatusCode.NotFound, (await dono.DeleteAsync($"{url}/parcelas/{parcelaId}/comprovante")).StatusCode);
+
+        // Sem parcelas, o comprovante é do pagamento.
+        await Ler(await dono.DeleteAsync($"{url}/parcelamento"));
+        using var total = Pdf("total.pdf");
+        var semParcelas = Pagamento(await Ler(await dono.PostAsync($"{url}/comprovante", total)));
+        Assert.Equal("total.pdf", semParcelas.GetProperty("comprovante").GetProperty("nome").GetString());
+        var semComprovante = Pagamento(await Ler(await dono.DeleteAsync($"{url}/comprovante")));
+        Assert.Equal(JsonValueKind.Null, semComprovante.GetProperty("comprovante").ValueKind);
+    }
+
+    private static MultipartFormDataContent Pdf(string nome) =>
+        new() { { new ByteArrayContent(System.Text.Encoding.ASCII.GetBytes("%PDF-1.4\n%%EOF")), "arquivo", nome } };
+
+    private static JsonElement Pagamento(JsonElement dinheiro) => dinheiro.GetProperty("pagamentosFornecedores").EnumerateArray().Single();
+
+    /// <summary>Evento com um serviço contratado (valor 4000, em <paramref name="parcelas"/> parcelas a partir de 10/12/2026).</summary>
+    private static async Task<(Guid EventoId, Guid ServicoId)> EventoComFornecedorContratado(HttpClient dono, int parcelas)
+    {
+        var evento = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new { tipo = "Casamento", primeiroNome = "Gil", segundoNome = "Ana" }));
+        var eventoId = evento.GetProperty("id").GetGuid();
+        var servicoConta = await Ler(await dono.PostAsJsonAsync("/api/v1/servicos-conta", new { nome = $"Serviço {Guid.NewGuid():N}" }));
+        var fornecedor = await Ler(await dono.PostAsJsonAsync("/api/v1/fornecedores", new
+        {
+            nome = "Fornecedor Teste",
+            servicoContaIds = new[] { servicoConta.GetProperty("id").GetGuid() },
+            emails = new[] { new { endereco = "forn@exemplo.com" } },
+            telefones = new[] { new { numero = "11999990000", movel = true } },
+        }));
+        var fornecedorId = fornecedor.GetProperty("id").GetGuid();
+        var comServico = await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/servicos", new { nome = "Banda" }));
+        var servicoId = comServico.GetProperty("servicos").EnumerateArray()
+            .Single(item => item.GetProperty("nome").GetString() == "Banda")
+            .GetProperty("id").GetGuid();
+        var comFornecedor = await Ler(await dono.PostAsJsonAsync(
+            $"/api/v1/eventos/{eventoId}/servicos/{servicoId}/fornecedores",
+            new { fornecedorId, etapa = "Orcamento" }));
+        var vinculoId = comFornecedor.GetProperty("servicos").EnumerateArray()
+            .Single(item => item.GetProperty("id").GetGuid() == servicoId)
+            .GetProperty("fornecedores").EnumerateArray().Single().GetProperty("id").GetGuid();
+        Assert.Equal(HttpStatusCode.OK, (await dono.PostAsJsonAsync(
+            $"/api/v1/eventos/{eventoId}/servicos/{servicoId}/fornecedores/{vinculoId}/contratar",
+            new { valor = 4000, quantidadeParcelas = parcelas, primeiraParcela = "2026-12-10", comEntrada = false })).StatusCode);
+        return (eventoId, servicoId);
     }
 
     private async Task<HttpClient> Entrar()

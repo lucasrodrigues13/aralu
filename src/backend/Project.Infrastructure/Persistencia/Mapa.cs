@@ -235,25 +235,15 @@ public static class Mapa
         parcelaFornecedor.Property(item => item.Valor).HasPrecision(12, 2);
         parcelaFornecedor.Property(item => item.Situacao).HasConversion<string>();
         parcelaFornecedor.HasIndex(item => item.ContratoFornecedorId);
+        parcelaFornecedor.Property(item => item.ComprovanteNome).HasMaxLength(260);
+        parcelaFornecedor.Property(item => item.ComprovanteTipoConteudo).HasMaxLength(100);
+        contratoFornecedor.Property(item => item.ComprovanteNome).HasMaxLength(260);
+        contratoFornecedor.Property(item => item.ComprovanteTipoConteudo).HasMaxLength(100);
 
         var recebimento = modelBuilder.Entity<Project.Domain.Dinheiro.RecebimentoParcela>();
         recebimento.ToTable("RecebimentosParcela");
         recebimento.Property(item => item.Valor).HasPrecision(12, 2);
         recebimento.Property(item => item.Forma).HasConversion<string>();
-
-        var lancamento = modelBuilder.Entity<Project.Domain.Dinheiro.LancamentoEvento>();
-        lancamento.ToTable("LancamentosEvento");
-        lancamento.Property(item => item.Valor).HasPrecision(12, 2);
-        lancamento.Property(item => item.Tipo).HasConversion<string>();
-        lancamento.Property(item => item.Categoria).HasMaxLength(80);
-        lancamento.HasIndex(item => item.EventoId);
-        lancamento.HasOne<Evento>().WithMany().HasForeignKey(item => item.EventoId).OnDelete(DeleteBehavior.Cascade);
-
-        var comprovante = modelBuilder.Entity<Project.Domain.Dinheiro.ComprovanteEvento>();
-        comprovante.ToTable("ComprovantesEvento");
-        comprovante.HasIndex(item => item.EventoId);
-        comprovante.Property(item => item.Descricao).HasMaxLength(200);
-        comprovante.HasOne<Evento>().WithMany().HasForeignKey(item => item.EventoId).OnDelete(DeleteBehavior.Cascade);
     }
 
     private static void MapearFornecedores(ModelBuilder modelBuilder)

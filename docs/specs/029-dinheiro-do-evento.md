@@ -4,6 +4,8 @@
 
 > **Versão 2 (card #41, 21/11/2026, [SPEC-040](040-parcelas-por-documento.md)).** As parcelas do casal (§6.1 a §6.4: contrato, Cobrar, Recebi e totais) deixaram a aba Dinheiro do evento: viraram **parcelas do contrato com o cliente** (`Contrato.Parcelas`, copiadas do orçamento aprovado), com Cobrar, Recebi e Desfazer no diálogo Parcelas do contrato da tela Contratos (funil). `ParcelaCasal` e `Evento.ValorContrato` saíram do banco e da API. A aba Dinheiro do evento fica com pagamentos a fornecedores (`ContratoFornecedor.Parcelas`), despesas e entradas, comprovantes e a exportação do orçamento. O texto das seções 6.1 a 6.4 vale como regra de Cobrar, Recebi e Desfazer, agora no contrato.
 
+> **Versão 3 (card #31, 21/11/2026, [SPEC-043](043-pagamentos-a-fornecedores.md)).** A aba Dinheiro do evento ficou só com os pagamentos a fornecedores (parcelas, marcar pago, comprovante por pagamento ou parcela) e o botão Exportar orçamento. As caixas **Despesas e entradas** e **Comprovantes e documentos** (§6.6) saíram da tela, da API e do banco; vale a SPEC-043 no lugar delas.
+
 ## 1. Identificador e nome
 
 SPEC-029. Dinheiro do evento.

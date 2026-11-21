@@ -6,7 +6,7 @@ using Project.Application.Negocio;
 
 namespace Project.Api.Negocio;
 
-/// <summary>Dinheiro do evento e pagamentos da conta (SPEC-029). Só o Organizer.</summary>
+/// <summary>Dinheiro do evento: pagamentos a fornecedores com parcelas e comprovantes (SPEC-043), e a tela Hoje.</summary>
 public static class DinheiroEndpoints
 {
     private static readonly string[] SoOrganizer = [Papeis.Organizer];
@@ -16,12 +16,16 @@ public static class DinheiroEndpoints
         var api = app.MapGroup("/api/v1").RequireAuthorization(AssistenteEndpoints.PoliticaFinanceiro);
         api.AddEndpointFilter(EscopoAssistente.Filtro);
         api.MapGet("/eventos/{id:guid}/dinheiro", Obter);
-        api.MapPost("/eventos/{id:guid}/dinheiro/lancamentos", CriarLancamento);
-        api.MapPut("/eventos/{id:guid}/dinheiro/lancamentos/{lancamentoId:guid}", AtualizarLancamento);
-        api.MapDelete("/eventos/{id:guid}/dinheiro/lancamentos/{lancamentoId:guid}", ExcluirLancamento);
         api.MapGet("/eventos/{id:guid}/budget/planilha", PlanilhaBudget);
-        api.MapPost("/eventos/{id:guid}/dinheiro/comprovantes", EnviarComprovante).DisableAntiforgery();
-        api.MapDelete("/eventos/{id:guid}/dinheiro/comprovantes/{comprovanteId:guid}", ExcluirComprovante);
+        var pagamento = "/eventos/{id:guid}/dinheiro/pagamentos/{servicoId:guid}";
+        api.MapPut(pagamento + "/parcelamento", Parcelar);
+        api.MapDelete(pagamento + "/parcelamento", RemoverParcelamento);
+        api.MapPut(pagamento + "/pago", MarcarPagamento);
+        api.MapPut(pagamento + "/parcelas/{parcelaId:guid}/pago", MarcarParcela);
+        api.MapPost(pagamento + "/comprovante", EnviarComprovante).DisableAntiforgery();
+        api.MapDelete(pagamento + "/comprovante", ExcluirComprovante);
+        api.MapPost(pagamento + "/parcelas/{parcelaId:guid}/comprovante", EnviarComprovanteDaParcela).DisableAntiforgery();
+        api.MapDelete(pagamento + "/parcelas/{parcelaId:guid}/comprovante", ExcluirComprovanteDaParcela);
         app.MapGet("/api/v1/hoje", (ClaimsPrincipal usuario, HojeServico servico, Project.Infrastructure.Persistencia.AppDbContext banco, CancellationToken ct) =>
             ComConta(usuario, async conta => Results.Ok(await servico.ObterAsync(
                 conta,
@@ -35,16 +39,35 @@ public static class DinheiroEndpoints
     private static Task<IResult> Obter(Guid id, ClaimsPrincipal usuario, DinheiroServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.ObterAsync(conta, id, ct)));
 
-    private static Task<IResult> CriarLancamento(Guid id, SalvarLancamento pedido, ClaimsPrincipal usuario, DinheiroServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.SalvarLancamentoAsync(conta, id, null, pedido, ct)));
+    private static Task<IResult> Parcelar(Guid id, Guid servicoId, PedidoParcelas pedido, ClaimsPrincipal usuario, DinheiroServico servico, CancellationToken ct) =>
+        ComConta(usuario, conta => De(servico.ParcelarAsync(conta, id, servicoId, pedido, ct)));
 
-    private static Task<IResult> AtualizarLancamento(Guid id, Guid lancamentoId, SalvarLancamento pedido, ClaimsPrincipal usuario, DinheiroServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.SalvarLancamentoAsync(conta, id, lancamentoId, pedido, ct)));
+    private static Task<IResult> RemoverParcelamento(Guid id, Guid servicoId, ClaimsPrincipal usuario, DinheiroServico servico, CancellationToken ct) =>
+        ComConta(usuario, conta => De(servico.RemoverParcelamentoAsync(conta, id, servicoId, ct)));
 
-    private static Task<IResult> ExcluirLancamento(Guid id, Guid lancamentoId, ClaimsPrincipal usuario, DinheiroServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.ExcluirLancamentoAsync(conta, id, lancamentoId, ct)));
+    private static Task<IResult> MarcarPagamento(Guid id, Guid servicoId, MarcarPago pedido, ClaimsPrincipal usuario, DinheiroServico servico, CancellationToken ct) =>
+        ComConta(usuario, conta => De(servico.DefinirPagoAsync(conta, id, servicoId, pedido.Pago, Hoje(), ct)));
 
-    private static Task<IResult> EnviarComprovante(Guid id, HttpRequest request, ClaimsPrincipal usuario, DinheiroServico servico, CancellationToken ct) =>
+    private static Task<IResult> MarcarParcela(Guid id, Guid servicoId, Guid parcelaId, MarcarPago pedido, ClaimsPrincipal usuario, DinheiroServico servico, CancellationToken ct) =>
+        ComConta(usuario, conta => De(servico.DefinirParcelaPagaAsync(conta, id, servicoId, parcelaId, pedido.Pago, Hoje(), ct)));
+
+    private static Task<IResult> EnviarComprovante(Guid id, Guid servicoId, HttpRequest request, ClaimsPrincipal usuario, DinheiroServico servico, CancellationToken ct) =>
+        Comprovante(request, usuario, (conta, fluxo, nome) => servico.EnviarComprovanteAsync(conta, id, servicoId, null, fluxo, nome, ct), ct);
+
+    private static Task<IResult> EnviarComprovanteDaParcela(Guid id, Guid servicoId, Guid parcelaId, HttpRequest request, ClaimsPrincipal usuario, DinheiroServico servico, CancellationToken ct) =>
+        Comprovante(request, usuario, (conta, fluxo, nome) => servico.EnviarComprovanteAsync(conta, id, servicoId, parcelaId, fluxo, nome, ct), ct);
+
+    private static Task<IResult> ExcluirComprovante(Guid id, Guid servicoId, ClaimsPrincipal usuario, DinheiroServico servico, CancellationToken ct) =>
+        ComConta(usuario, conta => De(servico.ExcluirComprovanteAsync(conta, id, servicoId, null, ct)));
+
+    private static Task<IResult> ExcluirComprovanteDaParcela(Guid id, Guid servicoId, Guid parcelaId, ClaimsPrincipal usuario, DinheiroServico servico, CancellationToken ct) =>
+        ComConta(usuario, conta => De(servico.ExcluirComprovanteAsync(conta, id, servicoId, parcelaId, ct)));
+
+    private static Task<IResult> Comprovante(
+        HttpRequest request,
+        ClaimsPrincipal usuario,
+        Func<string, Stream, string, Task<Resultado<DinheiroEventoLeitura>>> enviar,
+        CancellationToken ct) =>
         ComConta(usuario, async conta =>
         {
             const string invalido = "O arquivo não foi aceito. Use JPG, JPEG, PNG ou PDF de até 5 MB.";
@@ -61,11 +84,8 @@ public static class DinheiroEndpoints
             }
 
             await using var fluxo = arquivo.OpenReadStream();
-            return await De(servico.EnviarComprovanteAsync(conta, id, fluxo, arquivo.FileName, formulario["descricao"].ToString(), ct));
+            return await De(enviar(conta, fluxo, arquivo.FileName));
         });
-
-    private static Task<IResult> ExcluirComprovante(Guid id, Guid comprovanteId, ClaimsPrincipal usuario, DinheiroServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.ExcluirComprovanteAsync(conta, id, comprovanteId, ct)));
 
     private static Task<IResult> PlanilhaBudget(Guid id, ClaimsPrincipal usuario, DinheiroServico servico, CancellationToken ct) =>
         ComConta(usuario, async conta =>
