@@ -343,7 +343,7 @@ export class AgendaPage implements OnInit {
 
   protected resumo(item: CompromissoAgenda): void {
     if (item.origem === 'tarefa') {
-      void this.router.navigate(['/eventos', item.eventoId, 'tarefas']);
+      void this.router.navigate(['/eventos', item.eventoId]);
       return;
     }
     if (item.origem === 'tarefaFunil') {

@@ -45,7 +45,8 @@ export const routes: Routes = [
       { path: 'eventos/novo', redirectTo: 'eventos', pathMatch: 'full' },
       { path: 'eventos/:id', loadComponent: () => import('./pages/eventos/evento-home.page').then((m) => m.EventoHomePage) },
       { path: 'eventos/:id/editar', redirectTo: 'eventos/:id', pathMatch: 'full' },
-      { path: 'eventos/:id/tarefas', loadComponent: () => import('./pages/tarefas/tarefas.page').then((m) => m.TarefasPage) },
+      // A aba Tarefas foi para o Resumo (SPEC-051); o endereço antigo continua valendo.
+      { path: 'eventos/:id/tarefas', redirectTo: 'eventos/:id', pathMatch: 'full' },
       { path: 'eventos/:id/fornecedores', loadComponent: () => import('./pages/eventos/evento-fornecedores.page').then((m) => m.EventoFornecedoresPage) },
       { path: 'eventos/:id/contratos', loadComponent: () => import('./pages/eventos/evento-contratos.page').then((m) => m.EventoContratosPage) },
       { path: 'contratos', canActivate: [donaGuard], loadComponent: () => import('./pages/contratos/contratos.page').then((m) => m.ContratosPage) },

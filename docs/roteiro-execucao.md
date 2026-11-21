@@ -53,7 +53,7 @@ Legenda de "Banco": **M** = migration (entra na fila do banco), **—** = sem mi
 | 5 | #33 Gestão Financeira: parcelas do mês | #32, #41 | — | pagamentos/gestão financeira | pronto no branch `claude/card-33-parcelas-mes-0b0355` (SPEC-044, sem migration; só frontend; sem comprovante do recebimento) |
 | 5 | #43 Oportunidade: dados do contratante | #42, #45 | M | oportunidades, clientes, proposta | pronto no branch `claude/card-43-contratante-34ab4b` (SPEC-049, migration `DadosDoContratante`, só colunas novas; nada apagado do banco); juntar na main; integração só ao fim das ondas |
 | 5 | #44 Orçamento com parcelas | #41 | — | orçamentos-funil, proposta-publica | pronto no branch `claude/card-44-orcamento-80152a` (SPEC-042) |
-| 6 | #20 Resumo absorve Tarefas | #21, #31, #28, #30 | ? | evento-home, tarefas | pendente |
+| 6 | #20 Resumo absorve Tarefas | #21, #31, #28, #30 | — | evento-home, tarefas | pronto no branch `claude/card-20-resumo-5484eb` (SPEC-051, sem migration; só frontend; aba Tarefas saiu e a lista está no Resumo; vínculos com contrato, documento e pagamento ficaram de fora, ver SPEC-051 §17); juntar na main; integração só ao fim das ondas |
 | 6 | #23 Link para o casal cadastrar convites | #22, #34 | M | convidados, link do casal | pendente |
 | 6 | #24 RSVP com prazo | #22 (#23 ajuda) | M | rsvp, convidados | pendente |
 | 6 | #39 Contrato do funil com as tags | #46, #43, #44, #36, #38 | ? | contratos-funil, Mesclagem | pendente |

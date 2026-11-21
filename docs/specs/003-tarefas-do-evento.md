@@ -2,6 +2,8 @@
 
 **Status: aprovada (versão 4, 21/11/2026).** A versão 3 (aprovada em 18/11/2026) está no histórico do Git e é o que o código faz hoje; a v4 só acrescenta prazo e responsável por item da checklist (§6.8, card #21 do Trello). Fonte da v3: pedido de 18/11/2026 para a aba Tarefas do evento seguir a lista de eventos. RF-061 e [produto-v1.md](../produto-v1.md) 5.5 acompanham a v3.
 
+**Onde fica a lista:** desde 21/11/2026 a lista do evento (§6.1 a §6.8) aparece dentro da aba Resumo, não numa aba própria ([SPEC-051](051-resumo-do-evento-com-tarefas.md), card #20). Onde esta spec diz "aba Tarefas do evento", leia "lista de tarefas no Resumo".
+
 ## 1. Identificador e nome
 
 SPEC-003. Tarefas do evento (v4).

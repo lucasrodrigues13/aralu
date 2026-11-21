@@ -76,7 +76,7 @@ A primeira aba do evento passa a se chamar **Resumo** e mostra, de cima para bai
 
 ### 8.2. Abas do evento
 
-Resumo, Tarefas, Convidados e Fornecedores. A lista de serviços e fornecedores que hoje fica na primeira aba passa para a aba **Fornecedores**, sem mudar o comportamento da SPEC-018. Os clientes do evento ficam num cartão do Resumo.
+Resumo, Convidados, Fornecedores, Contratos e Dinheiro. **A aba Tarefas saiu: a lista de tarefas fica dentro do Resumo, abaixo dos cartões ([SPEC-051](051-resumo-do-evento-com-tarefas.md)).** A lista de serviços e fornecedores que hoje fica na primeira aba passa para a aba **Fornecedores**, sem mudar o comportamento da SPEC-018. Os clientes do evento ficam num cartão do Resumo.
 
 ### 8.3. Alertas
 
@@ -84,7 +84,7 @@ Calculados ao abrir o resumo, só para evento em andamento:
 
 | Alerta | Quando | Leva a |
 |---|---|---|
-| "N tarefas atrasadas" | Tarefa não concluída com prazo antes de hoje | Tarefas, filtro atrasadas |
+| "N tarefas atrasadas" | Tarefa não concluída com prazo antes de hoje | Lista de tarefas do próprio Resumo, filtro atrasadas (SPEC-051) |
 | "N pagamentos a fornecedor vencidos" | Parcela a fornecedor vencida e não paga | Fornecedores |
 | "N pagamentos a fornecedor nesta semana" | Parcela a fornecedor que vence nos próximos 7 dias | Fornecedores |
 | "N serviços sem fornecedor contratado" | Faltam 60 dias ou menos e há serviço sem contratado | Fornecedores |
@@ -97,7 +97,7 @@ A ordem é a da tabela. Aparecem no máximo três.
 
 | Cartão | Número principal | Apoio | Abrir |
 |---|---|---|---|
-| Tarefas | % concluídas | "N de M feitas · N atrasadas" | Tarefas |
+| Tarefas | % concluídas | "N de M feitas · N atrasadas" | Rola até a lista de tarefas do Resumo (SPEC-051) |
 | Convidados | Confirmados | "N pendentes · N recusados · de M" | Convidados |
 | Fornecedores | Serviços contratados | "N de M serviços · N sem fornecedor" | Fornecedores |
 | Orçamento | Contratado | "Estimado R$ X · pago R$ Y" | Fornecedores |

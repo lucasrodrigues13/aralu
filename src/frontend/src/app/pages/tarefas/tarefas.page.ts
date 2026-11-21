@@ -1,7 +1,6 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { EventoAbasComponent } from '../eventos/evento-abas.component';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
@@ -15,15 +14,14 @@ import { mensagemDeErro } from '../../core/mensagem-erro';
 import { AssistentesClient } from '../../core/assistentes.client';
 import { AuthService } from '../../core/auth.service';
 import { NegocioClient, SITUACOES_TAREFA, Tarefa } from '../../core/negocio.client';
-import { chaveResponsavel, opcoesResponsavel, OpcaoResponsavel, rotuloResponsavel } from '../../shared/responsaveis';
+import { opcoesResponsavel, OpcaoResponsavel, rotuloResponsavel } from '../../shared/responsaveis';
 import { ToastService } from '../../core/toast.service';
 import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { CampoDataComponent } from '../../shared/campo-data';
 import { deDataParaIso } from '../../shared/data';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
-import { AplicarModeloDialog } from '../eventos/aplicar-modelo.dialog';
-import { colunasPorDia, filtrarTarefas, FiltroTarefasLista, secoesAteEvento } from './grupo-tarefa';
+import { colunasPorDia, filtrarTarefas, FiltroTarefasLista } from './grupo-tarefa';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { TarefaFormDialog } from './tarefa-form.dialog';
 import { TarefaLeituraDialog } from './tarefa-leitura.dialog';
@@ -31,27 +29,14 @@ import { ChecklistTarefaComponent, progressoChecklist } from './checklist-tarefa
 
 @Component({
   selector: 'app-tarefas',
-  imports: [RouterLink, ReactiveFormsModule, MatCardModule, MatButtonModule, MatButtonToggleModule, MatIconModule, MatTableModule, MatFormFieldModule, MatInputModule, MatSelectModule, GdDataPipe, EventoAbasComponent, CampoDataComponent, ChecklistTarefaComponent, MatCheckboxModule],
+  imports: [RouterLink, ReactiveFormsModule, MatCardModule, MatButtonModule, MatButtonToggleModule, MatIconModule, MatTableModule, MatFormFieldModule, MatInputModule, MatSelectModule, GdDataPipe, CampoDataComponent, ChecklistTarefaComponent, MatCheckboxModule],
   template: `
-    @if (eventoId()) { <app-evento-abas [eventoId]="eventoId()" /> }
     <mat-card class="cardWithShadow">
     <div class="p-6 flex flex-wrap items-center justify-between gap-4">
       <div>
         <mat-card-title class="mb-0">Tarefas</mat-card-title>
         <mat-card-subtitle>Pendências dos eventos da assessoria.</mat-card-subtitle>
       </div>
-      @if (eventoId() && podeEditar()) {
-        <div class="flex flex-wrap gap-2">
-          <button mat-stroked-button type="button" (click)="aplicarModelo()">
-            <mat-icon>playlist_add</mat-icon>
-            Aplicar modelo
-          </button>
-          <button mat-flat-button type="button" (click)="nova()">
-            <mat-icon>add</mat-icon>
-            Nova tarefa
-          </button>
-        </div>
-      }
     </div>
     <mat-card-content class="border-t border-border">
     @if (somenteAtrasadas()) {
@@ -61,136 +46,6 @@ import { ChecklistTarefaComponent, progressoChecklist } from './checklist-tarefa
         <button mat-stroked-button type="button" (click)="somenteAtrasadas.set(false)">Ver todas</button>
       </div>
     }
-    @if (eventoId()) {
-        <div class="flex flex-wrap items-end gap-4 mb-6">
-            <div class="campo w-full sm:w-64">
-              <mat-label class="font-semibold mb-2 block">Buscar</mat-label>
-              <mat-form-field appearance="outline" class="w-full">
-              <mat-icon matIconPrefix>search</mat-icon>
-              <input matInput aria-label="Buscar" placeholder="Título da tarefa" [value]="buscaEvento()" (input)="buscaEvento.set($any($event.target).value)" />
-            </mat-form-field>
-            </div>
-            <div class="campo w-full sm:w-48">
-              <mat-label class="font-semibold mb-2 block">Situação</mat-label>
-              <mat-form-field appearance="outline" class="w-full">
-                <mat-select [value]="situacaoEvento()" (valueChange)="situacaoEvento.set($event)" aria-label="Situação">
-                  <mat-option value="">Todas</mat-option>
-                  @for (item of situacoes; track item.valor) { <mat-option [value]="item.valor">{{ item.rotulo }}</mat-option> }
-                </mat-select>
-              </mat-form-field>
-            </div>
-            <div class="campo w-full sm:w-48">
-              <mat-label class="font-semibold mb-2 block">Responsável</mat-label>
-              <mat-form-field appearance="outline" class="w-full">
-                <mat-select [value]="responsavelEvento()" (valueChange)="responsavelEvento.set($event)" aria-label="Responsável">
-                  <mat-option value="">Todos</mat-option>
-                  @for (papel of papeis(); track papel.valor) { <mat-option [value]="papel.valor">{{ papel.rotulo }}</mat-option> }
-                </mat-select>
-              </mat-form-field>
-            </div>
-            @if (servicos().length > 0) {
-              <div class="campo w-full sm:w-48">
-                <mat-label class="font-semibold mb-2 block">Serviço</mat-label>
-                <mat-form-field appearance="outline" class="w-full">
-                  <mat-select [value]="servicoEvento()" (valueChange)="servicoEvento.set($event)" aria-label="Serviço">
-                    <mat-option value="">Todos</mat-option>
-                    <mat-option value="-">Sem serviço</mat-option>
-                    @for (servico of servicos(); track servico.id) { <mat-option [value]="servico.id">{{ servico.nome }}</mat-option> }
-                  </mat-select>
-                </mat-form-field>
-              </div>
-            }
-            <mat-checkbox class="mb-1" [checked]="soChecklist()" (change)="soChecklist.set($event.checked)">Só com checklist</mat-checkbox>
-            <span class="text-sm text-muted mb-2.5 ml-auto">{{ plural(visiveisEvento().length, 'tarefa encontrada', 'tarefas encontradas') }}</span>
-        </div>
-        @if (secoesEvento().length === 0) {
-          <p class="text-center text-muted py-10">Não há tarefa para mostrar.</p>
-        } @else {
-          <div class="relative overflow-auto">
-            <table class="tabela agrupada">
-              <thead>
-                <tr>
-                  <th class="coluna-expandir"><span class="sr-only">Checklist</span></th>
-                  <th>Tarefa</th>
-                  <th>Prazo</th>
-                  <th>Serviço</th>
-                  <th>Responsáveis</th>
-                  <th class="text-end! whitespace-nowrap">Ações</th>
-                </tr>
-              </thead>
-              @for (secao of secoesEvento(); track secao.id) {
-                <tbody>
-                  <tr class="cabeca-grupo" (click)="alternarGrupo(secao.id)">
-                    <td colspan="6">
-                      <button type="button" class="botao-grupo" [attr.aria-expanded]="!grupoFechado(secao.id)">
-                        <span class="nome-grupo">{{ secao.rotulo }}</span>
-                        <span class="contagem-grupo">
-                          {{ plural(secao.tarefas.length, 'tarefa', 'tarefas') }}
-                          <mat-icon>{{ grupoFechado(secao.id) ? 'expand_more' : 'expand_less' }}</mat-icon>
-                        </span>
-                      </button>
-                    </td>
-                  </tr>
-                  @if (!grupoFechado(secao.id)) {
-                    @for (tarefa of secao.tarefas; track tarefa.id) {
-                      <tr class="linha-tarefa" [class.com-detalhe]="aberta(tarefa)" (click)="ler(tarefa)">
-                        <td class="coluna-expandir" (click)="$event.stopPropagation()">
-                          @if (tarefa.checklist.length > 0) {
-                            <button
-                              mat-icon-button
-                              type="button"
-                              class="seta"
-                              [class.aberta]="aberta(tarefa)"
-                              [attr.aria-expanded]="aberta(tarefa)"
-                              [attr.aria-label]="(aberta(tarefa) ? 'Recolher' : 'Expandir') + ' checklist de ' + tarefa.titulo"
-                              (click)="alternar(tarefa)"
-                            >
-                              <mat-icon>chevron_right</mat-icon>
-                            </button>
-                          }
-                        </td>
-                        <td>
-                          <div class="titulo-tarefa">
-                            <span class="ponto" [class]="'ponto ' + corSituacao(tarefa.situacao)" [title]="rotulo(tarefa.situacao)"></span>
-                            <div>
-                              {{ tarefa.titulo }}
-                              @if (tarefa.grupo || tarefa.checklist.length > 0) {
-                                <span class="block text-xs text-muted">
-                                  {{ tarefa.grupo }}
-                                  @if (tarefa.checklist.length > 0) {
-                                    @if (tarefa.grupo) { · }
-                                    <span class="progresso"><mat-icon>checklist</mat-icon>{{ progresso(tarefa).feitos }}/{{ progresso(tarefa).total }}</span>
-                                  }
-                                </span>
-                              }
-                            </div>
-                          </div>
-                        </td>
-                        <td class="prazo">{{ tarefa.prazo ? (tarefa.prazo | gdData) : '—' }}</td>
-                        <td>{{ tarefa.servico ?? '—' }}</td>
-                        <td>{{ nomesResponsaveis(tarefa) }}</td>
-                        <td class="text-end! whitespace-nowrap" (click)="$event.stopPropagation()">
-                          @if (tarefa.eventoEmAndamento) {
-                            <button mat-icon-button type="button" aria-label="Editar" (click)="editar(tarefa)"><mat-icon>edit</mat-icon></button>
-                          }
-                          <button mat-icon-button type="button" aria-label="Excluir" (click)="excluir()"><mat-icon>delete</mat-icon></button>
-                        </td>
-                      </tr>
-                      @if (aberta(tarefa)) {
-                        <tr class="linha-detalhe">
-                          <td class="detalhe" colspan="6">
-                            <app-checklist-tarefa [tarefa]="tarefa" [opcoes]="papeis()" [editavel]="tarefa.eventoEmAndamento" (mudou)="atualizar($event)" />
-                          </td>
-                        </tr>
-                      }
-                    }
-                  }
-                </tbody>
-              }
-            </table>
-          </div>
-        }
-    } @else {
     <form class="flex flex-wrap items-end gap-4 mb-6" [formGroup]="filtro" (ngSubmit)="aplicarFiltro()">
       <div class="campo w-full sm:w-48">
         <mat-label class="font-semibold mb-2 block">Situação</mat-label>
@@ -292,7 +147,7 @@ import { ChecklistTarefaComponent, progressoChecklist } from './checklist-tarefa
             </ng-container>
             <ng-container matColumnDef="evento">
               <th mat-header-cell *matHeaderCellDef>Evento</th>
-              <td mat-cell *matCellDef="let tarefa"><a [routerLink]="['/eventos', tarefa.eventoId, 'tarefas']" (click)="$event.stopPropagation()">{{ tarefa.evento }}</a></td>
+              <td mat-cell *matCellDef="let tarefa"><a [routerLink]="['/eventos', tarefa.eventoId]" (click)="$event.stopPropagation()">{{ tarefa.evento }}</a></td>
             </ng-container>
             <ng-container matColumnDef="prazo">
               <th mat-header-cell *matHeaderCellDef>Prazo</th>
@@ -352,7 +207,6 @@ import { ChecklistTarefaComponent, progressoChecklist } from './checklist-tarefa
         </div>
       }
     }
-    }
     </mat-card-content>
     </mat-card>
   `,
@@ -399,8 +253,6 @@ export class TarefasPage implements OnInit {
   protected readonly papeis = signal<OpcaoResponsavel[]>(opcoesResponsavel([], this.auth.ehAssistente() ? 'Dona da conta' : 'Eu'));
   protected readonly tarefas = signal<Tarefa[]>([]);
   protected readonly visao = signal('lista');
-  protected readonly eventoId = signal('');
-  protected readonly podeEditar = signal(false);
   protected readonly somenteAtrasadas = signal(false);
   protected readonly filtroAplicado = signal<FiltroTarefasLista>(filtroVazio());
   protected readonly filtro = this.fb.nonNullable.group({
@@ -416,25 +268,6 @@ export class TarefasPage implements OnInit {
     const base = this.somenteAtrasadas() ? this.tarefas().filter(atrasada) : this.tarefas();
     return filtrarTarefas(base, this.filtroAplicado());
   });
-  /** Aba do evento (SPEC-003 §6.2): filtros imediatos e grupos pela distância até o evento. */
-  protected readonly dataEvento = signal<string | null>(null);
-  protected readonly buscaEvento = signal('');
-  protected readonly situacaoEvento = signal('');
-  protected readonly responsavelEvento = signal('');
-  protected readonly servicoEvento = signal('');
-  protected readonly soChecklist = signal(false);
-  private readonly gruposFechados = signal<ReadonlySet<string>>(new Set());
-  protected readonly visiveisEvento = computed(() => {
-    const termo = this.buscaEvento().trim().toLocaleLowerCase('pt');
-    const servico = this.servicoEvento();
-    return this.tarefas().filter((tarefa) =>
-      (!termo || tarefa.titulo.toLocaleLowerCase('pt').includes(termo))
-      && (!this.situacaoEvento() || tarefa.situacao === this.situacaoEvento())
-      && (!this.responsavelEvento() || tarefa.responsaveis.some((item) => chaveResponsavel(item) === this.responsavelEvento()))
-      && (!servico || (servico === '-' ? !tarefa.servicoEventoId : tarefa.servicoEventoId === servico))
-      && (!this.soChecklist() || tarefa.checklist.length > 0));
-  });
-  protected readonly secoesEvento = computed(() => secoesAteEvento(this.visiveisEvento(), this.dataEvento()));
   protected readonly porDia = computed(() => colunasPorDia(this.visiveis()));
   protected readonly eventos = computed(() => {
     const vistos = new Map<string, string>();
@@ -458,17 +291,7 @@ export class TarefasPage implements OnInit {
       next: (nomes) => this.papeis.set(opcoesResponsavel(nomes, this.auth.ehAssistente() ? 'Dona da conta' : 'Eu', nomes.map((item) => `Assistente:${item.id}`))),
       error: () => undefined,
     });
-    this.eventoId.set(this.rota.snapshot.paramMap.get('id') ?? '');
     this.somenteAtrasadas.set(this.rota.snapshot.queryParamMap.get('filtro') === 'atrasadas');
-    if (this.eventoId()) {
-      this.negocio.evento(this.eventoId()).subscribe({
-        next: (evento) => {
-          this.podeEditar.set(evento.situacao === 'EmAndamento');
-          this.dataEvento.set(evento.data ?? null);
-        },
-        error: () => this.podeEditar.set(false),
-      });
-    }
     this.carregar();
   }
 
@@ -491,25 +314,6 @@ export class TarefasPage implements OnInit {
 
   protected plural(n: number, um: string, varios: string): string {
     return `${n} ${n === 1 ? um : varios}`;
-  }
-
-  protected corSituacao(situacao: string): string {
-    if (situacao === 'Concluida') return 'ok';
-    if (situacao === 'Atrasada') return 'erro';
-    if (situacao === 'EmAndamento') return 'info';
-    return 'alerta';
-  }
-
-  protected grupoFechado(id: string): boolean {
-    return this.gruposFechados().has(id);
-  }
-
-  protected alternarGrupo(id: string): void {
-    this.gruposFechados.update((atual) => {
-      const proximo = new Set(atual);
-      if (!proximo.delete(id)) proximo.add(id);
-      return proximo;
-    });
   }
 
   protected aberta(tarefa: Tarefa): boolean {
@@ -550,14 +354,6 @@ export class TarefasPage implements OnInit {
     this.filtroAplicado.set(filtroVazio());
   }
 
-  protected nova(): void {
-    const eventoId = this.eventoId();
-    if (!eventoId) return;
-    this.dialog.open(TarefaFormDialog, { ...DIALOG, data: { eventoId } }).afterClosed().subscribe((salvo) => {
-      if (salvo) this.carregar();
-    });
-  }
-
   protected ler(tarefa: Tarefa): void {
     this.dialog.open(TarefaLeituraDialog, { ...DIALOG, data: tarefa }).afterClosed().subscribe((acao) => {
       if (acao === 'editar') this.editar(tarefa);
@@ -568,22 +364,6 @@ export class TarefasPage implements OnInit {
   protected editar(tarefa: Tarefa): void {
     this.dialog.open(TarefaFormDialog, { ...DIALOG, data: { eventoId: tarefa.eventoId, tarefa } }).afterClosed().subscribe((salvo) => {
       if (salvo) this.carregar();
-    });
-  }
-
-  protected aplicarModelo(): void {
-    const eventoId = this.eventoId();
-    if (!eventoId) return;
-    this.negocio.evento(eventoId).subscribe({
-      next: (evento) => {
-        this.dialog.open(AplicarModeloDialog, {
-          ...DIALOG,
-          data: { eventoId, tipo: evento.tipo },
-        }).afterClosed().subscribe((ok) => {
-          if (ok) this.carregar();
-        });
-      },
-      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
     });
   }
 
@@ -599,8 +379,7 @@ export class TarefasPage implements OnInit {
   }
 
   private carregar(): void {
-    const pedido = this.eventoId() ? this.negocio.tarefasDoEvento(this.eventoId()) : this.negocio.tarefas();
-    pedido.subscribe({
+    this.negocio.tarefas().subscribe({
       next: (tarefas) => this.tarefas.set(tarefas),
       error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
     });

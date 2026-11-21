@@ -68,8 +68,8 @@ Valem para todas as telas. Vêm do PDF (seções "Por que assim" e "Não fazer")
 
 | Grupo | Abas |
 |---|---|
-| Resumo | Cartões por área |
-| Planejar | Tarefas, Fornecedores e serviços, Roteiro, Cronograma, Briefing, Inspirações, Notas e observações |
+| Resumo | Cartões por área e a lista de tarefas do evento |
+| Planejar | Tarefas (dentro do Resumo, SPEC-051), Fornecedores e serviços, Roteiro, Cronograma, Briefing, Inspirações, Notas e observações |
 | Convidados | Convites e convidados, RSVP e mensagens, Mesas |
 | Dinheiro | Pagamentos a fornecedores, Despesas, Comprovantes, Budget (as parcelas do cliente estão no contrato, SPEC-040) |
 | Casal | Link do casal, o que ele vê, aprovações |
@@ -147,6 +147,7 @@ Substitui o dashboard atual (SPEC-007, RF-080 a RF-082).
 | Perguntas e comentários na tarefa | Novo | AV |
 | Tarefa ligada a um serviço; contratar o fornecedor fecha "Contratar X" | Novo | PDF, AV |
 | Tocar abre leitura, não edição | Ajustar | PDF |
+| **A lista de tarefas do evento fica dentro do Resumo** (a aba Tarefas saiu); cartão e alerta de atrasadas levam à lista na mesma tela | Pronto (SPEC-051, card #20); vínculo direto com contrato, documento e pagamento ficou de fora: pede migration (SPEC-051 §17) | Trello #20, WP |
 | Tarefas de todos os eventos com filtros (situação, responsável, prazo, evento, serviço, tags) e visões lista / quadro por situação / quadro por dia | Ajustar (hoje sem filtros e sem quadro por dia) | AV |
 | Redatar prazos quando a data do evento muda | Pronto (SPEC-012 v2, 6.6) | G, AV |
 
