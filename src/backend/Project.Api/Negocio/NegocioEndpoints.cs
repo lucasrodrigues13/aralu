@@ -76,7 +76,6 @@ public static class NegocioEndpoints
         api.MapPost("/eventos/{id:guid}/concluir", Concluir).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/eventos/{id:guid}/cancelar", Cancelar).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/eventos/{id:guid}/assessoria", Assessoria).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
-        api.MapPut("/eventos/{id:guid}/transfer", Transfer).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/eventos/{id:guid}/imagem", ImagemEvento).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe)).DisableAntiforgery();
         api.MapDelete("/eventos/{id:guid}/imagem", RemoverImagemEvento).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapGet("/eventos/{id:guid}/tarefas", TarefasDoEvento);
@@ -95,8 +94,6 @@ public static class NegocioEndpoints
         api.MapGet("/eventos/{id:guid}/clientes", ClientesDoEvento).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/eventos/{id:guid}/clientes", Vincular).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapDelete("/eventos/{id:guid}/clientes/{clienteId:guid}", Desvincular).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
-        api.MapGet("/grupos", Grupos);
-        api.MapPost("/grupos", CriarGrupo);
         api.MapGet("/eventos/{id:guid}/convites", Convites);
         api.MapPost("/eventos/{id:guid}/convites", CriarConvite);
         api.MapPut("/convites/{id:guid}", AtualizarConvite);
@@ -633,9 +630,6 @@ public static class NegocioEndpoints
     private static Task<IResult> Assessoria(Guid id, AssessoriaPedido pedido, ClaimsPrincipal usuario, EventoServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.DefinirAssessoriaAsync(conta, id, pedido, Hoje(), ct)));
 
-    private static Task<IResult> Transfer(Guid id, TransferPedido pedido, ClaimsPrincipal usuario, EventoServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.DefinirTransferAsync(conta, id, pedido.Ativo, pedido.Locais, Hoje(), ct)));
-
     private static Task<IResult> ImagemEvento(
         Guid id,
         IFormFile? arquivo,
@@ -948,30 +942,6 @@ public static class NegocioEndpoints
     private static Task<IResult> Desvincular(Guid id, Guid clienteId, ClaimsPrincipal usuario, ClienteServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.DesvincularAsync(conta, id, clienteId, ct)));
 
-    private static Task<IResult> Grupos(ClaimsPrincipal usuario, ConviteServico servico, IDados dados, CancellationToken ct) =>
-        ComConta(usuario, async conta =>
-        {
-            var bloqueio = await ExigirModuloAsync(usuario, conta, ModuloCliente.Convidados, dados, ct);
-            if (bloqueio is not null)
-            {
-                return bloqueio;
-            }
-
-            return Results.Ok(await servico.ListarGruposAsync(conta, ct));
-        });
-
-    private static Task<IResult> CriarGrupo(GrupoPedido pedido, ClaimsPrincipal usuario, ConviteServico servico, IDados dados, CancellationToken ct) =>
-        ComConta(usuario, async conta =>
-        {
-            var bloqueio = await ExigirModuloAsync(usuario, conta, ModuloCliente.Convidados, dados, ct);
-            if (bloqueio is not null)
-            {
-                return bloqueio;
-            }
-
-            return await De(servico.CriarGrupoAsync(conta, pedido.Nome, ct));
-        });
-
     private static Task<IResult> Convites(
         Guid id,
         ClaimsPrincipal usuario,
@@ -980,8 +950,6 @@ public static class NegocioEndpoints
         string? nome,
         string? situacao,
         string? telefone,
-        bool? transfer,
-        Guid? grupoId,
         string? observacao,
         bool? somenteConfirmados,
         CancellationToken ct) =>
@@ -996,7 +964,7 @@ public static class NegocioEndpoints
             return await De(servico.ListarAsync(
                 conta,
                 id,
-                new FiltroConvites(nome, EnumOuNulo<SituacaoConvidado>(situacao), telefone, transfer, grupoId, observacao, somenteConfirmados == true),
+                new FiltroConvites(nome, EnumOuNulo<SituacaoConvidado>(situacao), telefone, observacao, somenteConfirmados == true),
                 ct));
         });
 
@@ -1607,7 +1575,7 @@ public static class NegocioEndpoints
 
     private static async Task<bool> EventoDaConta(string conta, Guid id, CancellationToken ct, ConviteServico servico)
     {
-        var lista = await servico.ListarAsync(conta, id, new FiltroConvites(null, null, null, null, null, null, false), ct);
+        var lista = await servico.ListarAsync(conta, id, new FiltroConvites(null, null, null, null, false), ct);
         return lista.Ok;
     }
 
@@ -1781,11 +1749,7 @@ public static class NegocioEndpoints
 
 public sealed record AssistentesDoEventoPedido(IReadOnlyList<Guid>? Assistentes);
 
-public sealed record TransferPedido(bool Ativo, IReadOnlyList<string>? Locais);
-
 public sealed record VinculoPedido(Guid ClienteId);
-
-public sealed record GrupoPedido(string? Nome);
 
 public sealed record PrincipalPedido(Guid ConvidadoId);
 

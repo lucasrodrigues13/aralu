@@ -298,8 +298,6 @@ export class ConvidadosPage implements OnInit {
     this.negocio.criarConvite(this.eventoId(), {
       nome: valor.nome,
       observacao: valor.observacao,
-      usaTransfer: false,
-      localOrigem: '',
       principal: valor.celular ? 0 : null,
       convidados: [{
         nome: valor.convidado,

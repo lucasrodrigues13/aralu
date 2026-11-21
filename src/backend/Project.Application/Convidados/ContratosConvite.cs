@@ -4,7 +4,6 @@ public sealed record LinhaPlanilha(
     string? Convite,
     string? Ddi,
     string? Telefone,
-    string? Grupo,
     string? Observacao,
     string? Convidado,
     string? Genero,

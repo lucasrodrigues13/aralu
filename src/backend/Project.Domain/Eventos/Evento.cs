@@ -56,8 +56,6 @@ public sealed class Evento
 
     public Guid? ImagemId { get; set; }
 
-    public bool TransferAtivo { get; set; }
-
     public LocalEvento Cerimonia { get; set; } = new();
 
     public LocalEvento Recepcao { get; set; } = new();
@@ -66,7 +64,6 @@ public sealed class Evento
 
     public List<ServicoEvento> Servicos { get; set; } = [];
 
-    public List<LocalTransfer> LocaisTransfer { get; set; } = [];
 }
 
 public sealed class LocalEvento
@@ -171,15 +168,6 @@ public sealed class ParcelaServico
     public bool Entrada { get; set; }
 
     public SituacaoParcela Situacao { get; set; }
-}
-
-public sealed class LocalTransfer
-{
-    public Guid Id { get; set; }
-
-    public Guid EventoId { get; set; }
-
-    public string Nome { get; set; } = "";
 }
 
 public sealed class CompromissoAgenda

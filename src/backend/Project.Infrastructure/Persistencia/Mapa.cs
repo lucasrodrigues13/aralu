@@ -39,7 +39,6 @@ public static class Mapa
         evento.OwnsOne(item => item.Cerimonia, local => local.Property<bool>("Persistido").HasDefaultValue(true));
         evento.OwnsOne(item => item.Recepcao, local => local.Property<bool>("Persistido").HasDefaultValue(true));
         evento.HasMany(item => item.Servicos).WithOne().HasForeignKey(servico => servico.EventoId).OnDelete(DeleteBehavior.Cascade);
-        evento.HasMany(item => item.LocaisTransfer).WithOne().HasForeignKey(local => local.EventoId).OnDelete(DeleteBehavior.Cascade);
         evento.HasMany(item => item.Tags).WithMany(tag => tag.Eventos);
 
         var servicoEvento = modelBuilder.Entity<ServicoEvento>();
@@ -93,7 +92,6 @@ public static class Mapa
 
         modelBuilder.Entity<Convite>().HasIndex(convite => convite.Token).IsUnique();
         modelBuilder.Entity<Convite>().HasOne<Evento>().WithMany().HasForeignKey(convite => convite.EventoId).OnDelete(DeleteBehavior.Cascade);
-        modelBuilder.Entity<Convite>().HasOne<GrupoConvidados>().WithMany().HasForeignKey(convite => convite.GrupoId).OnDelete(DeleteBehavior.SetNull);
         modelBuilder.Entity<Convite>().HasMany(convite => convite.Convidados).WithOne().HasForeignKey(convidado => convidado.ConviteId).OnDelete(DeleteBehavior.Cascade);
 
         var convidado = modelBuilder.Entity<Convidado>();
@@ -209,26 +207,6 @@ public static class Mapa
         contrato.ToTable("ContratosConta");
         contrato.HasIndex(item => item.ContaId);
         contrato.Property(item => item.Nome).HasMaxLength(120);
-
-        var doModelo = modelBuilder.Entity<Project.Domain.Contratos.ContratoDoModelo>();
-        doModelo.ToTable("ContratosDoModelo");
-        doModelo.HasKey(item => new { item.ModeloId, item.ContratoId });
-        doModelo.HasOne<ModeloEvento>().WithMany().HasForeignKey(item => item.ModeloId).OnDelete(DeleteBehavior.Cascade);
-        doModelo.HasOne<Project.Domain.Contratos.ContratoConta>().WithMany().HasForeignKey(item => item.ContratoId).OnDelete(DeleteBehavior.Cascade);
-
-        var doEvento = modelBuilder.Entity<Project.Domain.Contratos.ContratoDoEvento>();
-        doEvento.ToTable("ContratosDoEvento");
-        doEvento.HasKey(item => new { item.EventoId, item.ContratoId });
-        doEvento.HasOne<Evento>().WithMany().HasForeignKey(item => item.EventoId).OnDelete(DeleteBehavior.Cascade);
-        doEvento.HasOne<Project.Domain.Contratos.ContratoConta>().WithMany().HasForeignKey(item => item.ContratoId).OnDelete(DeleteBehavior.Cascade);
-
-        var link = modelBuilder.Entity<Project.Domain.Contratos.LinkLeituraContrato>();
-        link.ToTable("LinksLeituraContrato");
-        link.HasIndex(item => item.Token).IsUnique();
-        link.HasIndex(item => item.EventoId);
-        link.Property(item => item.Token).HasMaxLength(100);
-        link.HasOne<Evento>().WithMany().HasForeignKey(item => item.EventoId).OnDelete(DeleteBehavior.Cascade);
-        link.HasOne<Project.Domain.Contratos.ContratoConta>().WithMany().HasForeignKey(item => item.ContratoId).OnDelete(DeleteBehavior.Cascade);
     }
 
     private static void MapearDinheiro(ModelBuilder modelBuilder)

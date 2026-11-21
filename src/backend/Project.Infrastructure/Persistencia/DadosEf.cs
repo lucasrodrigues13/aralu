@@ -131,7 +131,6 @@ public sealed class DadosEf(AppDbContext banco) : IDados
             .Include(evento => evento.Servicos).ThenInclude(servico => servico.Parcelas)
             .Include(evento => evento.Servicos).ThenInclude(servico => servico.Subitens)
             .Include(evento => evento.Servicos).ThenInclude(servico => servico.Fornecedores)
-            .Include(evento => evento.LocaisTransfer)
             .FirstOrDefaultAsync(evento => evento.Id == id && evento.ContaId == contaId, ct);
 
     public Task<bool> EventoDaContaAsync(string contaId, Guid id, CancellationToken ct) =>
@@ -701,33 +700,6 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         }
 
         return true;
-    }
-
-    public async Task<IReadOnlyList<GrupoConvidados>> ListarGruposAsync(string contaId, CancellationToken ct) =>
-        await banco.Grupos.AsNoTracking().Where(grupo => grupo.ContaId == contaId).OrderBy(grupo => grupo.Nome).ToListAsync(ct);
-
-    public async Task InserirGrupoAsync(GrupoConvidados grupo, CancellationToken ct)
-    {
-        banco.Grupos.Add(grupo);
-        await banco.SaveChangesAsync(ct);
-    }
-
-    public Task<GrupoConvidados?> ObterGrupoAsync(string contaId, Guid id, CancellationToken ct) =>
-        banco.Grupos.FirstOrDefaultAsync(grupo => grupo.Id == id && grupo.ContaId == contaId, ct);
-
-    public async Task<GrupoConvidados> GarantirGrupoAsync(string contaId, string nome, CancellationToken ct)
-    {
-        var alvo = nome.ToLower();
-        var grupo = await banco.Grupos.FirstOrDefaultAsync(item => item.ContaId == contaId && item.Nome.ToLower() == alvo, ct);
-        if (grupo is not null)
-        {
-            return grupo;
-        }
-
-        grupo = new GrupoConvidados { Id = Guid.NewGuid(), ContaId = contaId, Nome = nome };
-        banco.Grupos.Add(grupo);
-        await banco.SaveChangesAsync(ct);
-        return grupo;
     }
 
     public async Task<IReadOnlyList<Convite>> ListarConvitesAsync(string contaId, Guid eventoId, CancellationToken ct) =>

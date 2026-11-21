@@ -117,8 +117,6 @@ public sealed record EventoDetalhe(
     bool SalvarNaAgenda,
     string? VinculoGoogle,
     Guid? ImagemId,
-    bool TransferAtivo,
-    IReadOnlyList<string> LocaisTransfer,
     LocalLeitura Cerimonia,
     LocalLeitura Recepcao,
     IReadOnlyList<string> Tags,
@@ -516,34 +514,6 @@ public sealed class EventoServico(IDados dados, IConsultaCep cep)
         };
         await dados.AdicionarServicoAsync(servico, ct);
         return await ObterAsync(contaId, id, hoje, ct);
-    }
-
-    public async Task<Resultado<EventoDetalhe>> DefinirTransferAsync(
-        string contaId,
-        Guid id,
-        bool ativo,
-        IReadOnlyList<string>? locais,
-        DateOnly hoje,
-        CancellationToken ct)
-    {
-        var evento = await dados.ObterEventoAsync(contaId, id, ct);
-        if (evento is null)
-        {
-            return Resultado<EventoDetalhe>.Erro(Codigos.Indisponivel, "Indisponível.");
-        }
-
-        evento.TransferAtivo = ativo;
-        evento.LocaisTransfer.Clear();
-        if (ativo)
-        {
-            foreach (var nome in (locais ?? []).Select(Domain.Comum.Texto.Limpo).OfType<string>().Distinct(StringComparer.OrdinalIgnoreCase))
-            {
-                evento.LocaisTransfer.Add(new LocalTransfer { Nome = nome });
-            }
-        }
-
-        await dados.SalvarEventoAsync(ct);
-        return Resultado<EventoDetalhe>.Sucesso(await DetalheAsync(contaId, evento, hoje, ct));
     }
 
     public async Task<Resultado<Guid?>> GuardarImagemAsync(string contaId, Guid id, Guid imagemId, CancellationToken ct)

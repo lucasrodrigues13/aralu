@@ -2811,3 +2811,91 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121213025_LimpezaDoLegado') THEN
+    ALTER TABLE "Convites" DROP CONSTRAINT "FK_Convites_Grupos_GrupoId";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121213025_LimpezaDoLegado') THEN
+    DROP TABLE "ContratosDoEvento";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121213025_LimpezaDoLegado') THEN
+    DROP TABLE "ContratosDoModelo";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121213025_LimpezaDoLegado') THEN
+    DROP TABLE "Grupos";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121213025_LimpezaDoLegado') THEN
+    DROP TABLE "LinksLeituraContrato";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121213025_LimpezaDoLegado') THEN
+    DROP TABLE "LocalTransfer";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121213025_LimpezaDoLegado') THEN
+    DROP INDEX "IX_Convites_GrupoId";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121213025_LimpezaDoLegado') THEN
+    ALTER TABLE "Eventos" DROP COLUMN "TransferAtivo";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121213025_LimpezaDoLegado') THEN
+    ALTER TABLE "Convites" DROP COLUMN "GrupoId";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121213025_LimpezaDoLegado') THEN
+    ALTER TABLE "Convites" DROP COLUMN "LocalOrigem";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121213025_LimpezaDoLegado') THEN
+    ALTER TABLE "Convites" DROP COLUMN "UsaTransfer";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121213025_LimpezaDoLegado') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261121213025_LimpezaDoLegado', '10.0.4');
+    END IF;
+END $EF$;
+COMMIT;
+

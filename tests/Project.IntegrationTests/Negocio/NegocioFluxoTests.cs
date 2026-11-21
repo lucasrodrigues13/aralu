@@ -376,7 +376,7 @@ public class NegocioFluxoTests
     }
 
     [Fact]
-    public async Task Convite_rsvp_transfer_e_planilha()
+    public async Task Convite_rsvp_e_planilha()
     {
         var dono = await Entrar();
         var outra = await Entrar();
@@ -384,12 +384,10 @@ public class NegocioFluxoTests
         var evento = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new { modeloId = modelo.GetProperty("id").GetGuid(), primeiroNome = "Turma" }));
         var eventoId = evento.GetProperty("id").GetGuid();
 
-        var grupo = await Ler(await dono.PostAsJsonAsync("/api/v1/grupos", new { nome = "Amigos" }));
         Assert.Equal(HttpStatusCode.BadRequest, (await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/convites", new { nome = "Mesa 1" })).StatusCode);
         var convite = await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/convites", new
         {
             nome = "Família",
-            grupoId = grupo.GetProperty("id").GetGuid(),
             convidados = new object[]
             {
                 new { nome = "Lia", ddi = "+55", celular = "11911112222" },
@@ -402,18 +400,14 @@ public class NegocioFluxoTests
         var token = convite.GetProperty("token").GetString()!;
         var conviteId = convite.GetProperty("id").GetGuid();
 
-        var transfer = await Ler(await dono.PutAsJsonAsync($"/api/v1/eventos/{eventoId}/transfer", new { ativo = true, locais = new[] { "Hotel" } }));
-        Assert.True(transfer.GetProperty("transferAtivo").GetBoolean());
-        var comTransfer = await Ler(await dono.PutAsJsonAsync($"/api/v1/convites/{conviteId}", new
-        {
-            nome = "Família",
-            grupoId = grupo.GetProperty("id").GetGuid(),
-            usaTransfer = true,
-            localOrigem = "Hotel",
-        }));
-        Assert.True(comTransfer.GetProperty("usaTransfer").GetBoolean());
-        Assert.Equal("Hotel", comTransfer.GetProperty("localOrigem").GetString());
-        Assert.Equal(token, comTransfer.GetProperty("token").GetString());
+        var renomeado = await Ler(await dono.PutAsJsonAsync($"/api/v1/convites/{conviteId}", new { nome = "Família Souza" }));
+        Assert.Equal("Família Souza", renomeado.GetProperty("nome").GetString());
+        Assert.Equal(token, renomeado.GetProperty("token").GetString());
+
+        // Grupos de convite e transfer saíram da 1.0 (SPEC-036): as rotas não existem mais.
+        Assert.Equal(HttpStatusCode.NotFound, (await dono.GetAsync("/api/v1/grupos")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await dono.PostAsJsonAsync("/api/v1/grupos", new { nome = "Amigos" })).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await dono.PutAsJsonAsync($"/api/v1/eventos/{eventoId}/transfer", new { ativo = true })).StatusCode);
 
         Assert.Equal(HttpStatusCode.NotFound, (await outra.GetAsync($"/api/v1/eventos/{eventoId}/convites")).StatusCode);
         var anonimo = _banco.Fabrica.CreateClient();

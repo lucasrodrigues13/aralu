@@ -339,79 +339,6 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.ToTable("ContratosConta", (string)null);
                 });
 
-            modelBuilder.Entity("Project.Domain.Contratos.ContratoDoEvento", b =>
-                {
-                    b.Property<Guid>("EventoId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("ContratoId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("EventoId", "ContratoId");
-
-                    b.HasIndex("ContratoId");
-
-                    b.ToTable("ContratosDoEvento", (string)null);
-                });
-
-            modelBuilder.Entity("Project.Domain.Contratos.ContratoDoModelo", b =>
-                {
-                    b.Property<Guid>("ModeloId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("ContratoId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("ModeloId", "ContratoId");
-
-                    b.HasIndex("ContratoId");
-
-                    b.ToTable("ContratosDoModelo", (string)null);
-                });
-
-            modelBuilder.Entity("Project.Domain.Contratos.LinkLeituraContrato", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("ContaId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("ContratoId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("CriadoEm")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("EventoId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("ExpiraEm")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Token")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ContratoId");
-
-                    b.HasIndex("EventoId");
-
-                    b.HasIndex("Token")
-                        .IsUnique();
-
-                    b.ToTable("LinksLeituraContrato", (string)null);
-                });
-
             modelBuilder.Entity("Project.Domain.Convidados.Convidado", b =>
                 {
                     b.Property<Guid>("Id")
@@ -479,12 +406,6 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<Guid>("EventoId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("GrupoId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("LocalOrigem")
-                        .HasColumnType("text");
-
                     b.Property<string>("Nome")
                         .IsRequired()
                         .HasColumnType("text");
@@ -502,38 +423,14 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<bool>("UsaTransfer")
-                        .HasColumnType("boolean");
-
                     b.HasKey("Id");
 
                     b.HasIndex("EventoId");
-
-                    b.HasIndex("GrupoId");
 
                     b.HasIndex("Token")
                         .IsUnique();
 
                     b.ToTable("Convites");
-                });
-
-            modelBuilder.Entity("Project.Domain.Convidados.GrupoConvidados", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("ContaId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Nome")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Grupos");
                 });
 
             modelBuilder.Entity("Project.Domain.Dinheiro.ComprovanteEvento", b =>
@@ -849,9 +746,6 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<bool>("TransferAtivo")
-                        .HasColumnType("boolean");
-
                     b.Property<decimal?>("ValorContrato")
                         .HasPrecision(12, 2)
                         .HasColumnType("numeric(12,2)");
@@ -913,26 +807,6 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.HasIndex("ServicoId");
 
                     b.ToTable("ItemServicoModelo");
-                });
-
-            modelBuilder.Entity("Project.Domain.Eventos.LocalTransfer", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("EventoId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Nome")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("EventoId");
-
-                    b.ToTable("LocalTransfer");
                 });
 
             modelBuilder.Entity("Project.Domain.Eventos.ModeloEvento", b =>
@@ -2738,51 +2612,6 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Project.Domain.Contratos.ContratoDoEvento", b =>
-                {
-                    b.HasOne("Project.Domain.Contratos.ContratoConta", null)
-                        .WithMany()
-                        .HasForeignKey("ContratoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Project.Domain.Eventos.Evento", null)
-                        .WithMany()
-                        .HasForeignKey("EventoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Project.Domain.Contratos.ContratoDoModelo", b =>
-                {
-                    b.HasOne("Project.Domain.Contratos.ContratoConta", null)
-                        .WithMany()
-                        .HasForeignKey("ContratoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Project.Domain.Eventos.ModeloEvento", null)
-                        .WithMany()
-                        .HasForeignKey("ModeloId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Project.Domain.Contratos.LinkLeituraContrato", b =>
-                {
-                    b.HasOne("Project.Domain.Contratos.ContratoConta", null)
-                        .WithMany()
-                        .HasForeignKey("ContratoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Project.Domain.Eventos.Evento", null)
-                        .WithMany()
-                        .HasForeignKey("EventoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("Project.Domain.Convidados.Convidado", b =>
                 {
                     b.HasOne("Project.Domain.Convidados.Convite", null)
@@ -2799,11 +2628,6 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .HasForeignKey("EventoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("Project.Domain.Convidados.GrupoConvidados", null)
-                        .WithMany()
-                        .HasForeignKey("GrupoId")
-                        .OnDelete(DeleteBehavior.SetNull);
                 });
 
             modelBuilder.Entity("Project.Domain.Dinheiro.ComprovanteEvento", b =>
@@ -2972,15 +2796,6 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.HasOne("Project.Domain.Eventos.ServicoModelo", null)
                         .WithMany("Itens")
                         .HasForeignKey("ServicoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Project.Domain.Eventos.LocalTransfer", b =>
-                {
-                    b.HasOne("Project.Domain.Eventos.Evento", null)
-                        .WithMany("LocaisTransfer")
-                        .HasForeignKey("EventoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -3258,8 +3073,6 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
             modelBuilder.Entity("Project.Domain.Eventos.Evento", b =>
                 {
-                    b.Navigation("LocaisTransfer");
-
                     b.Navigation("Servicos");
                 });
 

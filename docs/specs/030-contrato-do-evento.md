@@ -77,7 +77,7 @@ Valor e parcelas voltam como campos quando o contrato do funil os copiar do orç
 - Vários contratos por conta.
 - O contrato não tem vínculo com modelo de evento nem com evento, na tela e na API.
 - O envio do contrato ao cliente é só pelo contrato do funil (Enviar e, depois, assinatura eletrônica, SPEC-033). **Consequência confirmada no card #36:** não há mais leitura do contrato pelo e-mail com link de 7 dias, e nada no evento envia contrato ao casal.
-- **Banco:** nenhuma tabela nem coluna é apagada (regra do projeto). `ContratosDoModelo`, `ContratosDoEvento` e `LinksLeituraContrato` permanecem no banco e nas classes de mapeamento, marcadas como legado sem uso (se saíssem do mapeamento, a próxima migration as apagaria). Os dados ficam guardados. Sem migration neste card.
+- **Banco:** `ContratosDoModelo`, `ContratosDoEvento` e `LinksLeituraContrato` foram apagadas por migration, com as classes e o mapeamento (SPEC-036, regra 7 do roteiro: funcionalidade removida sai também do banco). Os dados delas foram perdidos.
 
 ## 9. Validações
 
@@ -89,7 +89,7 @@ Contrato cadastrado ou excluído.
 
 ## 11. Dados necessários
 
-Contrato da conta: nome, texto, datas. As três tabelas de vínculo e de link ficam no banco como legado, sem leitura nem escrita.
+Contrato da conta: nome, texto, datas. As três tabelas de vínculo e de link deixaram de existir (SPEC-036).
 
 ## 12. Interface
 

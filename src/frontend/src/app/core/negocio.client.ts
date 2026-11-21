@@ -300,8 +300,6 @@ export interface EventoDetalhe extends EventoResumo {
   salvarNaAgenda: boolean;
   vinculoGoogle: string | null;
   imagemId: string | null;
-  transferAtivo: boolean;
-  locaisTransfer: string[];
   cerimonia: Local;
   recepcao: Local;
   servicos: EventoServico[];
@@ -449,8 +447,6 @@ export interface Convite {
   eventoId: string;
   nome: string;
   observacao: string | null;
-  usaTransfer: boolean;
-  localOrigem: string | null;
   telefone: string | null;
   token: string;
   acessada: boolean;
@@ -871,10 +867,6 @@ export class NegocioClient {
 
   assessoria(id: string, pedido: unknown) {
     return this.http.post<EventoDetalhe>(`${this.base}/api/v1/eventos/${id}/assessoria`, pedido);
-  }
-
-  transfer(id: string, ativo: boolean, locais: string[]) {
-    return this.http.put<EventoDetalhe>(`${this.base}/api/v1/eventos/${id}/transfer`, { ativo, locais });
   }
 
   imagemEvento(id: string, arquivo: File) {

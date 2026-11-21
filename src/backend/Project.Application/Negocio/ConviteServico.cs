@@ -20,10 +20,7 @@ public sealed record ConvidadoPedido(
 
 public sealed record NovoConvite(
     string? Nome,
-    Guid? GrupoId,
     string? Observacao,
-    bool UsaTransfer,
-    string? LocalOrigem,
     IReadOnlyList<ConvidadoPedido>? Convidados,
     int? Principal);
 
@@ -48,11 +45,7 @@ public sealed record ConviteLeitura(
     Guid Id,
     Guid EventoId,
     string Nome,
-    Guid? GrupoId,
-    string? Grupo,
     string? Observacao,
-    bool UsaTransfer,
-    string? LocalOrigem,
     string? Telefone,
     string Token,
     bool Acessada,
@@ -89,14 +82,13 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
             return Resultado<ListaConvites>.Erro(Codigos.Indisponivel, "Indisponível.");
         }
 
-        var grupos = await dados.ListarGruposAsync(contaId, ct);
         var convites = await dados.ListarConvitesAsync(contaId, eventoId, ct);
         var todos = convites.SelectMany(convite => convite.Convidados).ToArray();
         var filtrados = convites
             .Select(convite => Filtrar(convite, filtro))
             .Where(convite => convite is not null)
             .Cast<Convite>()
-            .Select(convite => Ler(convite, grupos))
+            .Select(Ler)
             .ToArray();
 
         return Resultado<ListaConvites>.Sucesso(new ListaConvites(
@@ -120,15 +112,14 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
             return Resultado<ConviteLeitura>.Erro(Codigos.Validacao, "O evento não está em andamento.");
         }
 
-        var montado = await MontarAsync(contaId, evento, pedido, ct);
+        var montado = Montar(contaId, evento, pedido);
         if (!montado.Ok)
         {
             return Resultado<ConviteLeitura>.Erro(montado.Falha!.Codigo, montado.Falha.Mensagem);
         }
 
         await dados.InserirConvitesAsync([montado.Valor!], ct);
-        var grupos = await dados.ListarGruposAsync(contaId, ct);
-        return Resultado<ConviteLeitura>.Sucesso(Ler(montado.Valor!, grupos));
+        return Resultado<ConviteLeitura>.Sucesso(Ler(montado.Valor!));
     }
 
     public async Task<Resultado<ConviteLeitura>> AtualizarAsync(string contaId, Guid id, NovoConvite pedido, CancellationToken ct)
@@ -151,25 +142,10 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
             return Resultado<ConviteLeitura>.Erro(Codigos.Validacao, "Informe o nome do convite.");
         }
 
-        if (pedido.GrupoId is Guid grupoId && await dados.ObterGrupoAsync(contaId, grupoId, ct) is null)
-        {
-            return Resultado<ConviteLeitura>.Erro(Codigos.Validacao, "O grupo não pertence à conta.");
-        }
-
-        var transfer = ValidarTransfer(evento, pedido.UsaTransfer, pedido.LocalOrigem);
-        if (!transfer.Ok)
-        {
-            return Resultado<ConviteLeitura>.Erro(transfer.Falha!.Codigo, transfer.Falha.Mensagem);
-        }
-
         convite.Nome = nome;
-        convite.GrupoId = pedido.GrupoId;
         convite.Observacao = Domain.Comum.Texto.Limpo(pedido.Observacao);
-        convite.UsaTransfer = pedido.UsaTransfer && evento.TransferAtivo;
-        convite.LocalOrigem = convite.UsaTransfer ? transfer.Valor : null;
         await dados.SalvarConvitesAsync(ct);
-        var grupos = await dados.ListarGruposAsync(contaId, ct);
-        return Resultado<ConviteLeitura>.Sucesso(Ler(convite, grupos));
+        return Resultado<ConviteLeitura>.Sucesso(Ler(convite));
     }
 
     public async Task<Resultado<ConvidadoLeitura>> SalvarConvidadoAsync(
@@ -239,8 +215,7 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
 
         convite.PrincipalId = convidadoId;
         await dados.SalvarConvitesAsync(ct);
-        var grupos = await dados.ListarGruposAsync(contaId, ct);
-        return Resultado<ConviteLeitura>.Sucesso(Ler(convite, grupos));
+        return Resultado<ConviteLeitura>.Sucesso(Ler(convite));
     }
 
     public async Task<Resultado<bool>> RemoverConvidadoAsync(string contaId, Guid id, CancellationToken ct)
@@ -291,7 +266,6 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
             return Resultado<int>.Erro(Codigos.Validacao, "A planilha não tem convidados.");
         }
 
-        var gruposPorNome = new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase);
         var convites = new Dictionary<string, Convite>(StringComparer.OrdinalIgnoreCase);
         foreach (var linha in linhas.Valor)
         {
@@ -304,27 +278,12 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
 
             if (!convites.TryGetValue(nomeConvite, out var convite))
             {
-                Guid? grupoId = null;
-                var nomeGrupo = Domain.Comum.Texto.Limpo(linha.Grupo);
-                if (nomeGrupo is not null)
-                {
-                    if (!gruposPorNome.TryGetValue(nomeGrupo, out var existente))
-                    {
-                        var grupo = await dados.GarantirGrupoAsync(contaId, nomeGrupo, ct);
-                        existente = grupo.Id;
-                        gruposPorNome[nomeGrupo] = existente;
-                    }
-
-                    grupoId = existente;
-                }
-
                 convite = new Convite
                 {
                     Id = Guid.NewGuid(),
                     EventoId = eventoId,
                     ContaId = contaId,
                     Nome = nomeConvite,
-                    GrupoId = grupoId,
                     Observacao = Domain.Comum.Texto.Limpo(linha.Observacao),
                     Token = Guid.NewGuid().ToString("N"),
                 };
@@ -480,23 +439,7 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
             convite.Convidados.Select(item => new ConvidadoPublico(item.Id, item.Nome, item.Situacao)).ToArray()));
     }
 
-    public async Task<Resultado<GrupoConvidados>> CriarGrupoAsync(string contaId, string? nome, CancellationToken ct)
-    {
-        var limpo = Domain.Comum.Texto.Limpo(nome);
-        if (limpo is null)
-        {
-            return Resultado<GrupoConvidados>.Erro(Codigos.Validacao, "Informe o nome do grupo.");
-        }
-
-        var grupo = new GrupoConvidados { Id = Guid.NewGuid(), ContaId = contaId, Nome = limpo };
-        await dados.InserirGrupoAsync(grupo, ct);
-        return Resultado<GrupoConvidados>.Sucesso(grupo);
-    }
-
-    public Task<IReadOnlyList<GrupoConvidados>> ListarGruposAsync(string contaId, CancellationToken ct) =>
-        dados.ListarGruposAsync(contaId, ct);
-
-    private async Task<Resultado<Convite>> MontarAsync(string contaId, Evento evento, NovoConvite pedido, CancellationToken ct)
+    private static Resultado<Convite> Montar(string contaId, Evento evento, NovoConvite pedido)
     {
         var nome = Domain.Comum.Texto.Limpo(pedido.Nome);
         if (nome is null)
@@ -509,27 +452,13 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
             return Resultado<Convite>.Erro(Codigos.Validacao, "Inclua ao menos um convidado.");
         }
 
-        if (pedido.GrupoId is Guid grupoId && await dados.ObterGrupoAsync(contaId, grupoId, ct) is null)
-        {
-            return Resultado<Convite>.Erro(Codigos.Validacao, "O grupo não pertence à conta.");
-        }
-
-        var transfer = ValidarTransfer(evento, pedido.UsaTransfer, pedido.LocalOrigem);
-        if (!transfer.Ok)
-        {
-            return Resultado<Convite>.Erro(transfer.Falha!.Codigo, transfer.Falha.Mensagem);
-        }
-
         var convite = new Convite
         {
             Id = Guid.NewGuid(),
             EventoId = evento.Id,
             ContaId = contaId,
             Nome = nome,
-            GrupoId = pedido.GrupoId,
             Observacao = Domain.Comum.Texto.Limpo(pedido.Observacao),
-            UsaTransfer = pedido.UsaTransfer && evento.TransferAtivo,
-            LocalOrigem = pedido.UsaTransfer && evento.TransferAtivo ? transfer.Valor : null,
             Token = Guid.NewGuid().ToString("N"),
         };
 
@@ -657,34 +586,8 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
         });
     }
 
-    private static Resultado<string?> ValidarTransfer(Evento evento, bool usa, string? local)
-    {
-        if (!usa || !evento.TransferAtivo)
-        {
-            return Resultado<string?>.Sucesso(null);
-        }
-
-        var origem = Domain.Comum.Texto.Limpo(local);
-        if (origem is null || evento.LocaisTransfer.All(item => !string.Equals(item.Nome, origem, StringComparison.OrdinalIgnoreCase)))
-        {
-            return Resultado<string?>.Erro(Codigos.Validacao, "Escolha o local de origem do transfer.");
-        }
-
-        return Resultado<string?>.Sucesso(origem);
-    }
-
     private static Convite? Filtrar(Convite convite, FiltroConvites filtro)
     {
-        if (filtro.GrupoId is Guid grupo && convite.GrupoId != grupo)
-        {
-            return null;
-        }
-
-        if (filtro.Transfer is bool transfer && convite.UsaTransfer != transfer)
-        {
-            return null;
-        }
-
         var convidados = convite.Convidados.Where(item => ConvidadoPassa(convite, item, filtro)).ToList();
         var observacaoConvite = Contem(convite.Observacao, filtro.Observacao) || Contem(convite.Nome, filtro.Nome);
         if (convidados.Count == 0 && !observacaoConvite)
@@ -768,18 +671,14 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
         destino.Observacao = origem.Observacao;
     }
 
-    private static ConviteLeitura Ler(Convite convite, IReadOnlyList<GrupoConvidados> grupos)
+    private static ConviteLeitura Ler(Convite convite)
     {
         var principal = convite.Convidados.FirstOrDefault(item => item.Id == convite.PrincipalId);
         return new ConviteLeitura(
             convite.Id,
             convite.EventoId,
             convite.Nome,
-            convite.GrupoId,
-            grupos.FirstOrDefault(grupo => grupo.Id == convite.GrupoId)?.Nome,
             convite.Observacao,
-            convite.UsaTransfer,
-            convite.LocalOrigem,
             ConviteRegras.TemTelefone(principal?.Celular) ? $"{principal!.Ddi} {principal.Celular}".Trim() : null,
             convite.Token,
             convite.AcessadoEm is not null || convite.RespondidoEm is not null,

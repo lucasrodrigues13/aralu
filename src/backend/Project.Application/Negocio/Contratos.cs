@@ -21,8 +21,6 @@ public sealed record FiltroConvites(
     string? Nome,
     SituacaoConvidado? Situacao,
     string? Telefone,
-    bool? Transfer,
-    Guid? GrupoId,
     string? Observacao,
     bool SomenteConfirmados);
 
@@ -180,14 +178,6 @@ public interface IDados
     Task<bool> VincularAsync(string contaId, Guid clienteId, Guid eventoId, CancellationToken ct);
 
     Task<bool> DesvincularAsync(string contaId, Guid clienteId, Guid eventoId, CancellationToken ct);
-
-    Task<IReadOnlyList<GrupoConvidados>> ListarGruposAsync(string contaId, CancellationToken ct);
-
-    Task InserirGrupoAsync(GrupoConvidados grupo, CancellationToken ct);
-
-    Task<GrupoConvidados?> ObterGrupoAsync(string contaId, Guid id, CancellationToken ct);
-
-    Task<GrupoConvidados> GarantirGrupoAsync(string contaId, string nome, CancellationToken ct);
 
     Task<IReadOnlyList<Convite>> ListarConvitesAsync(string contaId, Guid eventoId, CancellationToken ct);
 

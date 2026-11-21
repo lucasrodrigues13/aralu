@@ -19,42 +19,6 @@ public sealed class ContratoConta
     public DateTimeOffset AtualizadoEm { get; set; }
 }
 
-/// <summary>Legado sem uso (SPEC-030 v3): vínculo removido da tela e da API. Fica mapeado para a tabela não ser apagada.</summary>
-public sealed class ContratoDoModelo
-{
-    public Guid ModeloId { get; set; }
-
-    public Guid ContratoId { get; set; }
-}
-
-/// <summary>Legado sem uso (SPEC-030 v3): vínculo removido da tela e da API. Fica mapeado para a tabela não ser apagada.</summary>
-public sealed class ContratoDoEvento
-{
-    public Guid EventoId { get; set; }
-
-    public Guid ContratoId { get; set; }
-}
-
-/// <summary>Legado sem uso (SPEC-030 v3): link de leitura removido. Fica mapeado para a tabela não ser apagada.</summary>
-public sealed class LinkLeituraContrato
-{
-    public Guid Id { get; set; }
-
-    public string Token { get; set; } = "";
-
-    public string ContaId { get; set; } = "";
-
-    public Guid EventoId { get; set; }
-
-    public Guid ContratoId { get; set; }
-
-    public string Email { get; set; } = "";
-
-    public DateTimeOffset CriadoEm { get; set; }
-
-    public DateTimeOffset ExpiraEm { get; set; }
-}
-
 public sealed record CampoMesclagem(string Marca, string Rotulo, string Exemplo);
 
 /// <summary>Campos de mesclagem e preenchimento do texto (SPEC-030 §6.2).</summary>

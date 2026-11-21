@@ -1,14 +1,5 @@
 namespace Project.Domain.Convidados;
 
-public sealed class GrupoConvidados
-{
-    public Guid Id { get; set; }
-
-    public string ContaId { get; set; } = "";
-
-    public string Nome { get; set; } = "";
-}
-
 public sealed class Convite
 {
     public Guid Id { get; set; }
@@ -19,15 +10,9 @@ public sealed class Convite
 
     public string Nome { get; set; } = "";
 
-    public Guid? GrupoId { get; set; }
-
     public string? Observacao { get; set; }
 
     public Guid? PrincipalId { get; set; }
-
-    public bool UsaTransfer { get; set; }
-
-    public string? LocalOrigem { get; set; }
 
     public string Token { get; set; } = "";
 
