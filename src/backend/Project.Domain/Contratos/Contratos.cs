@@ -30,14 +30,25 @@ public static partial class Mesclagem
     [
         new("contratante_nome", "Contratante: nome completo", "Ana Beatriz Souza"),
         new("contratante_documento", "Contratante: CPF ou CNPJ", "123.456.789-00"),
-        new("contratante_endereco", "Contratante: endereço", "Rua das Flores, 100 - Centro, São Paulo/SP"),
+        new("contratante_endereco", "Contratante: endereço", "Rua das Flores, 100 - Centro - São Paulo/SP - CEP 01001-000"),
         new("contratante_email", "Contratante: e-mail", "ana@email.com"),
-        new("contratante_telefone", "Contratante: telefone", "+55 (11) 98888-7777"),
+        new("contratante_telefone", "Contratante: celular", "+55 11 98888-7777"),
+        new("contratante_nascimento", "Contratante: data de nascimento", "5 de maio de 1990"),
+        new("contratante_profissao", "Contratante: profissão", "Médica"),
+        new("contratante_estado_civil", "Contratante: estado civil", "Solteiro(a)"),
+        new("contratante_nacionalidade", "Contratante: nacionalidade", "Brasileira"),
         new("contratada_nome", "Contratada: nome da empresa", "Cerimonial Exemplo"),
         new("contratada_documento", "Contratada: CPF ou CNPJ", "12.345.678/0001-90"),
-        new("contratada_endereco", "Contratada: endereço", "Av. Central, 50, São Paulo/SP"),
+        new("contratada_endereco", "Contratada: endereço", "Av. Central, 50 - Centro - São Paulo/SP - CEP 01001-000"),
         new("contratada_responsavel", "Contratada: responsável", "Maria Lima"),
         new("contratada_pix", "Contratada: chave Pix", "contato@cerimonial.com"),
+        new("evento_tipo", "Evento: tipo", "Casamento"),
+        new("evento_data", "Evento: data prevista", "20 de março de 2027"),
+        new("evento_local_cerimonia", "Evento: local da cerimônia", "Igreja Matriz - Rua da Paz, 10 - Centro - São Paulo/SP"),
+        new("evento_local_recepcao", "Evento: local da recepção", "Espaço Jardim - Av. das Flores, 200 - Jardins - São Paulo/SP"),
+        new("evento_convidados", "Evento: quantidade de convidados", "150"),
+        new("contrato_valor", "Contrato: valor do orçamento aprovado", "R$ 12.000,00"),
+        new("contrato_parcelas", "Contrato: parcelas do orçamento aprovado", "Entrada de R$ 4.000,00 em 10/12/2026; Parcela 2 de R$ 4.000,00 em 10/01/2027"),
         new("data_hoje", "Data de hoje por extenso", "18 de novembro de 2026"),
     ];
 
@@ -67,6 +78,15 @@ public static partial class Mesclagem
 
     public static IReadOnlyDictionary<string, string?> Exemplos() =>
         Campos.ToDictionary(campo => campo.Marca, campo => (string?)campo.Exemplo);
+
+    /// <summary>Endereço em uma linha: "rua, número, complemento - bairro - cidade/UF - CEP x - país". Partes vazias saem.</summary>
+    public static string EnderecoEmLinha(string? endereco, string? numero, string? complemento, string? bairro, string? cidade, string? estado, string? cep, string? pais)
+    {
+        var rua = string.Join(", ", new[] { endereco, numero, complemento }.Where(parte => !string.IsNullOrWhiteSpace(parte)));
+        var cidadeEstado = string.Join("/", new[] { cidade, estado }.Where(parte => !string.IsNullOrWhiteSpace(parte)));
+        var partes = new[] { rua, bairro, cidadeEstado, string.IsNullOrWhiteSpace(cep) ? null : $"CEP {cep}", pais };
+        return string.Join(" - ", partes.Where(parte => !string.IsNullOrWhiteSpace(parte)));
+    }
 
     public static string Real(decimal valor) =>
         valor.ToString("C", CultureInfo.GetCultureInfo("pt-BR"));

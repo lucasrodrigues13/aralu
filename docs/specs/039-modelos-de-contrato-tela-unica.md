@@ -1,6 +1,8 @@
 # 039. Modelos de Contrato: tela única
 
 **Status: aprovada (21/11/2026).** Aprovação antecipada do dono do projeto, repassada pela sessão coordenadora (card #38 do Trello). Substitui a [SPEC-028](028-modelo-de-contrato-do-funil.md) e ajusta a [SPEC-030](030-contrato-do-evento.md) e a [SPEC-035](035-menu-lateral.md). Os pontos que o card deixou em aberto foram resolvidos pela opção mais simples e conservadora e estão na seção 17.
+> **Card #39 (21/11/2026, [SPEC-050](050-contrato-do-funil-com-tags.md)).** O 6.2.2 mudou: ao criar o contrato, o servidor preenche todas as tags (antes só `contratante_nome`) e exige orçamento aprovado e dados do contratante completos; o modal copia o texto sem trocar tags.
+
 
 ## 1. Identificador e nome
 

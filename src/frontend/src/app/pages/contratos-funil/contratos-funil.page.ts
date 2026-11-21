@@ -77,8 +77,8 @@ export class ContratoFunilDialog implements OnInit {
   protected aplicarModelo(id: string | null): void {
     const modelo = this.modelos().find((m) => m.id === id);
     if (!modelo) return;
-    const opp = this.oportunidades().find((o) => o.id === this.form.controls.oportunidadeId.value);
-    this.form.controls.conteudo.setValue(modelo.texto.replace(/\{\{\s*contratante_nome\s*\}\}/gi, opp?.nome ?? ''));
+    // As tags ficam no texto; o servidor as preenche ao gerar o contrato (SPEC-050).
+    this.form.controls.conteudo.setValue(modelo.texto);
   }
 
   protected salvar(): void {

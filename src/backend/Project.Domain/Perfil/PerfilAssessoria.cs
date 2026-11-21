@@ -44,16 +44,6 @@ public sealed class PerfilAssessoria
     /// <summary>Endereço em uma linha, montado dos campos estruturados (tag contratada_endereco, SPEC-038).</summary>
     public string EnderecoCompleto()
     {
-        var rua = string.Join(", ", new[] { Endereco, Numero, Complemento }.Where(parte => !string.IsNullOrWhiteSpace(parte)));
-        var cidadeEstado = string.Join("/", new[] { Cidade, Estado }.Where(parte => !string.IsNullOrWhiteSpace(parte)));
-        var partes = new[]
-        {
-            rua,
-            Bairro,
-            cidadeEstado,
-            string.IsNullOrWhiteSpace(Cep) ? null : $"CEP {Cep}",
-            Pais,
-        };
-        return string.Join(" - ", partes.Where(parte => !string.IsNullOrWhiteSpace(parte)));
+        return Contratos.Mesclagem.EnderecoEmLinha(Endereco, Numero, Complemento, Bairro, Cidade, Estado, Cep, Pais);
     }
 }

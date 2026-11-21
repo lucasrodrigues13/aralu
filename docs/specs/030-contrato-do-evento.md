@@ -1,6 +1,8 @@
 # 030. Contratos (cadastro)
 
 **Status: aprovada (versão 3, 21/11/2026; aprovação do dono do projeto repassada pela sessão que abriu o card, com as opções mais simples e conservadoras nos pontos em aberto).** A versão 2 (aprovada em 18/11/2026, com vínculo ao modelo de evento, aba Contratos no evento e link de leitura por e-mail) está no histórico do Git. Esta versão aplica o card #36 do Trello: o contrato do organizador com o cliente **não tem vínculo com o evento**. Fonte: decisão do usuário em 21/11/2026; [produto-v1.md](../produto-v1.md) 5.10; RF-098.
+> **Card #39 (21/11/2026, [SPEC-050](050-contrato-do-funil-com-tags.md)).** A lista de tags (6.2) cresceu: voltaram `contrato_valor` e `contrato_parcelas`, entraram `evento_tipo`, `evento_data`, `evento_local_cerimonia`, `evento_local_recepcao`, `evento_convidados` e `contratante_nascimento`, `_profissao`, `_estado_civil`, `_nacionalidade`. Quem preenche é o contrato do funil; a tela de modelos mostra a lista inteira.
+
 
 ## 1. Identificador e nome
 

@@ -1,5 +1,5 @@
-using System.Text.RegularExpressions;
 using Project.Application.Comum;
+using Project.Domain.Contratos;
 using Project.Domain.Dinheiro;
 using Project.Domain.Funil;
 
@@ -29,7 +29,7 @@ public sealed record SalvarContratoFunil(Guid? OportunidadeId, string? Conteudo,
 public sealed record ModeloParaContratoFunil(Guid Id, string Nome, string Texto);
 
 /// <summary>Contratos das oportunidades. O modelo vem da tela única de modelos de contrato (SPEC-039).</summary>
-public sealed partial class ContratoFunilServico(IDados dados, IDadosContrato modelos)
+public sealed class ContratoFunilServico(IDados dados, IDadosContrato modelos)
 {
     /// <summary>Modelos da conta para escolher ao criar o contrato (a assistente também escolhe, sem abrir a tela de modelos).</summary>
     public async Task<IReadOnlyList<ModeloParaContratoFunil>> ModelosAsync(string contaId, CancellationToken ct) =>
@@ -79,9 +79,28 @@ public sealed partial class ContratoFunilServico(IDados dados, IDadosContrato mo
             return Resultado<ContratoFunilLeitura>.Erro(Codigos.Validacao, "Informe a oportunidade.");
         }
 
+        // Só gera com orçamento aprovado e dados do contratante completos (SPEC-050 §6.1).
+        var aprovado = await dados.OrcamentoAprovadoDaOportunidadeAsync(contaId, oportunidadeId, ct);
+        if (aprovado is null)
+        {
+            return Resultado<ContratoFunilLeitura>.Erro(
+                Codigos.Validacao,
+                "Esta oportunidade ainda não tem orçamento aprovado. Aprove o orçamento antes de gerar o contrato.");
+        }
+
+        var cliente = oportunidade.ClienteId is Guid clienteId ? await dados.ObterClienteAsync(contaId, clienteId, ct) : null;
+        var contratante = ContratoPreenchimento.Contratante(oportunidade, cliente);
+        var faltam = ContratanteRegras.Faltando(contratante);
+        if (faltam.Count > 0)
+        {
+            return Resultado<ContratoFunilLeitura>.Erro(
+                Codigos.Validacao,
+                $"Faltam dados do contratante para gerar o contrato: {string.Join(", ", faltam)}. Preencha na oportunidade ou no cadastro do cliente.");
+        }
+
         var conteudo = Domain.Comum.Texto.Limpo(pedido.Conteudo);
         Guid? modeloId = pedido.ModeloId;
-        if (conteudo is null && modeloId is Guid mid)
+        if (modeloId is Guid mid)
         {
             var modelo = await modelos.ObterAsync(contaId, mid, ct);
             if (modelo is null)
@@ -89,15 +108,7 @@ public sealed partial class ContratoFunilServico(IDados dados, IDadosContrato mo
                 return Resultado<ContratoFunilLeitura>.Erro(Codigos.Validacao, "Modelo inválido.");
             }
 
-            conteudo = AplicarTokens(modelo.Texto, oportunidade.Nome);
-        }
-        else if (conteudo is not null && modeloId is Guid mid2)
-        {
-            var modelo = await modelos.ObterAsync(contaId, mid2, ct);
-            if (modelo is null)
-            {
-                return Resultado<ContratoFunilLeitura>.Erro(Codigos.Validacao, "Modelo inválido.");
-            }
+            conteudo ??= modelo.Texto;
         }
 
         if (conteudo is null)
@@ -105,7 +116,10 @@ public sealed partial class ContratoFunilServico(IDados dados, IDadosContrato mo
             return Resultado<ContratoFunilLeitura>.Erro(Codigos.Validacao, "Informe o conteúdo do contrato.");
         }
 
-        var aprovado = await dados.OrcamentoAprovadoDaOportunidadeAsync(contaId, oportunidadeId, ct);
+        var perfil = await dados.ObterPerfilAsync(contaId, ct);
+        var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
+        conteudo = Mesclagem.Preencher(conteudo, ContratoPreenchimento.Valores(contratante, oportunidade, perfil, aprovado, hoje));
+
         var item = new ContratoFunil
         {
             Id = Guid.NewGuid(),
@@ -244,12 +258,6 @@ public sealed partial class ContratoFunilServico(IDados dados, IDadosContrato mo
         return Resultado<ContratoFunilLeitura>.Sucesso(Ler(item, nomes.GetValueOrDefault(item.OportunidadeId, "")));
     }
 
-    /// <summary>Só o nome do contratante é preenchido aqui; as demais marcas ficam para o card #39.</summary>
-    private static string AplicarTokens(string texto, string nomeOportunidade) =>
-        MarcaContratanteNome().Replace(texto, nomeOportunidade);
-
-    [GeneratedRegex(@"\{\{\s*contratante_nome\s*\}\}", RegexOptions.IgnoreCase)]
-    private static partial Regex MarcaContratanteNome();
 
     /// <summary>Registra o que o cliente pagou de uma parcela do contrato (SPEC-040; antigo "Recebi").</summary>
     public async Task<Resultado<ContratoFunilLeitura>> ReceberAsync(

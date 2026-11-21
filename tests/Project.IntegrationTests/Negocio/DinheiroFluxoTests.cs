@@ -25,6 +25,7 @@ public class DinheiroFluxoTests
             nome = "Casamento Ana e Rui",
             estagio = "Contato inicial",
             contatos = new[] { new { nome = "Ana", telefone = "11977776666" } },
+            contratante = ContratanteDeTeste.Completo,
         }));
         var oportunidadeId = oportunidade.GetProperty("id").GetGuid();
         var orcamento = await Ler(await dono.PostAsJsonAsync("/api/v1/orcamentos-funil", new { oportunidadeId, conteudo = "Proposta", valor = 9000 }));
@@ -47,9 +48,8 @@ public class DinheiroFluxoTests
         Assert.Equal(2000m, doOrcamento[1].GetProperty("valor").GetDecimal());
         Assert.Equal(HttpStatusCode.NotFound, (await outra.PutAsJsonAsync(urlParcelas, new { quantidadeParcelas = 1, primeiraParcela = "2027-01-10" })).StatusCode);
 
-        // Contrato gerado sem orçamento aceito: nasce sem parcelas.
-        var semAceite = await Ler(await dono.PostAsJsonAsync("/api/v1/contratos-funil", new { oportunidadeId, conteudo = "Contrato" }));
-        Assert.Empty(semAceite.GetProperty("parcelas").EnumerateArray());
+        // Sem orçamento aceito, o contrato não é gerado (SPEC-050).
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PostAsJsonAsync("/api/v1/contratos-funil", new { oportunidadeId, conteudo = "Contrato" })).StatusCode);
 
         // Orçamento aceito: o contrato novo copia as parcelas.
         Assert.Equal(HttpStatusCode.OK, (await dono.PostAsJsonAsync($"/api/v1/orcamentos-funil/{orcamentoId}/responder", new { tipo = "Aceitar" })).StatusCode);
@@ -85,18 +85,17 @@ public class DinheiroFluxoTests
     {
         var dono = await Entrar();
         var outra = await Entrar();
-        var oportunidade = await Ler(await dono.PostAsJsonAsync("/api/v1/oportunidades", new { nome = "Casamento Bia e Leo", estagio = "Contato inicial" }));
+        var oportunidade = await Ler(await dono.PostAsJsonAsync("/api/v1/oportunidades", new { nome = "Casamento Bia e Leo", estagio = "Contato inicial", contratante = ContratanteDeTeste.Completo }));
         var oportunidadeId = oportunidade.GetProperty("id").GetGuid();
         var orcamento = await Ler(await dono.PostAsJsonAsync("/api/v1/orcamentos-funil", new { oportunidadeId, conteudo = "Proposta", valor = 6000 }));
         var orcamentoId = orcamento.GetProperty("id").GetGuid();
 
-        // Sem orçamento aceito, não há valor para parcelar.
-        var semAceite = await Ler(await dono.PostAsJsonAsync("/api/v1/contratos-funil", new { oportunidadeId, conteudo = "Contrato" }));
-        var semAceiteUrl = $"/api/v1/contratos-funil/{semAceite.GetProperty("id").GetGuid()}/parcelas";
-        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PutAsJsonAsync(semAceiteUrl, new { quantidadeParcelas = 1, primeiraParcela = "2027-01-10" })).StatusCode);
+        // Sem orçamento aceito, o contrato não é gerado (SPEC-050).
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PostAsJsonAsync("/api/v1/contratos-funil", new { oportunidadeId, conteudo = "Contrato" })).StatusCode);
 
         Assert.Equal(HttpStatusCode.OK, (await dono.PostAsJsonAsync($"/api/v1/orcamentos-funil/{orcamentoId}/responder", new { tipo = "Aceitar" })).StatusCode);
-        var url = semAceiteUrl;
+        var contratoCriado = await Ler(await dono.PostAsJsonAsync("/api/v1/contratos-funil", new { oportunidadeId, conteudo = "Contrato" }));
+        var url = $"/api/v1/contratos-funil/{contratoCriado.GetProperty("id").GetGuid()}/parcelas";
 
         // À vista (uma parcela) e depois em três: a segunda definição substitui a primeira.
         var avista = await Ler(await dono.PutAsJsonAsync(url, new { quantidadeParcelas = 1, primeiraParcela = "2027-01-10" }));
@@ -118,7 +117,7 @@ public class DinheiroFluxoTests
         Assert.Equal(HttpStatusCode.NotFound, (await outra.PutAsJsonAsync(url, new { quantidadeParcelas = 1, primeiraParcela = "2027-01-10" })).StatusCode);
 
         // Cancelado não parcela.
-        Assert.Equal(HttpStatusCode.OK, (await dono.PostAsync($"/api/v1/contratos-funil/{semAceite.GetProperty("id").GetGuid()}/cancelar", null)).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await dono.PostAsync($"/api/v1/contratos-funil/{contratoCriado.GetProperty("id").GetGuid()}/cancelar", null)).StatusCode);
         Assert.Equal(HttpStatusCode.BadRequest, (await dono.PutAsJsonAsync(url, new { quantidadeParcelas = 1, primeiraParcela = "2027-01-10" })).StatusCode);
     }
 

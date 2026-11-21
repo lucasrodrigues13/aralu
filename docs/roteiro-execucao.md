@@ -56,7 +56,7 @@ Legenda de "Banco": **M** = migration (entra na fila do banco), **—** = sem mi
 | 6 | #20 Resumo absorve Tarefas | #21, #31, #28, #30 | ? | evento-home, tarefas | pendente |
 | 6 | #23 Link para o casal cadastrar convites | #22, #34 | M | convidados, link do casal | pendente |
 | 6 | #24 RSVP com prazo | #22 (#23 ajuda) | M | rsvp, convidados | pendente |
-| 6 | #39 Contrato do funil com as tags | #46, #43, #44, #36, #38 | ? | contratos-funil, Mesclagem | pendente |
+| 6 | #39 Contrato do funil com as tags | #46, #43, #44, #36, #38 | — | contratos-funil, Mesclagem | pronto no branch `claude/card-39-tags-46fafe` (SPEC-050, sem migration; só gera com orçamento aprovado e dados do contratante completos; nada apagado); juntar na main; integração só ao fim das ondas |
 | 7 | #40 Seletor de tags com busca e ajuda | #38, #39 | — | modelos de contrato | pendente |
 | 7 | #15 Live Preview do modelo | #38, #40 | — | modelos de contrato | pendente |
 | 7 | #16 Logo e imagem de fundo no modelo | #15, #38 | M | modelos de contrato | pendente |
