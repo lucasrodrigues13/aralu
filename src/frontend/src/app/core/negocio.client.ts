@@ -1431,6 +1431,8 @@ export interface PropostaPublica {
   respostaEm: string | null;
   /** A assessoria abriu o próprio link (logada): não conta como abertura e não pode responder. */
   daPropriaConta?: boolean;
+  /** Parcelas do orçamento, mostradas antes do aceite (SPEC-041). */
+  parcelas?: ParcelaOrcamento[] | null;
 }
 
 export interface LeadRsvp {

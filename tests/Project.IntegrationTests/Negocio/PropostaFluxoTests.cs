@@ -231,6 +231,26 @@ public class PropostaFluxoTests
         Assert.Empty((await Ler(await outra.GetAsync("/api/v1/oportunidades"))).EnumerateArray());
     }
 
+    [Fact]
+    public async Task Proposta_mostra_as_parcelas_e_mudar_as_parcelas_zera_a_resposta()
+    {
+        var dono = await Entrar();
+        var (_, orcamentoId) = await CriarLeadComOrcamento(dono, "Casamento Parcelas");
+        var token = await Enviar(dono, orcamentoId);
+        var anonimo = _banco.Fabrica.CreateClient();
+
+        var sem = await Ler(await anonimo.GetAsync($"/api/v1/publico/propostas/{token}"));
+        Assert.True(sem.GetProperty("parcelas").ValueKind is JsonValueKind.Null || sem.GetProperty("parcelas").GetArrayLength() == 0);
+
+        await Ler(await anonimo.PostAsJsonAsync($"/api/v1/publico/propostas/{token}/resposta", new { tipo = "Duvidas", mensagem = "Posso dividir?" }));
+        await Ler(await dono.PutAsJsonAsync($"/api/v1/orcamentos-funil/{orcamentoId}/parcelas", new { quantidadeParcelas = 3, primeiraParcela = "2027-01-10" }));
+
+        var com = await Ler(await anonimo.GetAsync($"/api/v1/publico/propostas/{token}"));
+        Assert.Equal(3, com.GetProperty("parcelas").GetArrayLength());
+        Assert.Equal(JsonValueKind.Null, com.GetProperty("resposta").ValueKind);
+    }
+
+
     private async Task<(Guid OportunidadeId, Guid OrcamentoId)> CriarLeadComOrcamento(HttpClient dono, string nome)
     {
         var oportunidade = await Ler(await dono.PostAsJsonAsync("/api/v1/oportunidades", new
