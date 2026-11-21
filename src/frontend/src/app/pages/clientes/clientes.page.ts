@@ -77,7 +77,7 @@ import { ClienteFormDialog } from './cliente-form.dialog';
             <th mat-header-cell *matHeaderCellDef class="text-end! whitespace-nowrap">Ações</th>
             <td mat-cell *matCellDef="let cliente" class="text-end! whitespace-nowrap">
               <button mat-icon-button type="button" aria-label="Editar" (click)="abrir(cliente)"><mat-icon>edit</mat-icon></button>
-              <button mat-icon-button type="button" aria-label="Excluir" (click)="excluir()"><mat-icon>delete</mat-icon></button>
+              <button mat-icon-button type="button" aria-label="Excluir" (click)="excluir(cliente)"><mat-icon>delete</mat-icon></button>
             </td>
           </ng-container>
           <tr mat-header-row *matHeaderRowDef="colunas"></tr>
@@ -117,14 +117,23 @@ export class ClientesPage implements OnInit {
     });
   }
 
-  protected excluir(): void {
+  protected excluir(cliente: Cliente): void {
     this.dialog.open(ConfirmaDialog, {
       ...DIALOG_PEQUENO,
-      data: { titulo: 'Excluir cliente', texto: 'Confirma a exclusão deste cliente?', confirmar: 'Excluir' },
+      data: {
+        titulo: 'Excluir cliente',
+        texto: `Confirma a exclusão de "${cliente.nome}"? A oportunidade do funil, se houver, continua existindo.`,
+        confirmar: 'Excluir',
+      },
     }).afterClosed().subscribe((confirmou) => {
-      if (confirmou) {
-        this.toast.erro('A exclusão ainda não está disponível neste fluxo.');
-      }
+      if (!confirmou) return;
+      this.negocio.excluirCliente(cliente.id).subscribe({
+        next: () => {
+          this.toast.sucesso('Cliente excluído.');
+          this.carregar();
+        },
+        error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+      });
     });
   }
 

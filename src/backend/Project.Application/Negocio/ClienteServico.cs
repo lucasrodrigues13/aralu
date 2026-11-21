@@ -257,6 +257,38 @@ public sealed class ClienteServico(IDados dados, Cep.IConsultaCep cep, IContaCli
         return Resultado<Guid?>.Sucesso(anterior);
     }
 
+    /// <summary>
+    /// Exclui o cliente. Cliente ligado a evento não é excluído (o casal sumiria do evento): desvincule antes.
+    /// A oportunidade que virou cliente continua existindo, só perde o vínculo (SPEC-020 §7).
+    /// Devolve o id da foto, para o chamador apagar o arquivo.
+    /// </summary>
+    public async Task<Resultado<Guid?>> ExcluirAsync(string contaId, Guid id, CancellationToken ct)
+    {
+        var cliente = await dados.ObterClienteAsync(contaId, id, ct);
+        if (cliente is null)
+        {
+            return Resultado<Guid?>.Erro(Codigos.Indisponivel, "Indisponível.");
+        }
+
+        var eventos = await dados.EventosDoClienteAsync(contaId, id, ct);
+        if (eventos.Count > 0)
+        {
+            var nomes = string.Join(", ", eventos.Take(3).Select(e => e.Nome)) + (eventos.Count > 3 ? "…" : "");
+            return Resultado<Guid?>.Erro(
+                Codigos.Validacao,
+                $"Este cliente está ligado a evento(s): {nomes}. Tire o vínculo no evento antes de excluir.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(cliente.UsuarioId))
+        {
+            await contaCliente.RevogarAsync(cliente.UsuarioId, ct);
+        }
+
+        var foto = cliente.FotoId;
+        await dados.RemoverClienteAsync(contaId, cliente, ct);
+        return Resultado<Guid?>.Sucesso(foto);
+    }
+
     public async Task<Resultado<bool>> AplicarAcessoAsync(string contaId, Cliente cliente, bool conceder, CancellationToken ct)
     {
         if (conceder)

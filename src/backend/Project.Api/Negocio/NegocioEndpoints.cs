@@ -90,6 +90,7 @@ public static class NegocioEndpoints
         api.MapGet("/clientes", Clientes).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/clientes", CriarCliente).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPut("/clientes/{id:guid}", AtualizarCliente).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapDelete("/clientes/{id:guid}", ExcluirCliente).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/clientes/{id:guid}/foto", FotoCliente).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe)).DisableAntiforgery();
         api.MapGet("/eventos/{id:guid}/clientes", ClientesDoEvento).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/eventos/{id:guid}/clientes", Vincular).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
@@ -909,6 +910,28 @@ public static class NegocioEndpoints
 
     private static Task<IResult> AtualizarCliente(Guid id, NovoCliente pedido, ClaimsPrincipal usuario, ClienteServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.AtualizarAsync(conta, id, pedido, Hoje(), ct)));
+
+    private static Task<IResult> ExcluirCliente(
+        Guid id,
+        ClaimsPrincipal usuario,
+        ClienteServico servico,
+        IArmazenamentoArquivo armazenamento,
+        CancellationToken ct) =>
+        ComConta(usuario, async conta =>
+        {
+            var resultado = await servico.ExcluirAsync(conta, id, ct);
+            if (!resultado.Ok)
+            {
+                return Falha(resultado.Falha!);
+            }
+
+            if (resultado.Valor is Guid foto)
+            {
+                await armazenamento.DescartarAsync(foto, ct);
+            }
+
+            return Results.NoContent();
+        });
 
     private static Task<IResult> FotoCliente(
         Guid id,

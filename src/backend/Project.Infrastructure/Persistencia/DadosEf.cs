@@ -566,6 +566,21 @@ public sealed class DadosEf(AppDbContext banco) : IDados
 
     public Task SalvarClienteAsync(CancellationToken ct) => banco.SaveChangesAsync(ct);
 
+    public async Task RemoverClienteAsync(string contaId, Cliente cliente, CancellationToken ct)
+    {
+        // Um SaveChanges só: soltar as oportunidades e apagar o cliente valem juntos ou nada.
+        var oportunidades = await banco.Oportunidades
+            .Where(item => item.ContaId == contaId && item.ClienteId == cliente.Id)
+            .ToListAsync(ct);
+        foreach (var oportunidade in oportunidades)
+        {
+            oportunidade.ClienteId = null;
+        }
+
+        banco.Clientes.Remove(cliente);
+        await banco.SaveChangesAsync(ct);
+    }
+
     public async Task<IReadOnlyList<(Guid Id, string Nome)>> EventosDoClienteAsync(string contaId, Guid clienteId, CancellationToken ct)
     {
         var eventos = await banco.Vinculos.AsNoTracking()

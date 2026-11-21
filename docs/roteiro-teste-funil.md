@@ -227,7 +227,7 @@ O lead da Marina aceitou. Hora do fim do funil.
    - Cancelar o modal não muda nada.
 5. Faça: tente virar cliente de novo. Confira: o botão não aparece mais (um cliente por oportunidade).
 6. Faça: em **Menu: Gestão de eventos > Clientes**, abra a Marina e complete o cadastro (documento, endereço, o noivo como segundo contato/papel). Veja a spec do cadastro completo de cliente para os campos.
-7. Faça: exclua o cliente de um lead de teste. Confira: a oportunidade continua existindo.
+7. Faça: em **Clientes**, exclua (lixeira) o cliente de um lead de teste que **não** esteja ligado a nenhum evento. Confira: o cliente some e a oportunidade continua existindo, em Contratado, sem o selo **Cliente**. Se o cliente estiver ligado a um evento, a exclusão é recusada com o nome do evento; tire o vínculo no evento e tente de novo.
 8. Faça: teste **Virar cliente** direto de um lead em Descartado. Confira: sai do descarte e vai para Contratado.
 
 > Atenção para anotar: a SPEC-031 §17 decidiu que "Virar cliente" também criaria o evento (com opção de desmarcar). No código que li, o fluxo só cria o cliente e vincula o lead; o evento é criado no Ato 9. Se o modal de cliente oferecer a criação do evento, anote e o Ato 9 muda. Se não oferecer, vale registrar como pendência.

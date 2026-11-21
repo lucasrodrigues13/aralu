@@ -162,6 +162,49 @@ public class FunilFluxoTests
     }
 
     [Fact]
+    public async Task Excluir_cliente_do_funil_mantem_a_oportunidade_e_bloqueia_cliente_de_evento()
+    {
+        var dono = await Entrar();
+        var outra = await Entrar();
+
+        async Task<Guid> NovoCliente(string nome) => (await Ler(await dono.PostAsJsonAsync("/api/v1/clientes", new
+        {
+            nome,
+            papel = "Noiva",
+            email = $"{Guid.NewGuid():N}@aralu.test",
+            ddi = "+55",
+            celular = "11977776666",
+        }))).GetProperty("id").GetGuid();
+
+        // Cliente que veio do funil: exclui, e o lead continua existindo, sem vínculo.
+        var lead = await Ler(await dono.PostAsJsonAsync("/api/v1/oportunidades", new
+        {
+            nome = "Casamento Helo",
+            estagio = "Orçamento enviado",
+            contatos = new[] { new { nome = "Helo" } },
+        }));
+        var leadId = lead.GetProperty("id").GetGuid();
+        var clienteId = await NovoCliente("Helo");
+        await Ler(await dono.PostAsJsonAsync($"/api/v1/oportunidades/{leadId}/cliente", new { clienteId }));
+
+        Assert.NotEqual(HttpStatusCode.NoContent, (await outra.DeleteAsync($"/api/v1/clientes/{clienteId}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, (await dono.DeleteAsync($"/api/v1/clientes/{clienteId}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await dono.DeleteAsync($"/api/v1/clientes/{clienteId}")).StatusCode);
+        var depois = await Ler(await dono.GetAsync($"/api/v1/oportunidades/{leadId}"));
+        Assert.Equal(JsonValueKind.Null, depois.GetProperty("clienteId").ValueKind);
+        Assert.Equal("Contratado", depois.GetProperty("estagio").GetString());
+
+        // Cliente ligado a evento não é excluído sem tirar o vínculo antes.
+        var comEvento = await NovoCliente("Ivo");
+        var evento = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new { tipo = "Casamento", primeiroNome = "Ivo", segundoNome = "Jo" }));
+        var eventoId = evento.GetProperty("id").GetGuid();
+        await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/clientes", new { clienteId = comEvento }));
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.DeleteAsync($"/api/v1/clientes/{comEvento}")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await dono.DeleteAsync($"/api/v1/eventos/{eventoId}/clientes/{comEvento}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, (await dono.DeleteAsync($"/api/v1/clientes/{comEvento}")).StatusCode);
+    }
+
+    [Fact]
     public async Task Dona_configura_estagios_e_leads_acompanham()
     {
         var dono = await Entrar();

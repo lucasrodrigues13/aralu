@@ -934,6 +934,10 @@ export class NegocioClient {
     return this.http.put<Cliente>(`${this.base}/api/v1/clientes/${id}`, pedido);
   }
 
+  excluirCliente(id: string) {
+    return this.http.delete<void>(`${this.base}/api/v1/clientes/${id}`);
+  }
+
   clientesDoEvento(id: string) {
     return this.http.get<Cliente[]>(`${this.base}/api/v1/eventos/${id}/clientes`);
   }

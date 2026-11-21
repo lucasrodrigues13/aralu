@@ -160,6 +160,9 @@ public interface IDados
 
     Task SalvarClienteAsync(CancellationToken ct);
 
+    /// <summary>Apaga o cliente e solta dele as oportunidades que viraram cliente (elas continuam existindo).</summary>
+    Task RemoverClienteAsync(string contaId, Cliente cliente, CancellationToken ct);
+
     Task<IReadOnlyList<(Guid Id, string Nome)>> EventosDoClienteAsync(string contaId, Guid clienteId, CancellationToken ct);
 
     Task<IReadOnlyList<Guid>> EventosDoUsuarioClienteAsync(string contaId, string usuarioId, CancellationToken ct);
