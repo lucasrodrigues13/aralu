@@ -1526,8 +1526,18 @@ public sealed class DadosEf(AppDbContext banco) : IDados
 
         if (!string.IsNullOrWhiteSpace(responsavel))
         {
+            // A tela manda "Organizer" ou "Assistente:<id>"; a tarefa guarda o id da dona ou da assistente.
             var texto = responsavel.Trim();
-            consulta = consulta.Where(item => item.Responsavel == texto);
+            if (texto == "Organizer")
+            {
+                texto = contaId;
+            }
+            else if (texto.StartsWith("Assistente:", StringComparison.Ordinal))
+            {
+                texto = texto["Assistente:".Length..];
+            }
+
+            consulta = consulta.Where(item => item.Responsavel == texto || item.Responsaveis.Any(r => r.ReferenciaId == texto));
         }
 
         if (completa is bool completaFiltro)

@@ -1,5 +1,7 @@
-import { Component, ElementRef, inject, OnInit, signal, viewChild } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Component, DestroyRef, ElementRef, inject, OnInit, signal, viewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { merge } from 'rxjs';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -148,7 +150,7 @@ export class TarefaFunilDialog implements OnInit {
 
 @Component({
   selector: 'app-tarefas-funil',
-  imports: [MatButtonToggleModule, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatSelectModule, GdDataPipe],
+  imports: [ReactiveFormsModule, CampoDataComponent, MatButtonToggleModule, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatSelectModule, GdDataPipe],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6 flex flex-wrap items-center justify-between gap-4">
@@ -170,6 +172,17 @@ export class TarefaFunilDialog implements OnInit {
           </mat-select>
         </mat-form-field>
         </div>
+        <div class="campo w-full sm:w-52">
+          <mat-label class="font-semibold mb-2 block">Responsável</mat-label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
+          <mat-select [attr.aria-label]="'Responsável'" [value]="responsavel()" (selectionChange)="responsavel.set($event.value); carregar()">
+            <mat-option value="">Todos</mat-option>
+            @for (o of opcoes(); track o.valor) { <mat-option [value]="o.valor">{{ o.rotulo }}</mat-option> }
+          </mat-select>
+        </mat-form-field>
+        </div>
+        <div class="w-full sm:w-44"><app-campo-data [formControl]="prazoDe" rotulo="Prazo de" /></div>
+        <div class="w-full sm:w-44"><app-campo-data [formControl]="prazoAte" rotulo="Prazo até" /></div>
       </div>
       @if (lista().length === 0) {
         <p class="text-center text-muted py-10">Não há tarefa.</p>
@@ -224,10 +237,14 @@ export class TarefasFunilPage implements OnInit {
   protected readonly tipos = TIPOS_TAREFA_FUNIL;
   protected readonly completa = signal(false);
   protected readonly tipo = signal('');
+  protected readonly responsavel = signal('');
+  protected readonly prazoDe = new FormControl<Date | null>(null);
+  protected readonly prazoAte = new FormControl<Date | null>(null);
   protected readonly lista = signal<TarefaFunil[]>([]);
   protected readonly colunas = ['titulo', 'tipo', 'responsaveis', 'prazo', 'acoes'];
   private readonly assistentes = inject(AssistentesClient);
-  private readonly opcoes = signal<OpcaoResponsavel[]>(opcoesResponsavel([], 'Dona da conta'));
+  private readonly destroyRef = inject(DestroyRef);
+  protected readonly opcoes = signal<OpcaoResponsavel[]>(opcoesResponsavel([], 'Dona da conta'));
 
   protected html(texto: string | null): string {
     return htmlDeTextoSimples(texto);
@@ -242,6 +259,9 @@ export class TarefasFunilPage implements OnInit {
       next: (nomes) => this.opcoes.set(opcoesResponsavel(nomes, 'Dona da conta', nomes.map((item) => `Assistente:${item.id}`))),
       error: () => undefined,
     });
+    merge(this.prazoDe.valueChanges, this.prazoAte.valueChanges)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.carregar());
     this.carregar();
   }
 
@@ -280,6 +300,9 @@ export class TarefasFunilPage implements OnInit {
     this.negocio.tarefasFunil({
       completa: String(this.completa()),
       tipo: this.tipo() || undefined,
+      responsavel: this.responsavel() || undefined,
+      prazoDe: deDataParaIso(this.prazoDe.value) ?? undefined,
+      prazoAte: deDataParaIso(this.prazoAte.value) ?? undefined,
     }).subscribe({
       next: (lista) => this.lista.set(lista),
       error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
