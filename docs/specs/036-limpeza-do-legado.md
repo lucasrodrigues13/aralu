@@ -53,7 +53,7 @@ Conferido: o transfer saiu da 1.0 ([produto-v1.md](../produto-v1.md) 5.7, linha 
 ## 6. O que NÃO sai (e por quê)
 
 - **`Evento.ModeloId` e a criação de evento com `modeloId` na API**: saíram no card #42 (decisão do dono, [SPEC-037](037-rg-fora-e-documento-unico-do-cliente.md), migration `RgEModeloDoEventoFora`). A criação de evento exige `tipo` e não copia mais o modelo.
-- **Forma de pagamento `Transferencia`** (SPEC-029): é pagamento por transferência bancária, outra coisa; segue em uso.
+- **Forma de pagamento `Transferencia`** (SPEC-029): é pagamento por transferência bancária, outra coisa; segue em uso. O dono confirmou em 21/11/2026 que o modelo do evento só se aplica pelo menu do evento ("Aplicar modelo", RF-053), sem o evento guardar a origem.
 - **Campos "grupo" de tarefa e de modelo, grupos de prazo da tarefa e "grupos" do menu**: homônimos, em uso.
 - **Resíduos do card #37**: o card só mexeu na ordem do menu (frontend); não deixou nada no banco nem na API.
 - **Migrations já geradas**: não são editadas; a limpeza é uma migration nova.
