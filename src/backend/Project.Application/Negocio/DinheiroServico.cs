@@ -5,31 +5,39 @@ using Project.Domain.Fornecedores;
 
 namespace Project.Application.Negocio;
 
-public sealed record SalvarLancamento(TipoLancamento? Tipo, string? Categoria, string? Descricao, decimal? Valor, DateOnly? Data);
+public sealed record ComprovantePagamentoLeitura(Guid ArquivoId, string Nome, string TipoConteudo);
 
-public sealed record ComprovanteLeitura(Guid Id, Guid ArquivoId, string Nome, string TipoConteudo, string? Descricao, DateTimeOffset EnviadoEm);
+public sealed record ParcelaPagamentoLeitura(
+    Guid Id,
+    int Numero,
+    DateOnly Vencimento,
+    decimal Valor,
+    bool Entrada,
+    bool Paga,
+    DateOnly? PagoEm,
+    ComprovantePagamentoLeitura? Comprovante);
 
-public sealed record LancamentoLeitura(Guid Id, TipoLancamento Tipo, string Categoria, string? Descricao, decimal Valor, DateOnly Data);
-
+/// <summary>Um pagamento a fornecedor: o serviço contratado do evento, com ou sem parcelas (SPEC-043).</summary>
 public sealed record PagamentoFornecedorLeitura(
     Guid EventoId,
     string Evento,
     Guid ServicoId,
     string Servico,
     string? Fornecedor,
-    int Numero,
-    DateOnly Vencimento,
     decimal Valor,
-    bool Entrada,
-    SituacaoParcela Situacao);
+    bool Pago,
+    DateOnly? PagoEm,
+    DateOnly? Vencimento,
+    ComprovantePagamentoLeitura? Comprovante,
+    IReadOnlyList<ParcelaPagamentoLeitura> Parcelas);
 
-/// <summary>Dinheiro do evento (SPEC-029 v2): só o lado dos fornecedores. O que o cliente paga está no contrato (SPEC-040).</summary>
+/// <summary>Dinheiro do evento (SPEC-043): só os pagamentos a fornecedores. O que o cliente paga está no contrato (SPEC-040).</summary>
 public sealed record DinheiroEventoLeitura(
-    decimal Despesas,
-    decimal Entradas,
-    IReadOnlyList<PagamentoFornecedorLeitura> PagamentosFornecedores,
-    IReadOnlyList<LancamentoLeitura> Lancamentos,
-    IReadOnlyList<ComprovanteLeitura> Comprovantes);
+    decimal Contratado,
+    decimal Pago,
+    IReadOnlyList<PagamentoFornecedorLeitura> PagamentosFornecedores);
+
+public sealed record MarcarPago(bool Pago);
 
 /// <summary>Linha do budget para a planilha (SPEC-029 §6.6).</summary>
 public sealed record LinhaPlanilhaBudget(string Servico, decimal Estimado, decimal Contratado);
@@ -42,50 +50,185 @@ public interface IPlanilhaBudget
 /// <summary>Acesso a dados do Dinheiro do evento. Tudo filtra pela conta.</summary>
 public interface IDadosDinheiro
 {
+    /// <summary>Evento da conta com os serviços, o contrato de fornecedor e as parcelas (rastreado, para alterar).</summary>
     Task<Evento?> ObterEventoAsync(string contaId, Guid eventoId, CancellationToken ct);
 
-    Task<IReadOnlyList<LancamentoEvento>> LancamentosAsync(Guid eventoId, CancellationToken ct);
+    Task<IReadOnlyList<PagamentoFornecedorLeitura>> PagamentosFornecedoresAsync(string contaId, Guid eventoId, CancellationToken ct);
 
-    Task<LancamentoEvento?> ObterLancamentoAsync(string contaId, Guid eventoId, Guid id, CancellationToken ct);
+    Task InserirContratoAsync(ContratoFornecedor contrato, CancellationToken ct);
 
-    Task InserirLancamentoAsync(LancamentoEvento lancamento, CancellationToken ct);
-
-    Task RemoverLancamentoAsync(LancamentoEvento lancamento, CancellationToken ct);
-
-    Task<IReadOnlyList<PagamentoFornecedorLeitura>> PagamentosFornecedoresAsync(string contaId, Guid? eventoId, CancellationToken ct);
-
-    Task<IReadOnlyList<ComprovanteEvento>> ComprovantesAsync(Guid eventoId, CancellationToken ct);
-
-    Task<ComprovanteEvento?> ObterComprovanteAsync(string contaId, Guid eventoId, Guid id, CancellationToken ct);
-
-    Task InserirComprovanteAsync(ComprovanteEvento comprovante, CancellationToken ct);
-
-    Task RemoverComprovanteAsync(ComprovanteEvento comprovante, CancellationToken ct);
+    /// <summary>Troca as parcelas do contrato pelas novas (as antigas são apagadas).</summary>
+    Task SubstituirParcelasAsync(ContratoFornecedor contrato, IReadOnlyList<ParcelaContratoFornecedor> novas, CancellationToken ct);
 
     Task SalvarAsync(CancellationToken ct);
 }
 
-/// <summary>Dinheiro do evento: pagamentos a fornecedores, despesas e comprovantes (SPEC-029 v2).</summary>
+/// <summary>Dinheiro do evento: pagamentos a fornecedores com parcelas e comprovantes (SPEC-043).</summary>
 public sealed class DinheiroServico(IDadosDinheiro dados, IPlanilhaBudget planilha, Arquivos.IArmazenamentoArquivo armazenamento)
 {
+    private const int MaximoParcelas = 120;
+    private const string Indisponivel = "Indisponível.";
+
+    public async Task<Resultado<DinheiroEventoLeitura>> ObterAsync(string contaId, Guid eventoId, CancellationToken ct)
+    {
+        var evento = await dados.ObterEventoAsync(contaId, eventoId, ct);
+        return evento is null
+            ? Resultado<DinheiroEventoLeitura>.Erro(Codigos.Indisponivel, Indisponivel)
+            : Resultado<DinheiroEventoLeitura>.Sucesso(await LerAsync(contaId, evento, ct));
+    }
+
+    /// <summary>Define o parcelamento do pagamento (SPEC-043 §6.2). O total é o valor contratado do serviço.</summary>
+    public async Task<Resultado<DinheiroEventoLeitura>> ParcelarAsync(
+        string contaId,
+        Guid eventoId,
+        Guid servicoId,
+        PedidoParcelas pedido,
+        CancellationToken ct)
+    {
+        var (evento, servico) = await ObterServicoAsync(contaId, eventoId, servicoId, ct);
+        if (evento is null || servico is null)
+        {
+            return Resultado<DinheiroEventoLeitura>.Erro(Codigos.Indisponivel, Indisponivel);
+        }
+
+        if (servico.ValorContratado is not decimal total || total <= 0)
+        {
+            return Resultado<DinheiroEventoLeitura>.Erro(Codigos.Validacao, "O serviço não tem valor contratado para parcelar.");
+        }
+
+        if (pedido.QuantidadeParcelas is not int quantidade || quantidade < 1 || quantidade > MaximoParcelas || pedido.PrimeiraParcela is not DateOnly primeira)
+        {
+            return Resultado<DinheiroEventoLeitura>.Erro(Codigos.Validacao, "Informe o número de parcelas (1 a 120) e o vencimento da primeira.");
+        }
+
+        var calculadas = ParcelasDaAssessoria.Calcular(total, quantidade, primeira, pedido.ComEntrada, pedido.BaseEntrada, pedido.ValorEntrada, pedido.DataEntrada);
+        if (calculadas.Count == 0)
+        {
+            return Resultado<DinheiroEventoLeitura>.Erro(Codigos.Validacao, "A entrada informada não fecha com o valor total.");
+        }
+
+        var contrato = await ContratoDoServicoAsync(servico, ct);
+        var bloqueio = BloqueioDoParcelamento(contrato);
+        if (bloqueio is not null)
+        {
+            return Resultado<DinheiroEventoLeitura>.Erro(Codigos.Validacao, bloqueio);
+        }
+
+        await dados.SubstituirParcelasAsync(contrato, calculadas.Select(parcela => new ParcelaContratoFornecedor
+        {
+            Id = Guid.NewGuid(),
+            ContratoFornecedorId = contrato.Id,
+            Numero = parcela.Numero,
+            Vencimento = parcela.Vencimento,
+            Valor = parcela.Valor,
+            Entrada = parcela.Entrada,
+            Situacao = SituacaoParcela.Pendente,
+        }).ToArray(), ct);
+        contrato.Pago = false;
+        contrato.PagoEm = null;
+        await dados.SalvarAsync(ct);
+        return await RecarregarAsync(contaId, eventoId, ct);
+    }
+
+    /// <summary>Volta o pagamento a inteiro, sem parcelas (SPEC-043 §6.2).</summary>
+    public async Task<Resultado<DinheiroEventoLeitura>> RemoverParcelamentoAsync(string contaId, Guid eventoId, Guid servicoId, CancellationToken ct)
+    {
+        var (evento, servico) = await ObterServicoAsync(contaId, eventoId, servicoId, ct);
+        if (evento is null || servico is null)
+        {
+            return Resultado<DinheiroEventoLeitura>.Erro(Codigos.Indisponivel, Indisponivel);
+        }
+
+        var contrato = servico.Contrato;
+        if (contrato is null || contrato.Parcelas.Count == 0)
+        {
+            return Resultado<DinheiroEventoLeitura>.Erro(Codigos.Validacao, "O pagamento não está parcelado.");
+        }
+
+        var bloqueio = BloqueioDoParcelamento(contrato);
+        if (bloqueio is not null)
+        {
+            return Resultado<DinheiroEventoLeitura>.Erro(Codigos.Validacao, bloqueio);
+        }
+
+        await dados.SubstituirParcelasAsync(contrato, [], ct);
+        contrato.Pago = false;
+        contrato.PagoEm = null;
+        await dados.SalvarAsync(ct);
+        return await RecarregarAsync(contaId, eventoId, ct);
+    }
+
+    /// <summary>Marca ou desfaz o pagamento inteiro: todas as parcelas, ou o próprio pagamento se não tem parcelas (SPEC-043 §6.3).</summary>
+    public async Task<Resultado<DinheiroEventoLeitura>> DefinirPagoAsync(
+        string contaId,
+        Guid eventoId,
+        Guid servicoId,
+        bool pago,
+        DateOnly hoje,
+        CancellationToken ct)
+    {
+        var (evento, servico) = await ObterServicoAsync(contaId, eventoId, servicoId, ct);
+        if (evento is null || servico is null)
+        {
+            return Resultado<DinheiroEventoLeitura>.Erro(Codigos.Indisponivel, Indisponivel);
+        }
+
+        var contrato = await ContratoDoServicoAsync(servico, ct);
+        contrato.DefinirPago(pago, hoje);
+        await dados.SalvarAsync(ct);
+        return await RecarregarAsync(contaId, eventoId, ct);
+    }
+
+    /// <summary>Marca ou desmarca uma parcela; todas pagas deixam o pagamento pago sozinho (SPEC-043 §6.3).</summary>
+    public async Task<Resultado<DinheiroEventoLeitura>> DefinirParcelaPagaAsync(
+        string contaId,
+        Guid eventoId,
+        Guid servicoId,
+        Guid parcelaId,
+        bool paga,
+        DateOnly hoje,
+        CancellationToken ct)
+    {
+        var (evento, servico) = await ObterServicoAsync(contaId, eventoId, servicoId, ct);
+        var parcela = servico?.Contrato?.Parcelas.FirstOrDefault(item => item.Id == parcelaId);
+        if (evento is null || parcela is null)
+        {
+            return Resultado<DinheiroEventoLeitura>.Erro(Codigos.Indisponivel, Indisponivel);
+        }
+
+        if (paga)
+        {
+            parcela.Marcar(hoje);
+        }
+        else
+        {
+            parcela.Desmarcar();
+        }
+
+        await dados.SalvarAsync(ct);
+        return await RecarregarAsync(contaId, eventoId, ct);
+    }
+
+    /// <summary>Guarda o comprovante da parcela, ou do pagamento sem parcelas, e apaga o anterior (SPEC-043 §6.4).</summary>
     public async Task<Resultado<DinheiroEventoLeitura>> EnviarComprovanteAsync(
         string contaId,
         Guid eventoId,
+        Guid servicoId,
+        Guid? parcelaId,
         Stream conteudo,
         string? nomeArquivo,
-        string? descricao,
         CancellationToken ct)
     {
-        var evento = await dados.ObterEventoAsync(contaId, eventoId, ct);
-        if (evento is null)
+        var (evento, servico) = await ObterServicoAsync(contaId, eventoId, servicoId, ct);
+        if (evento is null || servico is null)
         {
-            return Resultado<DinheiroEventoLeitura>.Erro(Codigos.Indisponivel, "Indisponível.");
+            return Resultado<DinheiroEventoLeitura>.Erro(Codigos.Indisponivel, Indisponivel);
         }
 
-        var texto = Domain.Comum.Texto.Limpo(descricao);
-        if (texto is { Length: > 200 })
+        var alvo = await AlvoDoComprovanteAsync(servico, parcelaId, criar: true, ct);
+        if (alvo.Falha is not null)
         {
-            return Resultado<DinheiroEventoLeitura>.Erro(Codigos.Validacao, "A descrição tem no máximo 200 caracteres.");
+            return Resultado<DinheiroEventoLeitura>.Erro(alvo.Falha.Codigo, alvo.Falha.Mensagem);
         }
 
         var guardado = await armazenamento.GuardarDocumentoAsync(conteudo, nomeArquivo, contaId, ct);
@@ -94,125 +237,67 @@ public sealed class DinheiroServico(IDadosDinheiro dados, IPlanilhaBudget planil
             return Resultado<DinheiroEventoLeitura>.Erro(guardado.Falha!.Codigo, guardado.Falha.Mensagem);
         }
 
+        var anterior = alvo.Parcela?.ComprovanteArquivoId ?? alvo.Contrato!.ComprovanteArquivoId;
         var arquivo = guardado.Valor!;
-        await dados.InserirComprovanteAsync(new ComprovanteEvento
+        var nome = arquivo.NomeOriginal.Length > 260 ? arquivo.NomeOriginal[..260] : arquivo.NomeOriginal;
+        if (alvo.Parcela is not null)
         {
-            Id = Guid.NewGuid(),
-            EventoId = eventoId,
-            ArquivoId = arquivo.Id,
-            Nome = arquivo.NomeOriginal,
-            TipoConteudo = arquivo.TipoConteudo,
-            Descricao = texto,
-            EnviadoEm = DateTimeOffset.UtcNow,
-        }, ct);
+            alvo.Parcela.ComprovanteArquivoId = arquivo.Id;
+            alvo.Parcela.ComprovanteNome = nome;
+            alvo.Parcela.ComprovanteTipoConteudo = arquivo.TipoConteudo;
+        }
+        else
+        {
+            alvo.Contrato!.ComprovanteArquivoId = arquivo.Id;
+            alvo.Contrato.ComprovanteNome = nome;
+            alvo.Contrato.ComprovanteTipoConteudo = arquivo.TipoConteudo;
+        }
+
         await dados.SalvarAsync(ct);
-        return Resultado<DinheiroEventoLeitura>.Sucesso(await LerAsync(contaId, evento, ct));
+        if (anterior is Guid antigo)
+        {
+            await armazenamento.DescartarAsync(antigo, ct);
+        }
+
+        return await RecarregarAsync(contaId, eventoId, ct);
     }
 
     public async Task<Resultado<DinheiroEventoLeitura>> ExcluirComprovanteAsync(
         string contaId,
         Guid eventoId,
-        Guid id,
+        Guid servicoId,
+        Guid? parcelaId,
         CancellationToken ct)
     {
-        var evento = await dados.ObterEventoAsync(contaId, eventoId, ct);
-        var comprovante = evento is null ? null : await dados.ObterComprovanteAsync(contaId, eventoId, id, ct);
-        if (evento is null || comprovante is null)
+        var (evento, servico) = await ObterServicoAsync(contaId, eventoId, servicoId, ct);
+        if (evento is null || servico is null)
         {
-            return Resultado<DinheiroEventoLeitura>.Erro(Codigos.Indisponivel, "Indisponível.");
+            return Resultado<DinheiroEventoLeitura>.Erro(Codigos.Indisponivel, Indisponivel);
         }
 
-        await dados.RemoverComprovanteAsync(comprovante, ct);
-        await dados.SalvarAsync(ct);
-        await armazenamento.DescartarAsync(comprovante.ArquivoId, ct);
-        return Resultado<DinheiroEventoLeitura>.Sucesso(await LerAsync(contaId, evento, ct));
-    }
-
-    public async Task<Resultado<DinheiroEventoLeitura>> ObterAsync(string contaId, Guid eventoId, CancellationToken ct)
-    {
-        var evento = await dados.ObterEventoAsync(contaId, eventoId, ct);
-        if (evento is null)
+        var alvo = await AlvoDoComprovanteAsync(servico, parcelaId, criar: false, ct);
+        var arquivoId = alvo.Parcela?.ComprovanteArquivoId ?? alvo.Contrato?.ComprovanteArquivoId;
+        if (alvo.Falha is not null || arquivoId is null)
         {
-            return Resultado<DinheiroEventoLeitura>.Erro(Codigos.Indisponivel, "Indisponível.");
+            return Resultado<DinheiroEventoLeitura>.Erro(Codigos.Indisponivel, Indisponivel);
         }
 
-        return Resultado<DinheiroEventoLeitura>.Sucesso(await LerAsync(contaId, evento, ct));
-    }
-
-    public async Task<Resultado<DinheiroEventoLeitura>> SalvarLancamentoAsync(
-        string contaId,
-        Guid eventoId,
-        Guid? id,
-        SalvarLancamento pedido,
-        CancellationToken ct)
-    {
-        var evento = await dados.ObterEventoAsync(contaId, eventoId, ct);
-        if (evento is null)
+        if (alvo.Parcela is not null)
         {
-            return Resultado<DinheiroEventoLeitura>.Erro(Codigos.Indisponivel, "Indisponível.");
-        }
-
-        if (pedido.Tipo is not TipoLancamento tipo || !Enum.IsDefined(tipo))
-        {
-            return Resultado<DinheiroEventoLeitura>.Erro(Codigos.Validacao, "Escolha se é despesa ou entrada.");
-        }
-
-        var categoria = Domain.Comum.Texto.Limpo(pedido.Categoria);
-        if (categoria is null || categoria.Length > 80)
-        {
-            return Resultado<DinheiroEventoLeitura>.Erro(Codigos.Validacao, "Informe a categoria (até 80 caracteres).");
-        }
-
-        if (pedido.Valor is not decimal valor || valor <= 0)
-        {
-            return Resultado<DinheiroEventoLeitura>.Erro(Codigos.Validacao, "Informe o valor.");
-        }
-
-        if (pedido.Data is not DateOnly data)
-        {
-            return Resultado<DinheiroEventoLeitura>.Erro(Codigos.Validacao, "Informe a data.");
-        }
-
-        LancamentoEvento? lancamento;
-        if (id is Guid existente)
-        {
-            lancamento = await dados.ObterLancamentoAsync(contaId, eventoId, existente, ct);
-            if (lancamento is null)
-            {
-                return Resultado<DinheiroEventoLeitura>.Erro(Codigos.Indisponivel, "Indisponível.");
-            }
+            alvo.Parcela.ComprovanteArquivoId = null;
+            alvo.Parcela.ComprovanteNome = null;
+            alvo.Parcela.ComprovanteTipoConteudo = null;
         }
         else
         {
-            lancamento = new LancamentoEvento { Id = Guid.NewGuid(), EventoId = eventoId };
-            await dados.InserirLancamentoAsync(lancamento, ct);
+            alvo.Contrato!.ComprovanteArquivoId = null;
+            alvo.Contrato.ComprovanteNome = null;
+            alvo.Contrato.ComprovanteTipoConteudo = null;
         }
 
-        lancamento.Tipo = tipo;
-        lancamento.Categoria = categoria;
-        lancamento.Descricao = Domain.Comum.Texto.Limpo(pedido.Descricao);
-        lancamento.Valor = decimal.Round(valor, 2, MidpointRounding.AwayFromZero);
-        lancamento.Data = data;
         await dados.SalvarAsync(ct);
-        return Resultado<DinheiroEventoLeitura>.Sucesso(await LerAsync(contaId, evento, ct));
-    }
-
-    public async Task<Resultado<DinheiroEventoLeitura>> ExcluirLancamentoAsync(
-        string contaId,
-        Guid eventoId,
-        Guid id,
-        CancellationToken ct)
-    {
-        var evento = await dados.ObterEventoAsync(contaId, eventoId, ct);
-        var lancamento = evento is null ? null : await dados.ObterLancamentoAsync(contaId, eventoId, id, ct);
-        if (evento is null || lancamento is null)
-        {
-            return Resultado<DinheiroEventoLeitura>.Erro(Codigos.Indisponivel, "Indisponível.");
-        }
-
-        await dados.RemoverLancamentoAsync(lancamento, ct);
-        await dados.SalvarAsync(ct);
-        return Resultado<DinheiroEventoLeitura>.Sucesso(await LerAsync(contaId, evento, ct));
+        await armazenamento.DescartarAsync(arquivoId.Value, ct);
+        return await RecarregarAsync(contaId, eventoId, ct);
     }
 
     public async Task<Resultado<(string Nome, byte[] Conteudo)>> PlanilhaBudgetAsync(string contaId, Guid eventoId, CancellationToken ct)
@@ -220,7 +305,7 @@ public sealed class DinheiroServico(IDadosDinheiro dados, IPlanilhaBudget planil
         var evento = await dados.ObterEventoAsync(contaId, eventoId, ct);
         if (evento is null)
         {
-            return Resultado<(string, byte[])>.Erro(Codigos.Indisponivel, "Indisponível.");
+            return Resultado<(string, byte[])>.Erro(Codigos.Indisponivel, Indisponivel);
         }
 
         var linhas = evento.Servicos
@@ -234,24 +319,91 @@ public sealed class DinheiroServico(IDadosDinheiro dados, IPlanilhaBudget planil
         return Resultado<(string, byte[])>.Sucesso(($"orcamento-{Arquivo(evento.Nome)}.xlsx", conteudo));
     }
 
+    /// <summary>Refazer ou remover o parcelamento só é possível sem parcela paga e sem comprovante (SPEC-043 §6.2).</summary>
+    private static string? BloqueioDoParcelamento(ContratoFornecedor contrato)
+    {
+        if (contrato.Pago || contrato.Parcelas.Any(parcela => parcela.Situacao == SituacaoParcela.Pago))
+        {
+            return "Desfaça os pagamentos antes de mudar o parcelamento.";
+        }
+
+        if (contrato.ComprovanteArquivoId is not null || contrato.Parcelas.Any(parcela => parcela.ComprovanteArquivoId is not null))
+        {
+            return "Exclua os comprovantes antes de mudar o parcelamento.";
+        }
+
+        return null;
+    }
+
+    private async Task<(Evento? Evento, ServicoEvento? Servico)> ObterServicoAsync(string contaId, Guid eventoId, Guid servicoId, CancellationToken ct)
+    {
+        var evento = await dados.ObterEventoAsync(contaId, eventoId, ct);
+        var servico = evento?.Servicos.FirstOrDefault(item => item.Id == servicoId && (item.Contratado || item.Contrato is not null));
+        return (evento, servico);
+    }
+
+    /// <summary>O contrato do serviço; se o serviço está contratado sem contrato de fornecedor, cria um sem parcelas.</summary>
+    private async Task<ContratoFornecedor> ContratoDoServicoAsync(ServicoEvento servico, CancellationToken ct)
+    {
+        if (servico.Contrato is not null)
+        {
+            return servico.Contrato;
+        }
+
+        var contrato = new ContratoFornecedor { Id = Guid.NewGuid(), ServicoId = servico.Id };
+        await dados.InserirContratoAsync(contrato, ct);
+        servico.Contrato = contrato;
+        return contrato;
+    }
+
+    private async Task<(ContratoFornecedor? Contrato, ParcelaContratoFornecedor? Parcela, Falha? Falha)> AlvoDoComprovanteAsync(
+        ServicoEvento servico,
+        Guid? parcelaId,
+        bool criar,
+        CancellationToken ct)
+    {
+        if (parcelaId is Guid id)
+        {
+            var parcela = servico.Contrato?.Parcelas.FirstOrDefault(item => item.Id == id);
+            return parcela is null
+                ? (null, null, new Falha(Codigos.Indisponivel, Indisponivel))
+                : (servico.Contrato, parcela, null);
+        }
+
+        if (servico.Contrato?.Parcelas.Count > 0)
+        {
+            return (null, null, new Falha(Codigos.Validacao, "Pagamento parcelado: o comprovante é de cada parcela."));
+        }
+
+        if (servico.Contrato is null && !criar)
+        {
+            return (null, null, new Falha(Codigos.Indisponivel, Indisponivel));
+        }
+
+        return (await ContratoDoServicoAsync(servico, ct), null, null);
+    }
+
+    private async Task<Resultado<DinheiroEventoLeitura>> RecarregarAsync(string contaId, Guid eventoId, CancellationToken ct)
+    {
+        var evento = await dados.ObterEventoAsync(contaId, eventoId, ct);
+        return evento is null
+            ? Resultado<DinheiroEventoLeitura>.Erro(Codigos.Indisponivel, Indisponivel)
+            : Resultado<DinheiroEventoLeitura>.Sucesso(await LerAsync(contaId, evento, ct));
+    }
+
     private async Task<DinheiroEventoLeitura> LerAsync(string contaId, Evento evento, CancellationToken ct)
     {
-        var lancamentos = await dados.LancamentosAsync(evento.Id, ct);
         var pagamentos = await dados.PagamentosFornecedoresAsync(contaId, evento.Id, ct);
-        var comprovantes = await dados.ComprovantesAsync(evento.Id, ct);
         return new DinheiroEventoLeitura(
-            lancamentos.Where(item => item.Tipo == TipoLancamento.Despesa).Sum(item => item.Valor),
-            lancamentos.Where(item => item.Tipo == TipoLancamento.Entrada).Sum(item => item.Valor),
-            pagamentos,
-            lancamentos
-                .OrderByDescending(item => item.Data)
-                .Select(item => new LancamentoLeitura(item.Id, item.Tipo, item.Categoria, item.Descricao, item.Valor, item.Data))
-                .ToArray(),
-            comprovantes
-                .OrderByDescending(item => item.EnviadoEm)
-                .Select(item => new ComprovanteLeitura(item.Id, item.ArquivoId, item.Nome, item.TipoConteudo, item.Descricao, item.EnviadoEm))
-                .ToArray());
+            pagamentos.Sum(item => item.Valor),
+            pagamentos.Sum(PagoDoPagamento),
+            pagamentos);
     }
+
+    private static decimal PagoDoPagamento(PagamentoFornecedorLeitura pagamento) =>
+        pagamento.Parcelas.Count > 0
+            ? pagamento.Parcelas.Where(parcela => parcela.Paga).Sum(parcela => parcela.Valor)
+            : pagamento.Pago ? pagamento.Valor : 0m;
 
     private static string Arquivo(string nome)
     {

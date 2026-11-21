@@ -111,9 +111,23 @@ public static class ResumoDoEvento
             semFornecedor,
             evento.OrcamentoEstimado ?? SomaOuNulo(servicos.Select(servico => servico.ValorEstimado)),
             servicos.Where(servico => servico.Contratado).Sum(servico => servico.ValorContratado ?? 0m),
-            servicos.SelectMany(servico => servico.Contrato?.Parcelas ?? []).Where(parcela => parcela.Situacao == SituacaoParcela.Pago).Sum(parcela => parcela.Valor),
+            servicos.Sum(ValorPagoDoServico),
             cliente is null ? null : new ClienteDoResumo(cliente.Id, cliente.Nome, cliente.Ddi, cliente.Celular),
             alertas.Take(MaximoAlertas).ToArray());
+    }
+
+    /// <summary>Quanto já foi pago ao fornecedor do serviço: parcelas pagas, ou o valor todo se o pagamento sem parcelas está pago (SPEC-043).</summary>
+    private static decimal ValorPagoDoServico(ServicoEvento servico)
+    {
+        var contrato = servico.Contrato;
+        if (contrato is null)
+        {
+            return 0m;
+        }
+
+        return contrato.Parcelas.Count > 0
+            ? contrato.Parcelas.Where(parcela => parcela.Situacao == SituacaoParcela.Pago).Sum(parcela => parcela.Valor)
+            : contrato.Pago ? servico.ValorContratado ?? 0m : 0m;
     }
 
     public static bool EstaAtrasada(Tarefa tarefa, DateOnly hoje) =>

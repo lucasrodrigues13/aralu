@@ -205,10 +205,10 @@ Separar o que **ela recebe** do casal do que o **casal paga** aos fornecedores (
 | **Cobrar**: abre o WhatsApp com mensagem e Pix; texto muda se é lembrete, se vence hoje ou se atrasou. Agora na parcela do **contrato com o cliente** (diálogo Parcelas do contrato, aberto da Gestão Financeira, SPEC-041; antes ficava na tela Contratos do funil) | Pronto (SPEC-040) | PDF, CF |
 | **Recebi**: valor, forma e data; aceita parcial; **Desfazer**. Na parcela do contrato com o cliente (SPEC-040) | Pronto (SPEC-040) | PDF, CF |
 | Totais Contrato, Recebido e Saldo (contrato − recebido; decidido em 18/11/2026). Saíram da aba Dinheiro do evento; estão no diálogo Parcelas do contrato (SPEC-040) e a Gestão Financeira (SPEC-041) os mostra por cliente, com o parcelamento do contrato (1 parcela = à vista) | Pronto (SPEC-040) | CF |
-| Parcelas a fornecedores com entrada, forma, juros, comprovante, pago por. Hoje são as parcelas do `ContratoFornecedor` (SPEC-040); pagar com comprovante é do card #31 | Pronto (SPEC-018, SPEC-040) | G (SPEC-018) |
+| Pagamentos a fornecedores (card #31, [SPEC-043](specs/043-pagamentos-a-fornecedores.md)): um por serviço contratado do evento; pode ser parcelado (modal com número de parcelas, 1ª data e entrada), expandido para marcar cada parcela como paga (todas pagas = pagamento pago) ou marcado direto como pago (marca todas as parcelas); comprovante (pdf, jpg, jpeg, png) por parcela ou, sem parcelas, por pagamento. Forma de pagamento, juros e "pago por" não existem | Feito | G (SPEC-018) |
 | Pagamentos do evento por mês e por fornecedor. **Pagamentos de todos os eventos: fora** (decidido em 21/11/2026; a tela Pagamentos saiu e deu lugar à Gestão Financeira da organizadora, SPEC-041) | Pronto (SPEC-041) | AV |
-| Despesas e entradas do evento por categoria | Novo | CF |
-| Comprovantes e documentos do evento | Novo | CF, AV |
+| ~~Despesas e entradas do evento por categoria~~ Removido em 21/11/2026 (card #31): caixa, API e tabela `LancamentosEvento` apagadas, com os dados; não há alternativa | Removido | CF |
+| ~~Comprovantes e documentos do evento~~ Trocado em 21/11/2026 (card #31): a caixa e a tabela `ComprovantesEvento` saíram, com os dados; o comprovante agora é um por pagamento ou parcela (SPEC-043) | Feito | CF, AV |
 | Planejamento de budget com exportação para Excel | Ajustar (sem exportação) | AV, G |
 | Cobrança automática sem aprovação | Fora | PDF |
 

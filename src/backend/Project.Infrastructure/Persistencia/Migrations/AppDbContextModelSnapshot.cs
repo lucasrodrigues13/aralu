@@ -427,45 +427,28 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.ToTable("Convites");
                 });
 
-            modelBuilder.Entity("Project.Domain.Dinheiro.ComprovanteEvento", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("ArquivoId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Descricao")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<DateTimeOffset>("EnviadoEm")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("EventoId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Nome")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("TipoConteudo")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("EventoId");
-
-                    b.ToTable("ComprovantesEvento", (string)null);
-                });
-
             modelBuilder.Entity("Project.Domain.Dinheiro.ContratoFornecedor", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ComprovanteArquivoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ComprovanteNome")
+                        .HasMaxLength(260)
+                        .HasColumnType("character varying(260)");
+
+                    b.Property<string>("ComprovanteTipoConteudo")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("Pago")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateOnly?>("PagoEm")
+                        .HasColumnType("date");
 
                     b.Property<Guid>("ServicoId")
                         .HasColumnType("uuid");
@@ -476,41 +459,6 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .IsUnique();
 
                     b.ToTable("ContratosFornecedor", (string)null);
-                });
-
-            modelBuilder.Entity("Project.Domain.Dinheiro.LancamentoEvento", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Categoria")
-                        .IsRequired()
-                        .HasMaxLength(80)
-                        .HasColumnType("character varying(80)");
-
-                    b.Property<DateOnly>("Data")
-                        .HasColumnType("date");
-
-                    b.Property<string>("Descricao")
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("EventoId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Tipo")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<decimal>("Valor")
-                        .HasPrecision(12, 2)
-                        .HasColumnType("numeric(12,2)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("EventoId");
-
-                    b.ToTable("LancamentosEvento", (string)null);
                 });
 
             modelBuilder.Entity("Project.Domain.Dinheiro.ParcelaContrato", b =>
@@ -548,6 +496,17 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("ComprovanteArquivoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ComprovanteNome")
+                        .HasMaxLength(260)
+                        .HasColumnType("character varying(260)");
+
+                    b.Property<string>("ComprovanteTipoConteudo")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<Guid>("ContratoFornecedorId")
                         .HasColumnType("uuid");
 
@@ -556,6 +515,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
                     b.Property<int>("Numero")
                         .HasColumnType("integer");
+
+                    b.Property<DateOnly?>("PagoEm")
+                        .HasColumnType("date");
 
                     b.Property<string>("Situacao")
                         .IsRequired()
@@ -2659,29 +2621,11 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Project.Domain.Dinheiro.ComprovanteEvento", b =>
-                {
-                    b.HasOne("Project.Domain.Eventos.Evento", null)
-                        .WithMany()
-                        .HasForeignKey("EventoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("Project.Domain.Dinheiro.ContratoFornecedor", b =>
                 {
                     b.HasOne("Project.Domain.Eventos.ServicoEvento", null)
                         .WithOne("Contrato")
                         .HasForeignKey("Project.Domain.Dinheiro.ContratoFornecedor", "ServicoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Project.Domain.Dinheiro.LancamentoEvento", b =>
-                {
-                    b.HasOne("Project.Domain.Eventos.Evento", null)
-                        .WithMany()
-                        .HasForeignKey("EventoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

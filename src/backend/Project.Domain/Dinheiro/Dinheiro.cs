@@ -77,7 +77,7 @@ public sealed class RecebimentoParcela
     public DateTimeOffset CriadoEm { get; set; }
 }
 
-/// <summary>Contrato da organizadora com o fornecedor de um serviço do evento (SPEC-040; substitui ParcelaServico).</summary>
+/// <summary>Contrato da organizadora com o fornecedor de um serviço do evento (SPEC-040; substitui ParcelaServico). É o "pagamento" da aba Dinheiro (SPEC-043).</summary>
 public sealed class ContratoFornecedor
 {
     public Guid Id { get; set; }
@@ -85,6 +85,37 @@ public sealed class ContratoFornecedor
     public Guid ServicoId { get; set; }
 
     public List<ParcelaContratoFornecedor> Parcelas { get; set; } = [];
+
+    /// <summary>Só vale quando não há parcelas; com parcelas, o pagamento está pago quando todas estão pagas.</summary>
+    public bool Pago { get; set; }
+
+    public DateOnly? PagoEm { get; set; }
+
+    public Guid? ComprovanteArquivoId { get; set; }
+
+    public string? ComprovanteNome { get; set; }
+
+    public string? ComprovanteTipoConteudo { get; set; }
+
+    public bool EstaPago => Parcelas.Count > 0 ? Parcelas.All(parcela => parcela.Situacao == SituacaoParcela.Pago) : Pago;
+
+    /// <summary>Marca ou desmarca o pagamento inteiro: todas as parcelas ou, sem parcelas, o próprio contrato.</summary>
+    public void DefinirPago(bool pago, DateOnly hoje)
+    {
+        Pago = pago;
+        PagoEm = pago ? hoje : null;
+        foreach (var parcela in Parcelas)
+        {
+            if (pago)
+            {
+                parcela.Marcar(hoje);
+            }
+            else
+            {
+                parcela.Desmarcar();
+            }
+        }
+    }
 }
 
 /// <summary>Parcela que se paga ao fornecedor (SPEC-040).</summary>
@@ -103,42 +134,29 @@ public sealed class ParcelaContratoFornecedor
     public bool Entrada { get; set; }
 
     public SituacaoParcela Situacao { get; set; }
-}
 
-/// <summary>Despesa ou entrada avulsa do evento (SPEC-029 §6.6).</summary>
-public sealed class LancamentoEvento
-{
-    public Guid Id { get; set; }
+    public DateOnly? PagoEm { get; set; }
 
-    public Guid EventoId { get; set; }
+    public Guid? ComprovanteArquivoId { get; set; }
 
-    public TipoLancamento Tipo { get; set; }
+    public string? ComprovanteNome { get; set; }
 
-    public string Categoria { get; set; } = "";
+    public string? ComprovanteTipoConteudo { get; set; }
 
-    public string? Descricao { get; set; }
+    public void Marcar(DateOnly hoje)
+    {
+        if (Situacao != SituacaoParcela.Pago)
+        {
+            Situacao = SituacaoParcela.Pago;
+            PagoEm = hoje;
+        }
+    }
 
-    public decimal Valor { get; set; }
-
-    public DateOnly Data { get; set; }
-}
-
-/// <summary>Comprovante ou documento do evento (SPEC-029 §6.6). O arquivo fica no armazenamento da conta.</summary>
-public sealed class ComprovanteEvento
-{
-    public Guid Id { get; set; }
-
-    public Guid EventoId { get; set; }
-
-    public Guid ArquivoId { get; set; }
-
-    public string Nome { get; set; } = "";
-
-    public string TipoConteudo { get; set; } = "";
-
-    public string? Descricao { get; set; }
-
-    public DateTimeOffset EnviadoEm { get; set; }
+    public void Desmarcar()
+    {
+        Situacao = SituacaoParcela.Pendente;
+        PagoEm = null;
+    }
 }
 
 public enum SituacaoParcelaContrato
@@ -164,10 +182,4 @@ public enum FormaPagamento
     Transferencia,
     Boleto,
     Outro,
-}
-
-public enum TipoLancamento
-{
-    Despesa,
-    Entrada,
 }

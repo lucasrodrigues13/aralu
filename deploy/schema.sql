@@ -3179,3 +3179,91 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121221624_PagamentosAFornecedores') THEN
+    DROP TABLE "ComprovantesEvento";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121221624_PagamentosAFornecedores') THEN
+    DROP TABLE "LancamentosEvento";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121221624_PagamentosAFornecedores') THEN
+    ALTER TABLE "ParcelasContratoFornecedor" ADD "ComprovanteArquivoId" uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121221624_PagamentosAFornecedores') THEN
+    ALTER TABLE "ParcelasContratoFornecedor" ADD "ComprovanteNome" character varying(260);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121221624_PagamentosAFornecedores') THEN
+    ALTER TABLE "ParcelasContratoFornecedor" ADD "ComprovanteTipoConteudo" character varying(100);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121221624_PagamentosAFornecedores') THEN
+    ALTER TABLE "ParcelasContratoFornecedor" ADD "PagoEm" date;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121221624_PagamentosAFornecedores') THEN
+    ALTER TABLE "ContratosFornecedor" ADD "ComprovanteArquivoId" uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121221624_PagamentosAFornecedores') THEN
+    ALTER TABLE "ContratosFornecedor" ADD "ComprovanteNome" character varying(260);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121221624_PagamentosAFornecedores') THEN
+    ALTER TABLE "ContratosFornecedor" ADD "ComprovanteTipoConteudo" character varying(100);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121221624_PagamentosAFornecedores') THEN
+    ALTER TABLE "ContratosFornecedor" ADD "Pago" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121221624_PagamentosAFornecedores') THEN
+    ALTER TABLE "ContratosFornecedor" ADD "PagoEm" date;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261121221624_PagamentosAFornecedores') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261121221624_PagamentosAFornecedores', '10.0.4');
+    END IF;
+END $EF$;
+COMMIT;
+

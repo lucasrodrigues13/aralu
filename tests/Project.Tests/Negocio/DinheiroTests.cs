@@ -1,4 +1,5 @@
 using Project.Domain.Dinheiro;
+using Project.Domain.Fornecedores;
 
 namespace Project.Tests.Negocio;
 
@@ -36,5 +37,55 @@ public class DinheiroTests
         Assert.Equal(TipoCobranca.Lembrete, new ParcelaContrato { Vencimento = Hoje.AddDays(1) }.Cobranca(Hoje));
         Assert.Equal(TipoCobranca.VenceHoje, new ParcelaContrato { Vencimento = Hoje }.Cobranca(Hoje));
         Assert.Equal(TipoCobranca.Atrasada, new ParcelaContrato { Vencimento = Hoje.AddDays(-2) }.Cobranca(Hoje));
+    }
+
+    [Fact]
+    public void Pagamento_parcelado_esta_pago_so_com_todas_as_parcelas_pagas()
+    {
+        var contrato = new ContratoFornecedor
+        {
+            Parcelas = [new ParcelaContratoFornecedor { Numero = 1, Valor = 50m }, new ParcelaContratoFornecedor { Numero = 2, Valor = 50m }],
+        };
+
+        Assert.False(contrato.EstaPago);
+        contrato.Parcelas[0].Marcar(Hoje);
+        Assert.False(contrato.EstaPago);
+        contrato.Parcelas[1].Marcar(Hoje);
+        Assert.True(contrato.EstaPago);
+        contrato.Parcelas[0].Desmarcar();
+        Assert.False(contrato.EstaPago);
+        Assert.Null(contrato.Parcelas[0].PagoEm);
+    }
+
+    [Fact]
+    public void Marcar_o_pagamento_marca_todas_as_parcelas_e_desfazer_volta_tudo()
+    {
+        var contrato = new ContratoFornecedor
+        {
+            Parcelas = [new ParcelaContratoFornecedor { Numero = 1 }, new ParcelaContratoFornecedor { Numero = 2 }],
+        };
+
+        contrato.DefinirPago(true, Hoje);
+        Assert.True(contrato.EstaPago);
+        Assert.All(contrato.Parcelas, parcela => Assert.Equal(SituacaoParcela.Pago, parcela.Situacao));
+        Assert.Equal(Hoje, contrato.Parcelas[1].PagoEm);
+
+        contrato.DefinirPago(false, Hoje);
+        Assert.False(contrato.EstaPago);
+        Assert.All(contrato.Parcelas, parcela => Assert.Equal(SituacaoParcela.Pendente, parcela.Situacao));
+    }
+
+    [Fact]
+    public void Pagamento_sem_parcelas_usa_a_propria_marcacao()
+    {
+        var contrato = new ContratoFornecedor();
+
+        Assert.False(contrato.EstaPago);
+        contrato.DefinirPago(true, Hoje);
+        Assert.True(contrato.EstaPago);
+        Assert.Equal(Hoje, contrato.PagoEm);
+        contrato.DefinirPago(false, Hoje);
+        Assert.False(contrato.EstaPago);
+        Assert.Null(contrato.PagoEm);
     }
 }

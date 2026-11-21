@@ -12,44 +12,22 @@ public sealed class DadosDinheiroEf(AppDbContext banco) : IDadosDinheiro
         banco.Eventos
             .Include(evento => evento.Servicos).ThenInclude(servico => servico.Contrato).ThenInclude(contrato => contrato!.Parcelas)
             .Include(evento => evento.Servicos).ThenInclude(servico => servico.Subitens)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(evento => evento.Id == eventoId && evento.ContaId == contaId, ct);
 
-    public async Task<IReadOnlyList<LancamentoEvento>> LancamentosAsync(Guid eventoId, CancellationToken ct) =>
-        await banco.Set<LancamentoEvento>().Where(item => item.EventoId == eventoId).ToListAsync(ct);
-
-    public Task<LancamentoEvento?> ObterLancamentoAsync(string contaId, Guid eventoId, Guid id, CancellationToken ct) =>
-        banco.Set<LancamentoEvento>()
-            .Where(item => item.Id == id && item.EventoId == eventoId)
-            .Where(item => banco.Eventos.Any(evento => evento.Id == item.EventoId && evento.ContaId == contaId))
-            .FirstOrDefaultAsync(ct);
-
-    public Task InserirLancamentoAsync(LancamentoEvento lancamento, CancellationToken ct)
+    public async Task<IReadOnlyList<PagamentoFornecedorLeitura>> PagamentosFornecedoresAsync(string contaId, Guid eventoId, CancellationToken ct)
     {
-        banco.Set<LancamentoEvento>().Add(lancamento);
-        return Task.CompletedTask;
-    }
-
-    public Task RemoverLancamentoAsync(LancamentoEvento lancamento, CancellationToken ct)
-    {
-        banco.Set<LancamentoEvento>().Remove(lancamento);
-        return Task.CompletedTask;
-    }
-
-    public async Task<IReadOnlyList<PagamentoFornecedorLeitura>> PagamentosFornecedoresAsync(string contaId, Guid? eventoId, CancellationToken ct)
-    {
-        var eventos = banco.Eventos.AsNoTracking().Where(evento => evento.ContaId == contaId);
-        if (eventoId is Guid id)
+        var evento = await banco.Eventos.AsNoTracking()
+            .Include(item => item.Servicos).ThenInclude(servico => servico.Contrato).ThenInclude(contrato => contrato!.Parcelas)
+            .Include(item => item.Servicos).ThenInclude(servico => servico.Fornecedores)
+            .AsSplitQuery()
+            .FirstOrDefaultAsync(item => item.Id == eventoId && item.ContaId == contaId, ct);
+        if (evento is null)
         {
-            eventos = eventos.Where(evento => evento.Id == id);
+            return [];
         }
 
-        var lista = await eventos
-            .Include(evento => evento.Servicos).ThenInclude(servico => servico.Contrato).ThenInclude(contrato => contrato!.Parcelas)
-            .Include(evento => evento.Servicos).ThenInclude(servico => servico.Fornecedores)
-            .AsSplitQuery()
-            .ToListAsync(ct);
-        var fornecedorIds = lista
-            .SelectMany(evento => evento.Servicos)
+        var fornecedorIds = evento.Servicos
             .SelectMany(servico => servico.Fornecedores)
             .Where(vinculo => vinculo.Etapa == EtapaNegociacao.Contratado)
             .Select(vinculo => vinculo.FornecedorId)
@@ -59,9 +37,13 @@ public sealed class DadosDinheiroEf(AppDbContext banco) : IDadosDinheiro
             .Where(fornecedor => fornecedor.ContaId == contaId && fornecedorIds.Contains(fornecedor.Id))
             .ToDictionaryAsync(fornecedor => fornecedor.Id, fornecedor => fornecedor.Nome, ct);
 
-        return lista
-            .SelectMany(evento => evento.Servicos.SelectMany(servico => (servico.Contrato?.Parcelas ?? []).Select(parcela =>
+        return evento.Servicos
+            .Where(servico => servico.Contratado || servico.Contrato is not null)
+            .OrderBy(servico => servico.Ordem)
+            .Select(servico =>
             {
+                var contrato = servico.Contrato;
+                var parcelas = (contrato?.Parcelas ?? []).OrderBy(parcela => parcela.Numero).ToArray();
                 var contratado = servico.Fornecedores.FirstOrDefault(vinculo => vinculo.Etapa == EtapaNegociacao.Contratado);
                 string? fornecedor = null;
                 if (contratado is not null)
@@ -69,43 +51,52 @@ public sealed class DadosDinheiroEf(AppDbContext banco) : IDadosDinheiro
                     nomes.TryGetValue(contratado.FornecedorId, out fornecedor);
                 }
 
+                var pendentes = parcelas.Where(parcela => parcela.Situacao == SituacaoParcela.Pendente).ToArray();
+                DateOnly? vencimento = parcelas.Length == 0
+                    ? null
+                    : pendentes.Length > 0 ? pendentes.Min(parcela => parcela.Vencimento) : parcelas.Max(parcela => parcela.Vencimento);
                 return new PagamentoFornecedorLeitura(
                     evento.Id,
                     evento.Nome,
                     servico.Id,
                     servico.Nome,
                     fornecedor,
-                    parcela.Numero,
-                    parcela.Vencimento,
-                    parcela.Valor,
-                    parcela.Entrada,
-                    parcela.Situacao);
-            })))
-            .OrderBy(item => item.Vencimento)
-            .ThenBy(item => item.Evento)
+                    servico.ValorContratado ?? parcelas.Sum(parcela => parcela.Valor),
+                    contrato?.EstaPago ?? false,
+                    parcelas.Length > 0
+                        ? contrato!.EstaPago ? parcelas.Max(parcela => parcela.PagoEm) : null
+                        : contrato?.PagoEm,
+                    vencimento,
+                    Comprovante(contrato?.ComprovanteArquivoId, contrato?.ComprovanteNome, contrato?.ComprovanteTipoConteudo),
+                    parcelas.Select(parcela => new ParcelaPagamentoLeitura(
+                        parcela.Id,
+                        parcela.Numero,
+                        parcela.Vencimento,
+                        parcela.Valor,
+                        parcela.Entrada,
+                        parcela.Situacao == SituacaoParcela.Pago,
+                        parcela.PagoEm,
+                        Comprovante(parcela.ComprovanteArquivoId, parcela.ComprovanteNome, parcela.ComprovanteTipoConteudo))).ToArray());
+            })
             .ToArray();
     }
 
-    public async Task<IReadOnlyList<ComprovanteEvento>> ComprovantesAsync(Guid eventoId, CancellationToken ct) =>
-        await banco.Set<ComprovanteEvento>().Where(item => item.EventoId == eventoId).ToListAsync(ct);
-
-    public Task<ComprovanteEvento?> ObterComprovanteAsync(string contaId, Guid eventoId, Guid id, CancellationToken ct) =>
-        banco.Set<ComprovanteEvento>()
-            .Where(item => item.Id == id && item.EventoId == eventoId)
-            .Where(item => banco.Eventos.Any(evento => evento.Id == item.EventoId && evento.ContaId == contaId))
-            .FirstOrDefaultAsync(ct);
-
-    public Task InserirComprovanteAsync(ComprovanteEvento comprovante, CancellationToken ct)
+    public Task InserirContratoAsync(ContratoFornecedor contrato, CancellationToken ct)
     {
-        banco.Set<ComprovanteEvento>().Add(comprovante);
+        banco.Set<ContratoFornecedor>().Add(contrato);
         return Task.CompletedTask;
     }
 
-    public Task RemoverComprovanteAsync(ComprovanteEvento comprovante, CancellationToken ct)
+    public Task SubstituirParcelasAsync(ContratoFornecedor contrato, IReadOnlyList<ParcelaContratoFornecedor> novas, CancellationToken ct)
     {
-        banco.Set<ComprovanteEvento>().Remove(comprovante);
+        var antigas = contrato.Parcelas.ToArray();
+        banco.Set<ParcelaContratoFornecedor>().RemoveRange(antigas);
+        banco.Set<ParcelaContratoFornecedor>().AddRange(novas);
         return Task.CompletedTask;
     }
 
     public Task SalvarAsync(CancellationToken ct) => banco.SaveChangesAsync(ct);
+
+    private static ComprovantePagamentoLeitura? Comprovante(Guid? arquivoId, string? nome, string? tipo) =>
+        arquivoId is Guid id ? new ComprovantePagamentoLeitura(id, nome ?? "comprovante", tipo ?? "application/octet-stream") : null;
 }
