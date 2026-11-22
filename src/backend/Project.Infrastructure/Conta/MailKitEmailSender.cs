@@ -2,10 +2,12 @@ using MailKit;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using MimeKit;
+using Project.Application.Negocio;
 
 namespace Project.Infrastructure.Conta;
 
@@ -13,33 +15,36 @@ public sealed class MailKitEmailSender : IEmailSender<ApplicationUser>
 {
     private readonly EmailOpcoes _opcoes;
     private readonly ILogger _log;
+    private readonly string? _urlPublica;
 
-    public MailKitEmailSender(IOptions<EmailOpcoes> opcoes, ILogger<MailKitEmailSender>? log = null)
+    public MailKitEmailSender(IOptions<EmailOpcoes> opcoes, ILogger<MailKitEmailSender>? log = null, IConfiguration? configuracao = null)
     {
         _opcoes = opcoes.Value;
+        _urlPublica = configuracao?["PublicUrl"];
         _log = (ILogger?)log ?? NullLogger.Instance;
     }
 
     public Task SendConfirmationLinkAsync(ApplicationUser user, string email, string confirmationLink)
     {
-        return EnviarAsync(email, "Confirme seu e-mail", $"Use este link para confirmar sua conta: {confirmationLink}", CancellationToken.None);
+        return EnviarAsync(email, EmailMensagens.ConfirmacaoDeEmail(email, confirmationLink), CancellationToken.None);
     }
 
     public Task SendPasswordResetLinkAsync(ApplicationUser user, string email, string resetLink)
     {
-        return EnviarAsync(email, "Redefina sua senha", $"Use este link para redefinir sua senha: {resetLink}", CancellationToken.None);
+        return EnviarAsync(email, EmailMensagens.RedefinicaoDeSenha(email, resetLink), CancellationToken.None);
     }
 
     public Task SendPasswordResetCodeAsync(ApplicationUser user, string email, string resetCode)
     {
-        return EnviarAsync(email, "Redefina sua senha", "Foi gerado um código para redefinir sua senha.", CancellationToken.None);
+        return EnviarAsync(email, EmailMensagens.CodigoDeRedefinicao(email, resetCode), CancellationToken.None);
     }
 
-    internal async Task EnviarAsync(string email, string assunto, string texto, CancellationToken cancellationToken)
+    internal async Task EnviarAsync(string email, EmailConteudo conteudo, CancellationToken cancellationToken)
     {
+        var assunto = conteudo.Assunto;
         try
         {
-            await EnviarSemRegistroAsync(email, assunto, texto, cancellationToken);
+            await EnviarSemRegistroAsync(email, conteudo, cancellationToken);
             _log.LogInformation(
                 "E-mail aceito pelo SMTP ({Autenticacao}, caixa {Caixa}, assunto \"{Assunto}\").",
                 _opcoes.UsaOAuth ? "OAuth2" : "senha",
@@ -63,7 +68,7 @@ public sealed class MailKitEmailSender : IEmailSender<ApplicationUser>
         }
     }
 
-    private async Task EnviarSemRegistroAsync(string email, string assunto, string texto, CancellationToken cancellationToken)
+    private async Task EnviarSemRegistroAsync(string email, EmailConteudo conteudo, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(_opcoes.Host)
             || string.IsNullOrWhiteSpace(_opcoes.From)
@@ -75,8 +80,8 @@ public sealed class MailKitEmailSender : IEmailSender<ApplicationUser>
         var mensagem = new MimeMessage();
         mensagem.From.Add(MailboxAddress.Parse(_opcoes.From));
         mensagem.To.Add(MailboxAddress.Parse(email));
-        mensagem.Subject = assunto;
-        mensagem.Body = new TextPart("plain") { Text = texto };
+        mensagem.Subject = conteudo.Assunto;
+        mensagem.Body = Corpo(conteudo, _urlPublica);
 
         using var cliente = new SmtpClient();
         var soquete = _opcoes.StartTls ? SecureSocketOptions.StartTls : SecureSocketOptions.Auto;
@@ -93,4 +98,12 @@ public sealed class MailKitEmailSender : IEmailSender<ApplicationUser>
         await cliente.SendAsync(mensagem, cancellationToken);
         await cliente.DisconnectAsync(true, cancellationToken);
     }
+
+    /// <summary>HTML com o layout da marca e a mesma mensagem em texto puro (multipart/alternative).</summary>
+    public static MimeEntity Corpo(EmailConteudo conteudo, string? urlPublica) =>
+        new BodyBuilder
+        {
+            HtmlBody = EmailModelo.Html(conteudo, urlPublica),
+            TextBody = EmailModelo.Texto(conteudo),
+        }.ToMessageBody();
 }

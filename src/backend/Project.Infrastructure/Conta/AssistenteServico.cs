@@ -376,11 +376,7 @@ public sealed class AssistenteServico(
             var publico = (configuracao["PublicUrl"] ?? "").TrimEnd('/');
             var link = $"{publico}/convite-assistente?usuarioId={Uri.EscapeDataString(usuario.Id)}&token={Uri.EscapeDataString(token)}";
             var quem = string.IsNullOrWhiteSpace(empresa) ? "uma assessoria" : empresa;
-            await email.EnviarAsync(
-                assistente.Email,
-                "Convite para ser assistente",
-                $"Olá, {assistente.Nome}! Você foi convidada para ser assistente de {quem}. Crie sua senha neste link (vale por 7 dias): {link}",
-                ct);
+            await email.EnviarAsync(assistente.Email, EmailMensagens.ConviteDeAssistente(assistente.Nome, quem, link), ct);
             return true;
         }
         catch

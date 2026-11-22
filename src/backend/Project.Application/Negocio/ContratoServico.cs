@@ -11,12 +11,6 @@ public sealed record ContratoResumo(Guid Id, string Nome, DateTimeOffset Atualiz
 
 public sealed record CamposContratoLeitura(IReadOnlyList<CampoMesclagem> Campos);
 
-/// <summary>Envio de e-mail simples (texto puro) para mensagens que não são da conta.</summary>
-public interface IEnvioEmail
-{
-    Task EnviarAsync(string email, string assunto, string texto, CancellationToken ct);
-}
-
 public interface IDadosContrato
 {
     Task<IReadOnlyList<ContratoConta>> ListarAsync(string contaId, CancellationToken ct);

@@ -41,9 +41,10 @@ public sealed class EmailCapturado : IEmailSender<ApplicationUser>, IEnvioEmail
         return Task.CompletedTask;
     }
 
-    public Task EnviarAsync(string email, string assunto, string texto, CancellationToken ct)
+    public Task EnviarAsync(string email, EmailConteudo conteudo, CancellationToken ct)
     {
-        Registrar(email, "texto", texto);
+        // Corpo = link do botão, como nos e-mails da conta.
+        Registrar(email, "texto", conteudo.Botao?.Url ?? string.Join('\n', conteudo.Paragrafos));
         return Task.CompletedTask;
     }
 
