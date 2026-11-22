@@ -43,6 +43,9 @@ public sealed class OrcamentoFunil
 
     public Guid? ModeloId { get; set; }
 
+    /// <summary>Cópia (sanitizada) do HTML de aceite do modelo, feita ao criar o orçamento (SPEC-057).</summary>
+    public string? HtmlAceite { get; set; }
+
     /// <summary>Token aleatório do link da proposta. Nasce no primeiro envio e não muda.</summary>
     public string? TokenLink { get; set; }
 

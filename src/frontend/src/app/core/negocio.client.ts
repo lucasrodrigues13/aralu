@@ -1490,6 +1490,8 @@ export interface PropostaPublica {
   contato: string | null;
   titulo: string | null;
   conteudo: string | null;
+  /** HTML sanitizado no servidor (SPEC-057); o Angular filtra de novo ao exibir. */
+  htmlAceite?: string | null;
   valor: number | null;
   validoAte: string | null;
   resposta: RespostaProposta | null;
@@ -1617,6 +1619,8 @@ export interface ModeloOrcamentoFunil {
   corPrimaria: string | null;
   corSecundaria: string | null;
   parametros: string[];
+  /** HTML já sanitizado pelo servidor, mostrado na tela de aceite (SPEC-057). */
+  htmlAceite?: string | null;
 }
 
 export interface ModeloParaContratoFunil {

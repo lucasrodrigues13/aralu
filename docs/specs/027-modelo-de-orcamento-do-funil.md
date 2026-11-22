@@ -29,6 +29,7 @@ Conta autenticada, SPEC-001.
 3. Salva o modelo na conta.
 4. Ao criar orçamento na SPEC-025, escolhe o modelo; o sistema copia o texto e substitui `#nome_oportunidade` pelo nome da oportunidade quando houver.
 5. Exclui modelo que não queira mais na biblioteca.
+6. O modelo também guarda um HTML opcional para a tela de aceite da proposta ([SPEC-057](057-html-do-modelo-de-orcamento-na-tela-de-aceite.md)).
 
 ## 7. Fluxos alternativos
 

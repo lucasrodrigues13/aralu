@@ -57,7 +57,8 @@ public sealed record PropostaPublica(
     DateTimeOffset? RespostaEm,
     bool DaPropriaConta = false,
     IReadOnlyList<ParcelaOrcamentoLeitura>? Parcelas = null,
-    ContratanteDados? Contratante = null);
+    ContratanteDados? Contratante = null,
+    string? HtmlAceite = null);
 
 /// <summary>Resposta à proposta. <c>Contratante</c> só vale no aceite pelo link (SPEC-049).</summary>
 public sealed record ResponderProposta(string? Tipo, string? Mensagem, ContratanteDados? Contratante = null);
@@ -127,6 +128,7 @@ public sealed class OrcamentoFunilServico(IDados dados)
 
         var conteudo = Domain.Comum.Texto.Limpo(pedido.Conteudo);
         Guid? modeloId = pedido.ModeloId;
+        string? htmlAceite = null;
         if (conteudo is null && modeloId is Guid mid)
         {
             var modelo = await dados.ObterModeloOrcamentoFunilAsync(contaId, mid, ct);
@@ -135,6 +137,7 @@ public sealed class OrcamentoFunilServico(IDados dados)
                 return Resultado<OrcamentoFunilLeitura>.Erro(Codigos.Validacao, "Modelo inválido.");
             }
 
+            htmlAceite = modelo.HtmlAceite;
             var perfil = await dados.ObterPerfilAsync(contaId, ct);
             conteudo = ParametrosOrcamento.Aplicar(modelo.Texto, oportunidade, pedido.Valor, DateOnly.FromDateTime(DateTime.UtcNow), perfil?.NomeEmpresa);
         }
@@ -145,6 +148,8 @@ public sealed class OrcamentoFunilServico(IDados dados)
             {
                 return Resultado<OrcamentoFunilLeitura>.Erro(Codigos.Validacao, "Modelo inválido.");
             }
+
+            htmlAceite = modelo.HtmlAceite;
         }
 
         if (conteudo is null)
@@ -162,6 +167,7 @@ public sealed class OrcamentoFunilServico(IDados dados)
             Situacao = SituacaoOrcamentoFunil.EmAndamento,
             CriadoEm = DateTimeOffset.UtcNow,
             ModeloId = modeloId,
+            HtmlAceite = htmlAceite,
             CriadoPor = criadoPor,
         };
         await dados.InserirOrcamentoFunilAsync(item, ct);
@@ -611,7 +617,8 @@ public sealed class OrcamentoFunilServico(IDados dados)
                 .OrderBy(parcela => parcela.Numero)
                 .Select(parcela => new ParcelaOrcamentoLeitura(parcela.Numero, parcela.Vencimento, parcela.Valor, parcela.Entrada))
                 .ToArray(),
-            Contratante: oportunidade is null ? null : ContratanteRegras.Ler(oportunidade));
+            Contratante: oportunidade is null ? null : ContratanteRegras.Ler(oportunidade),
+            HtmlAceite: HtmlSeguro.Sanitizar(item.HtmlAceite) is { Length: > 0 } html ? html : null);
     }
 
     private async Task<Resultado<OrcamentoFunilLeitura>> MudarAsync(
