@@ -76,10 +76,10 @@ import { pagamentosPorMes } from './pagamentos-por-mes';
                         <td>
                           @if (pagamento.parcelas.length === 0) {
                             @if (pagamento.comprovante; as c) {
-                              <button mat-button type="button" (click)="abrirComprovante(c)"><mat-icon>{{ c.tipoConteudo === 'application/pdf' ? 'picture_as_pdf' : 'image' }}</mat-icon> {{ c.nome }}</button>
+                              <button mat-icon-button type="button" aria-label="Abrir comprovante" [attr.title]="c.nome" (click)="abrirComprovante(c)"><mat-icon>{{ c.tipoConteudo === 'application/pdf' ? 'picture_as_pdf' : 'image' }}</mat-icon></button>
                               <button mat-icon-button type="button" aria-label="Excluir comprovante" (click)="excluirComprovante(pagamento, null)"><mat-icon>delete</mat-icon></button>
                             } @else {
-                              <button mat-button type="button" (click)="enviarComprovante(pagamento, null)"><mat-icon>upload_file</mat-icon> Comprovante</button>
+                              <button mat-icon-button type="button" aria-label="Enviar comprovante" title="Enviar comprovante" (click)="enviarComprovante(pagamento, null)"><mat-icon>upload_file</mat-icon></button>
                             }
                           } @else {
                             <span class="text-muted text-xs">Por parcela</span>
@@ -106,10 +106,10 @@ import { pagamentosPorMes } from './pagamentos-por-mes';
                             <td><span [class]="parcela.paga ? status.sucesso : status.alerta">{{ parcela.paga ? 'Paga' : 'Pendente' }}</span></td>
                             <td colspan="2">
                               @if (parcela.comprovante; as c) {
-                                <button mat-button type="button" (click)="abrirComprovante(c)"><mat-icon>{{ c.tipoConteudo === 'application/pdf' ? 'picture_as_pdf' : 'image' }}</mat-icon> {{ c.nome }}</button>
+                                <button mat-icon-button type="button" aria-label="Abrir comprovante" [attr.title]="c.nome" (click)="abrirComprovante(c)"><mat-icon>{{ c.tipoConteudo === 'application/pdf' ? 'picture_as_pdf' : 'image' }}</mat-icon></button>
                                 <button mat-icon-button type="button" aria-label="Excluir comprovante" (click)="excluirComprovante(pagamento, parcela)"><mat-icon>delete</mat-icon></button>
                               } @else {
-                                <button mat-button type="button" (click)="enviarComprovante(pagamento, parcela)"><mat-icon>upload_file</mat-icon> Comprovante</button>
+                                <button mat-icon-button type="button" aria-label="Enviar comprovante" title="Enviar comprovante" (click)="enviarComprovante(pagamento, parcela)"><mat-icon>upload_file</mat-icon></button>
                               }
                             </td>
                           </tr>

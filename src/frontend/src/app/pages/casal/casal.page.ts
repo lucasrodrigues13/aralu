@@ -83,7 +83,7 @@ import { ParcelarPagamentoDialog } from '../dinheiro/parcelar-pagamento.dialog';
                           </mat-checkbox>
                           <span class="arquivo">
                             @if (parcela.comprovante; as c) {
-                              <button mat-button type="button" (click)="abrir(c)"><mat-icon>{{ icone(c) }}</mat-icon> {{ c.nome }}</button>
+                              <button mat-button type="button" [attr.title]="c.nome" (click)="abrir(c)"><mat-icon>{{ icone(c) }}</mat-icon> Comprovante</button>
                               <button mat-icon-button type="button" aria-label="Excluir comprovante" (click)="excluirComprovante(pagamento, parcela)"><mat-icon>delete</mat-icon></button>
                             } @else {
                               <button mat-button type="button" (click)="enviarComprovante(pagamento, parcela)"><mat-icon>upload_file</mat-icon> Comprovante</button>
@@ -95,7 +95,7 @@ import { ParcelarPagamentoDialog } from '../dinheiro/parcelar-pagamento.dialog';
                       <div class="acoes">
                         @if (pagamento.parcelas.length === 0) {
                           @if (pagamento.comprovante; as c) {
-                            <button mat-button type="button" (click)="abrir(c)"><mat-icon>{{ icone(c) }}</mat-icon> {{ c.nome }}</button>
+                            <button mat-button type="button" [attr.title]="c.nome" (click)="abrir(c)"><mat-icon>{{ icone(c) }}</mat-icon> Comprovante</button>
                             <button mat-icon-button type="button" aria-label="Excluir comprovante" (click)="excluirComprovante(pagamento, null)"><mat-icon>delete</mat-icon></button>
                           } @else {
                             <button mat-button type="button" (click)="enviarComprovante(pagamento, null)"><mat-icon>upload_file</mat-icon> Comprovante</button>
