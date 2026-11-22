@@ -329,7 +329,7 @@ export class OportunidadeDialog implements OnInit {
     this.contatos.valueChanges
       .pipe(debounceTime(500), takeUntilDestroyed(this.destroyRef))
       .subscribe((lista: { telefone?: string; email?: string }[]) => {
-        const telefones = lista.map((c) => (c.telefone ?? '').trim()).filter((t) => t.replace(/D/g, '').length >= 8);
+        const telefones = lista.map((c) => (c.telefone ?? '').trim()).filter((t) => t.replace(/\D/g, '').length >= 8);
         const emails = lista.map((c) => (c.email ?? '').trim()).filter((e) => e.includes('@'));
         if (!telefones.length && !emails.length) {
           this.repetidos.set([]);

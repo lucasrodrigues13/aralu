@@ -278,7 +278,7 @@ export class PerfilPage implements OnInit {
   }
 
   protected completarCep(): void {
-    const digitos = (this.formulario.controls.cep.value ?? '').replace(/D/g, '');
+    const digitos = (this.formulario.controls.cep.value ?? '').replace(/\D/g, '');
     if (digitos.length !== 8) {
       return;
     }
