@@ -59,7 +59,10 @@ services:
       Email__TenantId: ${EMAIL_TENANT_ID:-}
       Email__ClientId: ${EMAIL_CLIENT_ID:-}
       Email__ClientSecret: ${EMAIL_CLIENT_SECRET:-}
-      Bootstrap__Enabled: "false"
+      # Cria o administrador inicial quando o .env define BOOTSTRAP_ENABLED=true (mesmo padrão do compose de produção).
+      Bootstrap__Enabled: ${BOOTSTRAP_ENABLED:-false}
+      Bootstrap__AdminEmail: ${BOOTSTRAP_ADMIN_EMAIL:-}
+      Bootstrap__AdminPassword: ${BOOTSTRAP_ADMIN_PASSWORD:-}
       ForwardedHeaders__KnownNetworks__0: 172.16.0.0/12
       ForwardedHeaders__KnownNetworks__1: 10.0.0.0/8
       ForwardedHeaders__KnownNetworks__2: 192.168.0.0/16
