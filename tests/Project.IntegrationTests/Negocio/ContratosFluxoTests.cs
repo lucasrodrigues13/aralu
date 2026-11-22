@@ -49,6 +49,37 @@ public class ContratosFluxoTests
         Assert.Equal(HttpStatusCode.OK, (await dono.DeleteAsync($"/api/v1/contratos/{contratoId}")).StatusCode);
     }
 
+    [Fact]
+    public async Task Logo_e_fundo_do_modelo_sao_da_conta_e_aceitam_so_imagem()
+    {
+        var dono = await Entrar();
+        var outra = await Entrar();
+        var modelo = await Ler(await dono.PostAsJsonAsync("/api/v1/contratos", new { nome = "Com imagens", texto = "Texto" }));
+        var id = modelo.GetProperty("id").GetGuid();
+        var png = new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0, 0, 0, 0 };
+
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PostAsync($"/api/v1/contratos/{id}/logo", Formulario(new byte[] { 1, 2, 3, 4 }, "logo.png"))).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await outra.PostAsync($"/api/v1/contratos/{id}/logo", Formulario(png, "logo.png"))).StatusCode);
+
+        var logo = await Ler(await dono.PostAsync($"/api/v1/contratos/{id}/logo", Formulario(png, "logo.png")));
+        var fundo = await Ler(await dono.PostAsync($"/api/v1/contratos/{id}/fundo", Formulario(png, "fundo.png")));
+        var lido = await Ler(await dono.GetAsync($"/api/v1/contratos/{id}"));
+        Assert.Equal(logo.GetProperty("arquivoId").GetGuid(), lido.GetProperty("logoArquivoId").GetGuid());
+        Assert.Equal(fundo.GetProperty("arquivoId").GetGuid(), lido.GetProperty("fundoArquivoId").GetGuid());
+
+        Assert.Equal(HttpStatusCode.OK, (await dono.DeleteAsync($"/api/v1/contratos/{id}/logo")).StatusCode);
+        lido = await Ler(await dono.GetAsync($"/api/v1/contratos/{id}"));
+        Assert.Equal(JsonValueKind.Null, lido.GetProperty("logoArquivoId").ValueKind);
+        Assert.NotEqual(JsonValueKind.Null, lido.GetProperty("fundoArquivoId").ValueKind);
+    }
+
+    private static MultipartFormDataContent Formulario(byte[] conteudo, string nome)
+    {
+        var parte = new ByteArrayContent(conteudo);
+        parte.Headers.ContentType = new MediaTypeHeaderValue("image/png");
+        return new MultipartFormDataContent { { parte, "arquivo", nome } };
+    }
+
     private async Task<HttpClient> Entrar()
     {
         var email = $"pessoa-{Guid.NewGuid():N}@aralu.test";

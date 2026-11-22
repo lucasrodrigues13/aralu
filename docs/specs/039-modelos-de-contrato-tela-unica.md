@@ -96,7 +96,7 @@ Integração: criar modelo em `/contratos`, criar contrato do funil com o modelo
 
 ## 16. Dependências
 
-SPEC-001, SPEC-020, SPEC-022, SPEC-030, SPEC-035, SPEC-036 (regra de apagar o legado). Vêm depois: #39 (contrato do funil com as tags), #40 (seletor de tags), #15, #16.
+SPEC-001, SPEC-020, SPEC-022, SPEC-030, SPEC-035, SPEC-036 (regra de apagar o legado). Vêm depois: #39 (contrato do funil com as tags), #40 (seletor de tags), #15, #16 ([SPEC-056](056-logo-e-fundo-do-modelo-de-contrato.md)).
 
 ## 17. Premissas e pontos não definidos (decididos pela opção mais simples e conservadora)
 

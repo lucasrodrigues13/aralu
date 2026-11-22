@@ -21,7 +21,9 @@ public sealed record ContratoFunilLeitura(
     decimal Recebido = 0,
     decimal Saldo = 0,
     string? OportunidadeTelefone = null,
-    string? ChavePix = null);
+    string? ChavePix = null,
+    Guid? LogoArquivoId = null,
+    Guid? FundoArquivoId = null);
 
 public sealed record SalvarContratoFunil(Guid? OportunidadeId, string? Conteudo, Guid? ModeloId);
 
@@ -100,6 +102,8 @@ public sealed class ContratoFunilServico(IDados dados, IDadosContrato modelos)
 
         var conteudo = Domain.Comum.Texto.Limpo(pedido.Conteudo);
         Guid? modeloId = pedido.ModeloId;
+        Guid? logoId = null;
+        Guid? fundoId = null;
         if (modeloId is Guid mid)
         {
             var modelo = await modelos.ObterAsync(contaId, mid, ct);
@@ -109,6 +113,8 @@ public sealed class ContratoFunilServico(IDados dados, IDadosContrato modelos)
             }
 
             conteudo ??= modelo.Texto;
+            logoId = modelo.LogoArquivoId;
+            fundoId = modelo.FundoArquivoId;
         }
 
         if (conteudo is null)
@@ -129,6 +135,8 @@ public sealed class ContratoFunilServico(IDados dados, IDadosContrato modelos)
             Situacao = SituacaoContratoFunil.EmAndamento,
             CriadoEm = DateTimeOffset.UtcNow,
             ModeloId = modeloId,
+            LogoArquivoId = logoId,
+            FundoArquivoId = fundoId,
             CriadoPor = criadoPor,
             Parcelas = (aprovado?.Parcelas ?? [])
                 .OrderBy(parcela => parcela.Numero)
@@ -423,6 +431,8 @@ public sealed class ContratoFunilServico(IDados dados, IDadosContrato modelos)
             item.Parcelas.OrderBy(parcela => parcela.Numero).Select(parcela => ParcelasDosDocumentos.Ler(parcela, hoje)).ToArray(),
             item.Parcelas.Sum(parcela => parcela.Valor),
             item.Parcelas.Sum(parcela => parcela.Recebido),
-            item.Parcelas.Sum(parcela => parcela.Saldo));
+            item.Parcelas.Sum(parcela => parcela.Saldo),
+            LogoArquivoId: item.LogoArquivoId,
+            FundoArquivoId: item.FundoArquivoId);
     }
 }
