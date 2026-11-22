@@ -26,4 +26,7 @@ public sealed class ModeloOrcamentoFunil
     public string? CorPrimaria { get; set; }
 
     public string? CorSecundaria { get; set; }
+
+    /// <summary>HTML (já sanitizado) mostrado ao cliente na tela de aceite da proposta (SPEC-057).</summary>
+    public string? HtmlAceite { get; set; }
 }

@@ -13,13 +13,15 @@ public sealed record ModeloOrcamentoFunilLeitura(
     string Texto,
     string? CorPrimaria,
     string? CorSecundaria,
-    IReadOnlyList<string> Parametros);
+    IReadOnlyList<string> Parametros,
+    string? HtmlAceite = null);
 
 public sealed record SalvarModeloOrcamentoFunil(
     string? Nome,
     string? Texto,
     string? CorPrimaria,
-    string? CorSecundaria);
+    string? CorSecundaria,
+    string? HtmlAceite = null);
 
 public static class TokensFunil
 {
@@ -189,6 +191,7 @@ public sealed class ModeloOrcamentoFunilServico(IDados dados)
         item.Texto = montado.Valor.Texto;
         item.CorPrimaria = montado.Valor.CorPrimaria;
         item.CorSecundaria = montado.Valor.CorSecundaria;
+        item.HtmlAceite = montado.Valor.HtmlAceite;
         await dados.SalvarNegocioAsync(ct);
         return Resultado<ModeloOrcamentoFunilLeitura>.Sucesso(Ler(item));
     }
@@ -234,6 +237,7 @@ public sealed class ModeloOrcamentoFunilServico(IDados dados)
             Texto = texto,
             CorPrimaria = cor1,
             CorSecundaria = cor2,
+            HtmlAceite = HtmlSeguro.Sanitizar(pedido.HtmlAceite) is { Length: > 0 } html ? html : null,
         });
     }
 
@@ -241,5 +245,5 @@ public sealed class ModeloOrcamentoFunilServico(IDados dados)
         cor.Length is 4 or 7 && cor.StartsWith('#') && cor[1..].All(c => Uri.IsHexDigit(c));
 
     private static ModeloOrcamentoFunilLeitura Ler(ModeloOrcamentoFunil item) =>
-        new(item.Id, item.Nome, item.Texto, item.CorPrimaria, item.CorSecundaria, TokensFunil.Todos);
+        new(item.Id, item.Nome, item.Texto, item.CorPrimaria, item.CorSecundaria, TokensFunil.Todos, item.HtmlAceite);
 }

@@ -53,6 +53,17 @@ type TipoModelo = 'servico' | 'orcamento';
               <mat-label class="font-semibold mb-2 block">Cor secundária</mat-label>
               <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Cor secundária'" matInput formControlName="corSecundaria" placeholder="#aabbcc" /></mat-form-field>
             </div>
+            <div class="campo">
+              <mat-label class="font-semibold mb-2 block">HTML da tela de aceite (opcional)</mat-label>
+              <mat-form-field appearance="outline" class="w-full">
+                <textarea [attr.aria-label]="'HTML da tela de aceite'" matInput rows="8" maxlength="50000" formControlName="htmlAceite" placeholder="<h2>Por que nos escolher</h2><p>…</p>"></textarea>
+                <mat-hint>Aparece para o cliente na tela de aceite. Por segurança só ficam títulos, texto, listas, tabelas, links e imagens https; scripts, estilos e formulários são removidos.</mat-hint>
+              </mat-form-field>
+              @if (form.controls.htmlAceite.value.trim()) {
+                <p class="text-xs text-muted mt-2">Prévia (já filtrada):</p>
+                <div class="previa" [innerHTML]="form.controls.htmlAceite.value"></div>
+              }
+            </div>
           }
         }
       </form>
@@ -62,7 +73,7 @@ type TipoModelo = 'servico' | 'orcamento';
       <button mat-flat-button type="button" (click)="salvar()">Salvar</button>
     </mat-dialog-actions>
   `,
-  styles: `.params { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }`,
+  styles: `.params { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; } .previa { border: 1px solid var(--mat-sys-outline-variant); border-radius: 8px; padding: 12px; overflow-wrap: anywhere; } .previa img { max-width: 100%; height: auto; }`,
 })
 export class ModeloFunilDialog {
   private readonly fb = inject(FormBuilder);
@@ -79,6 +90,7 @@ export class ModeloFunilDialog {
     texto: [(this.dados.item as ModeloOrcamentoFunil | null)?.texto ?? ''],
     corPrimaria: [(this.dados.item as ModeloOrcamentoFunil | null)?.corPrimaria ?? ''],
     corSecundaria: [(this.dados.item as ModeloOrcamentoFunil | null)?.corSecundaria ?? ''],
+    htmlAceite: [(this.dados.item as ModeloOrcamentoFunil | null)?.htmlAceite ?? ''],
   });
 
   protected inserir(param: string, area: HTMLTextAreaElement): void {
@@ -101,7 +113,7 @@ export class ModeloFunilDialog {
       const pedido = { nome: v.nome, descricao: v.descricao || null, valor: v.valor };
       req = id ? this.negocio.atualizarModeloServicoFunil(id, pedido) : this.negocio.criarModeloServicoFunil(pedido);
     } else {
-      const pedido = { nome: v.nome, texto: v.texto, corPrimaria: v.corPrimaria || null, corSecundaria: v.corSecundaria || null };
+      const pedido = { nome: v.nome, texto: v.texto, corPrimaria: v.corPrimaria || null, corSecundaria: v.corSecundaria || null, htmlAceite: v.htmlAceite || null };
       req = id ? this.negocio.atualizarModeloOrcamentoFunil(id, pedido) : this.negocio.criarModeloOrcamentoFunil(pedido);
     }
     req.subscribe({
