@@ -132,7 +132,7 @@ function lerPulados(): string[] {
           </mat-card>
         </a>
         @if (auth.podeVerFinanceiro()) {
-        <a class="block no-underline" href="#cobrancas" (click)="rolar($event, 'cobrancas')">
+        <a class="block no-underline" routerLink="/gestao-financeira" [queryParams]="{ filtro: 'cobrancas' }">
           <mat-card class="shadow-none text-center mb-0! h-full bg-light-warning card-hover">
             <mat-card-content>
               <mat-icon class="text-warning">request_quote</mat-icon>
@@ -201,7 +201,7 @@ function lerPulados(): string[] {
                   <tbody>
                     @for (item of d.cobrancas; track $index) {
                       <tr>
-                        <td><a routerLink="/gestao-financeira">{{ item.oportunidade }}</a></td>
+                        <td><a routerLink="/gestao-financeira" [queryParams]="{ filtro: 'cobrancas' }">{{ item.oportunidade }}</a></td>
                         <td>{{ item.parcela }}<span class="block text-xs text-muted">{{ item.vencimento | gdData }}</span></td>
                         <td class="text-end!"><span class="valor">{{ item.saldo | gdDinheiro }}</span></td>
                         <td class="text-end!">
@@ -470,11 +470,6 @@ export class HojePage implements OnInit {
 
   protected pularTudo(): void {
     this.gravarPulados(['perfil', 'pix', 'contrato']);
-  }
-
-  protected rolar(evento: Event, id: string): void {
-    evento.preventDefault();
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   private gravarPulados(lista: string[]): void {

@@ -6,6 +6,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ParcelaContrato } from '../../core/dinheiro.client';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { ContratoFunil, NegocioClient } from '../../core/negocio.client';
@@ -51,6 +52,41 @@ export function parcelasAtrasadas(contratos: ContratoFunil[]): ParcelaPendente[]
     .sort((a, b) => a.parcela.vencimento.localeCompare(b.parcela.vencimento) || a.contrato.oportunidadeNome.localeCompare(b.contrato.oportunidadeNome, 'pt-BR'));
 }
 
+/** Dias à frente que contam como "cobrança da semana" (o mesmo critério do card da tela Hoje). */
+export const DIAS_COBRANCA = 7;
+
+/**
+ * Cobranças a fazer: parcelas atrasadas e as que vencem nos próximos `DIAS_COBRANCA` dias,
+ * todas com saldo, da que vence primeiro para a última.
+ */
+export function parcelasACobrar(contratos: ContratoFunil[], hoje: string): ParcelaPendente[] {
+  const limite = somarDias(hoje, DIAS_COBRANCA);
+  return contratos
+    .flatMap((contrato) =>
+      contrato.parcelas
+        .filter((parcela) => parcela.saldo > 0 && (parcela.situacao === 'Atrasada' || parcela.vencimento.slice(0, 10) <= limite))
+        .map((parcela) => ({ contrato, parcela })),
+    )
+    .sort((a, b) => a.parcela.vencimento.localeCompare(b.parcela.vencimento) || a.contrato.oportunidadeNome.localeCompare(b.contrato.oportunidadeNome, 'pt-BR'));
+}
+
+function somarDias(iso: string, dias: number): string {
+  const [ano, mes, dia] = iso.split('-').map(Number);
+  const data = new Date(ano, mes - 1, dia + dias);
+  return `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}-${String(data.getDate()).padStart(2, '0')}`;
+}
+
+/** Filtro da lista; `Cobrancas` vem do card "Cobranças a fazer" (`?filtro=cobrancas`). */
+export type FiltroFinanceiro = SituacaoFinanceira | 'Cobrancas' | '';
+
+const FILTROS: FiltroFinanceiro[] = ['Cobrancas', 'EmAberto', 'Atrasados', 'Quitados', 'SemParcelas'];
+
+/** Filtro vindo da URL, sem diferenciar maiúsculas; valor desconhecido mostra todos. */
+export function filtroDaUrl(valor: string | null): FiltroFinanceiro {
+  const alvo = (valor ?? '').toLowerCase();
+  return FILTROS.find((filtro) => filtro.toLowerCase() === alvo) ?? '';
+}
+
 function hojeLocal(): string {
   const agora = new Date();
   return `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, '0')}-${String(agora.getDate()).padStart(2, '0')}`;
@@ -83,13 +119,18 @@ function hojeLocal(): string {
         </mat-card-content>
       </mat-card>
     </div>
-    @if (atrasadas().length > 0) {
+    @if (emCobranca() || atrasadas().length > 0) {
       <mat-card class="cardWithShadow mb-6">
         <div class="p-6">
-          <mat-card-title class="mb-0">Parcelas atrasadas</mat-card-title>
-          <mat-card-subtitle>Cobre pelo WhatsApp ou marque como recebida.</mat-card-subtitle>
+          <mat-card-title class="mb-0">{{ emCobranca() ? 'Cobranças a fazer' : 'Parcelas atrasadas' }}</mat-card-title>
+          <mat-card-subtitle>
+            {{ emCobranca() ? 'Parcelas atrasadas e que vencem nos próximos 7 dias. ' : '' }}Cobre pelo WhatsApp ou marque como recebida.
+          </mat-card-subtitle>
         </div>
         <mat-card-content class="border-t border-border">
+          @if (parcelasDestaque().length === 0) {
+            <p class="text-center text-muted py-10">Nenhuma parcela atrasada ou vencendo nos próximos 7 dias.</p>
+          } @else {
           <div class="relative overflow-auto">
             <table class="tabela">
               <thead>
@@ -102,11 +143,16 @@ function hojeLocal(): string {
                 </tr>
               </thead>
               <tbody>
-                @for (item of atrasadas(); track item.parcela.id) {
+                @for (item of parcelasDestaque(); track item.parcela.id) {
                   <tr>
                     <td>{{ item.contrato.oportunidadeNome }}</td>
                     <td>{{ item.parcela.entrada ? 'Entrada' : 'Parcela ' + item.parcela.numero }}</td>
-                    <td class="whitespace-nowrap">{{ item.parcela.vencimento | gdData }}</td>
+                    <td class="whitespace-nowrap">
+                      {{ item.parcela.vencimento | gdData }}
+                      @if (emCobranca()) {
+                        <span class="block" [class]="item.parcela.situacao === 'Atrasada' ? status.erro : status.alerta">{{ item.parcela.situacao === 'Atrasada' ? 'Atrasada' : 'A vencer' }}</span>
+                      }
+                    </td>
                     <td class="text-end! valor">{{ item.parcela.saldo | gdDinheiro }}</td>
                     <td class="text-end! whitespace-nowrap">
                       <button mat-stroked-button class="ml-1" type="button" (click)="cobrar(item)"><mat-icon>chat</mat-icon> Cobrar</button>
@@ -117,6 +163,7 @@ function hojeLocal(): string {
               </tbody>
             </table>
           </div>
+          }
         </mat-card-content>
       </mat-card>
     }
@@ -153,8 +200,9 @@ function hojeLocal(): string {
           <div class="campo w-full sm:w-56">
             <mat-label class="font-semibold mb-2 block">Situação</mat-label>
             <mat-form-field appearance="outline" class="w-full">
-              <mat-select [value]="filtro()" (valueChange)="filtro.set($event)" aria-label="Situação">
+              <mat-select [value]="filtro()" (valueChange)="mudarFiltro($event)" aria-label="Situação">
                 <mat-option value="">Todos</mat-option>
+                <mat-option value="Cobrancas">Cobranças: atrasadas e da semana</mat-option>
                 <mat-option value="EmAberto">Em aberto</mat-option>
                 <mat-option value="Atrasados">Com parcela atrasada</mat-option>
                 <mat-option value="Quitados">Quitados</mat-option>
@@ -232,17 +280,29 @@ export class GestaoFinanceiraPage implements OnInit {
   private readonly dialog = inject(MatDialog);
   private readonly toast = inject(ToastService);
   private readonly lista = signal<ContratoFunil[]>([]);
-  protected readonly filtro = signal<SituacaoFinanceira | ''>('');
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  protected readonly status = STATUS;
+  protected readonly filtro = signal<FiltroFinanceiro>(filtroDaUrl(this.route.snapshot.queryParamMap.get('filtro')));
   protected readonly busca = signal('');
+  protected readonly emCobranca = computed(() => this.filtro() === 'Cobrancas');
 
   protected readonly visiveis = computed(() => {
     const termo = this.busca().trim().toLowerCase();
+    const filtro = this.filtro();
+    const comCobranca = new Set(this.aCobrar().map((item) => item.contrato.id));
     return this.lista()
-      .filter((item) => (!this.filtro() || situacaoFinanceira(item) === this.filtro()) && (!termo || item.oportunidadeNome.toLowerCase().includes(termo)))
+      .filter((item) => {
+        const passaFiltro = !filtro || (filtro === 'Cobrancas' ? comCobranca.has(item.id) : situacaoFinanceira(item) === filtro);
+        return passaFiltro && (!termo || item.oportunidadeNome.toLowerCase().includes(termo));
+      })
       .sort((a, b) => a.oportunidadeNome.localeCompare(b.oportunidadeNome, 'pt-BR') || a.criadoEm.localeCompare(b.criadoEm));
   });
   protected readonly doMes = computed(() => parcelasDoMes(this.lista(), hojeLocal()));
   protected readonly atrasadas = computed(() => parcelasAtrasadas(this.lista()));
+  private readonly aCobrar = computed(() => parcelasACobrar(this.lista(), hojeLocal()));
+  /** Tabela do topo: cobranças da semana quando filtrado, senão só as atrasadas. */
+  protected readonly parcelasDestaque = computed(() => (this.emCobranca() ? this.aCobrar() : this.atrasadas()));
   protected readonly totalDoMes = computed(() => this.doMes().reduce((soma, item) => soma + item.parcela.saldo, 0));
   protected readonly totalAtrasado = computed(() => this.atrasadas().reduce((soma, item) => soma + item.parcela.saldo, 0));
   protected readonly totalContratado =computed(() => this.visiveis().reduce((soma, item) => soma + item.valorTotal, 0));
@@ -251,6 +311,16 @@ export class GestaoFinanceiraPage implements OnInit {
 
   ngOnInit(): void {
     this.carregar();
+  }
+
+  /** Mantém o filtro na URL, para voltar e compartilhar a tela já filtrada. */
+  protected mudarFiltro(filtro: FiltroFinanceiro): void {
+    this.filtro.set(filtro);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { filtro: filtro ? filtro.toLowerCase() : null },
+      replaceUrl: true,
+    });
   }
 
   protected selo(item: ContratoFunil): { rotulo: string; classe: string } {

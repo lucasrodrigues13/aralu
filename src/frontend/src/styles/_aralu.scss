@@ -147,13 +147,43 @@ html {
   color: var(--mat-sys-primary);
 }
 
-// Busca dentro da lista suspensa (seleção com muitos itens)
-.opcao-busca.mdc-list-item--disabled {
+// Busca dentro da lista suspensa (seleção com muitos itens). A lista não tem recuo no topo,
+// para o cabeçalho fixo cobrir por inteiro os itens que rolam por trás dele.
+.mat-mdc-select-panel:has(.opcao-busca) {
+  padding-top: 0 !important;
+}
+
+// O fundo do mat-option é transparente e vence um seletor mais fraco; por isso o seletor
+// completo e o fundo herdado do painel (sólido, da mesma cor da lista).
+.mat-mdc-select-panel .mat-mdc-option.opcao-busca.mdc-list-item--disabled {
   opacity: 1;
   position: sticky;
-  top: -8px;
-  z-index: 1;
-  background: var(--mat-sys-surface);
+  top: 0;
+  z-index: 2;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  background-color: inherit;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+}
+
+// Autocomplete com "Criar novo ..." fixo em primeiro: só os registros selecionáveis rolam.
+.painel-com-criar.mat-mdc-autocomplete-panel {
+  padding-top: 0 !important;
+}
+
+// Fundo sólido igual ao da lista (herdado do painel), para cobrir os itens que passam por trás.
+.mat-mdc-autocomplete-panel.painel-com-criar .mat-mdc-option.opcao-criar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background-color: inherit;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+  color: var(--mat-sys-primary);
+  font-weight: 500;
+}
+
+.painel-com-criar .opcao-criar .mat-icon {
+  color: var(--mat-sys-primary);
 }
 
 .opcao-busca .mdc-list-item__primary-text {

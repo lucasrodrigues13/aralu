@@ -1864,6 +1864,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<Guid>("EstagioFunilId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("EventoId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Fonte")
                         .HasColumnType("text");
 
@@ -1950,6 +1953,10 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.HasIndex("ContaId");
 
                     b.HasIndex("EstagioFunilId");
+
+                    b.HasIndex("EventoId")
+                        .IsUnique()
+                        .HasFilter("\"EventoId\" IS NOT NULL");
 
                     b.ToTable("Oportunidades");
                 });
@@ -3188,6 +3195,11 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .HasForeignKey("EstagioFunilId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("Project.Domain.Eventos.Evento", null)
+                        .WithMany()
+                        .HasForeignKey("EventoId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("EstagioFunil");
                 });

@@ -1,5 +1,5 @@
 import { ContratoFunil } from '../../core/negocio.client';
-import { parcelasAtrasadas, parcelasDoMes, situacaoFinanceira } from './gestao-financeira.page';
+import { filtroDaUrl, parcelasACobrar, parcelasAtrasadas, parcelasDoMes, situacaoFinanceira } from './gestao-financeira.page';
 
 function comParcelas(nome: string, parcelas: { id: string; vencimento: string; saldo: number; situacao: string }[]): ContratoFunil {
   return { oportunidadeNome: nome, parcelas } as unknown as ContratoFunil;
@@ -22,6 +22,24 @@ describe('parcelas do mês e atrasadas (SPEC-044)', () => {
 
   it('atrasadas: de qualquer mês, da mais antiga para a mais nova', () => {
     expect(parcelasAtrasadas(contratos).map((item) => item.parcela.id)).toEqual(['b1', 'a3']);
+  });
+
+  it('a cobrar: atrasadas e as que vencem em até 7 dias, com saldo, pela data', () => {
+    expect(parcelasACobrar(contratos, '2026-11-21').map((item) => item.parcela.id)).toEqual(['b1', 'a3', 'a1']);
+    // A semana atravessa o mês: 28/11 + 7 = 05/12.
+    expect(parcelasACobrar(contratos, '2026-11-28').map((item) => item.parcela.id)).toEqual(['b1', 'a3', 'a1', 'a2']);
+  });
+});
+
+describe('filtro da Gestão Financeira pela URL', () => {
+  it('aceita o filtro sem diferenciar maiúsculas', () => {
+    expect(filtroDaUrl('cobrancas')).toBe('Cobrancas');
+    expect(filtroDaUrl('ATRASADOS')).toBe('Atrasados');
+  });
+
+  it('valor ausente ou desconhecido mostra todos', () => {
+    expect(filtroDaUrl(null)).toBe('');
+    expect(filtroDaUrl('qualquer')).toBe('');
   });
 });
 

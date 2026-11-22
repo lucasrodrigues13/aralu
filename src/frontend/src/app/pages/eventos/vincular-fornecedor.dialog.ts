@@ -58,7 +58,8 @@ interface OpcaoServico {
             placeholder="Buscar no cadastro"
             required
           />
-          <mat-autocomplete #listaFornecedores="matAutocomplete" [displayWith]="nomeFornecedor" autoActiveFirstOption>
+          <mat-autocomplete #listaFornecedores="matAutocomplete" class="painel-com-criar" [displayWith]="nomeFornecedor" (optionSelected)="aoEscolherFornecedor($event.option.value)">
+            <mat-option class="opcao-criar" [value]="novoFornecedor"><mat-icon>person_add</mat-icon> Criar novo fornecedor</mat-option>
             @for (fornecedor of fornecedoresFiltrados(); track fornecedor.id) {
               <mat-option [value]="fornecedor">
                 <span class="opcao-nome">{{ fornecedor.nome }}</span>
@@ -70,12 +71,6 @@ interface OpcaoServico {
           </mat-autocomplete>
           @if (form.controls.fornecedor.invalid) { <mat-error>Escolha um fornecedor da lista.</mat-error> }
         </mat-form-field>
-        </div>
-        <div>
-          <button mat-button type="button" (click)="cadastrarFornecedor()">
-            <mat-icon>person_add</mat-icon>
-            Cadastrar novo fornecedor
-          </button>
         </div>
 
         <div class="campo">
@@ -168,10 +163,20 @@ export class VincularFornecedorDialog {
     });
   }
 
-  protected readonly nomeFornecedor = (valor: FornecedorResumo | string | null): string =>
-    !valor ? '' : typeof valor === 'string' ? valor : valor.nome;
+  protected readonly novoFornecedor = NOVO_FORNECEDOR;
 
-  protected cadastrarFornecedor(): void {
+  protected readonly nomeFornecedor = (valor: FornecedorResumo | string | null): string =>
+    !valor || valor === NOVO_FORNECEDOR ? '' : typeof valor === 'string' ? valor : valor.nome;
+
+  protected aoEscolherFornecedor(valor: FornecedorResumo | string): void {
+    if (valor !== NOVO_FORNECEDOR) {
+      return;
+    }
+    this.form.controls.fornecedor.setValue(null);
+    this.cadastrarFornecedor();
+  }
+
+  private cadastrarFornecedor(): void {
     const antes = new Set(this.fornecedores().map((item) => item.id));
     this.dialog.open(FornecedorFormDialog, { ...DIALOG_FORNECEDOR, data: null }).afterClosed().subscribe((ok) => {
       if (!ok) {
@@ -205,6 +210,8 @@ export class VincularFornecedorDialog {
     });
   }
 }
+
+const NOVO_FORNECEDOR = '__novo-fornecedor__';
 
 function normalizar(texto: string): string {
   return texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();

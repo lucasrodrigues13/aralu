@@ -1480,6 +1480,8 @@ export interface Oportunidade {
   contratante?: DadosContratante | null;
   /** Nome, CPF/CNPJ, estado civil, nacionalidade, e-mail, celular e endereço completo preenchidos (SPEC-049). */
   dadosContratoCompletos?: boolean;
+  /** Evento criado a partir do lead contratado; com ele, o quadro não oferece "Criar evento" de novo (card #66). */
+  eventoId?: string | null;
 }
 
 export type SituacaoProposta = 'NaoAberta' | 'Aberta' | 'Aceita' | 'Duvidas' | 'Recusada';

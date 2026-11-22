@@ -9,12 +9,13 @@ import { MatSelectModule } from '@angular/material/select';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { NegocioClient, TIPOS } from '../../core/negocio.client';
 import { CampoDataComponent } from '../../shared/campo-data';
+import { MascaraDirective } from '../../shared/mascara.directive';
 import { deDataParaIso } from '../../shared/data';
 import { ToastService } from '../../core/toast.service';
 
 @Component({
   selector: 'app-lead-publico',
-  imports: [ReactiveFormsModule, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, CampoDataComponent],
+  imports: [ReactiveFormsModule, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, CampoDataComponent, MascaraDirective],
   template: `
     <section class="flex min-h-screen w-full items-center justify-center p-4 bg-light">
       <mat-card class="cardWithShadow w-full max-w-[440px] mb-0!">
@@ -33,7 +34,7 @@ import { ToastService } from '../../core/toast.service';
               <div class="campo">
                 <mat-label class="font-semibold mb-2 block">Telefone</mat-label>
                 <mat-form-field appearance="outline" class="w-full">
-                <input [attr.aria-label]="'Telefone'" matInput formControlName="telefone" />
+                <input [attr.aria-label]="'Telefone'" matInput formControlName="telefone" gdMascara="celular" />
               </mat-form-field>
               </div>
               <div class="campo">

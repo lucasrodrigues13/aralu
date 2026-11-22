@@ -94,6 +94,9 @@ public sealed class Oportunidade
     /// <summary>Cliente criado a partir do lead ao fechar o negócio.</summary>
     public Guid? ClienteId { get; set; }
 
+    /// <summary>Evento criado a partir do lead contratado (card #66). Com ele preenchido, o lead não cria outro.</summary>
+    public Guid? EventoId { get; set; }
+
     public DateTimeOffset CriadoEm { get; set; }
 
     /// <summary>Id do usuário que criou. Nulo nos itens antigos e nos leads do formulário público (SPEC-032 §18, passo 1).</summary>

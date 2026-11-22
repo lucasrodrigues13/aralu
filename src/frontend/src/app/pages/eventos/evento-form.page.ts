@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -13,6 +13,7 @@ import { AuthService } from '../../core/auth.service';
 import { NegocioClient } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { CampoDataComponent } from '../../shared/campo-data';
+import { camposDoTipo } from '../../shared/campos-por-tipo';
 import { CampoDinheiroComponent } from '../../shared/campo-dinheiro';
 import { CampoHoraComponent } from '../../shared/campo-hora';
 import { deDataParaIso, deIsoParaData } from '../../shared/data';
@@ -21,6 +22,8 @@ import { grupoLocal, localPedido, LocalCamposComponent } from '../../shared/loca
 import { aplicarMascara, horaParaApi } from '../../shared/mascaras';
 import { MoverPrazosDialog } from './mover-prazos.dialog';
 import { nomesDosNoivos } from './noivos-do-evento';
+
+type LocalDoEvento = { nome: string | null; pais: string | null; cep: string | null; endereco: string | null; numero: string | null; estado: string | null; cidade: string | null; bairro: string | null };
 
 export interface EventoFormDados {
   id?: string;
@@ -51,8 +54,8 @@ export interface EventoFormDados {
                   </div>
                 } @else {
                   <div class="campo sm:col-span-2">
-                    <mat-label class="font-semibold mb-2 block">Nome</mat-label>
-                    <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Nome'" matInput formControlName="primeiroNome" /></mat-form-field>
+                    <mat-label class="font-semibold mb-2 block">{{ campos().rotuloNome }}</mat-label>
+                    <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="campos().rotuloNome" matInput formControlName="primeiroNome" /></mat-form-field>
                   </div>
                 }
                 <app-campo-data rotulo="Data" formControlName="data" />
@@ -92,8 +95,11 @@ export interface EventoFormDados {
             <mat-tab label="Detalhes">
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
                 <app-campo-hora rotulo="Tempo de festa" formControlName="tempoFesta" />
-                <app-campo-hora rotulo="Início da cerimônia" formControlName="inicioCerimonia" />
-                <app-campo-hora rotulo="Início da recepção" formControlName="inicioRecepcao" />
+                @if (campos().doisLocais) {
+                  <app-campo-hora [rotulo]="campos().rotuloInicioPrimeiro" formControlName="inicioCerimonia" />
+                }
+                <app-campo-hora [rotulo]="campos().rotuloInicio" formControlName="inicioRecepcao" />
+                @if (campos().padrinhosEDamas) {
                 <div class="campo">
                   <mat-label class="font-semibold mb-2 block">Padrinhos</mat-label>
                   <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Padrinhos'" matInput type="number" min="0" formControlName="quantidadePadrinhos" /></mat-form-field>
@@ -102,12 +108,15 @@ export interface EventoFormDados {
                   <mat-label class="font-semibold mb-2 block">Damas e pajens</mat-label>
                   <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Damas e pajens'" matInput type="number" min="0" formControlName="quantidadeDamas" /></mat-form-field>
                 </div>
+                }
               </div>
             </mat-tab>
-            <mat-tab label="Cerimônia">
+            @if (campos().doisLocais) {
+            <mat-tab [label]="campos().rotuloPrimeiroLocal">
               <app-local-campos [grupo]="formulario.controls.cerimonia" />
             </mat-tab>
-            <mat-tab label="Recepção">
+            }
+            <mat-tab [label]="campos().rotuloLocal">
               <app-local-campos [grupo]="formulario.controls.recepcao" />
             </mat-tab>
           </mat-tab-group>
@@ -132,6 +141,7 @@ export class EventoFormPage implements OnInit {
   protected readonly assistentesAtivas = signal<Assistente[]>([]);
   protected readonly assistentesDoEvento = signal<string[] | null>(null);
   protected readonly tipo = signal('');
+  protected readonly campos = computed(() => camposDoTipo(this.tipo()));
   protected readonly urlSite = signal('');
   private foto: File | null = null;
   protected id = '';
@@ -187,8 +197,7 @@ export class EventoFormPage implements OnInit {
             inicioRecepcao: (evento.inicioRecepcao ?? '').slice(0, 5),
             quantidadePadrinhos: evento.quantidadePadrinhos?.toString() ?? '',
             quantidadeDamas: evento.quantidadeDamas?.toString() ?? '',
-            cerimonia: this.localParaGrupo(evento.cerimonia),
-            recepcao: this.localParaGrupo(evento.recepcao),
+            ...this.locaisParaGrupos(evento.tipo, evento.cerimonia, evento.recepcao),
           });
           if (evento.tipo === 'Casamento') {
             this.preencherNoivos(evento.primeiroNome, evento.segundoNome, evento.nome);
@@ -307,7 +316,19 @@ export class EventoFormPage implements OnInit {
     };
   }
 
-  private localParaGrupo(local: { nome: string | null; pais: string | null; cep: string | null; endereco: string | null; numero: string | null; estado: string | null; cidade: string | null; bairro: string | null }) {
+  /**
+   * Tipo com um local só mostra apenas a recepção. Evento antigo desse tipo que tinha só a
+   * cerimônia preenchida passa esse local para a recepção, para não ficar escondido.
+   */
+  private locaisParaGrupos(tipo: string, cerimonia: LocalDoEvento, recepcao: LocalDoEvento) {
+    const vazio = (local: LocalDoEvento) => !local.nome && !local.endereco && !local.cep;
+    if (!camposDoTipo(tipo).doisLocais && vazio(recepcao) && !vazio(cerimonia)) {
+      return { cerimonia: this.localParaGrupo(recepcao), recepcao: this.localParaGrupo(cerimonia) };
+    }
+    return { cerimonia: this.localParaGrupo(cerimonia), recepcao: this.localParaGrupo(recepcao) };
+  }
+
+  private localParaGrupo(local: LocalDoEvento) {
     return {
       nome: local.nome ?? '',
       pais: local.pais ?? '',

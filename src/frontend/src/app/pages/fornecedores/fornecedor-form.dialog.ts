@@ -2,8 +2,10 @@ import { HttpBackend, HttpClient } from '@angular/common/http';
 import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatChipsModule } from '@angular/material/chips';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -41,7 +43,7 @@ export const DIALOG_FORNECEDOR = DIALOG_LARGO;
 
 @Component({
   selector: 'app-fornecedor-form-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatCheckboxModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatTabsModule, MatIconModule, MascaraDirective, CampoDinheiroComponent, MatTooltipModule],
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatCheckboxModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatTabsModule, MatIconModule, MatAutocompleteModule, MatChipsModule, MascaraDirective, CampoDinheiroComponent, MatTooltipModule],
   template: `
     <h2 mat-dialog-title>{{ dados ? 'Editar fornecedor' : 'Novo fornecedor' }}</h2>
     <mat-dialog-content>
@@ -57,28 +59,35 @@ export const DIALOG_FORNECEDOR = DIALOG_LARGO;
                 <div class="campo">
                   <mat-label class="font-semibold mb-2 block">Serviços</mat-label>
                   <mat-form-field appearance="outline" class="w-full">
-                  <mat-select [attr.aria-label]="'Serviços'" formControlName="servicoContaIds" multiple (openedChange)="aoAbrirServicos($event, buscaServico)" (selectionChange)="aoMudarServicos($event.value)">
-                    <mat-option class="opcao-busca" disabled>
+                    <mat-icon matIconPrefix>search</mat-icon>
+                    <mat-chip-grid #chipsServicos aria-label="Serviços do fornecedor">
+                      @for (servico of servicosMarcados(); track servico.id) {
+                        <mat-chip-row (removed)="desmarcarServico(servico.id)">
+                          {{ servico.nome }}
+                          <button matChipRemove type="button" [attr.aria-label]="'Remover ' + servico.nome"><mat-icon>cancel</mat-icon></button>
+                        </mat-chip-row>
+                      }
                       <input
                         #buscaServico
-                        class="input-busca"
-                        placeholder="Buscar serviço"
                         aria-label="Buscar serviço"
+                        placeholder="Buscar serviço"
                         [value]="termoServico()"
                         (input)="filtrarServico($event)"
-                        (keydown)="$event.stopPropagation()"
-                        (click)="$event.stopPropagation()"
+                        (blur)="form.controls.servicoContaIds.markAsTouched()"
+                        [matChipInputFor]="chipsServicos"
+                        [matAutocomplete]="listaServicos"
                       />
-                    </mat-option>
-                    @for (servico of servicos(); track servico.id) {
-                      <mat-option [value]="servico.id" [class.oculta]="!servicoCombina(servico, termoServico())">{{ servico.nome }}</mat-option>
-                    }
-                    @if (nenhumServico()) {
-                      <mat-option disabled>Nenhum serviço encontrado</mat-option>
-                    }
-                    <mat-option [value]="novoServico">Cadastrar novo serviço</mat-option>
-                  </mat-select>
-                </mat-form-field>
+                    </mat-chip-grid>
+                    <mat-autocomplete #listaServicos="matAutocomplete" class="painel-com-criar" (optionSelected)="escolherServico($event.option.value, buscaServico)">
+                      <mat-option class="opcao-criar" [value]="novoServico"><mat-icon>add</mat-icon> Criar novo serviço</mat-option>
+                      @for (servico of servicosDisponiveis(); track servico.id) {
+                        <mat-option [value]="servico.id">{{ servico.nome }}</mat-option>
+                      } @empty {
+                        <mat-option disabled>Nenhum serviço encontrado</mat-option>
+                      }
+                    </mat-autocomplete>
+                    @if (form.controls.servicoContaIds.invalid && form.controls.servicoContaIds.touched) { <mat-error>Escolha ao menos um serviço.</mat-error> }
+                  </mat-form-field>
                 </div>
                 <div class="campo">
                   <mat-label class="font-semibold mb-2 block">Razão social</mat-label>
@@ -362,7 +371,6 @@ export const DIALOG_FORNECEDOR = DIALOG_LARGO;
     }
     .linha.email { grid-template-columns: minmax(0, 1fr) auto; }
     .linha.orcamento { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto auto; }
-    :host ::ng-deep .oculta { display: none; }
     .acao { align-self: flex-start; justify-self: start; }
     .full { width: 100%; }
     @media (max-width: 720px) {
@@ -385,10 +393,16 @@ export class FornecedorFormDialog implements OnInit {
   protected readonly servicos = signal<ServicoConta[]>([]);
   protected readonly termoServico = signal('');
   protected readonly novoServico = NOVO_SERVICO;
-  protected readonly servicoCombina = servicoCombina;
-  protected readonly nenhumServico = computed(() => {
-    const lista = this.servicos();
-    return lista.length > 0 && !lista.some((servico) => servicoCombina(servico, this.termoServico()));
+  private readonly idsMarcados = signal<string[]>(this.dados?.servicoContaIds ?? []);
+  /** Serviços marcados, na ordem em que foram escolhidos (viram os chips do campo). */
+  protected readonly servicosMarcados = computed(() => {
+    const porId = new Map(this.servicos().map((servico) => [servico.id, servico]));
+    return this.idsMarcados().map((id) => porId.get(id)).filter((servico): servico is ServicoConta => !!servico);
+  });
+  /** O que ainda pode ser escolhido: não marcados e que combinam com a busca. */
+  protected readonly servicosDisponiveis = computed(() => {
+    const marcados = new Set(this.idsMarcados());
+    return this.servicos().filter((servico) => !marcados.has(servico.id) && servicoCombina(servico, this.termoServico()));
   });
   protected readonly bancos = signal<BancoBrasil[]>([]);
   protected readonly termoBanco = signal('');
@@ -449,6 +463,9 @@ export class FornecedorFormDialog implements OnInit {
 
   ngOnInit(): void {
     this.sincronizarPix(false);
+    this.form.controls.servicoContaIds.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((ids) => this.idsMarcados.set(ids ?? []));
     this.form.controls.pixTipo.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.sincronizarPix(true));
     this.negocio.servicosConta().subscribe({
       next: (lista) => this.servicos.set(lista),
@@ -488,26 +505,26 @@ export class FornecedorFormDialog implements OnInit {
     this.termoServico.set((evento.target as HTMLInputElement).value);
   }
 
-  protected aoAbrirServicos(aberto: boolean, campo: HTMLInputElement): void {
-    if (!aberto) {
-      return;
-    }
-    this.termoServico.set('');
-    campo.value = '';
-    setTimeout(() => campo.focus());
+  protected desmarcarServico(id: string): void {
+    const controle = this.form.controls.servicoContaIds;
+    controle.setValue((controle.value ?? []).filter((item) => item !== id));
+    controle.markAsTouched();
   }
 
-  protected aoMudarServicos(valor: string[]): void {
-    if (!valor.includes(NOVO_SERVICO)) {
+  protected escolherServico(valor: string, campo: HTMLInputElement): void {
+    const termo = this.termoServico().trim();
+    this.termoServico.set('');
+    campo.value = '';
+    const controle = this.form.controls.servicoContaIds;
+    if (valor !== NOVO_SERVICO) {
+      controle.setValue(marcarServico(controle.value ?? [], valor));
       return;
     }
-    this.form.controls.servicoContaIds.setValue(valor.filter((id) => id !== NOVO_SERVICO));
-    this.dialog.open(NovoServicoDialog, DIALOG_PEQUENO).afterClosed().subscribe((criados?: ServicoConta[]) => {
+    this.dialog.open(NovoServicoDialog, { ...DIALOG_PEQUENO, data: { nome: termo } }).afterClosed().subscribe((criados?: ServicoConta[]) => {
       if (!criados?.length) {
         return;
       }
       this.servicos.update((lista) => criados.reduce(incluirServico, lista));
-      const controle = this.form.controls.servicoContaIds;
       controle.setValue(criados.reduce((ids, servico) => marcarServico(ids, servico.id), controle.value ?? []));
     });
   }

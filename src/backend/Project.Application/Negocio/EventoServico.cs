@@ -41,7 +41,9 @@ public sealed record SalvarEvento(
     ClienteRapido? ClienteNovo = null,
     string? Local = null,
     /// <summary>Na edição: true move prazos das tarefas não concluídas; false mantém (SPEC-012 §6.6).</summary>
-    bool? MoverPrazos = null);
+    bool? MoverPrazos = null,
+    /// <summary>Na criação: lead contratado de onde o evento vem (card #66). Completa o que faltar com os dados dele.</summary>
+    Guid? OportunidadeId = null);
 
 /// <summary>Cliente criado junto com o evento: só nome e WhatsApp (SPEC-008 v2).</summary>
 public sealed record ClienteRapido(string? Nome, string? WhatsApp);
@@ -226,6 +228,26 @@ public sealed class EventoServico(IDados dados, IConsultaCep cep)
             recepcao.Valor.Nome = local;
         }
 
+        Domain.Funil.Oportunidade? oportunidade = null;
+        if (pedido.OportunidadeId is Guid oportunidadeId)
+        {
+            oportunidade = await dados.ObterOportunidadeAsync(contaId, oportunidadeId, ct);
+            if (oportunidade is null)
+            {
+                return Resultado<EventoDetalhe>.Erro(Codigos.Validacao, "Oportunidade não encontrada.");
+            }
+
+            if (oportunidade.EstagioFunil?.Tipo != Domain.Funil.TipoEstagioFunil.Contratado)
+            {
+                return Resultado<EventoDetalhe>.Erro(Codigos.Validacao, "Só um lead contratado pode virar evento.");
+            }
+
+            if (oportunidade.EventoId is not null)
+            {
+                return Resultado<EventoDetalhe>.Erro(Codigos.Validacao, "Esta oportunidade já virou evento.");
+            }
+        }
+
         var evento = new Evento
         {
             Id = Guid.NewGuid(),
@@ -253,6 +275,16 @@ public sealed class EventoServico(IDados dados, IConsultaCep cep)
             QuantidadePadrinhos = pedido.QuantidadePadrinhos,
             QuantidadeDamas = pedido.QuantidadeDamas,
         };
+
+        if (oportunidade is not null)
+        {
+            EventoDaOportunidade.Completar(evento, oportunidade);
+            oportunidade.EventoId = evento.Id;
+            if (pedido.SalvarNaAgenda is null)
+            {
+                evento.SalvarNaAgenda = evento.Data is not null;
+            }
+        }
 
         var agenda = evento.SalvarNaAgenda && evento.Data is not null
             ? new CompromissoAgenda

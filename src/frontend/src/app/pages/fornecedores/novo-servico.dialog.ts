@@ -2,7 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { Observable, map } from 'rxjs';
@@ -10,6 +10,10 @@ import { mensagemDeErro } from '../../core/mensagem-erro';
 import { NegocioClient, ServicoConta } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { nomesDaLista } from './busca-servico';
+
+export interface NovoServicoDados {
+  nome?: string;
+}
 
 /** Fecha com a lista de serviços criados (ou já existentes com o mesmo nome). */
 @Component({
@@ -48,9 +52,11 @@ export class NovoServicoDialog {
   private readonly negocio = inject(NegocioClient);
   private readonly toast = inject(ToastService);
   protected readonly ref = inject(MatDialogRef<NovoServicoDialog, ServicoConta[]>);
-  protected readonly emMassa = signal(false);
-  protected readonly nome = this.fb.nonNullable.control('', Validators.required);
-  protected readonly nomes = this.fb.nonNullable.control('', Validators.required);
+  /** Texto já digitado na busca de quem abriu o modal; com vírgula, já abre no modo em massa. */
+  private readonly inicial = (inject<NovoServicoDados | null>(MAT_DIALOG_DATA, { optional: true })?.nome ?? '').trim();
+  protected readonly emMassa = signal(this.inicial.includes(','));
+  protected readonly nome = this.fb.nonNullable.control(this.emMassa() ? '' : this.inicial, Validators.required);
+  protected readonly nomes = this.fb.nonNullable.control(this.emMassa() ? this.inicial : '', Validators.required);
 
   protected salvar(): void {
     const pedido = this.emMassa() ? this.pedidoEmMassa() : this.pedidoUnico();

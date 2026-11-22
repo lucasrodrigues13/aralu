@@ -148,6 +148,9 @@ public static class Mapa
         var oportunidade = modelBuilder.Entity<Oportunidade>();
         oportunidade.HasIndex(item => item.ContaId);
         oportunidade.HasOne(item => item.EstagioFunil).WithMany().HasForeignKey(item => item.EstagioFunilId).OnDelete(DeleteBehavior.Restrict);
+        // Um evento por lead; excluir o evento libera o lead para criar outro.
+        oportunidade.HasIndex(item => item.EventoId).IsUnique().HasFilter("\"EventoId\" IS NOT NULL");
+        oportunidade.HasOne<Evento>().WithMany().HasForeignKey(item => item.EventoId).OnDelete(DeleteBehavior.SetNull);
 
         var estagio = modelBuilder.Entity<EstagioFunil>();
         estagio.ToTable("EstagiosFunil");

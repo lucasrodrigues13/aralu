@@ -55,7 +55,8 @@ public sealed record OportunidadeLeitura(
     TimeOnly? HoraFesta = null,
     string? CriadoPor = null,
     ContratanteDados? Contratante = null,
-    bool DadosContratoCompletos = false);
+    bool DadosContratoCompletos = false,
+    Guid? EventoId = null);
 
 public sealed record ContatoOportunidadePedido(string? Nome, string? Telefone, string? Email, bool Contratante = false);
 
@@ -786,6 +787,7 @@ public sealed class OportunidadeServico(IDados dados)
             horarios.Festa,
             item.CriadoPor,
             ContratanteRegras.Ler(item),
-            ContratanteRegras.Faltando(ContratanteRegras.Ler(item)).Count == 0);
+            ContratanteRegras.Faltando(ContratanteRegras.Ler(item)).Count == 0,
+            item.EventoId);
     }
 }

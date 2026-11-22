@@ -515,7 +515,8 @@ export class EventoFornecedoresPage implements OnInit {
       return;
     }
     const dados: VincularFornecedorDados = { servicos: atual.servicos, fornecedores: this.fornecedores(), servicoId: servico?.id };
-    this.dialog.open(VincularFornecedorDialog, { ...DIALOG, data: dados }).afterClosed().subscribe((pedido?: VincularFornecedorPedido) => {
+    // Foco no modal, não no campo: o autocomplete abriria a lista assim que o modal aparece.
+    this.dialog.open(VincularFornecedorDialog, { ...DIALOG, autoFocus: 'dialog', data: dados }).afterClosed().subscribe((pedido?: VincularFornecedorPedido) => {
       if (pedido) {
         void this.gravarVinculos(pedido, atual);
       }

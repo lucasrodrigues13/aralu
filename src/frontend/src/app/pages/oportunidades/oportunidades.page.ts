@@ -1,5 +1,5 @@
 import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { debounceTime } from 'rxjs';
 import { FormArray, FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -40,15 +40,18 @@ import { DIALOG, DIALOG_LARGO, DIALOG_PEQUENO } from '../../shared/dialog';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { GdDinheiroPipe } from '../../shared/gd-dinheiro.pipe';
 import { grupoLocal, localPedido, LocalCamposComponent } from '../../shared/local-campos';
+import { camposDoTipo } from '../../shared/campos-por-tipo';
+import { MascaraDirective } from '../../shared/mascara.directive';
 import { linkProposta, SELO_PROPOSTA } from '../../shared/proposta';
 import { OpcaoResponsavel, opcoesEquipe } from '../../shared/responsaveis';
 import { STATUS } from '../../shared/status';
 import { ClienteFormDialog } from '../clientes/cliente-form.dialog';
+import { NovoEventoDados, NovoEventoDialog } from '../eventos/novo-evento.dialog';
 import { EstagiosFunilDialog } from './estagios-funil.dialog';
 
 @Component({
   selector: 'app-oportunidade-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatCheckboxModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, CampoDataComponent, CampoHoraComponent, CampoDinheiroComponent, LocalCamposComponent, ContratanteCamposComponent],
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatCheckboxModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, CampoDataComponent, CampoHoraComponent, CampoDinheiroComponent, LocalCamposComponent, ContratanteCamposComponent, MascaraDirective],
   template: `
     <h2 mat-dialog-title>{{ dados ? 'Editar oportunidade' : 'Nova oportunidade' }}</h2>
     <mat-dialog-content>
@@ -81,7 +84,7 @@ import { EstagiosFunilDialog } from './estagios-funil.dialog';
               </div>
               <div class="campo">
                 <mat-label class="font-semibold mb-2 block">Telefone</mat-label>
-                <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Telefone'" matInput formControlName="telefone" /></mat-form-field>
+                <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Telefone'" matInput formControlName="telefone" gdMascara="celular" /></mat-form-field>
               </div>
               <div class="campo">
                 <mat-label class="font-semibold mb-2 block">E-mail</mat-label>
@@ -124,15 +127,22 @@ import { EstagiosFunilDialog } from './estagios-funil.dialog';
           <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Convidados'" matInput type="number" formControlName="quantidadeConvidados" /></mat-form-field>
         </div>
         <app-campo-hora rotulo="Horário do convite" formControlName="horaConvite" />
-        <app-campo-hora rotulo="Horário da cerimônia" formControlName="horaCerimonia" />
-        <app-campo-hora rotulo="Horário da recepção" formControlName="horaRecepcao" />
+        @if (campos().doisLocais) {
+          <app-campo-hora [rotulo]="'Horário da ' + campos().rotuloPrimeiroLocal.toLowerCase()" formControlName="horaCerimonia" />
+          <app-campo-hora [rotulo]="'Horário da ' + campos().rotuloLocal.toLowerCase()" formControlName="horaRecepcao" />
+        }
         <app-campo-hora rotulo="Horário da festa" formControlName="horaFesta" />
 
-        <h3>Locais</h3>
-        <h4>Cerimônia</h4>
-        <app-local-campos [grupo]="form.controls.cerimonia" />
-        <h4>Recepção</h4>
-        <app-local-campos [grupo]="form.controls.recepcao" />
+        @if (campos().doisLocais) {
+          <h3>Locais</h3>
+          <h4>{{ campos().rotuloPrimeiroLocal }}</h4>
+          <app-local-campos [grupo]="form.controls.cerimonia" />
+          <h4>{{ campos().rotuloLocal }}</h4>
+          <app-local-campos [grupo]="form.controls.recepcao" />
+        } @else {
+          <h3>{{ campos().rotuloLocal }}</h3>
+          <app-local-campos [grupo]="form.controls.recepcao" />
+        }
 
         <h3>Comercial</h3>
         <div class="campo">
@@ -192,10 +202,7 @@ import { EstagiosFunilDialog } from './estagios-funil.dialog';
         </div>
         <div class="grid grid-cols-2 gap-4">
           <app-campo-data formControlName="retornarEm" rotulo="Retornar em" />
-          <div class="campo">
-            <mat-label class="font-semibold mb-2 block">Hora (opcional)</mat-label>
-            <mat-form-field appearance="outline" class="w-full"><input aria-label="Hora do retorno" matInput type="time" formControlName="retornarHora" /></mat-form-field>
-          </div>
+          <app-campo-hora formControlName="retornarHora" rotulo="Hora (opcional)" />
         </div>
 
         <h3>Dados para contrato <span class="text-xs text-muted font-normal">(opcional)</span></h3>
@@ -306,13 +313,16 @@ export class OportunidadeDialog implements OnInit {
       (this.dados?.contatos?.length ? this.dados.contatos : [{ nome: '', telefone: '', email: '', contratante: false }]).map((c) =>
         this.fb.nonNullable.group({
           nome: [c.nome ?? '', Validators.required],
-          telefone: [c.telefone ?? ''],
+          telefone: [aplicarMascara(c.telefone ?? '', 'celular')],
           email: [c.email ?? ''],
           contratante: [c.contratante ?? false],
         }),
       ),
     ),
   });
+  /** Campos de horário e locais conforme o tipo do evento (card #67). */
+  private readonly tipoEscolhido = toSignal(this.form.controls.tipoEvento.valueChanges, { initialValue: this.form.controls.tipoEvento.value });
+  protected readonly campos = computed(() => camposDoTipo(this.tipoEscolhido()));
 
   protected get contatos(): FormArray {
     return this.form.controls.contatos;
@@ -449,7 +459,7 @@ export class OportunidadeDialog implements OnInit {
         fonte: v.fonte || null,
         fonteOutro: v.fonte === 'Outro' ? v.fonteOutro.trim() : null,
         retornarEm: deDataParaIso(v.retornarEm),
-        retornarHora: v.retornarEm && v.retornarHora ? v.retornarHora : null,
+        retornarHora: v.retornarEm ? horaParaApi(v.retornarHora) : null,
         valorProposta: v.valorProposta,
         responsavel: v.responsavel,
         modeloServicoFunilId: v.modeloServicoFunilId,
@@ -553,7 +563,7 @@ export type ResultadoRetorno = { data: string; hora: string | null } | null;
 /** Marca, muda ou limpa a data de retorno do lead (SPEC-031 §6.3). */
 @Component({
   selector: 'app-retorno-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, CampoDataComponent],
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, CampoDataComponent, CampoHoraComponent],
   template: `
     <h2 mat-dialog-title>{{ dados.modo === 'retornei' ? 'Próximo retorno' : 'Retornar em' }}</h2>
     <mat-dialog-content>
@@ -562,10 +572,7 @@ export type ResultadoRetorno = { data: string; hora: string | null } | null;
       </p>
       <div class="grid grid-cols-2 gap-4">
         <app-campo-data [formControl]="data" rotulo="Data" />
-        <div class="campo">
-          <mat-label class="font-semibold mb-2 block">Hora (opcional)</mat-label>
-          <mat-form-field appearance="outline" class="w-full"><input aria-label="Hora do retorno" matInput type="time" [formControl]="hora" /></mat-form-field>
-        </div>
+        <app-campo-hora [formControl]="hora" rotulo="Hora (opcional)" />
       </div>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
@@ -589,7 +596,7 @@ export class RetornoDialog {
       this.data.markAsTouched();
       return;
     }
-    this.ref.close({ data: iso, hora: this.hora.value || null });
+    this.ref.close({ data: iso, hora: horaParaApi(this.hora.value) });
   }
 }
 
@@ -902,6 +909,17 @@ matTooltip="Ações do lead"
                     }
                   }
                 }
+                @if (item.tipoEstagio === 'Contratado') {
+                  @if (item.eventoId) {
+                    <a [class]="status.info" [routerLink]="['/eventos', item.eventoId]" (click)="$event.stopPropagation()">
+                      <mat-icon class="selo">event_available</mat-icon> Evento
+                    </a>
+                  } @else {
+                    <button mat-flat-button type="button" class="acao-lead" (click)="$event.stopPropagation(); criarEvento(item)">
+                      <mat-icon>event</mat-icon> Criar evento
+                    </button>
+                  }
+                }
               </footer>
             </article>
           } @empty {
@@ -1157,6 +1175,24 @@ export class OportunidadesPage implements OnInit {
    * Fim do funil: abre o cadastro de cliente já preenchido com o contato do lead.
    * Ao salvar, o lead fica ligado ao cliente e vai para Contratado.
    */
+  /** Lead contratado vira evento: o modal de novo evento abre já preenchido com a oportunidade (card #66). */
+  protected criarEvento(item: Oportunidade): void {
+    const dados: NovoEventoDados = {
+      oportunidadeId: item.id,
+      tipo: item.tipoEvento,
+      nome: item.nome,
+      data: item.dataPrevista,
+      hora: item.horaConvite ?? null,
+      convidados: item.quantidadeConvidados,
+      localCerimonia: item.localCerimonia,
+      localRecepcao: item.localRecepcao,
+      clienteId: item.clienteId,
+    };
+    this.dialog.open(NovoEventoDialog, { ...DIALOG_LARGO, autoFocus: 'dialog', data: dados }).afterClosed().subscribe((id?: string) => {
+      if (id) this.carregar();
+    });
+  }
+
   protected virarCliente(item: Oportunidade): void {
     // O cadastro abre com tudo o que a oportunidade já sabe (SPEC-049 §6.5); o contratante vem antes do primeiro contato.
     const contato = item.contatos.find((c) => c.contratante) ?? item.contatos[0];

@@ -176,6 +176,50 @@ public class FunilFluxoTests
     }
 
     [Fact]
+    public async Task Lead_contratado_vira_evento_uma_vez_com_os_dados_da_oportunidade()
+    {
+        var dono = await Entrar();
+        var outra = await Entrar();
+
+        var lead = await Ler(await dono.PostAsJsonAsync("/api/v1/oportunidades", new
+        {
+            nome = "Aniversário Lia",
+            estagio = "Orçamento enviado",
+            tipoEvento = "Aniversario",
+            dataPrevista = "2027-03-10",
+            quantidadeConvidados = 80,
+            horaFesta = "19:30:00",
+            localRecepcao = "Salão Azul",
+            enderecoRecepcao = "Rua das Flores",
+            numeroRecepcao = "100",
+            contatos = new[] { new { nome = "Lia", telefone = "11955554444", email = "lia@ex.com" } },
+        }));
+        var leadId = lead.GetProperty("id").GetGuid();
+        var pedido = new { tipo = "Aniversario", primeiroNome = "Lia", oportunidadeId = leadId, recepcao = new { nome = "Salão Azul" } };
+
+        // Só lead contratado vira evento.
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PostAsJsonAsync("/api/v1/eventos", pedido)).StatusCode);
+        await Ler(await dono.PostAsJsonAsync($"/api/v1/oportunidades/{leadId}/mover", new { estagio = "Contratado" }));
+        Assert.Equal(HttpStatusCode.BadRequest, (await outra.PostAsJsonAsync("/api/v1/eventos", pedido)).StatusCode);
+
+        var evento = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", pedido));
+        var eventoId = evento.GetProperty("id").GetGuid();
+        Assert.Equal("2027-03-10", evento.GetProperty("data").GetString()![..10]);
+        Assert.Equal(80, evento.GetProperty("convidadosEstimados").GetInt32());
+        Assert.Equal("Rua das Flores", evento.GetProperty("recepcao").GetProperty("endereco").GetString());
+        Assert.Equal("100", evento.GetProperty("recepcao").GetProperty("numero").GetString());
+        Assert.Equal("19:30:00", evento.GetProperty("inicioRecepcao").GetString());
+        // Aniversário tem um local só: a cerimônia fica vazia.
+        Assert.Equal(JsonValueKind.Null, evento.GetProperty("cerimonia").GetProperty("nome").ValueKind);
+
+        var depois = await Ler(await dono.GetAsync($"/api/v1/oportunidades/{leadId}"));
+        Assert.Equal(eventoId, depois.GetProperty("eventoId").GetGuid());
+
+        // O mesmo lead não vira um segundo evento.
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PostAsJsonAsync("/api/v1/eventos", pedido)).StatusCode);
+    }
+
+    [Fact]
     public async Task Excluir_cliente_do_funil_mantem_a_oportunidade_e_bloqueia_cliente_de_evento()
     {
         var dono = await Entrar();

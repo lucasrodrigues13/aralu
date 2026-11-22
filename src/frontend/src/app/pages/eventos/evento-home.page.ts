@@ -1,4 +1,6 @@
-import { Component, ElementRef, inject, OnDestroy, OnInit, signal, viewChild } from '@angular/core';
+import { Component, computed, ElementRef, inject, OnDestroy, OnInit, signal, viewChild } from '@angular/core';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatInputModule } from '@angular/material/input';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -18,6 +20,7 @@ import { GdDinheiroPipe } from '../../shared/gd-dinheiro.pipe';
 import { GdHoraPipe } from '../../shared/gd-hora.pipe';
 import { STATUS } from '../../shared/status';
 import { ClienteFormDialog } from '../clientes/cliente-form.dialog';
+import { normalizarBusca } from '../fornecedores/busca-servico';
 import { EventoAbasComponent } from './evento-abas.component';
 import { AplicarModeloDialog } from './aplicar-modelo.dialog';
 import { EventoFormPage } from './evento-form.page';
@@ -29,7 +32,7 @@ import { SalvarComoModeloDialog } from './salvar-como-modelo.dialog';
 /** Clientes do evento: vincular existente, cadastrar novo ou desvincular. */
 @Component({
   selector: 'app-clientes-evento-dialog',
-  imports: [MatDialogModule, MatButtonModule, MatFormFieldModule, MatSelectModule, MatIconModule],
+  imports: [MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatAutocompleteModule, MatIconModule],
   template: `
     <h2 mat-dialog-title>Clientes do evento</h2>
     <p class="text-muted text-sm px-6 -mt-2 mb-4">Quem contratou ou acompanha o evento.</p>
@@ -49,18 +52,20 @@ import { SalvarComoModeloDialog } from './salvar-como-modelo.dialog';
           }
         </ul>
       }
-      <div class="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-4 items-end mt-4">
-        <div class="campo">
-          <mat-label class="font-semibold mb-2 block">Vincular cliente da conta</mat-label>
-          <mat-form-field appearance="outline" class="w-full">
-          <mat-select [attr.aria-label]="'Vincular cliente da conta'" (valueChange)="vincular($event)">
-            @for (cliente of disponiveis(); track cliente.id) {
+      <div class="campo mt-4">
+        <mat-label class="font-semibold mb-2 block">Vincular cliente</mat-label>
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-icon matIconPrefix>search</mat-icon>
+          <input #buscaCliente matInput aria-label="Vincular cliente" placeholder="Buscar cliente" [value]="busca()" (input)="busca.set(buscaCliente.value)" [matAutocomplete]="listaClientes" />
+          <mat-autocomplete #listaClientes="matAutocomplete" class="painel-com-criar" (optionSelected)="escolher($event.option.value, buscaCliente)">
+            <mat-option class="opcao-criar" [value]="novoCliente"><mat-icon>person_add</mat-icon> Criar novo cliente</mat-option>
+            @for (cliente of filtrados(); track cliente.id) {
               <mat-option [value]="cliente.id">{{ cliente.nome }}</mat-option>
+            } @empty {
+              <mat-option disabled>Nenhum cliente encontrado</mat-option>
             }
-          </mat-select>
+          </mat-autocomplete>
         </mat-form-field>
-        </div>
-        <button mat-stroked-button type="button" (click)="novo()"><mat-icon>person_add</mat-icon> Cadastrar novo</button>
       </div>
     </mat-dialog-content>
     <mat-dialog-actions>
@@ -75,9 +80,26 @@ export class ClientesEventoDialog implements OnInit {
   private readonly eventoId = inject<string>(MAT_DIALOG_DATA);
   protected readonly vinculados = signal<Cliente[]>([]);
   protected readonly disponiveis = signal<Cliente[]>([]);
+  protected readonly busca = signal('');
+  protected readonly novoCliente = '__novo-cliente__';
+  protected readonly filtrados = computed(() => {
+    const termo = normalizarBusca(this.busca());
+    return this.disponiveis().filter((cliente) => !termo || normalizarBusca(cliente.nome).includes(termo));
+  });
 
   ngOnInit(): void {
     this.carregar();
+  }
+
+  protected escolher(valor: string, campo: HTMLInputElement): void {
+    const termo = this.busca().trim();
+    this.busca.set('');
+    campo.value = '';
+    if (valor === this.novoCliente) {
+      this.novo(termo);
+      return;
+    }
+    this.vincular(valor);
   }
 
   protected rotulo(papel: string | null): string {
@@ -105,8 +127,8 @@ export class ClientesEventoDialog implements OnInit {
     });
   }
 
-  protected novo(): void {
-    this.dialog.open(ClienteFormDialog, { ...DIALOG, data: null }).afterClosed().subscribe((cliente) => {
+  protected novo(nome = ''): void {
+    this.dialog.open(ClienteFormDialog, { ...DIALOG, data: nome ? { nome } : null }).afterClosed().subscribe((cliente) => {
       if (cliente) this.vincular(cliente.id);
     });
   }

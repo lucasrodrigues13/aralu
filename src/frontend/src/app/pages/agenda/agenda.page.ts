@@ -12,6 +12,9 @@ import { mensagemDeErro } from '../../core/mensagem-erro';
 import { CompromissoAgenda, EventoDetalhe, Local, NegocioClient } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { CampoDataComponent } from '../../shared/campo-data';
+import { CampoHoraComponent } from '../../shared/campo-hora';
+import { camposDoTipo } from '../../shared/campos-por-tipo';
+import { horaParaApi } from '../../shared/mascaras';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { deDataParaIso, deIsoParaData } from '../../shared/data';
 import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
@@ -26,7 +29,7 @@ export interface CompromissoDialogDados {
 
 @Component({
   selector: 'app-compromisso-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, CampoDataComponent],
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, CampoDataComponent, CampoHoraComponent],
   template: `
     <h2 mat-dialog-title>{{ item ? 'Editar compromisso' : 'Novo compromisso' }}</h2>
     <p class="text-muted text-sm px-6 -mt-2 mb-4">Reunião, visita, prova ou qualquer marcação da sua agenda.</p>
@@ -39,13 +42,7 @@ export interface CompromissoDialogDados {
         </mat-form-field>
         </div>
         <app-campo-data formControlName="data" rotulo="Data" />
-        <div class="campo">
-          <mat-label class="font-semibold mb-2 block">Hora</mat-label>
-          <mat-form-field appearance="outline" class="w-full">
-          <input [attr.aria-label]="'Hora'" matInput type="time" formControlName="hora" />
-          <mat-hint>Opcional</mat-hint>
-        </mat-form-field>
-        </div>
+        <app-campo-hora formControlName="hora" rotulo="Hora (opcional)" />
       </form>
     </mat-dialog-content>
     <mat-dialog-actions>
@@ -75,7 +72,7 @@ export class CompromissoDialog {
       return;
     }
     const valor = this.form.getRawValue();
-    const pedido = { descricao: valor.descricao.trim(), data: deDataParaIso(valor.data)!, hora: valor.hora || null };
+    const pedido = { descricao: valor.descricao.trim(), data: deDataParaIso(valor.data)!, hora: horaParaApi(valor.hora) };
     const req = this.item
       ? this.negocio.atualizarCompromisso(this.item.id, pedido)
       : this.negocio.criarCompromisso(pedido);
@@ -110,8 +107,10 @@ export type AcaoResumo = 'editar' | 'excluir' | undefined;
           <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 m-0 [&_dt]:text-xs [&_dt]:font-semibold [&_dt]:text-muted [&_dd]:m-0 [&_dd]:mt-0.5">
             <div><dt>Data</dt><dd>{{ e.data | gdData }}{{ e.hora ? ' às ' + e.hora.slice(0, 5) : '' }}</dd></div>
             <div><dt>Situação</dt><dd>{{ e.situacao }}{{ e.diasRestantes !== null && e.diasRestantes >= 0 ? ' · faltam ' + e.diasRestantes + ' dias' : '' }}</dd></div>
-            <div><dt>Cerimônia</dt><dd>{{ local(e.cerimonia) }}</dd></div>
-            <div><dt>Recepção</dt><dd>{{ local(e.recepcao) }}</dd></div>
+            @if (campos(e.tipo).doisLocais) {
+              <div><dt>{{ campos(e.tipo).rotuloPrimeiroLocal }}</dt><dd>{{ local(e.cerimonia) }}</dd></div>
+            }
+            <div><dt>{{ campos(e.tipo).rotuloLocal }}</dt><dd>{{ localPrincipal(e) }}</dd></div>
             <div><dt>Convidados</dt><dd>{{ e.convidadosConfirmados }} confirmados de {{ e.convidados }}</dd></div>
             <div><dt>Tarefas</dt><dd>{{ e.tarefasConcluidas }} feitas de {{ e.tarefas }}</dd></div>
           </dl>
@@ -159,6 +158,14 @@ export class ResumoAgendaDialog implements OnInit {
       },
       error: () => this.carregando.set(false),
     });
+  }
+
+  protected readonly campos = camposDoTipo;
+
+  /** Local principal: a recepção; em evento antigo de um local só, a cerimônia se a recepção estiver vazia. */
+  protected localPrincipal(e: EventoDetalhe): string {
+    const recepcao = this.local(e.recepcao);
+    return recepcao === '—' && !camposDoTipo(e.tipo).doisLocais ? this.local(e.cerimonia) : recepcao;
   }
 
   protected local(l: Local | null | undefined): string {
