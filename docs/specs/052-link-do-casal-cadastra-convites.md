@@ -31,14 +31,14 @@ Evento da conta em andamento, link ativo e marcação de convidados ligada.
 
 ### 6.1. Organizadora
 
-1. Na janela **Link do casal** há uma segunda marcação, **"O casal cadastra os convidados"**, que liga e desliga na hora. Nasce desligada.
+1. Na janela **Link do cliente** há uma segunda marcação, **"O cliente cadastra os convidados"**, que liga e desliga na hora. Nasce desligada.
 2. Na aba **Convidados**, o modal de convite ganha **E-mail** e **Data de envio do convite**. A lista mostra o e-mail e a data de envio (ou "Envio não definido") em cada convite.
 3. Os convites cadastrados pelo casal aparecem na lista como os demais.
 
 ### 6.2. Página do casal
 
 1. Com a marcação desligada, a página não mostra convidados.
-2. Ligada, aparece o bloco **Convidados**: lista dos convites (nome, telefone, e-mail, convidados com a situação) e o botão **Novo convite**.
+2. Ligada, aparece a aba **Convidados**: lista dos convites (nome, telefone, e-mail, convidados com a situação) e o botão **Novo convite**.
 3. O modal de convite tem: nome do convite, DDI e telefone, e-mail e o nome completo de cada convidado (mais de um, com adicionar e remover). Salvar grava e a lista se atualiza.
 4. O casal edita um convite pelo mesmo modal. Convidado removido sai do convite; pelo menos um convidado fica.
 
@@ -76,7 +76,7 @@ Convite: nome, e-mail, data de envio; convidados: nome; principal com DDI e tele
 
 ## 12. Interface
 
-Casal: bloco e modal conforme o design-system (modal para cadastro). Organizadora: segunda marcação na janela do link; campos novos no modal de convite e na lista.
+Casal: aba **Convidados** ao lado da aba **Financeiro** (SPEC-046 §12; design-system 5.4) e modal conforme o design-system (modal para cadastro). Organizadora: segunda marcação na janela do link; campos novos no modal de convite e na lista.
 
 ## 13. Erros
 

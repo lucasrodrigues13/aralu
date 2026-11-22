@@ -5,6 +5,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
+import { MatTabsModule } from '@angular/material/tabs';
 import { Observable } from 'rxjs';
 import { CasalClient, CasalLeitura, ConviteCasal, PedidoConviteCasal } from '../../core/casal.client';
 import { ComprovantePagamento, PagamentoFornecedor, ParcelaPagamento, refazerPerdePagamentos } from '../../core/dinheiro.client';
@@ -23,7 +24,7 @@ import { ParcelarPagamentoDialog } from '../dinheiro/parcelar-pagamento.dialog';
 /** Página do casal, sem login (SPEC-046): acompanha e atualiza o financeiro do evento quando a organizadora libera. */
 @Component({
   selector: 'app-casal',
-  imports: [MatCardModule, MatButtonModule, MatCheckboxModule, MatIconModule, GdDataPipe, GdDinheiroPipe],
+  imports: [MatCardModule, MatButtonModule, MatCheckboxModule, MatIconModule, MatTabsModule, GdDataPipe, GdDinheiroPipe],
   template: `
     <main class="pagina">
       @if (carregando()) {
@@ -40,33 +41,7 @@ import { ParcelarPagamentoDialog } from '../dinheiro/parcelar-pagamento.dialog';
           @if (d.data) { <span class="text-sm text-muted">{{ d.data | gdData }}</span> }
         </header>
 
-        @if (d.convites; as convites) {
-          <div class="secao">
-            <h2 class="mes">Convidados</h2>
-            <button mat-flat-button type="button" (click)="abrirConvite(null)"><mat-icon>add</mat-icon> Novo convite</button>
-          </div>
-          @if (convites.length === 0) {
-            <p class="text-center text-muted py-6">Nenhum convite ainda. Use "Novo convite" para cadastrar quem vai receber.</p>
-          }
-          @for (convite of convites; track convite.id) {
-            <mat-card class="cardWithShadow"><mat-card-content>
-              <div class="linha">
-                <div class="min-w-0">
-                  <strong>{{ convite.nome }}</strong>
-                  <span class="block text-xs text-muted">{{ convite.telefone ? ((convite.ddi ?? '') + ' ' + convite.telefone).trim() : 'Sem telefone' }}{{ convite.email ? ' · ' + convite.email : '' }}</span>
-                </div>
-                <button mat-icon-button type="button" aria-label="Editar convite" (click)="abrirConvite(convite)"><mat-icon>edit</mat-icon></button>
-              </div>
-              <ul class="convidados">
-                @for (pessoa of convite.convidados; track pessoa.id) {
-                  <li>{{ pessoa.nome }} <span class="text-xs text-muted">· {{ pessoa.situacao }}</span></li>
-                }
-              </ul>
-            </mat-card-content></mat-card>
-          }
-        }
-
-        @if (!d.financeiro) {
+        @if (!d.financeiro && !d.convites) {
           @if (!d.convidadosLiberado) {
             <mat-card class="cardWithShadow"><mat-card-content class="aviso">
               <mat-icon>lock</mat-icon>
@@ -74,72 +49,105 @@ import { ParcelarPagamentoDialog } from '../dinheiro/parcelar-pagamento.dialog';
             </mat-card-content></mat-card>
           }
         } @else {
-          <mat-card class="cardWithShadow resumo"><mat-card-content>
-            <div><span class="rotulo">Contratado</span><strong>{{ d.financeiro.contratado | gdDinheiro }}</strong></div>
-            <div><span class="rotulo">Pago</span><strong>{{ d.financeiro.pago | gdDinheiro }}</strong></div>
-            <div><span class="rotulo">A pagar</span><strong>{{ d.financeiro.contratado - d.financeiro.pago | gdDinheiro }}</strong></div>
-          </mat-card-content></mat-card>
+          <mat-tab-group dynamicHeight>
+            @if (d.financeiro) {
+              <mat-tab label="Financeiro"><div class="aba">
+                <mat-card class="cardWithShadow resumo"><mat-card-content>
+                  <div><span class="rotulo">Contratado</span><strong>{{ d.financeiro.contratado | gdDinheiro }}</strong></div>
+                  <div><span class="rotulo">Pago</span><strong>{{ d.financeiro.pago | gdDinheiro }}</strong></div>
+                  <div><span class="rotulo">A pagar</span><strong>{{ d.financeiro.contratado - d.financeiro.pago | gdDinheiro }}</strong></div>
+                </mat-card-content></mat-card>
 
-          @if (d.financeiro.pagamentosFornecedores.length === 0) {
-            <p class="text-center text-muted py-10">Nenhum pagamento ainda. Eles aparecem quando a organizadora contrata um fornecedor.</p>
-          }
-          @for (grupo of grupos(); track grupo.chave) {
-            <h2 class="mes">{{ grupo.mes }} · {{ grupo.total | gdDinheiro }}</h2>
-            @for (pagamento of grupo.itens; track pagamento.servicoId) {
-              <mat-card class="cardWithShadow pagamento"><mat-card-content>
-                <div class="linha">
-                  <div class="min-w-0">
-                    <strong>{{ pagamento.servico }}</strong>
-                    <span class="block text-xs text-muted">{{ pagamento.fornecedor ?? 'Sem fornecedor' }} · {{ pagamento.parcelas.length > 0 ? pagamento.parcelas.length + ' parcelas' : 'Sem parcelas' }}</span>
-                  </div>
-                  <div class="text-end">
-                    <strong>{{ pagamento.valor | gdDinheiro }}</strong>
-                    <span class="block"><span [class]="pagamento.pago ? status.sucesso : status.alerta">{{ pagamento.pago ? 'Pago' : 'Pendente' }}</span></span>
-                  </div>
-                </div>
-
-                @for (parcela of pagamento.parcelas; track parcela.id) {
-                  <div class="parcela">
-                    <mat-checkbox [checked]="parcela.paga" (change)="marcarParcela(pagamento, parcela, $event.checked)">
-                      {{ parcela.entrada ? 'Entrada' : 'Parcela ' + parcela.numero }} · vence {{ parcela.vencimento | gdData }} · {{ parcela.valor | gdDinheiro }}
-                    </mat-checkbox>
-                    <span class="arquivo">
-                      @if (parcela.comprovante; as c) {
-                        <button mat-button type="button" (click)="abrir(c)"><mat-icon>{{ icone(c) }}</mat-icon> {{ c.nome }}</button>
-                        <button mat-icon-button type="button" aria-label="Excluir comprovante" (click)="excluirComprovante(pagamento, parcela)"><mat-icon>delete</mat-icon></button>
-                      } @else {
-                        <button mat-button type="button" (click)="enviarComprovante(pagamento, parcela)"><mat-icon>upload_file</mat-icon> Comprovante</button>
-                      }
-                    </span>
-                  </div>
+                @if (d.financeiro.pagamentosFornecedores.length === 0) {
+                  <p class="text-center text-muted py-10">Nenhum pagamento ainda. Eles aparecem quando a organizadora contrata um fornecedor.</p>
                 }
+                @for (grupo of grupos(); track grupo.chave) {
+                  <h2 class="mes">{{ grupo.mes }} · {{ grupo.total | gdDinheiro }}</h2>
+                  @for (pagamento of grupo.itens; track pagamento.servicoId) {
+                    <mat-card class="cardWithShadow pagamento"><mat-card-content>
+                      <div class="linha">
+                        <div class="min-w-0">
+                          <strong>{{ pagamento.servico }}</strong>
+                          <span class="block text-xs text-muted">{{ pagamento.fornecedor ?? 'Sem fornecedor' }} · {{ pagamento.parcelas.length > 0 ? pagamento.parcelas.length + ' parcelas' : 'Sem parcelas' }}</span>
+                        </div>
+                        <div class="text-end">
+                          <strong>{{ pagamento.valor | gdDinheiro }}</strong>
+                          <span class="block"><span [class]="pagamento.pago ? status.sucesso : status.alerta">{{ pagamento.pago ? 'Pago' : 'Pendente' }}</span></span>
+                        </div>
+                      </div>
 
-                <div class="acoes">
-                  @if (pagamento.parcelas.length === 0) {
-                    @if (pagamento.comprovante; as c) {
-                      <button mat-button type="button" (click)="abrir(c)"><mat-icon>{{ icone(c) }}</mat-icon> {{ c.nome }}</button>
-                      <button mat-icon-button type="button" aria-label="Excluir comprovante" (click)="excluirComprovante(pagamento, null)"><mat-icon>delete</mat-icon></button>
-                    } @else {
-                      <button mat-button type="button" (click)="enviarComprovante(pagamento, null)"><mat-icon>upload_file</mat-icon> Comprovante</button>
-                    }
+                      @for (parcela of pagamento.parcelas; track parcela.id) {
+                        <div class="parcela">
+                          <mat-checkbox [checked]="parcela.paga" (change)="marcarParcela(pagamento, parcela, $event.checked)">
+                            {{ parcela.entrada ? 'Entrada' : 'Parcela ' + parcela.numero }} · vence {{ parcela.vencimento | gdData }} · {{ parcela.valor | gdDinheiro }}
+                          </mat-checkbox>
+                          <span class="arquivo">
+                            @if (parcela.comprovante; as c) {
+                              <button mat-button type="button" (click)="abrir(c)"><mat-icon>{{ icone(c) }}</mat-icon> {{ c.nome }}</button>
+                              <button mat-icon-button type="button" aria-label="Excluir comprovante" (click)="excluirComprovante(pagamento, parcela)"><mat-icon>delete</mat-icon></button>
+                            } @else {
+                              <button mat-button type="button" (click)="enviarComprovante(pagamento, parcela)"><mat-icon>upload_file</mat-icon> Comprovante</button>
+                            }
+                          </span>
+                        </div>
+                      }
+
+                      <div class="acoes">
+                        @if (pagamento.parcelas.length === 0) {
+                          @if (pagamento.comprovante; as c) {
+                            <button mat-button type="button" (click)="abrir(c)"><mat-icon>{{ icone(c) }}</mat-icon> {{ c.nome }}</button>
+                            <button mat-icon-button type="button" aria-label="Excluir comprovante" (click)="excluirComprovante(pagamento, null)"><mat-icon>delete</mat-icon></button>
+                          } @else {
+                            <button mat-button type="button" (click)="enviarComprovante(pagamento, null)"><mat-icon>upload_file</mat-icon> Comprovante</button>
+                          }
+                        }
+                        @if (pagamento.contratoAssinado; as c) {
+                          <button mat-button type="button" (click)="abrir(c)"><mat-icon>description</mat-icon> Contrato: {{ c.nome }}</button>
+                          <button mat-icon-button type="button" aria-label="Excluir contrato assinado" (click)="excluirContrato(pagamento)"><mat-icon>delete</mat-icon></button>
+                        } @else {
+                          <button mat-button type="button" (click)="enviarContrato(pagamento)"><mat-icon>upload_file</mat-icon> Contrato assinado</button>
+                        }
+                      </div>
+                      <div class="acoes">
+                        <button mat-button type="button" [class.text-error]="perdeAoRefazer(pagamento)" (click)="parcelar(pagamento)">{{ pagamento.parcelas.length > 0 ? 'Refazer parcelas' : 'Parcelar' }}</button>
+                        @if (pagamento.parcelas.length > 0) {
+                          <button mat-button type="button" (click)="removerParcelamento(pagamento)">Sem parcelas</button>
+                        }
+                        <button mat-flat-button type="button" (click)="marcarPagamento(pagamento, !pagamento.pago)">{{ pagamento.pago ? 'Desfazer' : 'Marcar como pago' }}</button>
+                      </div>
+                    </mat-card-content></mat-card>
                   }
-                  @if (pagamento.contratoAssinado; as c) {
-                    <button mat-button type="button" (click)="abrir(c)"><mat-icon>description</mat-icon> Contrato: {{ c.nome }}</button>
-                    <button mat-icon-button type="button" aria-label="Excluir contrato assinado" (click)="excluirContrato(pagamento)"><mat-icon>delete</mat-icon></button>
-                  } @else {
-                    <button mat-button type="button" (click)="enviarContrato(pagamento)"><mat-icon>upload_file</mat-icon> Contrato assinado</button>
-                  }
-                </div>
-                <div class="acoes">
-                  <button mat-button type="button" [class.text-error]="perdeAoRefazer(pagamento)" (click)="parcelar(pagamento)">{{ pagamento.parcelas.length > 0 ? 'Refazer parcelas' : 'Parcelar' }}</button>
-                  @if (pagamento.parcelas.length > 0) {
-                    <button mat-button type="button" (click)="removerParcelamento(pagamento)">Sem parcelas</button>
-                  }
-                  <button mat-flat-button type="button" (click)="marcarPagamento(pagamento, !pagamento.pago)">{{ pagamento.pago ? 'Desfazer' : 'Marcar como pago' }}</button>
-                </div>
-              </mat-card-content></mat-card>
+                }
+              </div></mat-tab>
             }
-          }
+            @if (d.convites; as convites) {
+              <mat-tab label="Convidados"><div class="aba">
+                <div class="secao">
+                  <h2 class="mes">Convites</h2>
+                  <button mat-flat-button type="button" (click)="abrirConvite(null)"><mat-icon>add</mat-icon> Novo convite</button>
+                </div>
+                @if (convites.length === 0) {
+                  <p class="text-center text-muted py-6">Nenhum convite ainda. Use "Novo convite" para cadastrar quem vai receber.</p>
+                }
+                @for (convite of convites; track convite.id) {
+                  <mat-card class="cardWithShadow"><mat-card-content>
+                    <div class="linha">
+                      <div class="min-w-0">
+                        <strong>{{ convite.nome }}</strong>
+                        <span class="block text-xs text-muted">{{ convite.telefone ? ((convite.ddi ?? '') + ' ' + convite.telefone).trim() : 'Sem telefone' }}{{ convite.email ? ' · ' + convite.email : '' }}</span>
+                      </div>
+                      <button mat-icon-button type="button" aria-label="Editar convite" (click)="abrirConvite(convite)"><mat-icon>edit</mat-icon></button>
+                    </div>
+                    <ul class="convidados">
+                      @for (pessoa of convite.convidados; track pessoa.id) {
+                        <li>{{ pessoa.nome }} <span class="text-xs text-muted">· {{ pessoa.situacao }}</span></li>
+                      }
+                    </ul>
+                  </mat-card-content></mat-card>
+                }
+              </div></mat-tab>
+            }
+          </mat-tab-group>
         }
       }
     </main>
@@ -153,6 +161,7 @@ import { ParcelarPagamentoDialog } from '../dinheiro/parcelar-pagamento.dialog';
     .aviso mat-icon { font-size: 40px; width: 40px; height: 40px; color: var(--mat-sys-outline); }
     .resumo mat-card-content { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; text-align: center; }
     .rotulo { display: block; font-size: 12px; color: var(--mat-sys-outline); }
+    .aba { display: grid; gap: 12px; padding-top: 16px; }
     .mes { font-size: 13px; font-weight: 600; text-transform: capitalize; margin: 8px 0 0; color: var(--mat-sys-outline); }
     .secao { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
     .secao .mes { margin: 0; }

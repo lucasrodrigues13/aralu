@@ -31,9 +31,9 @@ Evento da conta. Para o casal agir: link ativo e financeiro liberado.
 
 ### 6.1. Organizadora gerencia o link
 
-1. No evento (tela inicial), o menu **Mais** traz **Link do casal**, que abre um modal.
+1. No evento (tela inicial), o menu **Mais** traz **Link do cliente**, que abre um modal com o mesmo título. Na tela, o link e as marcações falam em "cliente", porque a plataforma atende outros tipos de evento; rotas, API e código seguem com "casal".
 2. Sem link: "Gerar link". Gera um endereço único (`/casal/{código}`), com o financeiro **fechado**.
-3. Com link: o modal mostra o endereço com **Copiar**, a marcação **"O casal acessa o financeiro do evento"** (liga e desliga na hora), **Trocar link** (gera outro código; o antigo para de funcionar) e **Desativar link** (apaga; o endereço para de funcionar).
+3. Com link: o modal mostra o endereço com **Copiar**, a marcação **"O cliente acessa o financeiro do evento"** (liga e desliga na hora), **Trocar link** (gera outro código; o antigo para de funcionar) e **Desativar link** (apaga; o endereço para de funcionar).
 
 ### 6.2. Página do casal
 
@@ -82,7 +82,7 @@ Evento, código, marcação do financeiro, data de criação.
 
 ## 12. Interface
 
-Modal em dois cliques no evento (design-system 5.10). A página do casal é pública, sem a casca do aplicativo, com a mesma tabela expansível da aba Dinheiro e os mesmos modais de parcelar e comprovante.
+Modal em dois cliques no evento (design-system 5.10). A página do casal é pública, sem a casca do aplicativo, com a mesma tabela expansível da aba Dinheiro e os mesmos modais de parcelar e comprovante. Abaixo do nome e da data, a página separa as funções em abas (`mat-tab-group`, design-system 5.4): **Financeiro** (totais contratado, pago e a pagar e os pagamentos por mês) e **Convidados** ([SPEC-052](052-link-do-casal-cadastra-convites.md)). Só aparece a aba do que a organizadora liberou, e o Financeiro vem primeiro. Sem nada liberado, a página mostra só o aviso, sem abas.
 
 ## 13. Erros
 

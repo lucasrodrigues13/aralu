@@ -8,35 +8,36 @@ import { CasalClient, enderecoDoLinkCasal, LinkCasal } from '../../core/casal.cl
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
+import { copiarTexto } from '../../shared/copiar-texto';
 import { DIALOG_PEQUENO } from '../../shared/dialog';
 
-/** Link do casal do evento (SPEC-046 §6.1): gerar, copiar, liberar o financeiro e os convidados, trocar e desativar. */
+/** Link do cliente do evento (SPEC-046 §6.1; no código segue "casal"): gerar, copiar, liberar o financeiro e os convidados, trocar e desativar. */
 @Component({
   selector: 'app-link-casal-dialog',
   imports: [MatDialogModule, MatButtonModule, MatIconModule, MatSlideToggleModule],
   template: `
-    <h2 mat-dialog-title>Link do casal</h2>
+    <h2 mat-dialog-title>Link do cliente</h2>
     <p class="text-muted text-sm px-6 -mt-2 mb-4">Um endereço por evento, sem senha: quem tem o endereço acessa. Trocar o link desliga o antigo.</p>
     <mat-dialog-content>
       @if (link(); as atual) {
         @if (!atual.ativo) {
-          <p class="mb-4">Este evento ainda não tem link para o casal.</p>
+          <p class="mb-4">Este evento ainda não tem link para o cliente.</p>
         } @else {
           <div class="flex items-center gap-2 mb-4">
-            <input class="endereco grow" readonly aria-label="Endereço do link do casal" [value]="endereco()" (focus)="$any($event.target).select()" />
+            <input class="endereco grow" readonly aria-label="Endereço do link do cliente" [value]="endereco()" (focus)="$any($event.target).select()" />
             <button mat-stroked-button type="button" (click)="copiar()"><mat-icon>content_copy</mat-icon> Copiar</button>
           </div>
           <mat-slide-toggle [checked]="atual.financeiroLiberado" (change)="liberar($event.checked)">
-            O casal acessa o financeiro do evento
+            O cliente acessa o financeiro do evento
           </mat-slide-toggle>
           <p class="text-muted text-xs mt-2">
-            Liberado, o casal marca como pago, sobe comprovantes e o contrato assinado do fornecedor e define as parcelas. A Gestão Financeira e os dados internos não vão junto.
+            Liberado, o cliente marca como pago, sobe comprovantes e o contrato assinado do fornecedor e define as parcelas. A Gestão Financeira e os dados internos não vão junto.
           </p>
           <mat-slide-toggle class="mt-4" [checked]="atual.convidadosLiberado" (change)="liberarConvidados($event.checked)">
-            O casal cadastra os convidados
+            O cliente cadastra os convidados
           </mat-slide-toggle>
           <p class="text-muted text-xs mt-2">
-            Liberado, o casal vê os convites do evento e cadastra nome, telefone, e-mail e o nome de cada convidado. Situação, mesa e demais dados da lista ficam só com você.
+            Liberado, o cliente vê os convites do evento e cadastra nome, telefone, e-mail e o nome de cada convidado. Situação, mesa e demais dados da lista ficam só com você.
           </p>
         }
       } @else {
@@ -71,9 +72,10 @@ export class LinkCasalDialog implements OnInit {
     return token ? enderecoDoLinkCasal(location.origin, token) : '';
   }
 
-  protected copiar(): void {
-    void navigator.clipboard?.writeText(this.endereco());
-    this.toast.sucesso('Link copiado.');
+  protected async copiar(): Promise<void> {
+    const endereco = this.endereco();
+    if (await copiarTexto(endereco)) this.toast.sucesso('Link copiado.');
+    else this.toast.erro(`Não foi possível copiar. Link: ${endereco}`);
   }
 
   protected gerar(): void {
@@ -84,20 +86,20 @@ export class LinkCasalDialog implements OnInit {
     const atual = this.link();
     this.aplicar(
       this.casal.liberar(this.dados.eventoId, { financeiroLiberado: liberado, convidadosLiberado: atual?.convidadosLiberado ?? false }),
-      liberado ? 'Financeiro liberado para o casal.' : 'Financeiro fechado para o casal.');
+      liberado ? 'Financeiro liberado para o cliente.' : 'Financeiro fechado para o cliente.');
   }
 
   protected liberarConvidados(liberado: boolean): void {
     const atual = this.link();
     this.aplicar(
       this.casal.liberar(this.dados.eventoId, { financeiroLiberado: atual?.financeiroLiberado ?? false, convidadosLiberado: liberado }),
-      liberado ? 'Cadastro de convidados liberado para o casal.' : 'Cadastro de convidados fechado para o casal.');
+      liberado ? 'Cadastro de convidados liberado para o cliente.' : 'Cadastro de convidados fechado para o cliente.');
   }
 
   protected trocar(): void {
     this.dialog.open(ConfirmaDialog, {
       ...DIALOG_PEQUENO,
-      data: { titulo: 'Trocar link', texto: 'O endereço antigo deixa de funcionar. Você precisa enviar o novo ao casal.', confirmar: 'Trocar' },
+      data: { titulo: 'Trocar link', texto: 'O endereço antigo deixa de funcionar. Você precisa enviar o novo ao cliente.', confirmar: 'Trocar' },
     }).afterClosed().subscribe((confirmou) => {
       if (confirmou) this.aplicar(this.casal.gerar(this.dados.eventoId), 'Link trocado.');
     });
@@ -106,7 +108,7 @@ export class LinkCasalDialog implements OnInit {
   protected desativar(): void {
     this.dialog.open(ConfirmaDialog, {
       ...DIALOG_PEQUENO,
-      data: { titulo: 'Desativar link', texto: 'O endereço deixa de funcionar e o casal perde o acesso.', confirmar: 'Desativar' },
+      data: { titulo: 'Desativar link', texto: 'O endereço deixa de funcionar e o cliente perde o acesso.', confirmar: 'Desativar' },
     }).afterClosed().subscribe((confirmou) => {
       if (confirmou) this.aplicar(this.casal.desativar(this.dados.eventoId), 'Link desativado.');
     });

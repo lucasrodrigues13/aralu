@@ -26,8 +26,8 @@ import { montarContratosDoEvento } from './contratos-do-evento';
           <p class="text-sm text-muted">Carregando…</p>
         } @else if (contratos().length === 0) {
           <p class="text-sm text-muted">
-            Nenhum contrato de fornecedor enviado ainda. Anexe o contrato assinado na aba Fornecedores; se o link do casal estiver
-            liberado, o que o casal subir também aparece aqui.
+            Nenhum contrato de fornecedor enviado ainda. Anexe o contrato assinado na aba Fornecedores; se o link do cliente estiver
+            liberado, o que o cliente subir também aparece aqui.
           </p>
         } @else {
           <div class="overflow-x-auto">

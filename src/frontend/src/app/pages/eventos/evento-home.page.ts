@@ -175,7 +175,7 @@ export class ClientesEventoDialog implements OnInit {
                   <button mat-menu-item type="button" (click)="removerFoto()"><mat-icon>hide_image</mat-icon> Remover foto</button>
                 }
                 @if (!auth.ehAssistente()) {
-                  <button mat-menu-item type="button" (click)="linkDoCasal()"><mat-icon>link</mat-icon> Link do casal</button>
+                  <button mat-menu-item type="button" (click)="linkDoCasal()"><mat-icon>link</mat-icon> Link do cliente</button>
                   <button mat-menu-item type="button" (click)="linkDaPortaria()"><mat-icon>qr_code_scanner</mat-icon> Link da portaria</button>
                 }
                 @if (atual.situacao === 'EmAndamento') {
