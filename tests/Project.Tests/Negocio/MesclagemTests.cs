@@ -38,6 +38,17 @@ public class MesclagemTests
     }
 
     [Fact]
+    public void Toda_tag_traz_o_que_representa_a_fonte_e_o_exemplo()
+    {
+        Assert.All(Mesclagem.Campos, campo =>
+        {
+            Assert.False(string.IsNullOrWhiteSpace(campo.Rotulo), campo.Marca);
+            Assert.False(string.IsNullOrWhiteSpace(campo.Fonte), campo.Marca);
+            Assert.False(string.IsNullOrWhiteSpace(campo.Exemplo), campo.Marca);
+        });
+    }
+
+    [Fact]
     public void Endereco_da_contratada_vem_dos_campos_estruturados()
     {
         var perfil = new Project.Domain.Perfil.PerfilAssessoria

@@ -18,6 +18,16 @@ export function previaDestacada(texto: string, campos: CampoMesclagem[]): string
     .replace(/\n/g, '<br>');
 }
 
+/** Filtra as tags do seletor pela busca (marca, o que representa ou fonte), sem acento nem caixa (SPEC-053). */
+export function filtrarCampos(campos: CampoMesclagem[], busca: string): CampoMesclagem[] {
+  const normalizar = (texto: string) => texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const termo = normalizar(busca.trim());
+  if (!termo) {
+    return campos;
+  }
+  return campos.filter((campo) => normalizar(`${campo.marca} ${campo.rotulo} ${campo.fonte}`).includes(termo));
+}
+
 /** Insere a marca no cursor do textarea e devolve o texto novo e a posição do cursor. */
 export function inserirMarca(texto: string, inicio: number, fim: number, marca: string): { texto: string; cursor: number } {
   const trecho = `{{${marca}}}`;

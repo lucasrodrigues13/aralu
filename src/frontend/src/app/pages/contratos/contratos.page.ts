@@ -1,6 +1,7 @@
 import { Component, computed, ElementRef, inject, OnInit, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
@@ -14,12 +15,60 @@ import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { DIALOG_LARGO, DIALOG_PEQUENO } from '../../shared/dialog';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
-import { inserirMarca, previaDestacada } from './mesclagem';
+import { filtrarCampos, inserirMarca, previaDestacada } from './mesclagem';
 
-/** Novo/editar contrato com a lista de campos de mesclagem e "Ver como fica" (SPEC-030 §6.1). */
+/** Ajuda das tags (SPEC-053): como usar e a lista completa, da mesma lista do seletor e do preenchimento. */
+@Component({
+  selector: 'app-ajuda-tags-dialog',
+  imports: [MatDialogModule, MatButtonModule],
+  template: `
+    <h2 mat-dialog-title>Como usar as tags</h2>
+    <mat-dialog-content>
+      <p class="text-sm mb-2">
+        Tags são trechos como <code>{{ marca({ marca: 'contratante_nome', rotulo: '', fonte: '', exemplo: '' }) }}</code> que o sistema troca pelos dados reais quando o contrato é gerado.
+        Use o campo "Inserir tag no cursor" para colocar uma tag onde o cursor está no texto. Quando um dado não existe, aparece uma linha em branco (________).
+      </p>
+      <div class="tabela-tags">
+        <table class="w-full text-sm">
+          <thead>
+            <tr><th>Tag</th><th>O que representa</th><th>De onde puxa o valor</th><th>Exemplo</th></tr>
+          </thead>
+          <tbody>
+            @for (campo of dados.campos; track campo.marca) {
+              <tr>
+                <td><code>{{ marca(campo) }}</code></td>
+                <td>{{ campo.rotulo }}</td>
+                <td>{{ campo.fonte }}</td>
+                <td>{{ campo.exemplo }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-flat-button type="button" mat-dialog-close>Fechar</button>
+    </mat-dialog-actions>
+  `,
+  styles: `
+    .tabela-tags { overflow-x: auto; }
+    th { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--mat-sys-outline-variant); }
+    td { vertical-align: top; padding: 6px 8px; border-bottom: 1px solid var(--mat-sys-outline-variant); }
+    code { font-size: 12px; white-space: nowrap; }
+  `,
+})
+export class AjudaTagsDialog {
+  protected readonly dados = inject<{ campos: CampoMesclagem[] }>(MAT_DIALOG_DATA);
+
+  protected marca(campo: CampoMesclagem): string {
+    return `{{${campo.marca}}}`;
+  }
+}
+
+/** Novo/editar modelo de contrato com seletor de tags com busca e ajuda (SPEC-053) e "Ver como fica" (SPEC-030 §6.1). */
 @Component({
   selector: 'app-contrato-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatButtonToggleModule, MatFormFieldModule, MatInputModule],
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatButtonToggleModule, MatFormFieldModule, MatInputModule, MatIconModule, MatAutocompleteModule],
   template: `
     <h2 mat-dialog-title>{{ dados.contrato ? 'Editar modelo de contrato' : 'Novo modelo de contrato' }}</h2>
     <p class="text-muted text-sm px-6 -mt-2 mb-4">Clique num campo para inserir no texto. Ele é trocado pelos dados do evento.</p>
@@ -36,6 +85,27 @@ import { inserirMarca, previaDestacada } from './mesclagem';
           <mat-button-toggle value="editar">Editar texto</mat-button-toggle>
           <mat-button-toggle value="previa">Ver como fica</mat-button-toggle>
         </mat-button-toggle-group>
+        @if (modo() === 'editar') {
+          <div class="seletor-tags">
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Inserir tag no cursor</mat-label>
+              <input matInput [formControl]="busca" [matAutocomplete]="auto" aria-label="Buscar tag para inserir" placeholder="Digite para buscar (ex.: nome, data, valor)" />
+              <mat-autocomplete #auto="matAutocomplete" (optionSelected)="escolher($event.option.value)">
+                @for (campo of filtrados(); track campo.marca) {
+                  <mat-option [value]="campo">
+                    <span class="font-medium">{{ campo.marca }}</span>
+                    <span class="text-muted text-xs"> · {{ campo.rotulo }}</span>
+                  </mat-option>
+                } @empty {
+                  <mat-option disabled>Nenhuma tag encontrada</mat-option>
+                }
+              </mat-autocomplete>
+            </mat-form-field>
+            <button mat-icon-button type="button" aria-label="Ajuda sobre as tags" title="Como usar as tags" (click)="abrirAjuda()">
+              <mat-icon>help_outline</mat-icon>
+            </button>
+          </div>
+        }
         <div class="editor">
           @if (modo() === 'editar') {
             <div class="campo texto">
@@ -48,14 +118,6 @@ import { inserirMarca, previaDestacada } from './mesclagem';
           } @else {
             <div class="previa" [innerHTML]="previa()"></div>
           }
-          <aside class="campos" aria-label="Campos de mesclagem">
-            <span class="font-semibold mb-2 block">Campos</span>
-            @for (campo of dados.campos; track campo.marca) {
-              <button type="button" class="campo-mescla" [disabled]="modo() !== 'editar'" (click)="inserir(campo)" [title]="marca(campo)">
-                {{ campo.rotulo }}
-              </button>
-            }
-          </aside>
         </div>
       </form>
     </mat-dialog-content>
@@ -66,16 +128,11 @@ import { inserirMarca, previaDestacada } from './mesclagem';
   `,
   styles: `
     mat-button-toggle-group { width: fit-content; }
-    .editor { display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 16px; align-items: start; }
+    .seletor-tags { display: flex; align-items: flex-start; gap: 8px; }
     .texto { width: 100%; }
     .texto textarea { font-family: inherit; line-height: 1.5; }
     .previa { min-height: 360px; max-height: 60vh; overflow: auto; padding: 12px 14px; border: 1px solid var(--mat-sys-outline-variant); border-radius: var(--mat-sys-corner-small); font-size: 14px; line-height: 1.6; white-space: normal; }
     .previa ::ng-deep mark { background: color-mix(in oklab, var(--mat-sys-primary) 18%, transparent); color: inherit; border-radius: 4px; padding: 0 2px; }
-    .campos { display: flex; flex-direction: column; gap: 4px; max-height: 60vh; overflow: auto; }
-    .campo-mescla { text-align: left; padding: 6px 10px; border: 1px solid var(--mat-sys-outline-variant); border-radius: var(--mat-sys-corner-small); background: transparent; color: var(--mat-sys-on-background); font: inherit; font-size: 12px; cursor: pointer; }
-    .campo-mescla:hover:not(:disabled) { border-color: var(--mat-sys-primary); color: var(--mat-sys-primary); }
-    .campo-mescla:disabled { opacity: 0.5; cursor: default; }
-    @media (max-width: 719px) { .editor { grid-template-columns: 1fr; } .campos { flex-direction: row; flex-wrap: wrap; max-height: none; } }
   `,
 })
 export class ContratoDialog {
@@ -90,9 +147,22 @@ export class ContratoDialog {
   });
   private readonly textoAtual = toSignal(this.form.controls.texto.valueChanges, { initialValue: this.form.controls.texto.value });
   protected readonly previa = computed(() => previaDestacada(this.textoAtual(), this.dados.campos));
+  private readonly dialog = inject(MatDialog);
+  /** Texto digitado na busca do seletor; ao escolher uma tag volta a ficar vazio. */
+  protected readonly busca = new FormControl<string | CampoMesclagem>('', { nonNullable: true });
+  private readonly termo = toSignal(this.busca.valueChanges, { initialValue: '' });
+  protected readonly filtrados = computed(() => {
+    const valor = this.termo();
+    return filtrarCampos(this.dados.campos, typeof valor === 'string' ? valor : '');
+  });
 
-  protected marca(campo: CampoMesclagem): string {
-    return `{{${campo.marca}}}`;
+  protected abrirAjuda(): void {
+    this.dialog.open(AjudaTagsDialog, { ...DIALOG_LARGO, data: { campos: this.dados.campos } });
+  }
+
+  protected escolher(campo: CampoMesclagem): void {
+    this.inserir(campo);
+    this.busca.setValue('');
   }
 
   protected inserir(campo: CampoMesclagem): void {
