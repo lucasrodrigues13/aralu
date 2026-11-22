@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -25,11 +26,12 @@ import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { DIALOG, DIALOG_LARGO, DIALOG_PEQUENO } from '../../shared/dialog';
 import { exibirPrazo, prazoDeDias, prazoParaDias, UNIDADES_PRAZO, UnidadePrazo } from '../../shared/prazo-modelo';
 import { ImportarTarefasModeloDialog } from './importar-tarefas-modelo.dialog';
+import { SelecionarBibliotecaDialog, ItemBiblioteca } from './selecionar-biblioteca.dialog';
 import { SelecionarServicosModeloDialog, ServicoEscolhido } from './selecionar-servicos-modelo.dialog';
 
 @Component({
   selector: 'app-modelo-evento-editor',
-  imports: [MatCardModule, ReactiveFormsModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatTabsModule, MatIconModule, CampoDinheiroComponent],
+  imports: [MatCardModule, ReactiveFormsModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatTabsModule, MatIconModule, CampoDinheiroComponent, NgTemplateOutlet],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6 flex flex-wrap items-center justify-between gap-4">
@@ -65,9 +67,23 @@ import { SelecionarServicosModeloDialog, ServicoEscolhido } from './selecionar-s
               </mat-form-field>
             </div>
           </div>
+          <ng-template #vinculosTpl let-tipo="tipo" let-titulo="titulo" let-singular="singular" let-itens="itens">
+            <div class="flex flex-col gap-3 pt-4">
+              <div class="flex justify-end"><button mat-stroked-button type="button" (click)="adicionarVinculos(tipo, titulo, itens)"><mat-icon>add</mat-icon> Adicionar {{ titulo }}</button></div>
+              @for (item of vinculados(tipo, itens); track item.id) {
+                <div class="flex items-center justify-between gap-2 border border-border rounded px-4 py-2">
+                  <span>{{ item.nome }}</span>
+                  <button mat-icon-button type="button" [attr.aria-label]="'Remover ' + singular" (click)="removerVinculo(tipo, item.id)"><mat-icon>close</mat-icon></button>
+                </div>
+              } @empty {
+                <p class="text-sm text-muted">Nenhum modelo de {{ singular }} vinculado.</p>
+              }
+            </div>
+          </ng-template>
           <mat-tab-group>
             <mat-tab label="Checklist">
               <div formArrayName="servicos" class="flex flex-col gap-4">
+                <div class="flex justify-end pt-4"><button mat-stroked-button type="button" (click)="adicionarServicos()"><mat-icon>add</mat-icon> Adicionar serviços</button></div>
                 @for (servico of servicos.controls; track $index; let i = $index) {
                   <mat-card class="border! border-border! shadow-none mb-0!" [formGroupName]="i">
                     <mat-card-content>
@@ -106,11 +122,11 @@ import { SelecionarServicosModeloDialog, ServicoEscolhido } from './selecionar-s
                     </mat-card-content>
                   </mat-card>
                 }
-                <div><button mat-stroked-button type="button" (click)="adicionarServicos()"><mat-icon>add</mat-icon> Adicionar serviços</button></div>
               </div>
             </mat-tab>
             <mat-tab label="Tarefas">
               <div formArrayName="tarefas" class="flex flex-col gap-4">
+                <div class="flex justify-end pt-4"><button mat-stroked-button type="button" (click)="adicionarTarefa()"><mat-icon>add</mat-icon> Adicionar tarefa</button></div>
                 @for (tarefa of tarefas.controls; track $index; let i = $index) {
                   <mat-card class="border! border-border! shadow-none mb-0!" [formGroupName]="i">
                     <mat-card-content>
@@ -149,60 +165,19 @@ import { SelecionarServicosModeloDialog, ServicoEscolhido } from './selecionar-s
                     </mat-card-content>
                   </mat-card>
                 }
-                <div><button mat-stroked-button type="button" (click)="adicionarTarefa()"><mat-icon>add</mat-icon> Adicionar tarefa</button></div>
               </div>
             </mat-tab>
             <mat-tab label="Briefings">
-              <div class="campo w-full sm:w-80">
-                <mat-label class="font-semibold mb-2 block">Modelo de briefing</mat-label>
-                <mat-form-field appearance="outline" class="w-full">
-                  <mat-select aria-label="Modelo de briefing" [value]="vinculo('Briefing')" (valueChange)="definirVinculo('Briefing', $event)">
-                    <mat-option value="">Nenhum</mat-option>
-                    @for (item of briefings(); track item.id) {
-                      <mat-option [value]="item.id">{{ item.nome }}</mat-option>
-                    }
-                  </mat-select>
-                </mat-form-field>
-              </div>
+              <ng-container [ngTemplateOutlet]="vinculosTpl" [ngTemplateOutletContext]="{ tipo: 'Briefing', titulo: 'briefings', singular: 'briefing', itens: briefings() }" />
             </mat-tab>
             <mat-tab label="Roteiros">
-              <div class="campo w-full sm:w-80">
-                <mat-label class="font-semibold mb-2 block">Modelo de roteiro</mat-label>
-                <mat-form-field appearance="outline" class="w-full">
-                  <mat-select aria-label="Modelo de roteiro" [value]="vinculo('Roteiro')" (valueChange)="definirVinculo('Roteiro', $event)">
-                    <mat-option value="">Nenhum</mat-option>
-                    @for (item of roteiros(); track item.id) {
-                      <mat-option [value]="item.id">{{ item.nome }}</mat-option>
-                    }
-                  </mat-select>
-                </mat-form-field>
-              </div>
+              <ng-container [ngTemplateOutlet]="vinculosTpl" [ngTemplateOutletContext]="{ tipo: 'Roteiro', titulo: 'roteiros', singular: 'roteiro', itens: roteiros() }" />
             </mat-tab>
             <mat-tab label="Inspirações">
-              <div class="campo w-full sm:w-80">
-                <mat-label class="font-semibold mb-2 block">Modelo de inspirações</mat-label>
-                <mat-form-field appearance="outline" class="w-full">
-                  <mat-select aria-label="Modelo de inspirações" [value]="vinculo('Inspiracao')" (valueChange)="definirVinculo('Inspiracao', $event)">
-                    <mat-option value="">Nenhum</mat-option>
-                    @for (item of inspiracoes(); track item.id) {
-                      <mat-option [value]="item.id">{{ item.nome }}</mat-option>
-                    }
-                  </mat-select>
-                </mat-form-field>
-              </div>
+              <ng-container [ngTemplateOutlet]="vinculosTpl" [ngTemplateOutletContext]="{ tipo: 'Inspiracao', titulo: 'inspirações', singular: 'inspiração', itens: inspiracoes() }" />
             </mat-tab>
             <mat-tab label="RSVP e Mensagens">
-              <div class="campo w-full sm:w-80">
-                <mat-label class="font-semibold mb-2 block">Modelo de mensagem</mat-label>
-                <mat-form-field appearance="outline" class="w-full">
-                  <mat-select aria-label="Modelo de mensagem" [value]="vinculo('Mensagem')" (valueChange)="definirVinculo('Mensagem', $event)">
-                    <mat-option value="">Nenhum</mat-option>
-                    @for (item of mensagens(); track item.id) {
-                      <mat-option [value]="item.id">{{ item.nome }}</mat-option>
-                    }
-                  </mat-select>
-                </mat-form-field>
-              </div>
+              <ng-container [ngTemplateOutlet]="vinculosTpl" [ngTemplateOutletContext]="{ tipo: 'Mensagem', titulo: 'mensagens', singular: 'mensagem', itens: mensagens() }" />
             </mat-tab>
           </mat-tab-group>
         </form>
@@ -225,7 +200,7 @@ export class ModeloEventoEditorPage implements OnInit {
   protected readonly roteiros = signal<Roteiro[]>([]);
   protected readonly inspiracoes = signal<Inspiracao[]>([]);
   protected readonly mensagens = signal<MensagemModelo[]>([]);
-  private readonly vinculosMap = signal<Record<string, string>>({});
+  private readonly vinculosMap = signal<Record<string, string[]>>({});
   private id = '';
 
   protected readonly form = this.fb.group({
@@ -280,9 +255,9 @@ export class ModeloEventoEditorPage implements OnInit {
         for (const tarefa of modelo.tarefas) {
           this.tarefas.push(this.novaTarefa(tarefa.titulo, tarefa.grupo, tarefa.diasAntes));
         }
-        const mapa: Record<string, string> = {};
+        const mapa: Record<string, string[]> = {};
         for (const vinculo of modelo.vinculos) {
-          mapa[vinculo.tipo] = vinculo.bibliotecaId;
+          (mapa[vinculo.tipo] ??= []).push(vinculo.bibliotecaId);
         }
         this.vinculosMap.set(mapa);
       },
@@ -290,15 +265,36 @@ export class ModeloEventoEditorPage implements OnInit {
     });
   }
 
-  protected vinculo(tipo: string): string {
-    return this.vinculosMap()[tipo] ?? '';
+  protected vinculos(tipo: string): string[] {
+    return this.vinculosMap()[tipo] ?? [];
   }
 
-  protected definirVinculo(tipo: string, id: string): void {
+  protected vinculados(tipo: string, itens: ItemBiblioteca[]): ItemBiblioteca[] {
+    const ids = this.vinculos(tipo);
+    return itens.filter((item) => ids.includes(item.id));
+  }
+
+  protected adicionarVinculos(tipo: string, titulo: string, itens: ItemBiblioteca[]): void {
+    const atuais = this.vinculos(tipo);
+    this.dialog.open(SelecionarBibliotecaDialog, {
+      ...DIALOG,
+      data: { titulo, itens, jaVinculados: atuais },
+    }).afterClosed().subscribe((novos?: string[]) => {
+      if (novos?.length) {
+        this.definirVinculos(tipo, [...new Set([...atuais, ...novos])]);
+      }
+    });
+  }
+
+  protected removerVinculo(tipo: string, id: string): void {
+    this.definirVinculos(tipo, this.vinculos(tipo).filter((atual) => atual !== id));
+  }
+
+  protected definirVinculos(tipo: string, ids: string[]): void {
     this.vinculosMap.update((mapa) => {
       const novo = { ...mapa };
-      if (id) {
-        novo[tipo] = id;
+      if (ids.length > 0) {
+        novo[tipo] = ids;
       } else {
         delete novo[tipo];
       }
@@ -371,7 +367,7 @@ export class ModeloEventoEditorPage implements OnInit {
       servicos: { nome: string; valorEstimado: number | string | null; itens: { tipo: string; texto: string }[] }[];
       tarefas: { titulo: string; grupo: string | null; quantidade: number | string | null; unidade: UnidadePrazo }[];
     };
-    const vinculos = Object.entries(this.vinculosMap()).map(([tipo, bibliotecaId]) => ({ tipo, bibliotecaId }));
+    const vinculos = Object.entries(this.vinculosMap()).flatMap(([tipo, ids]) => ids.map((bibliotecaId) => ({ tipo, bibliotecaId })));
     this.negocio.atualizarModelo(this.id, {
       nome: valor.nome,
       tipo: valor.tipo,
