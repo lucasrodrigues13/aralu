@@ -57,20 +57,7 @@ public class NegocioFluxoTests
 
         Assert.Equal(HttpStatusCode.NotFound, (await outra.GetAsync($"/api/v1/eventos/{eventoId}")).StatusCode);
 
-        var assessoria = await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/assessoria", new
-        {
-            valorTotal = 15000,
-            quantidadeParcelas = 4,
-            primeiraParcela = "2026-12-10",
-            comEntrada = true,
-            baseEntrada = "Valor",
-            valorEntrada = 3000,
-            dataEntrada = "2026-11-10",
-        }));
-        var servicoAssessoria = assessoria.GetProperty("servicos").EnumerateArray()
-            .Single(servico => servico.GetProperty("nome").GetString() == "Assessoria e Organização");
-        Assert.True(servicoAssessoria.GetProperty("contratado").GetBoolean());
-        Assert.Equal(5, servicoAssessoria.GetProperty("parcelas").GetArrayLength());
+        // As parcelas da assessoria nascem no orçamento e vão ao contrato; POST /eventos/{id}/assessoria saiu da API (SPEC-040 §8).
 
         var editado = await Ler(await dono.PutAsJsonAsync($"/api/v1/eventos/{eventoId}", new
         {

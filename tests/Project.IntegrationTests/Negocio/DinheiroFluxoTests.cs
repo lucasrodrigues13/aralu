@@ -85,7 +85,7 @@ public class DinheiroFluxoTests
     {
         var dono = await Entrar();
         var outra = await Entrar();
-        var oportunidade = await Ler(await dono.PostAsJsonAsync("/api/v1/oportunidades", new { nome = "Casamento Bia e Leo", estagio = "Contato inicial", contratante = ContratanteDeTeste.Completo }));
+        var oportunidade = await Ler(await dono.PostAsJsonAsync("/api/v1/oportunidades", new { nome = "Casamento Bia e Leo", estagio = "Contato inicial", contatos = new[] { new { nome = "Bia" } }, contratante = ContratanteDeTeste.Completo }));
         var oportunidadeId = oportunidade.GetProperty("id").GetGuid();
         var orcamento = await Ler(await dono.PostAsJsonAsync("/api/v1/orcamentos-funil", new { oportunidadeId, conteudo = "Proposta", valor = 6000 }));
         var orcamentoId = orcamento.GetProperty("id").GetGuid();
