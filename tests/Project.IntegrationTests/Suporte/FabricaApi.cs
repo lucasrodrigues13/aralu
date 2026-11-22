@@ -13,7 +13,7 @@ public sealed class FabricaApi : WebApplicationFactory<Program>
 {
     static FabricaApi()
     {
-        // O atraso de appsettings.Development.json é só para ver Pendente e Processando na tela.
+        // O atraso de appsettings.json é só para ver Pendente e Processando na tela.
         Environment.SetEnvironmentVariable("Importacao__AtrasoSegundos", "0");
     }
 
