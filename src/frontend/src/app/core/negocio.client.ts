@@ -463,6 +463,9 @@ export interface Convite {
   acessada: boolean;
   respondida: boolean;
   convidados: Convidado[];
+  email: string | null;
+  /** Data de envio do convite, `aaaa-mm-dd` (SPEC-052). */
+  dataEnvio: string | null;
 }
 
 export interface ListaConvites {
@@ -978,6 +981,10 @@ export class NegocioClient {
 
   criarConvite(eventoId: string, pedido: unknown) {
     return this.http.post<Convite>(`${this.base}/api/v1/eventos/${eventoId}/convites`, pedido);
+  }
+
+  atualizarConvite(id: string, pedido: { nome: string; observacao: string | null; email: string | null; dataEnvio: string | null }) {
+    return this.http.put<Convite>(`${this.base}/api/v1/convites/${id}`, pedido);
   }
 
   removerConvidado(id: string) {

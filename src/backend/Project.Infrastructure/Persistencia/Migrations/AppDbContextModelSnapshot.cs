@@ -403,6 +403,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateOnly?>("DataEnvio")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Email")
+                        .HasColumnType("text");
+
                     b.Property<Guid>("EventoId")
                         .HasColumnType("uuid");
 
@@ -871,6 +877,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .IsRequired()
                         .HasMaxLength(450)
                         .HasColumnType("character varying(450)");
+
+                    b.Property<bool>("ConvidadosLiberado")
+                        .HasColumnType("boolean");
 
                     b.Property<DateTimeOffset>("CriadoEm")
                         .HasColumnType("timestamp with time zone");

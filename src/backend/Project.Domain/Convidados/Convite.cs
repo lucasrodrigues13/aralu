@@ -14,6 +14,11 @@ public sealed class Convite
 
     public Guid? PrincipalId { get; set; }
 
+    public string? Email { get; set; }
+
+    /// <summary>Data em que a organizadora enviou (ou vai enviar) o convite (SPEC-052).</summary>
+    public DateOnly? DataEnvio { get; set; }
+
     public string Token { get; set; } = "";
 
     public DateTimeOffset? AcessadoEm { get; set; }

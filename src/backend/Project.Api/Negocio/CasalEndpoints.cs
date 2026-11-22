@@ -33,6 +33,8 @@ public static class CasalEndpoints
         casal.MapDelete(pagamento + "/parcelas/{parcelaId:guid}/comprovante", ExcluirComprovanteDaParcela);
         casal.MapPost(pagamento + "/contrato-assinado", EnviarContratoAssinado).DisableAntiforgery();
         casal.MapDelete(pagamento + "/contrato-assinado", ExcluirContratoAssinado);
+        casal.MapPost("/convites", CriarConvite);
+        casal.MapPut("/convites/{conviteId:guid}", AtualizarConvite);
         casal.MapGet("/arquivos/{arquivoId:guid}", Arquivo);
     }
 
@@ -50,6 +52,12 @@ public static class CasalEndpoints
 
     private static Task<IResult> LerCasal(string token, LinkCasalServico servico, CancellationToken ct) =>
         De(servico.LerCasalAsync(token, ct));
+
+    private static Task<IResult> CriarConvite(string token, ConviteCasalPedido pedido, LinkCasalServico servico, CancellationToken ct) =>
+        De(servico.CriarConviteAsync(token, pedido, ct));
+
+    private static Task<IResult> AtualizarConvite(string token, Guid conviteId, ConviteCasalPedido pedido, LinkCasalServico servico, CancellationToken ct) =>
+        De(servico.AtualizarConviteAsync(token, conviteId, pedido, ct));
 
     private static Task<IResult> Parcelar(string token, Guid servicoId, PedidoParcelas pedido, LinkCasalServico servico, CancellationToken ct) =>
         De(servico.ParcelarAsync(token, servicoId, pedido, ct));

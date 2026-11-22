@@ -15,7 +15,8 @@ import { ToastService } from '../../core/toast.service';
 import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { MascaraDirective } from '../../shared/mascara.directive';
-import { ListaConvites, NegocioClient } from '../../core/negocio.client';
+import { GdDataPipe } from '../../shared/gd-data.pipe';
+import { Convite, ListaConvites, NegocioClient } from '../../core/negocio.client';
 import { EventoAbasComponent } from '../eventos/evento-abas.component';
 
 const SITUACOES = [
@@ -32,7 +33,7 @@ export function cardsPorSituacao(porSituacao: { rotulo: string; quantidade: numb
 
 @Component({
   selector: 'app-convidados',
-  imports: [MatCardModule, MatButtonToggleModule, ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, EventoAbasComponent, MatSelectModule, MatCheckboxModule, MatIconModule, MatDialogModule, MascaraDirective],
+  imports: [MatCardModule, MatButtonToggleModule, ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, EventoAbasComponent, MatSelectModule, MatCheckboxModule, MatIconModule, MatDialogModule, MascaraDirective, GdDataPipe],
   template: `
     @if (!eventoId()) {
       <mat-card class="cardWithShadow">
@@ -136,6 +137,8 @@ export function cardsPorSituacao(porSituacao: { rotulo: string; quantidade: numb
                     <tr>
                       <td>
                         <strong>{{ item.nome }}</strong>
+                        @if (item.email) { <span class="block text-xs text-muted">{{ item.email }}</span> }
+                        <span class="block text-xs text-muted">{{ item.dataEnvio ? 'Envio em ' + (item.dataEnvio | gdData) : 'Envio não definido' }}</span>
                         <span class="block text-xs text-muted">@if (item.acessada) { acessada } @if (item.respondida) { @if (item.acessada) { · } respondida }</span>
                       </td>
                       <td>{{ item.telefone || '—' }}</td>
@@ -158,7 +161,7 @@ export function cardsPorSituacao(porSituacao: { rotulo: string; quantidade: numb
                         <button mat-icon-button type="button" aria-label="Copiar link de RSVP" (click)="copiar(item.token)"><mat-icon>link</mat-icon></button>
                         <button mat-icon-button type="button" aria-label="Baixar QR Code" (click)="baixarQr(item.id)"><mat-icon>qr_code_2</mat-icon></button>
                         <button mat-icon-button type="button" aria-label="Enviar pelo WhatsApp" (click)="whatsapp(item.id)"><mat-icon>chat</mat-icon></button>
-                        <button mat-icon-button type="button" aria-label="Editar" (click)="semEdicao()"><mat-icon>edit</mat-icon></button>
+                        <button mat-icon-button type="button" aria-label="Editar" (click)="abrirEdicao(item)"><mat-icon>edit</mat-icon></button>
                         <button mat-icon-button type="button" aria-label="Excluir" (click)="semExclusao('convite')"><mat-icon>delete</mat-icon></button>
                       </td>
                     </tr>
@@ -191,6 +194,35 @@ export function cardsPorSituacao(porSituacao: { rotulo: string; quantidade: numb
       </mat-card-content></mat-card>
     }
 
+    <ng-template #modalEdicao>
+      <h2 mat-dialog-title>Editar convite</h2>
+      <p class="text-muted text-sm px-6 -mt-2 mb-4">Defina o e-mail e a data de envio do convite.</p>
+      <mat-dialog-content>
+        <form id="edicao-form" class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4" [formGroup]="edicao" (ngSubmit)="salvarEdicao()">
+          <div class="campo sm:col-span-2">
+            <mat-label class="font-semibold mb-2 block">Nome do convite</mat-label>
+            <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Nome do convite'" matInput formControlName="nome" /></mat-form-field>
+          </div>
+          <div class="campo sm:col-span-2">
+            <mat-label class="font-semibold mb-2 block">Observação</mat-label>
+            <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Observação'" matInput formControlName="observacao" /></mat-form-field>
+          </div>
+          <div class="campo">
+            <mat-label class="font-semibold mb-2 block">E-mail</mat-label>
+            <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'E-mail'" matInput type="email" formControlName="email" /></mat-form-field>
+          </div>
+          <div class="campo">
+            <mat-label class="font-semibold mb-2 block">Data de envio do convite</mat-label>
+            <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Data de envio do convite'" matInput type="date" formControlName="dataEnvio" /></mat-form-field>
+          </div>
+        </form>
+      </mat-dialog-content>
+      <mat-dialog-actions>
+        <button mat-stroked-button type="button" mat-dialog-close>Cancelar</button>
+        <button mat-flat-button type="submit" form="edicao-form">Salvar</button>
+      </mat-dialog-actions>
+    </ng-template>
+
     <ng-template #modalConvite>
       <h2 mat-dialog-title>Novo convite</h2>
       <p class="text-muted text-sm px-6 -mt-2 mb-4">O convite reúne a família; o telefone fica no convite.</p>
@@ -203,6 +235,14 @@ export function cardsPorSituacao(porSituacao: { rotulo: string; quantidade: numb
           <div class="campo sm:col-span-2">
             <mat-label class="font-semibold mb-2 block">Observação</mat-label>
             <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Observação'" matInput formControlName="observacao" /></mat-form-field>
+          </div>
+          <div class="campo">
+            <mat-label class="font-semibold mb-2 block">E-mail</mat-label>
+            <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'E-mail'" matInput type="email" formControlName="email" /></mat-form-field>
+          </div>
+          <div class="campo">
+            <mat-label class="font-semibold mb-2 block">Data de envio do convite</mat-label>
+            <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Data de envio do convite'" matInput type="date" formControlName="dataEnvio" /></mat-form-field>
           </div>
           <div class="campo sm:col-span-2">
             <mat-label class="font-semibold mb-2 block">Nome do convidado</mat-label>
@@ -237,14 +277,18 @@ export class ConvidadosPage implements OnInit {
     return cardsPorSituacao(this.lista()?.porSituacao ?? []);
   });
   private readonly modalConvite = viewChild.required<TemplateRef<unknown>>('modalConvite');
+  private readonly modalEdicao = viewChild.required<TemplateRef<unknown>>('modalEdicao');
   private refConvite: MatDialogRef<unknown> | null = null;
+  private refEdicao: MatDialogRef<unknown> | null = null;
+  private conviteEmEdicao: string | null = null;
   private readonly dialog = inject(MatDialog);
   protected readonly filtro = this.fb.nonNullable.group({
     nome: '', situacao: '', telefone: '', observacao: '', somenteConfirmados: false,
   });
   protected readonly convite = this.fb.nonNullable.group({
-    nome: '', observacao: '', convidado: '', ddi: '+55', celular: '',
+    nome: '', observacao: '', convidado: '', ddi: '+55', celular: '', email: '', dataEnvio: '',
   });
+  protected readonly edicao = this.fb.nonNullable.group({ nome: '', observacao: '', email: '', dataEnvio: '' });
 
   ngOnInit(): void {
     const id = this.rota.snapshot.paramMap.get('id') ?? '';
@@ -298,6 +342,8 @@ export class ConvidadosPage implements OnInit {
     this.negocio.criarConvite(this.eventoId(), {
       nome: valor.nome,
       observacao: valor.observacao,
+      email: valor.email || null,
+      dataEnvio: valor.dataEnvio || null,
       principal: valor.celular ? 0 : null,
       convidados: [{
         nome: valor.convidado,
@@ -377,8 +423,29 @@ export class ConvidadosPage implements OnInit {
     });
   }
 
-  protected semEdicao(): void {
-    this.toast.erro('A edição do convite ainda não está disponível neste fluxo.');
+  protected abrirEdicao(convite: Convite): void {
+    this.conviteEmEdicao = convite.id;
+    this.edicao.reset({ nome: convite.nome, observacao: convite.observacao ?? '', email: convite.email ?? '', dataEnvio: convite.dataEnvio ?? '' });
+    this.refEdicao = this.dialog.open(this.modalEdicao(), DIALOG);
+  }
+
+  protected salvarEdicao(): void {
+    const id = this.conviteEmEdicao;
+    if (!id) return;
+    const valor = this.edicao.getRawValue();
+    this.negocio.atualizarConvite(id, {
+      nome: valor.nome,
+      observacao: valor.observacao || null,
+      email: valor.email || null,
+      dataEnvio: valor.dataEnvio || null,
+    }).subscribe({
+      next: () => {
+        this.refEdicao?.close();
+        this.toast.sucesso('Convite salvo.');
+        this.carregar();
+      },
+      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+    });
   }
 
   protected semExclusao(tipo: string): void {
