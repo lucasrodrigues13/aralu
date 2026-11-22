@@ -276,6 +276,8 @@ public class LinkCasalTests
             return Task.CompletedTask;
         }
 
+        public Task InserirConvidadoAsync(Convidado convidado, CancellationToken ct) => Task.CompletedTask;
+
         public Task RemoverConvidadoAsync(Convidado convidado, CancellationToken ct)
         {
             ConvidadosRemovidos.Add(convidado);

@@ -29,6 +29,13 @@ public sealed class DadosLinkCasalEf(AppDbContext banco) : IDadosLinkCasal
         return Task.CompletedTask;
     }
 
+    // Id já preenchido: pela navegação do convite rastreado o EF trataria como alteração (UPDATE de 0 linhas).
+    public Task InserirConvidadoAsync(Convidado convidado, CancellationToken ct)
+    {
+        banco.Convidados.Add(convidado);
+        return Task.CompletedTask;
+    }
+
     public Task<EventoDoLink?> ObterEventoAsync(string contaId, Guid eventoId, CancellationToken ct) =>
         banco.Eventos.AsNoTracking()
             .Where(evento => evento.Id == eventoId && evento.ContaId == contaId)

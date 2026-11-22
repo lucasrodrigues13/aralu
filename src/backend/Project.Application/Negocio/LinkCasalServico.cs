@@ -40,6 +40,9 @@ public interface IDadosLinkCasal
 
     Task RemoverConvidadoAsync(Domain.Convidados.Convidado convidado, CancellationToken ct);
 
+    /// <summary>Marca um convidado novo de um convite já gravado para inclusão (gravado no próximo <c>SalvarAsync</c>).</summary>
+    Task InserirConvidadoAsync(Domain.Convidados.Convidado convidado, CancellationToken ct);
+
     Task<EventoDoLink?> ObterEventoAsync(string contaId, Guid eventoId, CancellationToken ct);
 
     Task<LinkCasal?> ObterPorEventoAsync(Guid eventoId, CancellationToken ct);
@@ -380,7 +383,9 @@ public sealed class LinkCasalServico(
             }
             else
             {
-                convite.Convidados.Add(new Domain.Convidados.Convidado { Id = Guid.NewGuid(), ConviteId = convite.Id, Nome = nome });
+                var novo = new Domain.Convidados.Convidado { Id = Guid.NewGuid(), ConviteId = convite.Id, Nome = nome };
+                convite.Convidados.Add(novo);
+                await dados.InserirConvidadoAsync(novo, ct);
             }
         }
 

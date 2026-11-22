@@ -318,7 +318,11 @@ public sealed class ContratoFunilServico(IDados dados, IDadosContrato modelos)
         };
         dados.AdicionarRecebimentoParcela(recebimento);
         await dados.SalvarNegocioAsync(ct);
-        parcela.Recebimentos.Add(recebimento);
+        // Com EF a parcela rastreada já recebe o recebimento ao salvar; somar de novo dobrava o "recebido" (SPEC-040 §6.2).
+        if (!parcela.Recebimentos.Contains(recebimento))
+        {
+            parcela.Recebimentos.Add(recebimento);
+        }
         return await LerAposMudancaAsync(contaId, item, ct);
     }
 
