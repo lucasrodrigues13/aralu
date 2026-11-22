@@ -8,6 +8,33 @@ export interface LinkCasal {
   ativo: boolean;
   token: string | null;
   financeiroLiberado: boolean;
+  /** O casal vê e cadastra os convites (SPEC-052). */
+  convidadosLiberado: boolean;
+}
+
+/** Convidado de um convite, como o casal vê (SPEC-052). */
+export interface ConvidadoCasal {
+  id: string;
+  nome: string;
+  situacao: string;
+}
+
+export interface ConviteCasal {
+  id: string;
+  nome: string;
+  ddi: string | null;
+  telefone: string | null;
+  email: string | null;
+  convidados: ConvidadoCasal[];
+}
+
+/** Pedido de criar ou editar convite: convidado com `id` renomeia o existente; sem `id`, inclui um novo. */
+export interface PedidoConviteCasal {
+  nome: string;
+  ddi: string | null;
+  telefone: string | null;
+  email: string | null;
+  convidados: { id: string | null; nome: string }[];
 }
 
 /** O que a página do casal recebe (SPEC-046 §6.2 e §6.3). `financeiro` é nulo com o financeiro fechado. */
@@ -16,6 +43,9 @@ export interface CasalLeitura {
   data: string | null;
   financeiroLiberado: boolean;
   financeiro: DinheiroEvento | null;
+  convidadosLiberado: boolean;
+  /** Nulo com o cadastro de convidados fechado. */
+  convites: ConviteCasal[] | null;
 }
 
 /** Endereço que a organizadora passa ao casal. */
@@ -40,8 +70,9 @@ export class CasalClient {
     return this.http.post<LinkCasal>(this.url(eventoId), null);
   }
 
-  liberarFinanceiro(eventoId: string, financeiroLiberado: boolean) {
-    return this.http.put<LinkCasal>(this.url(eventoId), { financeiroLiberado });
+  /** Liga ou desliga cada área do link; as duas marcações vão juntas. */
+  liberar(eventoId: string, marcacoes: { financeiroLiberado: boolean; convidadosLiberado: boolean }) {
+    return this.http.put<LinkCasal>(this.url(eventoId), marcacoes);
   }
 
   desativar(eventoId: string) {
@@ -56,6 +87,14 @@ export class CasalClient {
 
   obter(token: string) {
     return this.http.get<CasalLeitura>(this.publico(token));
+  }
+
+  criarConvite(token: string, pedido: PedidoConviteCasal) {
+    return this.http.post<CasalLeitura>(`${this.publico(token)}/convites`, pedido);
+  }
+
+  atualizarConvite(token: string, conviteId: string, pedido: PedidoConviteCasal) {
+    return this.http.put<CasalLeitura>(`${this.publico(token)}/convites/${conviteId}`, pedido);
   }
 
   parcelar(token: string, servicoId: string, pedido: PedidoParcelamentoPagamento) {

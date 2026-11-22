@@ -6,7 +6,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { Observable } from 'rxjs';
-import { CasalClient, CasalLeitura } from '../../core/casal.client';
+import { CasalClient, CasalLeitura, ConviteCasal, PedidoConviteCasal } from '../../core/casal.client';
 import { ComprovantePagamento, PagamentoFornecedor, ParcelaPagamento } from '../../core/dinheiro.client';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { ToastService } from '../../core/toast.service';
@@ -17,6 +17,7 @@ import { GdDinheiroPipe } from '../../shared/gd-dinheiro.pipe';
 import { STATUS } from '../../shared/status';
 import { ComprovanteDialog } from '../dinheiro/comprovante.dialog';
 import { pagamentosPorMes } from '../dinheiro/pagamentos-por-mes';
+import { ConviteCasalDialog } from './convite-casal.dialog';
 import { ParcelarPagamentoDialog } from '../dinheiro/parcelar-pagamento.dialog';
 
 /** Página do casal, sem login (SPEC-046): acompanha e atualiza o financeiro do evento quando a organizadora libera. */
@@ -39,11 +40,39 @@ import { ParcelarPagamentoDialog } from '../dinheiro/parcelar-pagamento.dialog';
           @if (d.data) { <span class="text-sm text-muted">{{ d.data | gdData }}</span> }
         </header>
 
+        @if (d.convites; as convites) {
+          <div class="secao">
+            <h2 class="mes">Convidados</h2>
+            <button mat-flat-button type="button" (click)="abrirConvite(null)"><mat-icon>add</mat-icon> Novo convite</button>
+          </div>
+          @if (convites.length === 0) {
+            <p class="text-center text-muted py-6">Nenhum convite ainda. Use "Novo convite" para cadastrar quem vai receber.</p>
+          }
+          @for (convite of convites; track convite.id) {
+            <mat-card class="cardWithShadow"><mat-card-content>
+              <div class="linha">
+                <div class="min-w-0">
+                  <strong>{{ convite.nome }}</strong>
+                  <span class="block text-xs text-muted">{{ convite.telefone ? ((convite.ddi ?? '') + ' ' + convite.telefone).trim() : 'Sem telefone' }}{{ convite.email ? ' · ' + convite.email : '' }}</span>
+                </div>
+                <button mat-icon-button type="button" aria-label="Editar convite" (click)="abrirConvite(convite)"><mat-icon>edit</mat-icon></button>
+              </div>
+              <ul class="convidados">
+                @for (pessoa of convite.convidados; track pessoa.id) {
+                  <li>{{ pessoa.nome }} <span class="text-xs text-muted">· {{ pessoa.situacao }}</span></li>
+                }
+              </ul>
+            </mat-card-content></mat-card>
+          }
+        }
+
         @if (!d.financeiro) {
-          <mat-card class="cardWithShadow"><mat-card-content class="aviso">
-            <mat-icon>lock</mat-icon>
-            <p>A organizadora ainda não liberou o financeiro deste evento.</p>
-          </mat-card-content></mat-card>
+          @if (!d.convidadosLiberado) {
+            <mat-card class="cardWithShadow"><mat-card-content class="aviso">
+              <mat-icon>lock</mat-icon>
+              <p>A organizadora ainda não liberou o financeiro nem o cadastro de convidados deste evento.</p>
+            </mat-card-content></mat-card>
+          }
         } @else {
           <mat-card class="cardWithShadow resumo"><mat-card-content>
             <div><span class="rotulo">Contratado</span><strong>{{ d.financeiro.contratado | gdDinheiro }}</strong></div>
@@ -125,6 +154,9 @@ import { ParcelarPagamentoDialog } from '../dinheiro/parcelar-pagamento.dialog';
     .resumo mat-card-content { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; text-align: center; }
     .rotulo { display: block; font-size: 12px; color: var(--mat-sys-outline); }
     .mes { font-size: 13px; font-weight: 600; text-transform: capitalize; margin: 8px 0 0; color: var(--mat-sys-outline); }
+    .secao { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .secao .mes { margin: 0; }
+    .convidados { margin: 8px 0 0; padding: 0; list-style: none; display: grid; gap: 2px; }
     .linha { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
     .parcela { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 4px 12px; border-top: 1px solid var(--mat-sys-outline-variant); margin-top: 8px; padding-top: 4px; }
     .acoes { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 4px 8px; margin-top: 8px; }
@@ -153,6 +185,14 @@ export class CasalPage implements OnInit {
         this.indisponivel.set(true);
         this.carregando.set(false);
       },
+    });
+  }
+
+  protected abrirConvite(convite: ConviteCasal | null): void {
+    this.dialog.open(ConviteCasalDialog, { ...DIALOG, data: convite }).afterClosed().subscribe((pedido?: PedidoConviteCasal) => {
+      if (!pedido) return;
+      if (convite) this.aplicar(this.casal.atualizarConvite(this.token, convite.id, pedido), 'Convite salvo.');
+      else this.aplicar(this.casal.criarConvite(this.token, pedido), 'Convite cadastrado.');
     });
   }
 

@@ -393,6 +393,53 @@ public class DinheiroFluxoTests
         Assert.Equal(HttpStatusCode.NotFound, (await casal.GetAsync($"/api/v1/publico/casal/{trocado.GetProperty("token").GetString()}")).StatusCode);
     }
 
+    [Fact]
+    public async Task Link_do_casal_cadastra_convites_quando_liberado_e_a_organizadora_define_o_envio()
+    {
+        var dono = await Entrar();
+        var outra = await Entrar();
+        var (eventoId, _) = await EventoComFornecedorContratado(dono, 1);
+        var urlLink = $"/api/v1/eventos/{eventoId}/link-casal";
+        var token = (await Ler(await dono.PostAsync(urlLink, null))).GetProperty("token").GetString()!;
+        var casal = _banco.Fabrica.CreateClient();
+        var baseCasal = $"/api/v1/publico/casal/{token}";
+        var pedido = new
+        {
+            nome = "Família Souza",
+            ddi = "+55",
+            telefone = "11999990000",
+            email = "souza@exemplo.com",
+            convidados = new[] { new { id = (Guid?)null, nome = "Maria Souza" }, new { id = (Guid?)null, nome = "João Souza" } },
+        };
+
+        // Fechado (padrão): o casal não vê nem cadastra.
+        Assert.Equal(JsonValueKind.Null, (await Ler(await casal.GetAsync(baseCasal))).GetProperty("convites").ValueKind);
+        Assert.Equal(HttpStatusCode.Forbidden, (await casal.PostAsJsonAsync($"{baseCasal}/convites", pedido)).StatusCode);
+
+        // Liberado: o casal cadastra e a organizadora vê o convite na aba Convidados.
+        var liberado = await Ler(await dono.PutAsJsonAsync(urlLink, new { financeiroLiberado = false, convidadosLiberado = true }));
+        Assert.True(liberado.GetProperty("convidadosLiberado").GetBoolean());
+        var criado = await Ler(await casal.PostAsJsonAsync($"{baseCasal}/convites", pedido));
+        var convite = criado.GetProperty("convites").EnumerateArray().Single();
+        Assert.Equal("11999990000", convite.GetProperty("telefone").GetString());
+        Assert.Equal(2, convite.GetProperty("convidados").GetArrayLength());
+
+        var lista = await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/convites"));
+        var daOrganizadora = lista.GetProperty("convites").EnumerateArray().Single();
+        Assert.Equal("souza@exemplo.com", daOrganizadora.GetProperty("email").GetString());
+        Assert.Equal(JsonValueKind.Null, daOrganizadora.GetProperty("dataEnvio").ValueKind);
+
+        // A organizadora define a data de envio.
+        var conviteId = daOrganizadora.GetProperty("id").GetGuid();
+        var atualizado = await Ler(await dono.PutAsJsonAsync($"/api/v1/convites/{conviteId}", new { nome = "Família Souza", email = "souza@exemplo.com", dataEnvio = "2026-12-01" }));
+        Assert.Equal("2026-12-01", atualizado.GetProperty("dataEnvio").GetString());
+
+        // Outra conta não alcança o convite; o casal edita pelo mesmo link.
+        Assert.Equal(HttpStatusCode.NotFound, (await outra.PutAsJsonAsync($"/api/v1/convites/{conviteId}", new { nome = "X" })).StatusCode);
+        var editado = await Ler(await casal.PutAsJsonAsync($"{baseCasal}/convites/{conviteId}", pedido with { nome = "Souza e família" }));
+        Assert.Equal("Souza e família", editado.GetProperty("convites").EnumerateArray().Single().GetProperty("nome").GetString());
+    }
+
     private static JsonElement ServicoDe(JsonElement evento, Guid servicoId) =>
         evento.GetProperty("servicos").EnumerateArray().Single(item => item.GetProperty("id").GetGuid() == servicoId);
 

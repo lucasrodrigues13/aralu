@@ -14,5 +14,8 @@ public sealed class LinkCasal
     /// <summary>Quando liberado, o casal acompanha e atualiza os pagamentos a fornecedores do evento.</summary>
     public bool FinanceiroLiberado { get; set; }
 
+    /// <summary>Quando ligado, o casal vê e cadastra os convites do evento (SPEC-052).</summary>
+    public bool ConvidadosLiberado { get; set; }
+
     public DateTimeOffset CriadoEm { get; set; }
 }

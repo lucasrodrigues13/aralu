@@ -108,7 +108,7 @@ SPEC-043, SPEC-045, SPEC-040. Depois: #23 (convites usam a mesma base do link), 
 
 Decididos nesta entrega pela opção mais simples e conservadora (a conferir pelo dono):
 
-1. **"O que o casal vê e edita" é uma marcação só**: financeiro liberado ou não. O card fala em marcar ver e editar, mas lista só o que se faz com o financeiro liberado; ver sem editar não entra. Outras marcações (convidados, tarefas, roteiro) entram nos cards que as usam (#23 e seguintes).
+1. **"O que o casal vê e edita" é uma marcação só**: financeiro liberado ou não. O card fala em marcar ver e editar, mas lista só o que se faz com o financeiro liberado; ver sem editar não entra. Outras marcações (convidados, tarefas, roteiro) entram nos cards que as usam. A de convidados entrou no card #23 ([SPEC-052](052-link-do-casal-cadastra-convites.md)), com `LinksCasal.ConvidadosLiberado`; a página do casal e a janela do link ganharam esse bloco.
 2. **O link nasce com o financeiro fechado**; a dona liga depois.
 3. **Quem gerencia**: só a dona (Organizer). Assistente não gera nem troca o link.
 4. **Contratar, voltar para orçamento e valor do serviço** não são do casal; ele só atua sobre o que já está contratado.

@@ -10,7 +10,7 @@ import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { DIALOG_PEQUENO } from '../../shared/dialog';
 
-/** Link do casal do evento (SPEC-046 §6.1): gerar, copiar, liberar o financeiro, trocar e desativar. */
+/** Link do casal do evento (SPEC-046 §6.1): gerar, copiar, liberar o financeiro e os convidados, trocar e desativar. */
 @Component({
   selector: 'app-link-casal-dialog',
   imports: [MatDialogModule, MatButtonModule, MatIconModule, MatSlideToggleModule],
@@ -31,6 +31,12 @@ import { DIALOG_PEQUENO } from '../../shared/dialog';
           </mat-slide-toggle>
           <p class="text-muted text-xs mt-2">
             Liberado, o casal marca como pago, sobe comprovantes e o contrato assinado do fornecedor e define as parcelas. A Gestão Financeira e os dados internos não vão junto.
+          </p>
+          <mat-slide-toggle class="mt-4" [checked]="atual.convidadosLiberado" (change)="liberarConvidados($event.checked)">
+            O casal cadastra os convidados
+          </mat-slide-toggle>
+          <p class="text-muted text-xs mt-2">
+            Liberado, o casal vê os convites do evento e cadastra nome, telefone, e-mail e o nome de cada convidado. Situação, mesa e demais dados da lista ficam só com você.
           </p>
         }
       } @else {
@@ -75,7 +81,17 @@ export class LinkCasalDialog implements OnInit {
   }
 
   protected liberar(liberado: boolean): void {
-    this.aplicar(this.casal.liberarFinanceiro(this.dados.eventoId, liberado), liberado ? 'Financeiro liberado para o casal.' : 'Financeiro fechado para o casal.');
+    const atual = this.link();
+    this.aplicar(
+      this.casal.liberar(this.dados.eventoId, { financeiroLiberado: liberado, convidadosLiberado: atual?.convidadosLiberado ?? false }),
+      liberado ? 'Financeiro liberado para o casal.' : 'Financeiro fechado para o casal.');
+  }
+
+  protected liberarConvidados(liberado: boolean): void {
+    const atual = this.link();
+    this.aplicar(
+      this.casal.liberar(this.dados.eventoId, { financeiroLiberado: atual?.financeiroLiberado ?? false, convidadosLiberado: liberado }),
+      liberado ? 'Cadastro de convidados liberado para o casal.' : 'Cadastro de convidados fechado para o casal.');
   }
 
   protected trocar(): void {

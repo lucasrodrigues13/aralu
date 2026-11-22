@@ -21,7 +21,9 @@ public sealed record NovoConvite(
     string? Nome,
     string? Observacao,
     IReadOnlyList<ConvidadoPedido>? Convidados,
-    int? Principal);
+    int? Principal,
+    string? Email = null,
+    DateOnly? DataEnvio = null);
 
 public sealed record ConvidadoLeitura(
     Guid Id,
@@ -48,7 +50,9 @@ public sealed record ConviteLeitura(
     string Token,
     bool Acessada,
     bool Respondida,
-    IReadOnlyList<ConvidadoLeitura> Convidados);
+    IReadOnlyList<ConvidadoLeitura> Convidados,
+    string? Email = null,
+    DateOnly? DataEnvio = null);
 
 public sealed record TotaisLeitura(string Rotulo, int Quantidade);
 
@@ -140,8 +144,16 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
             return Resultado<ConviteLeitura>.Erro(Codigos.Validacao, "Informe o nome do convite.");
         }
 
+        var email = Domain.Comum.Texto.Limpo(pedido.Email);
+        if (email is not null && !ConviteRegras.EmailValido(email))
+        {
+            return Resultado<ConviteLeitura>.Erro(Codigos.Validacao, "Informe um e-mail válido.");
+        }
+
         convite.Nome = nome;
         convite.Observacao = Domain.Comum.Texto.Limpo(pedido.Observacao);
+        convite.Email = email;
+        convite.DataEnvio = pedido.DataEnvio;
         await dados.SalvarConvitesAsync(ct);
         return Resultado<ConviteLeitura>.Sucesso(Ler(convite));
     }
@@ -450,6 +462,12 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
             return Resultado<Convite>.Erro(Codigos.Validacao, "Inclua ao menos um convidado.");
         }
 
+        var email = Domain.Comum.Texto.Limpo(pedido.Email);
+        if (email is not null && !ConviteRegras.EmailValido(email))
+        {
+            return Resultado<Convite>.Erro(Codigos.Validacao, "Informe um e-mail válido.");
+        }
+
         var convite = new Convite
         {
             Id = Guid.NewGuid(),
@@ -457,6 +475,8 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
             ContaId = contaId,
             Nome = nome,
             Observacao = Domain.Comum.Texto.Limpo(pedido.Observacao),
+            Email = email,
+            DataEnvio = pedido.DataEnvio,
             Token = Guid.NewGuid().ToString("N"),
         };
 
@@ -679,7 +699,9 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
             convite.Token,
             convite.AcessadoEm is not null || convite.RespondidoEm is not null,
             convite.RespondidoEm is not null,
-            convite.Convidados.Select(item => LerConvidado(item, convite.PrincipalId)).ToArray());
+            convite.Convidados.Select(item => LerConvidado(item, convite.PrincipalId)).ToArray(),
+            convite.Email,
+            convite.DataEnvio);
     }
 
     private static ConvidadoLeitura LerConvidado(Convidado convidado, Guid? principalId) => new(
