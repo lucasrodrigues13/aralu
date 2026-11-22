@@ -244,7 +244,6 @@ BEGIN
         "InicioRecepcao" time without time zone,
         "QuantidadePadrinhos" integer,
         "QuantidadeDamas" integer,
-        "SenhaSite" text,
         "NotificarAssessor" boolean NOT NULL,
         "NotificarAssistentes" boolean NOT NULL,
         "NotificarClientes" boolean NOT NULL,

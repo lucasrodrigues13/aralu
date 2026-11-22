@@ -256,7 +256,7 @@ const CLASSE_ETAPA: Record<string, string> = {
             @if (g.orcamento.vazio) {
               <p class="text-sm text-muted">Informe o estimado dos serviços para ver os gráficos.</p>
             } @else {
-              <div class="barra" role="img" [attr.aria-label]="descricaoBarra(g.orcamento)">
+              <div class="barra" [class.alerta]="g.orcamento.excesso > 0" role="img" [attr.aria-label]="descricaoBarra(g.orcamento)">
                 @for (fatia of g.orcamento.fatias; track fatia.chave) {
                   @if (fatia.largura > 0) { <span class="fatia" [class]="'fatia ' + fatia.chave" [style.width.%]="fatia.largura"></span> }
                 }
@@ -425,7 +425,8 @@ const CLASSE_ETAPA: Record<string, string> = {
     .fatia.contratado, .ponto.contratado { background: #2e7d32; }
     .fatia.estimado, .ponto.estimado { background: #f9a825; }
     .fatia.restante, .ponto.restante { background: rgba(128,128,128,.45); }
-    .ponto.excesso { background: #c62828; }
+    .fatia.excesso, .ponto.excesso { background: #c62828; }
+    .barra.alerta { box-shadow: 0 0 0 2px #c62828; }
     .ponto { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
     .legenda { list-style: none; padding: 0; margin: 12px 0 0; display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
     .servicos { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }

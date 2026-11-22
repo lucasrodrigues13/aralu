@@ -116,4 +116,24 @@ describe('Tarefas do evento no Resumo', () => {
     expect(linhas.length).toBe(1);
     expect(linhas[0]).toContain('Velha');
   });
+
+  it('marcar a tarefa conclui, risca o título e avisa o Resumo', () => {
+    const fixture = montar('EmAndamento', [tarefa({ id: '1', titulo: 'Buffet' })]);
+    const pedidos: [string, boolean][] = [];
+    const negocio = TestBed.inject(NegocioClient) as unknown as Record<string, unknown>;
+    negocio['concluirTarefa'] = (id: string, concluida: boolean) => {
+      pedidos.push([id, concluida]);
+      return of(tarefa({ id, titulo: 'Buffet', situacao: concluida ? 'Concluida' : 'Pendente' }));
+    };
+    let avisos = 0;
+    fixture.componentInstance.mudou.subscribe(() => avisos++);
+    const raiz = fixture.nativeElement as HTMLElement;
+
+    (raiz.querySelector('tr.linha-tarefa .concluir input') as HTMLInputElement).click();
+    fixture.detectChanges();
+
+    expect(pedidos).toEqual([['1', true]]);
+    expect(avisos).toBe(1);
+    expect(raiz.querySelector('tr.linha-tarefa .titulo-tarefa.concluida')).not.toBeNull();
+  });
 });

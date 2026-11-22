@@ -42,8 +42,6 @@ public sealed class Evento
 
     public int? QuantidadeDamas { get; set; }
 
-    public string? SenhaSite { get; set; }
-
     public bool NotificarAssessor { get; set; } = true;
 
     public bool NotificarAssistentes { get; set; } = true;

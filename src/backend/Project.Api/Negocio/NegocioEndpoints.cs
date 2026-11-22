@@ -85,6 +85,7 @@ public static class NegocioEndpoints
         api.MapPut("/tarefas/{id:guid}", AtualizarTarefa);
         api.MapPost("/tarefas/{id:guid}/comentarios", ComentarTarefa);
         api.MapPut("/tarefas/{id:guid}/checklist/{itemId:guid}", MarcarItemChecklist);
+        api.MapPut("/tarefas/{id:guid}/conclusao", ConcluirTarefa);
         api.MapPost("/tarefas/{id:guid}/anexos", AnexarTarefa).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe)).DisableAntiforgery();
         api.MapDelete("/tarefas/{id:guid}/anexos/{anexoId:guid}", RemoverAnexoTarefa).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapGet("/clientes", Clientes).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
@@ -923,6 +924,39 @@ public static class NegocioEndpoints
             }
 
             return await De(servico.MarcarItemChecklistAsync(conta, id, itemId, pedido, Hoje(), ct));
+        });
+
+    private static Task<IResult> ConcluirTarefa(
+        Guid id,
+        ConcluirTarefa pedido,
+        ClaimsPrincipal usuario,
+        TarefaServico servico,
+        IDados dados,
+        CancellationToken ct) =>
+        ComConta(usuario, async conta =>
+        {
+            var bloqueio = await ExigirModuloAsync(usuario, conta, ModuloCliente.Tarefas, dados, ct);
+            if (bloqueio is not null)
+            {
+                return bloqueio;
+            }
+
+            if (EhClient(usuario))
+            {
+                var tarefa = await dados.ObterTarefaAsync(conta, id, ct);
+                if (tarefa is null)
+                {
+                    return Indisponivel();
+                }
+
+                var eventoOk = await ExigirEventoDoClientAsync(usuario, conta, tarefa.EventoId, dados, ct);
+                if (eventoOk is not null)
+                {
+                    return eventoOk;
+                }
+            }
+
+            return await De(servico.ConcluirAsync(conta, id, pedido.Concluida, Hoje(), ct));
         });
 
     private static Task<IResult> Clientes(ClaimsPrincipal usuario, ClienteServico servico, string? nome, CancellationToken ct) =>

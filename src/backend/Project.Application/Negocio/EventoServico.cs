@@ -36,7 +36,6 @@ public sealed record SalvarEvento(
     TimeOnly? InicioRecepcao,
     int? QuantidadePadrinhos,
     int? QuantidadeDamas,
-    string? SenhaSite,
     TipoEvento? Tipo = null,
     Guid? ClienteId = null,
     ClienteRapido? ClienteNovo = null,
@@ -103,7 +102,6 @@ public sealed record EventoDetalhe(
     int? QuantidadePadrinhos,
     int? QuantidadeDamas,
     string? UrlSite,
-    string? SenhaSite,
     bool NotificarAssessor,
     bool NotificarAssistentes,
     bool NotificarClientes,
@@ -367,7 +365,6 @@ public sealed class EventoServico(IDados dados, IConsultaCep cep)
         evento.InicioRecepcao = pedido.InicioRecepcao;
         evento.QuantidadePadrinhos = pedido.QuantidadePadrinhos;
         evento.QuantidadeDamas = pedido.QuantidadeDamas;
-        evento.SenhaSite = Domain.Comum.Texto.Limpo(pedido.SenhaSite);
         await dados.SubstituirTagsAsync(evento, LimparTags(pedido.Tags), ct);
         await dados.SincronizarAgendaAsync(evento, ct);
         await dados.SalvarEventoAsync(ct);

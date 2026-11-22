@@ -15,6 +15,8 @@ public sealed record ItemChecklistPedido(
 
 public sealed record MarcarItemChecklist(bool Feito, bool Cancelado);
 
+public sealed record ConcluirTarefa(bool Concluida);
+
 public sealed record SalvarTarefa(
     string? Titulo,
     string? Descricao,
@@ -384,7 +386,58 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
         }
 
         var atual = (await dados.ListarTarefasAsync(contaId, tarefa.EventoId, ct)).Single(item => item.Id == tarefa.Id);
+        if (SituacaoPelaChecklist(tarefa.Situacao, atual.Checklist) is SituacaoTarefa nova)
+        {
+            tarefa.Situacao = nova;
+            await dados.SalvarTarefaAsync(ct);
+            atual.Situacao = nova;
+        }
+
         return Resultado<TarefaLeitura>.Sucesso(await LerUmaAsync(contaId, atual, hoje, ct));
+    }
+
+    /// <summary>Marca a tarefa como concluída ou a reabre (volta para pendente), sem regravar o resto.</summary>
+    public async Task<Resultado<TarefaLeitura>> ConcluirAsync(string contaId, Guid id, bool concluida, DateOnly hoje, CancellationToken ct)
+    {
+        var tarefa = await dados.ObterTarefaAsync(contaId, id, ct);
+        if (tarefa is null)
+        {
+            return Resultado<TarefaLeitura>.Erro(Codigos.Indisponivel, "Indisponível.");
+        }
+
+        if (await dados.SituacaoDoEventoAsync(contaId, tarefa.EventoId, ct) != SituacaoEvento.EmAndamento)
+        {
+            return Resultado<TarefaLeitura>.Erro(Codigos.Validacao, "O evento não está em andamento.");
+        }
+
+        if (concluida != (tarefa.Situacao == SituacaoTarefa.Concluida))
+        {
+            tarefa.Situacao = concluida ? SituacaoTarefa.Concluida : SituacaoTarefa.Pendente;
+            await dados.SalvarTarefaAsync(ct);
+        }
+
+        return Resultado<TarefaLeitura>.Sucesso(await RelerAsync(contaId, tarefa, hoje, ct));
+    }
+
+    /// <summary>
+    /// Todos os itens válidos (não cancelados) feitos conclui a tarefa; desmarcar um item de tarefa concluída a reabre.
+    /// Devolve null quando a situação não muda.
+    /// </summary>
+    public static SituacaoTarefa? SituacaoPelaChecklist(SituacaoTarefa atual, IReadOnlyCollection<ItemChecklistTarefa> checklist)
+    {
+        var validos = checklist.Where(item => !item.Cancelado).ToArray();
+        if (validos.Length == 0)
+        {
+            return null;
+        }
+
+        var completa = validos.All(item => item.Feito);
+        if (completa && atual != SituacaoTarefa.Concluida)
+        {
+            return SituacaoTarefa.Concluida;
+        }
+
+        return !completa && atual == SituacaoTarefa.Concluida ? SituacaoTarefa.Pendente : null;
     }
 
     private async Task<IReadOnlyList<TarefaLeitura>> LerListaAsync(string contaId, IReadOnlyList<Tarefa> tarefas, DateOnly hoje, CancellationToken ct)

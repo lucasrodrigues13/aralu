@@ -837,9 +837,6 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<string>("SegundoNome")
                         .HasColumnType("text");
 
-                    b.Property<string>("SenhaSite")
-                        .HasColumnType("text");
-
                     b.Property<string>("Situacao")
                         .IsRequired()
                         .HasColumnType("text");

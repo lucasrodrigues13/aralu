@@ -93,6 +93,12 @@ import { TarefaLeituraDialog } from './tarefa-leitura.dialog';
               </div>
             }
             <mat-checkbox class="mb-1" [checked]="soChecklist()" (change)="soChecklist.set($event.checked)">Só com checklist</mat-checkbox>
+            @if (temFiltro()) {
+              <button mat-stroked-button type="button" class="mb-1" (click)="limparFiltros()">
+                <mat-icon>filter_alt_off</mat-icon>
+                Limpar filtros
+              </button>
+            }
             <span class="text-sm text-muted mb-2.5 ml-auto">{{ plural(visiveisEvento().length, 'tarefa encontrada', 'tarefas encontradas') }}</span>
         </div>
         @if (secoesEvento().length === 0) {
@@ -142,9 +148,17 @@ import { TarefaLeituraDialog } from './tarefa-leitura.dialog';
                           }
                         </td>
                         <td>
-                          <div class="titulo-tarefa">
+                          <div class="titulo-tarefa" [class.concluida]="tarefa.situacao === 'Concluida'">
+                            <mat-checkbox
+                              class="concluir"
+                              [checked]="tarefa.situacao === 'Concluida'"
+                              [disabled]="!tarefa.eventoEmAndamento || concluindo() === tarefa.id"
+                              [attr.aria-label]="(tarefa.situacao === 'Concluida' ? 'Reabrir tarefa: ' : 'Marcar como concluída: ') + tarefa.titulo"
+                              (click)="$event.stopPropagation()"
+                              (change)="concluir(tarefa, $event.checked)"
+                            />
                             <span class="ponto" [class]="'ponto ' + corSituacao(tarefa.situacao)" [title]="rotulo(tarefa.situacao)"></span>
-                            <div>
+                            <div class="texto-tarefa">
                               {{ tarefa.titulo }}
                               @if (tarefa.grupo || tarefa.checklist.length > 0) {
                                 <span class="block text-xs text-muted">
@@ -158,7 +172,12 @@ import { TarefaLeituraDialog } from './tarefa-leitura.dialog';
                             </div>
                           </div>
                         </td>
-                        <td class="prazo">{{ tarefa.prazo ? (tarefa.prazo | gdData) : '—' }}</td>
+                        <td class="prazo">
+                          {{ tarefa.prazo ? (tarefa.prazo | gdData) : '—' }}
+                          @if (prazoBadge(tarefa); as badge) {
+                            <span class="ml-2 inline-block rounded font-semibold px-2 py-1 text-xs whitespace-nowrap" [class]="badge.classe">{{ badge.rotulo }}</span>
+                          }
+                        </td>
                         <td>{{ tarefa.servico ?? '—' }}</td>
                         <td>{{ nomesResponsaveis(tarefa) }}</td>
                         <td class="text-end! whitespace-nowrap" (click)="$event.stopPropagation()">
@@ -205,6 +224,8 @@ import { TarefaLeituraDialog } from './tarefa-leitura.dialog';
     .contagem-grupo { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--mat-sys-surface-container-lowest); }
     .contagem-grupo mat-icon { font-size: 18px; width: 18px; height: 18px; }
     .titulo-tarefa { display: flex; align-items: flex-start; gap: 10px; }
+    .titulo-tarefa .concluir { flex-shrink: 0; margin: -10px -6px -10px -10px; }
+    .titulo-tarefa.concluida .texto-tarefa { color: var(--mat-sys-surface-container-lowest); text-decoration: line-through; }
     .ponto { flex-shrink: 0; width: 10px; height: 10px; margin-top: 5px; border-radius: 50%; background: var(--mat-sys-surface-container-lowest); }
     .ponto.ok { background: var(--success-color); }
     .ponto.erro { background: var(--mat-sys-error); }
@@ -287,6 +308,24 @@ export class EventoTarefasComponent implements OnInit {
     document.getElementById('tarefas-do-evento')?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
   }
 
+  protected readonly temFiltro = computed(() => !!(this.buscaEvento().trim() || this.situacaoEvento() || this.responsavelEvento() || this.servicoEvento() || this.soChecklist() || this.somenteAtrasadas()));
+
+  protected limparFiltros(): void {
+    this.buscaEvento.set('');
+    this.situacaoEvento.set('');
+    this.responsavelEvento.set('');
+    this.servicoEvento.set('');
+    this.soChecklist.set(false);
+    this.somenteAtrasadas.set(false);
+  }
+
+  /** Atrasada em vermelho, para hoje em amarelo; prazo futuro, sem prazo ou concluída não ganham badge. */
+  protected prazoBadge(tarefa: Tarefa): { rotulo: string; classe: string } | null {
+    if (atrasada(tarefa)) return { rotulo: 'Atrasada', classe: 'bg-light-error text-error' };
+    if (tarefa.situacao !== 'Concluida' && tarefa.prazo && tarefa.prazo.slice(0, 10) === hojeIso()) return { rotulo: 'Hoje', classe: 'bg-light-warning text-warning' };
+    return null;
+  }
+
   protected rotulo(situacao: string): string {
     return this.situacoes.find((item) => item.valor === situacao)?.rotulo ?? situacao;
   }
@@ -333,6 +372,24 @@ export class EventoTarefasComponent implements OnInit {
   protected atualizar(tarefa: Tarefa): void {
     this.tarefas.update((lista) => lista.map((item) => (item.id === tarefa.id ? tarefa : item)));
     this.mudou.emit();
+  }
+
+  protected readonly concluindo = signal<string | null>(null);
+
+  /** Marca a tarefa como concluída ou a reabre; o Resumo refaz os cartões de contagem. */
+  protected concluir(tarefa: Tarefa, concluida: boolean): void {
+    this.concluindo.set(tarefa.id);
+    this.negocio.concluirTarefa(tarefa.id, concluida).subscribe({
+      next: (atual) => {
+        this.concluindo.set(null);
+        this.atualizar(atual);
+      },
+      error: (erro: unknown) => {
+        this.concluindo.set(null);
+        this.toast.erro(mensagemDeErro(erro));
+        this.carregar();
+      },
+    });
   }
 
   protected nova(): void {
@@ -392,7 +449,10 @@ export class EventoTarefasComponent implements OnInit {
 function atrasada(tarefa: Tarefa): boolean {
   if (tarefa.situacao === 'Concluida') return false;
   if (tarefa.situacao === 'Atrasada') return true;
+  return !!tarefa.prazo && tarefa.prazo.slice(0, 10) < hojeIso();
+}
+
+function hojeIso(): string {
   const hoje = new Date();
-  const iso = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`;
-  return !!tarefa.prazo && tarefa.prazo.slice(0, 10) < iso;
+  return `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`;
 }

@@ -41,14 +41,18 @@ export function montarGraficoOrcamento(dados: BudgetEvento): GraficoOrcamento {
   const base = Math.max(orcamento, usado);
   const largura = (valor: number): number => (base > 0 ? (valor / base) * 100 : 0);
   const percentual = (valor: number): number | null => (semOrcamento ? null : (valor / orcamento) * 100);
+  // Acima do orçamento, contratado e estimado só ocupam a barra até o limite; o que passa vira a fatia de excesso.
+  const limite = excesso > 0 ? orcamento : usado;
+  const contratadoNaBarra = Math.min(contratado, limite);
+  const estimadoNaBarra = Math.min(estimado, limite - contratadoNaBarra);
 
   const fatias: FatiaOrcamento[] = [
-    { chave: 'contratado', rotulo: 'Contratado', valor: contratado, largura: largura(contratado), percentualDoOrcamento: percentual(contratado) },
-    { chave: 'estimado', rotulo: 'Estimado (a contratar)', valor: estimado, largura: largura(estimado), percentualDoOrcamento: percentual(estimado) },
+    { chave: 'contratado', rotulo: 'Contratado', valor: contratado, largura: largura(contratadoNaBarra), percentualDoOrcamento: percentual(contratado) },
+    { chave: 'estimado', rotulo: 'Estimado (a contratar)', valor: estimado, largura: largura(estimadoNaBarra), percentualDoOrcamento: percentual(estimado) },
   ];
   if (!semOrcamento) {
     fatias.push(excesso > 0
-      ? { chave: 'excesso', rotulo: 'Acima do orçamento', valor: excesso, largura: 0, percentualDoOrcamento: percentual(excesso) }
+      ? { chave: 'excesso', rotulo: 'Acima do orçamento', valor: excesso, largura: largura(excesso), percentualDoOrcamento: percentual(excesso) }
       : { chave: 'restante', rotulo: 'Restante do orçamento', valor: restante, largura: largura(restante), percentualDoOrcamento: percentual(restante) });
   }
   return { fatias, semOrcamento, vazio: usado === 0, excesso };

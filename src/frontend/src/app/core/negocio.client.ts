@@ -300,7 +300,6 @@ export interface EventoDetalhe extends EventoResumo {
   quantidadePadrinhos: number | null;
   quantidadeDamas: number | null;
   urlSite: string | null;
-  senhaSite: string | null;
   notificarAssessor: boolean;
   notificarAssistentes: boolean;
   notificarClientes: boolean;
@@ -935,6 +934,10 @@ export class NegocioClient {
 
   marcarItemChecklist(id: string, itemId: string, pedido: { feito: boolean; cancelado: boolean }) {
     return this.http.put<Tarefa>(`${this.base}/api/v1/tarefas/${id}/checklist/${itemId}`, pedido);
+  }
+
+  concluirTarefa(id: string, concluida: boolean) {
+    return this.http.put<Tarefa>(`${this.base}/api/v1/tarefas/${id}/conclusao`, { concluida });
   }
 
   anexarTarefa(id: string, arquivo: File) {

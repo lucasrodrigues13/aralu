@@ -271,6 +271,51 @@ public class NegocioFluxoTests
     }
 
     [Fact]
+    public async Task Checklist_completa_conclui_a_tarefa_e_desmarcar_reabre()
+    {
+        var dono = await Entrar();
+        var evento = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new { tipo = "Casamento", primeiroNome = "Rui", segundoNome = "Eva" }));
+        var eventoId = evento.GetProperty("id").GetGuid();
+        var tarefa = await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/tarefas", new
+        {
+            titulo = "Montar lista",
+            checklist = new[] { new { texto = "Padrinhos", feito = false }, new { texto = "Pajens", feito = false } },
+        }));
+        var tarefaId = tarefa.GetProperty("id").GetGuid();
+        var primeiro = tarefa.GetProperty("checklist")[0].GetProperty("id").GetGuid();
+        var segundo = tarefa.GetProperty("checklist")[1].GetProperty("id").GetGuid();
+
+        var metade = await Ler(await dono.PutAsJsonAsync($"/api/v1/tarefas/{tarefaId}/checklist/{primeiro}", new { feito = true, cancelado = false }));
+        Assert.Equal("Pendente", metade.GetProperty("situacao").GetString());
+
+        var completa = await Ler(await dono.PutAsJsonAsync($"/api/v1/tarefas/{tarefaId}/checklist/{segundo}", new { feito = true, cancelado = false }));
+        Assert.Equal("Concluida", completa.GetProperty("situacao").GetString());
+        var resumo = await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/resumo"));
+        Assert.Equal(1, resumo.GetProperty("tarefasConcluidas").GetInt32());
+
+        var reaberta = await Ler(await dono.PutAsJsonAsync($"/api/v1/tarefas/{tarefaId}/checklist/{segundo}", new { feito = false, cancelado = false }));
+        Assert.Equal("Pendente", reaberta.GetProperty("situacao").GetString());
+    }
+
+    [Fact]
+    public async Task Tarefa_e_concluida_e_reaberta_direto()
+    {
+        var dono = await Entrar();
+        var outra = await Entrar();
+        var evento = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new { tipo = "Casamento", primeiroNome = "Rui", segundoNome = "Eva" }));
+        var eventoId = evento.GetProperty("id").GetGuid();
+        var tarefa = await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/tarefas", new { titulo = "Reservar buffet" }));
+        var tarefaId = tarefa.GetProperty("id").GetGuid();
+
+        var concluida = await Ler(await dono.PutAsJsonAsync($"/api/v1/tarefas/{tarefaId}/conclusao", new { concluida = true }));
+        Assert.Equal("Concluida", concluida.GetProperty("situacao").GetString());
+        Assert.Equal(HttpStatusCode.NotFound, (await outra.PutAsJsonAsync($"/api/v1/tarefas/{tarefaId}/conclusao", new { concluida = false })).StatusCode);
+
+        var reaberta = await Ler(await dono.PutAsJsonAsync($"/api/v1/tarefas/{tarefaId}/conclusao", new { concluida = false }));
+        Assert.Equal("Pendente", reaberta.GetProperty("situacao").GetString());
+    }
+
+    [Fact]
     public async Task Item_da_checklist_guarda_prazo_e_responsavel_e_recusa_assistente_alheia()
     {
         var dono = await Entrar();

@@ -20,6 +20,7 @@ import { DIALOG_PEQUENO } from '../../shared/dialog';
 import { grupoLocal, localPedido, LocalCamposComponent } from '../../shared/local-campos';
 import { aplicarMascara, horaParaApi } from '../../shared/mascaras';
 import { MoverPrazosDialog } from './mover-prazos.dialog';
+import { nomesDosNoivos } from './noivos-do-evento';
 
 export interface EventoFormDados {
   id?: string;
@@ -64,10 +65,6 @@ export interface EventoFormDados {
                 <div class="campo">
                   <mat-label class="font-semibold mb-2 block">URL do site</mat-label>
                   <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'URL do site'" matInput [value]="urlSite()" readonly /></mat-form-field>
-                </div>
-                <div class="campo">
-                  <mat-label class="font-semibold mb-2 block">Senha do site</mat-label>
-                  <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Senha do site'" matInput formControlName="senhaSite" /></mat-form-field>
                 </div>
                 @if (!auth.ehAssistente() && assistentesAtivas().length > 0) {
                   <div class="campo sm:col-span-2">
@@ -148,7 +145,6 @@ export class EventoFormPage implements OnInit {
     orcamentoEstimado: this.fb.control<number | null>(null),
     convidadosEstimados: '',
     tags: '',
-    senhaSite: '',
     notificarAssessor: true,
     notificarAssistentes: true,
     notificarClientes: true,
@@ -182,7 +178,6 @@ export class EventoFormPage implements OnInit {
             orcamentoEstimado: evento.orcamentoEstimado,
             convidadosEstimados: evento.convidadosEstimados?.toString() ?? '',
             tags: evento.tags.join(', '),
-            senhaSite: evento.senhaSite ?? '',
             notificarAssessor: evento.notificarAssessor,
             notificarAssistentes: evento.notificarAssistentes,
             notificarClientes: evento.notificarClientes,
@@ -195,6 +190,9 @@ export class EventoFormPage implements OnInit {
             cerimonia: this.localParaGrupo(evento.cerimonia),
             recepcao: this.localParaGrupo(evento.recepcao),
           });
+          if (evento.tipo === 'Casamento') {
+            this.preencherNoivos(evento.primeiroNome, evento.segundoNome, evento.nome);
+          }
         },
         error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
       });
@@ -274,6 +272,17 @@ export class EventoFormPage implements OnInit {
     });
   }
 
+  /** Noiva e noivo vêm dos clientes do evento, pelo papel cadastrado (noiva ou noivo). */
+  private preencherNoivos(primeiroNome: string | null, segundoNome: string | null, nomeDoEvento: string): void {
+    this.negocio.clientesDoEvento(this.id).subscribe({
+      next: (clientes) => {
+        const nomes = nomesDosNoivos(clientes, { primeiroNome, segundoNome, nomeDoEvento });
+        this.formulario.patchValue({ primeiroNome: nomes.noiva, segundoNome: nomes.noivo });
+      },
+      error: () => undefined,
+    });
+  }
+
   private pedido() {
     const valor = this.formulario.getRawValue();
     return {
@@ -284,7 +293,6 @@ export class EventoFormPage implements OnInit {
       orcamentoEstimado: valor.orcamentoEstimado,
       convidadosEstimados: this.numero(valor.convidadosEstimados ?? ''),
       tags: (valor.tags ?? '').split(',').map((item) => item.trim()).filter(Boolean),
-      senhaSite: valor.senhaSite ?? '',
       notificarAssessor: !!valor.notificarAssessor,
       notificarAssistentes: !!valor.notificarAssistentes,
       notificarClientes: !!valor.notificarClientes,

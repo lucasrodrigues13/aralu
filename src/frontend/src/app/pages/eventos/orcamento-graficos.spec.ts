@@ -19,7 +19,18 @@ describe('orcamento-graficos', () => {
     const g = montarGraficoOrcamento(dados({ budget: 1000, contratado: 900, estimado: 300 }));
     expect(g.excesso).toBe(200);
     expect(g.fatias.map((f) => f.chave)).toEqual(['contratado', 'estimado', 'excesso']);
-    expect(g.fatias[0].largura + g.fatias[1].largura).toBeCloseTo(100);
+    // Base 1200: contratado 900 (75%), estimado só até o limite 100 (8,33%), excesso 200 (16,67%) em alerta.
+    expect(g.fatias[0].largura).toBeCloseTo(75);
+    expect(g.fatias[1].largura).toBeCloseTo(100 / 12);
+    expect(g.fatias[2].largura).toBeCloseTo(200 / 12);
+    expect(g.fatias.reduce((soma, f) => soma + f.largura, 0)).toBeCloseTo(100);
+    expect(g.fatias[1].valor).toBe(300);
+  });
+
+  it('contratado sozinho acima do orçamento: estimado some da barra e o excesso aparece', () => {
+    const g = montarGraficoOrcamento(dados({ budget: 1000, contratado: 1500, estimado: 500 }));
+    expect(g.excesso).toBe(1000);
+    expect(g.fatias.map((f) => f.largura)).toEqual([50, 0, 50]);
   });
 
   it('sem orçamento: sem restante nem percentual', () => {

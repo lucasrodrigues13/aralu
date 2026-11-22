@@ -62,8 +62,12 @@ const NOVO_CLIENTE = '__novo__';
             <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Convidados estimados'" matInput type="number" min="0" formControlName="convidados" /></mat-form-field>
           </div>
           <div class="campo">
-            <mat-label class="font-semibold mb-2 block">Local</mat-label>
-            <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Local'" matInput formControlName="local" placeholder="Nome do espaço" /></mat-form-field>
+            <mat-label class="font-semibold mb-2 block">Local da cerimônia</mat-label>
+            <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Local da cerimônia'" matInput formControlName="localCerimonia" placeholder="Nome do espaço" /></mat-form-field>
+          </div>
+          <div class="campo">
+            <mat-label class="font-semibold mb-2 block">Local da recepção</mat-label>
+            <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Local da recepção'" matInput formControlName="localRecepcao" placeholder="Nome do espaço" /></mat-form-field>
           </div>
 
           <div class="campo sm:col-span-2">
@@ -131,7 +135,8 @@ export class NovoEventoDialog implements OnInit {
     data: this.fb.control<Date | null>(null),
     hora: '',
     convidados: '',
-    local: '',
+    localCerimonia: '',
+    localRecepcao: '',
     buscaCliente: '',
     clienteNome: '',
     clienteWhatsApp: '',
@@ -196,7 +201,8 @@ export class NovoEventoDialog implements OnInit {
       data: deDataParaIso(valor.data),
       hora: horaParaApi(valor.hora),
       convidadosEstimados: Number.isFinite(convidados) ? convidados : null,
-      local: valor.local || null,
+      cerimonia: { nome: valor.localCerimonia.trim() || null },
+      recepcao: { nome: valor.localRecepcao.trim() || null },
       clienteId: this.clienteEscolhido()?.id ?? null,
       clienteNovo: this.cadastrandoCliente() ? { nome: valor.clienteNome, whatsApp: valor.clienteWhatsApp } : null,
     };

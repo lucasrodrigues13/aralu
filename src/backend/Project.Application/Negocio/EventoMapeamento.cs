@@ -38,7 +38,6 @@ public static class EventoMapeamento
             evento.QuantidadePadrinhos,
             evento.QuantidadeDamas,
             null,
-            evento.SenhaSite,
             evento.NotificarAssessor,
             evento.NotificarAssistentes,
             evento.NotificarClientes,
