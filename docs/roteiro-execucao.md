@@ -61,8 +61,8 @@ Legenda de "Banco": **M** = migration (entra na fila do banco), **—** = sem mi
 | 7 | #15 Live Preview do modelo | #38, #40 | — | modelos de contrato | pronto no branch `claude/card-15-preview-ff6b11` (SPEC-055, sem migration; só frontend; botão "Live Preview" no modal, exemplos fixos da lista de tags, substitui o seletor "Ver como fica"; nada apagado); juntar na main |
 | 7 | #16 Logo e imagem de fundo no modelo | #15, #38 | M | modelos de contrato | pronto no branch `claude/card-16-logo-fundo-fe3f33` (SPEC-056, migration `LogoEFundoDoModeloDeContrato`, só acrescenta colunas; nada apagado); juntar na main; integração só ao fim das ondas |
 | 7 | #18 HTML do orçamento na tela de aceite | — | M | modelo de orçamento, proposta-publica | pronto no branch `claude/card-18-html-orcamento-c7b26f` (SPEC-057, migration `HtmlDeAceiteDoOrcamento`, só colunas novas; nada apagado; HTML sanitizado no servidor); juntar na main; integração só ao fim das ondas |
-| 7 | #17 Avaliar upload de Word (avaliação) | #15, #16; SPEC-033 | — | nenhum (só avaliação) | pendente |
 | 7 | #25 Portaria: QR, link da equipe, check-in | #23, #24 | M | convidados, link da equipe | pronto no branch `claude/card-25-portaria-da585b` (SPEC-058, migration `PortariaDoEvento`, só acrescenta a tabela `LinksPortaria` e a coluna `PresencasEvento.CompareceuEm`; nada apagado; nova dependência `jsqr`); juntar na main; integração só ao fim das ondas |
+| 7 | #17 Avaliar upload de Word (avaliação) | #15, #16; SPEC-033 | — | nenhum (só avaliação) | avaliação pronta no branch `claude/card-17-avaliacao-word-bbbf9a`, em [docs/avaliacoes/upload-de-contrato-word.md](avaliacoes/upload-de-contrato-word.md); recomendação: adiar; sem código nem migration |
 
 As ondas seguem as dependências. **Dentro de uma onda**, o que não tem conflito de arquivo pode rodar junto (cada um em worktree); o que tem migration entra na fila do banco, **na ordem da tabela**.
 
