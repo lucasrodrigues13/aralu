@@ -229,12 +229,26 @@ public class DinheiroFluxoTests
         Assert.Equal(HttpStatusCode.BadRequest, (await dono.PutAsJsonAsync($"{url}/parcelamento", new { quantidadeParcelas = 2, primeiraParcela = "2027-01-10", comEntrada = true, baseEntrada = "Valor", valorEntrada = 9000, dataEntrada = "2026-12-01" })).StatusCode);
         Assert.Equal(HttpStatusCode.BadRequest, (await dono.PutAsJsonAsync($"{url}/parcelamento", new { quantidadeParcelas = 121, primeiraParcela = "2027-01-10", comEntrada = false })).StatusCode);
 
-        // Refazer sem pagamento funciona; com parcela paga, refazer e remover são recusados.
+        // Refazer sem pagamento funciona; com parcela paga, remover é recusado e refazer exige a confirmação.
         var refeito = Pagamento(await Ler(await dono.PutAsJsonAsync($"{url}/parcelamento", new { quantidadeParcelas = 2, primeiraParcela = "2027-01-10", comEntrada = false })));
         Assert.Equal(2, refeito.GetProperty("parcelas").GetArrayLength());
         await Ler(await dono.PutAsJsonAsync($"{url}/parcelas/{refeito.GetProperty("parcelas")[0].GetProperty("id").GetGuid()}/pago", new { pago = true }));
         Assert.Equal(HttpStatusCode.BadRequest, (await dono.PutAsJsonAsync($"{url}/parcelamento", new { quantidadeParcelas = 3, primeiraParcela = "2027-01-10", comEntrada = false })).StatusCode);
         Assert.Equal(HttpStatusCode.BadRequest, (await dono.DeleteAsync($"{url}/parcelamento")).StatusCode);
+
+        // Confirmado: as parcelas novas nascem sem pagamento e o pago do evento volta a zero.
+        var substituido = await Ler(await dono.PutAsJsonAsync($"{url}/parcelamento", new { quantidadeParcelas = 3, primeiraParcela = "2027-01-10", comEntrada = false, substituirPagamentos = true }));
+        var novas = Pagamento(substituido).GetProperty("parcelas").EnumerateArray().ToArray();
+        Assert.Equal(3, novas.Length);
+        Assert.All(novas, parcela => Assert.False(parcela.GetProperty("paga").GetBoolean()));
+        Assert.False(Pagamento(substituido).GetProperty("pago").GetBoolean());
+        Assert.Equal(0m, substituido.GetProperty("pago").GetDecimal());
+
+        // Pagamento inteiro marcado como pago também pode ser parcelado com a confirmação.
+        await Ler(await dono.PutAsJsonAsync($"{url}/pago", new { pago = true }));
+        var aposPago = Pagamento(await Ler(await dono.PutAsJsonAsync($"{url}/parcelamento", new { quantidadeParcelas = 2, primeiraParcela = "2027-01-10", comEntrada = false, substituirPagamentos = true })));
+        Assert.False(aposPago.GetProperty("pago").GetBoolean());
+        Assert.All(aposPago.GetProperty("parcelas").EnumerateArray(), parcela => Assert.False(parcela.GetProperty("paga").GetBoolean()));
     }
 
     [Fact]
@@ -279,6 +293,14 @@ public class DinheiroFluxoTests
         var excluido = Pagamento(await Ler(await dono.DeleteAsync($"{url}/parcelas/{parcelaId}/comprovante")));
         Assert.Equal(JsonValueKind.Null, excluido.GetProperty("parcelas")[0].GetProperty("comprovante").ValueKind);
         Assert.Equal(HttpStatusCode.NotFound, (await dono.DeleteAsync($"{url}/parcelas/{parcelaId}/comprovante")).StatusCode);
+
+        // Refazer confirmado com comprovante: as parcelas novas vêm sem comprovante e o arquivo antigo é apagado.
+        using var descartavel = Pdf("descartavel.pdf");
+        var comDescartavel = Pagamento(await Ler(await dono.PostAsync($"{url}/parcelas/{parcelaId}/comprovante", descartavel)));
+        var descartavelId = comDescartavel.GetProperty("parcelas")[0].GetProperty("comprovante").GetProperty("arquivoId").GetGuid();
+        var refeito = Pagamento(await Ler(await dono.PutAsJsonAsync($"{url}/parcelamento", new { quantidadeParcelas = 2, primeiraParcela = "2027-01-10", comEntrada = false, substituirPagamentos = true })));
+        Assert.All(refeito.GetProperty("parcelas").EnumerateArray(), parcela => Assert.Equal(JsonValueKind.Null, parcela.GetProperty("comprovante").ValueKind));
+        Assert.Equal(HttpStatusCode.NotFound, (await dono.GetAsync($"/api/v1/arquivos/{descartavelId}")).StatusCode);
 
         // Sem parcelas, o comprovante é do pagamento.
         await Ler(await dono.DeleteAsync($"{url}/parcelamento"));

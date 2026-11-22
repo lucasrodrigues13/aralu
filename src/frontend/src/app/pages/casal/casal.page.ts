@@ -7,7 +7,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { Observable } from 'rxjs';
 import { CasalClient, CasalLeitura, ConviteCasal, PedidoConviteCasal } from '../../core/casal.client';
-import { ComprovantePagamento, PagamentoFornecedor, ParcelaPagamento } from '../../core/dinheiro.client';
+import { ComprovantePagamento, PagamentoFornecedor, ParcelaPagamento, refazerPerdePagamentos } from '../../core/dinheiro.client';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
@@ -131,7 +131,7 @@ import { ParcelarPagamentoDialog } from '../dinheiro/parcelar-pagamento.dialog';
                   }
                 </div>
                 <div class="acoes">
-                  <button mat-button type="button" (click)="parcelar(pagamento)">{{ pagamento.parcelas.length > 0 ? 'Refazer parcelas' : 'Parcelar' }}</button>
+                  <button mat-button type="button" [class.text-error]="perdeAoRefazer(pagamento)" (click)="parcelar(pagamento)">{{ pagamento.parcelas.length > 0 ? 'Refazer parcelas' : 'Parcelar' }}</button>
                   @if (pagamento.parcelas.length > 0) {
                     <button mat-button type="button" (click)="removerParcelamento(pagamento)">Sem parcelas</button>
                   }
@@ -199,6 +199,8 @@ export class CasalPage implements OnInit {
   protected icone(arquivo: ComprovantePagamento): string {
     return arquivo.tipoConteudo === 'application/pdf' ? 'picture_as_pdf' : 'image';
   }
+
+  protected readonly perdeAoRefazer = refazerPerdePagamentos;
 
   protected parcelar(pagamento: PagamentoFornecedor): void {
     this.dialog.open(ParcelarPagamentoDialog, { ...DIALOG, data: pagamento }).afterClosed().subscribe((pedido) => {

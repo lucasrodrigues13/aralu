@@ -81,7 +81,7 @@
 - [ ] Cada serviço contratado é um pagamento, agrupado por mês; totais contratado, pago e a pagar.
 - [ ] Buffet > **Parcelar**: entrada + 4 parcelas → parcelas pendentes, expansíveis.
 - [ ] Marque a entrada como paga e suba o **comprovante** dela → situação muda; outro arquivo substitui o anterior.
-- [ ] Tente **Refazer parcelamento** com parcela paga → não deixa.
+- [ ] **Refazer parcelas** com parcela paga → botão em vermelho; o modal mostra o alerta vermelho e o botão "Refazer parcelamento" vermelho; salvar → parcelas novas, todas pendentes e sem comprovante.
 - [ ] Fotógrafo (sem parcelas) > **Marcar como pago** + comprovante; **Desfazer** volta a pendente.
 - [ ] **Exportar orçamento** → baixa a planilha.
 - [ ] **Hoje** → "Pagar a fornecedores" mostra os da semana.

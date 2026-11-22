@@ -107,11 +107,22 @@ public sealed class DinheiroServico(IDadosDinheiro dados, IPlanilhaBudget planil
         }
 
         var contrato = servico.Contrato!;
-        var bloqueio = BloqueioDoParcelamento(contrato);
-        if (bloqueio is not null)
+        if (BloqueioDoParcelamento(contrato) is not null && !pedido.SubstituirPagamentos)
         {
-            return Resultado<DinheiroEventoLeitura>.Erro(Codigos.Validacao, bloqueio);
+            return Resultado<DinheiroEventoLeitura>.Erro(
+                Codigos.Validacao,
+                "Já há pagamento ou comprovante registrado: confirme que quer refazer o parcelamento e marcar os pagamentos de novo.");
         }
+
+        // Refazer com pagamentos (SPEC-043 §6.2): as parcelas novas nascem sem pagamento e os comprovantes antigos são apagados.
+        var comprovantesAntigos = contrato.Parcelas
+            .Select(parcela => parcela.ComprovanteArquivoId)
+            .Append(contrato.ComprovanteArquivoId)
+            .OfType<Guid>()
+            .ToArray();
+        contrato.ComprovanteArquivoId = null;
+        contrato.ComprovanteNome = null;
+        contrato.ComprovanteTipoConteudo = null;
 
         await dados.SubstituirParcelasAsync(contrato, calculadas.Select(parcela => new ParcelaContratoFornecedor
         {
@@ -126,6 +137,11 @@ public sealed class DinheiroServico(IDadosDinheiro dados, IPlanilhaBudget planil
         contrato.Pago = false;
         contrato.PagoEm = null;
         await dados.SalvarAsync(ct);
+        foreach (var arquivoId in comprovantesAntigos)
+        {
+            await armazenamento.DescartarAsync(arquivoId, ct);
+        }
+
         return await RecarregarAsync(contaId, eventoId, ct);
     }
 
@@ -318,7 +334,10 @@ public sealed class DinheiroServico(IDadosDinheiro dados, IPlanilhaBudget planil
         return Resultado<(string, byte[])>.Sucesso(($"orcamento-{Arquivo(evento.Nome)}.xlsx", conteudo));
     }
 
-    /// <summary>Refazer ou remover o parcelamento só é possível sem parcela paga e sem comprovante (SPEC-043 §6.2).</summary>
+    /// <summary>
+    /// Pagamento ou comprovante já registrado: remover o parcelamento fica bloqueado; refazer exige a confirmação
+    /// <see cref="PedidoParcelas.SubstituirPagamentos"/> (SPEC-043 §6.2).
+    /// </summary>
     private static string? BloqueioDoParcelamento(ContratoFornecedor contrato)
     {
         if (contrato.Pago || contrato.Parcelas.Any(parcela => parcela.Situacao == SituacaoParcela.Pago))

@@ -103,6 +103,14 @@ export function validarComprovante(arquivo: { name: string; size: number }): str
   return null;
 }
 
+/**
+ * Refazer o parcelamento apaga o que já foi registrado (SPEC-043 §6.2): pagamento marcado e comprovantes.
+ * Quando há algo a perder, o modal avisa antes e o pedido leva a confirmação `substituirPagamentos`.
+ */
+export function refazerPerdePagamentos(pagamento: Pick<PagamentoFornecedor, 'pago' | 'comprovante' | 'parcelas'>): boolean {
+  return pagamento.pago || pagamento.comprovante !== null || pagamento.parcelas.some((parcela) => parcela.paga || parcela.comprovante !== null);
+}
+
 export interface DinheiroEvento {
   contratado: number;
   pago: number;
@@ -116,6 +124,8 @@ export interface PedidoParcelamentoPagamento {
   baseEntrada: 'Valor' | 'Porcentagem' | null;
   valorEntrada: number | null;
   dataEntrada: string | null;
+  /** Confirma que refazer apaga pagamentos e comprovantes já registrados. */
+  substituirPagamentos?: boolean;
 }
 
 /** Dinheiro do evento (SPEC-043): pagamentos a fornecedores com parcelas e comprovantes. */

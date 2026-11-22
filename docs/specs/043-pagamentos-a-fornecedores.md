@@ -39,8 +39,8 @@ Evento da conta com serviço contratado (Fornecedores > Contratar).
 ### 6.2. Parcelar
 
 1. Em um pagamento, "Parcelar" abre um modal: número de parcelas, vencimento da 1ª e entrada opcional (valor e data). O total é o valor contratado do serviço. As parcelas nascem pendentes.
-2. "Refazer parcelamento" substitui as parcelas; só é possível enquanto **nenhuma parcela estiver paga** e o pagamento não tiver comprovante.
-3. "Remover parcelamento" volta o pagamento a inteiro (nas mesmas condições).
+2. "Refazer parcelamento" substitui as parcelas. Se já há pagamento marcado (parcela paga ou pagamento inteiro pago) ou comprovante enviado, o modal abre normalmente, mas com um **alerta em vermelho** no topo: ao salvar, o parcelamento antigo é perdido, os pagamentos marcados e os comprovantes são apagados e é preciso marcar de novo o que já foi pago. O botão de salvar vira **"Refazer parcelamento" em vermelho** (ação destrutiva), e o botão "Refazer parcelas" da linha também fica vermelho. Salvar substitui as parcelas: as novas nascem pendentes e sem comprovante, e o pagamento volta a pendente. O pedido leva `substituirPagamentos: true`; sem essa confirmação, o servidor recusa (400). Vale também para "Parcelar" um pagamento sem parcelas já pago ou comprovado.
+3. "Remover parcelamento" volta o pagamento a inteiro; só é possível enquanto nenhuma parcela estiver paga e não houver comprovante.
 
 ### 6.3. Marcar como pago
 
@@ -60,7 +60,7 @@ As caixas **Comprovantes e documentos** e **Despesas e entradas** saem da tela, 
 ## 7. Fluxos alternativos
 
 - Parcelar com número fora de 1 a 120, sem 1ª data ou com entrada que não fecha: 400.
-- Refazer ou remover o parcelamento com parcela paga ou comprovante enviado: 400 com mensagem.
+- Refazer o parcelamento com pagamento ou comprovante registrado sem a confirmação `substituirPagamentos`: 400 com mensagem. Remover o parcelamento com parcela paga ou comprovante: 400 com mensagem.
 - Arquivo de outro tipo ou acima de 5 MB: 400. Pagamento ou parcela de outra conta ou de outro evento: 404.
 - Serviço sem valor contratado: não parcela (400).
 
@@ -97,12 +97,12 @@ Mensagem no modal ou aviso. Outra conta: indisponível.
 2. Marcar todas as parcelas como pagas muda o pagamento para pago; desmarcar uma o devolve a pendente.
 3. Marcar o pagamento como pago marca todas as parcelas; Desfazer reverte.
 4. Comprovante por parcela e por pagamento sem parcelas: aceita PDF, recusa outro tipo, substitui, abre e exclui; arquivo de outra conta não abre.
-5. Refazer parcelamento com parcela paga é recusado.
+5. Refazer parcelamento com parcela paga mostra o alerta vermelho e o botão vermelho; salvar substitui as parcelas, que nascem sem pagamento e sem comprovante (os arquivos antigos são apagados). Sem a confirmação, o servidor recusa.
 6. As caixas e os endpoints de despesas e comprovantes do evento não existem mais; outra conta não vê nada.
 
 ## 15. Cenários de teste
 
-Unitários: situação do pagamento (parcelado e sem parcelas), marcar tudo e desfazer. Integração: parcelar, marcar parcela, marcar pagamento, comprovante (PDF, texto recusado, excesso, substituir, excluir), refazer recusado, isolamento.
+Unitários: situação do pagamento (parcelado e sem parcelas), marcar tudo e desfazer. Integração: parcelar, marcar parcela, marcar pagamento, comprovante (PDF, texto recusado, excesso, substituir, excluir), refazer com parcela paga recusado sem confirmação e aceito com ela (parcelas novas sem pagamento, comprovante antigo apagado), isolamento. Frontend: quando o modal avisa da perda (`refazerPerdePagamentos`).
 
 ## 16. Dependências
 
@@ -116,7 +116,7 @@ Decididos nesta entrega pela opção mais simples e conservadora (a conferir pel
 2. **Despesas e comprovantes antigos.** O card manda definir o destino antes de remover: ficam **apagados com os dados** (regra 7). Os arquivos físicos do volume e as linhas da tabela `Arquivos` ficam órfãos (limpeza manual; não há migração de dados para a nova estrutura).
 3. **Data do pagamento.** Marcar como pago usa a data de hoje, sem perguntar. Forma de pagamento e "pago por" não existem.
 4. **Comprovante no pagamento inteiro** só quando não há parcelas.
-5. **Refazer parcelamento** só sem parcela paga e sem comprovante.
+5. **Refazer parcelamento** com pagamento marcado: decidido pelo dono (nov/2026) avisar antes, no modal, e deixar refazer, aceitando perder os pagamentos marcados e os comprovantes (§6.2). Antes era recusado só no fim, depois de configurar tudo.
 6. **Contratar** continua pedindo parcelas até o card #28 tirá-las. *(Resolvido pela [SPEC-045](045-contratar-fornecedor-e-contrato-assinado.md): Contratar não pede mais parcelas e contratar de novo mantém o contrato, os pagos e os comprovantes.)*
 7. **Hoje.** O card "Pagamentos da semana" continua e lê só parcelas; pagamento sem parcelas não aparece nele.
 8. **Exportar orçamento** fica (o card só manda tirar os dois boxes).

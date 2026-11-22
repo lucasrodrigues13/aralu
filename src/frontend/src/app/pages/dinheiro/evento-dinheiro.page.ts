@@ -12,6 +12,7 @@ import {
   DinheiroEvento,
   PagamentoFornecedor,
   ParcelaPagamento,
+  refazerPerdePagamentos,
 } from '../../core/dinheiro.client';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { NegocioClient } from '../../core/negocio.client';
@@ -85,7 +86,7 @@ import { pagamentosPorMes } from './pagamentos-por-mes';
                           }
                         </td>
                         <td class="text-end! whitespace-nowrap">
-                          <button mat-button type="button" (click)="parcelar(pagamento)">{{ pagamento.parcelas.length > 0 ? 'Refazer parcelas' : 'Parcelar' }}</button>
+                          <button mat-button type="button" [class.text-error]="perdeAoRefazer(pagamento)" (click)="parcelar(pagamento)">{{ pagamento.parcelas.length > 0 ? 'Refazer parcelas' : 'Parcelar' }}</button>
                           @if (pagamento.parcelas.length > 0) {
                             <button mat-button type="button" (click)="removerParcelamento(pagamento)">Sem parcelas</button>
                           }
@@ -162,6 +163,8 @@ export class EventoDinheiroPage implements OnInit {
     if (!novo.delete(pagamento.servicoId)) novo.add(pagamento.servicoId);
     this.abertos.set(novo);
   }
+
+  protected readonly perdeAoRefazer = refazerPerdePagamentos;
 
   protected parcelar(pagamento: PagamentoFornecedor): void {
     this.dialog.open(ParcelarPagamentoDialog, { ...DIALOG, data: pagamento }).afterClosed().subscribe((pedido) => {

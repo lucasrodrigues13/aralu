@@ -3,9 +3,10 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { PagamentoFornecedor, PedidoParcelamentoPagamento } from '../../core/dinheiro.client';
+import { PagamentoFornecedor, PedidoParcelamentoPagamento, refazerPerdePagamentos } from '../../core/dinheiro.client';
 import { CampoDataComponent } from '../../shared/campo-data';
 import { CampoDinheiroComponent } from '../../shared/campo-dinheiro';
 import { deDataParaIso } from '../../shared/data';
@@ -14,13 +15,22 @@ import { GdDinheiroPipe } from '../../shared/gd-dinheiro.pipe';
 /** Parcelamento do pagamento a fornecedor (SPEC-043 §6.2): N parcelas mensais, com entrada opcional. O total é o valor contratado. */
 @Component({
   selector: 'app-parcelar-pagamento-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, CampoDataComponent, CampoDinheiroComponent, GdDinheiroPipe],
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule, MatSelectModule, CampoDataComponent, CampoDinheiroComponent, GdDinheiroPipe],
   template: `
     <h2 mat-dialog-title>{{ dados.parcelas.length ? 'Refazer parcelamento' : 'Parcelar pagamento' }}</h2>
     <p class="text-muted text-sm px-6 -mt-2 mb-4">
       {{ dados.servico }}{{ dados.fornecedor ? " · " + dados.fornecedor : "" }}. O total é o valor contratado ({{ dados.valor | gdDinheiro }}).
     </p>
     <mat-dialog-content>
+      @if (perdePagamentos) {
+        <div class="alerta-perda" role="alert">
+          <mat-icon aria-hidden="true">warning</mat-icon>
+          <p>
+            Se você salvar, o parcelamento antigo será perdido. Tudo o que já foi marcado como pago
+            (e os comprovantes enviados) será apagado, e você terá que marcar os pagamentos de novo.
+          </p>
+        </div>
+      }
       <form id="parcelar" class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4" [formGroup]="form" (ngSubmit)="salvar()">
         <div class="campo">
           <mat-label class="font-semibold mb-2 block">Número de parcelas</mat-label>
@@ -47,14 +57,36 @@ import { GdDinheiroPipe } from '../../shared/gd-dinheiro.pipe';
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <button mat-stroked-button type="button" (click)="ref.close()">Cancelar</button>
-      <button mat-flat-button type="submit" form="parcelar">Salvar parcelamento</button>
+      @if (perdePagamentos) {
+        <button mat-flat-button class="botao-perigo" type="submit" form="parcelar">Refazer parcelamento</button>
+      } @else {
+        <button mat-flat-button type="submit" form="parcelar">Salvar parcelamento</button>
+      }
     </mat-dialog-actions>
+  `,
+  styles: `
+    .alerta-perda {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 16px;
+      padding: 12px 16px;
+      border: 1px solid var(--mat-sys-error);
+      border-radius: var(--mat-sys-corner-small);
+      background: var(--mat-sys-error-container);
+      color: var(--mat-sys-on-error-container);
+      font-size: 13px;
+    }
+    .alerta-perda mat-icon { flex: none; color: var(--mat-sys-error); }
+    .alerta-perda p { margin: 0; }
   `,
 })
 export class ParcelarPagamentoDialog {
   protected readonly dados = inject<PagamentoFornecedor>(MAT_DIALOG_DATA);
   protected readonly ref = inject(MatDialogRef<ParcelarPagamentoDialog, PedidoParcelamentoPagamento>);
   private readonly fb = inject(FormBuilder);
+  /** Já há pagamento ou comprovante: salvar apaga tudo (SPEC-043 §6.2). */
+  protected readonly perdePagamentos = refazerPerdePagamentos(this.dados);
   protected erro = '';
   protected readonly form = this.fb.group({
     quantidade: this.fb.control<number | null>(1, [Validators.required, Validators.min(1), Validators.max(120)]),
@@ -81,6 +113,7 @@ export class ParcelarPagamentoDialog {
       baseEntrada: v.comEntrada ? 'Valor' : null,
       valorEntrada: v.comEntrada ? v.valorEntrada : null,
       dataEntrada: v.comEntrada ? deDataParaIso(v.dataEntrada) : null,
+      substituirPagamentos: this.perdePagamentos,
     };
     this.ref.close(pedido);
   }

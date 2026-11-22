@@ -7,6 +7,8 @@ namespace Project.Application.Negocio;
 /// <summary>
 /// Pedido do parcelamento de um documento: orçamento, contrato com o cliente ou contrato de fornecedor (SPEC-040).
 /// O valor total vem do documento; o gerador é o mesmo para os três (<see cref="ParcelasDaAssessoria"/>).
+/// <see cref="SubstituirPagamentos"/> só vale no pagamento a fornecedor: confirma que refazer apaga os pagamentos
+/// e comprovantes já registrados (SPEC-043 §6.2).
 /// </summary>
 public sealed record PedidoParcelas(
     int? QuantidadeParcelas,
@@ -14,7 +16,8 @@ public sealed record PedidoParcelas(
     bool ComEntrada,
     BaseEntrada? BaseEntrada,
     decimal? ValorEntrada,
-    DateOnly? DataEntrada);
+    DateOnly? DataEntrada,
+    bool SubstituirPagamentos = false);
 
 public sealed record ReceberParcela(decimal? Valor, FormaPagamento? Forma, DateOnly? Data);
 
