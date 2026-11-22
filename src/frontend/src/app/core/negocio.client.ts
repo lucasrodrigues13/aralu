@@ -489,6 +489,8 @@ export interface PresencaEvento {
   convidadoId: string;
   convidado: string;
   confirmadoEm: string;
+  /** Quando a portaria marcou a presença (SPEC-058); nulo = ainda não entrou. */
+  compareceuEm: string | null;
 }
 
 export const PAPEIS = [
@@ -1022,6 +1024,16 @@ export class NegocioClient {
 
   qr(conviteId: string) {
     return this.http.get(`${this.base}/api/v1/convites/${conviteId}/qr`, { responseType: 'blob' });
+  }
+
+  /** QR de entrada do convite (SPEC-058): só existe com ao menos um convidado confirmado. */
+  qrEntrada(conviteId: string) {
+    return this.http.get(`${this.base}/api/v1/convites/${conviteId}/qr-entrada`, { responseType: 'blob' });
+  }
+
+  /** Endereço da imagem do QR de entrada pelo link de RSVP. */
+  urlQrEntradaDoRsvp(token: string) {
+    return `${this.base}/api/v1/rsvp/${token}/qr-entrada`;
   }
 
   whatsapp(conviteId: string) {

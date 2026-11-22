@@ -8,7 +8,7 @@ import { RsvpPage } from './rsvp.page';
 function montar(pagina: { convite: string; convidados: { id: string; nome: string; situacao: string }[]; expirado: boolean; prazo: string | null }) {
   TestBed.configureTestingModule({
     providers: [
-      { provide: NegocioClient, useValue: { abrirRsvp: () => of(pagina) } },
+      { provide: NegocioClient, useValue: { abrirRsvp: () => of(pagina), urlQrEntradaDoRsvp: (token: string) => `/api/v1/rsvp/${token}/qr-entrada` } },
       { provide: ToastService, useValue: { erro: () => undefined, sucesso: () => undefined } },
       { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ token: 't' }) } } },
     ],
@@ -31,5 +31,17 @@ describe('RsvpPage com prazo (SPEC-054)', () => {
     expect(tela.querySelector('[data-teste="convite-expirado"]')).toBeNull();
     expect(tela.textContent).toContain('Lia');
     expect(tela.querySelector('button[type="submit"]')).not.toBeNull();
+  });
+});
+
+describe('RsvpPage com QR de entrada (SPEC-058)', () => {
+  it('mostra o QR quando há convidado confirmado', () => {
+    const tela = montar({ convite: 'Família', convidados: [{ id: 'a', nome: 'Lia', situacao: 'Confirmado' }], expirado: false, prazo: null });
+    expect(tela.querySelector('[data-teste="qr-entrada"] img')?.getAttribute('src')).toBe('/api/v1/rsvp/t/qr-entrada');
+  });
+
+  it('não mostra o QR sem confirmados', () => {
+    const tela = montar({ convite: 'Família', convidados: [{ id: 'a', nome: 'Lia', situacao: 'Pendente' }], expirado: false, prazo: null });
+    expect(tela.querySelector('[data-teste="qr-entrada"]')).toBeNull();
   });
 });

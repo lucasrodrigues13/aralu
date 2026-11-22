@@ -24,6 +24,13 @@ import { ToastService } from '../../core/toast.service';
           } @else if (convidados().length === 0 && carregado()) {
             <p>Não há quem responder.</p>
           }
+          @if (temConfirmado()) {
+            <div class="text-center mb-4" data-teste="qr-entrada">
+              <p class="font-semibold">Seu QR code de entrada</p>
+              <img class="mx-auto w-48 h-48" [src]="urlQr()" alt="QR code de entrada no evento" />
+              <p class="text-sm text-muted">Mostre na portaria. Vale para os convidados confirmados deste convite.</p>
+            </div>
+          }
           <form class="grid grid-cols-1 gap-4" [formGroup]="formulario" (ngSubmit)="enviar()">
             @for (pessoa of convidados(); track pessoa.id) {
               <fieldset class="border border-border rounded p-4">
@@ -58,6 +65,14 @@ export class RsvpPage implements OnInit {
   protected readonly convidados = signal<{ id: string; nome: string; situacao: string }[]>([]);
   protected formulario: FormGroup = this.fb.group({ pretendeRealizarEvento: false });
   private token = '';
+
+  protected temConfirmado(): boolean {
+    return !this.expirado() && this.convidados().some((pessoa) => pessoa.situacao === 'Confirmado');
+  }
+
+  protected urlQr(): string {
+    return this.negocio.urlQrEntradaDoRsvp(this.token);
+  }
 
   ngOnInit(): void {
     this.token = this.rota.snapshot.paramMap.get('token') ?? '';

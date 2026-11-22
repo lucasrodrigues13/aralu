@@ -15,4 +15,7 @@ public sealed class PresencaEvento
     public Guid ConvidadoId { get; set; }
 
     public DateTimeOffset ConfirmadoEm { get; set; }
+
+    /// <summary>Quando a portaria marcou que o convidado compareceu (SPEC-058). Nulo = ainda não entrou.</summary>
+    public DateTimeOffset? CompareceuEm { get; set; }
 }

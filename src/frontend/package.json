@@ -22,6 +22,7 @@
     "@angular/router": "^22.2.0",
     "@fontsource-variable/dm-sans": "^5.3.0",
     "@tailwindcss/postcss": "^4.1.14",
+    "jsqr": "^1.4.0",
     "postcss": "^8.5.6",
     "rxjs": "~7.8.0",
     "tailwindcss": "^4.1.14",

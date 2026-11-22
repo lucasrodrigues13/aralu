@@ -171,6 +171,9 @@ export function cardsPorSituacao(porSituacao: { rotulo: string; quantidade: numb
                       <td class="text-end! whitespace-nowrap">
                         <button mat-icon-button type="button" aria-label="Copiar link de RSVP" (click)="copiar(item.token)"><mat-icon>link</mat-icon></button>
                         <button mat-icon-button type="button" aria-label="Baixar QR Code" (click)="baixarQr(item.id)"><mat-icon>qr_code_2</mat-icon></button>
+                        @if (temConfirmado(item)) {
+                          <button mat-icon-button type="button" aria-label="Baixar QR de entrada" (click)="baixarQrEntrada(item.id)"><mat-icon>qr_code_scanner</mat-icon></button>
+                        }
                         <button mat-icon-button type="button" aria-label="Enviar pelo WhatsApp" (click)="whatsapp(item.id)"><mat-icon>chat</mat-icon></button>
                         <button mat-icon-button type="button" aria-label="Editar" (click)="abrirEdicao(item)"><mat-icon>edit</mat-icon></button>
                         <button mat-icon-button type="button" aria-label="Excluir" (click)="semExclusao('convite')"><mat-icon>delete</mat-icon></button>
@@ -261,7 +264,7 @@ export function cardsPorSituacao(porSituacao: { rotulo: string; quantidade: numb
           <p>Ninguém confirmou ainda.</p>
         } @else {
           <table class="w-full text-sm">
-            <thead><tr><th class="text-start">Id</th><th class="text-start">Convidado</th><th class="text-start">Convite</th><th class="text-start">Confirmou em</th></tr></thead>
+            <thead><tr><th class="text-start">Id</th><th class="text-start">Convidado</th><th class="text-start">Convite</th><th class="text-start">Confirmou em</th><th class="text-start">Compareceu</th></tr></thead>
             <tbody>
               @for (item of presencas(); track item.id) {
                 <tr>
@@ -269,6 +272,7 @@ export function cardsPorSituacao(porSituacao: { rotulo: string; quantidade: numb
                   <td>{{ item.convidado }}</td>
                   <td>{{ item.convite }}</td>
                   <td>{{ item.confirmadoEm | date: 'dd/MM/yyyy HH:mm' }}</td>
+                  <td>{{ item.compareceuEm ? (item.compareceuEm | date: 'dd/MM/yyyy HH:mm') : "Não" }}</td>
                 </tr>
               }
             </tbody>
@@ -439,6 +443,24 @@ export class ConvidadosPage implements OnInit {
     const link = `${location.origin}/rsvp/${token}`;
     void navigator.clipboard.writeText(link);
     this.toast.sucesso('Link copiado.');
+  }
+
+  protected temConfirmado(item: Convite): boolean {
+    return item.convidados.some((pessoa) => pessoa.situacaoTela === 'Confirmado');
+  }
+
+  protected baixarQrEntrada(id: string): void {
+    this.negocio.qrEntrada(id).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'entrada.png';
+        link.click();
+        URL.revokeObjectURL(url);
+      },
+      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+    });
   }
 
   protected baixarQr(id: string): void {
