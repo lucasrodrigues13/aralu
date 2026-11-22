@@ -740,7 +740,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
                join convidado in banco.Convidados.AsNoTracking() on presenca.ConvidadoId equals convidado.Id
                where presenca.EventoId == eventoId && convite.ContaId == contaId
                orderby presenca.ConfirmadoEm, convidado.Nome
-               select new PresencaLeitura(presenca.Id, convite.Id, convite.Nome, convidado.Id, convidado.Nome, presenca.ConfirmadoEm))
+               select new PresencaLeitura(presenca.Id, convite.Id, convite.Nome, convidado.Id, convidado.Nome, presenca.ConfirmadoEm, presenca.CompareceuEm))
             .ToListAsync(ct);
 
     public async Task InserirConvitesAsync(IReadOnlyList<Convite> convites, CancellationToken ct)

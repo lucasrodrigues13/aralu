@@ -107,7 +107,7 @@ Decididos nesta entrega pela opção mais simples e conservadora (a conferir pel
 2. **Sem prazo = sem expiração por prazo.** O card diz que, sem data limite, qualquer confirmado consegue fazer check-in até a hora do evento; essa parte é do card #25. Aqui o link só segue valendo enquanto o evento estiver em andamento.
 3. **Exceção por convite, ligada e desligada à mão**, sem data de validade. Não há exceção por convidado.
 4. **Confirmação manual = a edição que já existe** (situação do convidado). O prazo não a bloqueia.
-5. **Lista de presença é uma entrada por convidado confirmado**, não uma lista por convite. O card diz "cada confirmação de convites gera uma lista de presença com um id único"; entendido como um id único por confirmação. Quem confirmou, sai e volta tem id novo. A entrada não guarda a origem (link ou organizadora); o check-in (hora de chegada) é do card #25.
+5. **Lista de presença é uma entrada por convidado confirmado**, não uma lista por convite. O card diz "cada confirmação de convites gera uma lista de presença com um id único"; entendido como um id único por confirmação. Quem confirmou, sai e volta tem id novo. A entrada não guarda a origem (link ou organizadora); o check-in (hora de chegada) ficou no card #25 ([SPEC-058](058-portaria-do-evento.md)), na coluna `CompareceuEm` da mesma lista.
 6. **Sem aviso automático** de prazo próximo ou encerrado e sem mensagem pronta de WhatsApp sobre o prazo.
 7. **Prazo depois da data do evento é aceito**; a plataforma não compara as duas datas.
 8. **A tela do casal (SPEC-052) não mostra nem edita prazo ou exceção.**

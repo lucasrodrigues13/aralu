@@ -22,6 +22,7 @@ import { EventoAbasComponent } from './evento-abas.component';
 import { AplicarModeloDialog } from './aplicar-modelo.dialog';
 import { EventoFormPage } from './evento-form.page';
 import { LinkCasalDialog } from './link-casal.dialog';
+import { LinkPortariaDialog } from './link-portaria.dialog';
 import { EventoTarefasComponent } from '../tarefas/evento-tarefas.component';
 import { SalvarComoModeloDialog } from './salvar-como-modelo.dialog';
 
@@ -175,6 +176,7 @@ export class ClientesEventoDialog implements OnInit {
                 }
                 @if (!auth.ehAssistente()) {
                   <button mat-menu-item type="button" (click)="linkDoCasal()"><mat-icon>link</mat-icon> Link do casal</button>
+                  <button mat-menu-item type="button" (click)="linkDaPortaria()"><mat-icon>qr_code_scanner</mat-icon> Link da portaria</button>
                 }
                 @if (atual.situacao === 'EmAndamento') {
                   <button mat-menu-item type="button" (click)="aplicarModelo()"><mat-icon>playlist_add</mat-icon> Aplicar modelo</button>
@@ -423,6 +425,10 @@ export class EventoHomePage implements OnInit, OnDestroy {
         this.tarefasDoEvento()?.recarregar();
       }
     });
+  }
+
+  protected linkDaPortaria(): void {
+    this.dialog.open(LinkPortariaDialog, { ...DIALOG, data: { eventoId: this.id } });
   }
 
   protected linkDoCasal(): void {

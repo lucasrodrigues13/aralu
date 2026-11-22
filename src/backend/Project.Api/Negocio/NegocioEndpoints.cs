@@ -108,6 +108,7 @@ public static class NegocioEndpoints
         api.MapGet("/eventos/{id:guid}/convites/planilha", Planilha);
         api.MapPost("/eventos/{id:guid}/convites/importar", Importar).DisableAntiforgery();
         api.MapGet("/convites/{id:guid}/qr", Qr);
+        api.MapGet("/convites/{id:guid}/qr-entrada", QrEntrada);
         api.MapGet("/convites/{id:guid}/whatsapp", WhatsApp);
         api.MapGet("/arquivos/{id:guid}", Arquivo);
         api.MapGet("/cep/{cep}", Cep);
@@ -179,6 +180,7 @@ public static class NegocioEndpoints
         MapearBibliotecaSimples(api, "/modelos-orcamento-funil", ModelosOrcamentoFunil, CriarModeloOrcamentoFunil, ModeloOrcamentoFunil, AtualizarModeloOrcamentoFunil, ExcluirModeloOrcamentoFunil);
 
         app.MapGet("/api/v1/rsvp/{token}", AbrirRsvp);
+        app.MapGet("/api/v1/rsvp/{token}/qr-entrada", QrEntradaDoRsvp);
         app.MapPost("/api/v1/rsvp/{token}", ResponderRsvp);
         app.MapPost("/api/v1/public/leads/{contaId}", LeadPublico);
         app.MapGet("/api/v1/publico/propostas/{token}", PropostaPublica);
@@ -1179,6 +1181,25 @@ public static class NegocioEndpoints
 
             return Results.File(png.Valor!, "image/png", "convite.png");
         });
+
+    private static Task<IResult> QrEntrada(Guid id, ClaimsPrincipal usuario, ConviteServico servico, IDados dados, CancellationToken ct) =>
+        ComConta(usuario, async conta =>
+        {
+            var bloqueio = await ExigirModuloViaConviteAsync(usuario, conta, id, ModuloCliente.Convidados, dados, servico, ct);
+            if (bloqueio is not null)
+            {
+                return bloqueio;
+            }
+
+            var png = await servico.QrEntradaAsync(conta, id, ct);
+            return png.Ok ? Results.File(png.Valor!, "image/png", "entrada.png") : Falha(png.Falha!);
+        });
+
+    private static async Task<IResult> QrEntradaDoRsvp(string token, PortariaServico servico, CancellationToken ct)
+    {
+        var png = await servico.QrPorTokenAsync(token, ct);
+        return png.Ok ? Results.File(png.Valor!, "image/png") : Falha(png.Falha!);
+    }
 
     private static Task<IResult> WhatsApp(Guid id, ClaimsPrincipal usuario, ConviteServico servico, IDados dados, IConfiguration configuracao, CancellationToken ct) =>
         ComConta(usuario, async conta =>

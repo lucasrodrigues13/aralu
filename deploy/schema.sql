@@ -3676,3 +3676,50 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122012209_PortariaDoEvento') THEN
+    ALTER TABLE "PresencasEvento" ADD "CompareceuEm" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122012209_PortariaDoEvento') THEN
+    CREATE TABLE "LinksPortaria" (
+        "Id" uuid NOT NULL,
+        "EventoId" uuid NOT NULL,
+        "ContaId" character varying(450) NOT NULL,
+        "Token" character varying(64) NOT NULL,
+        "CriadoEm" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_LinksPortaria" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_LinksPortaria_Eventos_EventoId" FOREIGN KEY ("EventoId") REFERENCES "Eventos" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122012209_PortariaDoEvento') THEN
+    CREATE UNIQUE INDEX "IX_LinksPortaria_EventoId" ON "LinksPortaria" ("EventoId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122012209_PortariaDoEvento') THEN
+    CREATE UNIQUE INDEX "IX_LinksPortaria_Token" ON "LinksPortaria" ("Token");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122012209_PortariaDoEvento') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261122012209_PortariaDoEvento', '10.0.4');
+    END IF;
+END $EF$;
+COMMIT;
+

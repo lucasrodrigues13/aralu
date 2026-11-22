@@ -85,7 +85,8 @@ public sealed record PresencaLeitura(
     string Convite,
     Guid ConvidadoId,
     string Convidado,
-    DateTimeOffset ConfirmadoEm);
+    DateTimeOffset ConfirmadoEm,
+    DateTimeOffset? CompareceuEm = null);
 
 public sealed record ConvidadoPublico(Guid Id, string Nome, SituacaoConvidado Situacao);
 
@@ -400,6 +401,18 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
         }
 
         return Resultado<byte[]>.Sucesso(qr.Png(Link(basePublica, convite.Token)));
+    }
+
+    /// <summary>QR de entrada do convite (SPEC-058): só existe com ao menos um convidado confirmado.</summary>
+    public async Task<Resultado<byte[]>> QrEntradaAsync(string contaId, Guid id, CancellationToken ct)
+    {
+        var convite = await dados.ObterConviteAsync(contaId, id, ct);
+        if (convite is null || !convite.Convidados.Any(item => item.Situacao == SituacaoConvidado.Confirmado))
+        {
+            return Resultado<byte[]>.Erro(Codigos.Indisponivel, "Indisponível.");
+        }
+
+        return Resultado<byte[]>.Sucesso(qr.Png(PortariaServico.PrefixoQr + convite.Token));
     }
 
     public async Task<Resultado<WhatsAppLeitura>> WhatsAppAsync(string contaId, Guid id, string basePublica, CancellationToken ct)
