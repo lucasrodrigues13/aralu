@@ -58,7 +58,7 @@ Legenda de "Banco": **M** = migration (entra na fila do banco), **—** = sem mi
 | 6 | #24 RSVP com prazo | #22 (#23 ajuda) | M | rsvp, convidados | pendente |
 | 6 | #39 Contrato do funil com as tags | #46, #43, #44, #36, #38 | — | contratos-funil, Mesclagem | pronto no branch `claude/card-39-tags-46fafe` (SPEC-050, sem migration; só gera com orçamento aprovado e dados do contratante completos; nada apagado); juntar na main; integração só ao fim das ondas |
 | 7 | #40 Seletor de tags com busca e ajuda | #38, #39 | — | modelos de contrato | pronto no branch `claude/card-40-seletor-tags-a2500d` (SPEC-053, sem migration; `Mesclagem.Campos` ganhou `Fonte`; botões de campo soltos removidos da tela); juntar na main |
-| 7 | #15 Live Preview do modelo | #38, #40 | — | modelos de contrato | pendente |
+| 7 | #15 Live Preview do modelo | #38, #40 | — | modelos de contrato | pronto no branch `claude/card-15-preview-ff6b11` (SPEC-055, sem migration; só frontend; botão "Live Preview" no modal, exemplos fixos da lista de tags, substitui o seletor "Ver como fica"; nada apagado); juntar na main |
 | 7 | #16 Logo e imagem de fundo no modelo | #15, #38 | M | modelos de contrato | pendente |
 | 7 | #18 HTML do orçamento na tela de aceite | — | M | modelo de orçamento, proposta-publica | pendente |
 | 7 | #17 Avaliar upload de Word (avaliação) | #15, #16; SPEC-033 | — | nenhum (só avaliação) | pendente |

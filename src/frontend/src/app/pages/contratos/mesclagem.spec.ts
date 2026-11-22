@@ -1,4 +1,4 @@
-import { filtrarCampos, inserirMarca, previaDestacada } from './mesclagem';
+import { filtrarCampos, inserirMarca, previaDestacada, tagsDesconhecidas } from './mesclagem';
 
 const campos = [{ marca: 'contratante_nome', rotulo: 'Nome', fonte: 'Cadastro de clientes, Nome', exemplo: 'Ana <Souza>' }];
 
@@ -21,8 +21,18 @@ describe('previaDestacada', () => {
     expect(previaDestacada('Olá {{contratante_nome}} <b>', campos)).toBe('Olá <mark>Ana &lt;Souza&gt;</mark> &lt;b&gt;');
   });
 
-  it('mantém a marca desconhecida e troca quebra de linha', () => {
-    expect(previaDestacada('{{apelido}}\nfim', campos)).toBe('{{apelido}}<br>fim');
+  it('mantém a marca desconhecida, destacada como aviso, e troca quebra de linha', () => {
+    expect(previaDestacada('{{apelido}}\nfim', campos)).toBe('<mark class="desconhecida">{{apelido}}</mark><br>fim');
+  });
+});
+
+describe('tagsDesconhecidas', () => {
+  it('lista só as tags fora da lista, sem repetir', () => {
+    expect(tagsDesconhecidas('{{contratante_nome}} {{Apelido}} {{apelido}} {{x_y}}', campos)).toEqual(['apelido', 'x_y']);
+  });
+
+  it('devolve vazio quando todas existem', () => {
+    expect(tagsDesconhecidas('Olá {{contratante_nome}}', campos)).toEqual([]);
   });
 });
 

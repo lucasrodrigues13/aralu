@@ -13,9 +13,21 @@ export function previaDestacada(texto: string, campos: CampoMesclagem[]): string
   return escapar(texto)
     .replace(/\{\{\s*([a-zA-Z_]+)\s*\}\}/g, (marca, nome: string) => {
       const exemplo = exemplos.get(nome.toLowerCase());
-      return exemplo === undefined ? marca : `<mark>${escapar(exemplo)}</mark>`;
+      return exemplo === undefined ? `<mark class="desconhecida">${marca}</mark>` : `<mark>${escapar(exemplo)}</mark>`;
     })
     .replace(/\n/g, '<br>');
+}
+
+/** Tags {{...}} do texto que não existem na lista (SPEC-055): ficam sem troca no contrato; sem repetição. */
+export function tagsDesconhecidas(texto: string, campos: CampoMesclagem[]): string[] {
+  const conhecidas = new Set(campos.map((campo) => campo.marca));
+  const achadas = new Set<string>();
+  for (const [, nome] of texto.matchAll(/\{\{\s*([a-zA-Z_]+)\s*\}\}/g)) {
+    if (!conhecidas.has(nome.toLowerCase())) {
+      achadas.add(nome.toLowerCase());
+    }
+  }
+  return [...achadas];
 }
 
 /** Filtra as tags do seletor pela busca (marca, o que representa ou fonte), sem acento nem caixa (SPEC-053). */
