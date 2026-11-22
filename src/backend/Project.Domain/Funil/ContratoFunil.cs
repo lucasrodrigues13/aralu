@@ -30,6 +30,11 @@ public sealed class ContratoFunil
 
     public Guid? ModeloId { get; set; }
 
+    /// <summary>Logo e fundo copiados do modelo ao gerar o contrato (SPEC-056): o contrato guarda o próprio vínculo.</summary>
+    public Guid? LogoArquivoId { get; set; }
+
+    public Guid? FundoArquivoId { get; set; }
+
     /// <summary>Parcelas a receber do cliente, copiadas do orçamento aprovado ao gerar o contrato (SPEC-040).</summary>
     public List<Project.Domain.Dinheiro.ParcelaContrato> Parcelas { get; set; } = [];
 }

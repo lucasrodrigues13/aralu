@@ -5,7 +5,7 @@ namespace Project.Application.Negocio;
 
 public sealed record SalvarContrato(string? Nome, string? Texto);
 
-public sealed record ContratoLeitura(Guid Id, string Nome, string Texto, DateTimeOffset AtualizadoEm);
+public sealed record ContratoLeitura(Guid Id, string Nome, string Texto, DateTimeOffset AtualizadoEm, Guid? LogoArquivoId = null, Guid? FundoArquivoId = null);
 
 public sealed record ContratoResumo(Guid Id, string Nome, DateTimeOffset AtualizadoEm);
 
@@ -99,5 +99,30 @@ public sealed class ContratoServico(IDadosContrato dados)
         return Resultado<bool>.Sucesso(true);
     }
 
-    private static ContratoLeitura Ler(ContratoConta contrato) => new(contrato.Id, contrato.Nome, contrato.Texto, contrato.AtualizadoEm);
+    /// <summary>Liga (ou, com arquivo nulo, desliga) a logo ou o fundo (SPEC-056). Devolve o arquivo ligado antes.</summary>
+    public async Task<Resultado<Guid?>> DefinirImagemAsync(string contaId, Guid id, bool logo, Guid? arquivoId, CancellationToken ct)
+    {
+        var contrato = await dados.ObterAsync(contaId, id, ct);
+        if (contrato is null)
+        {
+            return Resultado<Guid?>.Erro(Codigos.Indisponivel, "Indisponível.");
+        }
+
+        var anterior = logo ? contrato.LogoArquivoId : contrato.FundoArquivoId;
+        if (logo)
+        {
+            contrato.LogoArquivoId = arquivoId;
+        }
+        else
+        {
+            contrato.FundoArquivoId = arquivoId;
+        }
+
+        contrato.AtualizadoEm = DateTimeOffset.UtcNow;
+        await dados.SalvarAsync(ct);
+        return Resultado<Guid?>.Sucesso(anterior);
+    }
+
+    private static ContratoLeitura Ler(ContratoConta contrato) =>
+        new(contrato.Id, contrato.Nome, contrato.Texto, contrato.AtualizadoEm, contrato.LogoArquivoId, contrato.FundoArquivoId);
 }

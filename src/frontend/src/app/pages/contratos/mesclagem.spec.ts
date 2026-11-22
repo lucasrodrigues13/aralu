@@ -1,4 +1,24 @@
-import { filtrarCampos, inserirMarca, previaDestacada, tagsDesconhecidas } from './mesclagem';
+import { imagemModeloValida } from '../../core/contrato.client';
+import { filtrarCampos, inserirMarca, previaDestacada, tagsDesconhecidas, textoEmHtml } from './mesclagem';
+
+describe('textoEmHtml (contrato gerado, SPEC-056)', () => {
+  it('escapa HTML e troca quebra de linha por <br>, sem destacar marcas', () => {
+    expect(textoEmHtml('A <b>&</b>\nB {{x}}')).toBe('A &lt;b&gt;&amp;&lt;/b&gt;<br>B {{x}}');
+  });
+});
+
+describe('imagemModeloValida (logo e fundo, SPEC-056)', () => {
+  it('aceita JPG, PNG e WebP até 5 MB', () => {
+    expect(imagemModeloValida({ type: 'image/png', size: 1000 })).toBeNull();
+    expect(imagemModeloValida({ type: 'image/jpeg', size: 5 * 1024 * 1024 })).toBeNull();
+    expect(imagemModeloValida({ type: 'image/webp', size: 1 })).toBeNull();
+  });
+
+  it('recusa outro formato ou arquivo maior que 5 MB', () => {
+    expect(imagemModeloValida({ type: 'application/pdf', size: 1000 })).not.toBeNull();
+    expect(imagemModeloValida({ type: 'image/png', size: 5 * 1024 * 1024 + 1 })).not.toBeNull();
+  });
+});
 
 const campos = [{ marca: 'contratante_nome', rotulo: 'Nome', fonte: 'Cadastro de clientes, Nome', exemplo: 'Ana <Souza>' }];
 

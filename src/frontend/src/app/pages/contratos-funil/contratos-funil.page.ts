@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
@@ -14,8 +14,10 @@ import { ContratoFunil, ModeloParaContratoFunil, NegocioClient, Oportunidade } f
 import { AuthService } from '../../core/auth.service';
 import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
-import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
+import { DIALOG, DIALOG_LARGO, DIALOG_PEQUENO } from '../../shared/dialog';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
+import { FolhaContrato, imprimirContrato } from '../contratos/folha-contrato';
+import { textoEmHtml } from '../contratos/mesclagem';
 
 @Component({
   selector: 'app-contrato-funil-dialog',
@@ -100,6 +102,46 @@ export class ContratoFunilDialog implements OnInit {
   }
 }
 
+/** Contrato gerado como chega ao cliente: logo, texto e fundo do modelo, com botão de imprimir (SPEC-056). */
+@Component({
+  selector: 'app-contrato-funil-ver-dialog',
+  imports: [MatDialogModule, MatButtonModule, MatIconModule, FolhaContrato],
+  template: `
+    <h2 mat-dialog-title>Contrato de {{ dados.oportunidadeNome }}</h2>
+    <mat-dialog-content>
+      <app-folha-contrato titulo="Contrato" [html]="html" [logoUrl]="logoUrl()" [fundoUrl]="fundoUrl()" />
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-stroked-button type="button" mat-dialog-close>Fechar</button>
+      <button mat-flat-button type="button" (click)="imprimir()"><mat-icon>print</mat-icon> Imprimir</button>
+    </mat-dialog-actions>
+  `,
+})
+export class ContratoFunilVerDialog {
+  private readonly negocio = inject(NegocioClient);
+  protected readonly dados = inject<ContratoFunil>(MAT_DIALOG_DATA);
+  protected readonly html = textoEmHtml(this.dados.conteudo);
+  protected readonly logoUrl = signal<string | null>(null);
+  protected readonly fundoUrl = signal<string | null>(null);
+
+  constructor() {
+    this.carregar(this.dados.logoArquivoId, this.logoUrl);
+    this.carregar(this.dados.fundoArquivoId, this.fundoUrl);
+    inject(DestroyRef).onDestroy(() => {
+      for (const url of [this.logoUrl(), this.fundoUrl()]) if (url) URL.revokeObjectURL(url);
+    });
+  }
+
+  protected imprimir(): void {
+    imprimirContrato('Contrato', this.html, this.logoUrl(), this.fundoUrl());
+  }
+
+  private carregar(arquivoId: string | null | undefined, destino: { set(valor: string): void }): void {
+    if (!arquivoId) return;
+    this.negocio.baixarArquivo(arquivoId).subscribe({ next: (blob) => destino.set(URL.createObjectURL(blob)) });
+  }
+}
+
 @Component({
   selector: 'app-contratos-funil',
   imports: [MatButtonToggleModule, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, GdDataPipe],
@@ -151,6 +193,7 @@ export class ContratoFunilDialog implements OnInit {
           <ng-container matColumnDef="acoes">
             <th mat-header-cell *matHeaderCellDef class="text-end! whitespace-nowrap">Ações</th>
             <td mat-cell *matCellDef="let item" class="text-end! whitespace-nowrap">
+              <button mat-icon-button type="button" aria-label="Ver contrato" title="Ver contrato" (click)="ver(item)"><mat-icon>visibility</mat-icon></button>
               @if (item.situacao === 'EmAndamento') {
                 <button mat-icon-button type="button" (click)="abrir(item)"><mat-icon>edit</mat-icon></button>
                 <button mat-icon-button type="button" (click)="enviar(item)"><mat-icon>send</mat-icon></button>
@@ -198,6 +241,10 @@ export class ContratosFunilPage implements OnInit {
 
   protected abrir(item?: ContratoFunil): void {
     this.dialog.open(ContratoFunilDialog, { ...DIALOG, data: item ?? null }).afterClosed().subscribe((ok) => ok && this.carregar());
+  }
+
+  protected ver(item: ContratoFunil): void {
+    this.dialog.open(ContratoFunilVerDialog, { ...DIALOG_LARGO, data: item });
   }
 
   protected enviar(item: ContratoFunil): void {

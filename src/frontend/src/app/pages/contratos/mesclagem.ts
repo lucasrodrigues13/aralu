@@ -18,6 +18,11 @@ export function previaDestacada(texto: string, campos: CampoMesclagem[]): string
     .replace(/\n/g, '<br>');
 }
 
+/** Texto do contrato já gerado para exibir/imprimir: escapado, com quebra de linha. Nenhuma marca é destacada. */
+export function textoEmHtml(texto: string): string {
+  return escapar(texto).replace(/\n/g, '<br>');
+}
+
 /** Tags {{...}} do texto que não existem na lista (SPEC-055): ficam sem troca no contrato; sem repetição. */
 export function tagsDesconhecidas(texto: string, campos: CampoMesclagem[]): string[] {
   const conhecidas = new Set(campos.map((campo) => campo.marca));

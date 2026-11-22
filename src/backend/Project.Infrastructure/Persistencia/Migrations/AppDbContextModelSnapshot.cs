@@ -326,6 +326,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<DateTimeOffset>("CriadoEm")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid?>("FundoArquivoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("LogoArquivoId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Nome")
                         .IsRequired()
                         .HasMaxLength(120)
@@ -1467,6 +1473,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
                     b.Property<DateTimeOffset?>("EnviadoEm")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("FundoArquivoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("LogoArquivoId")
+                        .HasColumnType("uuid");
 
                     b.Property<Guid?>("ModeloId")
                         .HasColumnType("uuid");

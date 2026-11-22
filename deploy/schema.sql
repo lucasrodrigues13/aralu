@@ -3612,3 +3612,42 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122010710_LogoEFundoDoModeloDeContrato') THEN
+    ALTER TABLE "ContratosFunil" ADD "FundoArquivoId" uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122010710_LogoEFundoDoModeloDeContrato') THEN
+    ALTER TABLE "ContratosFunil" ADD "LogoArquivoId" uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122010710_LogoEFundoDoModeloDeContrato') THEN
+    ALTER TABLE "ContratosConta" ADD "FundoArquivoId" uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122010710_LogoEFundoDoModeloDeContrato') THEN
+    ALTER TABLE "ContratosConta" ADD "LogoArquivoId" uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122010710_LogoEFundoDoModeloDeContrato') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261122010710_LogoEFundoDoModeloDeContrato', '10.0.4');
+    END IF;
+END $EF$;
+COMMIT;
+

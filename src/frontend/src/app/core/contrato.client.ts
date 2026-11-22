@@ -17,6 +17,23 @@ export interface ContratoResumo {
 
 export interface Contrato extends ContratoResumo {
   texto: string;
+  /** Logo (topo) e imagem de fundo do modelo, no armazenamento de arquivos (SPEC-056). */
+  logoArquivoId?: string | null;
+  fundoArquivoId?: string | null;
+}
+
+/** Imagem de modelo: logo (topo do contrato) ou fundo da folha. */
+export type ImagemDoModelo = 'logo' | 'fundo';
+
+/** Formatos e tamanho aceitos para a logo e o fundo (SPEC-056 §17): os do armazenamento de imagens. */
+export const IMAGEM_MODELO_ACEITA = 'image/jpeg,image/png,image/webp';
+export const IMAGEM_MODELO_MAX_BYTES = 5 * 1024 * 1024;
+
+export function imagemModeloValida(arquivo: { type: string; size: number }): string | null {
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(arquivo.type) || arquivo.size > IMAGEM_MODELO_MAX_BYTES) {
+    return 'A imagem não foi aceita. Use JPG, PNG ou WebP de até 5 MB.';
+  }
+  return null;
 }
 
 /** Contratos da conta, sem vínculo com modelo nem evento (SPEC-030 v3). */
@@ -45,5 +62,15 @@ export class ContratoClient {
 
   excluir(id: string) {
     return this.http.delete(`${this.base}/api/v1/contratos/${id}`);
+  }
+
+  enviarImagem(id: string, qual: ImagemDoModelo, arquivo: File) {
+    const dados = new FormData();
+    dados.append('arquivo', arquivo);
+    return this.http.post<{ arquivoId: string }>(`${this.base}/api/v1/contratos/${id}/${qual}`, dados);
+  }
+
+  removerImagem(id: string, qual: ImagemDoModelo) {
+    return this.http.delete(`${this.base}/api/v1/contratos/${id}/${qual}`);
   }
 }

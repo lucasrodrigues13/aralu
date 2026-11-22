@@ -79,5 +79,5 @@ Frontend (`mesclagem.spec.ts`): `previaDestacada` destaca tag desconhecida com c
 1. **Preview com exemplos fixos** da lista de tags, não com dados de um evento real escolhido. Escolher um evento para ver com dados reais fica para depois.
 2. **Painel ao lado** (não página nem aba nova), no mesmo modal.
 3. **Substitui o seletor "Ver como fica"**: a função continua, agora sempre ao lado do texto.
-4. **Sem logo nem fundo** na folha: entram no card #16.
+4. **Sem logo nem fundo** na folha: entraram no card #16 ([SPEC-056](056-logo-e-fundo-do-modelo-de-contrato.md)), que usa a mesma folha.
 5. **Sem migration.**

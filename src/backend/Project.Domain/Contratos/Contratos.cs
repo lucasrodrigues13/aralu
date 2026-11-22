@@ -14,6 +14,12 @@ public sealed class ContratoConta
 
     public string Texto { get; set; } = "";
 
+    /// <summary>Arquivo da logo (topo do contrato), no armazenamento de arquivos. Sem chave estrangeira (SPEC-056).</summary>
+    public Guid? LogoArquivoId { get; set; }
+
+    /// <summary>Arquivo da imagem de fundo do contrato, no armazenamento de arquivos. Sem chave estrangeira (SPEC-056).</summary>
+    public Guid? FundoArquivoId { get; set; }
+
     public DateTimeOffset CriadoEm { get; set; }
 
     public DateTimeOffset AtualizadoEm { get; set; }

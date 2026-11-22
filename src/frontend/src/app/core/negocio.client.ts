@@ -1532,6 +1532,9 @@ export interface ContratoFunil {
   /** Só na leitura de um contrato: telefone do contato e chave Pix, usados no "Cobrar". */
   oportunidadeTelefone?: string | null;
   chavePix?: string | null;
+  /** Logo e fundo copiados do modelo ao gerar o contrato (SPEC-056). */
+  logoArquivoId?: string | null;
+  fundoArquivoId?: string | null;
 }
 
 export interface OrcamentoFunil {
