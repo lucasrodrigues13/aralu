@@ -4,7 +4,6 @@ import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angu
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -15,7 +14,7 @@ import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { DIALOG_LARGO, DIALOG_PEQUENO } from '../../shared/dialog';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
-import { filtrarCampos, inserirMarca, previaDestacada } from './mesclagem';
+import { filtrarCampos, inserirMarca, previaDestacada, tagsDesconhecidas } from './mesclagem';
 
 /** Ajuda das tags (SPEC-053): como usar e a lista completa, da mesma lista do seletor e do preenchimento. */
 @Component({
@@ -65,10 +64,10 @@ export class AjudaTagsDialog {
   }
 }
 
-/** Novo/editar modelo de contrato com seletor de tags com busca e ajuda (SPEC-053) e "Ver como fica" (SPEC-030 §6.1). */
+/** Novo/editar modelo de contrato com seletor de tags com busca e ajuda (SPEC-053) e Live Preview (SPEC-055, evolui o "Ver como fica" da SPEC-030 §6.1). */
 @Component({
   selector: 'app-contrato-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatButtonToggleModule, MatFormFieldModule, MatInputModule, MatIconModule, MatAutocompleteModule],
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatAutocompleteModule],
   template: `
     <h2 mat-dialog-title>{{ dados.contrato ? 'Editar modelo de contrato' : 'Novo modelo de contrato' }}</h2>
     <p class="text-muted text-sm px-6 -mt-2 mb-4">Clique num campo para inserir no texto. Ele é trocado pelos dados do evento.</p>
@@ -81,12 +80,13 @@ export class AjudaTagsDialog {
           @if (form.controls.nome.invalid) { <mat-error>Informe o nome.</mat-error> }
         </mat-form-field>
         </div>
-        <mat-button-toggle-group [value]="modo()" (change)="modo.set($event.value)" aria-label="Modo">
-          <mat-button-toggle value="editar">Editar texto</mat-button-toggle>
-          <mat-button-toggle value="previa">Ver como fica</mat-button-toggle>
-        </mat-button-toggle-group>
-        @if (modo() === 'editar') {
-          <div class="seletor-tags">
+        <div class="barra-previa">
+          <button mat-stroked-button type="button" [attr.aria-pressed]="previaAberta()" (click)="previaAberta.set(!previaAberta())">
+            <mat-icon>{{ previaAberta() ? 'visibility_off' : 'visibility' }}</mat-icon> {{ previaAberta() ? 'Fechar Live Preview' : 'Live Preview' }}
+          </button>
+          <span class="text-muted text-xs">Mostra como o contrato chega ao cliente, com exemplos no lugar das tags.</span>
+        </div>
+        <div class="seletor-tags">
             <mat-form-field appearance="outline" class="w-full">
               <mat-label>Inserir tag no cursor</mat-label>
               <input matInput [formControl]="busca" [matAutocomplete]="auto" aria-label="Buscar tag para inserir" placeholder="Digite para buscar (ex.: nome, data, valor)" />
@@ -105,18 +105,26 @@ export class AjudaTagsDialog {
               <mat-icon>help_outline</mat-icon>
             </button>
           </div>
-        }
-        <div class="editor">
-          @if (modo() === 'editar') {
-            <div class="campo texto">
-              <mat-label class="font-semibold mb-2 block">Texto do contrato</mat-label>
-              <mat-form-field appearance="outline" class="w-full">
+        <div class="editor" [class.com-previa]="previaAberta()">
+          <div class="campo texto">
+            <mat-label class="font-semibold mb-2 block">Texto do contrato</mat-label>
+            <mat-form-field appearance="outline" class="w-full">
               <textarea [attr.aria-label]="'Texto do contrato'" #texto matInput rows="18" formControlName="texto" required></textarea>
               @if (form.controls.texto.invalid) { <mat-error>Informe o texto.</mat-error> }
             </mat-form-field>
+          </div>
+          @if (previaAberta()) {
+            <div class="painel-previa" aria-label="Live Preview">
+              <span class="font-semibold mb-2 block">Como chega ao cliente</span>
+              @if (desconhecidas().length > 0) {
+                <p class="aviso" role="status">Tag que não existe e não será trocada: {{ desconhecidas().join(', ') }}.</p>
+              }
+              <div class="previa">
+                <h3 class="previa-titulo">{{ nomeAtual() || 'Contrato' }}</h3>
+                <div [innerHTML]="previa()"></div>
+              </div>
+              <p class="text-muted text-xs mt-2">Os valores destacados são exemplos. No contrato real entram os dados do evento; sem dado, aparece ________.</p>
             </div>
-          } @else {
-            <div class="previa" [innerHTML]="previa()"></div>
           }
         </div>
       </form>
@@ -127,12 +135,18 @@ export class AjudaTagsDialog {
     </mat-dialog-actions>
   `,
   styles: `
-    mat-button-toggle-group { width: fit-content; }
+    .barra-previa { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
     .seletor-tags { display: flex; align-items: flex-start; gap: 8px; }
+    .editor { display: grid; grid-template-columns: 1fr; gap: 16px; }
+    @media (min-width: 900px) { .editor.com-previa { grid-template-columns: 1fr 1fr; } }
     .texto { width: 100%; }
     .texto textarea { font-family: inherit; line-height: 1.5; }
-    .previa { min-height: 360px; max-height: 60vh; overflow: auto; padding: 12px 14px; border: 1px solid var(--mat-sys-outline-variant); border-radius: var(--mat-sys-corner-small); font-size: 14px; line-height: 1.6; white-space: normal; }
+    .painel-previa { min-width: 0; }
+    .previa { min-height: 360px; max-height: 60vh; overflow: auto; padding: 20px 24px; background: #fff; color: #1a1a1a; border: 1px solid var(--mat-sys-outline-variant); border-radius: var(--mat-sys-corner-small); box-shadow: 0 1px 4px rgb(0 0 0 / 12%); font-family: Georgia, 'Times New Roman', serif; font-size: 14px; line-height: 1.6; white-space: normal; }
+    .previa-titulo { text-align: center; font-size: 16px; font-weight: 700; margin: 0 0 16px; }
     .previa ::ng-deep mark { background: color-mix(in oklab, var(--mat-sys-primary) 18%, transparent); color: inherit; border-radius: 4px; padding: 0 2px; }
+    .previa ::ng-deep mark.desconhecida { background: #fde68a; }
+    .aviso { margin: 0 0 8px; font-size: 12px; color: #92400e; }
   `,
 })
 export class ContratoDialog {
@@ -140,13 +154,17 @@ export class ContratoDialog {
   protected readonly ref = inject(MatDialogRef<ContratoDialog, { nome: string; texto: string }>);
   private readonly fb = inject(FormBuilder);
   private readonly areaTexto = viewChild<ElementRef<HTMLTextAreaElement>>('texto');
-  protected readonly modo = signal<'editar' | 'previa'>('editar');
+  /** Live Preview (SPEC-055): painel ao lado do texto, atualizado a cada tecla. */
+  protected readonly previaAberta = signal(false);
   protected readonly form = this.fb.nonNullable.group({
     nome: [this.dados.contrato?.nome ?? '', [Validators.required, Validators.pattern(/\S/)]],
     texto: [this.dados.contrato?.texto ?? '', [Validators.required, Validators.pattern(/\S/)]],
   });
   private readonly textoAtual = toSignal(this.form.controls.texto.valueChanges, { initialValue: this.form.controls.texto.value });
+  private readonly nomeAtualSinal = toSignal(this.form.controls.nome.valueChanges, { initialValue: this.form.controls.nome.value });
+  protected readonly nomeAtual = computed(() => this.nomeAtualSinal().trim());
   protected readonly previa = computed(() => previaDestacada(this.textoAtual(), this.dados.campos));
+  protected readonly desconhecidas = computed(() => tagsDesconhecidas(this.textoAtual(), this.dados.campos));
   private readonly dialog = inject(MatDialog);
   /** Texto digitado na busca do seletor; ao escolher uma tag volta a ficar vazio. */
   protected readonly busca = new FormControl<string | CampoMesclagem>('', { nonNullable: true });
@@ -181,7 +199,6 @@ export class ContratoDialog {
   protected salvar(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      this.modo.set('editar');
       return;
     }
     const valor = this.form.getRawValue();
@@ -255,7 +272,7 @@ export class ContratosPage implements OnInit {
 
   protected abrir(resumo?: ContratoResumo): void {
     const abrirDialogo = (contrato: Contrato | null) =>
-      this.dialog.open(ContratoDialog, { ...DIALOG_LARGO, data: { contrato, campos: this.campos } }).afterClosed().subscribe((pedido) => {
+      this.dialog.open(ContratoDialog, { ...DIALOG_LARGO, width: 'min(1180px, calc(100vw - 32px))', data: { contrato, campos: this.campos } }).afterClosed().subscribe((pedido) => {
         if (!pedido) return;
         this.contratoClient.salvar(contrato?.id ?? null, pedido).subscribe({
           next: () => {
