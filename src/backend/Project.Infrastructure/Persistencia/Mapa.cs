@@ -100,6 +100,12 @@ public static class Mapa
         modelBuilder.Entity<Convite>().HasOne<Evento>().WithMany().HasForeignKey(convite => convite.EventoId).OnDelete(DeleteBehavior.Cascade);
         modelBuilder.Entity<Convite>().HasMany(convite => convite.Convidados).WithOne().HasForeignKey(convidado => convidado.ConviteId).OnDelete(DeleteBehavior.Cascade);
 
+        var presenca = modelBuilder.Entity<PresencaEvento>();
+        presenca.ToTable("PresencasEvento");
+        presenca.HasIndex(item => item.ConvidadoId).IsUnique();
+        presenca.HasIndex(item => item.EventoId);
+        presenca.HasOne<Convidado>().WithMany().HasForeignKey(item => item.ConvidadoId).OnDelete(DeleteBehavior.Cascade);
+
         var convidado = modelBuilder.Entity<Convidado>();
         convidado.Property(item => item.Situacao).HasConversion<string>();
         convidado.Property(item => item.Genero).HasConversion<string>();

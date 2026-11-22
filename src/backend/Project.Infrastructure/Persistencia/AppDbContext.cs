@@ -44,6 +44,8 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<Convidado> Convidados => Set<Convidado>();
 
+    public DbSet<PresencaEvento> PresencasEvento => Set<PresencaEvento>();
+
     public DbSet<CompromissoAgenda> Compromissos => Set<CompromissoAgenda>();
 
     public DbSet<ArquivoRegistro> Arquivos => Set<ArquivoRegistro>();
@@ -84,6 +86,78 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<ModeloOrcamentoFunil> ModelosOrcamentoFunil => Set<ModeloOrcamentoFunil>();
 
+
+    /// <summary>
+    /// Mantém a lista de presença (SPEC-054): cada convidado que passa a Confirmado ganha uma entrada com id único;
+    /// quem deixa de estar Confirmado perde a entrada. Convidado removido leva a entrada junto (cascata do banco).
+    /// </summary>
+    public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+    {
+        await SincronizarPresencasAsync(cancellationToken);
+        return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+    }
+
+    private async Task SincronizarPresencasAsync(CancellationToken ct)
+    {
+        var criar = new List<Convidado>();
+        var sair = new List<Guid>();
+        foreach (var entrada in ChangeTracker.Entries<Convidado>())
+        {
+            var convidado = entrada.Entity;
+            if (entrada.State == EntityState.Added)
+            {
+                if (convidado.Situacao == SituacaoConvidado.Confirmado)
+                {
+                    criar.Add(convidado);
+                }
+            }
+            else if (entrada.State == EntityState.Modified)
+            {
+                var situacao = entrada.Property(item => item.Situacao);
+                if (!situacao.IsModified || Equals(situacao.OriginalValue, situacao.CurrentValue))
+                {
+                    continue;
+                }
+
+                if (convidado.Situacao == SituacaoConvidado.Confirmado)
+                {
+                    criar.Add(convidado);
+                }
+                else
+                {
+                    sair.Add(convidado.Id);
+                }
+            }
+        }
+
+        if (sair.Count > 0)
+        {
+            var existentes = await PresencasEvento.Where(item => sair.Contains(item.ConvidadoId)).ToListAsync(ct);
+            PresencasEvento.RemoveRange(existentes);
+        }
+
+        if (criar.Count == 0)
+        {
+            return;
+        }
+
+        var ids = criar.Select(item => item.Id).ToArray();
+        var jaTem = (await PresencasEvento.Where(item => ids.Contains(item.ConvidadoId)).Select(item => item.ConvidadoId).ToListAsync(ct)).ToHashSet();
+        var agora = DateTimeOffset.UtcNow;
+        foreach (var convidado in criar.Where(item => !jaTem.Contains(item.Id)))
+        {
+            var eventoId = ChangeTracker.Entries<Convite>().FirstOrDefault(item => item.Entity.Id == convidado.ConviteId)?.Entity.EventoId
+                ?? await Convites.Where(item => item.Id == convidado.ConviteId).Select(item => item.EventoId).FirstOrDefaultAsync(ct);
+            PresencasEvento.Add(new PresencaEvento
+            {
+                Id = Guid.NewGuid(),
+                EventoId = eventoId,
+                ConviteId = convidado.ConviteId,
+                ConvidadoId = convidado.Id,
+                ConfirmadoEm = agora,
+            });
+        }
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -444,6 +444,61 @@ public class NegocioFluxoTests
     }
 
     [Fact]
+    public async Task Rsvp_com_prazo_excecao_e_lista_de_presenca()
+    {
+        var dono = await Entrar();
+        var outra = await Entrar();
+        var evento = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new { tipo = "Formatura", primeiroNome = "Turma" }));
+        var eventoId = evento.GetProperty("id").GetGuid();
+        var convite = await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/convites", new
+        {
+            nome = "Família",
+            convidados = new object[] { new { nome = "Lia" }, new { nome = "Caio" } },
+        }));
+        var token = convite.GetProperty("token").GetString()!;
+        var conviteId = convite.GetProperty("id").GetGuid();
+        var anonimo = _banco.Fabrica.CreateClient();
+
+        // Prazo de outra conta é 404; data futura mantém o link aberto.
+        Assert.Equal(HttpStatusCode.NotFound, (await outra.PutAsJsonAsync($"/api/v1/eventos/{eventoId}/prazo-rsvp", new { prazo = "2099-01-01" })).StatusCode);
+        var futuro = await Ler(await dono.PutAsJsonAsync($"/api/v1/eventos/{eventoId}/prazo-rsvp", new { prazo = "2099-01-01" }));
+        Assert.False(futuro.GetProperty("encerrado").GetBoolean());
+        var aberto = await Ler(await anonimo.GetAsync($"/api/v1/rsvp/{token}"));
+        Assert.False(aberto.GetProperty("expirado").GetBoolean());
+        var pessoas = aberto.GetProperty("convidados").EnumerateArray().Select(pessoa => pessoa.GetProperty("id").GetGuid()).ToArray();
+        Assert.Equal(HttpStatusCode.OK, (await anonimo.PostAsJsonAsync($"/api/v1/rsvp/{token}", new
+        {
+            respostas = new[] { new { convidadoId = pessoas[0], situacao = "Confirmado" } },
+        })).StatusCode);
+        var presencas = await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/presencas"));
+        Assert.Equal(1, presencas.GetArrayLength());
+        Assert.NotEqual(Guid.Empty, presencas[0].GetProperty("id").GetGuid());
+
+        // Prazo vencido: o link expira, recusa resposta e não mostra convidados.
+        await dono.PutAsJsonAsync($"/api/v1/eventos/{eventoId}/prazo-rsvp", new { prazo = "2020-01-01" });
+        var expirado = await Ler(await anonimo.GetAsync($"/api/v1/rsvp/{token}"));
+        Assert.True(expirado.GetProperty("expirado").GetBoolean());
+        Assert.Equal(0, expirado.GetProperty("convidados").GetArrayLength());
+        Assert.Equal(HttpStatusCode.BadRequest, (await anonimo.PostAsJsonAsync($"/api/v1/rsvp/{token}", new
+        {
+            respostas = new[] { new { convidadoId = pessoas[1], situacao = "Confirmado" } },
+        })).StatusCode);
+        var lista = await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/convites"));
+        Assert.True(lista.GetProperty("prazoEncerrado").GetBoolean());
+
+        // Exceção do convite reabre o link; confirmar manualmente gera a entrada.
+        Assert.Equal(HttpStatusCode.NotFound, (await outra.PutAsJsonAsync($"/api/v1/convites/{conviteId}/excecao-rsvp", new { liberada = true })).StatusCode);
+        await dono.PutAsJsonAsync($"/api/v1/convites/{conviteId}/excecao-rsvp", new { liberada = true });
+        Assert.False((await Ler(await anonimo.GetAsync($"/api/v1/rsvp/{token}"))).GetProperty("expirado").GetBoolean());
+        await dono.PutAsJsonAsync($"/api/v1/convites/{conviteId}/convidados/{pessoas[1]}", new { nome = "Caio", situacao = "Confirmado" });
+        Assert.Equal(2, (await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/presencas"))).GetArrayLength());
+
+        // Quem deixa de estar confirmado sai da lista.
+        await dono.PutAsJsonAsync($"/api/v1/convites/{conviteId}/convidados/{pessoas[1]}", new { nome = "Caio", situacao = "Pendente" });
+        Assert.Equal(1, (await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/presencas"))).GetArrayLength());
+    }
+
+    [Fact]
     public async Task Painel_conta_os_eventos_e_imagem_respeita_o_arquivo()
     {
         var dono = await Entrar();

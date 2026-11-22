@@ -23,6 +23,9 @@ public sealed class Evento
 
     public DateOnly? Data { get; set; }
 
+    /// <summary>Data limite para confirmar presença pelo link; vale até o fim do dia. Nulo = sem prazo (SPEC-054).</summary>
+    public DateOnly? PrazoRsvp { get; set; }
+
     public TimeOnly? Hora { get; set; }
 
     public decimal? OrcamentoEstimado { get; set; }

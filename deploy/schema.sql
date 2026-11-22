@@ -3551,3 +3551,64 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122003817_PrazoDoRsvp') THEN
+    ALTER TABLE "Eventos" ADD "PrazoRsvp" date;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122003817_PrazoDoRsvp') THEN
+    ALTER TABLE "Convites" ADD "ExcecaoPrazoRsvp" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122003817_PrazoDoRsvp') THEN
+    CREATE TABLE "PresencasEvento" (
+        "Id" uuid NOT NULL,
+        "EventoId" uuid NOT NULL,
+        "ConviteId" uuid NOT NULL,
+        "ConvidadoId" uuid NOT NULL,
+        "ConfirmadoEm" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_PresencasEvento" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_PresencasEvento_Convidados_ConvidadoId" FOREIGN KEY ("ConvidadoId") REFERENCES "Convidados" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122003817_PrazoDoRsvp') THEN
+    CREATE UNIQUE INDEX "IX_PresencasEvento_ConvidadoId" ON "PresencasEvento" ("ConvidadoId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122003817_PrazoDoRsvp') THEN
+    CREATE INDEX "IX_PresencasEvento_EventoId" ON "PresencasEvento" ("EventoId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122003817_PrazoDoRsvp') THEN
+    INSERT INTO "PresencasEvento" ("Id", "EventoId", "ConviteId", "ConvidadoId", "ConfirmadoEm") SELECT gen_random_uuid(), c."EventoId", v."ConviteId", v."Id", now() FROM "Convidados" v JOIN "Convites" c ON c."Id" = v."ConviteId" WHERE v."Situacao" = 'Confirmado';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122003817_PrazoDoRsvp') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261122003817_PrazoDoRsvp', '10.0.4');
+    END IF;
+END $EF$;
+COMMIT;
+

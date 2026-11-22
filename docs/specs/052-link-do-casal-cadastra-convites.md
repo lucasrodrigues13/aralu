@@ -111,4 +111,4 @@ Decididos nesta entrega pela opção mais simples e conservadora (a conferir pel
 6. **O e-mail do convite não dispara nada** neste card; só é guardado e mostrado.
 7. **Importação por planilha** não ganha as colunas e-mail e data de envio.
 8. **Não identifica quem cadastrou** (casal ou organizadora) no convite.
-9. **O prazo de confirmação (#24) e a portaria (#25)** não entram aqui.
+9. **O prazo de confirmação (#24, feito na [SPEC-054](054-rsvp-com-prazo.md)) e a portaria (#25)** não entram aqui.

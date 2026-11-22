@@ -98,6 +98,9 @@ public static class NegocioEndpoints
         api.MapGet("/eventos/{id:guid}/convites", Convites);
         api.MapPost("/eventos/{id:guid}/convites", CriarConvite);
         api.MapPut("/convites/{id:guid}", AtualizarConvite);
+        api.MapPut("/eventos/{id:guid}/prazo-rsvp", DefinirPrazoRsvp);
+        api.MapPut("/convites/{id:guid}/excecao-rsvp", DefinirExcecaoRsvp);
+        api.MapGet("/eventos/{id:guid}/presencas", Presencas);
         api.MapPost("/convites/{id:guid}/convidados", CriarConvidado);
         api.MapPut("/convites/{id:guid}/convidados/{convidadoId:guid}", AtualizarConvidado);
         api.MapDelete("/convidados/{id:guid}", RemoverConvidado);
@@ -996,6 +999,7 @@ public static class NegocioEndpoints
                 conta,
                 id,
                 new FiltroConvites(nome, EnumOuNulo<SituacaoConvidado>(situacao), telefone, observacao, somenteConfirmados == true),
+                Hoje(),
                 ct));
         });
 
@@ -1021,6 +1025,42 @@ public static class NegocioEndpoints
             }
 
             return await De(servico.AtualizarAsync(conta, id, pedido, ct));
+        });
+
+    private static Task<IResult> DefinirPrazoRsvp(Guid id, PrazoRsvpPedido pedido, ClaimsPrincipal usuario, ConviteServico servico, IDados dados, CancellationToken ct) =>
+        ComConta(usuario, async conta =>
+        {
+            var bloqueio = await ExigirModuloEEventoAsync(usuario, conta, id, ModuloCliente.Convidados, dados, ct);
+            if (bloqueio is not null)
+            {
+                return bloqueio;
+            }
+
+            return await De(servico.DefinirPrazoAsync(conta, id, pedido.Prazo, Hoje(), ct));
+        });
+
+    private static Task<IResult> DefinirExcecaoRsvp(Guid id, ExcecaoRsvpPedido pedido, ClaimsPrincipal usuario, ConviteServico servico, IDados dados, CancellationToken ct) =>
+        ComConta(usuario, async conta =>
+        {
+            var bloqueio = await ExigirModuloViaConviteAsync(usuario, conta, id, ModuloCliente.Convidados, dados, servico, ct);
+            if (bloqueio is not null)
+            {
+                return bloqueio;
+            }
+
+            return await De(servico.DefinirExcecaoAsync(conta, id, pedido.Liberada, ct));
+        });
+
+    private static Task<IResult> Presencas(Guid id, ClaimsPrincipal usuario, ConviteServico servico, IDados dados, CancellationToken ct) =>
+        ComConta(usuario, async conta =>
+        {
+            var bloqueio = await ExigirModuloEEventoAsync(usuario, conta, id, ModuloCliente.Convidados, dados, ct);
+            if (bloqueio is not null)
+            {
+                return bloqueio;
+            }
+
+            return await De(servico.ListarPresencasAsync(conta, id, ct));
         });
 
     private static Task<IResult> CriarConvidado(Guid id, ConvidadoPedido pedido, ClaimsPrincipal usuario, ConviteServico servico, IDados dados, CancellationToken ct) =>
@@ -1553,10 +1593,10 @@ public static class NegocioEndpoints
         ComConta(usuario, conta => De(servico.ExcluirAsync(conta, id, ct)));
 
     private static Task<IResult> AbrirRsvp(string token, ConviteServico servico, CancellationToken ct) =>
-        De(servico.AbrirRsvpAsync(token, ct));
+        De(servico.AbrirRsvpAsync(token, Hoje(), ct));
 
     private static Task<IResult> ResponderRsvp(string token, RespostasPedido pedido, ConviteServico servico, CancellationToken ct) =>
-        De(servico.ResponderAsync(token, pedido.Respostas, pedido.PretendeRealizarEvento, ct));
+        De(servico.ResponderAsync(token, pedido.Respostas, pedido.PretendeRealizarEvento, Hoje(), ct));
 
     private static string EscaparCsv(string? valor) =>
         "\"" + (valor ?? "").Replace("\"", "\"\"", StringComparison.Ordinal) + "\"";
@@ -1606,7 +1646,7 @@ public static class NegocioEndpoints
 
     private static async Task<bool> EventoDaConta(string conta, Guid id, CancellationToken ct, ConviteServico servico)
     {
-        var lista = await servico.ListarAsync(conta, id, new FiltroConvites(null, null, null, null, false), ct);
+        var lista = await servico.ListarAsync(conta, id, new FiltroConvites(null, null, null, null, false), Hoje(), ct);
         return lista.Ok;
     }
 

@@ -52,7 +52,8 @@ public sealed record ConviteLeitura(
     bool Respondida,
     IReadOnlyList<ConvidadoLeitura> Convidados,
     string? Email = null,
-    DateOnly? DataEnvio = null);
+    DateOnly? DataEnvio = null,
+    bool ExcecaoPrazoRsvp = false);
 
 public sealed record TotaisLeitura(string Rotulo, int Quantidade);
 
@@ -61,9 +62,30 @@ public sealed record ListaConvites(
     IReadOnlyList<TotaisLeitura> PorSituacao,
     IReadOnlyList<TotaisLeitura> PorFaixa,
     IReadOnlyList<TotaisLeitura> PorCusto,
-    IReadOnlyList<string> Mesas);
+    IReadOnlyList<string> Mesas,
+    DateOnly? PrazoRsvp = null,
+    bool PrazoEncerrado = false);
 
-public sealed record RsvpPublico(string Convite, IReadOnlyList<ConvidadoPublico> Convidados);
+/// <summary>Página pública do RSVP. Expirado = prazo vencido sem exceção: não traz convidados (SPEC-054).</summary>
+public sealed record RsvpPublico(
+    string Convite,
+    IReadOnlyList<ConvidadoPublico> Convidados,
+    bool Expirado = false,
+    DateOnly? Prazo = null);
+
+public sealed record PrazoRsvpPedido(DateOnly? Prazo);
+
+public sealed record ExcecaoRsvpPedido(bool Liberada);
+
+public sealed record PrazoRsvpLeitura(DateOnly? Prazo, bool Encerrado);
+
+public sealed record PresencaLeitura(
+    Guid Id,
+    Guid ConviteId,
+    string Convite,
+    Guid ConvidadoId,
+    string Convidado,
+    DateTimeOffset ConfirmadoEm);
 
 public sealed record ConvidadoPublico(Guid Id, string Nome, SituacaoConvidado Situacao);
 
@@ -77,9 +99,11 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
         string contaId,
         Guid eventoId,
         FiltroConvites filtro,
+        DateOnly hoje,
         CancellationToken ct)
     {
-        if (!await dados.EventoDaContaAsync(contaId, eventoId, ct))
+        var evento = await dados.ObterEventoAsync(contaId, eventoId, ct);
+        if (evento is null)
         {
             return Resultado<ListaConvites>.Erro(Codigos.Indisponivel, "Indisponível.");
         }
@@ -98,7 +122,53 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
             Contar(todos, item => Rotulos.SituacaoTela(item.Situacao)),
             Contar(todos.Where(item => item.Faixa is not null), item => RotuloFaixa(item.Faixa!.Value)),
             Contar(todos.Where(item => item.Custo is not null), item => RotuloCusto(item.Custo!.Value)),
-            todos.Select(item => Domain.Comum.Texto.Limpo(item.Mesa)).OfType<string>().Distinct(StringComparer.OrdinalIgnoreCase).ToArray()));
+            todos.Select(item => Domain.Comum.Texto.Limpo(item.Mesa)).OfType<string>().Distinct(StringComparer.OrdinalIgnoreCase).ToArray(),
+            evento.PrazoRsvp,
+            PrazoDoRsvp.Encerrado(evento.PrazoRsvp, hoje)));
+    }
+
+    /// <summary>Define ou remove a data limite de confirmação do evento (SPEC-054).</summary>
+    public async Task<Resultado<PrazoRsvpLeitura>> DefinirPrazoAsync(string contaId, Guid eventoId, DateOnly? prazo, DateOnly hoje, CancellationToken ct)
+    {
+        var evento = await dados.ObterEventoAsync(contaId, eventoId, ct);
+        if (evento is null)
+        {
+            return Resultado<PrazoRsvpLeitura>.Erro(Codigos.Indisponivel, "Indisponível.");
+        }
+
+        if (evento.Situacao != SituacaoEvento.EmAndamento)
+        {
+            return Resultado<PrazoRsvpLeitura>.Erro(Codigos.Validacao, "O evento não está em andamento.");
+        }
+
+        evento.PrazoRsvp = prazo;
+        await dados.SalvarEventoAsync(ct);
+        return Resultado<PrazoRsvpLeitura>.Sucesso(new PrazoRsvpLeitura(prazo, PrazoDoRsvp.Encerrado(prazo, hoje)));
+    }
+
+    /// <summary>Abre ou fecha a exceção do prazo para o link de um convite (SPEC-054).</summary>
+    public async Task<Resultado<ConviteLeitura>> DefinirExcecaoAsync(string contaId, Guid conviteId, bool liberada, CancellationToken ct)
+    {
+        var convite = await dados.ObterConviteAsync(contaId, conviteId, ct);
+        if (convite is null)
+        {
+            return Resultado<ConviteLeitura>.Erro(Codigos.Indisponivel, "Indisponível.");
+        }
+
+        convite.ExcecaoPrazoRsvp = liberada;
+        await dados.SalvarConvitesAsync(ct);
+        return Resultado<ConviteLeitura>.Sucesso(Ler(convite));
+    }
+
+    /// <summary>Lista de presença do evento: uma entrada por convidado confirmado (SPEC-054).</summary>
+    public async Task<Resultado<IReadOnlyList<PresencaLeitura>>> ListarPresencasAsync(string contaId, Guid eventoId, CancellationToken ct)
+    {
+        if (!await dados.EventoDaContaAsync(contaId, eventoId, ct))
+        {
+            return Resultado<IReadOnlyList<PresencaLeitura>>.Erro(Codigos.Indisponivel, "Indisponível.");
+        }
+
+        return Resultado<IReadOnlyList<PresencaLeitura>>.Sucesso(await dados.ListarPresencasAsync(contaId, eventoId, ct));
     }
 
     public async Task<Resultado<ConviteLeitura>> CriarAsync(string contaId, Guid eventoId, NovoConvite pedido, CancellationToken ct)
@@ -351,12 +421,18 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
         return Resultado<WhatsAppLeitura>.Sucesso(new WhatsAppLeitura($"https://wa.me/{digitos}?text={texto}"));
     }
 
-    public async Task<Resultado<RsvpPublico>> AbrirRsvpAsync(string token, CancellationToken ct)
+    public async Task<Resultado<RsvpPublico>> AbrirRsvpAsync(string token, DateOnly hoje, CancellationToken ct)
     {
         var convite = await dados.ObterConvitePorTokenAsync(token, ct);
         if (convite is null || !await dados.EventoEmAndamentoAsync(convite.EventoId, ct))
         {
             return Resultado<RsvpPublico>.Erro(Codigos.Indisponivel, "Indisponível.");
+        }
+
+        var prazo = await dados.PrazoRsvpDoEventoAsync(convite.EventoId, ct);
+        if (PrazoDoRsvp.Expirado(prazo, hoje, convite.ExcecaoPrazoRsvp))
+        {
+            return Resultado<RsvpPublico>.Sucesso(new RsvpPublico(convite.Nome, [], true, prazo));
         }
 
         if (convite.RespondidoEm is null && convite.AcessadoEm is null)
@@ -384,12 +460,18 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
         string token,
         IReadOnlyList<RespostaRsvp>? respostas,
         bool? pretendeRealizarEvento,
+        DateOnly hoje,
         CancellationToken ct)
     {
         var convite = await dados.ObterConvitePorTokenAsync(token, ct);
         if (convite is null || !await dados.EventoEmAndamentoAsync(convite.EventoId, ct))
         {
             return Resultado<RsvpPublico>.Erro(Codigos.Indisponivel, "Indisponível.");
+        }
+
+        if (PrazoDoRsvp.Expirado(await dados.PrazoRsvpDoEventoAsync(convite.EventoId, ct), hoje, convite.ExcecaoPrazoRsvp))
+        {
+            return Resultado<RsvpPublico>.Erro(Codigos.Validacao, "O prazo para confirmar presença terminou.");
         }
 
         if (respostas is null || respostas.Count == 0)
@@ -701,7 +783,8 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
             convite.RespondidoEm is not null,
             convite.Convidados.Select(item => LerConvidado(item, convite.PrincipalId)).ToArray(),
             convite.Email,
-            convite.DataEnvio);
+            convite.DataEnvio,
+            convite.ExcecaoPrazoRsvp);
     }
 
     private static ConvidadoLeitura LerConvidado(Convidado convidado, Guid? principalId) => new(
