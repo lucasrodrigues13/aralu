@@ -29,11 +29,16 @@ export interface BarraServico {
 
 const positivo = (valor: number): number => (valor > 0 ? valor : 0);
 
-/** Barra empilhada Contratado / Estimado / Restante do orçamento (SPEC-047 §6 e §8). */
+/**
+ * Barra empilhada Contratado / Estimado / Restante do orçamento (SPEC-047 §6 e §8).
+ * Serviço contratado entra só pelo valor contratado; o estimado dele não soma de novo.
+ */
 export function montarGraficoOrcamento(dados: BudgetEvento): GraficoOrcamento {
   const orcamento = positivo(dados.budget);
   const contratado = positivo(dados.contratado);
-  const estimado = positivo(dados.estimado);
+  const estimado = dados.servicos
+    .filter((servico) => positivo(servico.contratado) === 0)
+    .reduce((soma, servico) => soma + positivo(servico.estimado), 0);
   const usado = contratado + estimado;
   const semOrcamento = orcamento === 0;
   const excesso = !semOrcamento && usado > orcamento ? usado - orcamento : 0;

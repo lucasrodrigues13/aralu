@@ -41,6 +41,7 @@ Evento da conta com ao menos um serviço. Sem serviços, não há gráficos.
 
 - **Sem mudança de cálculo.** Os valores vêm do `GET /eventos/{id}/budget` já existente (Budget, Estimado, Contratado, Prova real, Por convidado e a lista por serviço). Nenhum endpoint, DTO ou coluna é criado ou apagado: o endpoint continua em uso pelos gráficos, então não há legado a remover (regra 7). **Sem migration.**
 - Estimado = soma dos estimados dos serviços (com subitens, a soma deles); Contratado = soma dos contratados (SPEC-018 §8).
+- **Na barra "frente ao orçamento" (revisão de 22/11/2026):** a fatia "Estimado (a contratar)" soma só o estimado dos serviços **ainda sem valor contratado**; serviço contratado entra só pelo contratado, para não contar o mesmo serviço duas vezes. O excesso é contratado + estimado a contratar − orçamento, calculado no frontend com a lista por serviço que o `GET /budget` já devolve. Os indicadores Estimado e Prova real seguem a regra da SPEC-018 §8, sem mudança.
 - A exportação do orçamento em Excel continua na aba Dinheiro (SPEC-029 §6.6), fora do escopo.
 - Percentuais da barra: sobre o maior entre o orçamento e (contratado + estimado), para a barra nunca passar de 100% da largura.
 
