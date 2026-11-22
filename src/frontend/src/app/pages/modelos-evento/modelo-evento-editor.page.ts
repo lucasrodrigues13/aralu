@@ -28,15 +28,16 @@ import { exibirPrazo, prazoDeDias, prazoParaDias, UNIDADES_PRAZO, UnidadePrazo }
 import { ImportarTarefasModeloDialog } from './importar-tarefas-modelo.dialog';
 import { SelecionarBibliotecaDialog, ItemBiblioteca } from './selecionar-biblioteca.dialog';
 import { SelecionarServicosModeloDialog, ServicoEscolhido } from './selecionar-servicos-modelo.dialog';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-modelo-evento-editor',
-  imports: [MatCardModule, ReactiveFormsModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatTabsModule, MatIconModule, CampoDinheiroComponent, NgTemplateOutlet],
+  imports: [MatCardModule, ReactiveFormsModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatTabsModule, MatIconModule, CampoDinheiroComponent, NgTemplateOutlet, MatTooltipModule],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6 flex flex-wrap items-center justify-between gap-4">
         <div class="flex items-center gap-2">
-          <a mat-icon-button routerLink="/modelos-evento" aria-label="Voltar para modelos de evento"><mat-icon>arrow_back</mat-icon></a>
+          <a mat-icon-button routerLink="/modelos-evento" aria-label="Voltar para modelos de evento" matTooltip="Voltar para modelos de evento"><mat-icon>arrow_back</mat-icon></a>
           <div>
             <mat-card-title class="mb-0">Editar modelo</mat-card-title>
             <mat-card-subtitle>Configure checklist, tarefas e vínculos.</mat-card-subtitle>
@@ -73,7 +74,7 @@ import { SelecionarServicosModeloDialog, ServicoEscolhido } from './selecionar-s
               @for (item of vinculados(tipo, itens); track item.id) {
                 <div class="flex items-center justify-between gap-2 border border-border rounded px-4 py-2">
                   <span>{{ item.nome }}</span>
-                  <button mat-icon-button type="button" [attr.aria-label]="'Remover ' + singular" (click)="removerVinculo(tipo, item.id)"><mat-icon>close</mat-icon></button>
+                  <button mat-icon-button type="button" [attr.aria-label]="'Remover ' + singular" [matTooltip]="'Remover ' + singular" (click)="removerVinculo(tipo, item.id)"><mat-icon>close</mat-icon></button>
                 </div>
               } @empty {
                 <p class="text-sm text-muted">Nenhum modelo de {{ singular }} vinculado.</p>
@@ -111,13 +112,13 @@ import { SelecionarServicosModeloDialog, ServicoEscolhido } from './selecionar-s
                               <mat-label class="font-semibold mb-2 block">Texto</mat-label>
                               <mat-form-field appearance="outline" class="w-full"><input aria-label="Texto" matInput formControlName="texto" /></mat-form-field>
                             </div>
-                            <button mat-icon-button type="button" aria-label="Remover item" (click)="removerItem(i, j)"><mat-icon>close</mat-icon></button>
+                            <button mat-icon-button type="button" aria-label="Remover item" matTooltip="Remover item" (click)="removerItem(i, j)"><mat-icon>close</mat-icon></button>
                           </div>
                         }
                       </div>
                       <div class="flex items-center gap-1 mt-2">
                         <button mat-stroked-button type="button" (click)="adicionarItem(i)"><mat-icon>add</mat-icon> Item</button>
-                        <button mat-icon-button type="button" aria-label="Remover serviço" (click)="removerServico(i)"><mat-icon>delete</mat-icon></button>
+                        <button mat-icon-button type="button" aria-label="Remover serviço" matTooltip="Remover serviço" (click)="removerServico(i)"><mat-icon>delete</mat-icon></button>
                       </div>
                     </mat-card-content>
                   </mat-card>
@@ -159,7 +160,7 @@ import { SelecionarServicosModeloDialog, ServicoEscolhido } from './selecionar-s
                             </mat-form-field>
                           </div>
                         </div>
-                        <button mat-icon-button type="button" aria-label="Remover tarefa" (click)="removerTarefa(i)"><mat-icon>delete</mat-icon></button>
+                        <button mat-icon-button type="button" aria-label="Remover tarefa" matTooltip="Remover tarefa" (click)="removerTarefa(i)"><mat-icon>delete</mat-icon></button>
                       </div>
                       <p class="text-sm text-muted mt-2">{{ textoPrazo(i) }}</p>
                     </mat-card-content>

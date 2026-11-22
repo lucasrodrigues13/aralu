@@ -19,6 +19,7 @@ import { NOVO_SERVICO, incluirServico, marcarServico, normalizarBusca, servicoCo
 import { NovoServicoDialog } from './novo-servico.dialog';
 import { MascaraDirective } from '../../shared/mascara.directive';
 import { TipoMascara, aplicarMascara } from '../../shared/mascaras';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 interface BancoBrasil {
   ispb: string;
@@ -40,7 +41,7 @@ export const DIALOG_FORNECEDOR = DIALOG_LARGO;
 
 @Component({
   selector: 'app-fornecedor-form-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatCheckboxModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatTabsModule, MatIconModule, MascaraDirective, CampoDinheiroComponent],
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatCheckboxModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatTabsModule, MatIconModule, MascaraDirective, CampoDinheiroComponent, MatTooltipModule],
   template: `
     <h2 mat-dialog-title>{{ dados ? 'Editar fornecedor' : 'Novo fornecedor' }}</h2>
     <mat-dialog-content>
@@ -110,7 +111,7 @@ export const DIALOG_FORNECEDOR = DIALOG_LARGO;
                       <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Telefone'" matInput formControlName="numero" gdMascara="celular" /></mat-form-field>
                     </div>
                     <mat-checkbox formControlName="movel">Móvel</mat-checkbox>
-                    <button mat-icon-button type="button" aria-label="Remover telefone" (click)="removerTelefone(i)"><mat-icon>close</mat-icon></button>
+                    <button mat-icon-button type="button" aria-label="Remover telefone" matTooltip="Remover telefone" (click)="removerTelefone(i)"><mat-icon>close</mat-icon></button>
                   </div>
                 }
                 <button mat-stroked-button type="button" class="acao" (click)="adicionarTelefone()">Adicionar telefone</button>
@@ -122,7 +123,7 @@ export const DIALOG_FORNECEDOR = DIALOG_LARGO;
                       <mat-label class="font-semibold mb-2 block">E-mail</mat-label>
                       <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'E-mail'" matInput formControlName="endereco" /></mat-form-field>
                     </div>
-                    <button mat-icon-button type="button" aria-label="Remover e-mail" (click)="removerEmail(i)"><mat-icon>close</mat-icon></button>
+                    <button mat-icon-button type="button" aria-label="Remover e-mail" matTooltip="Remover e-mail" (click)="removerEmail(i)"><mat-icon>close</mat-icon></button>
                   </div>
                 }
                 <button mat-stroked-button type="button" class="acao" (click)="adicionarEmail()">Adicionar e-mail</button>
@@ -298,7 +299,7 @@ export const DIALOG_FORNECEDOR = DIALOG_LARGO;
                     <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Link'" matInput formControlName="link" /></mat-form-field>
                   </div>
                   <mat-checkbox formControlName="visivelClientes">Visível</mat-checkbox>
-                  <button mat-icon-button type="button" aria-label="Remover orçamento" (click)="removerOrcamento(i)"><mat-icon>close</mat-icon></button>
+                  <button mat-icon-button type="button" aria-label="Remover orçamento" matTooltip="Remover orçamento" (click)="removerOrcamento(i)"><mat-icon>close</mat-icon></button>
                 </div>
               }
               <button mat-stroked-button type="button" class="acao" (click)="adicionarOrcamento()">Adicionar orçamento</button>

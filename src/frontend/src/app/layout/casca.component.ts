@@ -16,6 +16,7 @@ import { TemaService } from '../core/tema.service';
 import { NovoEventoDialog } from '../pages/eventos/novo-evento.dialog';
 import { DIALOG_LARGO } from '../shared/dialog';
 import { Marca } from '../shared/marca';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 interface ItemMenu {
   rotulo: string;
@@ -55,7 +56,7 @@ function telaEstreita(): boolean {
 @Component({
   selector: 'app-casca',
   host: { class: 'block h-full' },
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, MatSidenavModule, MatListModule, MatToolbarModule, MatMenuModule, MatButtonModule, MatIconModule, Marca],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, MatSidenavModule, MatListModule, MatToolbarModule, MatMenuModule, MatButtonModule, MatIconModule, Marca, MatTooltipModule],
   template: `
     <mat-sidenav-container class="mainWrapper" autosize>
       <mat-sidenav
@@ -72,7 +73,7 @@ function telaEstreita(): boolean {
               </a>
             </div>
             @if (estreito()) {
-              <button mat-icon-button type="button" class="mr-3" (click)="fecharMenu()" aria-label="Fechar menu">
+              <button mat-icon-button type="button" class="mr-3" (click)="fecharMenu()" aria-label="Fechar menu" matTooltip="Fechar menu">
                 <mat-icon>close</mat-icon>
               </button>
             }
@@ -120,7 +121,7 @@ function telaEstreita(): boolean {
                 <span class="block text-xs text-muted">{{ empresa() ? 'Assistente de ' + empresa() : 'Conectado como' }}</span>
                 <span class="block text-sm font-semibold truncate" [title]="auth.email()">{{ auth.email() }}</span>
               </div>
-              <button mat-icon-button type="button" (click)="sair()" aria-label="Sair">
+              <button mat-icon-button type="button" (click)="sair()" aria-label="Sair" matTooltip="Sair">
                 <mat-icon>logout</mat-icon>
               </button>
             </div>
@@ -131,7 +132,7 @@ function telaEstreita(): boolean {
       <mat-sidenav-content class="contentWrapper">
         <mat-toolbar class="topbar gap-2">
           @if (estreito()) {
-            <button mat-icon-button type="button" (click)="menuAberto.set(true)" aria-label="Abrir menu" class="flex justify-center">
+            <button mat-icon-button type="button" (click)="menuAberto.set(true)" aria-label="Abrir menu" matTooltip="Abrir menu" class="flex justify-center">
               <mat-icon>menu</mat-icon>
             </button>
           }
@@ -145,6 +146,7 @@ function telaEstreita(): boolean {
             class="flex justify-center"
             (click)="tema.alternar()"
             [attr.aria-label]="tema.escuro() ? 'Usar modo claro' : 'Usar modo escuro'"
+            [matTooltip]="tema.escuro() ? 'Usar modo claro' : 'Usar modo escuro'"
           >
             <mat-icon>{{ tema.escuro() ? 'light_mode' : 'dark_mode' }}</mat-icon>
           </button>
@@ -153,6 +155,7 @@ function telaEstreita(): boolean {
             type="button"
             [matMenuTriggerFor]="perfilMenu"
             aria-label="Menu da conta"
+            matTooltip="Menu da conta"
             class="flex! items-center justify-center"
           >
             <span class="rounded-full bg-light-primary text-primary size-9 flex items-center justify-center text-xs font-semibold">

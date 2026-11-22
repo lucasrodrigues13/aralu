@@ -12,6 +12,7 @@ import { MensagemModelo, NegocioClient } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-mensagem-editor-dialog',
@@ -101,7 +102,7 @@ export class MensagemEditorDialog {
 
 @Component({
   selector: 'app-modelos-mensagens',
-  imports: [MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule],
+  imports: [MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatTooltipModule],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6 flex flex-wrap items-center justify-between gap-4">
@@ -139,9 +140,9 @@ export class MensagemEditorDialog {
           <ng-container matColumnDef="acoes">
             <th mat-header-cell *matHeaderCellDef class="text-end! whitespace-nowrap">Ações</th>
             <td mat-cell *matCellDef="let item" class="text-end! whitespace-nowrap">
-              <button mat-icon-button type="button" aria-label="Editar" (click)="abrir(item)"><mat-icon>edit</mat-icon></button>
-              <button mat-icon-button type="button" aria-label="Clonar" (click)="clonar(item)"><mat-icon>content_copy</mat-icon></button>
-              <button mat-icon-button type="button" aria-label="Excluir" (click)="excluir(item)"><mat-icon>delete</mat-icon></button>
+              <button mat-icon-button type="button" aria-label="Editar" matTooltip="Editar" (click)="abrir(item)"><mat-icon>edit</mat-icon></button>
+              <button mat-icon-button type="button" aria-label="Clonar" matTooltip="Clonar" (click)="clonar(item)"><mat-icon>content_copy</mat-icon></button>
+              <button mat-icon-button type="button" aria-label="Excluir" matTooltip="Excluir" (click)="excluir(item)"><mat-icon>delete</mat-icon></button>
             </td>
           </ng-container>
           <tr mat-header-row *matHeaderRowDef="colunas"></tr>

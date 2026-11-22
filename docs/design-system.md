@@ -92,7 +92,7 @@ Seções secundárias da mesma tela usam o mesmo formato. Blocos dentro de um ca
 - `table[mat-table].min-w-full` dentro de `div.relative.overflow-auto`. Cabeçalho 14px/600; primeira e última colunas rentes ao cartão.
 - Listas montadas à mão usam `table.tabela`, com o mesmo desenho do `mat-table`.
 - Texto de apoio na célula: `span.block.text-xs.text-muted`. Valores: `.valor` alinhado à direita (`text-end!`).
-- Ações na última coluna (`text-end! whitespace-nowrap`): `mat-icon-button` Editar e Excluir, ou `mat-stroked-button` para a ação da linha e `mat-menu` (`class="cardWithShadow"`) para o resto.
+- Ações na última coluna (`text-end! whitespace-nowrap`): `mat-icon-button` Editar e Excluir (com `aria-label` e `matTooltip`, ver seção 7), ou `mat-stroked-button` para a ação da linha e `mat-menu` (`class="cardWithShadow"`) para o resto.
 
 ### 5.6. Etiqueta de situação (exemplo Tables / Badges)
 
@@ -153,5 +153,5 @@ Grade de 7 colunas em `.calendario` (`_aralu.scss`), dia de hoje em círculo pri
 ## 7. Acessibilidade
 
 - Contraste mínimo AA para texto; `text-muted` só em texto de apoio.
-- Todo botão de ícone tem `aria-label`; todo controle tem `aria-label` com o texto do rótulo.
+- Todo botão só de ícone (`mat-icon-button`, inclusive o "Mais ações" com `more_vert`) leva `aria-label` e `matTooltip` com o mesmo texto: o nome da ação, curto ("Editar", "Excluir comprovante", "Mais ações"). Nada de `title` nativo nesses botões, para não aparecerem dois tooltips. Exceção: alça de arrastar (`cdkDragHandle`) fica só com `aria-label`. Todo controle tem `aria-label` com o texto do rótulo.
 - Alvo de toque mínimo de 37px; 44px na barra inferior.

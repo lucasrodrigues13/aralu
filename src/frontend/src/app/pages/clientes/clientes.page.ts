@@ -13,10 +13,11 @@ import { ToastService } from '../../core/toast.service';
 import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { ClienteFormDialog } from './cliente-form.dialog';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-clientes',
-  imports: [MatCardModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule],
+  imports: [MatCardModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatTooltipModule],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6 flex flex-wrap items-center justify-between gap-4">
@@ -76,8 +77,8 @@ import { ClienteFormDialog } from './cliente-form.dialog';
           <ng-container matColumnDef="acoes">
             <th mat-header-cell *matHeaderCellDef class="text-end! whitespace-nowrap">Ações</th>
             <td mat-cell *matCellDef="let cliente" class="text-end! whitespace-nowrap">
-              <button mat-icon-button type="button" aria-label="Editar" (click)="abrir(cliente)"><mat-icon>edit</mat-icon></button>
-              <button mat-icon-button type="button" aria-label="Excluir" (click)="excluir(cliente)"><mat-icon>delete</mat-icon></button>
+              <button mat-icon-button type="button" aria-label="Editar" matTooltip="Editar" (click)="abrir(cliente)"><mat-icon>edit</mat-icon></button>
+              <button mat-icon-button type="button" aria-label="Excluir" matTooltip="Excluir" (click)="excluir(cliente)"><mat-icon>delete</mat-icon></button>
             </td>
           </ng-container>
           <tr mat-header-row *matHeaderRowDef="colunas"></tr>

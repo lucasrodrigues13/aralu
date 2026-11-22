@@ -26,10 +26,11 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { TarefaFormDialog } from './tarefa-form.dialog';
 import { TarefaLeituraDialog } from './tarefa-leitura.dialog';
 import { ChecklistTarefaComponent, progressoChecklist } from './checklist-tarefa';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-tarefas',
-  imports: [RouterLink, ReactiveFormsModule, MatCardModule, MatButtonModule, MatButtonToggleModule, MatIconModule, MatTableModule, MatFormFieldModule, MatInputModule, MatSelectModule, GdDataPipe, CampoDataComponent, ChecklistTarefaComponent, MatCheckboxModule],
+  imports: [RouterLink, ReactiveFormsModule, MatCardModule, MatButtonModule, MatButtonToggleModule, MatIconModule, MatTableModule, MatFormFieldModule, MatInputModule, MatSelectModule, GdDataPipe, CampoDataComponent, ChecklistTarefaComponent, MatCheckboxModule, MatTooltipModule],
   template: `
     <mat-card class="cardWithShadow">
     <div class="p-6 flex flex-wrap items-center justify-between gap-4">
@@ -116,6 +117,7 @@ import { ChecklistTarefaComponent, progressoChecklist } from './checklist-tarefa
                     [class.aberta]="aberta(tarefa)"
                     [attr.aria-expanded]="aberta(tarefa)"
                     [attr.aria-label]="(aberta(tarefa) ? 'Recolher' : 'Expandir') + ' checklist de ' + tarefa.titulo"
+                    [matTooltip]="(aberta(tarefa) ? 'Recolher' : 'Expandir') + ' checklist de ' + tarefa.titulo"
                     (click)="alternar(tarefa)"
                   >
                     <mat-icon>chevron_right</mat-icon>
@@ -165,9 +167,9 @@ import { ChecklistTarefaComponent, progressoChecklist } from './checklist-tarefa
               <th mat-header-cell *matHeaderCellDef class="text-end! whitespace-nowrap">Ações</th>
               <td mat-cell *matCellDef="let tarefa" class="text-end! whitespace-nowrap" (click)="$event.stopPropagation()">
                 @if (tarefa.eventoEmAndamento) {
-                  <button mat-icon-button type="button" aria-label="Editar" (click)="editar(tarefa)"><mat-icon>edit</mat-icon></button>
+                  <button mat-icon-button type="button" aria-label="Editar" matTooltip="Editar" (click)="editar(tarefa)"><mat-icon>edit</mat-icon></button>
                 }
-                <button mat-icon-button type="button" aria-label="Excluir" (click)="excluir()"><mat-icon>delete</mat-icon></button>
+                <button mat-icon-button type="button" aria-label="Excluir" matTooltip="Excluir" (click)="excluir()"><mat-icon>delete</mat-icon></button>
               </td>
             </ng-container>
             <tr mat-header-row *matHeaderRowDef="colunas"></tr>

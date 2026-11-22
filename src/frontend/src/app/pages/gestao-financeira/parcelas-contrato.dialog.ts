@@ -12,6 +12,7 @@ import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { GdDinheiroPipe } from '../../shared/gd-dinheiro.pipe';
 import { linkWhatsapp, textoCobranca } from '../dinheiro/cobranca';
 import { ChavePixDialog, ReceberDialog } from '../dinheiro/dinheiro.dialogs';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 /**
  * Parcelas do contrato com o cliente (SPEC-040): cobrar pelo WhatsApp, registrar o que o cliente pagou
@@ -19,7 +20,7 @@ import { ChavePixDialog, ReceberDialog } from '../dinheiro/dinheiro.dialogs';
  */
 @Component({
   selector: 'app-parcelas-contrato-dialog',
-  imports: [MatDialogModule, MatButtonModule, MatIconModule, MatMenuModule, GdDataPipe, GdDinheiroPipe],
+  imports: [MatDialogModule, MatButtonModule, MatIconModule, MatMenuModule, GdDataPipe, GdDinheiroPipe, MatTooltipModule],
   template: `
     <h2 mat-dialog-title>Parcelas do contrato</h2>
     @if (contrato(); as c) {
@@ -63,7 +64,7 @@ import { ChavePixDialog, ReceberDialog } from '../dinheiro/dinheiro.dialogs';
                         <button mat-stroked-button class="ml-1" type="button" (click)="receber(c, parcela)">Recebi</button>
                       }
                       @if (parcela.recebimentos.length > 0) {
-                        <button mat-icon-button type="button" aria-label="Mais ações" [matMenuTriggerFor]="menu"><mat-icon>more_vert</mat-icon></button>
+                        <button mat-icon-button type="button" aria-label="Mais ações" matTooltip="Mais ações" [matMenuTriggerFor]="menu"><mat-icon>more_vert</mat-icon></button>
                         <mat-menu #menu="matMenu" xPosition="before" class="cardWithShadow">
                           <button mat-menu-item type="button" (click)="desfazer(c, parcela)"><mat-icon>undo</mat-icon> Desfazer último recebimento</button>
                         </mat-menu>

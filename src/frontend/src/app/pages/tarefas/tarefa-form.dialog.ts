@@ -21,6 +21,7 @@ import { ToastService } from '../../core/toast.service';
 import { chaveResponsavel, opcoesResponsavel, OpcaoResponsavel, pedidoResponsavel } from '../../shared/responsaveis';
 import { CampoDataComponent } from '../../shared/campo-data';
 import { deDataParaIso, deIsoParaData } from '../../shared/data';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 export interface TarefaFormDados {
   eventoId: string;
@@ -29,7 +30,7 @@ export interface TarefaFormDados {
 
 @Component({
   selector: 'app-tarefa-form',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule, MatIconModule, CampoDataComponent],
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule, MatIconModule, CampoDataComponent, MatTooltipModule],
   template: `
     <h2 mat-dialog-title>{{ dados.tarefa ? 'Editar tarefa' : 'Nova tarefa' }}</h2>
     <p class="text-muted text-sm px-6 -mt-2 mb-4">Título, prazo, responsáveis e os detalhes da tarefa.</p>
@@ -109,7 +110,7 @@ export interface TarefaFormDados {
                   <input matInput formControlName="texto" placeholder="Descreva o item" required [attr.aria-label]="'Item ' + (i + 1)" />
                   @if (item.get('texto')?.invalid) { <mat-error>Preencha ou remova o item.</mat-error> }
                 </mat-form-field>
-                <button mat-icon-button type="button" aria-label="Remover item" (click)="removerItem(i)"><mat-icon>delete</mat-icon></button>
+                <button mat-icon-button type="button" aria-label="Remover item" matTooltip="Remover item" (click)="removerItem(i)"><mat-icon>delete</mat-icon></button>
               </div>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 pl-10">
                 <app-campo-data rotulo="" [ariaLabel]="'Prazo do item ' + (i + 1)" formControlName="prazo" />

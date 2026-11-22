@@ -27,10 +27,11 @@ import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { STATUS } from '../../shared/status';
 import { EventoFormPage } from './evento-form.page';
 import { NovoEventoDialog } from './novo-evento.dialog';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-eventos',
-  imports: [ReactiveFormsModule, RouterLink, MatButtonModule, MatButtonToggleModule, MatCardModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, MatTableModule, CampoDataComponent, GdDataPipe],
+  imports: [ReactiveFormsModule, RouterLink, MatButtonModule, MatButtonToggleModule, MatCardModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, MatTableModule, CampoDataComponent, GdDataPipe, MatTooltipModule],
   template: `
     @if (estatisticas(); as stats) {
       <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 mb-6">
@@ -246,8 +247,8 @@ import { NovoEventoDialog } from './novo-evento.dialog';
               <ng-container matColumnDef="acoes">
                 <th mat-header-cell *matHeaderCellDef class="font-semibold text-sm text-end! pr-0!">Ações</th>
                 <td mat-cell *matCellDef="let evento" class="text-end! whitespace-nowrap pr-0!">
-                  <button mat-icon-button type="button" aria-label="Editar" (click)="editar(evento.id)"><mat-icon>edit</mat-icon></button>
-                  <button mat-icon-button type="button" aria-label="Excluir" (click)="excluir()"><mat-icon>delete</mat-icon></button>
+                  <button mat-icon-button type="button" aria-label="Editar" matTooltip="Editar" (click)="editar(evento.id)"><mat-icon>edit</mat-icon></button>
+                  <button mat-icon-button type="button" aria-label="Excluir" matTooltip="Excluir" (click)="excluir()"><mat-icon>delete</mat-icon></button>
                 </td>
               </ng-container>
               <tr mat-header-row *matHeaderRowDef="colunas"></tr>

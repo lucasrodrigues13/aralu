@@ -295,16 +295,16 @@ export class RespostaManualDialog {
             <th mat-header-cell *matHeaderCellDef class="text-end! whitespace-nowrap">Ações</th>
             <td mat-cell *matCellDef="let item" class="text-end! whitespace-nowrap">
               @if (item.situacao === 'EmAndamento') {
-                <button mat-icon-button type="button" matTooltip="Editar" (click)="abrir(item)"><mat-icon>edit</mat-icon></button>
-                <button mat-icon-button type="button" matTooltip="Parcelas" (click)="parcelar(item)"><mat-icon>payments</mat-icon></button>
-                <button mat-icon-button type="button" matTooltip="Enviar proposta" (click)="enviar(item)"><mat-icon>send</mat-icon></button>
-                <button mat-icon-button type="button" matTooltip="Registrar resposta" (click)="responder(item)"><mat-icon>mark_email_read</mat-icon></button>
-                <button mat-icon-button type="button" matTooltip="Cancelar" (click)="cancelar(item)"><mat-icon>cancel</mat-icon></button>
+                <button mat-icon-button type="button" aria-label="Editar" matTooltip="Editar" (click)="abrir(item)"><mat-icon>edit</mat-icon></button>
+                <button mat-icon-button type="button" aria-label="Parcelas" matTooltip="Parcelas" (click)="parcelar(item)"><mat-icon>payments</mat-icon></button>
+                <button mat-icon-button type="button" aria-label="Enviar proposta" matTooltip="Enviar proposta" (click)="enviar(item)"><mat-icon>send</mat-icon></button>
+                <button mat-icon-button type="button" aria-label="Registrar resposta" matTooltip="Registrar resposta" (click)="responder(item)"><mat-icon>mark_email_read</mat-icon></button>
+                <button mat-icon-button type="button" aria-label="Cancelar" matTooltip="Cancelar" (click)="cancelar(item)"><mat-icon>cancel</mat-icon></button>
                 @if (auth.podeExcluirDoFunil(item.criadoPor)) {
-                  <button mat-icon-button type="button" matTooltip="Excluir" (click)="excluir(item)"><mat-icon>delete</mat-icon></button>
+                  <button mat-icon-button type="button" aria-label="Excluir" matTooltip="Excluir" (click)="excluir(item)"><mat-icon>delete</mat-icon></button>
                 }
               } @else if (item.situacao === 'Respondido' && item.tokenLink) {
-                <button mat-icon-button type="button" matTooltip="Link da proposta" (click)="mostrarLink(item)"><mat-icon>link</mat-icon></button>
+                <button mat-icon-button type="button" aria-label="Link da proposta" matTooltip="Link da proposta" (click)="mostrarLink(item)"><mat-icon>link</mat-icon></button>
               }
             </td>
           </ng-container>

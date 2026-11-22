@@ -9,11 +9,12 @@ import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { AssistenteFormDialog } from './assistente-form.dialog';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 /** Tela Assistentes (só para a dona): convidar, editar permissões, reenviar e remover (SPEC-032 §12). */
 @Component({
   selector: 'app-assistentes',
-  imports: [MatCardModule, MatButtonModule, MatIconModule],
+  imports: [MatCardModule, MatButtonModule, MatIconModule, MatTooltipModule],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6 flex flex-wrap items-center justify-between gap-4">
@@ -54,11 +55,11 @@ import { AssistenteFormDialog } from './assistente-form.dialog';
                     <td class="py-3 pr-4">{{ item.podeVerFinanceiro ? 'Sim' : 'Não' }}</td>
                     <td class="py-3 pr-4">{{ item.somenteDela ? 'Só os dela' : 'Todos' }}</td>
                     <td class="py-3 whitespace-nowrap text-right">
-                      <button mat-icon-button type="button" [attr.aria-label]="'Editar ' + item.nome" (click)="editar(item)"><mat-icon>edit</mat-icon></button>
+                      <button mat-icon-button type="button" [attr.aria-label]="'Editar ' + item.nome" [matTooltip]="'Editar ' + item.nome" (click)="editar(item)"><mat-icon>edit</mat-icon></button>
                       @if (item.situacao === 'Convidada') {
-                        <button mat-icon-button type="button" [attr.aria-label]="'Reenviar convite para ' + item.nome" (click)="reenviar(item)"><mat-icon>forward_to_inbox</mat-icon></button>
+                        <button mat-icon-button type="button" [attr.aria-label]="'Reenviar convite para ' + item.nome" [matTooltip]="'Reenviar convite para ' + item.nome" (click)="reenviar(item)"><mat-icon>forward_to_inbox</mat-icon></button>
                       }
-                      <button mat-icon-button type="button" [attr.aria-label]="'Remover acesso de ' + item.nome" (click)="remover(item)"><mat-icon>person_remove</mat-icon></button>
+                      <button mat-icon-button type="button" [attr.aria-label]="'Remover acesso de ' + item.nome" [matTooltip]="'Remover acesso de ' + item.nome" (click)="remover(item)"><mat-icon>person_remove</mat-icon></button>
                     </td>
                   </tr>
                 }

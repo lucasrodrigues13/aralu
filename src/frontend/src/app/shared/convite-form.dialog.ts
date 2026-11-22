@@ -8,6 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { ConviteDoFormulario, DDI_PADRAO, PedidoConvite, pedidoDoFormulario } from '../core/convite-formulario';
 import { MascaraDirective } from './mascara.directive';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 export interface ConviteFormDados {
   /** Nulo = novo convite. */
@@ -22,7 +23,7 @@ export interface ConviteFormDados {
  */
 @Component({
   selector: 'app-convite-form-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatCheckboxModule, MascaraDirective],
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatCheckboxModule, MascaraDirective, MatTooltipModule],
   template: `
     <h2 mat-dialog-title>{{ dados.convite ? 'Editar convite' : 'Novo convite' }}</h2>
     <p class="text-muted text-sm px-6 -mt-2 mb-4">Um convite reúne quem recebe junto, como a família. O telefone do primeiro convidado é obrigatório e é para ele que o convite vai.</p>
@@ -59,7 +60,7 @@ export interface ConviteFormDados {
                     <mat-error>Obrigatório no primeiro convidado.</mat-error>
                   }
                 </mat-form-field>
-                <button mat-icon-button type="button" aria-label="Remover convidado" [disabled]="convidados.length === 1" (click)="remover(i)"><mat-icon>delete</mat-icon></button>
+                <button mat-icon-button type="button" aria-label="Remover convidado" matTooltip="Remover convidado" [disabled]="convidados.length === 1" (click)="remover(i)"><mat-icon>delete</mat-icon></button>
               </div>
             }
           </div>
