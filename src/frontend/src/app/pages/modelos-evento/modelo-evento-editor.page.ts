@@ -22,9 +22,10 @@ import {
 import { ToastService } from '../../core/toast.service';
 import { CampoDinheiroComponent } from '../../shared/campo-dinheiro';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
-import { DIALOG_LARGO, DIALOG_PEQUENO } from '../../shared/dialog';
+import { DIALOG, DIALOG_LARGO, DIALOG_PEQUENO } from '../../shared/dialog';
 import { exibirPrazo, prazoDeDias, prazoParaDias, UNIDADES_PRAZO, UnidadePrazo } from '../../shared/prazo-modelo';
 import { ImportarTarefasModeloDialog } from './importar-tarefas-modelo.dialog';
+import { SelecionarServicosModeloDialog, ServicoEscolhido } from './selecionar-servicos-modelo.dialog';
 
 @Component({
   selector: 'app-modelo-evento-editor',
@@ -105,7 +106,7 @@ import { ImportarTarefasModeloDialog } from './importar-tarefas-modelo.dialog';
                     </mat-card-content>
                   </mat-card>
                 }
-                <div><button mat-stroked-button type="button" (click)="adicionarServico()"><mat-icon>add</mat-icon> Adicionar serviço</button></div>
+                <div><button mat-stroked-button type="button" (click)="adicionarServicos()"><mat-icon>add</mat-icon> Adicionar serviços</button></div>
               </div>
             </mat-tab>
             <mat-tab label="Tarefas">
@@ -305,8 +306,16 @@ export class ModeloEventoEditorPage implements OnInit {
     });
   }
 
-  protected adicionarServico(): void {
-    this.servicos.push(this.novoServico('', null));
+  protected adicionarServicos(): void {
+    const jaAdicionados = (this.servicos.getRawValue() as { nome: string }[]).map((servico) => servico.nome);
+    this.dialog.open(SelecionarServicosModeloDialog, {
+      ...DIALOG,
+      data: { jaAdicionados },
+    }).afterClosed().subscribe((escolhidos?: ServicoEscolhido[]) => {
+      for (const servico of escolhidos ?? []) {
+        this.servicos.push(this.novoServico(servico.nome, servico.valorEstimado));
+      }
+    });
   }
 
   protected removerServico(indice: number): void {
