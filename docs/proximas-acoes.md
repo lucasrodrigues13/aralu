@@ -4,7 +4,44 @@ Roteiro para continuar o trabalho em outra sessão. Siga na ordem. Na dúvida, p
 
 > **Desde 21/11/2026 o trabalho segue os cards do Trello**, copiados em [tarefas-trello.md](tarefas-trello.md), na ordem e com o paralelismo de [roteiro-execucao.md](roteiro-execucao.md). Onde este arquivo e o roteiro divergirem, vale o roteiro. As seções 1, 2 e 6 deste arquivo continuam valendo.
 
-## 0. Próxima tarefa (atualizada em 20/11/2026)
+## 0. Retomar daqui (atualizado em 22/11/2026)
+
+Tudo o que foi feito em 22/11 está commitado e enviado para a `main`. O deploy na VPS (http://voltexstores.com) roda a cada push. Não há worktrees nem branches `claude/*` pendentes. Faça um item por vez, nesta ordem. Itens marcados como **decisão** precisam do usuário antes de codar.
+
+### 0.1 Conferir na tela o que entrou hoje (ninguém testou no site com login)
+
+Testes e build passaram, mas as telas abaixo só foram vistas em teste unitário ou com API de mentira. Peça ao usuário para entrar no site, ou suba o ambiente local com `just up`, e confira:
+
+- [ ] **Gráfico de orçamento** (aba Fornecedores do evento): o excesso aparece em vermelho e a barra fica com contorno vermelho. Serviço contratado entra só pelo contratado, sem somar o estimado dele. Caso real: orçamento 150.000, Buffet 150.000 e Foto 2.000 → "Acima do orçamento em R$ 2.000,00". Código: `pages/eventos/orcamento-graficos.ts`.
+- [ ] **Refazer parcelamento com parcela paga** (aba Dinheiro): alerta vermelho no modal e botão vermelho; salvar troca as parcelas. SPEC-043.
+- [ ] **Tela do cliente** (link do cliente): abas Financeiro e Convidados; comprovante como ícone + "Comprovante". Modal "Link do cliente" (antes "Link do casal"); o Copiar copia o link inteiro.
+- [ ] **Aba Dinheiro do organizador**: coluna Comprovante só com ícones (abrir, enviar, excluir).
+- [ ] **Convites (SPEC-059)**: formulário igual no organizador e no cliente (menos Observação; no cliente grava "Preenchido pelo casal" sem mostrar). Vários convidados, gênero, faixa etária, convidado principal obrigatório, único e com telefone. Data de envio única por evento, fora do formulário. Lista de convites recolhida; ao expandir, mostra os convidados.
+- [ ] **Planilha de convidados**: o botão abre o modal de instruções com o download dentro. O modelo traz dois convites de exemplo (com aviso para apagar), sem Mesa, Custo e Pagamento, e com Gênero e Principal em lista suspensa. A importação vai para uma fila no banco, com modal de histórico e erros por linha.
+- [ ] **Tooltips**: todo botão só de ícone das listas mostra o nome da ação (regra no `design-system.md`). Confira também os botões declarados em várias linhas (`casca.component.ts`, `tarefas.page.ts`, `evento-tarefas.component.ts`, `checklist-tarefa.ts`, `estagios-funil.dialog.ts`, menu do lead em `oportunidades.page.ts`, `tema-botao.ts`). O grep simples não confirma se eles têm `matTooltip`.
+
+### 0.2 Câmera da portaria não abre no celular (infra, fora deste repositório)
+
+O site está em **http://**, e o navegador só libera a câmera com **HTTPS**. Por isso `navigator.mediaDevices` vem vazio e a tela diz "Este navegador não deixa usar a câmera" (`pages/portaria/leitor-qr.component.ts:34`).
+
+- [ ] Ativar HTTPS para `voltexstores.com` no proxy das portas 80/443 da VPS. Ele fica em `/opt/proxy`, que vem do repositório `jm-reboques-lp`, pasta `infra/proxy`; veja o comentário em `compose.production.yaml`. Se for Caddy, use o domínio no endereço do site, e o certificado sai sozinho (com o DNS apontando para a VPS e as portas 80/443 abertas).
+- [ ] Opcional, neste repositório: trocar a mensagem por uma que explique a falta de HTTPS quando `!window.isSecureContext`.
+
+### 0.3 Fila de importação de convidados: confirmar a robustez
+
+A fila é processada dentro da própria API, sem worker (decisão do usuário: nada de tecnologia nova).
+
+- [ ] Confira em `Project.Infrastructure/Convidados/ProcessadorImportacoes.cs` se uma importação "em andamento" é retomada ou marcada como falha quando a API reinicia (deploy), para não ficar presa para sempre. Se não for, leve ao usuário antes de mudar.
+
+### 0.4 Decisões em aberto (pergunte antes de codar)
+
+- [ ] **Decisão:** os cards **Estimado** e **Prova real** da aba Fornecedores ainda somam o estimado dos serviços já contratados (regra da SPEC-018 §8). O gráfico já não soma. Mudar os cards exige mexer no backend (`BudgetCalculo.Resumo`) e na SPEC-018.
+- [ ] **Decisão:** alerta por serviço, por exemplo "Contratado acima do estimado em R$ X" (hoje o Buffet contratou 150.000 com estimado de 15.500, e nada avisa). Precisa de spec.
+- [ ] **Decisão:** na tela do cliente, o botão do contrato assinado ainda mostra "Contrato: nome-do-arquivo". Pode virar só ícone + "Contrato", como foi feito com o comprovante.
+
+### 0.5 Anterior a 22/11
+
+## 0-antigo. Próxima tarefa (atualizada em 20/11/2026)
 
 A SPEC-032 (assistentes) e a SPEC-031 parte D (ajustes do formulário do funil) estão **implementadas e commitadas na `main`**. Backend: 102 testes de unidade e 54 de integração passando. Frontend: `ng build` e 63 testes passando. O usuário ainda não conferiu na tela.
 
