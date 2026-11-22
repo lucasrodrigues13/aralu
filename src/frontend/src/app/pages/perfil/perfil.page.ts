@@ -162,7 +162,7 @@ import { aplicarMascara } from '../../shared/mascaras';
             </mat-card-content>
           </mat-card>
           <mat-card class="cardWithShadow">
-            <mat-card-content class="flex flex-col gap-3">
+            <mat-card-content class="flex flex-col gap-6 p-4">
               <button mat-flat-button type="submit" class="w-full">Salvar</button>
               <button mat-stroked-button type="button" class="w-full" (click)="cancelar()">Cancelar</button>
             </mat-card-content>

@@ -1,5 +1,5 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
+import { Component, computed, DestroyRef, inject, OnDestroy, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -12,6 +12,7 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { AuthService } from '../core/auth.service';
 import { AssistentesClient } from '../core/assistentes.client';
 import { ContaClient } from '../core/conta.client';
+import { NegocioClient } from '../core/negocio.client';
 import { TemaService } from '../core/tema.service';
 import { NovoEventoDialog } from '../pages/eventos/novo-evento.dialog';
 import { DIALOG_LARGO } from '../shared/dialog';
@@ -114,12 +115,16 @@ function telaEstreita(): boolean {
           </div>
           <div class="p-6">
             <div class="bg-light-primary flex items-center gap-3 rounded p-4">
-              <span class="rounded-full bg-primary text-white size-10 shrink-0 flex items-center justify-center text-sm font-semibold">
-                {{ iniciais() }}
-              </span>
+              @if (fotoUrl()) {
+                <img [src]="fotoUrl()" alt="Foto do perfil" class="rounded-full size-10 shrink-0 object-cover" />
+              } @else {
+                <span class="rounded-full bg-primary text-white size-10 shrink-0 flex items-center justify-center text-sm font-semibold">
+                  {{ iniciais() }}
+                </span>
+              }
               <div class="min-w-0 flex-1">
                 <span class="block text-xs text-muted">{{ empresa() ? 'Assistente de ' + empresa() : 'Conectado como' }}</span>
-                <span class="block text-sm font-semibold truncate" [title]="auth.email()">{{ auth.email() }}</span>
+                <span class="block text-sm font-semibold truncate" [title]="nomeDisplay() || auth.email()">{{ nomeDisplay() || auth.email() }}</span>
               </div>
               <button mat-icon-button type="button" (click)="sair()" aria-label="Sair" matTooltip="Sair">
                 <mat-icon>logout</mat-icon>
@@ -158,22 +163,24 @@ function telaEstreita(): boolean {
             matTooltip="Menu da conta"
             class="flex! items-center justify-center"
           >
-            <span class="rounded-full bg-light-primary text-primary size-9 flex items-center justify-center text-xs font-semibold">
-              {{ iniciais() }}
-            </span>
+            @if (fotoUrl()) {
+              <img [src]="fotoUrl()" alt="Foto do perfil" class="rounded-full size-9 object-cover" />
+            } @else {
+              <span class="rounded-full bg-light-primary text-primary size-9 flex items-center justify-center text-xs font-semibold">
+                {{ iniciais() }}
+              </span>
+            }
           </button>
           <mat-menu #perfilMenu="matMenu" class="cardWithShadow">
             <div class="px-4 py-3">
               <span class="block text-xs text-muted">Conectado como</span>
-              <span class="block text-sm font-semibold">{{ auth.email() }}</span>
+              <span class="block text-sm font-semibold">{{ nomeDisplay() || auth.email() }}</span>
             </div>
             @if (!auth.ehAssistente()) {
               <a mat-menu-item routerLink="/perfil"><mat-icon>apartment</mat-icon>Perfil da assessoria</a>
             }
             <a mat-menu-item routerLink="/conta"><mat-icon>manage_accounts</mat-icon>Minha conta</a>
-            <div class="px-3 mt-3 mb-2">
-              <button mat-stroked-button type="button" class="w-full" (click)="sair()">Sair</button>
-            </div>
+            <button mat-menu-item type="button" (click)="sair()"><mat-icon>logout</mat-icon>Sair</button>
           </mat-menu>
         </mat-toolbar>
 
@@ -194,11 +201,12 @@ function telaEstreita(): boolean {
     </nav>
   `,
 })
-export class CascaComponent {
+export class CascaComponent implements OnDestroy {
   protected readonly auth = inject(AuthService);
   protected readonly tema = inject(TemaService);
   private readonly conta = inject(ContaClient);
   private readonly assistentes = inject(AssistentesClient);
+  private readonly negocio = inject(NegocioClient);
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
   private readonly breakpoints = inject(BreakpointObserver);
@@ -206,6 +214,9 @@ export class CascaComponent {
   protected readonly menuAberto = signal(false);
 
   protected readonly empresa = signal('');
+  protected readonly nomeDisplay = signal('');
+  protected readonly fotoUrl = signal<string | null>(null);
+  private fotoLocal: string | null = null;
 
   /** Grupos recolhidos; lembrados só neste navegador (localStorage), sem backend. */
   private readonly gruposFechados = signal<ReadonlySet<string>>(lerGruposFechados());
@@ -300,29 +311,61 @@ export class CascaComponent {
       .filter((grupo) => grupo.itens.length > 0);
   });
 
-  protected readonly iniciais = computed(() => (this.auth.email() ?? '').slice(0, 2).toUpperCase());
+  protected readonly iniciais = computed(() => {
+    const nome = this.nomeDisplay();
+    if (nome) return nome.slice(0, 2).toUpperCase();
+    return (this.auth.email() ?? '').slice(0, 2).toUpperCase();
+  });
 
   constructor() {
+    const destroyRef = inject(DestroyRef);
+
     if (this.auth.ehAssistente()) {
       this.conta.areaUsuario().subscribe({
         next: (area) => this.auth.permissoes.set({ podeVerFinanceiro: !!area.podeVerFinanceiro, somenteDela: !!area.somenteDela, usuarioId: area.usuarioId }),
         error: () => undefined,
       });
       this.assistentes.minhaConta().subscribe({
-        next: (minha) => this.empresa.set(minha.empresa),
+        next: (minha) => {
+          this.empresa.set(minha.empresa);
+          this.nomeDisplay.set(minha.nome);
+        },
+        error: () => undefined,
+      });
+    } else if (!this.auth.ehAdmin() || !!this.auth.contaSelecionada()) {
+      this.negocio.perfil().pipe(takeUntilDestroyed(destroyRef)).subscribe({
+        next: (perfil) => {
+          this.nomeDisplay.set((perfil.responsavel || perfil.nomeEmpresa || '').trim());
+          if (perfil.fotoId) {
+            this.negocio.baixarArquivo(perfil.fotoId).pipe(takeUntilDestroyed(destroyRef)).subscribe({
+              next: (blob) => {
+                if (this.fotoLocal) URL.revokeObjectURL(this.fotoLocal);
+                this.fotoLocal = URL.createObjectURL(blob);
+                this.fotoUrl.set(this.fotoLocal);
+              },
+              error: () => undefined,
+            });
+          }
+        },
         error: () => undefined,
       });
     }
 
     this.breakpoints
       .observe('(max-width: 959px)')
-      .pipe(takeUntilDestroyed(inject(DestroyRef)))
+      .pipe(takeUntilDestroyed(destroyRef))
       .subscribe((estado) => {
         this.estreito.set(estado.matches);
         if (estado.matches) {
           this.menuAberto.set(false);
         }
       });
+  }
+
+  ngOnDestroy(): void {
+    if (this.fotoLocal) {
+      URL.revokeObjectURL(this.fotoLocal);
+    }
   }
 
   protected fecharMenu(): void {
