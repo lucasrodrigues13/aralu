@@ -50,3 +50,74 @@ const ROTULOS: Record<string, string> = {
   Gratuita: 'Gratuita',
   NaoInformado: 'Não informado',
 };
+
+const SITUACOES = [
+  { valor: 'Pendente', rotulo: 'Pendente', titulo: 'Pendentes', icone: 'schedule', cor: 'warning' },
+  { valor: 'Confirmado', rotulo: 'Confirmado', titulo: 'Confirmados', icone: 'check_circle', cor: 'success' },
+  { valor: 'NaoComparecera', rotulo: 'Não comparecerá', titulo: 'Não confirmados', icone: 'cancel', cor: 'error' },
+];
+
+/** Três cards fixos; situação sem convidados aparece com 0. */
+export function cardsPorSituacao(porSituacao: { rotulo: string; quantidade: number }[]) {
+  const porRotulo = new Map(porSituacao.map((item) => [item.rotulo, item.quantidade]));
+  return SITUACOES.map((item) => ({ ...item, quantidade: porRotulo.get(item.rotulo) ?? 0 }));
+}
+
+/** O prazo vale até o fim do dia (SPEC-054): encerra no dia seguinte. `hoje` em `aaaa-mm-dd`. */
+export function prazoEncerrado(prazo: string | null, hoje: string = hojeLocal()): boolean {
+  return !!prazo && hoje > prazo;
+}
+
+function hojeLocal(): string {
+  const agora = new Date();
+  return `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, '0')}-${String(agora.getDate()).padStart(2, '0')}`;
+}
+
+/** Contagem por situação a partir dos rótulos de tela dos convidados (link do cliente). */
+export function contarPorSituacao(situacoes: string[]): { rotulo: string; quantidade: number }[] {
+  const contagem = new Map<string, number>();
+  for (const situacao of situacoes) contagem.set(situacao, (contagem.get(situacao) ?? 0) + 1);
+  return [...contagem].map(([rotulo, quantidade]) => ({ rotulo, quantidade }));
+}
+
+/** Filtros da aba Convidados (SPEC-059 §6.5). `situacao` usa o valor da API (Pendente, Confirmado, NaoComparecera). */
+export interface FiltroDeConvites {
+  nome: string;
+  situacao: string;
+  telefone: string;
+  observacao: string;
+  somenteConfirmados: boolean;
+}
+
+interface ConviteFiltravel<C extends { nome: string; situacao: string; celular: string | null }> {
+  nome: string;
+  convidados: C[];
+}
+
+const digitos = (texto: string | null | undefined) => (texto ?? '').replace(/\D/g, '');
+const contem = (texto: string, termo: string) => texto.toLocaleLowerCase('pt-BR').includes(termo.trim().toLocaleLowerCase('pt-BR'));
+
+/**
+ * Filtro do link do cliente, feito na tela com as mesmas regras do filtro da organizadora (que roda na API): o
+ * convidado passa se atende a todos os filtros; o nome vale para o convidado ou o convite; o convite fica com os
+ * convidados que passaram e sai se nenhum passou. Sem filtro, volta tudo.
+ */
+export function filtrarConvites<C extends { nome: string; situacao: string; celular: string | null }, T extends ConviteFiltravel<C>>(
+  convites: T[],
+  filtro: FiltroDeConvites,
+): T[] {
+  const rotulo = SITUACOES.find((item) => item.valor === filtro.situacao)?.rotulo;
+  const telefone = digitos(filtro.telefone);
+  const nome = filtro.nome.trim();
+  if (!rotulo && !telefone && !nome && !filtro.somenteConfirmados) return convites;
+  return convites
+    .map((convite) => ({
+      ...convite,
+      convidados: convite.convidados.filter((pessoa) =>
+        (!filtro.somenteConfirmados || pessoa.situacao === 'Confirmado')
+        && (!rotulo || pessoa.situacao === rotulo)
+        && (!telefone || digitos(pessoa.celular).includes(telefone))
+        && (!nome || contem(pessoa.nome, nome) || contem(convite.nome, nome))),
+    }))
+    .filter((convite) => convite.convidados.length > 0);
+}

@@ -44,6 +44,8 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<Convite> Convites => Set<Convite>();
 
+    public DbSet<ImportacaoConvidados> ImportacoesConvidados => Set<ImportacaoConvidados>();
+
     public DbSet<Convidado> Convidados => Set<Convidado>();
 
     public DbSet<PresencaEvento> PresencasEvento => Set<PresencaEvento>();

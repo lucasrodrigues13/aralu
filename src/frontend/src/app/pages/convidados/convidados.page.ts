@@ -1,44 +1,30 @@
-import { DatePipe } from '@angular/common';
-import { Component, computed, inject, OnInit, signal, TemplateRef, viewChild } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { ToastService } from '../../core/toast.service';
 import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
-import { MascaraDirective } from '../../shared/mascara.directive';
-import { GdDataPipe } from '../../shared/gd-data.pipe';
-import { Convite, ListaConvites, NegocioClient, PresencaEvento } from '../../core/negocio.client';
+import { Convite, ListaConvites, NegocioClient } from '../../core/negocio.client';
 import { ConviteDoFormulario, PedidoConvite } from '../../core/convite-formulario';
 import { ConviteFormDados, ConviteFormDialog } from '../../shared/convite-form.dialog';
-import { dadosPreenchidos, resumoDosConvidados } from '../../shared/convite-lista';
-import { PlanilhaInstrucoesDialog } from './planilha-instrucoes.dialog';
+import { dadosPreenchidos, FiltroDeConvites, resumoDosConvidados } from '../../shared/convite-lista';
+import { PlanilhaInstrucoesDados, PlanilhaInstrucoesDialog } from '../../shared/planilha-instrucoes.dialog';
+import { ConvidadosTopoComponent } from '../../shared/convidados-topo.component';
+import { DADOS_ENVIO, DADOS_PRAZO, DataConvitesDialog } from '../../shared/data-convites.dialog';
+import { PresencasDialog } from '../../shared/presencas.dialog';
+import { ImportacoesDados, ImportacoesDialog } from '../../shared/importacoes.dialog';
 import { EventoAbasComponent } from '../eventos/evento-abas.component';
 
-const SITUACOES = [
-  { valor: 'Pendente', rotulo: 'Pendente', titulo: 'Pendentes', icone: 'schedule', cor: 'warning' },
-  { valor: 'Confirmado', rotulo: 'Confirmado', titulo: 'Confirmados', icone: 'check_circle', cor: 'success' },
-  { valor: 'NaoComparecera', rotulo: 'Não comparecerá', titulo: 'Não confirmados', icone: 'cancel', cor: 'error' },
-];
-
-/** Três cards fixos; situação sem convidados aparece com 0. */
-export function cardsPorSituacao(porSituacao: { rotulo: string; quantidade: number }[]) {
-  const porRotulo = new Map(porSituacao.map((item) => [item.rotulo, item.quantidade]));
-  return SITUACOES.map((item) => ({ ...item, quantidade: porRotulo.get(item.rotulo) ?? 0 }));
-}
+export { cardsPorSituacao } from '../../shared/convite-lista';
 
 @Component({
   selector: 'app-convidados',
-  imports: [MatCardModule, MatButtonToggleModule, ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, EventoAbasComponent, MatSelectModule, MatCheckboxModule, MatIconModule, MatDialogModule, MascaraDirective, GdDataPipe, DatePipe],
+  imports: [MatCardModule, MatButtonToggleModule, MatButtonModule, EventoAbasComponent, MatIconModule, MatDialogModule, ConvidadosTopoComponent],
   template: `
     @if (!eventoId()) {
       <mat-card class="cardWithShadow">
@@ -50,92 +36,24 @@ export function cardsPorSituacao(porSituacao: { rotulo: string; quantidade: numb
     } @else {
       <app-evento-abas [eventoId]="eventoId()" />
 
-      @if (lista()) {
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-6">
-          @for (item of cards(); track item.valor) {
-            <button type="button" class="card-situacao text-start p-0 border-0 bg-transparent cursor-pointer" [attr.aria-label]="item.titulo" [attr.aria-pressed]="filtro.controls.situacao.value === item.valor" (click)="filtrarPorSituacao(item.valor)">
-              <mat-card class="shadow-none text-center mb-0! h-full {{ 'bg-light-' + item.cor }}" [class.ring-2]="filtro.controls.situacao.value === item.valor">
-                <mat-card-content>
-                  <mat-icon class="{{ 'text-' + item.cor }}">{{ item.icone }}</mat-icon>
-                  <h4 class="text-sm font-semibold mt-2! {{ 'text-' + item.cor }}">{{ item.titulo }}</h4>
-                  <h6 class="text-xl font-semibold mt-2! {{ 'text-' + item.cor }}">{{ item.quantidade }}</h6>
-                </mat-card-content>
-              </mat-card>
-            </button>
-          }
-        </div>
-      }
-
-      <mat-card class="cardWithShadow">
-        <div class="p-6 flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <mat-card-title class="mb-0">Convites e convidados</mat-card-title>
-            <mat-card-subtitle>Lista do evento e o RSVP de cada convite.</mat-card-subtitle>
-            <p class="text-sm text-muted mt-1 mb-0" data-teste="prazo-rsvp">
-              @if (lista()?.prazoRsvp; as prazo) {
-                Confirmar presença até {{ prazo | gdData }}@if (lista()?.prazoEncerrado) { · <strong>Prazo encerrado</strong> }
-              } @else {
-                Sem prazo para confirmar presença.
-              }
-            </p>
-            <p class="text-sm text-muted mt-1 mb-0" data-teste="envio-convites">
-              @if (lista()?.dataEnvioConvites; as envio) {
-                Envio dos convites em {{ envio | gdData }}
-              } @else {
-                Data de envio dos convites não definida.
-              }
-            </p>
-          </div>
-          <div class="flex flex-wrap gap-2">
-            <button mat-stroked-button type="button" (click)="abrirEnvio()"><mat-icon>send</mat-icon> Data de envio</button>
-            <button mat-stroked-button type="button" (click)="abrirPrazo()"><mat-icon>event_busy</mat-icon> Prazo de confirmação</button>
-            <button mat-stroked-button type="button" (click)="abrirPresencas()"><mat-icon>fact_check</mat-icon> Lista de presença</button>
-            <button mat-stroked-button type="button" (click)="abrirPlanilha()"><mat-icon>description</mat-icon> Planilha padrão</button>
-            <button mat-stroked-button type="button" (click)="arquivo.click()"><mat-icon>upload</mat-icon> Importar</button>
-            <input #arquivo type="file" accept=".xlsx,.xls" hidden (change)="importar($event)" />
-            <button mat-flat-button type="button" (click)="abrirConvite()"><mat-icon>add</mat-icon> Novo convite</button>
-          </div>
-        </div>
-        <mat-card-content class="border-t border-border">
-        <mat-button-toggle-group [value]="visao()" (change)="visao.set($event.value)" aria-label="Visão da lista" class="mb-6">
+      <app-convidados-topo
+        [porSituacao]="lista()?.porSituacao ?? []"
+        [prazoRsvp]="lista()?.prazoRsvp ?? null"
+        [prazoEncerrado]="lista()?.prazoEncerrado ?? false"
+        [dataEnvio]="lista()?.dataEnvioConvites ?? null"
+        [mostrarObservacao]="true"
+        [situacaoInicial]="filtroAtual().situacao"
+        (filtrar)="filtrar($event)"
+        (novoConvite)="abrirConvite()"
+        (envio)="abrirEnvio()"
+        (prazo)="abrirPrazo()"
+        (presencas)="abrirPresencas()"
+        (planilha)="abrirPlanilha()"
+        (importar)="abrirImportacoes()">
+        <mat-button-toggle-group antesDoFiltro [value]="visao()" (change)="visao.set($event.value)" aria-label="Visão da lista" class="mb-6">
           <mat-button-toggle value="convite">Por convite</mat-button-toggle>
           <mat-button-toggle value="convidado">Por convidado</mat-button-toggle>
         </mat-button-toggle-group>
-        <form class="flex flex-wrap items-end gap-4 mb-6" [formGroup]="filtro" (ngSubmit)="carregar()">
-          <div class="campo w-full sm:w-64">
-            <mat-label class="font-semibold mb-2 block">Convite</mat-label>
-            <mat-form-field appearance="outline" class="w-full">
-              <mat-icon matIconPrefix>search</mat-icon>
-              <input matInput formControlName="nome" aria-label="Convite" placeholder="Ex.: Família Souza" />
-            </mat-form-field>
-          </div>
-          <div class="campo w-full sm:w-44">
-            <mat-label class="font-semibold mb-2 block">Situação</mat-label>
-            <mat-form-field appearance="outline" class="w-full">
-              <mat-select formControlName="situacao" aria-label="Situação">
-                <mat-option value="">Todas</mat-option>
-                <mat-option value="Pendente">Pendente</mat-option>
-                <mat-option value="Confirmado">Confirmado</mat-option>
-                <mat-option value="NaoComparecera">Não comparecerá</mat-option>
-              </mat-select>
-            </mat-form-field>
-          </div>
-          <div class="campo w-full sm:w-44">
-            <mat-label class="font-semibold mb-2 block">Telefone</mat-label>
-            <mat-form-field appearance="outline" class="w-full">
-              <input matInput formControlName="telefone" gdMascara="celular" aria-label="Telefone" placeholder="(11) 90000-0000" />
-            </mat-form-field>
-          </div>
-          <div class="campo w-full sm:w-44">
-            <mat-label class="font-semibold mb-2 block">Observação</mat-label>
-            <mat-form-field appearance="outline" class="w-full">
-              <input matInput formControlName="observacao" aria-label="Observação" placeholder="Ex.: vegetariano" />
-            </mat-form-field>
-          </div>
-          <mat-checkbox formControlName="somenteConfirmados" class="mb-1">Só confirmados</mat-checkbox>
-          <button mat-flat-button type="submit">Filtrar</button>
-        </form>
-
         @if (lista(); as dados) {
           @if (dados.convites.length === 0) {
             <div class="flex flex-col items-center gap-2 text-center text-muted py-10">
@@ -228,79 +146,12 @@ export function cardsPorSituacao(porSituacao: { rotulo: string; quantidade: numb
             </div>
           }
         }
-      </mat-card-content></mat-card>
+      </app-convidados-topo>
     }
 
-    <ng-template #modalEnvio>
-      <h2 mat-dialog-title>Data de envio dos convites</h2>
-      <p class="text-muted text-sm px-6 -mt-2 mb-4">Uma data só para todos os convites do evento. Deixe vazio se ainda não definiu.</p>
-      <mat-dialog-content>
-        <form id="envio-form" class="grid grid-cols-1 gap-4" [formGroup]="envioForm" (ngSubmit)="salvarEnvio()">
-          <div class="campo">
-            <mat-label class="font-semibold mb-2 block">Data de envio</mat-label>
-            <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Data de envio'" matInput type="date" formControlName="data" /></mat-form-field>
-          </div>
-        </form>
-      </mat-dialog-content>
-      <mat-dialog-actions>
-        <button mat-stroked-button type="button" mat-dialog-close>Cancelar</button>
-        <button mat-flat-button type="submit" form="envio-form">Salvar</button>
-      </mat-dialog-actions>
-    </ng-template>
-
-    <ng-template #modalPrazo>
-      <h2 mat-dialog-title>Prazo de confirmação</h2>
-      <p class="text-muted text-sm px-6 -mt-2 mb-4">Depois desta data o link do convite mostra que expirou. Deixe vazio para não ter prazo.</p>
-      <mat-dialog-content>
-        <form id="prazo-form" class="grid grid-cols-1 gap-4" [formGroup]="prazoForm" (ngSubmit)="salvarPrazo()">
-          <div class="campo">
-            <mat-label class="font-semibold mb-2 block">Data limite</mat-label>
-            <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Data limite'" matInput type="date" formControlName="prazo" /></mat-form-field>
-          </div>
-        </form>
-      </mat-dialog-content>
-      <mat-dialog-actions>
-        <button mat-stroked-button type="button" mat-dialog-close>Cancelar</button>
-        <button mat-flat-button type="submit" form="prazo-form">Salvar</button>
-      </mat-dialog-actions>
-    </ng-template>
-
-    <ng-template #modalPresencas>
-      <h2 mat-dialog-title>Lista de presença</h2>
-      <mat-dialog-content>
-        @if (presencas().length === 0) {
-          <p>Ninguém confirmou ainda.</p>
-        } @else {
-          <table class="w-full text-sm">
-            <thead><tr><th class="text-start">Id</th><th class="text-start">Convidado</th><th class="text-start">Convite</th><th class="text-start">Confirmou em</th><th class="text-start">Compareceu</th></tr></thead>
-            <tbody>
-              @for (item of presencas(); track item.id) {
-                <tr>
-                  <td class="font-mono text-xs" [attr.title]="item.id">{{ item.id.slice(0, 8) }}</td>
-                  <td>{{ item.convidado }}</td>
-                  <td>{{ item.convite }}</td>
-                  <td>{{ item.confirmadoEm | date: 'dd/MM/yyyy HH:mm' }}</td>
-                  <td>{{ item.compareceuEm ? (item.compareceuEm | date: 'dd/MM/yyyy HH:mm') : "Não" }}</td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        }
-      </mat-dialog-content>
-      <mat-dialog-actions>
-        <button mat-flat-button type="button" mat-dialog-close>Fechar</button>
-      </mat-dialog-actions>
-    </ng-template>
-  `,
-  styles: `
-    .seta { width: 32px; height: 32px; padding: 4px; flex: none; }
-    .seta mat-icon { transition: transform 0.15s; }
-    .seta.aberta mat-icon { transform: rotate(90deg); }
-    tr.detalhe td { padding-top: 0; }
   `,
 })
 export class ConvidadosPage implements OnInit {
-  private readonly fb = inject(FormBuilder);
   private readonly negocio = inject(NegocioClient);
   private readonly rota = inject(ActivatedRoute);
   private readonly toast = inject(ToastService);
@@ -308,39 +159,22 @@ export class ConvidadosPage implements OnInit {
   protected readonly visao = signal('convite');
   private readonly abertos = signal<ReadonlySet<string>>(new Set());
   protected readonly eventoId = signal('');
-  protected readonly cards = computed(() => {
-    return cardsPorSituacao(this.lista()?.porSituacao ?? []);
-  });
   private readonly dialog = inject(MatDialog);
-  protected readonly filtro = this.fb.nonNullable.group({
-    nome: '', situacao: '', telefone: '', observacao: '', somenteConfirmados: false,
-  });
-  protected readonly envioForm = this.fb.nonNullable.group({ data: '' });
-  protected readonly prazoForm = this.fb.nonNullable.group({ prazo: '' });
-  protected readonly presencas = signal<PresencaEvento[]>([]);
-  private readonly modalPrazo = viewChild.required<TemplateRef<unknown>>('modalPrazo');
-  private readonly modalPresencas = viewChild.required<TemplateRef<unknown>>('modalPresencas');
-  private readonly modalEnvio = viewChild.required<TemplateRef<unknown>>('modalEnvio');
-  private refPrazo: MatDialogRef<unknown> | null = null;
-  private refEnvio: MatDialogRef<unknown> | null = null;
+  protected readonly filtroAtual = signal<FiltroDeConvites>({ nome: '', situacao: '', telefone: '', observacao: '', somenteConfirmados: false });
 
   ngOnInit(): void {
     const id = this.rota.snapshot.paramMap.get('id') ?? '';
     this.eventoId.set(id);
     const situacao = this.rota.snapshot.queryParamMap.get('situacao');
-    if (situacao) this.filtro.patchValue({ situacao });
+    if (situacao) this.filtroAtual.update((filtro) => ({ ...filtro, situacao }));
     if (!id) {
       return;
     }
     this.carregar();
   }
 
-  protected texto(evento: Event): string {
-    return (evento.target as HTMLInputElement | HTMLTextAreaElement).value;
-  }
-
   protected carregar(): void {
-    const valor = this.filtro.getRawValue();
+    const valor = this.filtroAtual();
     this.negocio.convites(this.eventoId(), {
       nome: valor.nome,
       situacao: valor.situacao,
@@ -353,9 +187,8 @@ export class ConvidadosPage implements OnInit {
     });
   }
 
-  protected filtrarPorSituacao(valor: string): void {
-    const atual = this.filtro.controls.situacao.value;
-    this.filtro.controls.situacao.setValue(atual === valor ? '' : valor);
+  protected filtrar(filtro: FiltroDeConvites): void {
+    this.filtroAtual.set(filtro);
     this.carregar();
   }
 
@@ -478,43 +311,30 @@ export class ConvidadosPage implements OnInit {
   }
 
   protected abrirPrazo(): void {
-    this.prazoForm.reset({ prazo: this.lista()?.prazoRsvp ?? '' });
-    this.refPrazo = this.dialog.open(this.modalPrazo(), DIALOG_PEQUENO);
-  }
-
-  protected salvarPrazo(): void {
-    this.negocio.definirPrazoRsvp(this.eventoId(), this.prazoForm.getRawValue().prazo || null).subscribe({
-      next: () => {
-        this.refPrazo?.close();
-        this.toast.sucesso('Prazo salvo.');
-        this.carregar();
-      },
-      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
-    });
+    this.dialog.open(DataConvitesDialog, { ...DIALOG_PEQUENO, data: DADOS_PRAZO(this.lista()?.prazoRsvp ?? null) }).afterClosed()
+      .subscribe((resposta?: { data: string | null }) => {
+        if (!resposta) return;
+        this.negocio.definirPrazoRsvp(this.eventoId(), resposta.data).subscribe({
+          next: () => this.concluir('Prazo salvo.'),
+          error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+        });
+      });
   }
 
   protected abrirEnvio(): void {
-    this.envioForm.reset({ data: this.lista()?.dataEnvioConvites ?? '' });
-    this.refEnvio = this.dialog.open(this.modalEnvio(), DIALOG_PEQUENO);
-  }
-
-  protected salvarEnvio(): void {
-    this.negocio.definirEnvioConvites(this.eventoId(), this.envioForm.getRawValue().data || null).subscribe({
-      next: () => {
-        this.refEnvio?.close();
-        this.toast.sucesso('Data de envio salva.');
-        this.carregar();
-      },
-      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
-    });
+    this.dialog.open(DataConvitesDialog, { ...DIALOG_PEQUENO, data: DADOS_ENVIO(this.lista()?.dataEnvioConvites ?? null) }).afterClosed()
+      .subscribe((resposta?: { data: string | null }) => {
+        if (!resposta) return;
+        this.negocio.definirEnvioConvites(this.eventoId(), resposta.data).subscribe({
+          next: () => this.concluir('Data de envio salva.'),
+          error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+        });
+      });
   }
 
   protected abrirPresencas(): void {
     this.negocio.presencas(this.eventoId()).subscribe({
-      next: (itens) => {
-        this.presencas.set(itens);
-        this.dialog.open(this.modalPresencas(), DIALOG);
-      },
+      next: (itens) => this.dialog.open(PresencasDialog, { ...DIALOG, data: itens }),
       error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
     });
   }
@@ -532,7 +352,8 @@ export class ConvidadosPage implements OnInit {
 
   /** Instruções de preenchimento com o download do modelo dentro do modal (SPEC-059). */
   protected abrirPlanilha(): void {
-    this.dialog.open(PlanilhaInstrucoesDialog, { ...DIALOG, data: this.eventoId() });
+    const dados: PlanilhaInstrucoesDados = { baixar: () => this.negocio.planilha(this.eventoId()) };
+    this.dialog.open(PlanilhaInstrucoesDialog, { ...DIALOG, data: dados });
   }
 
   /** Convites nascem recolhidos; clicar mostra os convidados (SPEC-059). */
@@ -555,19 +376,18 @@ export class ConvidadosPage implements OnInit {
     return dadosPreenchidos(pessoa);
   }
 
-  protected importar(evento: Event): void {
-    const arquivo = (evento.target as HTMLInputElement).files?.[0];
-    if (!arquivo) {
-      return;
-    }
-    this.negocio.importar(this.eventoId(), arquivo).subscribe({
-      next: () => {
-        this.toast.sucesso('Planilha importada.');
-        this.carregar();
-      },
-      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+  /** Fila de importações (SPEC-059 §6.6); ao fechar depois de uma importação concluída, recarrega a lista. */
+  protected abrirImportacoes(): void {
+    const dados: ImportacoesDados = {
+      listar: () => this.negocio.importacoes(this.eventoId()),
+      enviar: (arquivo) => this.negocio.importar(this.eventoId(), arquivo),
+    };
+    this.dialog.open(ImportacoesDialog, { ...DIALOG, data: dados }).afterClosed().subscribe((importou?: boolean) => {
+      if (importou) this.carregar();
     });
   }
+
+
 }
 
 /** Convite da organizadora no formato do formulário único (SPEC-059); o convidado principal vem primeiro. */
@@ -578,6 +398,6 @@ export function conviteDoFormulario(convite: Convite): ConviteDoFormulario {
     email: convite.email,
     observacao: convite.observacao,
     excecaoPrazoRsvp: convite.excecaoPrazoRsvp,
-    convidados: convidados.map((pessoa) => ({ id: pessoa.id, nome: pessoa.nome, ddi: pessoa.ddi, celular: pessoa.celular })),
+    convidados: convidados.map((pessoa) => ({ id: pessoa.id, nome: pessoa.nome, ddi: pessoa.ddi, celular: pessoa.celular, genero: pessoa.genero, faixa: pessoa.faixa, principal: pessoa.principal })),
   };
 }

@@ -91,6 +91,12 @@ public sealed record RespostaRsvp(Guid ConvidadoId, SituacaoConvidado Situacao);
 
 public sealed record WhatsAppLeitura(string? Url);
 
+/// <summary>Resultado de processar uma planilha (SPEC-059): convites gravados ou todos os erros, com o número da linha.</summary>
+public sealed record ResultadoImportacao(int Convites, IReadOnlyList<string> Erros)
+{
+    public static ResultadoImportacao Falha(string erro) => new(0, [erro]);
+}
+
 public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGeradorQr qr)
 {
     public async Task<Resultado<ListaConvites>> ListarAsync(
@@ -358,82 +364,142 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
         return Resultado<bool>.Sucesso(true);
     }
 
-    public async Task<Resultado<int>> ImportarAsync(string contaId, Guid eventoId, Stream arquivo, string? nomeArquivo, CancellationToken ct)
+    /// <summary>
+    /// Lê e grava a planilha (SPEC-059). Junta todos os erros, com o número da linha; com qualquer erro, nada é gravado.
+    /// <paramref name="observacaoFixa"/> substitui a observação da planilha (importação pelo link do cliente).
+    /// Usado pelo processamento da fila de importações (<see cref="ImportacaoServico"/>).
+    /// </summary>
+    public async Task<ResultadoImportacao> ProcessarPlanilhaAsync(
+        string contaId,
+        Guid eventoId,
+        Stream arquivo,
+        string? nomeArquivo,
+        string? observacaoFixa,
+        CancellationToken ct)
     {
         var evento = await dados.ObterEventoAsync(contaId, eventoId, ct);
         if (evento is null)
         {
-            return Resultado<int>.Erro(Codigos.Indisponivel, "Indisponível.");
+            return ResultadoImportacao.Falha("O evento não foi encontrado.");
         }
 
         if (evento.Situacao != SituacaoEvento.EmAndamento)
         {
-            return Resultado<int>.Erro(Codigos.Validacao, "O evento não está em andamento.");
+            return ResultadoImportacao.Falha("O evento não está em andamento.");
         }
 
         var linhas = planilha.Ler(arquivo, nomeArquivo);
         if (!linhas.Ok)
         {
-            return Resultado<int>.Erro(linhas.Falha!.Codigo, linhas.Falha.Mensagem);
+            return ResultadoImportacao.Falha(linhas.Falha!.Mensagem);
         }
 
         if (linhas.Valor!.Count == 0)
         {
-            return Resultado<int>.Erro(Codigos.Validacao, "A planilha não tem convidados.");
+            return ResultadoImportacao.Falha("A planilha não tem convidados.");
         }
 
-        var convites = new Dictionary<string, Convite>(StringComparer.OrdinalIgnoreCase);
+        var erros = new List<string>();
+        var convites = new Dictionary<string, ConviteDaPlanilha>(StringComparer.OrdinalIgnoreCase);
         foreach (var linha in linhas.Valor)
         {
             var onde = linha.Linha > 0 ? $"Linha {linha.Linha}: " : "";
             var nomeConvite = Domain.Comum.Texto.Limpo(linha.Convite);
             var nomeConvidado = Domain.Comum.Texto.Limpo(linha.Convidado);
+            if (PlanilhaConvites.LinhaDeExemplo(nomeConvite, nomeConvidado))
+            {
+                erros.Add($"{onde}É uma linha de exemplo do modelo. Apague as linhas de exemplo antes de importar.");
+                continue;
+            }
+
             if (nomeConvite is null)
             {
-                return Resultado<int>.Erro(Codigos.Validacao, $"{onde}Informe o nome do convite.");
+                erros.Add($"{onde}Informe o nome do convite.");
+                continue;
             }
 
             if (nomeConvidado is null)
             {
-                return Resultado<int>.Erro(Codigos.Validacao, $"{onde}Informe o nome do convidado.");
+                erros.Add($"{onde}Informe o nome do convidado.");
+                continue;
             }
 
             var convidado = ConvidadoDaPlanilha(linha, nomeConvidado);
             if (!convidado.Ok)
             {
-                return Resultado<int>.Erro(convidado.Falha!.Codigo, onde + convidado.Falha.Mensagem);
+                erros.Add(onde + convidado.Falha!.Mensagem);
+                continue;
             }
 
-            if (!convites.TryGetValue(nomeConvite, out var convite))
+            var principal = PlanilhaConvites.LerSimNao(linha.Principal);
+            if (principal is null)
             {
-                // Mesma regra do formulário (SPEC-059): o primeiro convidado do convite precisa de telefone e é o principal.
-                if (!ConviteRegras.TemTelefone(convidado.Valor!.Celular))
-                {
-                    return Resultado<int>.Erro(
-                        Codigos.Validacao,
-                        $"{onde}O primeiro convidado do convite \"{nomeConvite}\" precisa de telefone.");
-                }
+                erros.Add($"{onde}Em \"Convidado principal\", use Sim ou Não.");
+                continue;
+            }
 
-                convite = new Convite
+            if (!convites.TryGetValue(nomeConvite, out var doConvite))
+            {
+                doConvite = new ConviteDaPlanilha(new Convite
                 {
                     Id = Guid.NewGuid(),
                     EventoId = eventoId,
                     ContaId = contaId,
                     Nome = nomeConvite,
-                    Observacao = Domain.Comum.Texto.Limpo(linha.Observacao),
+                    Observacao = observacaoFixa ?? Domain.Comum.Texto.Limpo(linha.Observacao),
                     Token = Guid.NewGuid().ToString("N"),
-                };
-                convites[nomeConvite] = convite;
+                }, linha.Linha);
+                convites[nomeConvite] = doConvite;
             }
 
             convidado.Valor!.Id = Guid.NewGuid();
-            convidado.Valor.ConviteId = convite.Id;
-            convite.Convidados.Add(convidado.Valor);
-            convite.PrincipalId ??= convidado.Valor.Id;
+            convidado.Valor.ConviteId = doConvite.Convite.Id;
+            doConvite.Convite.Convidados.Add(convidado.Valor);
+            if (principal != true)
+            {
+                continue;
+            }
+
+            if (doConvite.LinhaDoPrincipal is int anterior)
+            {
+                erros.Add($"{onde}O convite \"{nomeConvite}\" já tem um convidado principal (linha {anterior}). Marque só um por convite.");
+                continue;
+            }
+
+            doConvite.LinhaDoPrincipal = linha.Linha;
+            if (!ConviteRegras.TemTelefone(convidado.Valor.Celular))
+            {
+                erros.Add($"{onde}{ConviteRegras.PrincipalSemTelefone}");
+                continue;
+            }
+
+            doConvite.Convite.PrincipalId = convidado.Valor.Id;
         }
 
-        await dados.InserirConvitesAsync(convites.Values.ToArray(), ct);
-        return Resultado<int>.Sucesso(convites.Count);
+        foreach (var (nome, doConvite) in convites)
+        {
+            if (doConvite.LinhaDoPrincipal is null)
+            {
+                erros.Add($"Linha {doConvite.PrimeiraLinha}: O convite \"{nome}\" não tem convidado principal. Marque Sim em um convidado dele.");
+            }
+        }
+
+        if (erros.Count > 0)
+        {
+            return new ResultadoImportacao(0, erros);
+        }
+
+        await dados.InserirConvitesAsync(convites.Values.Select(item => item.Convite).ToArray(), ct);
+        return new ResultadoImportacao(convites.Count, []);
+    }
+
+    private sealed class ConviteDaPlanilha(Convite convite, int primeiraLinha)
+    {
+        public Convite Convite { get; } = convite;
+
+        public int PrimeiraLinha { get; } = primeiraLinha;
+
+        public int? LinhaDoPrincipal { get; set; }
     }
 
     public byte[] ModeloPlanilha() => planilha.Modelo();
@@ -663,16 +729,6 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
             }
         }
 
-        CustoConvidado? custo = null;
-        if (!Domain.Comum.Texto.Vazio(linha.Custo))
-        {
-            custo = Rotulos.Custo(linha.Custo);
-            if (custo is null)
-            {
-                return Resultado<Convidado>.Erro(Codigos.Validacao, "A planilha tem um custo que não faz parte da lista.");
-            }
-        }
-
         return Resultado<Convidado>.Sucesso(new Convidado
         {
             Nome = nome,
@@ -681,8 +737,6 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
             Situacao = situacao,
             Genero = genero,
             Faixa = faixa,
-            Custo = custo,
-            Mesa = Domain.Comum.Texto.Limpo(linha.Mesa),
         });
     }
 

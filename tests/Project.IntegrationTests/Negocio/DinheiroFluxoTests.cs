@@ -433,8 +433,8 @@ public class DinheiroFluxoTests
             observacao = "Ignorada no link do cliente",
             convidados = new[]
             {
-                new { id = (Guid?)null, nome = "Maria Souza", ddi = (string?)"+55", celular = (string?)"11999990000" },
-                new { id = (Guid?)null, nome = "João Souza", ddi = (string?)null, celular = (string?)null },
+                new { id = (Guid?)null, nome = "Maria Souza", ddi = (string?)"+55", celular = (string?)"11999990000", principal = true },
+                new { id = (Guid?)null, nome = "João Souza", ddi = (string?)null, celular = (string?)null, principal = false },
             },
         };
 
@@ -448,7 +448,7 @@ public class DinheiroFluxoTests
         var semTelefone = await casal.PostAsJsonAsync($"{baseCasal}/convites", new
         {
             nome = "Sem telefone",
-            convidados = new[] { new { id = (Guid?)null, nome = "Ana", ddi = (string?)null, celular = (string?)null } },
+            convidados = new[] { new { id = (Guid?)null, nome = "Ana", ddi = (string?)null, celular = (string?)null, principal = true } },
         });
         Assert.Equal(HttpStatusCode.BadRequest, semTelefone.StatusCode);
         var criado = await Ler(await casal.PostAsJsonAsync($"{baseCasal}/convites", pedido));
@@ -478,6 +478,77 @@ public class DinheiroFluxoTests
         Assert.Equal("Souza e família", editado.GetProperty("convites").EnumerateArray().Single().GetProperty("nome").GetString());
         var depois = (await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/convites"))).GetProperty("convites").EnumerateArray().Single();
         Assert.Equal("Preenchido pelo casal", depois.GetProperty("observacao").GetString());
+    }
+
+    [Fact]
+    public async Task Link_do_cliente_usa_as_ferramentas_da_aba_convidados()
+    {
+        var dono = await Entrar();
+        var (eventoId, _) = await EventoComFornecedorContratado(dono, 1);
+        var urlLink = $"/api/v1/eventos/{eventoId}/link-casal";
+        var token = (await Ler(await dono.PostAsync(urlLink, null))).GetProperty("token").GetString()!;
+        var casal = _banco.Fabrica.CreateClient();
+        var baseCasal = $"/api/v1/publico/casal/{token}";
+
+        // Fechado: nenhuma ferramenta responde.
+        Assert.Equal(HttpStatusCode.Forbidden, (await casal.PutAsJsonAsync($"{baseCasal}/prazo-rsvp", new { prazo = "2099-01-01" })).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await casal.GetAsync($"{baseCasal}/convites/planilha")).StatusCode);
+        await dono.PutAsJsonAsync(urlLink, new { financeiroLiberado = false, convidadosLiberado = true });
+
+        // Prazo e data de envio: o cliente define e a organizadora vê o mesmo valor.
+        var comPrazo = await Ler(await casal.PutAsJsonAsync($"{baseCasal}/prazo-rsvp", new { prazo = "2099-01-01" }));
+        Assert.Equal("2099-01-01", comPrazo.GetProperty("prazoRsvp").GetString());
+        var comEnvio = await Ler(await casal.PutAsJsonAsync($"{baseCasal}/envio-convites", new { data = "2098-12-01" }));
+        Assert.Equal("2098-12-01", comEnvio.GetProperty("dataEnvioConvites").GetString());
+        var daOrganizadora = await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/convites"));
+        Assert.Equal("2099-01-01", daOrganizadora.GetProperty("prazoRsvp").GetString());
+        Assert.Equal("2098-12-01", daOrganizadora.GetProperty("dataEnvioConvites").GetString());
+
+        // Planilha padrão e importação; o convite importado pelo cliente grava "Preenchido pelo casal".
+        var modelo = await casal.GetAsync($"{baseCasal}/convites/planilha");
+        Assert.Equal(HttpStatusCode.OK, modelo.StatusCode);
+        Assert.Equal("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", modelo.Content.Headers.ContentType?.MediaType);
+        var enviada = await Ler(await casal.PostAsync($"{baseCasal}/convites/importar", PlanilhaDeConvites(
+            ["Família Souza", "+55", "11999990000", "Observação da planilha", "Maria Souza", "Sim"],
+            ["Família Souza", "", "", "", "João Souza", "Não"])));
+        Assert.Equal("Pendente", enviada.GetProperty("situacao").GetString());
+        var importada = await NegocioFluxoTests.AguardarImportacao(casal, $"{baseCasal}/convites/importacoes", enviada.GetProperty("id").GetGuid());
+        Assert.Equal("Importado", importada.GetProperty("situacao").GetString());
+        var convite = (await Ler(await casal.GetAsync(baseCasal))).GetProperty("convites").EnumerateArray().Single();
+        Assert.Equal(2, convite.GetProperty("convidados").GetArrayLength());
+        var naOrganizadora = (await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/convites"))).GetProperty("convites").EnumerateArray().Single();
+        Assert.Equal("Preenchido pelo casal", naOrganizadora.GetProperty("observacao").GetString());
+
+        // Lista de presença: começa vazia e mostra quem confirmou pelo RSVP.
+        Assert.Equal(0, (await Ler(await casal.GetAsync($"{baseCasal}/presencas"))).GetArrayLength());
+        var rsvp = naOrganizadora.GetProperty("token").GetString()!;
+        var maria = naOrganizadora.GetProperty("convidados").EnumerateArray().Single(item => item.GetProperty("nome").GetString() == "Maria Souza").GetProperty("id").GetGuid();
+        await casal.PostAsJsonAsync($"/api/v1/rsvp/{rsvp}", new { respostas = new[] { new { convidadoId = maria, situacao = "Confirmado" } } });
+        var presencas = await Ler(await casal.GetAsync($"{baseCasal}/presencas"));
+        Assert.Equal("Maria Souza", presencas.EnumerateArray().Single().GetProperty("convidado").GetString());
+    }
+
+    private static MultipartFormDataContent PlanilhaDeConvites(params string[][] linhas)
+    {
+        using var livro = new ClosedXML.Excel.XLWorkbook();
+        var aba = livro.AddWorksheet("Convidados");
+        var colunas = Project.Domain.Convidados.PlanilhaConvites.Colunas;
+        for (var i = 0; i < colunas.Length; i++)
+        {
+            aba.Cell(1, i + 1).Value = colunas[i];
+        }
+
+        for (var linha = 0; linha < linhas.Length; linha++)
+        {
+            for (var coluna = 0; coluna < linhas[linha].Length; coluna++)
+            {
+                aba.Cell(linha + 2, coluna + 1).Value = linhas[linha][coluna];
+            }
+        }
+
+        using var memoria = new MemoryStream();
+        livro.SaveAs(memoria);
+        return new MultipartFormDataContent { { new ByteArrayContent(memoria.ToArray()), "arquivo", "convidados.xlsx" } };
     }
 
     private static JsonElement ServicoDe(JsonElement evento, Guid servicoId) =>

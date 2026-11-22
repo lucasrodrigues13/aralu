@@ -2,6 +2,8 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { API_BASE_URL } from './api-base-url';
 import { PedidoConvite } from './convite-formulario';
+import { ImportacaoConvidados } from './importacoes';
+import { PresencaEvento } from './negocio.client';
 import { DinheiroEvento, PedidoParcelamentoPagamento } from './dinheiro.client';
 
 /** Link do casal como a organizadora vê (SPEC-046 §6.1). */
@@ -20,6 +22,10 @@ export interface ConvidadoCasal {
   situacao: string;
   ddi: string | null;
   celular: string | null;
+  genero: string | null;
+  faixa: string | null;
+  /** Quem recebe as comunicações do convite. */
+  principal: boolean;
 }
 
 export interface ConviteCasal {
@@ -42,6 +48,9 @@ export interface CasalLeitura {
   convidadosLiberado: boolean;
   /** Nulo com o cadastro de convidados fechado. */
   convites: ConviteCasal[] | null;
+  /** Prazo de confirmação e data de envio do evento, `aaaa-mm-dd` (SPEC-059 §6.5); nulos com os convidados fechados. */
+  prazoRsvp: string | null;
+  dataEnvioConvites: string | null;
 }
 
 /** Endereço que a organizadora passa ao casal. */
@@ -91,6 +100,34 @@ export class CasalClient {
 
   atualizarConvite(token: string, conviteId: string, pedido: PedidoConvite) {
     return this.http.put<CasalLeitura>(`${this.publico(token)}/convites/${conviteId}`, pedido);
+  }
+
+  // Ferramentas da aba Convidados, as mesmas da organizadora (SPEC-059 §6.5).
+
+  definirPrazoRsvp(token: string, prazo: string | null) {
+    return this.http.put<CasalLeitura>(`${this.publico(token)}/prazo-rsvp`, { prazo });
+  }
+
+  definirEnvioConvites(token: string, data: string | null) {
+    return this.http.put<CasalLeitura>(`${this.publico(token)}/envio-convites`, { data });
+  }
+
+  presencas(token: string) {
+    return this.http.get<PresencaEvento[]>(`${this.publico(token)}/presencas`);
+  }
+
+  planilha(token: string) {
+    return this.http.get(`${this.publico(token)}/convites/planilha`, { responseType: 'blob' });
+  }
+
+  importar(token: string, arquivo: File) {
+    const dados = new FormData();
+    dados.append('arquivo', arquivo);
+    return this.http.post<ImportacaoConvidados>(`${this.publico(token)}/convites/importar`, dados);
+  }
+
+  importacoes(token: string) {
+    return this.http.get<ImportacaoConvidados[]>(`${this.publico(token)}/convites/importacoes`);
   }
 
   parcelar(token: string, servicoId: string, pedido: PedidoParcelamentoPagamento) {

@@ -32,7 +32,7 @@ describe('Formulário único de convite (SPEC-059)', () => {
     return [...raiz.querySelectorAll('button')].find((item) => item.textContent?.includes(texto)) as HTMLButtonElement;
   }
 
-  const rotulos = (raiz: HTMLElement) => [...raiz.querySelectorAll('input')].map((item) => item.getAttribute('aria-label') ?? item.type);
+  const rotulos = (raiz: HTMLElement) => [...raiz.querySelectorAll('input, mat-select')].map((item) => item.getAttribute('aria-label') ?? (item as HTMLInputElement).type);
 
   it('organizadora e cliente têm os mesmos campos, menos a observação', () => {
     const organizadora = rotulos(abrir({ convite: null, mostrarObservacao: true }).nativeElement);
@@ -42,10 +42,10 @@ describe('Formulário único de convite (SPEC-059)', () => {
     expect(organizadora).toContain('Observação');
     expect(cliente).not.toContain('Observação');
     expect(organizadora.filter((item) => item !== 'Observação')).toEqual(cliente);
-    expect(cliente).toEqual(expect.arrayContaining(['Nome do convite', 'E-mail', 'Nome completo do convidado 1', 'DDI do convidado 1', 'Telefone do convidado 1', 'checkbox']));
+    expect(cliente).toEqual(expect.arrayContaining(['Nome do convite', 'E-mail', 'Nome completo do convidado 1', 'DDI do convidado 1', 'Telefone do convidado 1', 'Gênero do convidado 1', 'Faixa etária do convidado 1', 'checkbox']));
   });
 
-  it('exige o telefone só do primeiro convidado e envia vários convidados', () => {
+  it('exige marcar um principal, com telefone, e envia vários convidados', () => {
     const fixture = abrir({ convite: null, mostrarObservacao: false });
     const raiz: HTMLElement = fixture.nativeElement;
     digitar(raiz, 'Nome do convite', 'Família Souza');
@@ -55,16 +55,21 @@ describe('Formulário único de convite (SPEC-059)', () => {
     digitar(raiz, 'Nome completo do convidado 2', 'João Souza');
     fixture.detectChanges();
     expect(botao(raiz, 'Salvar convite').disabled).toBe(true);
+    expect(raiz.textContent).toContain('Marque o convidado principal.');
 
-    digitar(raiz, 'Telefone do convidado 1', '11999990000');
+    // O principal é o segundo convidado: só o telefone dele passa a ser obrigatório.
+    (raiz.querySelector('[data-teste="principal-1"] input') as HTMLInputElement).click();
+    fixture.detectChanges();
+    expect(botao(raiz, 'Salvar convite').disabled).toBe(true);
+    digitar(raiz, 'Telefone do convidado 2', '11977776666');
     fixture.detectChanges();
     expect(botao(raiz, 'Salvar convite').disabled).toBe(false);
     botao(raiz, 'Salvar convite').click();
 
     const pedido = fechar.mock.calls[0][0];
     expect(pedido.convidados.map((item: { nome: string }) => item.nome)).toEqual(['Maria Souza', 'João Souza']);
-    expect(pedido.convidados[0].celular).toBeTruthy();
-    expect(pedido.convidados[1]).toMatchObject({ id: null, ddi: null, celular: null });
+    expect(pedido.convidados.map((item: { principal: boolean }) => item.principal)).toEqual([false, true]);
+    expect(pedido.convidados[0]).toMatchObject({ id: null, ddi: null, celular: null, genero: null, faixa: null });
     expect('observacao' in pedido).toBe(false);
   });
 
@@ -74,7 +79,7 @@ describe('Formulário único de convite (SPEC-059)', () => {
       email: null,
       observacao: 'Pedido da noiva',
       excecaoPrazoRsvp: true,
-      convidados: [{ id: 'c1', nome: 'Maria Souza', ddi: '+55', celular: '11999990000' }],
+      convidados: [{ id: 'c1', nome: 'Maria Souza', ddi: '+55', celular: '11999990000', genero: 'Feminino', faixa: 'Adulto', principal: true }],
     };
     const fixture = abrir({ convite, mostrarObservacao: true });
     botao(fixture.nativeElement, 'Salvar convite').click();
@@ -83,7 +88,7 @@ describe('Formulário único de convite (SPEC-059)', () => {
       nome: 'Família Souza',
       observacao: 'Pedido da noiva',
       excecaoPrazoRsvp: true,
-      convidados: [expect.objectContaining({ id: 'c1', nome: 'Maria Souza' })],
+      convidados: [expect.objectContaining({ id: 'c1', nome: 'Maria Souza', genero: 'Feminino', faixa: 'Adulto', principal: true })],
     }));
   });
 });
@@ -94,7 +99,8 @@ describe('pedidoDoFormulario', () => {
     email: '',
     excecaoPrazoRsvp: false,
     observacao: ' nota ',
-    convidados: [{ nome: 'Ana', ddi: '+55', celular: '11999990000' }, { nome: 'Bia', ddi: '+55', celular: ' ' }],
+    principal: 0,
+    convidados: [{ nome: 'Ana', ddi: '+55', celular: '11999990000', genero: 'Feminino', faixa: '' }, { nome: 'Bia', ddi: '+55', celular: ' ', genero: '', faixa: 'Crianca' }],
   };
 
   it('limpa os textos e tira o DDI de quem não tem telefone', () => {
@@ -104,8 +110,8 @@ describe('pedidoDoFormulario', () => {
       excecaoPrazoRsvp: false,
       observacao: 'nota',
       convidados: [
-        { id: 'a', nome: 'Ana', ddi: '+55', celular: '11999990000' },
-        { id: null, nome: 'Bia', ddi: null, celular: null },
+        { id: 'a', nome: 'Ana', ddi: '+55', celular: '11999990000', genero: 'Feminino', faixa: null, principal: true },
+        { id: null, nome: 'Bia', ddi: null, celular: null, genero: null, faixa: 'Crianca', principal: false },
       ],
     });
   });

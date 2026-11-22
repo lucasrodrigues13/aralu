@@ -7,6 +7,12 @@ public static class ConviteRegras
     public static bool PodeSerPrincipal(bool doMesmoConvite, string? celular) =>
         doMesmoConvite && TemTelefone(celular);
 
+    public const string SemPrincipal = "Marque o convidado principal do convite.";
+
+    public const string MaisDeUmPrincipal = "Marque só um convidado principal por convite.";
+
+    public const string PrincipalSemTelefone = "O convidado principal precisa de telefone.";
+
     /// <summary>Observação gravada pelo sistema no convite criado pelo link do cliente (SPEC-059).</summary>
     public const string ObservacaoDoCliente = "Preenchido pelo casal";
 

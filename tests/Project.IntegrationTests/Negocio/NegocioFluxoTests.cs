@@ -443,8 +443,8 @@ public class NegocioFluxoTests
             nome = "Família",
             convidados = new object[]
             {
-                new { nome = "Lia", ddi = "+55", celular = "11911112222" },
-                new { nome = "Caio", ddi = (string?)null, celular = (string?)null },
+                new { nome = "Lia", ddi = "+55", celular = "11911112222", principal = true },
+                new { nome = "Caio", ddi = (string?)null, celular = (string?)null, principal = false },
             },
             observacao = "Cadastro pedido pela noiva",
         }));
@@ -469,7 +469,7 @@ public class NegocioFluxoTests
             excecaoPrazoRsvp = true,
             convidados = new object[]
             {
-                new { id = ids[0], nome = "Lia", ddi = "+55", celular = "11911112222" },
+                new { id = ids[0], nome = "Lia", ddi = "+55", celular = "11911112222", principal = true },
                 new { id = ids[1], nome = "Caio Souza", ddi = "+55", celular = "11933334444" },
             },
         }));
@@ -512,37 +512,77 @@ public class NegocioFluxoTests
     }
 
     [Fact]
-    public async Task Importacao_agrupa_por_convite_e_exige_telefone_do_primeiro_convidado()
+    public async Task Importacao_vai_para_a_fila_e_junta_todos_os_erros_da_planilha()
     {
         var dono = await Entrar();
         var evento = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new { tipo = "Formatura", primeiroNome = "Turma" }));
         var eventoId = evento.GetProperty("id").GetGuid();
         var url = $"/api/v1/eventos/{eventoId}/convites/importar";
+        var historico = $"/api/v1/eventos/{eventoId}/convites/importacoes";
 
-        // O primeiro convidado do convite "Lima" (linha 3) está sem telefone: nada é importado.
-        var invalida = await dono.PostAsync(url, PlanilhaConvites(
-            ["Família Souza", "+55", "11999990000", "", "Maria Souza"],
-            ["Lima", "", "", "", "Ana Lima"],
-            ["Lima", "+55", "21988887777", "", "Bruno Lima"]));
-        Assert.Equal(HttpStatusCode.BadRequest, invalida.StatusCode);
-        var erro = JsonDocument.Parse(await invalida.Content.ReadAsStringAsync()).RootElement.GetProperty("message").GetString();
-        Assert.Equal("Linha 3: O primeiro convidado do convite \"Lima\" precisa de telefone.", erro);
+        // O modelo baixado vem com exemplos: a importação termina em Erro apontando cada linha de exemplo.
+        var modelo = await (await dono.GetAsync($"/api/v1/eventos/{eventoId}/convites/planilha")).Content.ReadAsByteArrayAsync();
+        var enviada = await Ler(await dono.PostAsync(url, new MultipartFormDataContent { { new ByteArrayContent(modelo), "arquivo", "convidados.xlsx" } }));
+        Assert.Equal("Pendente", enviada.GetProperty("situacao").GetString());
+        var semApagar = await AguardarImportacao(dono, historico, enviada.GetProperty("id").GetGuid());
+        Assert.Equal("Erro", semApagar.GetProperty("situacao").GetString());
+        Assert.Equal(4, semApagar.GetProperty("erros").GetArrayLength());
+        Assert.Equal("Linha 2: É uma linha de exemplo do modelo. Apague as linhas de exemplo antes de importar.", semApagar.GetProperty("erros")[0].GetString());
+
+        // Vários erros na mesma planilha: todos aparecem, e nada é gravado.
+        var invalida = await Ler(await dono.PostAsync(url, PlanilhaConvites(
+            ["Família Souza", "+55", "11999990000", "", "Maria Souza", "Sim"],
+            ["Família Souza", "+55", "11977776666", "", "João Souza", "Sim"],
+            ["Lima", "", "", "", "Ana Lima", "Sim"],
+            ["Costa", "+55", "21988887777", "", "Rui Costa", "Não"])));
+        var comErros = await AguardarImportacao(dono, historico, invalida.GetProperty("id").GetGuid());
+        Assert.Equal("Erro", comErros.GetProperty("situacao").GetString());
+        Assert.Equal(
+            [
+                "Linha 3: O convite \"Família Souza\" já tem um convidado principal (linha 2). Marque só um por convite.",
+                "Linha 4: O convidado principal precisa de telefone.",
+                "Linha 5: O convite \"Costa\" não tem convidado principal. Marque Sim em um convidado dele.",
+            ],
+            comErros.GetProperty("erros").EnumerateArray().Select(item => item.GetString()));
         Assert.Empty((await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/convites"))).GetProperty("convites").EnumerateArray());
 
-        // Válida: o nome do convite repetido agrupa os convidados; o primeiro é o principal; os demais podem ficar sem telefone.
-        var valida = await dono.PostAsync(url, PlanilhaConvites(
-            ["Família Souza", "+55", "11999990000", "Amigos da noiva", "Maria Souza"],
-            ["Família Souza", "", "", "", "João Souza"],
-            ["Ana Lima", "+55", "21988887777", "", "Ana Lima"]));
-        Assert.Equal(HttpStatusCode.OK, valida.StatusCode);
+        // Válida: o nome do convite repetido agrupa; o principal é o marcado com Sim, mesmo que não seja o primeiro.
+        var valida = await Ler(await dono.PostAsync(url, PlanilhaConvites(
+            ["Família Souza", "", "", "Amigos da noiva", "João Souza", "Não"],
+            ["Família Souza", "+55", "11999990000", "", "Maria Souza", "Sim"],
+            ["Ana Lima", "+55", "21988887777", "", "Ana Lima", "Sim"])));
+        var importada = await AguardarImportacao(dono, historico, valida.GetProperty("id").GetGuid());
+        Assert.Equal("Importado", importada.GetProperty("situacao").GetString());
+        Assert.Equal(2, importada.GetProperty("convites").GetInt32());
         var convites = (await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/convites"))).GetProperty("convites").EnumerateArray().ToArray();
-        Assert.Equal(2, convites.Length);
         var souza = convites.Single(item => item.GetProperty("nome").GetString() == "Família Souza");
         Assert.Equal(2, souza.GetProperty("convidados").GetArrayLength());
         Assert.Equal("+55 11999990000", souza.GetProperty("telefone").GetString());
         Assert.Equal("Amigos da noiva", souza.GetProperty("observacao").GetString());
         var principal = souza.GetProperty("convidados").EnumerateArray().Single(item => item.GetProperty("principal").GetBoolean());
         Assert.Equal("Maria Souza", principal.GetProperty("nome").GetString());
+
+        // O histórico lista as três, da mais nova para a mais antiga; outra conta não vê.
+        var lista = (await Ler(await dono.GetAsync(historico))).EnumerateArray().Select(item => item.GetProperty("situacao").GetString());
+        Assert.Equal(["Importado", "Erro", "Erro"], lista);
+        Assert.Equal(HttpStatusCode.NotFound, (await (await Entrar()).GetAsync(historico)).StatusCode);
+    }
+
+    internal static async Task<JsonElement> AguardarImportacao(HttpClient cliente, string historico, Guid id)
+    {
+        for (var tentativa = 0; tentativa < 100; tentativa++)
+        {
+            var itens = await Ler(await cliente.GetAsync(historico));
+            var item = itens.EnumerateArray().Single(atual => atual.GetProperty("id").GetGuid() == id);
+            if (item.GetProperty("situacao").GetString() is "Importado" or "Erro")
+            {
+                return item;
+            }
+
+            await Task.Delay(100);
+        }
+
+        throw new TimeoutException("A importação não terminou.");
     }
 
     private static MultipartFormDataContent PlanilhaConvites(params string[][] linhas)
@@ -577,7 +617,7 @@ public class NegocioFluxoTests
         var convite = await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/convites", new
         {
             nome = "Família",
-            convidados = new object[] { new { nome = "Lia", ddi = "+55", celular = "11911112222" }, new { nome = "Caio" } },
+            convidados = new object[] { new { nome = "Lia", ddi = "+55", celular = "11911112222", principal = true }, new { nome = "Caio" } },
         }));
         var token = convite.GetProperty("token").GetString()!;
         var conviteId = convite.GetProperty("id").GetGuid();

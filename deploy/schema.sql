@@ -3766,3 +3766,49 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122172904_FilaDeImportacaoDeConvidados') THEN
+    CREATE TABLE "ImportacoesConvidados" (
+        "Id" uuid NOT NULL,
+        "ContaId" character varying(450) NOT NULL,
+        "EventoId" uuid NOT NULL,
+        "NomeArquivo" character varying(260) NOT NULL,
+        "Arquivo" bytea NOT NULL,
+        "ObservacaoFixa" character varying(200),
+        "Situacao" character varying(20) NOT NULL,
+        "CriadaEm" timestamp with time zone NOT NULL,
+        "ConcluidaEm" timestamp with time zone,
+        "Convites" integer NOT NULL,
+        "Erros" text[] NOT NULL,
+        CONSTRAINT "PK_ImportacoesConvidados" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_ImportacoesConvidados_Eventos_EventoId" FOREIGN KEY ("EventoId") REFERENCES "Eventos" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122172904_FilaDeImportacaoDeConvidados') THEN
+    CREATE INDEX "IX_ImportacoesConvidados_EventoId_CriadaEm" ON "ImportacoesConvidados" ("EventoId", "CriadaEm");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122172904_FilaDeImportacaoDeConvidados') THEN
+    CREATE INDEX "IX_ImportacoesConvidados_Situacao" ON "ImportacoesConvidados" ("Situacao");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122172904_FilaDeImportacaoDeConvidados') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261122172904_FilaDeImportacaoDeConvidados', '10.0.4');
+    END IF;
+END $EF$;
+COMMIT;
+

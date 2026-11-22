@@ -3,8 +3,18 @@ using Project.Domain.Convidados;
 
 namespace Project.Application.Convidados;
 
-/// <summary>Convidado no formulário de convite: com <paramref name="Id"/> atualiza o existente; sem, inclui um novo (Pendente).</summary>
-public sealed record ConvidadoDoFormulario(Guid? Id, string? Nome, string? Ddi, string? Celular);
+/// <summary>
+/// Convidado no formulário de convite: com <paramref name="Id"/> atualiza o existente; sem, inclui um novo (Pendente).
+/// Gênero e faixa etária são opcionais. <paramref name="Principal"/> marca quem recebe as comunicações (SPEC-059).
+/// </summary>
+public sealed record ConvidadoDoFormulario(
+    Guid? Id,
+    string? Nome,
+    string? Ddi,
+    string? Celular,
+    GeneroConvidado? Genero = null,
+    FaixaEtaria? Faixa = null,
+    bool Principal = false);
 
 /// <summary>
 /// Formulário único de convite (SPEC-059), igual para a organizadora e para o link do cliente, ao criar e ao editar.
@@ -44,9 +54,26 @@ public static class FormularioConvite
             return Resultado<Validado>.Erro(Codigos.Validacao, "Informe o nome completo de cada convidado.");
         }
 
-        if (!ConviteRegras.TemTelefone(pedido.Convidados[0].Celular))
+        if (pedido.Convidados.Any(item => (item.Genero is { } genero && !Enum.IsDefined(genero)) || (item.Faixa is { } faixa && !Enum.IsDefined(faixa))))
         {
-            return Resultado<Validado>.Erro(Codigos.Validacao, "Informe o telefone do primeiro convidado.");
+            return Resultado<Validado>.Erro(Codigos.Validacao, "Há um valor de convidado que não faz parte da lista.");
+        }
+
+        // O principal é obrigatório, único e precisa de telefone; nos demais o telefone é opcional (SPEC-059).
+        var principais = pedido.Convidados.Where(item => item.Principal).ToArray();
+        if (principais.Length == 0)
+        {
+            return Resultado<Validado>.Erro(Codigos.Validacao, ConviteRegras.SemPrincipal);
+        }
+
+        if (principais.Length > 1)
+        {
+            return Resultado<Validado>.Erro(Codigos.Validacao, ConviteRegras.MaisDeUmPrincipal);
+        }
+
+        if (!ConviteRegras.TemTelefone(principais[0].Celular))
+        {
+            return Resultado<Validado>.Erro(Codigos.Validacao, ConviteRegras.PrincipalSemTelefone);
         }
 
         var email = Domain.Comum.Texto.Limpo(pedido.Email);
@@ -61,7 +88,7 @@ public static class FormularioConvite
     /// <summary>
     /// Aplica o formulário já validado ao convite (novo ou existente). Devolve os convidados que saíram do convite
     /// e os que entraram (para o chamador gravar) ou falha se algum <c>Id</c> não é deste convite.
-    /// O principal continua o mesmo se ficou com telefone; senão, o primeiro convidado assume.
+    /// O principal é o convidado marcado no formulário.
     /// </summary>
     public static Resultado<Aplicacao> Aplicar(Convite convite, Validado validado, FormularioConvitePedido pedido)
     {
@@ -85,7 +112,7 @@ public static class FormularioConvite
         }
 
         var incluidos = new List<Convidado>();
-        var ordem = new List<Convidado>();
+        Convidado? principal = null;
         foreach (var item in pedido.Convidados!)
         {
             var convidado = item.Id is Guid id
@@ -94,17 +121,21 @@ public static class FormularioConvite
             convidado.Nome = Domain.Comum.Texto.Limpo(item.Nome)!;
             convidado.Celular = Domain.Comum.Texto.Limpo(item.Celular);
             convidado.Ddi = convidado.Celular is null ? null : Domain.Comum.Texto.Limpo(item.Ddi);
+            convidado.Genero = item.Genero;
+            convidado.Faixa = item.Faixa;
             if (item.Id is null)
             {
                 convite.Convidados.Add(convidado);
                 incluidos.Add(convidado);
             }
 
-            ordem.Add(convidado);
+            if (item.Principal)
+            {
+                principal = convidado;
+            }
         }
 
-        var atual = ordem.FirstOrDefault(item => item.Id == convite.PrincipalId);
-        convite.PrincipalId = ConviteRegras.TemTelefone(atual?.Celular) ? atual!.Id : ordem[0].Id;
+        convite.PrincipalId = principal!.Id;
         return Resultado<Aplicacao>.Sucesso(new Aplicacao(removidos, incluidos));
     }
 }

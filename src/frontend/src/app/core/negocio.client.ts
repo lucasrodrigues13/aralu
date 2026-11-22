@@ -4,6 +4,7 @@ import { API_BASE_URL } from './api-base-url';
 import { contaDoVisitante } from './auth.service';
 import { FormaPagamento, ParcelaContrato, ParcelaOrcamento } from './dinheiro.client';
 import { PedidoConvite } from './convite-formulario';
+import { ImportacaoConvidados } from './importacoes';
 
 export interface Painel {
   emAndamento: number;
@@ -1019,7 +1020,12 @@ export class NegocioClient {
   importar(eventoId: string, arquivo: File) {
     const dados = new FormData();
     dados.append('arquivo', arquivo);
-    return this.http.post(`${this.base}/api/v1/eventos/${eventoId}/convites/importar`, dados);
+    return this.http.post<ImportacaoConvidados>(`${this.base}/api/v1/eventos/${eventoId}/convites/importar`, dados);
+  }
+
+  /** Histórico da fila de importações do evento (SPEC-059 §6.6). */
+  importacoes(eventoId: string) {
+    return this.http.get<ImportacaoConvidados[]>(`${this.base}/api/v1/eventos/${eventoId}/convites/importacoes`);
   }
 
   planilha(eventoId: string) {

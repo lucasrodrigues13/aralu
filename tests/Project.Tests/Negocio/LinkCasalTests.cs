@@ -16,7 +16,7 @@ public class LinkCasalTests
     {
         var dados = new DadosFalsos();
         // O financeiro (DinheiroServico, FornecedorServico) não é alcançado nestes cenários.
-        return (new LinkCasalServico(dados, null!, null!, null!), dados);
+        return (new LinkCasalServico(dados, null!, null!, null!, null!, null!), dados);
     }
 
     [Fact]
@@ -109,10 +109,23 @@ public class LinkCasalTests
         return (servico, dados, token);
     }
 
-    private static ConvidadoDoFormulario Pessoa(string nome, string? celular = null, Guid? id = null) => new(id, nome, celular is null ? null : "+55", celular);
+    private static ConvidadoDoFormulario Pessoa(string nome, string? celular = null, Guid? id = null, bool principal = false) =>
+        new(id, nome, celular is null ? null : "+55", celular, Principal: principal);
+
+    /// <summary>Sem principal marcado, o pedido de teste marca o primeiro com telefone (a regra tem teste próprio).</summary>
+    private static ConvidadoDoFormulario[] ComPrincipal(ConvidadoDoFormulario[] convidados)
+    {
+        if (convidados.Any(item => item.Principal))
+        {
+            return convidados;
+        }
+
+        var indice = Array.FindIndex(convidados, item => !string.IsNullOrWhiteSpace(item.Celular));
+        return convidados.Select((item, i) => i == indice ? item with { Principal = true } : item).ToArray();
+    }
 
     private static FormularioConvitePedido Pedido(string nome = "Família Souza", string? telefone = "11999990000", string? email = "souza@exemplo.com", params ConvidadoDoFormulario[] convidados) =>
-        new(nome, email, convidados.Length > 0 ? convidados : [Pessoa("Maria Souza", telefone), Pessoa("João Souza")]);
+        new(nome, email, ComPrincipal(convidados.Length > 0 ? convidados : [Pessoa("Maria Souza", telefone), Pessoa("João Souza")]));
 
     [Fact]
     public async Task Convidados_nascem_fechados_e_a_marcacao_liga_e_desliga_sem_mexer_no_financeiro()
@@ -153,6 +166,24 @@ public class LinkCasalTests
         Assert.Equal(EventoId, gravado.EventoId);
         Assert.Equal(Conta, gravado.ContaId);
         Assert.False(string.IsNullOrWhiteSpace(gravado.Token));
+    }
+
+    [Fact]
+    public async Task Formulario_grava_genero_e_faixa_etaria_de_cada_convidado()
+    {
+        var (servico, dados, token) = await CriarComConvidadosAsync();
+        var pedido = Pedido(convidados:
+        [
+            new ConvidadoDoFormulario(null, "Maria Souza", "+55", "11999990000", GeneroConvidado.Feminino, FaixaEtaria.Adulto),
+            new ConvidadoDoFormulario(null, "Pedro Souza", null, null, GeneroConvidado.Masculino, FaixaEtaria.Crianca),
+        ]);
+
+        var lido = (await servico.CriarConviteAsync(token, pedido, default)).Valor!.Convites!.Single();
+
+        Assert.Equal([GeneroConvidado.Feminino, GeneroConvidado.Masculino], dados.Convites.Single().Convidados.Select(item => item.Genero));
+        Assert.Equal([FaixaEtaria.Adulto, FaixaEtaria.Crianca], lido.Convidados.Select(item => item.Faixa));
+        var invalido = Pedido(convidados: new ConvidadoDoFormulario(null, "Ana", "+55", "11999990000", (GeneroConvidado)99));
+        Assert.Equal(Codigos.Validacao, (await servico.CriarConviteAsync(token, invalido, default)).Falha!.Codigo);
     }
 
     [Fact]
@@ -199,17 +230,23 @@ public class LinkCasalTests
     }
 
     [Fact]
-    public async Task Primeiro_convidado_sem_telefone_e_recusado_e_os_demais_sao_opcionais()
+    public async Task Principal_e_obrigatorio_unico_e_precisa_de_telefone()
     {
         var (servico, dados, token) = await CriarComConvidadosAsync();
+        async Task<string?> Erro(params ConvidadoDoFormulario[] convidados) =>
+            (await servico.CriarConviteAsync(token, new FormularioConvitePedido("Família Souza", null, convidados), default)).Falha?.Mensagem;
 
-        var semTelefone = await servico.CriarConviteAsync(token, Pedido(telefone: null), default);
-        Assert.Equal(Codigos.Validacao, semTelefone.Falha!.Codigo);
-        Assert.Equal("Informe o telefone do primeiro convidado.", semTelefone.Falha.Mensagem);
+        Assert.Equal("Marque o convidado principal do convite.", await Erro(Pessoa("Maria Souza", "11999990000"), Pessoa("João Souza")));
+        Assert.Equal(
+            "Marque só um convidado principal por convite.",
+            await Erro(Pessoa("Maria Souza", "11999990000", principal: true), Pessoa("João Souza", "11977776666", principal: true)));
+        Assert.Equal("O convidado principal precisa de telefone.", await Erro(Pessoa("Maria Souza", "11999990000"), Pessoa("João Souza", principal: true)));
         Assert.Empty(dados.Convites);
 
-        Assert.True((await servico.CriarConviteAsync(token, Pedido(), default)).Ok);
-        Assert.Null(dados.Convites.Single().Convidados[1].Celular);
+        // O principal pode ser qualquer convidado; os outros podem ficar sem telefone.
+        Assert.Null(await Erro(Pessoa("Maria Souza"), Pessoa("João Souza", "11977776666", principal: true)));
+        var convite = dados.Convites.Single();
+        Assert.Equal(convite.Convidados.Single(item => item.Nome == "João Souza").Id, convite.PrincipalId);
     }
 
     [Fact]

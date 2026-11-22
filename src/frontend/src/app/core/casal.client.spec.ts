@@ -21,7 +21,7 @@ describe('CasalClient: convites (SPEC-052)', () => {
 
   afterEach(() => http.verify());
 
-  const pedido = { nome: 'Família Souza', email: null, excecaoPrazoRsvp: false, convidados: [{ id: null, nome: 'Maria Souza', ddi: '+55', celular: '11999990000' }] };
+  const pedido = { nome: 'Família Souza', email: null, excecaoPrazoRsvp: false, convidados: [{ id: null, nome: 'Maria Souza', ddi: '+55', celular: '11999990000', genero: null, faixa: null, principal: true }] };
 
   it('cria o convite pelo código do link', () => {
     casal.criarConvite('abc', pedido).subscribe();
@@ -36,6 +36,22 @@ describe('CasalClient: convites (SPEC-052)', () => {
     const req = http.expectOne((r) => r.url.endsWith('/api/v1/publico/casal/abc/convites/c1'));
     expect(req.request.method).toBe('PUT');
     req.flush({});
+  });
+
+  it('as ferramentas da aba Convidados usam o código do link (SPEC-059)', () => {
+    casal.definirPrazoRsvp('abc', '2099-01-01').subscribe();
+    casal.definirEnvioConvites('abc', null).subscribe();
+    casal.presencas('abc').subscribe();
+    casal.planilha('abc').subscribe();
+    casal.importar('abc', new File(['x'], 'convidados.xlsx')).subscribe();
+
+    const prazo = http.expectOne((r) => r.url.endsWith('/api/v1/publico/casal/abc/prazo-rsvp'));
+    expect([prazo.request.method, prazo.request.body]).toEqual(['PUT', { prazo: '2099-01-01' }]);
+    expect(http.expectOne((r) => r.url.endsWith('/abc/envio-convites')).request.body).toEqual({ data: null });
+    expect(http.expectOne((r) => r.url.endsWith('/abc/presencas')).request.method).toBe('GET');
+    expect(http.expectOne((r) => r.url.endsWith('/abc/convites/planilha')).request.responseType).toBe('blob');
+    const importar = http.expectOne((r) => r.url.endsWith('/abc/convites/importar'));
+    expect((importar.request.body as FormData).get('arquivo')).toBeInstanceOf(File);
   });
 
   it('a organizadora liga as duas marcações juntas', () => {

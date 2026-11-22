@@ -11,7 +11,14 @@ public sealed record LinkCasalLeitura(bool Ativo, string? Token, bool Financeiro
 /// <summary><paramref name="ConvidadosLiberado"/> nulo mantém a marcação como está (SPEC-052).</summary>
 public sealed record SalvarLinkCasal(bool FinanceiroLiberado, bool? ConvidadosLiberado = null);
 
-public sealed record EventoDoLink(Guid Id, string ContaId, string Nome, DateOnly? Data, bool EmAndamento = true);
+public sealed record EventoDoLink(
+    Guid Id,
+    string ContaId,
+    string Nome,
+    DateOnly? Data,
+    bool EmAndamento = true,
+    DateOnly? PrazoRsvp = null,
+    DateOnly? DataEnvioConvites = null);
 
 /// <summary>O que a página do casal recebe (SPEC-046 §6.2 e §6.3; SPEC-052). Financeiro e convites são nulos quando a marcação está fechada.</summary>
 public sealed record CasalLeitura(
@@ -20,9 +27,19 @@ public sealed record CasalLeitura(
     bool FinanceiroLiberado,
     DinheiroEventoLeitura? Financeiro,
     bool ConvidadosLiberado = false,
-    IReadOnlyList<ConviteCasal>? Convites = null);
+    IReadOnlyList<ConviteCasal>? Convites = null,
+    DateOnly? PrazoRsvp = null,
+    DateOnly? DataEnvioConvites = null);
 
-public sealed record ConvidadoCasal(Guid Id, string Nome, string Situacao, string? Ddi = null, string? Celular = null);
+public sealed record ConvidadoCasal(
+    Guid Id,
+    string Nome,
+    string Situacao,
+    string? Ddi = null,
+    string? Celular = null,
+    Domain.Convidados.GeneroConvidado? Genero = null,
+    Domain.Convidados.FaixaEtaria? Faixa = null,
+    bool Principal = false);
 
 /// <summary><paramref name="Ddi"/> e <paramref name="Telefone"/> são do convidado principal (SPEC-010).</summary>
 public sealed record ConviteCasal(
@@ -68,7 +85,9 @@ public sealed class LinkCasalServico(
     IDadosLinkCasal dados,
     DinheiroServico dinheiro,
     FornecedorServico fornecedores,
-    Arquivos.IArmazenamentoArquivo armazenamento)
+    Arquivos.IArmazenamentoArquivo armazenamento,
+    ConviteServico conviteServico,
+    ImportacaoServico importacoes)
 {
     private const string LinkInvalido = "Link inválido.";
     private const string ConvidadosFechado = "A organizadora ainda não liberou o cadastro de convidados deste evento.";
@@ -282,7 +301,9 @@ public sealed class LinkCasalServico(
             contexto.Link.FinanceiroLiberado,
             financeiro,
             contexto.Link.ConvidadosLiberado,
-            convites);
+            convites,
+            contexto.Link.ConvidadosLiberado ? contexto.Evento.PrazoRsvp : null,
+            contexto.Link.ConvidadosLiberado ? contexto.Evento.DataEnvioConvites : null);
     }
 
     private static ConviteCasal LerConvite(Domain.Convidados.Convite convite)
@@ -296,9 +317,81 @@ public sealed class LinkCasalServico(
             convite.Email,
             convite.Convidados
                 .OrderByDescending(item => item.Id == convite.PrincipalId)
-                .Select(item => new ConvidadoCasal(item.Id, item.Nome, Domain.Convidados.Rotulos.SituacaoTela(item.Situacao), item.Ddi, item.Celular))
+                .Select(item => new ConvidadoCasal(item.Id, item.Nome, Domain.Convidados.Rotulos.SituacaoTela(item.Situacao), item.Ddi, item.Celular, item.Genero, item.Faixa, item.Id == convite.PrincipalId))
                 .ToArray(),
             convite.ExcecaoPrazoRsvp);
+    }
+
+    // ---- Casal: ferramentas da aba Convidados, as mesmas da organizadora (SPEC-059 §6.5) ----
+
+    public Task<Resultado<CasalLeitura>> DefinirPrazoRsvpAsync(string token, DateOnly? prazo, DateOnly hoje, CancellationToken ct) =>
+        AgirNosConvitesAsync(token, ct, async (conta, evento) =>
+        {
+            var resultado = await conviteServico.DefinirPrazoAsync(conta, evento, prazo, hoje, ct);
+            return resultado.Ok ? null : resultado.Falha;
+        });
+
+    public Task<Resultado<CasalLeitura>> DefinirEnvioConvitesAsync(string token, DateOnly? data, CancellationToken ct) =>
+        AgirNosConvitesAsync(token, ct, async (conta, evento) =>
+        {
+            var resultado = await conviteServico.DefinirEnvioAsync(conta, evento, data, ct);
+            return resultado.Ok ? null : resultado.Falha;
+        });
+
+    /// <summary>
+    /// Coloca a planilha na mesma fila da organizadora (SPEC-059 §6.6); os convites importados pelo casal gravam
+    /// "Preenchido pelo casal".
+    /// </summary>
+    public async Task<Resultado<ImportacaoLeitura>> EnfileirarImportacaoAsync(string token, Stream arquivo, string? nomeArquivo, DateTimeOffset agora, CancellationToken ct)
+    {
+        var contexto = await ResolverAsync(token, Area.Convidados, ct);
+        return contexto.Falha is not null
+            ? Resultado<ImportacaoLeitura>.Erro(contexto.Falha.Codigo, contexto.Falha.Mensagem)
+            : await importacoes.EnfileirarAsync(
+                contexto.Evento!.ContaId, contexto.Evento.Id, arquivo, nomeArquivo, Domain.Convidados.ConviteRegras.ObservacaoDoCliente, agora, ct);
+    }
+
+    public async Task<Resultado<IReadOnlyList<ImportacaoLeitura>>> ListarImportacoesAsync(string token, CancellationToken ct)
+    {
+        var contexto = await ResolverAsync(token, Area.Convidados, ct);
+        return contexto.Falha is not null
+            ? Resultado<IReadOnlyList<ImportacaoLeitura>>.Erro(contexto.Falha.Codigo, contexto.Falha.Mensagem)
+            : await importacoes.ListarAsync(contexto.Evento!.ContaId, contexto.Evento.Id, ct);
+    }
+
+    public async Task<Resultado<IReadOnlyList<PresencaLeitura>>> ListarPresencasAsync(string token, CancellationToken ct)
+    {
+        var contexto = await ResolverAsync(token, Area.Convidados, ct);
+        return contexto.Falha is not null
+            ? Resultado<IReadOnlyList<PresencaLeitura>>.Erro(contexto.Falha.Codigo, contexto.Falha.Mensagem)
+            : await conviteServico.ListarPresencasAsync(contexto.Evento!.ContaId, contexto.Evento.Id, ct);
+    }
+
+    public async Task<Resultado<byte[]>> ModeloPlanilhaAsync(string token, CancellationToken ct)
+    {
+        var contexto = await ResolverAsync(token, Area.Convidados, ct);
+        return contexto.Falha is not null
+            ? Resultado<byte[]>.Erro(contexto.Falha.Codigo, contexto.Falha.Mensagem)
+            : Resultado<byte[]>.Sucesso(conviteServico.ModeloPlanilha());
+    }
+
+    private async Task<Resultado<CasalLeitura>> AgirNosConvitesAsync(string token, CancellationToken ct, Func<string, Guid, Task<Falha?>> acao)
+    {
+        var contexto = await ResolverAsync(token, Area.Convidados, ct);
+        if (contexto.Falha is not null)
+        {
+            return Resultado<CasalLeitura>.Erro(contexto.Falha.Codigo, contexto.Falha.Mensagem);
+        }
+
+        var falha = await acao(contexto.Evento!.ContaId, contexto.Evento.Id);
+        if (falha is not null)
+        {
+            return Resultado<CasalLeitura>.Erro(falha.Codigo, falha.Mensagem);
+        }
+
+        // Lê o evento de novo: o prazo e a data de envio podem ter mudado.
+        var evento = await dados.ObterEventoAsync(contexto.Evento.ContaId, contexto.Evento.Id, ct);
+        return await MontarAsync(contexto with { Evento = evento ?? contexto.Evento }, ct);
     }
 
     // ---- Casal: convites (SPEC-052 e SPEC-059) ----

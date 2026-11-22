@@ -110,6 +110,7 @@ public static class NegocioEndpoints
         api.MapPost("/convites/{id:guid}/principal", Principal);
         api.MapGet("/eventos/{id:guid}/convites/planilha", Planilha);
         api.MapPost("/eventos/{id:guid}/convites/importar", Importar).DisableAntiforgery();
+        api.MapGet("/eventos/{id:guid}/convites/importacoes", Importacoes);
         api.MapGet("/convites/{id:guid}/qr", Qr);
         api.MapGet("/convites/{id:guid}/qr-entrada", QrEntrada);
         api.MapGet("/convites/{id:guid}/whatsapp", WhatsApp);
@@ -1188,11 +1189,12 @@ public static class NegocioEndpoints
                 "convidados.xlsx");
         });
 
+    /// <summary>Coloca a planilha na fila (SPEC-059 §6.6): responde na hora com a importação Pendente.</summary>
     private static Task<IResult> Importar(
         Guid id,
         IFormFile? arquivo,
         ClaimsPrincipal usuario,
-        ConviteServico servico,
+        ImportacaoServico servico,
         IDados dados,
         CancellationToken ct) =>
         ComConta(usuario, async conta =>
@@ -1209,7 +1211,19 @@ public static class NegocioEndpoints
             }
 
             await using var fluxo = arquivo.OpenReadStream();
-            return await De(servico.ImportarAsync(conta, id, fluxo, arquivo.FileName, ct));
+            return await De(servico.EnfileirarAsync(conta, id, fluxo, arquivo.FileName, null, DateTimeOffset.UtcNow, ct));
+        });
+
+    private static Task<IResult> Importacoes(Guid id, ClaimsPrincipal usuario, ImportacaoServico servico, IDados dados, CancellationToken ct) =>
+        ComConta(usuario, async conta =>
+        {
+            var bloqueio = await ExigirModuloEEventoAsync(usuario, conta, id, ModuloCliente.Convidados, dados, ct);
+            if (bloqueio is not null)
+            {
+                return bloqueio;
+            }
+
+            return await De(servico.ListarAsync(conta, id, ct));
         });
 
     private static Task<IResult> Qr(Guid id, ClaimsPrincipal usuario, ConviteServico servico, IDados dados, IConfiguration configuracao, CancellationToken ct) =>

@@ -38,7 +38,14 @@ public sealed class DadosLinkCasalEf(AppDbContext banco) : IDadosLinkCasal
     public Task<EventoDoLink?> ObterEventoAsync(string contaId, Guid eventoId, CancellationToken ct) =>
         banco.Eventos.AsNoTracking()
             .Where(evento => evento.Id == eventoId && evento.ContaId == contaId)
-            .Select(evento => new EventoDoLink(evento.Id, evento.ContaId, evento.Nome, evento.Data, evento.Situacao == SituacaoEvento.EmAndamento))
+            .Select(evento => new EventoDoLink(
+                evento.Id,
+                evento.ContaId,
+                evento.Nome,
+                evento.Data,
+                evento.Situacao == SituacaoEvento.EmAndamento,
+                evento.PrazoRsvp,
+                evento.DataEnvioConvites))
             .FirstOrDefaultAsync(ct);
 
     public Task<LinkCasal?> ObterPorEventoAsync(Guid eventoId, CancellationToken ct) =>

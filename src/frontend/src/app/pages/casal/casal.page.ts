@@ -14,7 +14,12 @@ import { mensagemDeErro } from '../../core/mensagem-erro';
 import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { ConviteFormDados, ConviteFormDialog } from '../../shared/convite-form.dialog';
-import { dadosPreenchidos, resumoDosConvidados } from '../../shared/convite-lista';
+import { contarPorSituacao, dadosPreenchidos, filtrarConvites, FiltroDeConvites, prazoEncerrado, resumoDosConvidados } from '../../shared/convite-lista';
+import { ConvidadosTopoComponent } from '../../shared/convidados-topo.component';
+import { DADOS_ENVIO, DADOS_PRAZO, DataConvitesDialog } from '../../shared/data-convites.dialog';
+import { PlanilhaInstrucoesDados, PlanilhaInstrucoesDialog } from '../../shared/planilha-instrucoes.dialog';
+import { PresencasDialog } from '../../shared/presencas.dialog';
+import { ImportacoesDados, ImportacoesDialog } from '../../shared/importacoes.dialog';
 import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { GdDinheiroPipe } from '../../shared/gd-dinheiro.pipe';
@@ -26,7 +31,7 @@ import { ParcelarPagamentoDialog } from '../dinheiro/parcelar-pagamento.dialog';
 /** Página do casal, sem login (SPEC-046): acompanha e atualiza o financeiro do evento quando a organizadora libera. */
 @Component({
   selector: 'app-casal',
-  imports: [MatCardModule, MatButtonModule, MatCheckboxModule, MatIconModule, MatTabsModule, GdDataPipe, GdDinheiroPipe],
+  imports: [MatCardModule, MatButtonModule, MatCheckboxModule, MatIconModule, MatTabsModule, GdDataPipe, GdDinheiroPipe, ConvidadosTopoComponent],
   template: `
     <main class="pagina">
       @if (carregando()) {
@@ -124,14 +129,25 @@ import { ParcelarPagamentoDialog } from '../dinheiro/parcelar-pagamento.dialog';
             }
             @if (d.convites; as convites) {
               <mat-tab label="Convidados"><div class="aba">
-                <div class="secao">
-                  <h2 class="mes">Convites</h2>
-                  <button mat-flat-button type="button" (click)="abrirConvite(null)"><mat-icon>add</mat-icon> Novo convite</button>
-                </div>
+                <app-convidados-topo
+                  [porSituacao]="porSituacao()"
+                  [prazoRsvp]="d.prazoRsvp"
+                  [prazoEncerrado]="encerrado(d.prazoRsvp)"
+                  [dataEnvio]="d.dataEnvioConvites"
+                  [mostrarObservacao]="false"
+                  (filtrar)="filtro.set($event)"
+                  (novoConvite)="abrirConvite(null)"
+                  (envio)="abrirEnvio(d.dataEnvioConvites)"
+                  (prazo)="abrirPrazo(d.prazoRsvp)"
+                  (presencas)="abrirPresencas()"
+                  (planilha)="abrirPlanilha()"
+                  (importar)="abrirImportacoes()">
                 @if (convites.length === 0) {
                   <p class="text-center text-muted py-6">Nenhum convite ainda. Use "Novo convite" para cadastrar quem vai receber.</p>
+                } @else if (convitesFiltrados().length === 0) {
+                  <p class="text-center text-muted py-6">Nenhum convite com estes filtros.</p>
                 }
-                @for (convite of convites; track convite.id) {
+                @for (convite of convitesFiltrados(); track convite.id) {
                   <mat-card class="cardWithShadow"><mat-card-content>
                     <div class="linha">
                       <button mat-icon-button type="button" class="seta" [class.aberta]="aberto(convite.id)" [attr.aria-expanded]="aberto(convite.id)" [attr.aria-controls]="'convidados-' + convite.id" [attr.aria-label]="(aberto(convite.id) ? 'Recolher' : 'Expandir') + ' convidados de ' + convite.nome" (click)="alternar(convite.id)"><mat-icon>chevron_right</mat-icon></button>
@@ -145,12 +161,13 @@ import { ParcelarPagamentoDialog } from '../dinheiro/parcelar-pagamento.dialog';
                     @if (aberto(convite.id)) {
                       <ul class="convidados" [id]="'convidados-' + convite.id">
                         @for (pessoa of convite.convidados; track pessoa.id) {
-                          <li>{{ pessoa.nome }} <span class="text-xs text-muted">· {{ pessoa.situacao }}@for (dado of preenchidos(pessoa); track dado) { · {{ dado }} }</span></li>
+                          <li>{{ pessoa.nome }}@if (pessoa.principal) { <span class="inline-block rounded font-semibold px-2 text-xs bg-light text-muted">Principal</span> } <span class="text-xs text-muted">· {{ pessoa.situacao }}@for (dado of preenchidos(pessoa); track dado) { · {{ dado }} }</span></li>
                         }
                       </ul>
                     }
                   </mat-card-content></mat-card>
                 }
+                </app-convidados-topo>
               </div></mat-tab>
             }
           </mat-tab-group>
@@ -190,6 +207,12 @@ export class CasalPage implements OnInit {
   protected readonly dados = signal<CasalLeitura | null>(null);
   /** Convites nascem recolhidos; clicar mostra os convidados (SPEC-059). */
   private readonly abertos = signal<ReadonlySet<string>>(new Set());
+  /** Filtro da aba Convidados, aplicado na tela com as regras da organizadora (SPEC-059 §6.5). */
+  protected readonly filtro = signal<FiltroDeConvites>({ nome: '', situacao: '', telefone: '', observacao: '', somenteConfirmados: false });
+  protected readonly convitesFiltrados = computed(() => filtrarConvites(this.dados()?.convites ?? [], this.filtro()));
+  protected readonly porSituacao = computed(() =>
+    contarPorSituacao((this.dados()?.convites ?? []).flatMap((convite) => convite.convidados.map((pessoa) => pessoa.situacao))));
+  protected readonly encerrado = (prazo: string | null) => prazoEncerrado(prazo);
   protected readonly carregando = signal(true);
   protected readonly indisponivel = signal(false);
   protected readonly grupos = computed(() => pagamentosPorMes(this.dados()?.financeiro?.pagamentosFornecedores ?? []));
@@ -206,6 +229,43 @@ export class CasalPage implements OnInit {
         this.indisponivel.set(true);
         this.carregando.set(false);
       },
+    });
+  }
+
+  protected abrirPrazo(atual: string | null): void {
+    this.dialog.open(DataConvitesDialog, { ...DIALOG_PEQUENO, data: DADOS_PRAZO(atual) }).afterClosed()
+      .subscribe((resposta?: { data: string | null }) => {
+        if (resposta) this.aplicar(this.casal.definirPrazoRsvp(this.token, resposta.data), 'Prazo salvo.');
+      });
+  }
+
+  protected abrirEnvio(atual: string | null): void {
+    this.dialog.open(DataConvitesDialog, { ...DIALOG_PEQUENO, data: DADOS_ENVIO(atual) }).afterClosed()
+      .subscribe((resposta?: { data: string | null }) => {
+        if (resposta) this.aplicar(this.casal.definirEnvioConvites(this.token, resposta.data), 'Data de envio salva.');
+      });
+  }
+
+  protected abrirPresencas(): void {
+    this.casal.presencas(this.token).subscribe({
+      next: (itens) => this.dialog.open(PresencasDialog, { ...DIALOG, data: itens }),
+      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+    });
+  }
+
+  protected abrirPlanilha(): void {
+    const dados: PlanilhaInstrucoesDados = { baixar: () => this.casal.planilha(this.token) };
+    this.dialog.open(PlanilhaInstrucoesDialog, { ...DIALOG, data: dados });
+  }
+
+  /** Fila de importações (SPEC-059 §6.6); ao fechar depois de uma importação concluída, recarrega a lista. */
+  protected abrirImportacoes(): void {
+    const dados: ImportacoesDados = {
+      listar: () => this.casal.importacoes(this.token),
+      enviar: (arquivo) => this.casal.importar(this.token, arquivo),
+    };
+    this.dialog.open(ImportacoesDialog, { ...DIALOG, data: dados }).afterClosed().subscribe((importou?: boolean) => {
+      if (importou) this.casal.obter(this.token).subscribe((leitura) => this.dados.set(leitura));
     });
   }
 
@@ -324,6 +384,6 @@ export function conviteDoFormulario(convite: ConviteCasal): ConviteDoFormulario 
     nome: convite.nome,
     email: convite.email,
     excecaoPrazoRsvp: convite.excecaoPrazoRsvp,
-    convidados: convite.convidados.map((pessoa) => ({ id: pessoa.id, nome: pessoa.nome, ddi: pessoa.ddi, celular: pessoa.celular })),
+    convidados: convite.convidados.map((pessoa) => ({ id: pessoa.id, nome: pessoa.nome, ddi: pessoa.ddi, celular: pessoa.celular, genero: pessoa.genero, faixa: pessoa.faixa, principal: pessoa.principal })),
   };
 }

@@ -68,6 +68,11 @@ public static class Dependencias
         services.AddScoped<TarefaServico>();
         services.AddScoped<ClienteServico>();
         services.AddScoped<ConviteServico>();
+        services.AddScoped<IDadosImportacao, DadosImportacaoEf>();
+        services.AddScoped<ImportacaoServico>();
+        services.AddSingleton<Convidados.SinalImportacao>();
+        services.AddSingleton<ISinalImportacao>(provedor => provedor.GetRequiredService<Convidados.SinalImportacao>());
+        services.AddHostedService<Convidados.ProcessadorImportacoes>();
         services.AddScoped<AgendaServico>();
         services.AddScoped<OportunidadeServico>();
         services.AddScoped<EstagioFunilServico>();

@@ -37,6 +37,12 @@ public static class CasalEndpoints
         casal.MapPost("/convites", CriarConvite);
         casal.MapPut("/convites/{conviteId:guid}", AtualizarConvite);
         casal.MapGet("/arquivos/{arquivoId:guid}", Arquivo);
+        casal.MapPut("/prazo-rsvp", DefinirPrazoRsvp);
+        casal.MapPut("/envio-convites", DefinirEnvioConvites);
+        casal.MapGet("/presencas", Presencas);
+        casal.MapGet("/convites/planilha", Planilha);
+        casal.MapPost("/convites/importar", Importar).DisableAntiforgery();
+        casal.MapGet("/convites/importacoes", Importacoes);
     }
 
     private static Task<IResult> Obter(Guid id, ClaimsPrincipal usuario, LinkCasalServico servico, CancellationToken ct) =>
@@ -53,6 +59,43 @@ public static class CasalEndpoints
 
     private static Task<IResult> LerCasal(string token, LinkCasalServico servico, CancellationToken ct) =>
         De(servico.LerCasalAsync(token, ct));
+
+    private static Task<IResult> DefinirPrazoRsvp(string token, PrazoRsvpPedido pedido, LinkCasalServico servico, CancellationToken ct) =>
+        De(servico.DefinirPrazoRsvpAsync(token, pedido.Prazo, Hoje(), ct));
+
+    private static Task<IResult> DefinirEnvioConvites(string token, EnvioConvitesPedido pedido, LinkCasalServico servico, CancellationToken ct) =>
+        De(servico.DefinirEnvioConvitesAsync(token, pedido.Data, ct));
+
+    private static Task<IResult> Presencas(string token, LinkCasalServico servico, CancellationToken ct) =>
+        De(servico.ListarPresencasAsync(token, ct));
+
+    private static async Task<IResult> Planilha(string token, LinkCasalServico servico, CancellationToken ct)
+    {
+        var modelo = await servico.ModeloPlanilhaAsync(token, ct);
+        return modelo.Ok
+            ? Results.File(modelo.Valor!, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "convidados.xlsx")
+            : Falha(modelo.Falha!);
+    }
+
+    private static async Task<IResult> Importar(string token, HttpRequest request, LinkCasalServico servico, CancellationToken ct)
+    {
+        if (!request.HasFormContentType)
+        {
+            return Falha(new Falha(Codigos.Validacao, "Envie uma planilha .xlsx ou .xls."));
+        }
+
+        var arquivo = (await request.ReadFormAsync(ct)).Files.GetFile("arquivo");
+        if (arquivo is null || arquivo.Length == 0 || arquivo.Length > ImportacaoServico.TamanhoMaximo)
+        {
+            return Falha(new Falha(Codigos.Validacao, "Envie uma planilha .xlsx ou .xls de até 10 MB."));
+        }
+
+        await using var fluxo = arquivo.OpenReadStream();
+        return await De(servico.EnfileirarImportacaoAsync(token, fluxo, arquivo.FileName, DateTimeOffset.UtcNow, ct));
+    }
+
+    private static Task<IResult> Importacoes(string token, LinkCasalServico servico, CancellationToken ct) =>
+        De(servico.ListarImportacoesAsync(token, ct));
 
     private static Task<IResult> CriarConvite(string token, FormularioConvitePedido pedido, LinkCasalServico servico, CancellationToken ct) =>
         De(servico.CriarConviteAsync(token, pedido, ct));

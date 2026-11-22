@@ -1,16 +1,16 @@
 namespace Project.Application.Convidados;
 
+/// <summary>Linha lida da planilha (SPEC-059). Mesa e custo não vêm mais da planilha.</summary>
 public sealed record LinhaPlanilha(
     string? Convite,
     string? Ddi,
     string? Telefone,
     string? Observacao,
     string? Convidado,
+    string? Principal,
     string? Genero,
     string? Faixa,
-    string? Custo,
     string? Situacao,
-    string? Mesa,
     int Linha = 0);
 
 public interface IPlanilhaConvites

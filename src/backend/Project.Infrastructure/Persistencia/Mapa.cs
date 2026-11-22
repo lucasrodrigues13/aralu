@@ -104,6 +104,16 @@ public static class Mapa
         linkPortaria.HasIndex(item => item.EventoId).IsUnique();
         linkPortaria.HasOne<Evento>().WithMany().HasForeignKey(item => item.EventoId).OnDelete(DeleteBehavior.Cascade);
 
+        var importacao = modelBuilder.Entity<ImportacaoConvidados>();
+        importacao.ToTable("ImportacoesConvidados");
+        importacao.Property(item => item.ContaId).HasMaxLength(450);
+        importacao.Property(item => item.NomeArquivo).HasMaxLength(260);
+        importacao.Property(item => item.ObservacaoFixa).HasMaxLength(200);
+        importacao.Property(item => item.Situacao).HasConversion<string>().HasMaxLength(20);
+        importacao.HasIndex(item => new { item.EventoId, item.CriadaEm });
+        importacao.HasIndex(item => item.Situacao);
+        importacao.HasOne<Evento>().WithMany().HasForeignKey(item => item.EventoId).OnDelete(DeleteBehavior.Cascade);
+
         modelBuilder.Entity<Convite>().HasIndex(convite => convite.Token).IsUnique();
         modelBuilder.Entity<Convite>().HasOne<Evento>().WithMany().HasForeignKey(convite => convite.EventoId).OnDelete(DeleteBehavior.Cascade);
         modelBuilder.Entity<Convite>().HasMany(convite => convite.Convidados).WithOne().HasForeignKey(convidado => convidado.ConviteId).OnDelete(DeleteBehavior.Cascade);
