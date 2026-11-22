@@ -11,6 +11,12 @@ namespace Project.IntegrationTests.Suporte;
 
 public sealed class FabricaApi : WebApplicationFactory<Program>
 {
+    static FabricaApi()
+    {
+        // O atraso de appsettings.Development.json é só para ver Pendente e Processando na tela.
+        Environment.SetEnvironmentVariable("Importacao__AtrasoSegundos", "0");
+    }
+
     private readonly string _conexao;
     private readonly bool _bootstrap;
     private readonly string? _adminEmail;

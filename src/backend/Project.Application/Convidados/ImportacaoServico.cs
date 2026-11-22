@@ -22,6 +22,9 @@ public interface IDadosImportacao
 
     Task<IReadOnlyList<ImportacaoConvidados>> ListarAsync(string contaId, Guid eventoId, int quantidade, CancellationToken ct);
 
+    /// <summary>Há alguma importação Pendente na fila.</summary>
+    Task<bool> TemPendenteAsync(CancellationToken ct);
+
     /// <summary>A Pendente mais antiga, já marcada como Processando (ou nula se não há).</summary>
     Task<ImportacaoConvidados?> PegarProximaAsync(DateTimeOffset agora, CancellationToken ct);
 
@@ -107,13 +110,32 @@ public sealed class ImportacaoServico(IDadosImportacao dados, ConviteServico con
         return Resultado<IReadOnlyList<ImportacaoLeitura>>.Sucesso(lista.Select(Ler).ToArray());
     }
 
-    /// <summary>Processa a próxima Pendente. Devolve falso quando a fila está vazia.</summary>
-    public async Task<bool> ProcessarProximaAsync(Func<DateTimeOffset> agora, CancellationToken ct)
+    /// <summary>
+    /// Processa a próxima Pendente. Devolve falso quando a fila está vazia.
+    /// <paramref name="atraso"/>, se maior que zero, segura a importação em Pendente e de novo em Processando
+    /// para a tela conseguir mostrar a troca (a consulta é a cada 2 segundos). Zero no uso normal.
+    /// </summary>
+    public async Task<bool> ProcessarProximaAsync(Func<DateTimeOffset> agora, CancellationToken ct, TimeSpan atraso = default)
     {
+        if (atraso > TimeSpan.Zero && !await dados.TemPendenteAsync(ct))
+        {
+            return false;
+        }
+
+        if (atraso > TimeSpan.Zero)
+        {
+            await Task.Delay(atraso, ct);
+        }
+
         var importacao = await dados.PegarProximaAsync(agora(), ct);
         if (importacao is null)
         {
             return false;
+        }
+
+        if (atraso > TimeSpan.Zero)
+        {
+            await Task.Delay(atraso, ct);
         }
 
         ResultadoImportacao resultado;

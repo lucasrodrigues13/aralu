@@ -42,6 +42,9 @@ public sealed class DadosImportacaoEf(AppDbContext banco) : IDadosImportacao
             })
             .ToListAsync(ct);
 
+    public Task<bool> TemPendenteAsync(CancellationToken ct) =>
+        banco.ImportacoesConvidados.AnyAsync(item => item.Situacao == SituacaoImportacao.Pendente, ct);
+
     public async Task<ImportacaoConvidados?> PegarProximaAsync(DateTimeOffset agora, CancellationToken ct)
     {
         var proxima = await banco.ImportacoesConvidados
