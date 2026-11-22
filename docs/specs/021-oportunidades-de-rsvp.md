@@ -16,7 +16,7 @@ RF-075, no recorte de oportunidades de RSVP e integração do RSVP com o funil. 
 
 ## 4. Atores e permissões
 
-O `Organizer` lista e age sobre os leads RSVP da própria conta. Outro `Organizer` não vê. `Admin` acessa qualquer conta. `Client` não acessa. Quem responde o link de presença permanece na SPEC-004, sem login de Organizer. Assistente e fornecedor com login ficam fora.
+O `Organizer` lista e age sobre os leads RSVP da própria conta. Outro `Organizer` não vê. `Admin` acessa qualquer conta. O cliente não entra na plataforma (SPEC-060). Quem responde o link de presença permanece na SPEC-004, sem login de Organizer. Assistente e fornecedor com login ficam fora.
 
 ## 5. Pré-condições
 

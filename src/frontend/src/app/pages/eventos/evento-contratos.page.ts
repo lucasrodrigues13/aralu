@@ -10,7 +10,7 @@ import { ToastService } from '../../core/toast.service';
 import { EventoAbasComponent } from './evento-abas.component';
 import { montarContratosDoEvento } from './contratos-do-evento';
 
-/** Aba Contratos do evento: contratos de fornecedor enviados ao sistema, pelo organizador ou pelo casal (SPEC-048). */
+/** Aba Contratos do evento: contratos de fornecedor enviados ao sistema, pelo organizador ou pelo cliente (SPEC-048). */
 @Component({
   selector: 'app-evento-contratos',
   imports: [DatePipe, MatCardModule, MatButtonModule, MatIconModule, EventoAbasComponent],

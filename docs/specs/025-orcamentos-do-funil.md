@@ -18,7 +18,7 @@ RF-075, no recorte de orçamentos do funil. Modelo de orçamento é a SPEC-027. 
 
 ## 4. Atores e permissões
 
-O `Organizer` opera os orçamentos da própria conta. Outro `Organizer` não vê. `Admin` acessa qualquer conta. `Client` não acessa o funil neste corte. Assistente e fornecedor com login ficam fora.
+O `Organizer` opera os orçamentos da própria conta. Outro `Organizer` não vê. `Admin` acessa qualquer conta. O cliente não entra na plataforma (SPEC-060). Assistente e fornecedor com login ficam fora.
 
 ## 5. Pré-condições
 

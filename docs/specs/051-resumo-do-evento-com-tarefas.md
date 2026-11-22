@@ -12,7 +12,7 @@ Ter uma aba a menos no evento: a lista de tarefas, com todas as ações que ela 
 
 ## 3. Requisitos relacionados
 
-RF-061 (tarefas), RF-056 (visibilidade para o casal), SPEC-003 v4 (checklist com prazo e responsável), SPEC-008 (resumo e alertas).
+RF-061 (tarefas), RF-056 (visibilidade para o cliente), SPEC-003 v4 (checklist com prazo e responsável), SPEC-008 (resumo e alertas).
 
 ## 4. Atores e permissões
 

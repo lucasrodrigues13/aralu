@@ -90,7 +90,7 @@ export class TarefaFunilDialog implements OnInit {
   private readonly campoObservacao = viewChild<ElementRef<HTMLTextAreaElement>>('observacao');
   protected readonly oportunidades = signal<Oportunidade[]>([]);
   protected readonly opcoes = signal<OpcaoResponsavel[]>(
-    opcoesResponsavel([], 'Eu').filter((opcao) => opcao.valor !== 'Casal'),
+    opcoesResponsavel([], 'Eu').filter((opcao) => opcao.valor !== 'Cliente'),
   );
   protected readonly form = this.fb.nonNullable.group({
     titulo: [this.dados?.titulo ?? '', Validators.required],
@@ -105,7 +105,7 @@ export class TarefaFunilDialog implements OnInit {
     this.negocio.oportunidades().subscribe({ next: (lista) => this.oportunidades.set(lista) });
     const atuais = (this.dados?.responsaveis ?? []).map((item) => chaveResponsavel(item));
     this.assistentes.nomes().subscribe({
-      next: (nomes) => this.opcoes.set(opcoesResponsavel(nomes, 'Eu', atuais).filter((opcao) => opcao.valor !== 'Casal')),
+      next: (nomes) => this.opcoes.set(opcoesResponsavel(nomes, 'Eu', atuais).filter((opcao) => opcao.valor !== 'Cliente')),
       error: () => undefined,
     });
   }

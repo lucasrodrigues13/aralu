@@ -47,7 +47,6 @@ public class ContaFluxoTests
         Assert.False(usuario.EmailConfirmed);
         Assert.True(await usuarios.IsInRoleAsync(usuario, Papeis.Organizer));
         Assert.False(await usuarios.IsInRoleAsync(usuario, Papeis.Admin));
-        Assert.False(await usuarios.IsInRoleAsync(usuario, Papeis.Client));
         Assert.Null(usuario.OrganizerId);
     }
 
@@ -94,7 +93,6 @@ public class ContaFluxoTests
         Assert.Equal(HttpStatusCode.OK, entrada.StatusCode);
         Assert.NotNull(sessao);
         Assert.Contains(Papeis.Organizer, sessao.Papeis);
-        Assert.DoesNotContain(Papeis.Client, sessao.Papeis);
         Assert.DoesNotContain(Senha, await entrada.Content.ReadAsStringAsync(), StringComparison.Ordinal);
 
         cliente.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", sessao.Token);
@@ -365,7 +363,7 @@ public class ContaFluxoTests
     }
 
     [Fact]
-    public async Task Bootstrap_garante_as_tres_roles_e_client_vinculado_acessa_tenant_sem_admin()
+    public async Task Bootstrap_garante_os_papeis_da_plataforma()
     {
         var adminEmail = Unico();
         await using var fabrica = new FabricaApi(_banco.Conexao, bootstrap: true, adminEmail: adminEmail, adminSenha: Senha);
@@ -375,47 +373,24 @@ public class ContaFluxoTests
         var roles = escopo.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
         Assert.True(await roles.RoleExistsAsync(Papeis.Admin));
         Assert.True(await roles.RoleExistsAsync(Papeis.Organizer));
-        Assert.True(await roles.RoleExistsAsync(Papeis.Client));
-
-        var usuarios = escopo.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-        var organizer = new ApplicationUser { UserName = Unico(), Email = Unico(), EmailConfirmed = true };
-        Assert.True((await usuarios.CreateAsync(organizer, Senha)).Succeeded);
-        Assert.True((await usuarios.AddToRoleAsync(organizer, Papeis.Organizer)).Succeeded);
-
-        var client = new ApplicationUser { UserName = Unico(), Email = Unico(), EmailConfirmed = true };
-        client.VincularAoOrganizer(organizer.Id);
-        Assert.True((await usuarios.CreateAsync(client, Senha)).Succeeded);
-        Assert.True((await usuarios.AddToRoleAsync(client, Papeis.Client)).Succeeded);
-
-        var http = fabrica.CreateClient();
-        var entrada = await http.PostAsJsonAsync("/api/v1/conta/entrar", new { email = client.Email, senha = Senha });
-        var sessao = await entrada.Content.ReadFromJsonAsync<Sessao>();
-        Assert.Equal(HttpStatusCode.OK, entrada.StatusCode);
-        Assert.NotNull(sessao);
-        Assert.Contains(Papeis.Client, sessao.Papeis);
-        Assert.DoesNotContain(Papeis.Admin, sessao.Papeis);
-
-        http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", sessao.Token);
-        Assert.Equal(HttpStatusCode.Forbidden, (await http.GetAsync("/api/v1/admin/area")).StatusCode);
-        Assert.Equal(HttpStatusCode.OK, (await http.GetAsync("/api/v1/conta/area")).StatusCode);
+        Assert.True(await roles.RoleExistsAsync(Papeis.Assistant));
     }
 
     [Fact]
-    public async Task Client_sem_organizer_nao_completa_login()
+    public async Task Conta_sem_papel_da_plataforma_nao_completa_login()
     {
         await using var escopo = _banco.Fabrica.Services.CreateAsyncScope();
         var usuarios = escopo.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-        var client = new ApplicationUser
+        var solta = new ApplicationUser
         {
             UserName = Unico(),
             Email = Unico(),
             EmailConfirmed = true,
         };
-        Assert.True((await usuarios.CreateAsync(client, Senha)).Succeeded);
-        Assert.True((await usuarios.AddToRoleAsync(client, Papeis.Client)).Succeeded);
+        Assert.True((await usuarios.CreateAsync(solta, Senha)).Succeeded);
 
         var http = _banco.Fabrica.CreateClient();
-        var entrada = await http.PostAsJsonAsync("/api/v1/conta/entrar", new { email = client.Email, senha = Senha });
+        var entrada = await http.PostAsJsonAsync("/api/v1/conta/entrar", new { email = solta.Email, senha = Senha });
         Assert.Equal(HttpStatusCode.Unauthorized, entrada.StatusCode);
     }
 

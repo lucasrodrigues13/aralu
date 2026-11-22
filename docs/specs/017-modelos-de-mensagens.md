@@ -21,7 +21,7 @@ Fora: RF-079. Assistente. Fornecedor com login. Mensagens do funil (SPEC de funi
 | Ator | Pode |
 |---|---|
 | Organizer | CRUD dos modelos de mensagem da própria conta. |
-| Client | Não edita a biblioteca. |
+| Cliente | Não entra na plataforma (SPEC-060). |
 | Admin | Acessa modelos de qualquer conta. |
 | Visitante | Não acessa. |
 

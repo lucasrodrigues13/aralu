@@ -17,7 +17,7 @@ public sealed class ImportacaoConvidados
     /// <summary>Conteúdo da planilha; esvaziado ao terminar o processamento.</summary>
     public byte[] Arquivo { get; set; } = [];
 
-    /// <summary>Observação gravada nos convites importados pelo link do cliente ("Preenchido pelo casal").</summary>
+    /// <summary>Observação gravada nos convites importados pelo link do cliente ("Preenchido pelo cliente").</summary>
     public string? ObservacaoFixa { get; set; }
 
     public SituacaoImportacao Situacao { get; set; } = SituacaoImportacao.Pendente;

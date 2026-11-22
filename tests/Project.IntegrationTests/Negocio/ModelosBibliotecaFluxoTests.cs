@@ -29,7 +29,7 @@ public class ModelosBibliotecaFluxoTests
                 new
                 {
                     titulo = "Geral",
-                    descricao = "Sobre o casal",
+                    descricao = "Sobre o cliente",
                     perguntas = new[] { new { enunciado = "Quantos convidados?", tipo = "TextoCurto" } },
                 },
             },

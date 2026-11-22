@@ -189,7 +189,7 @@ Decididos em 20/11/2026: o usuário aprovou todas as sugestões. A decisão de c
 12. **Onde fica a tela Assistentes.** (Decidido: Item "Assistentes" no grupo Principal do menu, logo abaixo de Perfil, só para a dona. Quando a spec de equipe existir, vira uma aba da tela Equipe.)
 13. **Hoje sem financeiro (SPEC-007 §17, ponto 4):** ocultar os cartões ou mostrar zero? (Decidido: Ocultar.)
 14. **A dona vê o que cada assistente fez?** (Decidido: Não nesta versão. O registro de quem fez o quê fica para depois.)
-15. **Contas `Client` antigas.** A role `Client` deixou de existir (RF-024). (Decidido: Esta spec não mexe no acesso do casal; a retirada do `Client` entra na spec do link do casal, RF-056.)
+15. **Contas `Client` antigas.** A role `Client` deixou de existir (RF-024). (Decidido: Esta spec não mexe no acesso do cliente; a retirada do `Client` entra na spec do link do cliente, RF-056.) **Feito na [SPEC-060](060-cliente-sem-login-e-link-do-cliente.md):** o login recusa quem não é `Admin`, `Organizer` ou `Assistant`, e as contas antigas perderam o papel `Client`.
 
 ## 18. Como ficou no código (20/11/2026)
 
@@ -201,7 +201,7 @@ Implementada em três partes (A conta, B permissões, C "só os dela" e respons�
 4. **Fechado para a assistente (403):** Perfil, Assistentes (gestão), Contratos da conta (modelos), estágios do funil (PUT) e exclusão de fornecedor e de serviço da conta. Financeiro (Dinheiro do evento, Pagamentos, Budget, contratos do evento e dos modelos) só com "pode ver o financeiro".
 5. **Sem a permissão financeira:** resumo do evento sem valores, evento sem orçamento estimado, fornecedor sem faixa de preço, Hoje sem cobranças nem pagamentos (o servidor zera e a tela oculta os cartões), abas Dinheiro e Contratos e menu Pagamentos ocultos.
 6. **Só os dela:** tabela `EventosAssistentes`. Filtro nas listas de Eventos, Tarefas, Hoje e Agenda; rotas de evento, tarefa, convite e convidado de outro evento respondem 404. O evento criado por uma assistente já nasce com ela marcada. A dona marca as assistentes no modal "Editar evento".
-7. **Responsáveis:** o seletor da tarefa do evento lista a dona, o casal e as assistentes ativas; assistente removida continua na tarefa com o selo "(removida)".
+7. **Responsáveis:** o seletor da tarefa do evento lista a dona, o cliente e as assistentes ativas; assistente removida continua na tarefa com o selo "(removida)".
 8. **Minha conta:** a assistente edita nome, celular, nascimento e senha; o menu mostra "Assistente de <empresa>".
 
 Ainda falta, com as decisões do usuário (20/11/2026). **Cada passo roda em uma sessão própria, sem conferir no navegador** (só build e testes). Uma sessão nova deve ler só esta seção e o código apontado. Os passos são independentes; ordem sugerida: 1, 2, 4, 3. Ao terminar um passo: rodar os testes, trocar `[ ]` por `[x]` aqui, atualizar o Passo 1 de [proximas-acoes.md](../proximas-acoes.md) e commitar na `main`.

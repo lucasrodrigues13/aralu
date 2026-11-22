@@ -57,7 +57,7 @@ public class ContaSemBancoTests
     }
 
     [Fact]
-    public void Jwt_de_client_inclui_organizer_id()
+    public void Jwt_de_assistente_inclui_organizer_id()
     {
         var emissor = new EmissorJwt(Options.Create(new JwtOpcoes
         {
@@ -67,10 +67,10 @@ public class ContaSemBancoTests
             ExpiryHours = 8,
         }));
 
-        var token = emissor.Emitir("client-1", "client@aralu.test", [Papeis.Client], "organizer-9");
+        var token = emissor.Emitir("assistente-1", "assistente@aralu.test", [Papeis.Assistant], "organizer-9");
         var jwt = new JwtSecurityTokenHandler().ReadJwtToken(token);
 
-        Assert.Contains(jwt.Claims, claim => claim.Type == ClaimTypes.Role && claim.Value == Papeis.Client);
+        Assert.Contains(jwt.Claims, claim => claim.Type == ClaimTypes.Role && claim.Value == Papeis.Assistant);
         Assert.Contains(jwt.Claims, claim => claim.Type == ContaClaims.OrganizerId && claim.Value == "organizer-9");
     }
 
@@ -85,16 +85,13 @@ public class ContaSemBancoTests
     }
 
     [Fact]
-    public void Client_exige_vinculo_com_organizer()
+    public void Assistente_exige_vinculo_com_organizer()
     {
-        var client = new ApplicationUser { Id = "client-1" };
+        var assistente = new ApplicationUser { Id = "assistente-1" };
+        Assert.Throws<InvalidOperationException>(() => assistente.VincularAoOrganizer(""));
+        Assert.Throws<InvalidOperationException>(() => assistente.VincularAoOrganizer("assistente-1"));
 
-        Assert.Throws<InvalidOperationException>(() => client.GarantirVinculoClient());
-        Assert.Throws<InvalidOperationException>(() => client.VincularAoOrganizer(""));
-        Assert.Throws<InvalidOperationException>(() => client.VincularAoOrganizer("client-1"));
-
-        client.VincularAoOrganizer("organizer-1");
-        Assert.Equal("organizer-1", client.OrganizerId);
-        client.GarantirVinculoClient();
+        assistente.VincularAoOrganizer("organizer-1");
+        Assert.Equal("organizer-1", assistente.OrganizerId);
     }
 }

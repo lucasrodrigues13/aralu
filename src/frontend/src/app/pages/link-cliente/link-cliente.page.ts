@@ -7,7 +7,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTabsModule } from '@angular/material/tabs';
 import { Observable } from 'rxjs';
-import { CasalClient, CasalLeitura, ConviteCasal } from '../../core/casal.client';
+import { LinkClienteClient, PaginaClienteLeitura, ConviteDoLink } from '../../core/link-cliente.client';
 import { ConviteDoFormulario, PedidoConvite } from '../../core/convite-formulario';
 import { ComprovantePagamento, PagamentoFornecedor, ParcelaPagamento, refazerPerdePagamentos } from '../../core/dinheiro.client';
 import { mensagemDeErro } from '../../core/mensagem-erro';
@@ -29,9 +29,9 @@ import { pagamentosPorMes } from '../dinheiro/pagamentos-por-mes';
 import { ParcelarPagamentoDialog } from '../dinheiro/parcelar-pagamento.dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
-/** Página do casal, sem login (SPEC-046): acompanha e atualiza o financeiro do evento quando a organizadora libera. */
+/** Página do cliente, sem login (SPEC-046): acompanha e atualiza o financeiro do evento quando a organizadora libera. */
 @Component({
-  selector: 'app-casal',
+  selector: 'app-cliente',
   imports: [MatCardModule, MatButtonModule, MatCheckboxModule, MatIconModule, MatTabsModule, GdDataPipe, GdDinheiroPipe, ConvidadosTopoComponent, MatTooltipModule],
   template: `
     <main class="pagina">
@@ -199,13 +199,13 @@ import { MatTooltipModule } from '@angular/material/tooltip';
     .acoes { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 4px 8px; margin-top: 8px; }
   `,
 })
-export class CasalPage implements OnInit {
-  private readonly casal = inject(CasalClient);
+export class LinkClientePage implements OnInit {
+  private readonly cliente = inject(LinkClienteClient);
   private readonly rota = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
   private readonly toast = inject(ToastService);
   protected readonly status = STATUS;
-  protected readonly dados = signal<CasalLeitura | null>(null);
+  protected readonly dados = signal<PaginaClienteLeitura | null>(null);
   /** Convites nascem recolhidos; clicar mostra os convidados (SPEC-059). */
   private readonly abertos = signal<ReadonlySet<string>>(new Set());
   /** Filtro da aba Convidados, aplicado na tela com as regras da organizadora (SPEC-059 §6.5). */
@@ -221,7 +221,7 @@ export class CasalPage implements OnInit {
 
   ngOnInit(): void {
     this.token = this.rota.snapshot.paramMap.get('token') ?? '';
-    this.casal.obter(this.token).subscribe({
+    this.cliente.obter(this.token).subscribe({
       next: (dados) => {
         this.dados.set(dados);
         this.carregando.set(false);
@@ -236,37 +236,37 @@ export class CasalPage implements OnInit {
   protected abrirPrazo(atual: string | null): void {
     this.dialog.open(DataConvitesDialog, { ...DIALOG_PEQUENO, data: DADOS_PRAZO(atual) }).afterClosed()
       .subscribe((resposta?: { data: string | null }) => {
-        if (resposta) this.aplicar(this.casal.definirPrazoRsvp(this.token, resposta.data), 'Prazo salvo.');
+        if (resposta) this.aplicar(this.cliente.definirPrazoRsvp(this.token, resposta.data), 'Prazo salvo.');
       });
   }
 
   protected abrirEnvio(atual: string | null): void {
     this.dialog.open(DataConvitesDialog, { ...DIALOG_PEQUENO, data: DADOS_ENVIO(atual) }).afterClosed()
       .subscribe((resposta?: { data: string | null }) => {
-        if (resposta) this.aplicar(this.casal.definirEnvioConvites(this.token, resposta.data), 'Data de envio salva.');
+        if (resposta) this.aplicar(this.cliente.definirEnvioConvites(this.token, resposta.data), 'Data de envio salva.');
       });
   }
 
   protected abrirPresencas(): void {
-    this.casal.presencas(this.token).subscribe({
+    this.cliente.presencas(this.token).subscribe({
       next: (itens) => this.dialog.open(PresencasDialog, { ...DIALOG, data: itens }),
       error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
     });
   }
 
   protected abrirPlanilha(): void {
-    const dados: PlanilhaInstrucoesDados = { baixar: () => this.casal.planilha(this.token) };
+    const dados: PlanilhaInstrucoesDados = { baixar: () => this.cliente.planilha(this.token) };
     this.dialog.open(PlanilhaInstrucoesDialog, { ...DIALOG, data: dados });
   }
 
   /** Fila de importações (SPEC-059 §6.6); ao fechar depois de uma importação concluída, recarrega a lista. */
   protected abrirImportacoes(): void {
     const dados: ImportacoesDados = {
-      listar: () => this.casal.importacoes(this.token),
-      enviar: (arquivo) => this.casal.importar(this.token, arquivo),
+      listar: () => this.cliente.importacoes(this.token),
+      enviar: (arquivo) => this.cliente.importar(this.token, arquivo),
     };
     this.dialog.open(ImportacoesDialog, { ...DIALOG, data: dados }).afterClosed().subscribe((importou?: boolean) => {
-      if (importou) this.casal.obter(this.token).subscribe((leitura) => this.dados.set(leitura));
+      if (importou) this.cliente.obter(this.token).subscribe((leitura) => this.dados.set(leitura));
     });
   }
 
@@ -281,20 +281,20 @@ export class CasalPage implements OnInit {
     this.abertos.set(abertos);
   }
 
-  protected resumo(convite: ConviteCasal): string {
+  protected resumo(convite: ConviteDoLink): string {
     return resumoDosConvidados(convite.convidados.map((pessoa) => pessoa.situacao));
   }
 
-  protected preenchidos(pessoa: ConviteCasal['convidados'][number]): string[] {
+  protected preenchidos(pessoa: ConviteDoLink['convidados'][number]): string[] {
     return dadosPreenchidos(pessoa);
   }
 
-  protected abrirConvite(convite: ConviteCasal | null): void {
+  protected abrirConvite(convite: ConviteDoLink | null): void {
     const dados: ConviteFormDados = { convite: convite ? conviteDoFormulario(convite) : null, mostrarObservacao: false };
     this.dialog.open(ConviteFormDialog, { ...DIALOG, data: dados }).afterClosed().subscribe((pedido?: PedidoConvite) => {
       if (!pedido) return;
-      if (convite) this.aplicar(this.casal.atualizarConvite(this.token, convite.id, pedido), 'Convite salvo.');
-      else this.aplicar(this.casal.criarConvite(this.token, pedido), 'Convite cadastrado.');
+      if (convite) this.aplicar(this.cliente.atualizarConvite(this.token, convite.id, pedido), 'Convite salvo.');
+      else this.aplicar(this.cliente.criarConvite(this.token, pedido), 'Convite cadastrado.');
     });
   }
 
@@ -306,50 +306,50 @@ export class CasalPage implements OnInit {
 
   protected parcelar(pagamento: PagamentoFornecedor): void {
     this.dialog.open(ParcelarPagamentoDialog, { ...DIALOG, data: pagamento }).afterClosed().subscribe((pedido) => {
-      if (pedido) this.aplicar(this.casal.parcelar(this.token, pagamento.servicoId, pedido), 'Parcelamento salvo.');
+      if (pedido) this.aplicar(this.cliente.parcelar(this.token, pagamento.servicoId, pedido), 'Parcelamento salvo.');
     });
   }
 
   protected removerParcelamento(pagamento: PagamentoFornecedor): void {
     this.confirmar('Remover parcelamento', `Voltar "${pagamento.servico}" a um pagamento só, sem parcelas?`, 'Remover', () =>
-      this.aplicar(this.casal.removerParcelamento(this.token, pagamento.servicoId), 'Parcelamento removido.'));
+      this.aplicar(this.cliente.removerParcelamento(this.token, pagamento.servicoId), 'Parcelamento removido.'));
   }
 
   protected marcarPagamento(pagamento: PagamentoFornecedor, pago: boolean): void {
-    this.aplicar(this.casal.marcarPagamento(this.token, pagamento.servicoId, pago), pago ? 'Pagamento marcado como pago.' : 'Pagamento desfeito.');
+    this.aplicar(this.cliente.marcarPagamento(this.token, pagamento.servicoId, pago), pago ? 'Pagamento marcado como pago.' : 'Pagamento desfeito.');
   }
 
   protected marcarParcela(pagamento: PagamentoFornecedor, parcela: ParcelaPagamento, paga: boolean): void {
-    this.aplicar(this.casal.marcarParcela(this.token, pagamento.servicoId, parcela.id, paga), paga ? 'Parcela marcada como paga.' : 'Parcela desfeita.');
+    this.aplicar(this.cliente.marcarParcela(this.token, pagamento.servicoId, parcela.id, paga), paga ? 'Parcela marcada como paga.' : 'Parcela desfeita.');
   }
 
   protected enviarComprovante(pagamento: PagamentoFornecedor, parcela: ParcelaPagamento | null): void {
     this.dialog.open(ComprovanteDialog, DIALOG_PEQUENO).afterClosed().subscribe((arquivo?: File) => {
-      if (arquivo) this.aplicar(this.casal.enviarComprovante(this.token, pagamento.servicoId, parcela?.id ?? null, arquivo), 'Comprovante enviado.');
+      if (arquivo) this.aplicar(this.cliente.enviarComprovante(this.token, pagamento.servicoId, parcela?.id ?? null, arquivo), 'Comprovante enviado.');
     });
   }
 
   protected excluirComprovante(pagamento: PagamentoFornecedor, parcela: ParcelaPagamento | null): void {
     const nome = (parcela ?? pagamento).comprovante?.nome ?? 'comprovante';
     this.confirmar('Excluir comprovante', `Excluir "${nome}"? O arquivo é apagado.`, 'Excluir', () =>
-      this.aplicar(this.casal.excluirComprovante(this.token, pagamento.servicoId, parcela?.id ?? null), 'Comprovante excluído.'));
+      this.aplicar(this.cliente.excluirComprovante(this.token, pagamento.servicoId, parcela?.id ?? null), 'Comprovante excluído.'));
   }
 
   protected enviarContrato(pagamento: PagamentoFornecedor): void {
     this.dialog.open(ComprovanteDialog, { ...DIALOG_PEQUENO, data: { titulo: 'Enviar contrato assinado' } }).afterClosed().subscribe((arquivo?: File) => {
-      if (arquivo) this.aplicar(this.casal.enviarContratoAssinado(this.token, pagamento.servicoId, arquivo), 'Contrato assinado enviado.');
+      if (arquivo) this.aplicar(this.cliente.enviarContratoAssinado(this.token, pagamento.servicoId, arquivo), 'Contrato assinado enviado.');
     });
   }
 
   protected excluirContrato(pagamento: PagamentoFornecedor): void {
     const nome = pagamento.contratoAssinado?.nome ?? 'contrato';
     this.confirmar('Excluir contrato assinado', `Excluir "${nome}"? O arquivo é apagado.`, 'Excluir', () =>
-      this.aplicar(this.casal.excluirContratoAssinado(this.token, pagamento.servicoId), 'Contrato assinado excluído.'));
+      this.aplicar(this.cliente.excluirContratoAssinado(this.token, pagamento.servicoId), 'Contrato assinado excluído.'));
   }
 
   protected abrir(arquivo: ComprovantePagamento): void {
     const janela = window.open('', '_blank');
-    this.casal.baixarArquivo(this.token, arquivo.arquivoId).subscribe({
+    this.cliente.baixarArquivo(this.token, arquivo.arquivoId).subscribe({
       next: (blob) => {
         const url = URL.createObjectURL(blob);
         if (janela) janela.location.href = url; else window.open(url, '_blank');
@@ -368,7 +368,7 @@ export class CasalPage implements OnInit {
     });
   }
 
-  private aplicar(chamada: Observable<CasalLeitura>, sucesso: string): void {
+  private aplicar(chamada: Observable<PaginaClienteLeitura>, sucesso: string): void {
     chamada.subscribe({
       next: (dados) => {
         this.dados.set(dados);
@@ -379,8 +379,8 @@ export class CasalPage implements OnInit {
   }
 }
 
-/** Convite como o casal vê, no formato do formulário único (SPEC-059). Sem observação: o casal não a vê. */
-export function conviteDoFormulario(convite: ConviteCasal): ConviteDoFormulario {
+/** Convite como o cliente vê, no formato do formulário único (SPEC-059). Sem observação: o cliente não a vê. */
+export function conviteDoFormulario(convite: ConviteDoLink): ConviteDoFormulario {
   return {
     nome: convite.nome,
     email: convite.email,

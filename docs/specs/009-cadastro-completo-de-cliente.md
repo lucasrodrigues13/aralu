@@ -14,11 +14,11 @@ O cadastro de cliente (contato de negócio) passa a ter os campos vistos na refe
 
 ## 3. Requisitos relacionados
 
-RF-055. RF-056 fica fora do CRUD deste incremento: o portal e as permissões ainda não foram usados de ponta a ponta. E-mail de primeiro acesso dispara na referência; o envio real não foi executado neste teste. Quando RF-056 estiver Definido (e RFs correlatos), conceder login na plataforma cria ou vincula uma conta Identity `Client` ao Organizer; as flags inventariadas são: convidados, tarefas, anexos, parcelas, RSVP, mapa, contrato. Esta spec não inventa a matriz completa do portal além dessas flags.
+RF-055. O acesso do cliente é só o link público do evento, com token gerado pelo organizador (RF-056, SPEC-046 e [SPEC-060](060-cliente-sem-login-e-link-do-cliente.md)). Cadastrar um cliente não cria conta, não envia e-mail de primeiro acesso e não tem aba de acesso nem permissões.
 
 ## 4. Atores e permissões
 
-O Organizer cria, lista e edita os próprios clientes (contatos). Outro Organizer não vê. O contato não tem login neste incremento. Admin fica fora do miolo desta spec. A role `Client` não é o registro desta lista.
+O Organizer cria, lista e edita os próprios clientes (contatos). Outro Organizer não vê. O cliente não tem login na plataforma (SPEC-060). Admin fica fora do miolo desta spec.
 
 ## 5. Pré-condições
 
@@ -28,7 +28,7 @@ Organizer autenticado. Para vincular, evento da mesma conta, SPEC-002.
 
 1. Na lista da conta, o Organizer abre Adicionar cliente.
 2. Preenche os campos da seção 11, em três abas.
-3. Salva. A lista mostra nome, telefone, e-mail, eventos vinculados e último acesso.
+3. Salva. A lista mostra nome, telefone, e-mail e eventos vinculados.
 4. No evento, Gerenciar clientes oferece três caminhos: link para o próprio cliente se cadastrar, selecionar existente, cadastrar novo já vinculado.
 5. O cartão do cliente na lista aponta para os eventos vinculados.
 
@@ -38,17 +38,17 @@ Organizer autenticado. Para vincular, evento da mesma conta, SPEC-002.
 - E-mail inválido: não grava.
 - CEP completo: preenche país, endereço, estado, cidade e bairro. O CEP é o primeiro campo do endereço.
 - Sem evento vinculado: o cartão diz "Nenhum evento vinculado".
-- Cadastrar pelo evento: a referência avisa que o cliente será notificado do primeiro acesso.
+- Cadastrar pelo evento: a referência avisa que o cliente será notificado do primeiro acesso. Aqui não há notificação nem primeiro acesso: o cliente recebe o link do cliente quando a organizadora o envia (SPEC-060).
 
 ## 8. Regras de negócio
 
 - Cliente (contato) pertence à conta do Organizer. O evento só guarda o vínculo, como na SPEC-006.
 - O casal gravado no evento (SPEC-008) não cria cliente sozinho.
-- Papel (função no evento: Noiva, Noivo, etc.) é lista fechada, vista na tela: Anfitrião, Aniversariante, Avó, Avô, Comissão, Formando(a), Mãe, Noiva, Noivo, Pai, Promotor, Representante, Tia, Tio. Não confundir com a role Identity `Client`.
+- Papel (função no evento) é lista fechada, vista na tela: Anfitrião, Aniversariante, Avó, Avô, Comissão, Formando(a), Mãe, Noiva, Noivo, Pai, Promotor, Representante, Tia, Tio. O cadastro novo não vem com papel marcado: a organizadora escolhe, já que a plataforma atende vários tipos de evento (SPEC-060).
 - DDI padrão `+55`.
 - Um cliente pode estar em mais de um evento da conta.
 - Excluir: a lista tem lixeira; a consequência da exclusão nos vínculos não foi executada.
-- Distinção: o registro desta spec é pessoa ligada a eventos; a role Identity `Client` só entra quando o Organizer conceder login (RF-056).
+- Distinção: o registro desta spec é pessoa ligada a eventos, sem conta nem login. O que o cliente vê é decidido no link do cliente (SPEC-046, SPEC-052).
 
 ## 9. Validações
 
@@ -66,11 +66,11 @@ Redes: Facebook, Instagram.
 
 Endereço: CEP, país, endereço, número, estado, cidade, bairro, complemento.
 
-Lista: eventos vinculados e último acesso. Último acesso depende do portal, RF-056, e permanece sem regra própria aqui.
+Lista: eventos vinculados. Não há coluna de último acesso (o cliente não entra na plataforma).
 
 ## 12. Interface
 
-Lista com busca por nome. Modal de três abas. No evento, modal Gerenciar clientes com Clientes do evento, Permissões (vazia sem cliente) e Cadastrar novo cliente nas três opções da seção 6.
+Lista com busca por nome. Modal de três abas. No evento, modal Gerenciar clientes com Clientes do evento e Cadastrar novo cliente (sem aba Permissões: o cliente não tem login, SPEC-060) nas três opções da seção 6.
 
 ## 13. Erros
 
@@ -84,7 +84,7 @@ Campo inválido permanece no modal. Cliente ou evento de outra conta não revela
 4. Vincular pelo evento mostra o evento no cartão e o cliente na home.
 5. Desvincular tira os dois lados.
 6. Papel só aceita um valor da lista da seção 8.
-7. Não existe login de `Client` neste incremento.
+7. Não existe login de cliente (SPEC-060).
 
 ## 15. Cenários de teste
 
@@ -96,4 +96,4 @@ SPEC-001, SPEC-006, SPEC-002 para o vínculo.
 
 ## 17. Premissas e pontos não definidos
 
-Obrigatoriedade de foto. Duplicidade de e-mail na mesma conta. Conteúdo e disparo do e-mail de primeiro acesso. Matriz da aba Permissões além do inventário de flags (convidados, tarefas, anexos, parcelas, RSVP, mapa, contrato) quando RF-056 estiver Definido. Exclusão e o destino dos vínculos. Último acesso.
+Obrigatoriedade de foto. Duplicidade de e-mail na mesma conta. Exclusão e o destino dos vínculos.

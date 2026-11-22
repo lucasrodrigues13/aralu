@@ -49,7 +49,7 @@ interface ContratarResultado {
         <div class="campo">
           <span class="font-semibold mb-2 block">Contrato assinado (opcional)</span>
           <input aria-label="Contrato assinado" type="file" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf" (change)="escolher($event)" />
-          <p class="text-xs text-muted mt-1">Arquivo assinado pelo fornecedor e pelo casal. JPG, JPEG, PNG ou PDF de até 5 MB. Também dá para anexar depois.</p>
+          <p class="text-xs text-muted mt-1">Arquivo assinado pelo fornecedor e pelo cliente. JPG, JPEG, PNG ou PDF de até 5 MB. Também dá para anexar depois.</p>
           @if (erro()) { <p class="text-error text-xs">{{ erro() }}</p> }
         </div>
       </form>

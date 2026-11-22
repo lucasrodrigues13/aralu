@@ -10,12 +10,12 @@ describe('responsáveis da tarefa (SPEC-032)', () => {
     expect(chaveResponsavel({ papel: 'Assistente', referenciaId: 'a1' })).toBe('Assistente:a1');
     expect(chaveResponsavel({ papel: 'Organizer', referenciaId: 'conta' })).toBe('Organizer');
     expect(pedidoResponsavel('Assistente:a1')).toEqual({ papel: 'Assistente', referenciaId: 'a1' });
-    expect(pedidoResponsavel('Casal')).toEqual({ papel: 'Casal' });
+    expect(pedidoResponsavel('Cliente')).toEqual({ papel: 'Cliente' });
   });
 
-  it('lista a dona, o casal e só as assistentes ativas', () => {
+  it('lista a dona, o cliente e só as assistentes ativas', () => {
     const opcoes = opcoesResponsavel(nomes, 'Eu');
-    expect(opcoes.map((item) => item.valor)).toEqual(['Organizer', 'Casal', 'Assistente:a1']);
+    expect(opcoes.map((item) => item.valor)).toEqual(['Organizer', 'Cliente', 'Assistente:a1']);
     expect(opcoes[0].rotulo).toBe('Eu');
   });
 

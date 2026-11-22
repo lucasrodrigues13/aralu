@@ -21,7 +21,7 @@ Fora: RF-079 (marketplace e peças da plataforma de referência). Impressão da 
 | Ator | Pode |
 |---|---|
 | Organizer | Ver totais, gráfico, rankings e o resumo dos próprios eventos. Usar os atalhos para navegar aos módulos relacionados da própria conta. |
-| Client | Não acessa esta aba nem o resumo da lista de eventos do Organizer, salvo se flag de permissão futura o autorizar; neste corte, fora. |
+| Cliente | Não entra na plataforma (SPEC-060); não vê esta aba nem o resumo. |
 | Admin | Acessa as estatísticas e o resumo de qualquer conta. |
 | Visitante | Não acessa. |
 

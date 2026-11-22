@@ -11,97 +11,92 @@ using Project.IntegrationTests.Suporte;
 
 namespace Project.IntegrationTests.Negocio;
 
+/// <summary>
+/// O cliente não entra na plataforma: o acesso dele é só o link público com token gerado pelo organizador.
+/// </summary>
 [Collection(ColecaoApi.Nome)]
 public class ClienteAcessoFluxoTests
 {
     private const string Senha = "abcdefgh";
+    private const string PapelLegado = "Client";
     private readonly BancoFixture _banco;
 
     public ClienteAcessoFluxoTests(BancoFixture banco) => _banco = banco;
 
     [Fact]
-    public async Task Organizer_concede_acesso_client_vinculado_e_flag_nega_tarefas()
+    public async Task Cadastrar_cliente_nao_cria_conta_de_acesso()
     {
         var dono = await EntrarOrganizer();
-        var evento = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new
-        {
-            tipo = "Aniversario",
-            primeiroNome = "Festa",
-        }));
-        var eventoId = evento.GetProperty("id").GetGuid();
-
         var emailCliente = $"client-{Guid.NewGuid():N}@aralu.test";
-        var contato = await Ler(await dono.PostAsJsonAsync("/api/v1/clientes", new
+        var resposta = await dono.PostAsJsonAsync("/api/v1/clientes", new
         {
-            nome = "Cliente Portal",
-            papel = "Noiva",
+            nome = "Cliente Sem Acesso",
+            papel = "Anfitriao",
             email = emailCliente,
             ddi = "+55",
             celular = "11988887777",
+            // Campos antigos são ignorados: não existe mais acesso do cliente à plataforma.
             acessoPlataforma = true,
-            permissoes = new
-            {
-                convidados = true,
-                tarefas = false,
-                anexos = false,
-                parcelas = false,
-                rsvp = false,
-                mapa = false,
-                contrato = false,
-            },
-        }));
-
-        Assert.True(contato.GetProperty("acessoPlataforma").GetBoolean());
-        Assert.False(string.IsNullOrWhiteSpace(contato.GetProperty("usuarioId").GetString()));
-        Assert.True(contato.GetProperty("permissoes").GetProperty("convidados").GetBoolean());
-        Assert.False(contato.GetProperty("permissoes").GetProperty("tarefas").GetBoolean());
-
-        Assert.Equal(HttpStatusCode.OK, (await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/clientes", new
-        {
-            clienteId = contato.GetProperty("id").GetGuid(),
-        })).StatusCode);
-
-        var reset = _banco.Fabrica.Email.Mensagens.Last(item => item.Email == emailCliente && item.Tipo == "redefinicao");
-        var query = QueryHelpers.ParseQuery(new Uri(reset.Corpo).Query);
-        var redefinicao = await dono.PostAsJsonAsync("/api/v1/conta/redefinir-senha", new
-        {
-            usuarioId = query["usuarioId"].ToString(),
-            token = query["token"].ToString(),
-            senha = Senha,
-            confirmacao = Senha,
+            permissoes = new { convidados = true, tarefas = true },
         });
-        Assert.Equal(HttpStatusCode.OK, redefinicao.StatusCode);
+        var contato = await Ler(resposta);
 
-        var clientHttp = _banco.Fabrica.CreateClient();
-        var entrada = await clientHttp.PostAsJsonAsync("/api/v1/conta/entrar", new { email = emailCliente, senha = Senha });
-        var sessao = await entrada.Content.ReadFromJsonAsync<Sessao>();
-        Assert.Equal(HttpStatusCode.OK, entrada.StatusCode);
-        Assert.Contains(Papeis.Client, sessao!.Papeis);
-        Assert.DoesNotContain(Papeis.Organizer, sessao.Papeis);
-        clientHttp.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", sessao.Token);
+        Assert.False(contato.TryGetProperty("acessoPlataforma", out _));
+        Assert.False(contato.TryGetProperty("permissoes", out _));
+        Assert.False(contato.TryGetProperty("usuarioId", out _));
+        Assert.DoesNotContain(_banco.Fabrica.Email.Mensagens, item => item.Email == emailCliente);
 
-        await using (var escopo = _banco.Fabrica.Services.CreateAsyncScope())
-        {
-            var usuarios = escopo.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-            var usuario = await usuarios.FindByEmailAsync(emailCliente);
-            Assert.NotNull(usuario);
-            var organizerEmail = (await Ler(await dono.GetAsync("/api/v1/conta/area"))).GetProperty("email").GetString()!;
-            var organizer = await usuarios.FindByEmailAsync(organizerEmail);
-            Assert.Equal(organizer!.Id, usuario!.OrganizerId);
-            Assert.True(await usuarios.IsInRoleAsync(usuario, Papeis.Client));
-        }
-
-        var eventos = await Ler(await clientHttp.GetAsync("/api/v1/eventos"));
-        Assert.Single(eventos.EnumerateArray());
-        Assert.Equal(eventoId, eventos.EnumerateArray().First().GetProperty("id").GetGuid());
-
-        Assert.Equal(HttpStatusCode.Forbidden, (await clientHttp.GetAsync($"/api/v1/eventos/{eventoId}/tarefas")).StatusCode);
-        Assert.Equal(HttpStatusCode.Forbidden, (await clientHttp.GetAsync("/api/v1/clientes")).StatusCode);
-        Assert.Equal(HttpStatusCode.OK, (await clientHttp.GetAsync($"/api/v1/eventos/{eventoId}/convites")).StatusCode);
+        await using var escopo = _banco.Fabrica.Services.CreateAsyncScope();
+        var usuarios = escopo.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        Assert.Null(await usuarios.FindByEmailAsync(emailCliente));
     }
 
     [Fact]
-    public async Task Client_sem_vinculo_ao_evento_e_isolado_de_outro_organizer()
+    public async Task Conta_de_cliente_legada_nao_entra_na_plataforma()
+    {
+        var email = $"legado-{Guid.NewGuid():N}@aralu.test";
+        await using (var escopo = _banco.Fabrica.Services.CreateAsyncScope())
+        {
+            var roles = escopo.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+            if (!await roles.RoleExistsAsync(PapelLegado))
+            {
+                Assert.True((await roles.CreateAsync(new IdentityRole(PapelLegado))).Succeeded);
+            }
+
+            var usuarios = escopo.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            var organizer = new ApplicationUser { UserName = $"org-{Guid.NewGuid():N}", Email = $"org-{Guid.NewGuid():N}@aralu.test", EmailConfirmed = true };
+            Assert.True((await usuarios.CreateAsync(organizer, Senha)).Succeeded);
+            Assert.True((await usuarios.AddToRoleAsync(organizer, Papeis.Organizer)).Succeeded);
+
+            var usuario = new ApplicationUser { UserName = email, Email = email, EmailConfirmed = true };
+            usuario.VincularAoOrganizer(organizer.Id);
+            Assert.True((await usuarios.CreateAsync(usuario, Senha)).Succeeded);
+            Assert.True((await usuarios.AddToRoleAsync(usuario, PapelLegado)).Succeeded);
+        }
+
+        var http = _banco.Fabrica.CreateClient();
+        var entrada = await http.PostAsJsonAsync("/api/v1/conta/entrar", new { email, senha = Senha });
+        Assert.Equal(HttpStatusCode.Unauthorized, entrada.StatusCode);
+    }
+
+    [Fact]
+    public async Task Token_de_papel_fora_da_equipe_e_recusado_pela_api()
+    {
+        var http = _banco.Fabrica.CreateClient();
+        await using (var escopo = _banco.Fabrica.Services.CreateAsyncScope())
+        {
+            var emissor = escopo.ServiceProvider.GetRequiredService<IEmissorJwt>();
+            var token = emissor.Emitir("legado-1", "legado@aralu.test", [PapelLegado], "organizer-1");
+            http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        }
+
+        Assert.Equal(HttpStatusCode.Forbidden, (await http.GetAsync("/api/v1/eventos")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await http.GetAsync("/api/v1/clientes")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await http.GetAsync("/api/v1/conta/area")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Cliente_de_um_organizer_nao_aparece_para_outro()
     {
         var dono = await EntrarOrganizer();
         var outro = await EntrarOrganizer();
@@ -112,58 +107,18 @@ public class ClienteAcessoFluxoTests
         }));
         var eventoId = evento.GetProperty("id").GetGuid();
 
-        var emailCliente = $"client-{Guid.NewGuid():N}@aralu.test";
-        var contato = await Ler(await dono.PostAsJsonAsync("/api/v1/clientes", new
+        await Ler(await dono.PostAsJsonAsync("/api/v1/clientes", new
         {
             nome = "Sem Evento",
-            papel = "Noivo",
-            email = emailCliente,
+            papel = "Anfitriao",
+            email = $"client-{Guid.NewGuid():N}@aralu.test",
             ddi = "+55",
             celular = "11977776666",
-            acessoPlataforma = true,
-            permissoes = new { convidados = true, tarefas = true, anexos = true, parcelas = true, rsvp = true, mapa = true, contrato = true },
         }));
 
-        var reset = _banco.Fabrica.Email.Mensagens.Last(item => item.Email == emailCliente && item.Tipo == "redefinicao");
-        var query = QueryHelpers.ParseQuery(new Uri(reset.Corpo).Query);
-        Assert.Equal(HttpStatusCode.OK, (await dono.PostAsJsonAsync("/api/v1/conta/redefinir-senha", new
-        {
-            usuarioId = query["usuarioId"].ToString(),
-            token = query["token"].ToString(),
-            senha = Senha,
-            confirmacao = Senha,
-        })).StatusCode);
-
-        var clientHttp = await EntrarComo(emailCliente, Senha);
-        Assert.Equal(HttpStatusCode.NotFound, (await clientHttp.GetAsync($"/api/v1/eventos/{eventoId}")).StatusCode);
-        Assert.Empty((await Ler(await clientHttp.GetAsync("/api/v1/eventos"))).EnumerateArray());
-
-        Assert.Equal(HttpStatusCode.OK, (await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/clientes", new
-        {
-            clienteId = contato.GetProperty("id").GetGuid(),
-        })).StatusCode);
-        Assert.Equal(HttpStatusCode.OK, (await clientHttp.GetAsync($"/api/v1/eventos/{eventoId}")).StatusCode);
-
-        var buscaAlheia = await Ler(await outro.GetAsync($"/api/v1/clientes?nome=Sem"));
+        var buscaAlheia = await Ler(await outro.GetAsync("/api/v1/clientes?nome=Sem"));
         Assert.Empty(buscaAlheia.EnumerateArray());
         Assert.Equal(HttpStatusCode.NotFound, (await outro.GetAsync($"/api/v1/eventos/{eventoId}")).StatusCode);
-    }
-
-    [Fact]
-    public async Task Client_sem_OrganizerId_nao_entra()
-    {
-        var email = $"solto-{Guid.NewGuid():N}@aralu.test";
-        await using (var escopo = _banco.Fabrica.Services.CreateAsyncScope())
-        {
-            var usuarios = escopo.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-            var usuario = new ApplicationUser { UserName = email, Email = email, EmailConfirmed = true };
-            Assert.True((await usuarios.CreateAsync(usuario, Senha)).Succeeded);
-            Assert.True((await usuarios.AddToRoleAsync(usuario, Papeis.Client)).Succeeded);
-        }
-
-        var cliente = _banco.Fabrica.CreateClient();
-        var entrada = await cliente.PostAsJsonAsync("/api/v1/conta/entrar", new { email, senha = Senha });
-        Assert.Equal(HttpStatusCode.Unauthorized, entrada.StatusCode);
     }
 
     private async Task<HttpClient> EntrarOrganizer()
@@ -180,16 +135,6 @@ public class ClienteAcessoFluxoTests
         })).StatusCode);
         var entrada = await cliente.PostAsJsonAsync("/api/v1/conta/entrar", new { email, senha = Senha });
         var sessao = await entrada.Content.ReadFromJsonAsync<Sessao>();
-        cliente.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", sessao!.Token);
-        return cliente;
-    }
-
-    private async Task<HttpClient> EntrarComo(string email, string senha)
-    {
-        var cliente = _banco.Fabrica.CreateClient();
-        var entrada = await cliente.PostAsJsonAsync("/api/v1/conta/entrar", new { email, senha });
-        var sessao = await entrada.Content.ReadFromJsonAsync<Sessao>();
-        Assert.Equal(HttpStatusCode.OK, entrada.StatusCode);
         cliente.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", sessao!.Token);
         return cliente;
     }

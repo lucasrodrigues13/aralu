@@ -16,7 +16,7 @@ RF-075, no recorte de tarefas de reunião, ligação, e-mail ou tarefa. Oportuni
 
 ## 4. Atores e permissões
 
-O `Organizer` opera as tarefas comerciais da própria conta. Outro `Organizer` não vê. `Admin` acessa qualquer conta. `Client` não acessa. Assistente e fornecedor com login ficam fora. Lead não usa esta lista.
+O `Organizer` opera as tarefas comerciais da própria conta. Outro `Organizer` não vê. `Admin` acessa qualquer conta. O cliente não entra na plataforma (SPEC-060). Assistente e fornecedor com login ficam fora. Lead não usa esta lista.
 
 ## 5. Pré-condições
 

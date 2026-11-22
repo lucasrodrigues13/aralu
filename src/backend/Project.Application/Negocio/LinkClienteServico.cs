@@ -5,11 +5,11 @@ using Project.Domain.Eventos;
 
 namespace Project.Application.Negocio;
 
-/// <summary>Link do casal como a organizadora vê (SPEC-046 §6.1). <paramref name="Token"/> é nulo quando não há link.</summary>
-public sealed record LinkCasalLeitura(bool Ativo, string? Token, bool FinanceiroLiberado, bool ConvidadosLiberado = false);
+/// <summary>Link do cliente como a organizadora vê (SPEC-046 §6.1). <paramref name="Token"/> é nulo quando não há link.</summary>
+public sealed record LinkClienteLeitura(bool Ativo, string? Token, bool FinanceiroLiberado, bool ConvidadosLiberado = false);
 
 /// <summary><paramref name="ConvidadosLiberado"/> nulo mantém a marcação como está (SPEC-052).</summary>
-public sealed record SalvarLinkCasal(bool FinanceiroLiberado, bool? ConvidadosLiberado = null);
+public sealed record SalvarLinkCliente(bool FinanceiroLiberado, bool? ConvidadosLiberado = null);
 
 public sealed record EventoDoLink(
     Guid Id,
@@ -20,18 +20,18 @@ public sealed record EventoDoLink(
     DateOnly? PrazoRsvp = null,
     DateOnly? DataEnvioConvites = null);
 
-/// <summary>O que a página do casal recebe (SPEC-046 §6.2 e §6.3; SPEC-052). Financeiro e convites são nulos quando a marcação está fechada.</summary>
-public sealed record CasalLeitura(
+/// <summary>O que a página do cliente recebe (SPEC-046 §6.2 e §6.3; SPEC-052). Financeiro e convites são nulos quando a marcação está fechada.</summary>
+public sealed record PaginaClienteLeitura(
     string Evento,
     DateOnly? Data,
     bool FinanceiroLiberado,
     DinheiroEventoLeitura? Financeiro,
     bool ConvidadosLiberado = false,
-    IReadOnlyList<ConviteCasal>? Convites = null,
+    IReadOnlyList<ConviteDoLink>? Convites = null,
     DateOnly? PrazoRsvp = null,
     DateOnly? DataEnvioConvites = null);
 
-public sealed record ConvidadoCasal(
+public sealed record ConvidadoDoLink(
     Guid Id,
     string Nome,
     string Situacao,
@@ -42,16 +42,16 @@ public sealed record ConvidadoCasal(
     bool Principal = false);
 
 /// <summary><paramref name="Ddi"/> e <paramref name="Telefone"/> são do convidado principal (SPEC-010).</summary>
-public sealed record ConviteCasal(
+public sealed record ConviteDoLink(
     Guid Id,
     string Nome,
     string? Ddi,
     string? Telefone,
     string? Email,
-    IReadOnlyList<ConvidadoCasal> Convidados,
+    IReadOnlyList<ConvidadoDoLink> Convidados,
     bool ExcecaoPrazoRsvp = false);
 
-public interface IDadosLinkCasal
+public interface IDadosLinkCliente
 {
     Task<IReadOnlyList<Domain.Convidados.Convite>> ListarConvitesAsync(Guid eventoId, CancellationToken ct);
 
@@ -66,23 +66,23 @@ public interface IDadosLinkCasal
 
     Task<EventoDoLink?> ObterEventoAsync(string contaId, Guid eventoId, CancellationToken ct);
 
-    Task<LinkCasal?> ObterPorEventoAsync(Guid eventoId, CancellationToken ct);
+    Task<LinkCliente?> ObterPorEventoAsync(Guid eventoId, CancellationToken ct);
 
-    Task<LinkCasal?> ObterPorTokenAsync(string token, CancellationToken ct);
+    Task<LinkCliente?> ObterPorTokenAsync(string token, CancellationToken ct);
 
-    Task InserirAsync(LinkCasal link, CancellationToken ct);
+    Task InserirAsync(LinkCliente link, CancellationToken ct);
 
-    Task RemoverAsync(LinkCasal link, CancellationToken ct);
+    Task RemoverAsync(LinkCliente link, CancellationToken ct);
 
     Task SalvarAsync(CancellationToken ct);
 }
 
 /// <summary>
-/// Link do casal (SPEC-046): a organizadora gerencia o link do evento e o casal, sem login, atua no financeiro
+/// Link do cliente (SPEC-046): a organizadora gerencia o link do evento e o cliente, sem login, atua no financeiro
 /// pelas mesmas regras da SPEC-043 e da SPEC-045. O link resolve a conta e o evento.
 /// </summary>
-public sealed class LinkCasalServico(
-    IDadosLinkCasal dados,
+public sealed class LinkClienteServico(
+    IDadosLinkCliente dados,
     DinheiroServico dinheiro,
     FornecedorServico fornecedores,
     Arquivos.IArmazenamentoArquivo armazenamento,
@@ -95,29 +95,29 @@ public sealed class LinkCasalServico(
 
     // ---- Organizadora ----
 
-    public async Task<Resultado<LinkCasalLeitura>> ObterAsync(string contaId, Guid eventoId, CancellationToken ct)
+    public async Task<Resultado<LinkClienteLeitura>> ObterAsync(string contaId, Guid eventoId, CancellationToken ct)
     {
         if (await dados.ObterEventoAsync(contaId, eventoId, ct) is null)
         {
-            return Resultado<LinkCasalLeitura>.Erro(Codigos.Indisponivel, "Indisponível.");
+            return Resultado<LinkClienteLeitura>.Erro(Codigos.Indisponivel, "Indisponível.");
         }
 
         var link = await dados.ObterPorEventoAsync(eventoId, ct);
-        return Resultado<LinkCasalLeitura>.Sucesso(Ler(link));
+        return Resultado<LinkClienteLeitura>.Sucesso(Ler(link));
     }
 
     /// <summary>Gera o link do evento ou, se já existe, troca o código (o endereço antigo deixa de valer).</summary>
-    public async Task<Resultado<LinkCasalLeitura>> GerarAsync(string contaId, Guid eventoId, DateTimeOffset agora, CancellationToken ct)
+    public async Task<Resultado<LinkClienteLeitura>> GerarAsync(string contaId, Guid eventoId, DateTimeOffset agora, CancellationToken ct)
     {
         if (await dados.ObterEventoAsync(contaId, eventoId, ct) is null)
         {
-            return Resultado<LinkCasalLeitura>.Erro(Codigos.Indisponivel, "Indisponível.");
+            return Resultado<LinkClienteLeitura>.Erro(Codigos.Indisponivel, "Indisponível.");
         }
 
         var link = await dados.ObterPorEventoAsync(eventoId, ct);
         if (link is null)
         {
-            link = new LinkCasal { Id = Guid.NewGuid(), EventoId = eventoId, ContaId = contaId, Token = NovoToken(), CriadoEm = agora };
+            link = new LinkCliente { Id = Guid.NewGuid(), EventoId = eventoId, ContaId = contaId, Token = NovoToken(), CriadoEm = agora };
             await dados.InserirAsync(link, ct);
         }
         else
@@ -126,28 +126,28 @@ public sealed class LinkCasalServico(
         }
 
         await dados.SalvarAsync(ct);
-        return Resultado<LinkCasalLeitura>.Sucesso(Ler(link));
+        return Resultado<LinkClienteLeitura>.Sucesso(Ler(link));
     }
 
-    public async Task<Resultado<LinkCasalLeitura>> SalvarAsync(string contaId, Guid eventoId, SalvarLinkCasal pedido, CancellationToken ct)
+    public async Task<Resultado<LinkClienteLeitura>> SalvarAsync(string contaId, Guid eventoId, SalvarLinkCliente pedido, CancellationToken ct)
     {
         var link = await ObterDaContaAsync(contaId, eventoId, ct);
         if (link is null)
         {
-            return Resultado<LinkCasalLeitura>.Erro(Codigos.Indisponivel, "Gere o link antes.");
+            return Resultado<LinkClienteLeitura>.Erro(Codigos.Indisponivel, "Gere o link antes.");
         }
 
         link.FinanceiroLiberado = pedido.FinanceiroLiberado;
         link.ConvidadosLiberado = pedido.ConvidadosLiberado ?? link.ConvidadosLiberado;
         await dados.SalvarAsync(ct);
-        return Resultado<LinkCasalLeitura>.Sucesso(Ler(link));
+        return Resultado<LinkClienteLeitura>.Sucesso(Ler(link));
     }
 
-    public async Task<Resultado<LinkCasalLeitura>> DesativarAsync(string contaId, Guid eventoId, CancellationToken ct)
+    public async Task<Resultado<LinkClienteLeitura>> DesativarAsync(string contaId, Guid eventoId, CancellationToken ct)
     {
         if (await dados.ObterEventoAsync(contaId, eventoId, ct) is null)
         {
-            return Resultado<LinkCasalLeitura>.Erro(Codigos.Indisponivel, "Indisponível.");
+            return Resultado<LinkClienteLeitura>.Erro(Codigos.Indisponivel, "Indisponível.");
         }
 
         var link = await dados.ObterPorEventoAsync(eventoId, ct);
@@ -157,44 +157,44 @@ public sealed class LinkCasalServico(
             await dados.SalvarAsync(ct);
         }
 
-        return Resultado<LinkCasalLeitura>.Sucesso(Ler(null));
+        return Resultado<LinkClienteLeitura>.Sucesso(Ler(null));
     }
 
-    // ---- Casal ----
+    // ---- Cliente ----
 
-    public async Task<Resultado<CasalLeitura>> LerCasalAsync(string token, CancellationToken ct)
+    public async Task<Resultado<PaginaClienteLeitura>> LerPaginaAsync(string token, CancellationToken ct)
     {
         var contexto = await ResolverAsync(token, exigirFinanceiro: false, ct);
         if (contexto.Falha is not null)
         {
-            return Resultado<CasalLeitura>.Erro(contexto.Falha.Codigo, contexto.Falha.Mensagem);
+            return Resultado<PaginaClienteLeitura>.Erro(contexto.Falha.Codigo, contexto.Falha.Mensagem);
         }
 
         return await MontarAsync(contexto, ct);
     }
 
-    public Task<Resultado<CasalLeitura>> ParcelarAsync(string token, Guid servicoId, PedidoParcelas pedido, CancellationToken ct) =>
+    public Task<Resultado<PaginaClienteLeitura>> ParcelarAsync(string token, Guid servicoId, PedidoParcelas pedido, CancellationToken ct) =>
         AgirAsync(token, ct, (conta, evento) => dinheiro.ParcelarAsync(conta, evento, servicoId, pedido, ct));
 
-    public Task<Resultado<CasalLeitura>> RemoverParcelamentoAsync(string token, Guid servicoId, CancellationToken ct) =>
+    public Task<Resultado<PaginaClienteLeitura>> RemoverParcelamentoAsync(string token, Guid servicoId, CancellationToken ct) =>
         AgirAsync(token, ct, (conta, evento) => dinheiro.RemoverParcelamentoAsync(conta, evento, servicoId, ct));
 
-    public Task<Resultado<CasalLeitura>> DefinirPagoAsync(string token, Guid servicoId, bool pago, DateOnly hoje, CancellationToken ct) =>
+    public Task<Resultado<PaginaClienteLeitura>> DefinirPagoAsync(string token, Guid servicoId, bool pago, DateOnly hoje, CancellationToken ct) =>
         AgirAsync(token, ct, (conta, evento) => dinheiro.DefinirPagoAsync(conta, evento, servicoId, pago, hoje, ct));
 
-    public Task<Resultado<CasalLeitura>> DefinirParcelaPagaAsync(string token, Guid servicoId, Guid parcelaId, bool paga, DateOnly hoje, CancellationToken ct) =>
+    public Task<Resultado<PaginaClienteLeitura>> DefinirParcelaPagaAsync(string token, Guid servicoId, Guid parcelaId, bool paga, DateOnly hoje, CancellationToken ct) =>
         AgirAsync(token, ct, (conta, evento) => dinheiro.DefinirParcelaPagaAsync(conta, evento, servicoId, parcelaId, paga, hoje, ct));
 
-    public Task<Resultado<CasalLeitura>> EnviarComprovanteAsync(string token, Guid servicoId, Guid? parcelaId, Stream conteudo, string? nome, CancellationToken ct) =>
+    public Task<Resultado<PaginaClienteLeitura>> EnviarComprovanteAsync(string token, Guid servicoId, Guid? parcelaId, Stream conteudo, string? nome, CancellationToken ct) =>
         AgirAsync(token, ct, (conta, evento) => dinheiro.EnviarComprovanteAsync(conta, evento, servicoId, parcelaId, conteudo, nome, ct));
 
-    public Task<Resultado<CasalLeitura>> ExcluirComprovanteAsync(string token, Guid servicoId, Guid? parcelaId, CancellationToken ct) =>
+    public Task<Resultado<PaginaClienteLeitura>> ExcluirComprovanteAsync(string token, Guid servicoId, Guid? parcelaId, CancellationToken ct) =>
         AgirAsync(token, ct, (conta, evento) => dinheiro.ExcluirComprovanteAsync(conta, evento, servicoId, parcelaId, ct));
 
-    public Task<Resultado<CasalLeitura>> EnviarContratoAssinadoAsync(string token, Guid servicoId, Stream conteudo, string? nome, DateOnly hoje, CancellationToken ct) =>
-        AgirComContratoAsync(token, ct, (conta, evento) => fornecedores.EnviarContratoAssinadoAsync(conta, evento, servicoId, conteudo, nome, hoje, ct, peloCasal: true));
+    public Task<Resultado<PaginaClienteLeitura>> EnviarContratoAssinadoAsync(string token, Guid servicoId, Stream conteudo, string? nome, DateOnly hoje, CancellationToken ct) =>
+        AgirComContratoAsync(token, ct, (conta, evento) => fornecedores.EnviarContratoAssinadoAsync(conta, evento, servicoId, conteudo, nome, hoje, ct, peloCliente: true));
 
-    public Task<Resultado<CasalLeitura>> ExcluirContratoAssinadoAsync(string token, Guid servicoId, DateOnly hoje, CancellationToken ct) =>
+    public Task<Resultado<PaginaClienteLeitura>> ExcluirContratoAssinadoAsync(string token, Guid servicoId, DateOnly hoje, CancellationToken ct) =>
         AgirComContratoAsync(token, ct, (conta, evento) => fornecedores.ExcluirContratoAssinadoAsync(conta, evento, servicoId, hoje, ct));
 
     /// <summary>Abre um arquivo do financeiro do evento do link; arquivo de outro evento ou conta é indisponível.</summary>
@@ -237,7 +237,7 @@ public sealed class LinkCasalServico(
         }
     }
 
-    private async Task<Resultado<CasalLeitura>> AgirAsync(
+    private async Task<Resultado<PaginaClienteLeitura>> AgirAsync(
         string token,
         CancellationToken ct,
         Func<string, Guid, Task<Resultado<DinheiroEventoLeitura>>> acao)
@@ -245,16 +245,16 @@ public sealed class LinkCasalServico(
         var contexto = await ResolverAsync(token, exigirFinanceiro: true, ct);
         if (contexto.Falha is not null)
         {
-            return Resultado<CasalLeitura>.Erro(contexto.Falha.Codigo, contexto.Falha.Mensagem);
+            return Resultado<PaginaClienteLeitura>.Erro(contexto.Falha.Codigo, contexto.Falha.Mensagem);
         }
 
         var resultado = await acao(contexto.Evento!.ContaId, contexto.Evento.Id);
         return resultado.Ok
-            ? Resultado<CasalLeitura>.Sucesso(await MontarCom(contexto, resultado.Valor!, ct))
-            : Resultado<CasalLeitura>.Erro(resultado.Falha!.Codigo, resultado.Falha.Mensagem);
+            ? Resultado<PaginaClienteLeitura>.Sucesso(await MontarCom(contexto, resultado.Valor!, ct))
+            : Resultado<PaginaClienteLeitura>.Erro(resultado.Falha!.Codigo, resultado.Falha.Mensagem);
     }
 
-    private async Task<Resultado<CasalLeitura>> AgirComContratoAsync(
+    private async Task<Resultado<PaginaClienteLeitura>> AgirComContratoAsync(
         string token,
         CancellationToken ct,
         Func<string, Guid, Task<Resultado<EventoDetalhe>>> acao)
@@ -262,40 +262,40 @@ public sealed class LinkCasalServico(
         var contexto = await ResolverAsync(token, exigirFinanceiro: true, ct);
         if (contexto.Falha is not null)
         {
-            return Resultado<CasalLeitura>.Erro(contexto.Falha.Codigo, contexto.Falha.Mensagem);
+            return Resultado<PaginaClienteLeitura>.Erro(contexto.Falha.Codigo, contexto.Falha.Mensagem);
         }
 
         var resultado = await acao(contexto.Evento!.ContaId, contexto.Evento.Id);
         if (!resultado.Ok)
         {
-            return Resultado<CasalLeitura>.Erro(resultado.Falha!.Codigo, resultado.Falha.Mensagem);
+            return Resultado<PaginaClienteLeitura>.Erro(resultado.Falha!.Codigo, resultado.Falha.Mensagem);
         }
 
         return await MontarAsync(contexto, ct);
     }
 
-    private async Task<Resultado<CasalLeitura>> MontarAsync(Contexto contexto, CancellationToken ct)
+    private async Task<Resultado<PaginaClienteLeitura>> MontarAsync(Contexto contexto, CancellationToken ct)
     {
         if (!contexto.Link!.FinanceiroLiberado)
         {
-            return Resultado<CasalLeitura>.Sucesso(await MontarCom(contexto, null, ct));
+            return Resultado<PaginaClienteLeitura>.Sucesso(await MontarCom(contexto, null, ct));
         }
 
         var leitura = await dinheiro.ObterAsync(contexto.Evento!.ContaId, contexto.Evento.Id, ct);
         return leitura.Ok
-            ? Resultado<CasalLeitura>.Sucesso(await MontarCom(contexto, leitura.Valor, ct))
-            : Resultado<CasalLeitura>.Erro(leitura.Falha!.Codigo, leitura.Falha.Mensagem);
+            ? Resultado<PaginaClienteLeitura>.Sucesso(await MontarCom(contexto, leitura.Valor, ct))
+            : Resultado<PaginaClienteLeitura>.Erro(leitura.Falha!.Codigo, leitura.Falha.Mensagem);
     }
 
-    private async Task<CasalLeitura> MontarCom(Contexto contexto, DinheiroEventoLeitura? financeiro, CancellationToken ct)
+    private async Task<PaginaClienteLeitura> MontarCom(Contexto contexto, DinheiroEventoLeitura? financeiro, CancellationToken ct)
     {
-        IReadOnlyList<ConviteCasal>? convites = null;
+        IReadOnlyList<ConviteDoLink>? convites = null;
         if (contexto.Link!.ConvidadosLiberado)
         {
             convites = (await dados.ListarConvitesAsync(contexto.Evento!.Id, ct)).OrderBy(item => item.Nome).Select(LerConvite).ToArray();
         }
 
-        return new CasalLeitura(
+        return new PaginaClienteLeitura(
             contexto.Evento!.Nome,
             contexto.Evento.Data,
             contexto.Link.FinanceiroLiberado,
@@ -306,10 +306,10 @@ public sealed class LinkCasalServico(
             contexto.Link.ConvidadosLiberado ? contexto.Evento.DataEnvioConvites : null);
     }
 
-    private static ConviteCasal LerConvite(Domain.Convidados.Convite convite)
+    private static ConviteDoLink LerConvite(Domain.Convidados.Convite convite)
     {
         var principal = convite.Convidados.FirstOrDefault(item => item.Id == convite.PrincipalId);
-        return new ConviteCasal(
+        return new ConviteDoLink(
             convite.Id,
             convite.Nome,
             principal?.Ddi,
@@ -317,21 +317,21 @@ public sealed class LinkCasalServico(
             convite.Email,
             convite.Convidados
                 .OrderByDescending(item => item.Id == convite.PrincipalId)
-                .Select(item => new ConvidadoCasal(item.Id, item.Nome, Domain.Convidados.Rotulos.SituacaoTela(item.Situacao), item.Ddi, item.Celular, item.Genero, item.Faixa, item.Id == convite.PrincipalId))
+                .Select(item => new ConvidadoDoLink(item.Id, item.Nome, Domain.Convidados.Rotulos.SituacaoTela(item.Situacao), item.Ddi, item.Celular, item.Genero, item.Faixa, item.Id == convite.PrincipalId))
                 .ToArray(),
             convite.ExcecaoPrazoRsvp);
     }
 
-    // ---- Casal: ferramentas da aba Convidados, as mesmas da organizadora (SPEC-059 §6.5) ----
+    // ---- Cliente: ferramentas da aba Convidados, as mesmas da organizadora (SPEC-059 §6.5) ----
 
-    public Task<Resultado<CasalLeitura>> DefinirPrazoRsvpAsync(string token, DateOnly? prazo, DateOnly hoje, CancellationToken ct) =>
+    public Task<Resultado<PaginaClienteLeitura>> DefinirPrazoRsvpAsync(string token, DateOnly? prazo, DateOnly hoje, CancellationToken ct) =>
         AgirNosConvitesAsync(token, ct, async (conta, evento) =>
         {
             var resultado = await conviteServico.DefinirPrazoAsync(conta, evento, prazo, hoje, ct);
             return resultado.Ok ? null : resultado.Falha;
         });
 
-    public Task<Resultado<CasalLeitura>> DefinirEnvioConvitesAsync(string token, DateOnly? data, CancellationToken ct) =>
+    public Task<Resultado<PaginaClienteLeitura>> DefinirEnvioConvitesAsync(string token, DateOnly? data, CancellationToken ct) =>
         AgirNosConvitesAsync(token, ct, async (conta, evento) =>
         {
             var resultado = await conviteServico.DefinirEnvioAsync(conta, evento, data, ct);
@@ -339,8 +339,8 @@ public sealed class LinkCasalServico(
         });
 
     /// <summary>
-    /// Coloca a planilha na mesma fila da organizadora (SPEC-059 §6.6); os convites importados pelo casal gravam
-    /// "Preenchido pelo casal".
+    /// Coloca a planilha na mesma fila da organizadora (SPEC-059 §6.6); os convites importados pelo cliente gravam
+    /// "Preenchido pelo cliente".
     /// </summary>
     public async Task<Resultado<ImportacaoLeitura>> EnfileirarImportacaoAsync(string token, Stream arquivo, string? nomeArquivo, DateTimeOffset agora, CancellationToken ct)
     {
@@ -375,18 +375,18 @@ public sealed class LinkCasalServico(
             : Resultado<byte[]>.Sucesso(conviteServico.ModeloPlanilha());
     }
 
-    private async Task<Resultado<CasalLeitura>> AgirNosConvitesAsync(string token, CancellationToken ct, Func<string, Guid, Task<Falha?>> acao)
+    private async Task<Resultado<PaginaClienteLeitura>> AgirNosConvitesAsync(string token, CancellationToken ct, Func<string, Guid, Task<Falha?>> acao)
     {
         var contexto = await ResolverAsync(token, Area.Convidados, ct);
         if (contexto.Falha is not null)
         {
-            return Resultado<CasalLeitura>.Erro(contexto.Falha.Codigo, contexto.Falha.Mensagem);
+            return Resultado<PaginaClienteLeitura>.Erro(contexto.Falha.Codigo, contexto.Falha.Mensagem);
         }
 
         var falha = await acao(contexto.Evento!.ContaId, contexto.Evento.Id);
         if (falha is not null)
         {
-            return Resultado<CasalLeitura>.Erro(falha.Codigo, falha.Mensagem);
+            return Resultado<PaginaClienteLeitura>.Erro(falha.Codigo, falha.Mensagem);
         }
 
         // Lê o evento de novo: o prazo e a data de envio podem ter mudado.
@@ -394,21 +394,21 @@ public sealed class LinkCasalServico(
         return await MontarAsync(contexto with { Evento = evento ?? contexto.Evento }, ct);
     }
 
-    // ---- Casal: convites (SPEC-052 e SPEC-059) ----
+    // ---- Cliente: convites (SPEC-052 e SPEC-059) ----
 
-    /// <summary>Cria o convite pelo formulário único (SPEC-059); a observação é sempre "Preenchido pelo casal", gravada aqui.</summary>
-    public async Task<Resultado<CasalLeitura>> CriarConviteAsync(string token, FormularioConvitePedido pedido, CancellationToken ct)
+    /// <summary>Cria o convite pelo formulário único (SPEC-059); a observação é sempre "Preenchido pelo cliente", gravada aqui.</summary>
+    public async Task<Resultado<PaginaClienteLeitura>> CriarConviteAsync(string token, FormularioConvitePedido pedido, CancellationToken ct)
     {
         var contexto = await ResolverAsync(token, Area.Convidados, ct);
         if (contexto.Falha is not null)
         {
-            return Resultado<CasalLeitura>.Erro(contexto.Falha.Codigo, contexto.Falha.Mensagem);
+            return Resultado<PaginaClienteLeitura>.Erro(contexto.Falha.Codigo, contexto.Falha.Mensagem);
         }
 
         var validado = FormularioConvite.Validar(pedido);
         if (!validado.Ok)
         {
-            return Resultado<CasalLeitura>.Erro(validado.Falha!.Codigo, validado.Falha.Mensagem);
+            return Resultado<PaginaClienteLeitura>.Erro(validado.Falha!.Codigo, validado.Falha.Mensagem);
         }
 
         var convite = new Domain.Convidados.Convite
@@ -425,30 +425,30 @@ public sealed class LinkCasalServico(
     }
 
     /// <summary>Edita pelo mesmo formulário; a observação do convite não muda.</summary>
-    public async Task<Resultado<CasalLeitura>> AtualizarConviteAsync(string token, Guid conviteId, FormularioConvitePedido pedido, CancellationToken ct)
+    public async Task<Resultado<PaginaClienteLeitura>> AtualizarConviteAsync(string token, Guid conviteId, FormularioConvitePedido pedido, CancellationToken ct)
     {
         var contexto = await ResolverAsync(token, Area.Convidados, ct);
         if (contexto.Falha is not null)
         {
-            return Resultado<CasalLeitura>.Erro(contexto.Falha.Codigo, contexto.Falha.Mensagem);
+            return Resultado<PaginaClienteLeitura>.Erro(contexto.Falha.Codigo, contexto.Falha.Mensagem);
         }
 
         var convite = await dados.ObterConviteAsync(contexto.Evento!.Id, conviteId, ct);
         if (convite is null)
         {
-            return Resultado<CasalLeitura>.Erro(Codigos.Indisponivel, "Indisponível.");
+            return Resultado<PaginaClienteLeitura>.Erro(Codigos.Indisponivel, "Indisponível.");
         }
 
         var validado = FormularioConvite.Validar(pedido);
         if (!validado.Ok)
         {
-            return Resultado<CasalLeitura>.Erro(validado.Falha!.Codigo, validado.Falha.Mensagem);
+            return Resultado<PaginaClienteLeitura>.Erro(validado.Falha!.Codigo, validado.Falha.Mensagem);
         }
 
         var aplicado = FormularioConvite.Aplicar(convite, validado.Valor!, pedido);
         if (!aplicado.Ok)
         {
-            return Resultado<CasalLeitura>.Erro(aplicado.Falha!.Codigo, aplicado.Falha.Mensagem);
+            return Resultado<PaginaClienteLeitura>.Erro(aplicado.Falha!.Codigo, aplicado.Falha.Mensagem);
         }
 
         foreach (var incluido in aplicado.Valor!.Incluidos)
@@ -465,7 +465,7 @@ public sealed class LinkCasalServico(
         return await MontarAsync(contexto, ct);
     }
 
-    private sealed record Contexto(LinkCasal? Link, EventoDoLink? Evento, Falha? Falha);
+    private sealed record Contexto(LinkCliente? Link, EventoDoLink? Evento, Falha? Falha);
 
     private enum Area
     {
@@ -501,10 +501,10 @@ public sealed class LinkCasalServico(
             : new Contexto(link, evento, null);
     }
 
-    private async Task<LinkCasal?> ObterDaContaAsync(string contaId, Guid eventoId, CancellationToken ct) =>
+    private async Task<LinkCliente?> ObterDaContaAsync(string contaId, Guid eventoId, CancellationToken ct) =>
         await dados.ObterEventoAsync(contaId, eventoId, ct) is null ? null : await dados.ObterPorEventoAsync(eventoId, ct);
 
-    private static LinkCasalLeitura Ler(LinkCasal? link) =>
+    private static LinkClienteLeitura Ler(LinkCliente? link) =>
         new(link is not null, link?.Token, link?.FinanceiroLiberado ?? false, link?.ConvidadosLiberado ?? false);
 
     private static string NovoToken() =>

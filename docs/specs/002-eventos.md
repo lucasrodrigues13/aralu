@@ -23,7 +23,7 @@ Fora: aba Estatísticas (RF-078), agrupar (RF-052), equipe do dia (RF-051), impr
 | Organizer | Criar, listar, filtrar, abrir, editar, concluir e cancelar os próprios eventos. Ver a imagem do próprio evento. |
 | Outro Organizer | Não vê evento, home nem imagem. |
 | Admin | Admin geral; fora do miolo desta spec de operação da conta. |
-| Client | Não opera este cadastro. Acesso limitado a evento/módulo, se existir, fica em RF-056. |
+| Cliente | Não entra na plataforma (SPEC-060). Vê do evento só o que o link do cliente mostrar (RF-056). |
 | Visitante | Não acessa. |
 
 ## 5. Pré-condições

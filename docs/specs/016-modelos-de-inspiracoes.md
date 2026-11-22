@@ -12,7 +12,7 @@ O Organizer mantém a biblioteca de galerias de inspiração: listar, criar gale
 
 ## 3. Requisitos relacionados
 
-RF-054 (biblioteca de inspiração). RF-072 (inspirações / galerias no contexto do evento e visão do Client).
+RF-054 (biblioteca de inspiração). RF-072 (inspirações / galerias no contexto do evento e visão do cliente pelo link).
 
 Fora: RF-079. Assistente. Fornecedor com login. Aba Inspirações do modelo de evento (vínculo na SPEC-012).
 
@@ -21,7 +21,7 @@ Fora: RF-079. Assistente. Fornecedor com login. Aba Inspirações do modelo de e
 | Ator | Pode |
 |---|---|
 | Organizer | CRUD das galerias da própria conta. |
-| Client | Não edita a biblioteca. No evento, vê inspirações se a flag (RF-056 / RF-072) permitir. |
+| Cliente | Não entra na plataforma (SPEC-060). Ver inspirações do evento, se vier, é pelo link do cliente (RF-056, RF-072). |
 | Admin | Acessa galerias de qualquer conta. |
 | Visitante | Não acessa a biblioteca. |
 

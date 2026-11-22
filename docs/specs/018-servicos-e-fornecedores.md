@@ -27,7 +27,7 @@ Fora: RF-060 (login / formulário público do fornecedor para completar dados). 
 | Ator | Pode |
 |---|---|
 | Organizer | CRUD de fornecedores e serviços da conta; gerenciar fornecedores no evento; avançar/voltar etapas de negociação; editar estimado, subitens e valor contratado; gerar parcelas do contratado. |
-| Client | Vê recomendações, comparativos e parcelas só se as flags (RF-056) e as marcas de visibilidade permitirem. Não edita o catálogo da conta. |
+| Cliente | Não entra na plataforma (SPEC-060). Vê só o que o link do cliente mostrar (RF-056). |
 | Admin | Acessa catálogo e eventos de qualquer conta. |
 | Visitante | Não acessa o catálogo autenticado. |
 
@@ -63,7 +63,7 @@ Conta autenticada, SPEC-001. Para ações no evento: evento da mesma conta, SPEC
 - Descartar fornecedor / descartar orçamento: remove da trilha ou volta etapa, conforme a ação do hub.
 - Serviço sem fornecedor: valor contratado vazio; estimado editável.
 - Com subitens: o valor estimado do serviço passa a ser a soma dos subitens.
-- Ocultar serviço para Client; ordenar serviços; agrupar em pacotes: ações do menu Serviços da home.
+- Ocultar serviço para o cliente (link do cliente); ordenar serviços; agrupar em pacotes: ações do menu Serviços da home.
 - Adicionar serviço inexistente no catálogo da conta: cria o serviço na conta e associa ao evento.
 - Solicitação de dados / "Ver todos": listagens auxiliares do catálogo; exportação/mescla se presentes em RF-057.
 - Fornecedor de outra conta: Organizer não vê.
@@ -73,7 +73,7 @@ Conta autenticada, SPEC-001. Para ações no evento: evento da mesma conta, SPEC
 - Fornecedor e serviço de catálogo pertencem à conta do Organizer. RF-057.
 - Nome do fornecedor e pelo menos um serviço oferecido são obrigatórios. RF-057.
 - Formulário do fornecedor tem oito abas: Dados, Redes sociais, Endereço, Dados bancários, Orçamentos, Diferencial, Inf. gerais, Portfólio. RF-057 / inventário §1.11.
-- Orçamentos genéricos do fornecedor e Diferencial podem ser marcados como visíveis ao Client; Inf. gerais e Portfólio são restritos ao Organizer (e Admin).
+- Orçamentos genéricos do fornecedor e Diferencial podem ser marcados como visíveis ao cliente no link do cliente; Inf. gerais e Portfólio são restritos ao Organizer (e Admin).
 - No evento, cada serviço tem fornecedores, tarefas e valores; a home compara estimado e contratado. RF-058.
 - Etapas de negociação: Orçamento e Contratado. Solicitar contrato é ação do contratado, não uma terceira etapa. RF-059.
 - Planejamento de budget: Budget = estimado do evento; Estimado = soma dos estimados dos serviços; Contratado = soma dos contratados; Prova real = Estimado + Contratado; custo por convidado = (Estimado + Contratado) / convidados estimados quando houver convidados. Inventário §1.9.
@@ -159,7 +159,7 @@ Campo inválido permanece no formulário. Falha ao salvar mantém o anterior. Re
 4. No evento, o fornecedor entra em Orçamento, vai a Contratado e pode voltar para Orçamento.
 5. Contratar define a etapa Contratado; o hub aceita valor e geração de parcelas.
 6. Planejamento de budget mostra Budget, Estimado, Contratado, prova real e permite editar estimado e subitens; com subitens, o estimado do serviço é a soma deles.
-7. Client não acessa o catálogo da conta; só vê o que as flags e a visibilidade permitirem no evento.
+7. O cliente não acessa o catálogo da conta; só vê o que o link do cliente mostrar (SPEC-060).
 8. Outra conta não vê fornecedor nem serviço.
 9. Não há login de fornecedor nem formulário público RF-060 neste fluxo.
 

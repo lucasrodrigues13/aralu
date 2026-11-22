@@ -16,7 +16,7 @@ RF-075 e RF-077, no recorte de catálogos do funil. Uso do serviço/produto na o
 
 ## 4. Atores e permissões
 
-O `Organizer` opera o catálogo da própria conta. Outro `Organizer` não vê. `Admin` acessa qualquer conta. `Client` não acessa. Assistente e fornecedor com login ficam fora.
+O `Organizer` opera o catálogo da própria conta. Outro `Organizer` não vê. `Admin` acessa qualquer conta. O cliente não entra na plataforma (SPEC-060). Assistente e fornecedor com login ficam fora.
 
 ## 5. Pré-condições
 

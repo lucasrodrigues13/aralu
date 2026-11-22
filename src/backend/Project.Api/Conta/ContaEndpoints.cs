@@ -18,7 +18,7 @@ public static class ContaEndpoints
         conta.MapPost("/esqueci-senha", EsqueciSenha).RequireRateLimiting("recuperacao");
         conta.MapPost("/redefinir-senha", RedefinirSenha);
         conta.MapPost("/sair", Sair).RequireAuthorization();
-        conta.MapGet("/area", Area).RequireAuthorization();
+        conta.MapGet("/area", Area).RequireAuthorization(policy => policy.RequireRole(Papeis.ComAcesso));
 
         app.MapGet("/api/v1/admin/area", Area)
             .RequireAuthorization(policy => policy.RequireRole(Papeis.Admin));
@@ -115,16 +115,10 @@ public static class ContaEndpoints
         }
 
         var papeis = await usuarios.GetRolesAsync(usuario);
-        if (papeis.Contains(Papeis.Client))
+        // Só a equipe e o admin entram na plataforma; o cliente usa apenas o link público com token.
+        if (!papeis.Any(papel => Papeis.ComAcesso.Contains(papel)))
         {
-            try
-            {
-                usuario.GarantirVinculoClient();
-            }
-            catch (InvalidOperationException)
-            {
-                return CredencialInvalida();
-            }
+            return CredencialInvalida();
         }
 
         var emailConfirmado = usuario.Email ?? email;

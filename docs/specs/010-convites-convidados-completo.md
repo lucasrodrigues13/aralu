@@ -16,7 +16,7 @@ RF-063, RF-064. Fora deste arquivo: RSVP automático (RF-065), mapa operacional 
 
 ## 4. Atores e permissões
 
-O Organizer mantém grupos, convites e convidados do próprio evento. Quem tem o link de RSVP continua no recorte da SPEC-004, sem os campos novos. Admin fica fora do miolo desta spec. Client não gerencia a lista neste corte; acesso a convidados/RSVP via flags fica em RF-056.
+O Organizer mantém grupos, convites e convidados do próprio evento. Quem tem o link de RSVP continua no recorte da SPEC-004, sem os campos novos. Admin fica fora do miolo desta spec. O cliente não entra na plataforma (SPEC-060); cadastra convites pelo link do cliente (SPEC-052).
 
 ## 5. Pré-condições
 

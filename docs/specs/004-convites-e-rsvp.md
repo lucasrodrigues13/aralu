@@ -24,7 +24,7 @@ Fora: importação, exportação, impressão, mapa de mesas, checklist de portar
 | Quem tem o link | Ver os convidados daquele convite e informar a presença de cada um. Sem conta Identity. |
 | Outro Organizer ou quem não tem o link | Não vê a lista. |
 | Admin | Admin geral; fora do miolo desta spec. |
-| Client | Não gerencia a lista neste corte. Acesso a convidados/RSVP via flags fica em RF-056. |
+| Cliente | Não entra na plataforma (SPEC-060). Cadastra convites pelo link do cliente quando a organizadora libera (SPEC-052). |
 
 ## 5. Pré-condições
 

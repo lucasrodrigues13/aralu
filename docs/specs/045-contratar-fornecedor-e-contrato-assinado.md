@@ -8,7 +8,7 @@ SPEC-045. Contratar fornecedor e anexar o contrato assinado.
 
 ## 2. Objetivo
 
-Na aba Fornecedores do evento: (a) escolher o fornecedor e, na sequência, os serviços dele; (b) **Contratar** pede só o valor, sem parcelas (o parcelamento é feito depois, na aba Dinheiro); (c) ao contratar, e depois, o organizador **anexa o contrato assinado** pelo fornecedor e pelo casal. A plataforma só recebe o arquivo: não há modelo, leitura nem envio ao casal.
+Na aba Fornecedores do evento: (a) escolher o fornecedor e, na sequência, os serviços dele; (b) **Contratar** pede só o valor, sem parcelas (o parcelamento é feito depois, na aba Dinheiro); (c) ao contratar, e depois, o organizador **anexa o contrato assinado** pelo fornecedor e pelo cliente. A plataforma só recebe o arquivo: não há modelo, leitura nem envio ao cliente.
 
 ## 3. Requisitos relacionados
 
@@ -21,7 +21,7 @@ RF-058, RF-059 (etapas), RF-068 (parcelas a fornecedores; agora definidas no Din
 | Admin, Organizer, Assistant | Contratar e anexar/abrir/excluir o contrato assinado nos eventos a que têm acesso (mesma regra do Contratar de hoje). |
 | Outra conta | Não vê (404). |
 
-O casal subir o contrato assinado pelo link é o card #34 (feito na [SPEC-046](046-link-do-casal-financeiro.md)).
+O cliente subir o contrato assinado pelo link é o card #34 (feito na [SPEC-046](046-link-do-cliente-financeiro.md)).
 
 ## 5. Pré-condições
 
@@ -99,7 +99,7 @@ Só integração (a regra do valor contra a soma das parcelas fica no serviço):
 
 ## 16. Dependências
 
-SPEC-018, SPEC-040 (banco), SPEC-043 (Dinheiro). Depois: #34 (casal sobe o contrato assinado pelo link), #29 (gráficos na mesma tela).
+SPEC-018, SPEC-040 (banco), SPEC-043 (Dinheiro). Depois: #34 (cliente sobe o contrato assinado pelo link), #29 (gráficos na mesma tela).
 
 ## 17. Premissas e pontos não definidos
 

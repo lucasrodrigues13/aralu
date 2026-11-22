@@ -18,10 +18,10 @@ public sealed class ItemChecklistTarefa
     /// <summary>Prazo próprio do item (SPEC-003 §6.8). Independe do prazo da tarefa.</summary>
     public DateOnly? Prazo { get; set; }
 
-    /// <summary>Responsável do item: uma pessoa só (dona, casal ou assistente). Nulo = sem responsável.</summary>
+    /// <summary>Responsável do item: uma pessoa só (dona, cliente ou assistente). Nulo = sem responsável.</summary>
     public PapelResponsavel? ResponsavelPapel { get; set; }
 
-    /// <summary>Conta da dona ou id da assistente; nulo para o casal.</summary>
+    /// <summary>Conta da dona ou id da assistente; nulo para o cliente.</summary>
     public string? ResponsavelReferenciaId { get; set; }
 
     /// <summary>Item que ainda pode andar com a data do evento: aberto (não feito, não cancelado) e com prazo.</summary>

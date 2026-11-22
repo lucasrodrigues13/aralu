@@ -16,7 +16,7 @@ RF-074. A gravação do evento na agenda da conta permanece na SPEC-008. RF-079 
 
 ## 4. Atores e permissões
 
-O `Organizer` autentica e opera a agenda da própria conta. Outro `Organizer` não vê esses compromissos. `Admin` acessa qualquer conta. `Client` não acessa esta tela neste corte. Assistente e fornecedor com login ficam fora. Convidado do RSVP não usa a agenda autenticada.
+O `Organizer` autentica e opera a agenda da própria conta. Outro `Organizer` não vê esses compromissos. `Admin` acessa qualquer conta. O cliente não entra na plataforma (SPEC-060). Assistente e fornecedor com login ficam fora. Convidado do RSVP não usa a agenda autenticada.
 
 ## 5. Pré-condições
 

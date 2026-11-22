@@ -14,7 +14,7 @@ Criar um evento em menos de um minuto, num modal só, e abrir o evento num resum
 
 RF-049 (criação curta), RF-050 (resumo do evento), RF-055 (cliente do evento), RF-074 (evento na agenda).
 
-Fora desta spec, cada um com a sua: aplicar modelo de evento (pacote) a um evento já criado (RF-053; a criação deixa de aplicar modelo), dinheiro do casal (RF-095), roteiro (RF-092), equipe do dia (RF-051), link do casal (RF-056), observações (RF-107), salvar como modelo (RF-105), visão em tabela da lista de eventos (SPEC-002).
+Fora desta spec, cada um com a sua: aplicar modelo de evento (pacote) a um evento já criado (RF-053; a criação deixa de aplicar modelo), dinheiro do cliente (RF-095), roteiro (RF-092), equipe do dia (RF-051), link do cliente (RF-056), observações (RF-107), salvar como modelo (RF-105), visão em tabela da lista de eventos (SPEC-002).
 
 ## 4. Atores e permissões
 
@@ -70,7 +70,7 @@ A primeira aba do evento passa a se chamar **Resumo** e mostra, de cima para bai
 - Cliente existente escolhido na criação pode já ter vínculo com outro evento; o vínculo novo não desfaz o antigo.
 - O transfer não faz parte da criação; fica só na aba Convidados (SPEC-010).
 - Evento com data entra na agenda da conta. A opção de tirar da agenda fica na edição.
-- O valor da assessoria e as parcelas do casal **não** são pedidos na criação. Eles ficam no Dinheiro do evento (RF-095). O passo de valor da assessoria logo após salvar deixa de existir.
+- O valor da assessoria e as parcelas do cliente **não** são pedidos na criação. Eles ficam no Dinheiro do evento (RF-095). O passo de valor da assessoria logo após salvar deixa de existir.
 - Cliente novo criado aqui grava só nome e WhatsApp e fica vinculado ao evento. O papel e os outros dados são completados depois em Clientes (SPEC-009); o papel nasce vazio.
 - O local da criação é gravado como o nome do local da recepção. Cerimônia e endereço completo ficam na edição.
 
@@ -103,7 +103,7 @@ A ordem é a da tabela. Aparecem no máximo três.
 | Orçamento | Contratado | "Estimado R$ X · pago R$ Y" | Fornecedores |
 | Cliente | Nome do cliente principal | WhatsApp, ou "Nenhum cliente" com o botão "Vincular" | Modal de vínculo |
 
-Os cartões de Dinheiro do casal, Roteiro, Equipe, Link do casal e Notas entram com as specs desses blocos; até lá, não aparecem.
+Os cartões de Dinheiro do cliente, Roteiro, Equipe, Link do cliente e Notas entram com as specs desses blocos; até lá, não aparecem.
 
 ## 9. Validações
 

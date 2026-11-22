@@ -6,17 +6,17 @@ using Project.Domain.Eventos;
 
 namespace Project.Tests.Negocio;
 
-/// <summary>Regras do link do casal (SPEC-046) que não dependem do financeiro: gestão do link, link inválido e financeiro fechado.</summary>
-public class LinkCasalTests
+/// <summary>Regras do link do cliente (SPEC-046) que não dependem do financeiro: gestão do link, link inválido e financeiro fechado.</summary>
+public class LinkClienteTests
 {
     private static readonly Guid EventoId = Guid.NewGuid();
     private const string Conta = "conta-1";
 
-    private static (LinkCasalServico Servico, DadosFalsos Dados) Criar()
+    private static (LinkClienteServico Servico, DadosFalsos Dados) Criar()
     {
         var dados = new DadosFalsos();
         // O financeiro (DinheiroServico, FornecedorServico) não é alcançado nestes cenários.
-        return (new LinkCasalServico(dados, null!, null!, null!, null!, null!), dados);
+        return (new LinkClienteServico(dados, null!, null!, null!, null!, null!), dados);
     }
 
     [Fact]
@@ -37,13 +37,13 @@ public class LinkCasalTests
     {
         var (servico, _) = Criar();
         var primeiro = (await servico.GerarAsync(Conta, EventoId, DateTimeOffset.UtcNow, default)).Valor!;
-        await servico.SalvarAsync(Conta, EventoId, new SalvarLinkCasal(true), default);
+        await servico.SalvarAsync(Conta, EventoId, new SalvarLinkCliente(true), default);
 
         var segundo = (await servico.GerarAsync(Conta, EventoId, DateTimeOffset.UtcNow, default)).Valor!;
 
         Assert.NotEqual(primeiro.Token, segundo.Token);
         Assert.True(segundo.FinanceiroLiberado);
-        Assert.Equal(Codigos.Indisponivel, (await servico.LerCasalAsync(primeiro.Token!, default)).Falha!.Codigo);
+        Assert.Equal(Codigos.Indisponivel, (await servico.LerPaginaAsync(primeiro.Token!, default)).Falha!.Codigo);
         Assert.Equal(segundo.Token, (await servico.ObterAsync(Conta, EventoId, default)).Valor!.Token);
     }
 
@@ -56,7 +56,7 @@ public class LinkCasalTests
         var resultado = await servico.DesativarAsync(Conta, EventoId, default);
 
         Assert.False(resultado.Valor!.Ativo);
-        Assert.Equal(Codigos.Indisponivel, (await servico.LerCasalAsync(link.Token!, default)).Falha!.Codigo);
+        Assert.Equal(Codigos.Indisponivel, (await servico.LerPaginaAsync(link.Token!, default)).Falha!.Codigo);
     }
 
     [Fact]
@@ -66,7 +66,7 @@ public class LinkCasalTests
 
         Assert.Equal(Codigos.Indisponivel, (await servico.GerarAsync("outra", EventoId, DateTimeOffset.UtcNow, default)).Falha!.Codigo);
         Assert.Equal(Codigos.Indisponivel, (await servico.ObterAsync("outra", EventoId, default)).Falha!.Codigo);
-        Assert.Equal(Codigos.Indisponivel, (await servico.SalvarAsync("outra", EventoId, new SalvarLinkCasal(true), default)).Falha!.Codigo);
+        Assert.Equal(Codigos.Indisponivel, (await servico.SalvarAsync("outra", EventoId, new SalvarLinkCliente(true), default)).Falha!.Codigo);
     }
 
     [Fact]
@@ -75,7 +75,7 @@ public class LinkCasalTests
         var (servico, _) = Criar();
         var token = (await servico.GerarAsync(Conta, EventoId, DateTimeOffset.UtcNow, default)).Valor!.Token!;
 
-        var leitura = await servico.LerCasalAsync(token, default);
+        var leitura = await servico.LerPaginaAsync(token, default);
         var acao = await servico.DefinirPagoAsync(token, Guid.NewGuid(), true, new DateOnly(2026, 11, 21), default);
         var arquivo = await servico.AbrirArquivoAsync(token, Guid.NewGuid(), default);
 
@@ -92,18 +92,18 @@ public class LinkCasalTests
     {
         var (servico, _) = Criar();
 
-        Assert.Equal(Codigos.Indisponivel, (await servico.LerCasalAsync("nao-existe", default)).Falha!.Codigo);
-        Assert.Equal(Codigos.Indisponivel, (await servico.LerCasalAsync("", default)).Falha!.Codigo);
+        Assert.Equal(Codigos.Indisponivel, (await servico.LerPaginaAsync("nao-existe", default)).Falha!.Codigo);
+        Assert.Equal(Codigos.Indisponivel, (await servico.LerPaginaAsync("", default)).Falha!.Codigo);
         Assert.Equal(Codigos.Indisponivel, (await servico.DefinirPagoAsync("nao-existe", Guid.NewGuid(), true, new DateOnly(2026, 11, 21), default)).Falha!.Codigo);
     }
 
-    private static async Task<(LinkCasalServico Servico, DadosFalsos Dados, string Token)> CriarComConvidadosAsync(bool liberado = true)
+    private static async Task<(LinkClienteServico Servico, DadosFalsos Dados, string Token)> CriarComConvidadosAsync(bool liberado = true)
     {
         var (servico, dados) = Criar();
         var token = (await servico.GerarAsync(Conta, EventoId, DateTimeOffset.UtcNow, default)).Valor!.Token!;
         if (liberado)
         {
-            await servico.SalvarAsync(Conta, EventoId, new SalvarLinkCasal(false, true), default);
+            await servico.SalvarAsync(Conta, EventoId, new SalvarLinkCliente(false, true), default);
         }
 
         return (servico, dados, token);
@@ -135,16 +135,16 @@ public class LinkCasalTests
         Assert.False((await servico.ObterAsync(Conta, EventoId, default)).Valor!.ConvidadosLiberado);
         Assert.Equal(Codigos.Proibido, (await servico.CriarConviteAsync(token, Pedido(), default)).Falha!.Codigo);
 
-        var ligado = (await servico.SalvarAsync(Conta, EventoId, new SalvarLinkCasal(false, true), default)).Valor!;
+        var ligado = (await servico.SalvarAsync(Conta, EventoId, new SalvarLinkCliente(false, true), default)).Valor!;
         Assert.True(ligado.ConvidadosLiberado);
         Assert.False(ligado.FinanceiroLiberado);
 
         // Sem informar a marcação de convidados, ela fica como está.
-        Assert.True((await servico.SalvarAsync(Conta, EventoId, new SalvarLinkCasal(false), default)).Valor!.ConvidadosLiberado);
+        Assert.True((await servico.SalvarAsync(Conta, EventoId, new SalvarLinkCliente(false), default)).Valor!.ConvidadosLiberado);
     }
 
     [Fact]
-    public async Task Casal_cria_convite_com_telefone_por_convidado_e_o_primeiro_como_principal()
+    public async Task Cliente_cria_convite_com_telefone_por_convidado_e_o_primeiro_como_principal()
     {
         var (servico, dados, token) = await CriarComConvidadosAsync();
 
@@ -187,17 +187,17 @@ public class LinkCasalTests
     }
 
     [Fact]
-    public async Task Convite_do_casal_grava_a_observacao_sozinho_e_ignora_a_enviada()
+    public async Task Convite_do_cliente_grava_a_observacao_sozinho_e_ignora_a_enviada()
     {
         var (servico, dados, token) = await CriarComConvidadosAsync();
 
         Assert.True((await servico.CriarConviteAsync(token, Pedido() with { Observacao = "Outra coisa" }, default)).Ok);
 
-        Assert.Equal("Preenchido pelo casal", dados.Convites.Single().Observacao);
+        Assert.Equal("Preenchido pelo cliente", dados.Convites.Single().Observacao);
     }
 
     [Fact]
-    public async Task Edicao_pelo_casal_nao_muda_a_observacao()
+    public async Task Edicao_pelo_cliente_nao_muda_a_observacao()
     {
         var (servico, dados, token) = await CriarComConvidadosAsync();
         await servico.CriarConviteAsync(token, Pedido(), default);
@@ -216,7 +216,7 @@ public class LinkCasalTests
     }
 
     [Fact]
-    public async Task Casal_marca_a_excecao_do_prazo_e_sem_informar_ela_fica_como_esta()
+    public async Task Cliente_marca_a_excecao_do_prazo_e_sem_informar_ela_fica_como_esta()
     {
         var (servico, dados, token) = await CriarComConvidadosAsync();
 
@@ -338,17 +338,17 @@ public class LinkCasalTests
         var (servico, dados, token) = await CriarComConvidadosAsync(liberado: false);
         dados.Convites.Add(new Convite { Id = Guid.NewGuid(), EventoId = EventoId, ContaId = Conta, Nome = "Da organizadora" });
 
-        Assert.Null((await servico.LerCasalAsync(token, default)).Valor!.Convites);
+        Assert.Null((await servico.LerPaginaAsync(token, default)).Valor!.Convites);
 
-        await servico.SalvarAsync(Conta, EventoId, new SalvarLinkCasal(false, true), default);
-        var leitura = (await servico.LerCasalAsync(token, default)).Valor!;
+        await servico.SalvarAsync(Conta, EventoId, new SalvarLinkCliente(false, true), default);
+        var leitura = (await servico.LerPaginaAsync(token, default)).Valor!;
         Assert.True(leitura.ConvidadosLiberado);
         Assert.Equal("Da organizadora", Assert.Single(leitura.Convites!).Nome);
     }
 
-    private sealed class DadosFalsos : IDadosLinkCasal
+    private sealed class DadosFalsos : IDadosLinkCliente
     {
-        private readonly List<LinkCasal> links = [];
+        private readonly List<LinkCliente> links = [];
 
         public List<Convite> Convites { get; } = [];
 
@@ -379,19 +379,19 @@ public class LinkCasalTests
         public Task<EventoDoLink?> ObterEventoAsync(string contaId, Guid eventoId, CancellationToken ct) =>
             Task.FromResult<EventoDoLink?>(contaId == Conta && eventoId == EventoId ? new EventoDoLink(EventoId, Conta, "Casamento", null, EmAndamento) : null);
 
-        public Task<LinkCasal?> ObterPorEventoAsync(Guid eventoId, CancellationToken ct) =>
+        public Task<LinkCliente?> ObterPorEventoAsync(Guid eventoId, CancellationToken ct) =>
             Task.FromResult(links.FirstOrDefault(link => link.EventoId == eventoId));
 
-        public Task<LinkCasal?> ObterPorTokenAsync(string token, CancellationToken ct) =>
+        public Task<LinkCliente?> ObterPorTokenAsync(string token, CancellationToken ct) =>
             Task.FromResult(links.FirstOrDefault(link => link.Token == token));
 
-        public Task InserirAsync(LinkCasal link, CancellationToken ct)
+        public Task InserirAsync(LinkCliente link, CancellationToken ct)
         {
             links.Add(link);
             return Task.CompletedTask;
         }
 
-        public Task RemoverAsync(LinkCasal link, CancellationToken ct)
+        public Task RemoverAsync(LinkCliente link, CancellationToken ct)
         {
             links.Remove(link);
             return Task.CompletedTask;

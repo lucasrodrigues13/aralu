@@ -13,7 +13,7 @@ Trocar os registros manuais "Enviar" e "Assinar" por um fluxo real: a plataforma
 ## 3. Situação atual (o que existe hoje)
 
 - **Contratos do funil (SPEC-022).** "Enviar" só grava a data de envio; o sistema não manda nada ao cliente. "Assinar" move o contrato para Assinados, sem prova de quem assinou. A lista tem a coluna Situação ("Não enviado", "Enviado em", "Assinado em"), criada em 21/11/2026 para o registro ficar visível.
-- **Contratos do evento (SPEC-030).** O casal só **lê** o contrato por um link de 7 dias enviado por e-mail. Não há assinatura nem simulação.
+- **Contratos do evento (SPEC-030).** O cliente só **lê** o contrato por um link de 7 dias enviado por e-mail. Não há assinatura nem simulação.
 - Nenhum dos dois tem validade jurídica de assinatura. O roteiro já avisa isso no passo 4 do Ato 7.
 
 ## 4. Requisitos relacionados
@@ -26,13 +26,13 @@ RF-075 (contratos do funil, SPEC-022), RF-098 (contrato do evento, SPEC-030), SP
 |---|---|
 | Organizer | Envia o contrato para assinatura, acompanha o estado, cancela o envio, baixa o documento assinado. |
 | Assistant | Só se tiver a permissão do contrato (a definir; hoje a assistente não vê a tela Contratos da conta, mas vê os contratos do funil). |
-| Signatário (cliente, casal, sem login) | Recebe o documento pela plataforma, assina e não precisa de conta no sistema. |
+| Signatário (cliente, cliente, sem login) | Recebe o documento pela plataforma, assina e não precisa de conta no sistema. |
 | Admin | Como o Organizer, na conta que está operando. |
 
 ## 6. Fluxo principal (proposta, a validar)
 
 1. No contrato em andamento, o Organizer toca em **Enviar para assinatura**.
-2. O sistema congela o texto do contrato (cópia que não muda mais), gera o documento e o envia à plataforma com os signatários (contato da oportunidade; no evento, o casal). O contrato passa a **Aguardando assinatura**.
+2. O sistema congela o texto do contrato (cópia que não muda mais), gera o documento e o envia à plataforma com os signatários (contato da oportunidade; no evento, o cliente). O contrato passa a **Aguardando assinatura**.
 3. A plataforma avisa o signatário (e-mail ou WhatsApp, conforme o fornecedor) e coleta a assinatura.
 4. A plataforma avisa o sistema por webhook a cada mudança. O sistema atualiza o estado: **Assinado**, **Recusado** ou **Expirado**.
 5. Ao assinar, o sistema guarda o PDF assinado e o certificado de assinatura (trilha de auditoria) e os deixa para baixar na tela do contrato.
@@ -41,7 +41,7 @@ RF-075 (contratos do funil, SPEC-022), RF-098 (contrato do evento, SPEC-030), SP
 
 ## 7. Fluxos alternativos
 
-- **Vários signatários** (casal, dois contratantes, testemunha) e **ordem de assinatura**: ver §17, ponto 3.
+- **Vários signatários** (cliente, dois contratantes, testemunha) e **ordem de assinatura**: ver §17, ponto 3.
 - **Falha da plataforma** ao enviar: o contrato continua Em andamento, com mensagem clara, e dá para tentar de novo.
 - **Webhook perdido ou atrasado:** o sistema consulta o estado na plataforma ao abrir o contrato e em uma rotina periódica.
 - **Contrato editado depois do envio:** não pode. O texto está congelado; para mudar, cancela o envio e envia de novo.
@@ -96,7 +96,7 @@ Credencial da plataforma inválida ou vencida: o envio falha com mensagem para o
 
 ## 15. Cenários de teste
 
-Envio feliz até Assinado. Recusa. Expiração. Cancelar envio pendente. Reenvio depois de recusa. Webhook repetido (idempotência). Webhook perdido e recuperado pela consulta. Credencial inválida. Casal com dois signatários. Isolamento entre contas. Ambiente de teste (sandbox) do fornecedor, sem cobrança.
+Envio feliz até Assinado. Recusa. Expiração. Cancelar envio pendente. Reenvio depois de recusa. Webhook repetido (idempotência). Webhook perdido e recuperado pela consulta. Credencial inválida. Cliente com dois signatários. Isolamento entre contas. Ambiente de teste (sandbox) do fornecedor, sem cobrança.
 
 ## 16. Dependências
 
@@ -106,7 +106,7 @@ SPEC-022 (contratos do funil), SPEC-030 (contratos do evento), SPEC-039 (modelo)
 
 1. **Escolher o fornecedor.** Candidatos: ZapSign, Clicksign, D4Sign, Autentique e DocuSign. Critérios: preço por documento ou por plano, API e sandbox, webhooks, assinatura por WhatsApp além de e-mail, aceita vários signatários e ordem, guarda trilha de auditoria, retorno do PDF assinado, suporte em português e termos de uso. Fazer uma comparação curta antes de aprovar. Não há preço nem fornecedor definidos neste rascunho.
 2. **Nível de validade jurídica.** Contratos entre assessoria e cliente costumam bastar com assinatura eletrônica simples ou avançada (Lei 14.063/2020); ICP-Brasil (qualificada) só se alguém exigir. Validar com o usuário e, se for o caso, com um advogado antes de prometer validade jurídica na tela.
-3. **Signatários e ordem.** Quem assina nos dois fluxos: no funil, o contato da oportunidade e a assessoria? No evento, o casal inteiro? A assessoria assina por último?
+3. **Signatários e ordem.** Quem assina nos dois fluxos: no funil, o contato da oportunidade e a assessoria? No evento, todos os clientes do evento? A assessoria assina por último?
 4. **O que fazer com o "Assinar" manual.** Manter como registro de papel (com selo "manual"), ou remover.
 5. **Quem paga e quem tem a conta.** Cada assessoria contrata a plataforma (credenciais dela no Perfil) ou o sistema tem uma conta única e embute o custo no plano.
 6. **Canal de aviso ao signatário.** Só e-mail, ou também WhatsApp (depende do fornecedor e do custo).

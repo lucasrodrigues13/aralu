@@ -585,13 +585,6 @@ public sealed class DadosEf(AppDbContext banco) : IDados
     public Task<Cliente?> ObterClienteAsync(string contaId, Guid id, CancellationToken ct) =>
         banco.Clientes.FirstOrDefaultAsync(cliente => cliente.Id == id && cliente.ContaId == contaId, ct);
 
-    public Task<Cliente?> ObterClientePorUsuarioAsync(string contaId, string usuarioId, CancellationToken ct) =>
-        banco.Clientes.FirstOrDefaultAsync(
-            cliente => cliente.ContaId == contaId
-                && cliente.UsuarioId == usuarioId
-                && cliente.AcessoPlataforma,
-            ct);
-
     public async Task InserirClienteAsync(Cliente cliente, CancellationToken ct)
     {
         banco.Clientes.Add(cliente);
@@ -627,42 +620,6 @@ public sealed class DadosEf(AppDbContext banco) : IDados
             .OrderBy(evento => evento.Nome)
             .ToListAsync(ct);
         return eventos.Select(evento => (evento.Id, evento.Nome)).ToArray();
-    }
-
-    public async Task<IReadOnlyList<Guid>> EventosDoUsuarioClienteAsync(string contaId, string usuarioId, CancellationToken ct)
-    {
-        var cliente = await banco.Clientes.AsNoTracking()
-            .FirstOrDefaultAsync(
-                item => item.ContaId == contaId && item.UsuarioId == usuarioId && item.AcessoPlataforma,
-                ct);
-        if (cliente is null)
-        {
-            return [];
-        }
-
-        return await banco.Vinculos.AsNoTracking()
-            .Where(vinculo => vinculo.ClienteId == cliente.Id)
-            .Join(
-                banco.Eventos.AsNoTracking().Where(evento => evento.ContaId == contaId),
-                vinculo => vinculo.EventoId,
-                evento => evento.Id,
-                (_, evento) => evento.Id)
-            .ToListAsync(ct);
-    }
-
-    public async Task<bool> ClienteVinculadoAoEventoAsync(string contaId, string usuarioId, Guid eventoId, CancellationToken ct)
-    {
-        var cliente = await banco.Clientes.AsNoTracking()
-            .FirstOrDefaultAsync(
-                item => item.ContaId == contaId && item.UsuarioId == usuarioId && item.AcessoPlataforma,
-                ct);
-        if (cliente is null)
-        {
-            return false;
-        }
-
-        return await banco.Vinculos.AsNoTracking()
-            .AnyAsync(vinculo => vinculo.ClienteId == cliente.Id && vinculo.EventoId == eventoId, ct);
     }
 
     public async Task<IReadOnlyList<Cliente>> ClientesDoEventoAsync(string contaId, Guid eventoId, CancellationToken ct) =>

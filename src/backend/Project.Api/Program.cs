@@ -177,7 +177,7 @@ Project.Api.Conta.AssistenteEndpoints.Mapear(app);
 Project.Api.Conta.AdminEndpoints.Mapear(app);
 NegocioEndpoints.Mapear(app);
 DinheiroEndpoints.Mapear(app);
-CasalEndpoints.Mapear(app);
+LinkClienteEndpoints.Mapear(app);
 PortariaEndpoints.Mapear(app);
 ContratoEndpoints.Mapear(app);
 

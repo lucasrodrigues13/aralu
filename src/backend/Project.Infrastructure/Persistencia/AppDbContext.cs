@@ -38,7 +38,7 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<VinculoCliente> Vinculos => Set<VinculoCliente>();
 
-    public DbSet<LinkCasal> LinksCasal => Set<LinkCasal>();
+    public DbSet<LinkCliente> LinksCliente => Set<LinkCliente>();
 
     public DbSet<LinkPortaria> LinksPortaria => Set<LinkPortaria>();
 

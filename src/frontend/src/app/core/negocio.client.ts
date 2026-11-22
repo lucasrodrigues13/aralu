@@ -334,9 +334,9 @@ export interface EventoServico {
     valorOrcamento: number | null;
     observacoes: string | null;
   }[];
-  /** Contrato assinado pelo fornecedor e pelo casal, anexado pelo organizador (SPEC-045). */
+  /** Contrato assinado pelo fornecedor e pelo cliente, anexado pelo organizador (SPEC-045). */
   contratoAssinado: { arquivoId: string; nome: string; tipoConteudo: string } | null;
-  /** "Organizadora" ou "Casal"; nulo em contratos enviados antes do registro (SPEC-048). */
+  /** "Organizadora" ou "Cliente"; nulo em contratos enviados antes do registro (SPEC-048). */
   contratoAssinadoPor?: string | null;
   contratoAssinadoEm?: string | null;
 }
@@ -393,16 +393,6 @@ export interface Tarefa {
   tags: string[];
 }
 
-export interface PermissoesCliente {
-  convidados: boolean;
-  tarefas: boolean;
-  anexos: boolean;
-  parcelas: boolean;
-  rsvp: boolean;
-  mapa: boolean;
-  contrato: boolean;
-}
-
 export interface Cliente {
   id: string;
   nome: string;
@@ -430,10 +420,6 @@ export interface Cliente {
   bairro: string | null;
   complemento: string | null;
   fotoId: string | null;
-  ultimoAcesso: string | null;
-  acessoPlataforma: boolean;
-  usuarioId: string | null;
-  permissoes: PermissoesCliente;
   eventos: { id: string; nome: string }[];
 }
 
@@ -538,13 +524,13 @@ export const PRIORIDADES_TAREFA = [
 
 export const VISIBILIDADES_TAREFA = [
   { valor: 'SoEu', rotulo: 'Só eu' },
-  { valor: 'Casal', rotulo: 'Casal' },
+  { valor: 'Cliente', rotulo: 'Cliente' },
   { valor: 'Compartilhada', rotulo: 'Compartilhada' },
 ];
 
 export const PAPEIS_RESPONSAVEL_TAREFA = [
   { valor: 'Organizer', rotulo: 'Eu' },
-  { valor: 'Casal', rotulo: 'Casal' },
+  { valor: 'Cliente', rotulo: 'Cliente' },
 ];
 
 @Injectable({ providedIn: 'root' })

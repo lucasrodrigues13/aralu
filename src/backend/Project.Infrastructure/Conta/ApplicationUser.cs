@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Identity;
 namespace Project.Infrastructure.Conta;
 
 /// <summary>
-/// Conta Identity. <see cref="OrganizerId"/> vincula um <c>Client</c> ao Organizer dono do tenant (RF-084).
+/// Conta Identity. <see cref="OrganizerId"/> vincula a assistente ao Organizer dono da conta (SPEC-032).
 /// Admin e Organizer ficam sem vínculo.
 /// </summary>
 public sealed class ApplicationUser : IdentityUser
@@ -14,22 +14,14 @@ public sealed class ApplicationUser : IdentityUser
     {
         if (string.IsNullOrWhiteSpace(organizerId))
         {
-            throw new InvalidOperationException("Conta Client exige vínculo com um Organizer.");
+            throw new InvalidOperationException("Conta de assistente exige vínculo com um Organizer.");
         }
 
         if (string.Equals(Id, organizerId, StringComparison.Ordinal))
         {
-            throw new InvalidOperationException("Conta Client não pode vincular a si mesma.");
+            throw new InvalidOperationException("Conta de assistente não pode vincular a si mesma.");
         }
 
         OrganizerId = organizerId.Trim();
-    }
-
-    public void GarantirVinculoClient()
-    {
-        if (string.IsNullOrWhiteSpace(OrganizerId))
-        {
-            throw new InvalidOperationException("Conta Client exige vínculo com um Organizer.");
-        }
     }
 }

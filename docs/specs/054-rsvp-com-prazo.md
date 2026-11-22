@@ -1,6 +1,6 @@
 # 054. RSVP com prazo e lista de presença
 
-**Status: aprovada (21/11/2026; aprovação antecipada do dono do projeto, repassada pela sessão que abriu o card #24, com as opções mais simples e conservadoras nos pontos em aberto).** Fonte: card #24 do Trello; [produto-v1.md](../produto-v1.md) 5.7. Estende o RSVP da [SPEC-004](004-convites-e-rsvp.md) e [SPEC-010](010-convites-convidados-completo.md) e a aba Convidados da [SPEC-052](052-link-do-casal-cadastra-convites.md). Não muda o lead pelo RSVP ([SPEC-021](021-oportunidades-de-rsvp.md)).
+**Status: aprovada (21/11/2026; aprovação antecipada do dono do projeto, repassada pela sessão que abriu o card #24, com as opções mais simples e conservadoras nos pontos em aberto).** Fonte: card #24 do Trello; [produto-v1.md](../produto-v1.md) 5.7. Estende o RSVP da [SPEC-004](004-convites-e-rsvp.md) e [SPEC-010](010-convites-convidados-completo.md) e a aba Convidados da [SPEC-052](052-link-do-cliente-cadastra-convites.md). Não muda o lead pelo RSVP ([SPEC-021](021-oportunidades-de-rsvp.md)).
 
 ## 1. Identificador e nome
 
@@ -22,7 +22,7 @@ Fora: check-in na portaria, QR e link da equipe (card #25); aviso automático de
 |---|---|
 | Organizer (dona) e Assistant com a permissão de Convidados | Definir, trocar e remover o prazo; abrir e fechar a exceção de um convite; confirmar manualmente; ver a lista de presença. |
 | Quem tem o link de RSVP | Antes do fim do prazo (ou com exceção): como na SPEC-004. Depois: ver a tela de convite expirado. |
-| Casal (link do casal) | Não mexe no prazo nem na exceção. |
+| Cliente (link do cliente) | Não mexe no prazo nem na exceção. |
 
 ## 5. Pré-condições
 
@@ -110,4 +110,4 @@ Decididos nesta entrega pela opção mais simples e conservadora (a conferir pel
 5. **Lista de presença é uma entrada por convidado confirmado**, não uma lista por convite. O card diz "cada confirmação de convites gera uma lista de presença com um id único"; entendido como um id único por confirmação. Quem confirmou, sai e volta tem id novo. A entrada não guarda a origem (link ou organizadora); o check-in (hora de chegada) ficou no card #25 ([SPEC-058](058-portaria-do-evento.md)), na coluna `CompareceuEm` da mesma lista.
 6. **Sem aviso automático** de prazo próximo ou encerrado e sem mensagem pronta de WhatsApp sobre o prazo.
 7. **Prazo depois da data do evento é aceito**; a plataforma não compara as duas datas.
-8. **A tela do casal (SPEC-052) não mostra nem edita prazo ou exceção.**
+8. **A tela do cliente (SPEC-052) não mostra nem edita prazo ou exceção.**

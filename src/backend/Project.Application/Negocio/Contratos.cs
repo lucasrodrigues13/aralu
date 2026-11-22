@@ -161,8 +161,6 @@ public interface IDados
 
     Task<Cliente?> ObterClienteAsync(string contaId, Guid id, CancellationToken ct);
 
-    Task<Cliente?> ObterClientePorUsuarioAsync(string contaId, string usuarioId, CancellationToken ct);
-
     Task InserirClienteAsync(Cliente cliente, CancellationToken ct);
 
     Task SalvarClienteAsync(CancellationToken ct);
@@ -171,10 +169,6 @@ public interface IDados
     Task RemoverClienteAsync(string contaId, Cliente cliente, CancellationToken ct);
 
     Task<IReadOnlyList<(Guid Id, string Nome)>> EventosDoClienteAsync(string contaId, Guid clienteId, CancellationToken ct);
-
-    Task<IReadOnlyList<Guid>> EventosDoUsuarioClienteAsync(string contaId, string usuarioId, CancellationToken ct);
-
-    Task<bool> ClienteVinculadoAoEventoAsync(string contaId, string usuarioId, Guid eventoId, CancellationToken ct);
 
     Task<IReadOnlyList<Cliente>> ClientesDoEventoAsync(string contaId, Guid eventoId, CancellationToken ct);
 

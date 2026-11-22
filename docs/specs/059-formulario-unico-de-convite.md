@@ -1,6 +1,6 @@
 # 059. Formulário único de convite, planilha e lista de convites
 
-**Status: aprovada (22/11/2026, pelo dono do projeto, com as respostas dele nos pontos em aberto: telefone obrigatório só no primeiro convidado; datas de envio por convite descartadas; o mesmo formulário ao criar e ao editar, com a exceção do prazo nas duas telas). Ampliada no mesmo dia, também a pedido dele: a planilha de importação segue o mesmo formato (telefone obrigatório no primeiro convidado de cada convite) e ganha um modal de instruções; a lista de convites fica recolhida nas duas telas. Depois, ainda a pedido dele: a aba Convidados do link do cliente ganha os cards por situação, os filtros e as ferramentas da organizadora (data de envio, prazo de confirmação, lista de presença, planilha padrão e importar). Por fim: o modelo da planilha vem com dois convites de exemplo para apagar, sem Mesa e Custo, com listas suspensas; e os formulários ganham gênero e faixa etária por convidado. Depois, o dono pediu o **convidado principal** marcado explicitamente (na planilha e nos formulários): um, e só um, por convite, obrigatório e com telefone. Essa regra substituiu a do "telefone obrigatório no primeiro convidado". E a importação passou a ir para uma **fila** processada em segundo plano na própria API, com um modal de histórico (§6.6).** Altera a [SPEC-052](052-link-do-casal-cadastra-convites.md) (link do cliente cadastra convites), a [SPEC-010](010-convites-convidados-completo.md) (convite e principal) e a [SPEC-054](054-rsvp-com-prazo.md) (exceção do prazo).
+**Status: aprovada (22/11/2026, pelo dono do projeto, com as respostas dele nos pontos em aberto: telefone obrigatório só no primeiro convidado; datas de envio por convite descartadas; o mesmo formulário ao criar e ao editar, com a exceção do prazo nas duas telas). Ampliada no mesmo dia, também a pedido dele: a planilha de importação segue o mesmo formato (telefone obrigatório no primeiro convidado de cada convite) e ganha um modal de instruções; a lista de convites fica recolhida nas duas telas. Depois, ainda a pedido dele: a aba Convidados do link do cliente ganha os cards por situação, os filtros e as ferramentas da organizadora (data de envio, prazo de confirmação, lista de presença, planilha padrão e importar). Por fim: o modelo da planilha vem com dois convites de exemplo para apagar, sem Mesa e Custo, com listas suspensas; e os formulários ganham gênero e faixa etária por convidado. Depois, o dono pediu o **convidado principal** marcado explicitamente (na planilha e nos formulários): um, e só um, por convite, obrigatório e com telefone. Essa regra substituiu a do "telefone obrigatório no primeiro convidado". E a importação passou a ir para uma **fila** processada em segundo plano na própria API, com um modal de histórico (§6.6).** Altera a [SPEC-052](052-link-do-cliente-cadastra-convites.md) (link do cliente cadastra convites), a [SPEC-010](010-convites-convidados-completo.md) (convite e principal) e a [SPEC-054](054-rsvp-com-prazo.md) (exceção do prazo).
 
 ## 1. Identificador e nome
 
@@ -8,7 +8,7 @@ SPEC-059. Formulário único de convite (organizadora e link do cliente), data d
 
 ## 2. Objetivo
 
-A organizadora e o cliente (pelo link do cliente) usam o mesmo formulário para criar e editar convites, com as mesmas regras: vários convidados, telefone por convidado e a exceção do prazo. A única diferença é a observação: a organizadora escreve; no link do cliente ela não aparece e o sistema grava "Preenchido pelo casal". A data de envio deixa de ser de cada convite e passa a ser uma só para o evento, configurada fora do formulário.
+A organizadora e o cliente (pelo link do cliente) usam o mesmo formulário para criar e editar convites, com as mesmas regras: vários convidados, telefone por convidado e a exceção do prazo. A única diferença é a observação: a organizadora escreve; no link do cliente ela não aparece e o sistema grava "Preenchido pelo cliente". A data de envio deixa de ser de cada convite e passa a ser uma só para o evento, configurada fora do formulário.
 
 ## 3. Requisitos relacionados
 
@@ -61,7 +61,7 @@ Na aba Convidados da organizadora (visão **Por convite**) e na aba Convidados d
 2. Os modais também são compartilhados: data (`data-convites.dialog.ts`, para prazo e data de envio), lista de presença (`presencas.dialog.ts`) e instruções da planilha (`planilha-instrucoes.dialog.ts`, que recebe a função de download de cada tela).
 3. Na organizadora, o filtro roda na API, como antes. No link do cliente, que já recebe todos os convites, o filtro roda na tela com as mesmas regras (`filtrarConvites` em `shared/convite-lista.ts`): o convidado passa se atende a todos os filtros, o nome vale para o convidado ou o convite, e o convite fica com os convidados que passaram.
 4. O prazo e a data de envio definidos pelo cliente são os do evento: a organizadora vê o mesmo valor, e vice-versa.
-5. Convites importados pelo cliente gravam a observação "Preenchido pelo casal", como os criados pelo formulário; a coluna de observação da planilha é ignorada nesse caso.
+5. Convites importados pelo cliente gravam a observação "Preenchido pelo cliente", como os criados pelo formulário; a coluna de observação da planilha é ignorada nesse caso.
 6. A organizadora mantém só para ela a troca "Por convite / Por convidado" e as ações do convite (link de RSVP, QR, WhatsApp, excluir).
 
 ### 6.6. Importação em fila, com histórico
@@ -85,19 +85,19 @@ Na aba Convidados da organizadora (visão **Por convite**) e na aba Convidados d
 ## 8. Regras de negócio
 
 - **Principal:** é o convidado marcado no formulário ou com Sim na planilha; obrigatório, um por convite e com telefone. "Usar este telefone" na lista da organizadora segue trocando o principal (SPEC-010).
-- **Observação:** a organizadora envia e grava livremente. No link do cliente, o backend grava "Preenchido pelo casal" ao criar (`ConviteRegras.ObservacaoDoCliente`) e ignora qualquer observação enviada; ao editar pelo link, a observação do convite não muda. O cliente não vê a observação.
+- **Observação:** a organizadora envia e grava livremente. No link do cliente, o backend grava "Preenchido pelo cliente" ao criar (`ConviteRegras.ObservacaoDoCliente`) e ignora qualquer observação enviada; ao editar pelo link, a observação do convite não muda. O cliente não vê a observação.
 - **Exceção do prazo:** o formulário envia `excecaoPrazoRsvp`; nulo mantém como está. O endpoint `PUT /convites/{id}/excecao-rsvp` (SPEC-054) continua existindo.
-- **Mesmas validações nos dois caminhos:** `FormularioConvite.Validar` e `FormularioConvite.Aplicar` (Application/Convidados), chamados por `ConviteServico` e `LinkCasalServico`.
+- **Mesmas validações nos dois caminhos:** `FormularioConvite.Validar` e `FormularioConvite.Aplicar` (Application/Convidados), chamados por `ConviteServico` e `LinkClienteServico`.
 - **Banco (migration `DataDeEnvioDosConvitesNoEvento`):** apaga `Convites.DataEnvio` (as datas existentes são descartadas, por decisão do dono) e cria `Eventos.DataEnvioConvites` (data, opcional). `deploy/schema.sql` gerado de novo.
 
 ## 9. API
 
 - Corpo único dos dois caminhos (`FormularioConvitePedido`): `{ nome, email, excecaoPrazoRsvp?, observacao?, convidados: [{ id?, nome, ddi, celular, genero?, faixa?, principal }] }`. A leitura do link do cliente traz `genero`, `faixa` e `principal` em cada convidado.
-- Importação em fila (§6.6): `POST /api/v1/eventos/{id}/convites/importar` e `POST /api/v1/publico/casal/{token}/convites/importar` (multipart, campo `arquivo`) respondem com a importação `{ id, nomeArquivo, situacao, criadaEm, concluidaEm, convites, erros }` Pendente; `GET .../convites/importacoes` lista as últimas 20.
+- Importação em fila (§6.6): `POST /api/v1/eventos/{id}/convites/importar` e `POST /api/v1/publico/cliente/{token}/convites/importar` (multipart, campo `arquivo`) respondem com a importação `{ id, nomeArquivo, situacao, criadaEm, concluidaEm, convites, erros }` Pendente; `GET .../convites/importacoes` lista as últimas 20.
 - Organizadora: `POST /api/v1/eventos/{id}/convites` e `PUT /api/v1/convites/{id}` recebem esse corpo (saem `principal`, `dataEnvio` e os campos de situação, mesa etc. na criação; esses seguem no cadastro do convidado). A leitura do convite perde `dataEnvio`; a lista ganha `dataEnvioConvites`.
 - Nova rota: `PUT /api/v1/eventos/{id}/envio-convites` com `{ data }` (nula remove), mesmo controle de acesso do prazo de confirmação.
 - Link do cliente: `POST convites` e `PUT convites/{conviteId}` recebem o mesmo corpo (observação ignorada). A leitura traz `excecaoPrazoRsvp` no convite, `ddi` e `celular` em cada convidado, e `prazoRsvp` e `dataEnvioConvites` do evento.
-- Ferramentas do link do cliente (base `/api/v1/publico/casal/{token}`, exigem a marcação de convidados ligada e o evento em andamento; 403 com a marcação desligada): `PUT prazo-rsvp` `{ prazo }`, `PUT envio-convites` `{ data }`, `GET presencas`, `GET convites/planilha` e `POST convites/importar` (multipart, campo `arquivo`). Usam as regras de `ConviteServico`; as escritas devolvem a leitura do casal atualizada.
+- Ferramentas do link do cliente (base `/api/v1/publico/cliente/{token}`, exigem a marcação de convidados ligada e o evento em andamento; 403 com a marcação desligada): `PUT prazo-rsvp` `{ prazo }`, `PUT envio-convites` `{ data }`, `GET presencas`, `GET convites/planilha` e `POST convites/importar` (multipart, campo `arquivo`). Usam as regras de `ConviteServico`; as escritas devolvem a leitura do cliente atualizada.
 
 ## 10. Estados
 
@@ -121,18 +121,18 @@ Mensagem no modal (toast) com o texto do backend.
 2. A organizadora cadastra um convite com vários convidados.
 3. Os dois pedem telefone por convidado; sem o do primeiro, não salva.
 4. A data de envio é uma só para o evento e fica fora do formulário.
-5. O convite criado pelo link do cliente grava "Preenchido pelo casal", sem mostrar isso ao cliente.
+5. O convite criado pelo link do cliente grava "Preenchido pelo cliente", sem mostrar isso ao cliente.
 6. Editar pelo link do cliente não muda a observação.
 
 ## 15. Cenários de teste
 
-Modelo e gênero/faixa: `RegrasNegocioTests` (modelo com exemplos, comentário, listas e aba Instruções; planilha antiga com Mesa e Custo lida ignorando essas colunas; 8 colunas), `LinkCasalTests.Formulario_grava_genero_e_faixa_etaria_de_cada_convidado`, integração `Importacao_agrupa_por_convite_e_exige_telefone_do_primeiro_convidado` (modelo sem apagar os exemplos é recusado), frontend `convite-form.dialog.spec.ts` e `planilha-instrucoes.dialog.spec.ts`.
+Modelo e gênero/faixa: `RegrasNegocioTests` (modelo com exemplos, comentário, listas e aba Instruções; planilha antiga com Mesa e Custo lida ignorando essas colunas; 8 colunas), `LinkClienteTests.Formulario_grava_genero_e_faixa_etaria_de_cada_convidado`, integração `Importacao_agrupa_por_convite_e_exige_telefone_do_primeiro_convidado` (modelo sem apagar os exemplos é recusado), frontend `convite-form.dialog.spec.ts` e `planilha-instrucoes.dialog.spec.ts`.
 
-Aba do cliente: integração `Link_do_cliente_usa_as_ferramentas_da_aba_convidados`; frontend `convidados-topo.component.spec.ts` (mesmas ferramentas nas duas telas, observação só na organizadora, card filtra, filtro e cards do cliente, prazo encerrado) e `casal.client.spec.ts`. Planilha e lista: `RegrasNegocioTests` (modelo com a aba Exemplo, que não é importada; número da linha na leitura), integração `Importacao_agrupa_por_convite_e_exige_telefone_do_primeiro_convidado`, frontend `planilha-instrucoes.dialog.spec.ts` e `convite-lista.spec.ts`.
+Aba do cliente: integração `Link_do_cliente_usa_as_ferramentas_da_aba_convidados`; frontend `convidados-topo.component.spec.ts` (mesmas ferramentas nas duas telas, observação só na organizadora, card filtra, filtro e cards do cliente, prazo encerrado) e `cliente.client.spec.ts`. Planilha e lista: `RegrasNegocioTests` (modelo com a aba Exemplo, que não é importada; número da linha na leitura), integração `Importacao_agrupa_por_convite_e_exige_telefone_do_primeiro_convidado`, frontend `planilha-instrucoes.dialog.spec.ts` e `convite-lista.spec.ts`.
 
-Principal e fila: `LinkCasalTests.Principal_e_obrigatorio_unico_e_precisa_de_telefone`, `RegrasNegocioTests` (coluna Convidado principal com lista Sim/Não; coluna que falta avisada), integração `Importacao_vai_para_a_fila_e_junta_todos_os_erros_da_planilha` (modelo sem apagar os exemplos, vários erros de principal na mesma planilha, principal fora da primeira linha, histórico e isolamento entre contas) e a importação pelo link do cliente em `Link_do_cliente_usa_as_ferramentas_da_aba_convidados`; frontend `convite-form.dialog.spec.ts` (marcar o principal; telefone obrigatório só nele) e `importacoes.dialog.spec.ts` (situações, acordeão de erros, consulta enquanto há fila).
+Principal e fila: `LinkClienteTests.Principal_e_obrigatorio_unico_e_precisa_de_telefone`, `RegrasNegocioTests` (coluna Convidado principal com lista Sim/Não; coluna que falta avisada), integração `Importacao_vai_para_a_fila_e_junta_todos_os_erros_da_planilha` (modelo sem apagar os exemplos, vários erros de principal na mesma planilha, principal fora da primeira linha, histórico e isolamento entre contas) e a importação pelo link do cliente em `Link_do_cliente_usa_as_ferramentas_da_aba_convidados`; frontend `convite-form.dialog.spec.ts` (marcar o principal; telefone obrigatório só nele) e `importacoes.dialog.spec.ts` (situações, acordeão de erros, consulta enquanto há fila).
 
-Unitários (`LinkCasalTests`): telefone por convidado e principal; observação gravada pelo backend e ignorada quando enviada; edição não muda a observação; exceção do prazo; primeiro convidado sem telefone recusado; edição incluindo e removendo convidados. Integração: `Link_do_casal_cadastra_convites_quando_liberado_e_a_organizadora_define_o_envio` e `Convite_rsvp_e_planilha`. Frontend: `convite-form.dialog.spec.ts` (mesmos campos menos a observação; telefone obrigatório só no primeiro; ids mantidos na edição), `convidados.page.spec.ts` e `casal.client.spec.ts`.
+Unitários (`LinkClienteTests`): telefone por convidado e principal; observação gravada pelo backend e ignorada quando enviada; edição não muda a observação; exceção do prazo; primeiro convidado sem telefone recusado; edição incluindo e removendo convidados. Integração: `Link_do_cliente_cadastra_convites_quando_liberado_e_a_organizadora_define_o_envio` e `Convite_rsvp_e_planilha`. Frontend: `convite-form.dialog.spec.ts` (mesmos campos menos a observação; telefone obrigatório só no primeiro; ids mantidos na edição), `convidados.page.spec.ts` e `cliente.client.spec.ts`.
 
 ## 16. Dependências
 
@@ -141,6 +141,6 @@ SPEC-052, SPEC-010, SPEC-054.
 ## 17. Premissas e pontos não definidos
 
 1. ~~A importação por planilha não muda~~: passou a seguir o formulário (§6.3). O telefone da linha continua indo para o convidado da linha. O cabeçalho do modelo não mudou, para não invalidar planilhas já preenchidas.
-2. O texto "Preenchido pelo casal" segue o pedido do dono, mesmo a plataforma atendendo outros tipos de evento.
+2. O texto gravado é "Preenchido pelo cliente" (era "Preenchido pelo casal"; trocado na [SPEC-060](060-cliente-sem-login-e-link-do-cliente.md), porque a plataforma não atende só casamentos).
 3. A edição de um convidado pela organizadora (situação, mesa, CPF etc.) continua fora do formulário de convite.
 4. Na edição, convidado removido pelo formulário é apagado do banco, como já acontecia no link do cliente.

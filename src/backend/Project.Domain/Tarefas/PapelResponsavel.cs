@@ -5,5 +5,5 @@ public enum PapelResponsavel
     Organizer,
     Assistente,
     Equipe,
-    Casal,
+    Cliente,
 }

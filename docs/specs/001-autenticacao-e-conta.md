@@ -1,6 +1,6 @@
 # 001. Autenticação e conta
 
-**Status: aprovada.** O código segue esta spec.
+**Status: aprovada.** O código segue esta spec. **Revisão (22/11/2026, [SPEC-060](060-cliente-sem-login-e-link-do-cliente.md)):** a role `Client` saiu; só `Admin`, `Organizer` e `Assistant` entram na plataforma. O cliente acessa apenas o link público com token gerado pelo organizador.
 
 ## 1. Identificador e nome
 
@@ -23,10 +23,10 @@ RF-042 e RF-043 existem, mas não há tela de arquivo neste fluxo.
 | Visitante | Cadastrar, confirmar e-mail, pedir novo link, entrar, pedir redefinição. |
 | Organizer | Conta comum do produto. Entra nas áreas autenticadas da própria conta. Não acessa área de `Admin`. Não escolhe a própria role. O cadastro público cria só esta role. |
 | Admin | Admin geral. Acessa a área administrativa e todas as contas. Nasce pelo bootstrap. |
-| Client | Subusuário Identity vinculado a um `Organizer`, com acesso limitado por flags (RF-056). Não nasce pelo cadastro público. Criação e vínculo ficam fora deste fluxo de conta pública. |
+| Cliente | Não tem conta nem login (SPEC-060). Acessa só o link público do evento, com token gerado pelo organizador (RF-056). |
 | Sistema | Envia e-mail, bloqueia conta, aplica limite por IP. |
 
-Assistente e fornecedor com login ficam de fora. O registro de contato de negócio chamado “cliente” (SPEC-006 e SPEC-009) não é a role `Client`.
+Assistente e fornecedor com login ficam de fora. O registro de contato de negócio chamado “cliente” (SPEC-006 e SPEC-009) não tem login.
 
 ## 5. Pré-condições
 
@@ -45,7 +45,7 @@ Assistente e fornecedor com login ficam de fora. O registro de contato de negóc
 7. O sistema entrega um JWT de acesso e leva à área de `Organizer`.
 8. Ele sai. O navegador deixa de enviar o token. O token já emitido continua válido até expirar.
 
-O administrador inicial segue outro caminho: o bootstrap garante as roles `Admin`, `Organizer` e `Client`, cria o usuário se o e-mail não existir, confirma o e-mail e atribui `Admin`. Ele entra pela mesma tela de login.
+O administrador inicial segue outro caminho: o bootstrap garante as roles `Admin`, `Organizer` e `Assistant`, cria o usuário se o e-mail não existir, confirma o e-mail e atribui `Admin`. Ele entra pela mesma tela de login.
 
 ## 7. Fluxos alternativos
 
@@ -64,9 +64,9 @@ O administrador inicial segue outro caminho: o bootstrap garante as roles `Admin
 ## 8. Regras de negócio
 
 - E-mail é único depois da normalização.
-- Cadastro público só recebe `Organizer`. Não atribui `Admin` nem `Client`.
+- Cadastro público só recebe `Organizer`. Não atribui `Admin`.
 - `Organizer` é a conta compradora que opera eventos e dados da própria assessoria. Não é assistente nem fornecedor.
-- `Client` só existe como conta Identity ligada a um `Organizer`, com permissões de módulo/evento quando RF-056 estiver no escopo. Não é criada pelo formulário público.
+- Login só é aceito para contas com `Admin`, `Organizer` ou `Assistant`; conta sem um desses papéis recebe credencial inválida (SPEC-060). A API interna recusa token sem esses papéis.
 - Sem confirmação não há login.
 - Confirmação vale 24 horas. Redefinição vale 1 hora. São provedores de token separados do Identity. Não há criptografia própria.
 - Bloqueio: 5 falhas, 15 minutos.
@@ -106,7 +106,7 @@ Páginas públicas: cadastro, login, confirmação, reenvio, esqueci a senha e r
 
 Cadastro concluído leva o visitante à tela de login, com a mensagem do resultado. Dado inválido ou e-mail já cadastrado permanece na tela de cadastro.
 
-Página autenticada mínima para `Organizer` e página separada para `Admin`, suficientes para provar a autorização. Sem menu de evento. Conta `Client` não é exercitada nesta spec.
+Página autenticada mínima para `Organizer` e página separada para `Admin`, suficientes para provar a autorização. Sem menu de evento.
 
 Mensagens em português, sem stack trace, senha, token ou connection string.
 
@@ -130,7 +130,7 @@ Mensagens em português, sem stack trace, senha, token ou connection string.
 8. `Admin` entra na área administrativa.
 9. Cinco senhas erradas bloqueiam por 15 minutos.
 10. Redefinição válida troca a senha. Resposta de pedido não revela se o e-mail existe.
-11. Cadastro público não cria `Admin` nem `Client`.
+11. Cadastro público não cria `Admin`. Conta sem papel da plataforma não entra (SPEC-060).
 12. Bootstrap desligado não cria usuário. Ligado, garante as três roles, cria o admin se não existir e não troca senha existente.
 13. E-mail já pertencente a `Organizer` não é promovido a `Admin` pelo bootstrap.
 14. Senha, token, senha SMTP e connection string não aparecem em log nem na resposta.
@@ -153,4 +153,4 @@ PostgreSQL, Identity, MailKit, JWT de acesso, Data Protection em volume persisti
 - Depois do login, o `Organizer` vai para a tela de dashboards, SPEC-007. A área mínima desta spec continua servindo só para provar a autorização.
 - E-mail de bootstrap que já foi `Admin` e perdeu a role não tem regra. Resolução manual, como já está em DA-026.
 - Nome de exibição, foto e perfil da empresa são RF-044, observado, fora desta spec.
-- Criação de conta `Client`, vínculo ao `Organizer` e flags de permissão ficam para quando RF-056 e RFs correlatos estiverem Definidos.
+- (Resolvido na SPEC-060.) Não existe conta de cliente: o acesso do cliente é o link público (RF-056).

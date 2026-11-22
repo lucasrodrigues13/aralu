@@ -63,7 +63,7 @@ O item **Gestão Financeira** fica no grupo **Principal** (depois de Perfil e As
 
 ## 8. Regras de negócio
 
-- A Gestão Financeira mostra **só** o dinheiro entre organizadora e cliente. O dinheiro do casal para fornecedores existe só dentro de cada evento (produto-v1 5.9).
+- A Gestão Financeira mostra **só** o dinheiro entre organizadora e cliente. O dinheiro do cliente para fornecedores existe só dentro de cada evento (produto-v1 5.9).
 - Cobrar, Recebi e Desfazer seguem as regras da SPEC-029 §6.2 e §6.3 e da SPEC-040 §6.2 sem mudança.
 - Refazer o parcelamento apaga as parcelas antigas (sem recebimentos, então não perde dado de pagamento).
 - Nova API: `PUT /api/v1/contratos-funil/{id}/parcelas`, mesmo corpo do orçamento (`quantidadeParcelas`, `primeiraParcela`, `comEntrada`, `baseEntrada`, `valorEntrada`, `dataEntrada`), com a política do financeiro. Devolve o contrato como a leitura de sempre.
@@ -103,7 +103,7 @@ Unitário (frontend): selo/filtro financeiro (sem parcelas, atrasado, em aberto,
 
 ## 16. Dependências
 
-Card #41 (SPEC-040), SPEC-032 (permissão do financeiro), SPEC-035 (menu), SPEC-029 e SPEC-007 (Hoje). Quem usa depois: #31 (Dinheiro do evento sem a parte do casal), #33 (parcelas do mês na Gestão Financeira) e #34.
+Card #41 (SPEC-040), SPEC-032 (permissão do financeiro), SPEC-035 (menu), SPEC-029 e SPEC-007 (Hoje). Quem usa depois: #31 (Dinheiro do evento sem a parte do cliente), #33 (parcelas do mês na Gestão Financeira) e #34.
 
 ## 17. Premissas e pontos não definidos
 

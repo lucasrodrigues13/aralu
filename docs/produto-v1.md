@@ -41,7 +41,7 @@ Valem para todas as telas. Vêm do PDF (seções "Por que assim" e "Não fazer")
 | Admin | Login | Tudo, todas as contas | Pronto | G |
 | Organizer (cerimonialista) | Login | Opera a própria conta | Pronto | G |
 | **Assistente** | Login próprio, por convite | Vê os eventos; financeiro só se liberado; pode ficar só com os eventos dela | Novo | D, CF |
-| **Casal / contratante** | **Link sem senha** | Acompanha o que ela liberar; marca as próprias tarefas; aprova; edita com código | Ajustar (substitui o login `Client`) | D, CF, WP |
+| **Cliente / contratante** | **Link sem senha** | Acompanha o que ela liberar; marca as próprias tarefas; aprova; edita com código | Ajustar (substitui o login `Client`) | D, CF, WP |
 | Equipe do dia | Sem login | Recebe a escala pelo WhatsApp | Novo | AV, CF |
 | Convidado | Link de RSVP | Confirma presença | Pronto | G |
 | Lead | Formulário público / página pública | Pede orçamento | Ajustar | G, CF |
@@ -72,7 +72,7 @@ Valem para todas as telas. Vêm do PDF (seções "Por que assim" e "Não fazer")
 | Planejar | Tarefas (dentro do Resumo, SPEC-051), Fornecedores e serviços, Roteiro, Cronograma, Briefing, Inspirações, Notas e observações |
 | Convidados | Convites e convidados, RSVP e mensagens, Mesas |
 | Dinheiro | Pagamentos a fornecedores, Despesas, Comprovantes, Budget (as parcelas do cliente estão no contrato, SPEC-040) |
-| Casal | Link do casal, o que ele vê, aprovações |
+| Cliente | Link do cliente, o que ele vê, aprovações |
 | Evento | Dados, Equipe do dia, Anexos |
 
 ## 5. Módulos
@@ -85,7 +85,7 @@ Valem para todas as telas. Vêm do PDF (seções "Por que assim" e "Não fazer")
 | Perfil da empresa com foto | Pronto | G (SPEC-005) |
 | **Endereço do perfil estruturado** (CEP preenche os demais campos, salvo em campos separados e não como texto livre), usado na contratada dos contratos (decidido em 21/11/2026). **Feito** em 21/11/2026 ([SPEC-038](specs/038-endereco-estruturado-do-perfil.md)): CEP, endereço, número, complemento, bairro, cidade, estado e país; o texto antigo foi descartado na migration | Pronto | usuário |
 | **CPF e CNPJ guardados sem máscara**, como texto no banco, em todo o sistema; o **CNPJ aceita letras** (formato alfanumérico que começa a valer no Brasil). A máscara é só de exibição (decidido em 21/11/2026). **Feito** em 21/11/2026 ([SPEC-034](specs/034-cpf-cnpj-sem-mascara.md)): validação dos dígitos verificadores (CNPJ pela regra do SERPRO), migration que normaliza o que já estava gravado | Pronto | usuário |
-| Marca: logo, nome, WhatsApp e cor, usados no link do casal, RSVP e página pública | Novo | PDF, CF |
+| Marca: logo, nome, WhatsApp e cor, usados no link do cliente, RSVP e página pública | Novo | PDF, CF |
 | Chave Pix (tipo, chave, CPF/CNPJ) usada na cobrança e no contrato | Novo | PDF, CF |
 | Página pública com apresentação, cidade, Instagram, tipos de evento, portfólio, depoimentos e botão de orçamento que cai no funil | Novo | D, CF |
 | Feed de calendário (iCal) com link secreto e "gerar link novo", para Google Agenda e iPhone | Novo | D, CF |
@@ -99,7 +99,7 @@ Substitui o dashboard atual (SPEC-007, RF-080 a RF-082).
 | Saudação com data e "N coisas pedem você hoje"; sem pendência, "Nada pede você hoje" | Novo | PDF, IV |
 | Cartões de ação somando todos os eventos: tarefas da semana e atrasadas, cobranças a fazer (atrasadas e 7 dias), pagamentos a fornecedores da semana, respostas de convidados, retornos do funil; cada cartão leva à tela que resolve | Novo | PDF, IV, CF |
 | Próximo evento com contagem de dias | Novo | CF, WP |
-| Carteira em tabela: casal, data, % de tarefas, respondidos, coluna **Atenção** (atrasadas + respostas abaixo do esperado) | Novo | PDF, IV |
+| Carteira em tabela: cliente, data, % de tarefas, respondidos, coluna **Atenção** (atrasadas + respostas abaixo do esperado) | Novo | PDF, IV |
 | Números do funil (quantidade e valor por estágio) | Ajustar (vem do dashboard atual) | G (RF-082) |
 | Checklist de configuração inicial (contrato, Pix, marca, página, equipe) com "pular" | Novo | CF |
 
@@ -113,12 +113,12 @@ Substitui o dashboard atual (SPEC-007, RF-080 a RF-082).
 | **Criar em uma tela**: obrigatório tipo e nome (um campo só, "Nome do evento"; casamento com dois nomes vira "A & B"); data, horário, convidados e local opcionais; cliente na mesma tela (existente ou novo com nome e WhatsApp); data digitável | Pronto (SPEC-008 v4, card #19, branch `claude/card-19-cadastro-evento-d18601`) | PDF, CF, IV, G (SPEC-008) |
 | O pacote não é escolhido na criação; o modelo de tarefas e roteiro se aplica depois, pelo menu do evento ("Aplicar modelo") | Pronto (SPEC-008 v4, card #19) | PDF, CF |
 | Valor da assessoria e parcelas **depois**, no Dinheiro do evento, não no passo de criação | Pronto na criação (SPEC-008 v2); o Dinheiro do evento vem no bloco 6 | PDF, G |
-| Resumo do evento em cartões (tarefas, dinheiro, convidados, fornecedores, roteiro, equipe, casal, notas) com alertas acionáveis no topo | Pronto para tarefas, convidados, fornecedores, orçamento e cliente (SPEC-008 v2); os outros cartões entram com seus blocos | PDF, CF, WP, AV |
+| Resumo do evento em cartões (tarefas, dinheiro, convidados, fornecedores, roteiro, equipe, cliente, notas) com alertas acionáveis no topo | Pronto para tarefas, convidados, fornecedores, orçamento e cliente (SPEC-008 v2); os outros cartões entram com seus blocos | PDF, CF, WP, AV |
 | Dados do evento: detalhes, cerimônia e recepção com CEP, horários, padrinhos, damas | Pronto | G (SPEC-008) |
 | Estatísticas e rankings | Pronto | G (SPEC-011) |
 | Salvar evento como modelo (tarefas com "dias antes"; roteiro no bloco 10) | Pronto (tarefas e serviços) | G (SPEC-012 v2), CF, IV |
 | Observações gerais do evento com modelos de observação | Novo | AV |
-| Notificações por e-mail do evento (assessora, assistentes, casal) | Pendente | AV |
+| Notificações por e-mail do evento (assessora, assistentes, cliente) | Pendente | AV |
 
 ### 5.4. Modelos
 
@@ -139,11 +139,11 @@ Substitui o dashboard atual (SPEC-007, RF-080 a RF-082).
 | Criar pelo botão "Nova tarefa", em modal (título obrigatório; prazo e demais campos opcionais) | Pronto | D (SPEC-003 v3) |
 | Lista do evento em uma tabela, com filtro de situação. Grupos de prazo saíram dessa aba | Pronto | D (SPEC-003 v3) |
 | Situações (pendente, em andamento, concluída, atrasada) como filtro na aba do evento e como quadro na lista de todos os eventos | Pronto | D, G |
-| Responsáveis: ela, assistente, equipe ou casal; **mais de um** | Pronto (20/11/2026) para dona, assistente e casal; equipe fica para a spec de equipe | PDF, AV, D |
-| **Visibilidade** por tarefa: só eu / casal / compartilhada | Novo | D, IV |
+| Responsáveis: ela, assistente, equipe ou cliente; **mais de um** | Pronto (20/11/2026) para dona, assistente e cliente; equipe fica para a spec de equipe | PDF, AV, D |
+| **Visibilidade** por tarefa: só eu / cliente / compartilhada | Novo | D, IV |
 | **Prioridade** baixa / média / alta | Novo | D, IV |
 | Checklist e anexos dentro da tarefa, recolhidos até alguém precisar | Novo | PDF, AV |
-| Cada item da checklist tem prazo e um responsável (dona, casal ou assistente); mudar a data do evento move os prazos dos itens abertos de tarefas não concluídas | Pronto (SPEC-003 v4, card #21, branch `claude/card-21-tarefas-item-ce4d93`) | Trello #21 |
+| Cada item da checklist tem prazo e um responsável (dona, cliente ou assistente); mudar a data do evento move os prazos dos itens abertos de tarefas não concluídas | Pronto (SPEC-003 v4, card #21, branch `claude/card-21-tarefas-item-ce4d93`) | Trello #21 |
 | Perguntas e comentários na tarefa | Novo | AV |
 | Tarefa ligada a um serviço; contratar o fornecedor fecha "Contratar X" | Novo | PDF, AV |
 | Tocar abre leitura, não edição | Ajustar | PDF |
@@ -164,8 +164,8 @@ Substitui o dashboard atual (SPEC-007, RF-080 a RF-082).
 | "Dados para contrato (copiar)" | Novo | CF |
 | Serviços do evento, budget estimado e contratado, subitens | Pronto | G (SPEC-018) |
 | **Gráficos de orçamento no topo da aba Fornecedores (card #29, [SPEC-047](specs/047-graficos-de-orcamento-no-evento.md)):** o botão "Orçamento" e o modal saem; no topo aparecem os indicadores (Orçamento, Estimado, Contratado, Prova real, Por convidado), um gráfico de barra "contratado e estimado frente ao orçamento" (com aviso de excesso) e um gráfico por serviço. Sem biblioteca de gráficos, sem migration, backend inalterado (o `GET /budget` segue em uso); só quem tem a permissão do financeiro vê | Feito (SPEC-047) | Trello #29 |
-| **Adicionar fornecedor ao evento (card #28, [SPEC-045](specs/045-contratar-fornecedor-e-contrato-assinado.md)):** escolhe-se o fornecedor e, na sequência, os serviços dele (marcação múltipla, os que ele presta já marcados; os que não existem no evento nascem junto). **Contratar** pede só o valor (sem parcelas, que se definem depois na aba Dinheiro) e aceita o **contrato assinado** pelo fornecedor e pelo casal (JPG, JPEG, PNG ou PDF até 5 MB; anexar, substituir, abrir e excluir pelo menu da linha). A plataforma só guarda o arquivo: não há modelo, leitura nem envio ao casal. Contratar de novo mantém parcelas, pagos, comprovantes e o arquivo assinado. O contrato do fornecedor nasce ao contratar (não mais no primeiro uso do Dinheiro). Migration `ContratoAssinadoDoFornecedor` | Feito (SPEC-045) | Trello #28 |
-| Agrupar, ordenar e ocultar serviços do casal | Novo | AV |
+| **Adicionar fornecedor ao evento (card #28, [SPEC-045](specs/045-contratar-fornecedor-e-contrato-assinado.md)):** escolhe-se o fornecedor e, na sequência, os serviços dele (marcação múltipla, os que ele presta já marcados; os que não existem no evento nascem junto). **Contratar** pede só o valor (sem parcelas, que se definem depois na aba Dinheiro) e aceita o **contrato assinado** pelo fornecedor e pelo cliente (JPG, JPEG, PNG ou PDF até 5 MB; anexar, substituir, abrir e excluir pelo menu da linha). A plataforma só guarda o arquivo: não há modelo, leitura nem envio ao cliente. Contratar de novo mantém parcelas, pagos, comprovantes e o arquivo assinado. O contrato do fornecedor nasce ao contratar (não mais no primeiro uso do Dinheiro). Migration `ContratoAssinadoDoFornecedor` | Feito (SPEC-045) | Trello #28 |
+| Agrupar, ordenar e ocultar serviços do cliente | Novo | AV |
 | Comparativo de fornecedores, alinhamentos, observações e chat por fornecedor | Novo | AV |
 | Mensagem em massa aos fornecedores contratados | Novo | AV |
 
@@ -176,7 +176,7 @@ Substitui o dashboard atual (SPEC-007, RF-080 a RF-082).
 | Convite por família com convidados; faixa etária; inteira/meia/gratuito; planilha; QR; link de RSVP | Pronto | G (SPEC-004, 010) |
 | Aba limpa (card #22): saem os cards Totais, Transfer do evento e Grupos e o campo "Usa transfer" do convite; ficam três cards por situação (Pendentes, Confirmados, Não confirmados) que filtram a lista ao clicar. Grupos de convite e transfer saíram também do banco e da API (SPEC-036, 21/11/2026) | Pronto (SPEC-010/004/036) | Trello #22 |
 | **Colar lista** do WhatsApp com prévia antes de salvar: entende "+ marido", "(3 pessoas)", "Família X - 4", crianças | Novo | D, PDF |
-| **Link sem login para o casal cadastrar os convites** (nome do convite, telefone, e-mail e convidados; a cerimonialista define a data de envio). **Implementado (card #23, [SPEC-052](specs/052-link-do-casal-cadastra-convites.md)):** mesmo link `/casal/{código}`, com a marcação "O casal cadastra os convidados" (nasce desligada, independente do financeiro); o casal vê, cria e edita convites (inclui e remove convidados); a organizadora define e-mail e data de envio na aba Convidados. Migration `ConvitesDoCasal` (só colunas novas; nada apagado). Quem recebe confirma por convidado no RSVP que já existe | Feito (SPEC-052) | CF, D |
+| **Link sem login para o cliente cadastrar os convites** (nome do convite, telefone, e-mail e convidados; a cerimonialista define a data de envio). **Implementado (card #23, [SPEC-052](specs/052-link-do-cliente-cadastra-convites.md)):** mesmo link `/cliente/{código}`, com a marcação "O cliente cadastra os convidados" (nasce desligada, independente do financeiro); o cliente vê, cria e edita convites (inclui e remove convidados); a organizadora define e-mail e data de envio na aba Convidados. Migration `ConvitesDoCliente` (só colunas novas; nada apagado). Quem recebe confirma por convidado no RSVP que já existe | Feito (SPEC-052) | CF, D |
 | **Confirmação de presença com prazo (card #24, [SPEC-054](specs/054-rsvp-com-prazo.md))**: data limite por evento (vale até o fim do dia; sem data, sem expiração), link expirado com tela própria, exceção por convite aberta pela organizadora, confirmação manual pela edição do convidado e lista de presença com id único (uma entrada por convidado confirmado, que a portaria do card #25 vai usar). Migration `PrazoDoRsvp` (colunas `Eventos.PrazoRsvp` e `Convites.ExcecaoPrazoRsvp` e tabela `PresencasEvento`; nada apagado) | Feito (SPEC-054) | D |
 | **Check-in na portaria (card #25, [SPEC-058](specs/058-portaria-do-evento.md))**: QR de entrada por convite com confirmado (na página de RSVP e para baixar na aba Convidados), link sem login para a equipe da portaria (`/portaria/{código}`; só a portaria do evento; a dona gera, troca e desativa), tela com escanear QR pela câmera e lista completa com busca, tela do convite com todos os convidados e marcação de quem compareceu (guardada na lista de presença, coluna Compareceu). Migration `PortariaDoEvento` (tabela `LinksPortaria` e `PresencasEvento.CompareceuEm`; nada apagado). Modo dia completo e QR offline seguem na 1.1 | Feito (SPEC-058) | D, PDF, WP |
 | Lead pelo RSVP ("pretende fazer evento em 2 anos") | Pronto; fica como está (confirmado em 21/11/2026) | G (SPEC-021) |
@@ -193,14 +193,14 @@ As bibliotecas existem. Falta a **instância no evento**, criada do modelo e edi
 | Momentos divididos em cerimônia e recepção; nomes de quem entra (cortejo) por momento | Novo | PDF, CF, WP |
 | Enviar pelo WhatsApp para equipe e fornecedores; imprimir uma folha do dia | Novo | PDF, CF, WP |
 | **Cronograma** no evento (separado do roteiro): seções, informações aos fornecedores, importar modelo | Novo | D, AV |
-| Briefing no evento: formulário para conhecer o casal, preenchido por ela ou pelo casal | Novo | D, AV |
+| Briefing no evento: formulário para conhecer o cliente, preenchido por ela ou pelo cliente | Novo | D, AV |
 | Inspirações no evento: galerias | Novo | AV |
 
 ### 5.9. Dinheiro do evento
 
-Separar o que **ela recebe** do casal do que o **casal paga** aos fornecedores (IV, WP).
+Separar o que **ela recebe** do cliente do que o **cliente paga** aos fornecedores (IV, WP).
 
-**Dinâmica (decidida em 21/11/2026):** o dinheiro do orçamento do casamento é do casal. A organizadora não paga nem movimenta esse dinheiro; ela acompanha, informa o casal sobre a saúde financeira e os vencimentos e marca como pago o que o casal informa (depois, o casal marca pelo link, ver 5.11). Os pagamentos a fornecedores existem só dentro de cada evento, sem tela com todos os eventos. A **Gestão Financeira** da organizadora (tela hoje chamada Pagamentos, que vai para o grupo Principal) é só o faturamento pelo serviço prestado: contratos fechados com clientes e parcelas a receber. A organizadora pagar fornecedor parceiro (responsabilidade de pagamento) não entra: o cliente piloto disse que ninguém adota essa prática.
+**Dinâmica (decidida em 21/11/2026):** o dinheiro do orçamento do evento é do cliente. A organizadora não paga nem movimenta esse dinheiro; ela acompanha, informa o cliente sobre a saúde financeira e os vencimentos e marca como pago o que o cliente informa (depois, o cliente marca pelo link, ver 5.11). Os pagamentos a fornecedores existem só dentro de cada evento, sem tela com todos os eventos. A **Gestão Financeira** da organizadora (tela hoje chamada Pagamentos, que vai para o grupo Principal) é só o faturamento pelo serviço prestado: contratos fechados com clientes e parcelas a receber. A organizadora pagar fornecedor parceiro (responsabilidade de pagamento) não entra: o cliente piloto disse que ninguém adota essa prática.
 
 | Item | Estado | Fonte |
 |---|---|---|
@@ -220,37 +220,37 @@ Separar o que **ela recebe** do casal do que o **casal paga** aos fornecedores (
 
 **Separação (decidida em 21/11/2026):** há dois tipos de contrato, sem relação entre si.
 
-- **Contratos da organizadora com os clientes** (casal): são os únicos que usam **modelos**, campos de mesclagem, "Ver como fica" e, no futuro, assinatura eletrônica. Existe **uma única tela de modelos**, "Modelos de Contrato" (grupo Modelos), usada só para orçamentos aprovados; o modelo de contrato do funil foi unificado nela (21/11/2026). Gerar contrato a partir do funil exige orçamento aprovado e os dados do contratante completos, na oportunidade ou no cliente (SPEC-050). No editor do modelo, as tags são inseridas por um seletor com busca (na posição do cursor) e um botão "?" abre a lista de todas as tags com o que representam, de onde puxam o valor e um exemplo; a lista é uma só no sistema (SPEC-053). O contrato **não tem vínculo com o evento**.
-- **Contratos com fornecedores**: são **arquivos enviados** (o contrato assinado, anexado pela organizadora ao contratar o fornecedor ou subido pelo casal pelo link). Não usam modelo nem mesclagem. A aba Contratos do evento lista só estes, com o fornecedor de cada um (card #30 do Trello).
+- **Contratos da organizadora com os clientes**: são os únicos que usam **modelos**, campos de mesclagem, "Ver como fica" e, no futuro, assinatura eletrônica. Existe **uma única tela de modelos**, "Modelos de Contrato" (grupo Modelos), usada só para orçamentos aprovados; o modelo de contrato do funil foi unificado nela (21/11/2026). Gerar contrato a partir do funil exige orçamento aprovado e os dados do contratante completos, na oportunidade ou no cliente (SPEC-050). No editor do modelo, as tags são inseridas por um seletor com busca (na posição do cursor) e um botão "?" abre a lista de todas as tags com o que representam, de onde puxam o valor e um exemplo; a lista é uma só no sistema (SPEC-053). O contrato **não tem vínculo com o evento**.
+- **Contratos com fornecedores**: são **arquivos enviados** (o contrato assinado, anexado pela organizadora ao contratar o fornecedor ou subido pelo cliente pelo link). Não usam modelo nem mesclagem. A aba Contratos do evento lista só estes, com o fornecedor de cada um (card #30 do Trello).
 
 | Item | Estado | Fonte |
 |---|---|---|
 | Tela **Modelos de Contrato** (grupo Modelos; Admin e Organizer): única para todo tipo de contrato que a organizadora oferece aos clientes, usada só em orçamentos aprovados. Os campos de mesclagem ficam num seletor com busca e um botão de ajuda (?) que explica como usar e mostra cada campo e de onde o sistema puxa o valor (decidido em 21/11/2026; base na SPEC-030 v2, 18/11/2026) | Ajustar | PDF, CF, usuário |
 | "Ver como fica" com os campos destacados. **Implementado como Live Preview (card #15, [SPEC-055](specs/055-live-preview-do-modelo-de-contrato.md)):** botão no modal do modelo abre ao lado do texto a folha como chega ao cliente, com exemplos no lugar das tags e aviso de tag inexistente; atualiza a cada tecla; sem migration | Parcial | PDF, CF |
 | **Logo e imagem de fundo no modelo de contrato. Implementado (card #16, [SPEC-056](specs/056-logo-e-fundo-do-modelo-de-contrato.md)):** duas áreas no modal do modelo (JPG, PNG ou WebP até 5 MB); a logo fica centralizada no topo e o fundo cobre a folha com transparência, no Live Preview e no contrato gerado ("Ver contrato" no funil, com Imprimir). O contrato copia as imagens do modelo ao ser gerado. Migration só acrescenta colunas | Feito | PDF, CF |
-| Aba Contratos no evento: **só contratos com fornecedores, enviados como arquivo** (pela organizadora ou pelo casal), com o fornecedor de cada um (decidido em 21/11/2026, card #30). A plataforma só **recebe** o documento: a negociação, a leitura e a assinatura são entre o cliente e o fornecedor, fora do sistema. A organizadora sobe o arquivo (recebido por fora do fornecedor ou do cliente) ou o próprio casal sobe pelo link dele. Não há ler preenchido, imprimir nem enviar link de leitura para contrato de fornecedor. Esses recursos valem só para o contrato da organizadora com o cliente (modelo); ele não tem vínculo com o evento **Implementado (card #30, [SPEC-048](specs/048-contratos-de-fornecedor-do-evento.md)):** aba Contratos (entre Fornecedores e Dinheiro) só de leitura, com fornecedor, serviço, arquivo, quem enviou (Organizadora ou Casal) e data do envio (Abrir e Baixar); inclui o que o casal subir pelo link. Migration `QuemEnviouOContratoDoFornecedor` (só acrescenta duas colunas); contratos enviados antes dela mostram "—" | Feito | usuário, Trello #30 |
+| Aba Contratos no evento: **só contratos com fornecedores, enviados como arquivo** (pela organizadora ou pelo cliente), com o fornecedor de cada um (decidido em 21/11/2026, card #30). A plataforma só **recebe** o documento: a negociação, a leitura e a assinatura são entre o cliente e o fornecedor, fora do sistema. A organizadora sobe o arquivo (recebido por fora do fornecedor ou do cliente) ou o próprio cliente sobe pelo link dele. Não há ler preenchido, imprimir nem enviar link de leitura para contrato de fornecedor. Esses recursos valem só para o contrato da organizadora com o cliente (modelo); ele não tem vínculo com o evento **Implementado (card #30, [SPEC-048](specs/048-contratos-de-fornecedor-do-evento.md)):** aba Contratos (entre Fornecedores e Dinheiro) só de leitura, com fornecedor, serviço, arquivo, quem enviou (Organizadora ou Cliente) e data do envio (Abrir e Baixar); inclui o que o cliente subir pelo link. Migration `QuemEnviouOContratoDoFornecedor` (só acrescenta duas colunas); contratos enviados antes dela mostram "—" | Feito | usuário, Trello #30 |
 | ~~Aba Contratos no modelo de evento: vincula contratos ao modelo; o evento criado do modelo já vem com eles~~ Removido em 21/11/2026: o contrato não tem vínculo com o evento. **Implementado (card #36, SPEC-030 v3):** saíram a aba do modelo, a aba Contratos do evento, o link de leitura por e-mail com sua página pública, os endpoints de vínculo e os campos de mesclagem `evento_*`, `contrato_valor` e `contrato_parcelas` (voltaram no card #39, SPEC-050, com as tags do contrato do funil). As tabelas `ContratosDoModelo`, `ContratosDoEvento` e `LinksLeituraContrato` foram apagadas do banco (SPEC-036) | Feito | usuário |
 | **Assinatura eletrônica**: fora até escolher a plataforma (pendência 1). Sem simulação | Pendente | D, usuário |
 | **Upload de contrato em Word com tags (card #17): só avaliação**, em [avaliacoes/upload-de-contrato-word.md](avaliacoes/upload-de-contrato-word.md); recomendação: adiar até o dono responder as perguntas da avaliação e a assinatura (SPEC-033) definir fornecedor e formato. Nada implementado | Avaliação | Trello #17 |
 | O valor e as parcelas vêm do orçamento aprovado e são copiados para o contrato ao gerá-lo; o contrato só lê. Gerar contrato do funil exige os dados do contratante completos, na oportunidade ou no cliente (que não precisa existir antes do fechamento). Todos os dados do cliente ficam disponíveis como tags; o organizador usa os que quiser (decidido em 21/11/2026) **Implementado (card #39, SPEC-050, sem migration):** só gera com orçamento aprovado e dados completos (nome, CPF/CNPJ, estado civil, nacionalidade, e-mail, celular e endereço), avisando o que falta; cliente vale primeiro e a oportunidade completa o resto; todas as tags (`contratante_*`, `contratada_*`, `evento_*`, `contrato_valor`, `contrato_parcelas`, `data_hoje`) são preenchidas ao gerar | Feito | PDF, usuário |
 | Modelos de contrato do funil (SPEC-028): unificados na tela Modelos de Contrato (21/11/2026). **Implementado (card #38, SPEC-039):** o item e a rota do funil saíram; o contrato do funil escolhe o modelo da tela única; os modelos antigos foram migrados (`#nome_oportunidade` virou `{{contratante_nome}}`, mesmo Id) e a tabela `ModelosContratoFunil` foi apagada | Feito | G |
 
-### 5.11. Link do casal
+### 5.11. Link do cliente
 
 Substitui o login `Client` com flags (RF-056, SPEC-001/009).
 
 | Item | Estado | Fonte |
 |---|---|---|
-| Link sem senha por evento; trocar link desliga o antigo. **Implementado (card #34, [SPEC-046](specs/046-link-do-casal-financeiro.md)):** tabela `LinksCasal`; a dona (menu Mais do evento > Link do casal) gera, copia, troca e desativa; a página pública é `/casal/{código}`. É a base que o card de convites (#23) também usa | Feito | D, CF |
+| Link sem senha por evento; trocar link desliga o antigo. **Implementado (card #34, [SPEC-046](specs/046-link-do-cliente-financeiro.md)):** tabela `LinksCliente` (antes `LinksCliente`, renomeada na SPEC-060); a dona (menu Mais do evento > Link do cliente) gera, copia, troca e desativa; a página pública é `/cliente/{código}`. É a base que o card de convites (#23) também usa | Feito | D, CF |
 | Marca da cerimonialista e mensagem dela no topo; contagem regressiva | Novo | PDF, WP |
-| "O que o casal vê", por marcação: andamento das tarefas (marcos, não %), parcelas com Pix, fornecedores contratados, convidados, roteiro, fotos. **Feitas: financeiro (SPEC-046) e convidados (SPEC-052, ver e editar juntos);** as demais seguem Novo | Parcial | PDF, CF |
-| Tarefas do casal para ele marcar; só o que tem visibilidade "casal" ou "compartilhada" | Novo | PDF, IV |
+| "O que o cliente vê", por marcação: andamento das tarefas (marcos, não %), parcelas com Pix, fornecedores contratados, convidados, roteiro, fotos. **Feitas: financeiro (SPEC-046) e convidados (SPEC-052, ver e editar juntos);** as demais seguem Novo | Parcial | PDF, CF |
+| Tarefas do cliente para ele marcar; só o que tem visibilidade "cliente" ou "compartilhada" | Novo | PDF, IV |
 | Valores ocultos como opção | Novo | WP |
-| **Acesso ao financeiro do evento pelo link**, quando a organizadora liberar: o casal marca como paga cada parcela ou pagamento de fornecedor, sobe o contrato assinado do fornecedor e os comprovantes e gerencia as parcelas de fornecedor. Fica de fora a Gestão Financeira da organizadora (decidido em 21/11/2026; card do Trello). **Implementado (card #34, SPEC-046):** uma marcação só na janela do link, "O casal acessa o financeiro do evento" (nasce fechada); liberada, a página do casal mostra os pagamentos a fornecedores e deixa marcar parcela ou pagamento como pago (sem confirmação da organizadora, que pode desfazer), parcelar, subir e excluir comprovante e contrato assinado | Feito | D |
-| **Aprovações**: ela pede o ok (cardápio, decoração, convite), o casal aprova ou pede ajuste, ela recebe e-mail | Novo | D, CF |
-| **Código de edição**: o casal edita o que ela liberar sem login | Novo | D, WP |
+| **Acesso ao financeiro do evento pelo link**, quando a organizadora liberar: o cliente marca como paga cada parcela ou pagamento de fornecedor, sobe o contrato assinado do fornecedor e os comprovantes e gerencia as parcelas de fornecedor. Fica de fora a Gestão Financeira da organizadora (decidido em 21/11/2026; card do Trello). **Implementado (card #34, SPEC-046):** uma marcação só na janela do link, "O cliente acessa o financeiro do evento" (nasce fechada); liberada, a página do cliente mostra os pagamentos a fornecedores e deixa marcar parcela ou pagamento como pago (sem confirmação da organizadora, que pode desfazer), parcelar, subir e excluir comprovante e contrato assinado | Feito | D |
+| **Aprovações**: ela pede o ok (cardápio, decoração, convite), o cliente aprova ou pede ajuste, ela recebe e-mail | Novo | D, CF |
+| **Código de edição**: o cliente edita o que ela liberar sem login | Novo | D, WP |
 | **Depoimento** após o evento, que pode ir para a página pública | Novo | D, CF |
-| "Ver como o casal vê" | Novo | CF, IV |
+| "Ver como o cliente vê" | Novo | CF, IV |
 | Nada interno vai junto (observações, comparativos, valores se ocultos) | Novo | PDF |
 
 ### 5.12. Minha agenda
@@ -375,7 +375,7 @@ Fica na 1.0 e ganha o que faltou (D).
 | RF-049 / SPEC-008 Cadastro do evento | Modelo obrigatório; valor da assessoria logo após criar | Tipo + nome; valor depois (5.3) |
 | mvp-scope §3 | Menu igual à Assessoria VIP | Grupos da seção 4 |
 
-**RFs novos**, criados como RF-087 a RF-109 (requirements.md, seção 2.9): marca, Pix, página pública, feed iCal, tela Hoje, colar lista de convidados, roteiro e cronograma no evento, briefing e inspirações no evento, cobrança e recebimento do casal, despesas do evento, contrato do evento com assinatura, link do casal (aprovações, código, depoimento), aniversários, resumo do dia, salvar como modelo, importar modelo colando.
+**RFs novos**, criados como RF-087 a RF-109 (requirements.md, seção 2.9): marca, Pix, página pública, feed iCal, tela Hoje, colar lista de convidados, roteiro e cronograma no evento, briefing e inspirações no evento, cobrança e recebimento do cliente, despesas do evento, contrato do evento com assinatura, link do cliente (aprovações, código, depoimento), aniversários, resumo do dia, salvar como modelo, importar modelo colando.
 
 ## 8. Specs
 
@@ -383,7 +383,7 @@ Fica na 1.0 e ganha o que faltou (D).
 |---|---|
 | Revisar | 001 (roles), 003 (tarefas), 007 (vira Hoje), 008 (criação), 009 (cliente sem login), 010 (mesas), 012 (prazos, importar, salvar como modelo), 018 (2 etapas, horário de chegada, WhatsApp), 019 (agenda), 020 (estágios, proposta, campos), 023 (responsáveis), 024 (relatórios), 027 (parâmetros) |
 | Manter | 002, 004, 005, 006, 011, 013 a 017, 021, 022, 025, 026, 028 |
-| Criar | Casca e navegação; Hoje; marca, Pix e página pública; feed iCal; colar lista de convidados; mesas; roteiro no evento; cronograma no evento; briefing e inspirações no evento; dinheiro do evento (cobrança, recebimento, despesas, comprovantes); pagamentos de todos os eventos; contrato do evento e assinatura; link do casal; equipe e equipe do dia; assistente; financeiro da empresa; aniversários; relatórios financeiros; resumo do dia; proposta do funil; observações gerais do evento; fornecedor no evento (comparativo, alinhamentos, mensagens) |
+| Criar | Casca e navegação; Hoje; marca, Pix e página pública; feed iCal; colar lista de convidados; mesas; roteiro no evento; cronograma no evento; briefing e inspirações no evento; dinheiro do evento (cobrança, recebimento, despesas, comprovantes); pagamentos de todos os eventos; contrato do evento e assinatura; link do cliente; equipe e equipe do dia; assistente; financeiro da empresa; aniversários; relatórios financeiros; resumo do dia; proposta do funil; observações gerais do evento; fornecedor no evento (comparativo, alinhamentos, mensagens) |
 
 ## 9. Ordem sugerida de construção
 
@@ -394,12 +394,12 @@ Baseada no PDF (base → uso diário → diferencial), com o que já existe.
 3. ~~Modelos: prazos legíveis, importar colando, salvar como modelo.~~ **Pronto** (SPEC-012 v2).
 4. Tarefas: lista do evento com "Nova tarefa" em modal, vários responsáveis, visibilidade, prioridade e checklist. **Em código** (SPEC-003 v3). A seção 17 da spec continua sem decisão. Anexos: JPG, PNG ou PDF até 5 MB, fotos reduzidas.
 5. ~~Tela Hoje.~~ **Pronto** (SPEC-007 v2).
-6. ~~Dinheiro do evento: parcelas do casal, cobrar, recebi, Pix.~~ **Pronto** (SPEC-029), menos comprovantes. As parcelas do casal viraram parcelas do contrato (card #41, SPEC-040).
+6. ~~Dinheiro do evento: parcelas do cliente, cobrar, recebi, Pix.~~ **Pronto** (SPEC-029), menos comprovantes. As parcelas do cliente viraram parcelas do contrato (card #41, SPEC-040).
 7. ~~Contratos: cadastro com campos de mesclagem, vínculo ao modelo, leitura por link.~~ **Pronto** (SPEC-030 v2). Assinatura pendente.
 8. Convidados: colar lista, mesas.
 9. Fornecedores: duas etapas, horário de chegada, mensagens.
 10. Roteiro e cronograma no evento.
-11. Link do casal (aprovações, código de edição, depoimento).
+11. Link do cliente (aprovações, código de edição, depoimento).
 12. Resumo do dia por e-mail.
 13. Equipe, equipe do dia e assistente. Assistente na [SPEC-032](specs/032-assistentes.md), aprovada e implementada em 20/11/2026 (faltam os itens da §18). Equipe e equipe do dia seguem sem spec.
 14. Financeiro da empresa e relatórios.
@@ -410,7 +410,7 @@ Baseada no PDF (base → uso diário → diferencial), com o que já existe.
 ## 10. Pendências
 
 1. Serviço de assinatura eletrônica (5.10). Até a escolha, não há assinatura (SPEC-030 v2, §17).
-2. ~~Pedir a lista de convidados ao casal pelo link (5.7).~~ Decidido em 21/11/2026: entra na 1.0 (card do Trello).
+2. ~~Pedir a lista de convidados ao cliente pelo link (5.7).~~ Decidido em 21/11/2026: entra na 1.0 (card do Trello).
 3. Mural de recados da equipe (5.15).
 4. Caixa global de anexos (5.19).
 5. Notificações por e-mail do evento (5.3).

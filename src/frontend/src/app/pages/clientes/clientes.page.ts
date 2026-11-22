@@ -70,10 +70,6 @@ import { MatTooltipModule } from '@angular/material/tooltip';
               }
             </td>
           </ng-container>
-          <ng-container matColumnDef="acesso">
-            <th mat-header-cell *matHeaderCellDef>Último acesso</th>
-            <td mat-cell *matCellDef="let cliente">{{ cliente.ultimoAcesso ?? '—' }}</td>
-          </ng-container>
           <ng-container matColumnDef="acoes">
             <th mat-header-cell *matHeaderCellDef class="text-end! whitespace-nowrap">Ações</th>
             <td mat-cell *matCellDef="let cliente" class="text-end! whitespace-nowrap">
@@ -95,7 +91,7 @@ export class ClientesPage implements OnInit {
   private readonly toast = inject(ToastService);
   protected readonly clientes = signal<Cliente[]>([]);
   protected readonly busca = signal('');
-  protected readonly colunas = ['nome', 'contato', 'eventos', 'acesso', 'acoes'];
+  protected readonly colunas = ['nome', 'contato', 'eventos', 'acoes'];
 
   ngOnInit(): void {
     this.carregar();

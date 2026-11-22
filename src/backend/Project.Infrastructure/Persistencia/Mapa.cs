@@ -83,18 +83,17 @@ public static class Mapa
         modelBuilder.Entity<ComentarioTarefa>().ToTable("ComentariosTarefa");
 
         modelBuilder.Entity<Cliente>().Property(cliente => cliente.Papel).HasConversion<string>();
-        modelBuilder.Entity<Cliente>().HasIndex(cliente => cliente.UsuarioId);
         modelBuilder.Entity<VinculoCliente>().HasKey(vinculo => new { vinculo.ClienteId, vinculo.EventoId });
         modelBuilder.Entity<VinculoCliente>().HasOne<Cliente>().WithMany(cliente => cliente.Vinculos).HasForeignKey(vinculo => vinculo.ClienteId).OnDelete(DeleteBehavior.Cascade);
         modelBuilder.Entity<VinculoCliente>().HasOne<Evento>().WithMany().HasForeignKey(vinculo => vinculo.EventoId).OnDelete(DeleteBehavior.Cascade);
 
-        var linkCasal = modelBuilder.Entity<LinkCasal>();
-        linkCasal.ToTable("LinksCasal");
-        linkCasal.Property(item => item.ContaId).HasMaxLength(450);
-        linkCasal.Property(item => item.Token).HasMaxLength(64);
-        linkCasal.HasIndex(item => item.Token).IsUnique();
-        linkCasal.HasIndex(item => item.EventoId).IsUnique();
-        linkCasal.HasOne<Evento>().WithMany().HasForeignKey(item => item.EventoId).OnDelete(DeleteBehavior.Cascade);
+        var linkCliente = modelBuilder.Entity<LinkCliente>();
+        linkCliente.ToTable("LinksCliente");
+        linkCliente.Property(item => item.ContaId).HasMaxLength(450);
+        linkCliente.Property(item => item.Token).HasMaxLength(64);
+        linkCliente.HasIndex(item => item.Token).IsUnique();
+        linkCliente.HasIndex(item => item.EventoId).IsUnique();
+        linkCliente.HasOne<Evento>().WithMany().HasForeignKey(item => item.EventoId).OnDelete(DeleteBehavior.Cascade);
 
         var linkPortaria = modelBuilder.Entity<LinkPortaria>();
         linkPortaria.ToTable("LinksPortaria");

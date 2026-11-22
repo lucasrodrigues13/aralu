@@ -176,9 +176,6 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<bool>("AcessoPlataforma")
-                        .HasColumnType("boolean");
-
                     b.Property<string>("Bairro")
                         .HasColumnType("text");
 
@@ -256,27 +253,6 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<string>("Papel")
                         .HasColumnType("text");
 
-                    b.Property<bool>("PermiteAnexos")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("PermiteContrato")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("PermiteConvidados")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("PermiteMapa")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("PermiteParcelas")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("PermiteRsvp")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("PermiteTarefas")
-                        .HasColumnType("boolean");
-
                     b.Property<string>("Profissao")
                         .HasColumnType("text");
 
@@ -286,12 +262,7 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<string>("TelefoneFixo")
                         .HasColumnType("text");
 
-                    b.Property<string>("UsuarioId")
-                        .HasColumnType("text");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("UsuarioId");
 
                     b.ToTable("Clientes");
                 });
@@ -962,7 +933,7 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.ToTable("ItemServicoModelo");
                 });
 
-            modelBuilder.Entity("Project.Domain.Eventos.LinkCasal", b =>
+            modelBuilder.Entity("Project.Domain.Eventos.LinkCliente", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -998,7 +969,7 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.HasIndex("Token")
                         .IsUnique();
 
-                    b.ToTable("LinksCasal", (string)null);
+                    b.ToTable("LinksCliente", (string)null);
                 });
 
             modelBuilder.Entity("Project.Domain.Eventos.LinkPortaria", b =>
@@ -3078,7 +3049,7 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Project.Domain.Eventos.LinkCasal", b =>
+            modelBuilder.Entity("Project.Domain.Eventos.LinkCliente", b =>
                 {
                     b.HasOne("Project.Domain.Eventos.Evento", null)
                         .WithMany()

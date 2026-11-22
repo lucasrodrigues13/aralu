@@ -23,7 +23,7 @@ RF-098 (contrato). RF-087 / RF-088 (nome, documento e Pix da conta no texto). SP
 | Admin | Vê e mantém a tela Contratos da própria conta. |
 | Organizer | Vê e mantém a tela Contratos. |
 | Assistant | Não vê a tela Contratos. |
-| Casal (sem login) | Não há mais leitura de contrato por link. |
+| Cliente (sem login) | Não há mais leitura de contrato por link. |
 | Outra conta | Não vê. |
 
 ## 5. Pré-condições
@@ -78,7 +78,7 @@ Valor e parcelas voltam como campos quando o contrato do funil os copiar do orç
 
 - Vários contratos por conta.
 - O contrato não tem vínculo com modelo de evento nem com evento, na tela e na API.
-- O envio do contrato ao cliente é só pelo contrato do funil (Enviar e, depois, assinatura eletrônica, SPEC-033). **Consequência confirmada no card #36:** não há mais leitura do contrato pelo e-mail com link de 7 dias, e nada no evento envia contrato ao casal.
+- O envio do contrato ao cliente é só pelo contrato do funil (Enviar e, depois, assinatura eletrônica, SPEC-033). **Consequência confirmada no card #36:** não há mais leitura do contrato pelo e-mail com link de 7 dias, e nada no evento envia contrato ao cliente.
 - **Banco:** `ContratosDoModelo`, `ContratosDoEvento` e `LinksLeituraContrato` foram apagadas por migration, com as classes e o mapeamento (SPEC-036, regra 7 do roteiro: funcionalidade removida sai também do banco). Os dados delas foram perdidos.
 
 ## 9. Validações
@@ -122,6 +122,6 @@ SPEC-001 (papéis), SPEC-005 (Perfil), SPEC-006/009 (cliente), SPEC-012 (modelo 
 ## 17. Premissas e pontos não definidos
 
 1. **Pendência: assinatura eletrônica.** Rascunho em [SPEC-033](033-assinatura-eletronica.md). Até lá não há assinatura nem simulação.
-2. **Em aberto (fora deste card, já registrado no card #30):** onde o contrato do organizador com o cliente é visto, impresso e enviado ao casal dentro do evento, já que a aba sai. Até o #30/#39 não há esse lugar.
+2. **Em aberto (fora deste card, já registrado no card #30):** onde o contrato do organizador com o cliente é visto, impresso e enviado ao cliente dentro do evento, já que a aba sai. Até o #30/#39 não há esse lugar.
 4. Decisões conservadoras tomadas ao aprovar: `contrato_valor` e `contrato_parcelas` saem agora (voltam no #39); a tela Contratos fica como está até o #38; as tabelas legadas ficam no mapeamento do EF.
 3. Textos de contrato já salvos com marcas removidas (`{{evento_nome}}` etc.) ficam com a marca crua; o dono precisa editá-los. Premissa: aceitável, pois a tela é substituída pelo card #38.

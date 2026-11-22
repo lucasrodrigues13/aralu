@@ -12,7 +12,7 @@ export interface OpcaoResponsavel {
   rotulo: string;
 }
 
-/** Chave usada nos seletores: "Organizer", "Casal" ou "Assistente:<id>". */
+/** Chave usada nos seletores: "Organizer", "Cliente" ou "Assistente:<id>". */
 export function chaveResponsavel(item: ResponsavelItem): string {
   return item.papel === 'Assistente' && item.referenciaId ? `Assistente:${item.referenciaId}` : item.papel;
 }
@@ -23,7 +23,7 @@ export function pedidoResponsavel(chave: string): { papel: string; referenciaId?
   return referencia ? { papel, referenciaId: referencia } : { papel };
 }
 
-/** Opções do seletor: a dona, o casal e as assistentes ativas (mais as removidas que já estão na tarefa). */
+/** Opções do seletor: a dona, o cliente e as assistentes ativas (mais as removidas que já estão na tarefa). */
 export function opcoesResponsavel(
   assistentes: NomeAssistente[],
   rotuloDona: string,

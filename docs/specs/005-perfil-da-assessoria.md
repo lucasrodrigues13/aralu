@@ -16,7 +16,7 @@ RF-044. A conta e o e-mail vêm da SPEC-001.
 
 ## 4. Atores e permissões
 
-O Organizer vê e edita o próprio perfil. Não vê o perfil de outra conta. Admin não tem tela de perfil de assessoria nesta spec. Client não edita este perfil.
+O Organizer vê e edita o próprio perfil. Não vê o perfil de outra conta. Admin não tem tela de perfil de assessoria nesta spec. O cliente não entra na plataforma (SPEC-060).
 
 ## 5. Pré-condições
 

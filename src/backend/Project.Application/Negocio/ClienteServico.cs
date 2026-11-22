@@ -1,17 +1,7 @@
 using Project.Application.Comum;
-using Project.Application.Conta;
 using Project.Domain.Clientes;
 
 namespace Project.Application.Negocio;
-
-public sealed record PermissoesClientePedido(
-    bool? Convidados,
-    bool? Tarefas,
-    bool? Anexos,
-    bool? Parcelas,
-    bool? Rsvp,
-    bool? Mapa,
-    bool? Contrato);
 
 public sealed record NovoCliente(
     string? Nome,
@@ -36,19 +26,8 @@ public sealed record NovoCliente(
     string? Cidade,
     string? Bairro,
     string? Complemento,
-    bool? AcessoPlataforma = null,
-    PermissoesClientePedido? Permissoes = null,
     string? EstadoCivil = null,
     string? Nacionalidade = null);
-
-public sealed record PermissoesClienteLeitura(
-    bool Convidados,
-    bool Tarefas,
-    bool Anexos,
-    bool Parcelas,
-    bool Rsvp,
-    bool Mapa,
-    bool Contrato);
 
 public sealed record ClienteLeitura(
     Guid Id,
@@ -75,17 +54,13 @@ public sealed record ClienteLeitura(
     string? Bairro,
     string? Complemento,
     Guid? FotoId,
-    string? UltimoAcesso,
-    bool AcessoPlataforma,
-    string? UsuarioId,
-    PermissoesClienteLeitura Permissoes,
     IReadOnlyList<EventoVinculado> Eventos,
     string? EstadoCivil = null,
     string? Nacionalidade = null);
 
 public sealed record EventoVinculado(Guid Id, string Nome);
 
-public sealed class ClienteServico(IDados dados, Cep.IConsultaCep cep, IContaCliente contaCliente)
+public sealed class ClienteServico(IDados dados, Cep.IConsultaCep cep)
 {
     public async Task<IReadOnlyList<ClienteLeitura>> ListarAsync(string contaId, string? nome, CancellationToken ct)
     {
@@ -122,12 +97,6 @@ public sealed class ClienteServico(IDados dados, Cep.IConsultaCep cep, IContaCli
         if (!cepOk.Ok)
         {
             return Resultado<ClienteLeitura>.Erro(cepOk.Falha!.Codigo, cepOk.Falha.Mensagem);
-        }
-
-        var acesso = await AplicarAcessoAsync(contaId, montado.Valor!, pedido?.AcessoPlataforma == true, ct);
-        if (!acesso.Ok)
-        {
-            return Resultado<ClienteLeitura>.Erro(acesso.Falha!.Codigo, acesso.Falha.Mensagem);
         }
 
         await dados.InserirClienteAsync(montado.Valor!, ct);
@@ -185,21 +154,6 @@ public sealed class ClienteServico(IDados dados, Cep.IConsultaCep cep, IContaCli
         cliente.Cidade = origem.Cidade;
         cliente.Bairro = origem.Bairro;
         cliente.Complemento = origem.Complemento;
-        cliente.AplicarPermissoes(
-            origem.PermiteConvidados,
-            origem.PermiteTarefas,
-            origem.PermiteAnexos,
-            origem.PermiteParcelas,
-            origem.PermiteRsvp,
-            origem.PermiteMapa,
-            origem.PermiteContrato);
-
-        var conceder = pedido?.AcessoPlataforma ?? cliente.AcessoPlataforma;
-        var acesso = await AplicarAcessoAsync(contaId, cliente, conceder, ct);
-        if (!acesso.Ok)
-        {
-            return Resultado<ClienteLeitura>.Erro(acesso.Falha!.Codigo, acesso.Falha.Mensagem);
-        }
 
         await dados.SalvarClienteAsync(ct);
         return Resultado<ClienteLeitura>.Sucesso(await LerAsync(contaId, cliente, ct));
@@ -259,7 +213,7 @@ public sealed class ClienteServico(IDados dados, Cep.IConsultaCep cep, IContaCli
     }
 
     /// <summary>
-    /// Exclui o cliente. Cliente ligado a evento não é excluído (o casal sumiria do evento): desvincule antes.
+    /// Exclui o cliente. Cliente ligado a evento não é excluído (o cliente sumiria do evento): desvincule antes.
     /// A oportunidade que virou cliente continua existindo, só perde o vínculo (SPEC-020 §7).
     /// Devolve o id da foto, para o chamador apagar o arquivo.
     /// </summary>
@@ -280,39 +234,9 @@ public sealed class ClienteServico(IDados dados, Cep.IConsultaCep cep, IContaCli
                 $"Este cliente está ligado a evento(s): {nomes}. Tire o vínculo no evento antes de excluir.");
         }
 
-        if (!string.IsNullOrWhiteSpace(cliente.UsuarioId))
-        {
-            await contaCliente.RevogarAsync(cliente.UsuarioId, ct);
-        }
-
         var foto = cliente.FotoId;
         await dados.RemoverClienteAsync(contaId, cliente, ct);
         return Resultado<Guid?>.Sucesso(foto);
-    }
-
-    public async Task<Resultado<bool>> AplicarAcessoAsync(string contaId, Cliente cliente, bool conceder, CancellationToken ct)
-    {
-        if (conceder)
-        {
-            var criado = await contaCliente.ConcederAsync(contaId, cliente.Email, ct);
-            if (!criado.Ok)
-            {
-                return Resultado<bool>.Erro(criado.Falha!.Codigo, criado.Falha.Mensagem);
-            }
-
-            cliente.UsuarioId = criado.Valor;
-            cliente.AcessoPlataforma = true;
-            return Resultado<bool>.Sucesso(true);
-        }
-
-        if (!string.IsNullOrWhiteSpace(cliente.UsuarioId))
-        {
-            await contaCliente.RevogarAsync(cliente.UsuarioId, ct);
-        }
-
-        cliente.UsuarioId = null;
-        cliente.AcessoPlataforma = false;
-        return Resultado<bool>.Sucesso(true);
     }
 
     public static Resultado<Cliente> Montar(string contaId, NovoCliente? pedido, DateOnly hoje)
@@ -365,7 +289,6 @@ public sealed class ClienteServico(IDados dados, Cep.IConsultaCep cep, IContaCli
         }
 
         var ddi = Domain.Comum.Texto.Limpo(pedido.Ddi) ?? "+55";
-        var permissoes = pedido.Permissoes;
         var cliente = new Cliente
         {
             Id = Guid.NewGuid(),
@@ -395,16 +318,7 @@ public sealed class ClienteServico(IDados dados, Cep.IConsultaCep cep, IContaCli
             Cidade = Domain.Comum.Texto.Limpo(pedido.Cidade),
             Bairro = Domain.Comum.Texto.Limpo(pedido.Bairro),
             Complemento = Domain.Comum.Texto.Limpo(pedido.Complemento),
-            AcessoPlataforma = pedido.AcessoPlataforma == true,
         };
-        cliente.AplicarPermissoes(
-            permissoes?.Convidados == true,
-            permissoes?.Tarefas == true,
-            permissoes?.Anexos == true,
-            permissoes?.Parcelas == true,
-            permissoes?.Rsvp == true,
-            permissoes?.Mapa == true,
-            permissoes?.Contrato == true);
         return Resultado<Cliente>.Sucesso(cliente);
     }
 
@@ -457,17 +371,6 @@ public sealed class ClienteServico(IDados dados, Cep.IConsultaCep cep, IContaCli
             cliente.Bairro,
             cliente.Complemento,
             cliente.FotoId,
-            null,
-            cliente.AcessoPlataforma,
-            cliente.UsuarioId,
-            new PermissoesClienteLeitura(
-                cliente.PermiteConvidados,
-                cliente.PermiteTarefas,
-                cliente.PermiteAnexos,
-                cliente.PermiteParcelas,
-                cliente.PermiteRsvp,
-                cliente.PermiteMapa,
-                cliente.PermiteContrato),
             eventos.Select(evento => new EventoVinculado(evento.Id, evento.Nome)).ToArray(),
             cliente.EstadoCivil,
             cliente.Nacionalidade);

@@ -1,12 +1,12 @@
 # Roteiro 2: o casamento da Marina e do Rafael, do contrato à festa
 
-**A história.** Continuação do [Roteiro 1](roteiro-teste-funil.md). Marina assinou e já é cliente. Agora a Júlia monta o casamento: contrata buffet e fotógrafo, divide tarefas com a assistente Bia, entrega um link para o casal acompanhar pagamentos e convidados, e no grande dia a portaria confere quem chegou.
+**A história.** Continuação do [Roteiro 1](roteiro-teste-funil.md). Marina assinou e já é cliente. Agora a Júlia monta o casamento: contrata buffet e fotógrafo, divide tarefas com a assistente Bia, entrega um link para o cliente acompanhar pagamentos e convidados, e no grande dia a portaria confere quem chegou.
 
 **Como usar.** Siga em ordem. Cada linha é: o que fazer **→** o que conferir. Marque `[x]`. Se não bater, anote na tabela do fim.
 
 **Antes de começar**
 - Roteiro 1 feito até o passo 9 (Marina cliente, com contrato e parcelas).
-- Janela normal (Júlia) e **anônima** (casal, convidados e portaria). Celular à mão para o QR.
+- Janela normal (Júlia) e **anônima** (cliente, convidados e portaria). Celular à mão para o QR.
 - Segundo e-mail para a Bia.
 
 ---
@@ -88,16 +88,17 @@
 
 ---
 
-## 7. O link do casal
+## 7. O link do cliente
 
 *Marina quer acompanhar os pagamentos e cadastrar os convidados ela mesma.*
 
-- [ ] Resumo > **Mais > Link do casal** > **Gerar link** → financeiro nasce fechado.
+- [ ] Resumo > **Mais > Link do cliente** > **Gerar link** → financeiro nasce fechado. O endereço copiado termina em `/cliente/<código>` e nenhum texto fala em "casal".
+- [ ] O cadastro da Marina (Clientes) não tem aba de acesso nem coluna de último acesso: ela não entra na plataforma, só pelo link (SPEC-060).
 - [ ] Anônima, abra o link → nome e data do evento; "A organizadora ainda não liberou o financeiro…".
-- [ ] (Júlia) Ligue **O casal acessa o financeiro do evento** → na anônima, recarregue: pagamentos, totais e meses.
-- [ ] (Casal) Marque uma parcela do buffet como paga, suba comprovante e o contrato assinado do decorador → (Júlia) aparece na aba Dinheiro; na aba Contratos, **Enviado por: Casal**.
-- [ ] Confira que o casal **não** vê Gestão Financeira, contrato com a Júlia, tarefas nem estimados.
-- [ ] (Júlia) Ligue **O casal cadastra os convidados** → (casal) bloco Convidados com **Novo convite**; cadastre "Família Alves" com 4 pessoas e e-mail.
+- [ ] (Júlia) Ligue **O cliente acessa o financeiro do evento** → na anônima, recarregue: pagamentos, totais e meses.
+- [ ] (Cliente) Marque uma parcela do buffet como paga, suba comprovante e o contrato assinado do decorador → (Júlia) aparece na aba Dinheiro; na aba Contratos, **Enviado por: Cliente**.
+- [ ] Confira que o cliente **não** vê Gestão Financeira, contrato com a Júlia, tarefas nem estimados.
+- [ ] (Júlia) Ligue **O cliente cadastra os convidados** → (cliente) bloco Convidados com **Novo convite**; cadastre "Família Alves" com 4 pessoas e e-mail.
 - [ ] (Júlia) **Trocar link** → o antigo diz "Este link não está mais disponível". Deixe o novo ativo.
 
 ---
@@ -105,7 +106,7 @@
 ## 8. Convidados e RSVP
 
 **Aba Convidados**
-- [ ] O convite "Família Alves" feito pelo casal aparece na lista.
+- [ ] O convite "Família Alves" feito pelo cliente aparece na lista.
 - [ ] **Novo convite** "Tios do Rafael" com 2 convidados, telefone, e-mail e **Data de envio do convite** → a lista mostra a data (ou "Envio não definido").
 - [ ] **Importar** com a **planilha padrão** (.xlsx) → linhas inválidas aparecem como ignoradas antes de gravar.
 - [ ] **Prazo de confirmação**: daqui a 30 dias → a aba mostra o prazo.
@@ -141,7 +142,7 @@
 - [ ] **Eventos** → estatísticas (situações com %, gráfico por mês, rankings de orçamento, fornecedores e serviços).
 - [ ] **Hoje** → carteira e próximo evento atualizados.
 - [ ] (Júlia) **Remover acesso** da Bia → ela cai em "Seu acesso foi removido"; o que ela criou continua.
-- [ ] Desative o **Link do casal** → endereço para de funcionar.
+- [ ] Desative o **Link do cliente** → endereço para de funcionar.
 
 **Fora do roteiro:** Anexos, Equipe e Aniversários aparecem como "em breve".
 

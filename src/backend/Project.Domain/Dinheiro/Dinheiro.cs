@@ -20,7 +20,7 @@ public sealed class ParcelaOrcamento
     public bool Entrada { get; set; }
 }
 
-/// <summary>Parcela do contrato com o cliente: o que o cliente paga à organizadora (SPEC-040; antiga ParcelaCasal).</summary>
+/// <summary>Parcela do contrato com o cliente: o que o cliente paga à organizadora (SPEC-040).</summary>
 public sealed class ParcelaContrato
 {
     public Guid Id { get; set; }
@@ -97,14 +97,14 @@ public sealed class ContratoFornecedor
 
     public string? ComprovanteTipoConteudo { get; set; }
 
-    /// <summary>Contrato assinado pelo fornecedor e pelo casal, anexado pelo organizador (SPEC-045).</summary>
+    /// <summary>Contrato assinado pelo fornecedor e pelo cliente, anexado pelo organizador (SPEC-045).</summary>
     public Guid? ContratoAssinadoArquivoId { get; set; }
 
     public string? ContratoAssinadoNome { get; set; }
 
     public string? ContratoAssinadoTipoConteudo { get; set; }
 
-    /// <summary>Quem enviou o contrato assinado: "Organizadora" ou "Casal" (SPEC-048). Nulo em contratos anteriores ao campo.</summary>
+    /// <summary>Quem enviou o contrato assinado: "Organizadora" ou "Cliente" (SPEC-048). Nulo em contratos anteriores ao campo.</summary>
     public string? ContratoAssinadoEnviadoPor { get; set; }
 
     public DateOnly? ContratoAssinadoEnviadoEm { get; set; }

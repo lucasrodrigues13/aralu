@@ -22,7 +22,7 @@ RF-068 (parcelas a fornecedores), RF-096 (comprovantes; a parte de despesas avul
 | Assistant | Só com "pode ver o financeiro" e, se restrita, nos eventos liberados (SPEC-032), como já era. |
 | Outra conta | Não vê (404). |
 
-O casal marcar como pago e subir comprovante pelo link é o card #34, sobre esta estrutura (feito na [SPEC-046](046-link-do-casal-financeiro.md); a leitura do pagamento ganhou `contratoAssinado`).
+O cliente marcar como pago e subir comprovante pelo link é o card #34, sobre esta estrutura (feito na [SPEC-046](046-link-do-cliente-financeiro.md); a leitura do pagamento ganhou `contratoAssinado`).
 
 ## 5. Pré-condições
 
@@ -66,7 +66,7 @@ As caixas **Comprovantes e documentos** e **Despesas e entradas** saem da tela, 
 
 ## 8. Regras de negócio
 
-- Pagamento a fornecedor existe só dentro do evento; o dinheiro é do casal e a organizadora marca o que o casal informa.
+- Pagamento a fornecedor existe só dentro do evento; o dinheiro é do cliente e a organizadora marca o que o cliente informa.
 - Pagamento pago = todas as parcelas pagas (parcelado) ou marcado pago (sem parcelas).
 - O resumo do evento e o card "Pagamentos da semana" da Hoje seguem contando parcelas pagas e pendentes.
 - **Banco (migration `PagamentosAFornecedores`, uma só):** `ParcelasContratoFornecedor` ganha `PagoEm` e o comprovante (arquivo, nome, tipo); `ContratosFornecedor` ganha `Pago`, `PagoEm` e o comprovante; `LancamentosEvento` e `ComprovantesEvento` são apagadas (dados perdidos). Saem da API: `POST/PUT/DELETE /eventos/{id}/dinheiro/lancamentos`, `POST/DELETE /eventos/{id}/dinheiro/comprovantes`, e `despesas`, `entradas`, `lancamentos` e `comprovantes` da leitura do Dinheiro.
@@ -106,7 +106,7 @@ Unitários: situação do pagamento (parcelado e sem parcelas), marcar tudo e de
 
 ## 16. Dependências
 
-SPEC-040 (banco), SPEC-041 (parte do casal saiu), SPEC-018, SPEC-029. Depois: #28 (Contratar sem parcelas, arquivo assinado) e #34 (casal marca pelo link).
+SPEC-040 (banco), SPEC-041 (parte do cliente saiu), SPEC-018, SPEC-029. Depois: #28 (Contratar sem parcelas, arquivo assinado) e #34 (cliente marca pelo link).
 
 ## 17. Premissas e pontos não definidos
 

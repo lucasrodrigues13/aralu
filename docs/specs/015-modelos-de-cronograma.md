@@ -21,7 +21,7 @@ Fora: RF-079. Assistente. Fornecedor com login.
 | Ator | Pode |
 |---|---|
 | Organizer | CRUD dos modelos de cronograma da própria conta. |
-| Client | Não edita a biblioteca. Acesso ao cronograma do evento só com flag (RF-056). |
+| Cliente | Não entra na plataforma (SPEC-060). Ver o cronograma do evento, se vier, é pelo link do cliente (RF-056). |
 | Admin | Acessa modelos de qualquer conta. |
 | Visitante | Não acessa. |
 

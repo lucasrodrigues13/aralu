@@ -18,7 +18,7 @@ RF-075, no recorte de oportunidades, quadro, filtro, exportação, descarte com 
 
 ## 4. Atores e permissões
 
-O `Organizer` cria, lista, edita, exclui, filtra, exporta e muda estágio das oportunidades da própria conta. Outro `Organizer` não vê. `Admin` acessa qualquer conta. `Client` não acessa o funil neste corte. Lead preenche só o formulário público, sem login. Assistente e fornecedor com login ficam fora.
+O `Organizer` cria, lista, edita, exclui, filtra, exporta e muda estágio das oportunidades da própria conta. Outro `Organizer` não vê. `Admin` acessa qualquer conta. O cliente não entra na plataforma (SPEC-060). Lead preenche só o formulário público, sem login. Assistente e fornecedor com login ficam fora.
 
 ## 5. Pré-condições
 

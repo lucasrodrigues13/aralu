@@ -111,7 +111,7 @@ Usuário autenticado, SPEC-001. Para aplicar um modelo ou salvar como modelo, o 
 - Ao aplicar, "já existe" quer dizer mesmo título de tarefa, ou mesmo nome de serviço, sem diferenciar maiúsculas e acentos.
 - As tarefas aplicadas nascem pendentes e com o Organizer como responsável, como na criação.
 - Salvar como modelo leva: todas as tarefas do evento (feitas ou não), com título, grupo e prazo convertido em "dias antes"; e os serviços do evento, com nome e valor estimado. Não leva fornecedores, valores contratados, parcelas, convidados nem clientes.
-- A aba Permissões do modelo sai: as flags eram da conta `Client`, que deixou de existir (RF-024). O que o casal vê passa a ser escolhido no link do casal (RF-056, bloco 11). As colunas ficam no banco até o bloco 11 decidir o que fazer com elas.
+- A aba Permissões do modelo sai: as flags eram da conta `Client`, que deixou de existir (RF-024). O que o cliente vê passa a ser escolhido no link do cliente (RF-056, bloco 11). As colunas ficam no banco até o bloco 11 decidir o que fazer com elas.
 
 ## 9. Validações
 

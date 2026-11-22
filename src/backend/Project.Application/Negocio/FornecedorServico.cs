@@ -456,7 +456,7 @@ public sealed class FornecedorServico(IDados dados, Arquivos.IArmazenamentoArqui
         string? nomeArquivo,
         DateOnly hoje,
         CancellationToken ct,
-        bool peloCasal = false)
+        bool peloCliente = false)
     {
         var servico = await dados.ObterServicoEventoAsync(contaId, eventoId, servicoId, ct);
         if (servico?.Contrato is null)
@@ -472,7 +472,7 @@ public sealed class FornecedorServico(IDados dados, Arquivos.IArmazenamentoArqui
 
         var arquivo = guardado.Valor!;
         var nome = arquivo.NomeOriginal.Length > 260 ? arquivo.NomeOriginal[..260] : arquivo.NomeOriginal;
-        await dados.GravarContratoAssinadoAsync(servico.Id, arquivo.Id, nome, arquivo.TipoConteudo, peloCasal ? "Casal" : "Organizadora", hoje, ct);
+        await dados.GravarContratoAssinadoAsync(servico.Id, arquivo.Id, nome, arquivo.TipoConteudo, peloCliente ? "Cliente" : "Organizadora", hoje, ct);
         if (servico.Contrato.ContratoAssinadoArquivoId is Guid anterior)
         {
             await armazenamento.DescartarAsync(anterior, ct);

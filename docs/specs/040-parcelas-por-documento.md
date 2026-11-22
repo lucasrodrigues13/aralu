@@ -1,6 +1,6 @@
 # 040. Parcelas por documento
 
-**Status: aprovada (21/11/2026; aprovação do dono do projeto repassada pela sessão que abriu o card #41, com as opções mais simples e conservadoras nos pontos em aberto).** Implementada em 21/11/2026. Fonte: card #41 do Trello (decidido em 21/11/2026); [produto-v1.md](../produto-v1.md) 5.9, 5.10 e 5.13. Substitui a parte de parcelas da [SPEC-029](029-dinheiro-do-evento.md) (parcelas do casal presas ao evento) e da [SPEC-018](018-servicos-e-fornecedores.md) (parcelas do serviço).
+**Status: aprovada (21/11/2026; aprovação do dono do projeto repassada pela sessão que abriu o card #41, com as opções mais simples e conservadoras nos pontos em aberto).** Implementada em 21/11/2026. Fonte: card #41 do Trello (decidido em 21/11/2026); [produto-v1.md](../produto-v1.md) 5.9, 5.10 e 5.13. Substitui a parte de parcelas da [SPEC-029](029-dinheiro-do-evento.md) (parcelas do cliente presas ao evento) e da [SPEC-018](018-servicos-e-fornecedores.md) (parcelas do serviço).
 
 ## 1. Identificador e nome
 
@@ -53,7 +53,7 @@ O card "Cobranças a fazer" lista as parcelas de **contratos não cancelados** c
 
 ### 6.5. Aba Dinheiro do evento
 
-Perde as parcelas do casal e os totais Contrato, Recebido e Saldo (e `Evento.ValorContrato`). Fica com pagamentos a fornecedores, despesas e entradas, comprovantes e a exportação do orçamento. O card #31 reorganiza o resto.
+Perde as parcelas do cliente e os totais Contrato, Recebido e Saldo (e `Evento.ValorContrato`). Fica com pagamentos a fornecedores, despesas e entradas, comprovantes e a exportação do orçamento. O card #31 reorganiza o resto.
 
 ## 7. Fluxos alternativos
 
@@ -65,7 +65,7 @@ Perde as parcelas do casal e os totais Contrato, Recebido e Saldo (e `Evento.Val
 
 - A estrutura é a mesma nos três documentos: número, vencimento, valor, entrada. O contrato com o cliente tem recebimentos (valor, forma, data); o do fornecedor tem situação pendente/pago.
 - O contrato **copia** as parcelas do orçamento ao ser criado e passa a ter vida própria: mudar o orçamento depois não muda um contrato já gerado.
-- Não existe mais parcela do casal presa ao evento, nem o "serviço" Assessoria e Organização (que só guardava essas parcelas), nem `POST /eventos/{id}/assessoria`.
+- Não existe mais parcela do cliente presa ao evento, nem o "serviço" Assessoria e Organização (que só guardava essas parcelas), nem `POST /eventos/{id}/assessoria`.
 - **Banco (migration `ParcelasPorDocumento`, uma só):** apaga `ParcelasCasal`, `ParcelaServico`, `RecebimentosParcela` (os dados) e `Eventos.ValorContrato`, e os serviços "Assessoria e Organização" da própria conta; cria `ParcelasOrcamento`, `ParcelasContrato`, `ContratosFornecedor` e `ParcelasContratoFornecedor`; `RecebimentosParcela` passa a apontar para `ParcelasContrato`. Os dados antigos são perdidos (aceito pelo dono, regra 7).
 - Saem da API: `PUT /eventos/{id}/dinheiro/contrato`, `POST/DELETE /eventos/{id}/dinheiro/parcelas/{parcelaId}/recebimentos`, `POST /eventos/{id}/assessoria`. A leitura do Dinheiro do evento perde `valorContrato`, `recebido`, `saldo`, `chavePix` e `parcelas`.
 
@@ -83,7 +83,7 @@ Parcela do contrato: a receber, parcial, recebida; atrasada é derivada (vencime
 
 ## 12. Interface
 
-Diálogo "Parcelas do contrato" (tabela com Cobrar, Recebi e menu Desfazer; totais no subtítulo) aberto da tela Contratos. Aba Dinheiro do evento sem o bloco do casal. Hoje com a coluna Contrato.
+Diálogo "Parcelas do contrato" (tabela com Cobrar, Recebi e menu Desfazer; totais no subtítulo) aberto da tela Contratos. Aba Dinheiro do evento sem o bloco do cliente. Hoje com a coluna Contrato.
 
 ## 13. Erros
 
@@ -115,6 +115,6 @@ Decididos nesta entrega pela opção mais simples e conservadora (a conferir pel
 3. **Parcela só do orçamento ao gerar o contrato.** Não havia edição das parcelas direto no contrato; mudava-se o orçamento e gerava-se um contrato novo. **Atualizado no card #32 (SPEC-041 §17.2): a Gestão Financeira define ou refaz o parcelamento do contrato, só sem recebimento registrado, sobre o valor do orçamento aprovado.**
 4. **Quais contratos cobram.** Todo contrato não cancelado (assinado ou não), para a organizadora poder registrar o que o cliente pagou sem depender do botão Assinar.
 5. **ContratoFornecedor mínimo.** Só `Id` e o serviço (único); o arquivo do contrato assinado e o comprovante por parcela entram com os cards #28 e #31, que têm migration própria.
-6. **Evento.ValorContrato saiu.** Só servia às parcelas do casal.
+6. **Evento.ValorContrato saiu.** Só servia às parcelas do cliente.
 7. **Cobranças na tela Hoje.** O contrato não tem evento: o card aparece para Admin e Organizer e para a assistente com financeiro que não é restrita a eventos marcados.
-8. **Dados antigos.** Perdem-se recebimentos, parcelas do casal, parcelas de fornecedor e o serviço "Assessoria e Organização" (aceito pelo dono).
+8. **Dados antigos.** Perdem-se recebimentos, parcelas do cliente, parcelas de fornecedor e o serviço "Assessoria e Organização" (aceito pelo dono).

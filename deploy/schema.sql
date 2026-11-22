@@ -3812,3 +3812,182 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122190130_ClienteSemAcessoELinkDoCliente') THEN
+    DROP INDEX "IX_Clientes_UsuarioId";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122190130_ClienteSemAcessoELinkDoCliente') THEN
+    ALTER TABLE "Clientes" DROP COLUMN "AcessoPlataforma";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122190130_ClienteSemAcessoELinkDoCliente') THEN
+    ALTER TABLE "Clientes" DROP COLUMN "PermiteAnexos";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122190130_ClienteSemAcessoELinkDoCliente') THEN
+    ALTER TABLE "Clientes" DROP COLUMN "PermiteContrato";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122190130_ClienteSemAcessoELinkDoCliente') THEN
+    ALTER TABLE "Clientes" DROP COLUMN "PermiteConvidados";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122190130_ClienteSemAcessoELinkDoCliente') THEN
+    ALTER TABLE "Clientes" DROP COLUMN "PermiteMapa";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122190130_ClienteSemAcessoELinkDoCliente') THEN
+    ALTER TABLE "Clientes" DROP COLUMN "PermiteParcelas";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122190130_ClienteSemAcessoELinkDoCliente') THEN
+    ALTER TABLE "Clientes" DROP COLUMN "PermiteRsvp";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122190130_ClienteSemAcessoELinkDoCliente') THEN
+    ALTER TABLE "Clientes" DROP COLUMN "PermiteTarefas";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122190130_ClienteSemAcessoELinkDoCliente') THEN
+    ALTER TABLE "Clientes" DROP COLUMN "UsuarioId";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122190130_ClienteSemAcessoELinkDoCliente') THEN
+    ALTER TABLE "LinksCasal" RENAME TO "LinksCliente";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122190130_ClienteSemAcessoELinkDoCliente') THEN
+    ALTER TABLE "LinksCliente" RENAME CONSTRAINT "PK_LinksCasal" TO "PK_LinksCliente";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122190130_ClienteSemAcessoELinkDoCliente') THEN
+    ALTER TABLE "LinksCliente" RENAME CONSTRAINT "FK_LinksCasal_Eventos_EventoId" TO "FK_LinksCliente_Eventos_EventoId";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122190130_ClienteSemAcessoELinkDoCliente') THEN
+    ALTER INDEX "IX_LinksCasal_EventoId" RENAME TO "IX_LinksCliente_EventoId";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122190130_ClienteSemAcessoELinkDoCliente') THEN
+    ALTER INDEX "IX_LinksCasal_Token" RENAME TO "IX_LinksCliente_Token";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122190130_ClienteSemAcessoELinkDoCliente') THEN
+    UPDATE "ResponsaveisTarefa" SET "Papel" = 'Cliente' WHERE "Papel" = 'Casal';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122190130_ClienteSemAcessoELinkDoCliente') THEN
+    UPDATE "ResponsaveisTarefaFunil" SET "Papel" = 'Cliente' WHERE "Papel" = 'Casal';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122190130_ClienteSemAcessoELinkDoCliente') THEN
+    UPDATE "ItensChecklistTarefa" SET "ResponsavelPapel" = 'Cliente' WHERE "ResponsavelPapel" = 'Casal';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122190130_ClienteSemAcessoELinkDoCliente') THEN
+    UPDATE "Tarefas" SET "Visibilidade" = 'Cliente' WHERE "Visibilidade" = 'Casal';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122190130_ClienteSemAcessoELinkDoCliente') THEN
+    UPDATE "ContratosFornecedor" SET "ContratoAssinadoEnviadoPor" = 'Cliente' WHERE "ContratoAssinadoEnviadoPor" = 'Casal';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122190130_ClienteSemAcessoELinkDoCliente') THEN
+    UPDATE "Convites" SET "Observacao" = 'Preenchido pelo cliente' WHERE "Observacao" = 'Preenchido pelo casal';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122190130_ClienteSemAcessoELinkDoCliente') THEN
+    UPDATE "ImportacoesConvidados" SET "ObservacaoFixa" = 'Preenchido pelo cliente' WHERE "ObservacaoFixa" = 'Preenchido pelo casal';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122190130_ClienteSemAcessoELinkDoCliente') THEN
+    DELETE FROM "AspNetUserRoles" WHERE "RoleId" IN (SELECT "Id" FROM "AspNetRoles" WHERE "Name" = 'Client');
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122190130_ClienteSemAcessoELinkDoCliente') THEN
+    DELETE FROM "AspNetRoles" WHERE "Name" = 'Client';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122190130_ClienteSemAcessoELinkDoCliente') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261122190130_ClienteSemAcessoELinkDoCliente', '10.0.4');
+    END IF;
+END $EF$;
+COMMIT;
+

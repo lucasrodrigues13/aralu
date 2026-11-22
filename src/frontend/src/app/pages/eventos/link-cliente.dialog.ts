@@ -4,16 +4,16 @@ import { MAT_DIALOG_DATA, MatDialog, MatDialogModule } from '@angular/material/d
 import { MatIconModule } from '@angular/material/icon';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { Observable } from 'rxjs';
-import { CasalClient, enderecoDoLinkCasal, LinkCasal } from '../../core/casal.client';
+import { LinkClienteClient, enderecoDoLinkCliente, LinkCliente } from '../../core/link-cliente.client';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { copiarTexto } from '../../shared/copiar-texto';
 import { DIALOG_PEQUENO } from '../../shared/dialog';
 
-/** Link do cliente do evento (SPEC-046 §6.1; no código segue "casal"): gerar, copiar, liberar o financeiro e os convidados, trocar e desativar. */
+/** Link do cliente do evento (SPEC-046 §6.1): gerar, copiar, liberar o financeiro e os convidados, trocar e desativar. */
 @Component({
-  selector: 'app-link-casal-dialog',
+  selector: 'app-link-cliente-dialog',
   imports: [MatDialogModule, MatButtonModule, MatIconModule, MatSlideToggleModule],
   template: `
     <h2 mat-dialog-title>Link do cliente</h2>
@@ -56,20 +56,20 @@ import { DIALOG_PEQUENO } from '../../shared/dialog';
   `,
   styles: `.endereco { padding: 8px 12px; border: 1px solid var(--mat-sys-outline-variant); border-radius: 8px; background: transparent; color: inherit; font: inherit; min-width: 0; }`,
 })
-export class LinkCasalDialog implements OnInit {
-  private readonly casal = inject(CasalClient);
+export class LinkClienteDialog implements OnInit {
+  private readonly cliente = inject(LinkClienteClient);
   private readonly dialog = inject(MatDialog);
   private readonly toast = inject(ToastService);
   private readonly dados = inject<{ eventoId: string }>(MAT_DIALOG_DATA);
-  protected readonly link = signal<LinkCasal | null>(null);
+  protected readonly link = signal<LinkCliente | null>(null);
 
   ngOnInit(): void {
-    this.aplicar(this.casal.link(this.dados.eventoId));
+    this.aplicar(this.cliente.link(this.dados.eventoId));
   }
 
   protected endereco(): string {
     const token = this.link()?.token;
-    return token ? enderecoDoLinkCasal(location.origin, token) : '';
+    return token ? enderecoDoLinkCliente(location.origin, token) : '';
   }
 
   protected async copiar(): Promise<void> {
@@ -79,20 +79,20 @@ export class LinkCasalDialog implements OnInit {
   }
 
   protected gerar(): void {
-    this.aplicar(this.casal.gerar(this.dados.eventoId), 'Link gerado.');
+    this.aplicar(this.cliente.gerar(this.dados.eventoId), 'Link gerado.');
   }
 
   protected liberar(liberado: boolean): void {
     const atual = this.link();
     this.aplicar(
-      this.casal.liberar(this.dados.eventoId, { financeiroLiberado: liberado, convidadosLiberado: atual?.convidadosLiberado ?? false }),
+      this.cliente.liberar(this.dados.eventoId, { financeiroLiberado: liberado, convidadosLiberado: atual?.convidadosLiberado ?? false }),
       liberado ? 'Financeiro liberado para o cliente.' : 'Financeiro fechado para o cliente.');
   }
 
   protected liberarConvidados(liberado: boolean): void {
     const atual = this.link();
     this.aplicar(
-      this.casal.liberar(this.dados.eventoId, { financeiroLiberado: atual?.financeiroLiberado ?? false, convidadosLiberado: liberado }),
+      this.cliente.liberar(this.dados.eventoId, { financeiroLiberado: atual?.financeiroLiberado ?? false, convidadosLiberado: liberado }),
       liberado ? 'Cadastro de convidados liberado para o cliente.' : 'Cadastro de convidados fechado para o cliente.');
   }
 
@@ -101,7 +101,7 @@ export class LinkCasalDialog implements OnInit {
       ...DIALOG_PEQUENO,
       data: { titulo: 'Trocar link', texto: 'O endereço antigo deixa de funcionar. Você precisa enviar o novo ao cliente.', confirmar: 'Trocar' },
     }).afterClosed().subscribe((confirmou) => {
-      if (confirmou) this.aplicar(this.casal.gerar(this.dados.eventoId), 'Link trocado.');
+      if (confirmou) this.aplicar(this.cliente.gerar(this.dados.eventoId), 'Link trocado.');
     });
   }
 
@@ -110,11 +110,11 @@ export class LinkCasalDialog implements OnInit {
       ...DIALOG_PEQUENO,
       data: { titulo: 'Desativar link', texto: 'O endereço deixa de funcionar e o cliente perde o acesso.', confirmar: 'Desativar' },
     }).afterClosed().subscribe((confirmou) => {
-      if (confirmou) this.aplicar(this.casal.desativar(this.dados.eventoId), 'Link desativado.');
+      if (confirmou) this.aplicar(this.cliente.desativar(this.dados.eventoId), 'Link desativado.');
     });
   }
 
-  private aplicar(chamada: Observable<LinkCasal>, sucesso?: string): void {
+  private aplicar(chamada: Observable<LinkCliente>, sucesso?: string): void {
     chamada.subscribe({
       next: (link) => {
         this.link.set(link);

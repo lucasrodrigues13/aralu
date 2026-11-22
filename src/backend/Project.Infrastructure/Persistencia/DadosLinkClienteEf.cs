@@ -5,8 +5,8 @@ using Project.Domain.Eventos;
 
 namespace Project.Infrastructure.Persistencia;
 
-/// <summary>Acesso a dados do link do casal (SPEC-046).</summary>
-public sealed class DadosLinkCasalEf(AppDbContext banco) : IDadosLinkCasal
+/// <summary>Acesso a dados do link do cliente (SPEC-046).</summary>
+public sealed class DadosLinkClienteEf(AppDbContext banco) : IDadosLinkCliente
 {
     public async Task<IReadOnlyList<Convite>> ListarConvitesAsync(Guid eventoId, CancellationToken ct) =>
         await banco.Convites.AsNoTracking().Include(convite => convite.Convidados)
@@ -48,21 +48,21 @@ public sealed class DadosLinkCasalEf(AppDbContext banco) : IDadosLinkCasal
                 evento.DataEnvioConvites))
             .FirstOrDefaultAsync(ct);
 
-    public Task<LinkCasal?> ObterPorEventoAsync(Guid eventoId, CancellationToken ct) =>
-        banco.LinksCasal.FirstOrDefaultAsync(link => link.EventoId == eventoId, ct);
+    public Task<LinkCliente?> ObterPorEventoAsync(Guid eventoId, CancellationToken ct) =>
+        banco.LinksCliente.FirstOrDefaultAsync(link => link.EventoId == eventoId, ct);
 
-    public Task<LinkCasal?> ObterPorTokenAsync(string token, CancellationToken ct) =>
-        banco.LinksCasal.AsNoTracking().FirstOrDefaultAsync(link => link.Token == token, ct);
+    public Task<LinkCliente?> ObterPorTokenAsync(string token, CancellationToken ct) =>
+        banco.LinksCliente.AsNoTracking().FirstOrDefaultAsync(link => link.Token == token, ct);
 
-    public Task InserirAsync(LinkCasal link, CancellationToken ct)
+    public Task InserirAsync(LinkCliente link, CancellationToken ct)
     {
-        banco.LinksCasal.Add(link);
+        banco.LinksCliente.Add(link);
         return Task.CompletedTask;
     }
 
-    public Task RemoverAsync(LinkCasal link, CancellationToken ct)
+    public Task RemoverAsync(LinkCliente link, CancellationToken ct)
     {
-        banco.LinksCasal.Remove(link);
+        banco.LinksCliente.Remove(link);
         return Task.CompletedTask;
     }
 

@@ -19,7 +19,7 @@ RF-075, no recorte de contratos do funil. Modelo de contrato é a SPEC-039. Opor
 
 ## 4. Atores e permissões
 
-O `Organizer` opera os contratos da própria conta. Outro `Organizer` não vê. `Admin` acessa qualquer conta. `Client` não acessa o funil neste corte. Assistente e fornecedor com login ficam fora.
+O `Organizer` opera os contratos da própria conta. Outro `Organizer` não vê. `Admin` acessa qualquer conta. O cliente não entra na plataforma (SPEC-060). Assistente e fornecedor com login ficam fora.
 
 ## 5. Pré-condições
 

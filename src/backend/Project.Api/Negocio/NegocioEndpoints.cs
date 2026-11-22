@@ -24,7 +24,7 @@ public static class NegocioEndpoints
 
     public static void Mapear(WebApplication app)
     {
-        var api = app.MapGroup("/api/v1").RequireAuthorization();
+        var api = app.MapGroup("/api/v1").RequireAuthorization(policy => policy.RequireRole(Papeis.ComAcesso));
         api.AddEndpointFilter(EscopoAssistente.Filtro);
         api.MapGet("/perfil", Perfil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapPut("/perfil", GravarPerfil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
@@ -601,24 +601,12 @@ public static class NegocioEndpoints
                 lista = lista.Where(evento => liberados.Contains(evento.Id)).ToArray();
             }
 
-            if (!EhClient(usuario))
-            {
-                return Results.Ok(lista);
-            }
-
-            var permitidos = await dados.EventosDoUsuarioClienteAsync(conta, UsuarioId(usuario)!, ct);
-            return Results.Ok(lista.Where(evento => permitidos.Contains(evento.Id)).ToArray());
+            return Results.Ok(lista);
         });
 
     private static Task<IResult> Evento(Guid id, ClaimsPrincipal usuario, EventoServico servico, IDados dados, CancellationToken ct) =>
         ComConta(usuario, async conta =>
         {
-            var bloqueio = await ExigirEventoDoClientAsync(usuario, conta, id, dados, ct);
-            if (bloqueio is not null)
-            {
-                return bloqueio;
-            }
-
             var detalhe = await servico.ObterAsync(conta, id, Hoje(), ct);
             if (detalhe.Ok && !AssistenteEndpoints.PodeVerFinanceiro(usuario))
             {
@@ -708,24 +696,12 @@ public static class NegocioEndpoints
     private static Task<IResult> TarefasDoEvento(Guid id, ClaimsPrincipal usuario, TarefaServico servico, IDados dados, CancellationToken ct) =>
         ComConta(usuario, async conta =>
         {
-            var bloqueio = await ExigirModuloEEventoAsync(usuario, conta, id, ModuloCliente.Tarefas, dados, ct);
-            if (bloqueio is not null)
-            {
-                return bloqueio;
-            }
-
             return await De(servico.DoEventoAsync(conta, id, Hoje(), ct));
         });
 
     private static Task<IResult> CriarTarefa(Guid id, SalvarTarefa pedido, ClaimsPrincipal usuario, TarefaServico servico, IDados dados, CancellationToken ct) =>
         ComConta(usuario, async conta =>
         {
-            var bloqueio = await ExigirModuloEEventoAsync(usuario, conta, id, ModuloCliente.Tarefas, dados, ct);
-            if (bloqueio is not null)
-            {
-                return bloqueio;
-            }
-
             return await De(servico.CriarAsync(conta, id, pedido, Hoje(), ct));
         });
 
@@ -797,50 +773,18 @@ public static class NegocioEndpoints
     private static Task<IResult> Tarefas(ClaimsPrincipal usuario, TarefaServico servico, IDados dados, AppDbContext banco, CancellationToken ct) =>
         ComConta(usuario, async conta =>
         {
-            var bloqueio = await ExigirModuloAsync(usuario, conta, ModuloCliente.Tarefas, dados, ct);
-            if (bloqueio is not null)
-            {
-                return bloqueio;
-            }
-
             var lista = await servico.DaContaAsync(conta, Hoje(), ct);
             if (await EscopoAssistente.LiberadosAsync(usuario, banco, ct) is { } liberados)
             {
                 lista = lista.Where(tarefa => liberados.Contains(tarefa.EventoId)).ToArray();
             }
 
-            if (!EhClient(usuario))
-            {
-                return Results.Ok(lista);
-            }
-
-            var permitidos = await dados.EventosDoUsuarioClienteAsync(conta, UsuarioId(usuario)!, ct);
-            return Results.Ok(lista.Where(tarefa => permitidos.Contains(tarefa.EventoId)).ToArray());
+            return Results.Ok(lista);
         });
 
     private static Task<IResult> AtualizarTarefa(Guid id, SalvarTarefa pedido, ClaimsPrincipal usuario, TarefaServico servico, IDados dados, CancellationToken ct) =>
         ComConta(usuario, async conta =>
         {
-            var bloqueio = await ExigirModuloAsync(usuario, conta, ModuloCliente.Tarefas, dados, ct);
-            if (bloqueio is not null)
-            {
-                return bloqueio;
-            }
-
-            if (EhClient(usuario))
-            {
-                var tarefa = await dados.ObterTarefaAsync(conta, id, ct);
-                if (tarefa is null)
-                {
-                    return Indisponivel();
-                }
-
-                var eventoOk = await ExigirEventoDoClientAsync(usuario, conta, tarefa.EventoId, dados, ct);
-                if (eventoOk is not null)
-                {
-                    return eventoOk;
-                }
-            }
 
             return await De(servico.AtualizarAsync(conta, id, pedido, Hoje(), ct));
         });
@@ -848,26 +792,6 @@ public static class NegocioEndpoints
     private static Task<IResult> ComentarTarefa(Guid id, ComentarioPedido pedido, ClaimsPrincipal usuario, TarefaServico servico, IDados dados, CancellationToken ct) =>
         ComConta(usuario, async conta =>
         {
-            var bloqueio = await ExigirModuloAsync(usuario, conta, ModuloCliente.Tarefas, dados, ct);
-            if (bloqueio is not null)
-            {
-                return bloqueio;
-            }
-
-            if (EhClient(usuario))
-            {
-                var tarefa = await dados.ObterTarefaAsync(conta, id, ct);
-                if (tarefa is null)
-                {
-                    return Indisponivel();
-                }
-
-                var eventoOk = await ExigirEventoDoClientAsync(usuario, conta, tarefa.EventoId, dados, ct);
-                if (eventoOk is not null)
-                {
-                    return eventoOk;
-                }
-            }
 
             return await De(servico.ComentarAsync(conta, id, pedido, Hoje(), ct));
         });
@@ -905,26 +829,6 @@ public static class NegocioEndpoints
         CancellationToken ct) =>
         ComConta(usuario, async conta =>
         {
-            var bloqueio = await ExigirModuloAsync(usuario, conta, ModuloCliente.Tarefas, dados, ct);
-            if (bloqueio is not null)
-            {
-                return bloqueio;
-            }
-
-            if (EhClient(usuario))
-            {
-                var tarefa = await dados.ObterTarefaAsync(conta, id, ct);
-                if (tarefa is null)
-                {
-                    return Indisponivel();
-                }
-
-                var eventoOk = await ExigirEventoDoClientAsync(usuario, conta, tarefa.EventoId, dados, ct);
-                if (eventoOk is not null)
-                {
-                    return eventoOk;
-                }
-            }
 
             return await De(servico.MarcarItemChecklistAsync(conta, id, itemId, pedido, Hoje(), ct));
         });
@@ -938,26 +842,6 @@ public static class NegocioEndpoints
         CancellationToken ct) =>
         ComConta(usuario, async conta =>
         {
-            var bloqueio = await ExigirModuloAsync(usuario, conta, ModuloCliente.Tarefas, dados, ct);
-            if (bloqueio is not null)
-            {
-                return bloqueio;
-            }
-
-            if (EhClient(usuario))
-            {
-                var tarefa = await dados.ObterTarefaAsync(conta, id, ct);
-                if (tarefa is null)
-                {
-                    return Indisponivel();
-                }
-
-                var eventoOk = await ExigirEventoDoClientAsync(usuario, conta, tarefa.EventoId, dados, ct);
-                if (eventoOk is not null)
-                {
-                    return eventoOk;
-                }
-            }
 
             return await De(servico.ConcluirAsync(conta, id, pedido.Concluida, Hoje(), ct));
         });
@@ -1028,12 +912,6 @@ public static class NegocioEndpoints
         CancellationToken ct) =>
         ComConta(usuario, async conta =>
         {
-            var bloqueio = await ExigirModuloEEventoAsync(usuario, conta, id, ModuloCliente.Convidados, dados, ct);
-            if (bloqueio is not null)
-            {
-                return bloqueio;
-            }
-
             return await De(servico.ListarAsync(
                 conta,
                 id,
@@ -1045,84 +923,42 @@ public static class NegocioEndpoints
     private static Task<IResult> CriarConvite(Guid id, FormularioConvitePedido pedido, ClaimsPrincipal usuario, ConviteServico servico, IDados dados, CancellationToken ct) =>
         ComConta(usuario, async conta =>
         {
-            var bloqueio = await ExigirModuloEEventoAsync(usuario, conta, id, ModuloCliente.Convidados, dados, ct);
-            if (bloqueio is not null)
-            {
-                return bloqueio;
-            }
-
             return await De(servico.CriarAsync(conta, id, pedido, ct));
         });
 
     private static Task<IResult> AtualizarConvite(Guid id, FormularioConvitePedido pedido, ClaimsPrincipal usuario, ConviteServico servico, IDados dados, CancellationToken ct) =>
         ComConta(usuario, async conta =>
         {
-            var bloqueio = await ExigirModuloViaConviteAsync(usuario, conta, id, ModuloCliente.Convidados, dados, servico, ct);
-            if (bloqueio is not null)
-            {
-                return bloqueio;
-            }
-
             return await De(servico.AtualizarAsync(conta, id, pedido, ct));
         });
 
     private static Task<IResult> DefinirPrazoRsvp(Guid id, PrazoRsvpPedido pedido, ClaimsPrincipal usuario, ConviteServico servico, IDados dados, CancellationToken ct) =>
         ComConta(usuario, async conta =>
         {
-            var bloqueio = await ExigirModuloEEventoAsync(usuario, conta, id, ModuloCliente.Convidados, dados, ct);
-            if (bloqueio is not null)
-            {
-                return bloqueio;
-            }
-
             return await De(servico.DefinirPrazoAsync(conta, id, pedido.Prazo, Hoje(), ct));
         });
 
     private static Task<IResult> DefinirEnvioConvites(Guid id, EnvioConvitesPedido pedido, ClaimsPrincipal usuario, ConviteServico servico, IDados dados, CancellationToken ct) =>
         ComConta(usuario, async conta =>
         {
-            var bloqueio = await ExigirModuloEEventoAsync(usuario, conta, id, ModuloCliente.Convidados, dados, ct);
-            if (bloqueio is not null)
-            {
-                return bloqueio;
-            }
-
             return await De(servico.DefinirEnvioAsync(conta, id, pedido.Data, ct));
         });
 
     private static Task<IResult> DefinirExcecaoRsvp(Guid id, ExcecaoRsvpPedido pedido, ClaimsPrincipal usuario, ConviteServico servico, IDados dados, CancellationToken ct) =>
         ComConta(usuario, async conta =>
         {
-            var bloqueio = await ExigirModuloViaConviteAsync(usuario, conta, id, ModuloCliente.Convidados, dados, servico, ct);
-            if (bloqueio is not null)
-            {
-                return bloqueio;
-            }
-
             return await De(servico.DefinirExcecaoAsync(conta, id, pedido.Liberada, ct));
         });
 
     private static Task<IResult> Presencas(Guid id, ClaimsPrincipal usuario, ConviteServico servico, IDados dados, CancellationToken ct) =>
         ComConta(usuario, async conta =>
         {
-            var bloqueio = await ExigirModuloEEventoAsync(usuario, conta, id, ModuloCliente.Convidados, dados, ct);
-            if (bloqueio is not null)
-            {
-                return bloqueio;
-            }
-
             return await De(servico.ListarPresencasAsync(conta, id, ct));
         });
 
     private static Task<IResult> CriarConvidado(Guid id, ConvidadoPedido pedido, ClaimsPrincipal usuario, ConviteServico servico, IDados dados, CancellationToken ct) =>
         ComConta(usuario, async conta =>
         {
-            var bloqueio = await ExigirModuloViaConviteAsync(usuario, conta, id, ModuloCliente.Convidados, dados, servico, ct);
-            if (bloqueio is not null)
-            {
-                return bloqueio;
-            }
-
             return await De(servico.SalvarConvidadoAsync(conta, id, null, pedido, ct));
         });
 
@@ -1136,48 +972,24 @@ public static class NegocioEndpoints
         CancellationToken ct) =>
         ComConta(usuario, async conta =>
         {
-            var bloqueio = await ExigirModuloViaConviteAsync(usuario, conta, id, ModuloCliente.Convidados, dados, servico, ct);
-            if (bloqueio is not null)
-            {
-                return bloqueio;
-            }
-
             return await De(servico.SalvarConvidadoAsync(conta, id, convidadoId, pedido, ct));
         });
 
     private static Task<IResult> RemoverConvidado(Guid id, ClaimsPrincipal usuario, ConviteServico servico, IDados dados, CancellationToken ct) =>
         ComConta(usuario, async conta =>
         {
-            var bloqueio = await ExigirModuloAsync(usuario, conta, ModuloCliente.Convidados, dados, ct);
-            if (bloqueio is not null)
-            {
-                return bloqueio;
-            }
-
             return await De(servico.RemoverConvidadoAsync(conta, id, ct));
         });
 
     private static Task<IResult> Principal(Guid id, PrincipalPedido pedido, ClaimsPrincipal usuario, ConviteServico servico, IDados dados, CancellationToken ct) =>
         ComConta(usuario, async conta =>
         {
-            var bloqueio = await ExigirModuloViaConviteAsync(usuario, conta, id, ModuloCliente.Convidados, dados, servico, ct);
-            if (bloqueio is not null)
-            {
-                return bloqueio;
-            }
-
             return await De(servico.DefinirPrincipalAsync(conta, id, pedido.ConvidadoId, ct));
         });
 
     private static Task<IResult> Planilha(Guid id, ClaimsPrincipal usuario, ConviteServico servico, IDados dados, CancellationToken ct) =>
         ComConta(usuario, async conta =>
         {
-            var bloqueio = await ExigirModuloEEventoAsync(usuario, conta, id, ModuloCliente.Convidados, dados, ct);
-            if (bloqueio is not null)
-            {
-                return bloqueio;
-            }
-
             if (!await EventoDaConta(conta, id, ct, servico))
             {
                 return Indisponivel();
@@ -1199,12 +1011,6 @@ public static class NegocioEndpoints
         CancellationToken ct) =>
         ComConta(usuario, async conta =>
         {
-            var bloqueio = await ExigirModuloEEventoAsync(usuario, conta, id, ModuloCliente.Convidados, dados, ct);
-            if (bloqueio is not null)
-            {
-                return bloqueio;
-            }
-
             if (arquivo is null)
             {
                 return Validacao("Envie uma planilha .xlsx ou .xls.");
@@ -1217,24 +1023,12 @@ public static class NegocioEndpoints
     private static Task<IResult> Importacoes(Guid id, ClaimsPrincipal usuario, ImportacaoServico servico, IDados dados, CancellationToken ct) =>
         ComConta(usuario, async conta =>
         {
-            var bloqueio = await ExigirModuloEEventoAsync(usuario, conta, id, ModuloCliente.Convidados, dados, ct);
-            if (bloqueio is not null)
-            {
-                return bloqueio;
-            }
-
             return await De(servico.ListarAsync(conta, id, ct));
         });
 
     private static Task<IResult> Qr(Guid id, ClaimsPrincipal usuario, ConviteServico servico, IDados dados, IConfiguration configuracao, CancellationToken ct) =>
         ComConta(usuario, async conta =>
         {
-            var bloqueio = await ExigirModuloViaConviteAsync(usuario, conta, id, ModuloCliente.Convidados, dados, servico, ct);
-            if (bloqueio is not null)
-            {
-                return bloqueio;
-            }
-
             var png = await servico.QrAsync(conta, id, configuracao["PublicUrl"] ?? "http://localhost:4200", ct);
             if (!png.Ok)
             {
@@ -1247,12 +1041,6 @@ public static class NegocioEndpoints
     private static Task<IResult> QrEntrada(Guid id, ClaimsPrincipal usuario, ConviteServico servico, IDados dados, CancellationToken ct) =>
         ComConta(usuario, async conta =>
         {
-            var bloqueio = await ExigirModuloViaConviteAsync(usuario, conta, id, ModuloCliente.Convidados, dados, servico, ct);
-            if (bloqueio is not null)
-            {
-                return bloqueio;
-            }
-
             var png = await servico.QrEntradaAsync(conta, id, ct);
             return png.Ok ? Results.File(png.Valor!, "image/png", "entrada.png") : Falha(png.Falha!);
         });
@@ -1266,12 +1054,6 @@ public static class NegocioEndpoints
     private static Task<IResult> WhatsApp(Guid id, ClaimsPrincipal usuario, ConviteServico servico, IDados dados, IConfiguration configuracao, CancellationToken ct) =>
         ComConta(usuario, async conta =>
         {
-            var bloqueio = await ExigirModuloViaConviteAsync(usuario, conta, id, ModuloCliente.Convidados, dados, servico, ct);
-            if (bloqueio is not null)
-            {
-                return bloqueio;
-            }
-
             return await De(servico.WhatsAppAsync(conta, id, configuracao["PublicUrl"] ?? "http://localhost:4200", ct));
         });
 
@@ -1287,12 +1069,6 @@ public static class NegocioEndpoints
         if (conta is null)
         {
             return NaoAutenticado();
-        }
-
-        var bloqueio = await ExigirModuloAsync(usuario, conta, ModuloCliente.Anexos, dados, ct);
-        if (bloqueio is not null)
-        {
-            return bloqueio;
         }
 
         var aberto = await armazenamento.AbrirAsync(id, conta, ct);
@@ -1764,115 +1540,11 @@ public static class NegocioEndpoints
     private static IResult NaoAutenticado() =>
         Results.Json(new ErroResposta("autenticacao", "É preciso entrar para continuar."), statusCode: StatusCodes.Status401Unauthorized);
 
-    private static bool EhClient(ClaimsPrincipal usuario) => usuario.IsInRole(Papeis.Client);
-
     private static string? UsuarioId(ClaimsPrincipal usuario) => usuario.FindFirstValue(ClaimTypes.NameIdentifier);
 
     /// <summary>A assistente só exclui o que criou (SPEC-032 §18, passo 1); a dona exclui tudo (nulo).</summary>
     private static string? SoDoUsuario(ClaimsPrincipal usuario) =>
         usuario.IsInRole(Papeis.Assistant) ? UsuarioId(usuario) ?? "-" : null;
-
-    private static async Task<IResult?> ExigirModuloAsync(
-        ClaimsPrincipal usuario,
-        string conta,
-        ModuloCliente modulo,
-        IDados dados,
-        CancellationToken ct)
-    {
-        if (!EhClient(usuario))
-        {
-            return null;
-        }
-
-        var usuarioId = UsuarioId(usuario);
-        if (usuarioId is null)
-        {
-            return NaoAutenticado();
-        }
-
-        var cliente = await dados.ObterClientePorUsuarioAsync(conta, usuarioId, ct);
-        if (cliente is null)
-        {
-            return Proibido();
-        }
-
-        return cliente.TemPermissao(modulo) ? null : Proibido();
-    }
-
-    private static async Task<IResult?> ExigirEventoDoClientAsync(
-        ClaimsPrincipal usuario,
-        string conta,
-        Guid eventoId,
-        IDados dados,
-        CancellationToken ct)
-    {
-        if (!EhClient(usuario))
-        {
-            return null;
-        }
-
-        var usuarioId = UsuarioId(usuario);
-        if (usuarioId is null)
-        {
-            return NaoAutenticado();
-        }
-
-        var cliente = await dados.ObterClientePorUsuarioAsync(conta, usuarioId, ct);
-        if (cliente is null)
-        {
-            return Proibido();
-        }
-
-        return await dados.ClienteVinculadoAoEventoAsync(conta, usuarioId, eventoId, ct)
-            ? null
-            : Indisponivel();
-    }
-
-    private static async Task<IResult?> ExigirModuloEEventoAsync(
-        ClaimsPrincipal usuario,
-        string conta,
-        Guid eventoId,
-        ModuloCliente modulo,
-        IDados dados,
-        CancellationToken ct)
-    {
-        var moduloOk = await ExigirModuloAsync(usuario, conta, modulo, dados, ct);
-        if (moduloOk is not null)
-        {
-            return moduloOk;
-        }
-
-        return await ExigirEventoDoClientAsync(usuario, conta, eventoId, dados, ct);
-    }
-
-    private static async Task<IResult?> ExigirModuloViaConviteAsync(
-        ClaimsPrincipal usuario,
-        string conta,
-        Guid conviteId,
-        ModuloCliente modulo,
-        IDados dados,
-        ConviteServico servico,
-        CancellationToken ct)
-    {
-        var moduloOk = await ExigirModuloAsync(usuario, conta, modulo, dados, ct);
-        if (moduloOk is not null)
-        {
-            return moduloOk;
-        }
-
-        if (!EhClient(usuario))
-        {
-            return null;
-        }
-
-        var convite = await dados.ObterConviteAsync(conta, conviteId, ct);
-        if (convite is null)
-        {
-            return Indisponivel();
-        }
-
-        return await ExigirEventoDoClientAsync(usuario, conta, convite.EventoId, dados, ct);
-    }
 
     private static string? Conta(ClaimsPrincipal usuario)
     {

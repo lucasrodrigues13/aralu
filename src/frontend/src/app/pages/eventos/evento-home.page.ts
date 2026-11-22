@@ -21,7 +21,7 @@ import { ClienteFormDialog } from '../clientes/cliente-form.dialog';
 import { EventoAbasComponent } from './evento-abas.component';
 import { AplicarModeloDialog } from './aplicar-modelo.dialog';
 import { EventoFormPage } from './evento-form.page';
-import { LinkCasalDialog } from './link-casal.dialog';
+import { LinkClienteDialog } from './link-cliente.dialog';
 import { LinkPortariaDialog } from './link-portaria.dialog';
 import { EventoTarefasComponent } from '../tarefas/evento-tarefas.component';
 import { SalvarComoModeloDialog } from './salvar-como-modelo.dialog';
@@ -175,7 +175,7 @@ export class ClientesEventoDialog implements OnInit {
                   <button mat-menu-item type="button" (click)="removerFoto()"><mat-icon>hide_image</mat-icon> Remover foto</button>
                 }
                 @if (!auth.ehAssistente()) {
-                  <button mat-menu-item type="button" (click)="linkDoCasal()"><mat-icon>link</mat-icon> Link do cliente</button>
+                  <button mat-menu-item type="button" (click)="linkDoCliente()"><mat-icon>link</mat-icon> Link do cliente</button>
                   <button mat-menu-item type="button" (click)="linkDaPortaria()"><mat-icon>qr_code_scanner</mat-icon> Link da portaria</button>
                 }
                 @if (atual.situacao === 'EmAndamento') {
@@ -431,8 +431,8 @@ export class EventoHomePage implements OnInit, OnDestroy {
     this.dialog.open(LinkPortariaDialog, { ...DIALOG, data: { eventoId: this.id } });
   }
 
-  protected linkDoCasal(): void {
-    this.dialog.open(LinkCasalDialog, { ...DIALOG, data: { eventoId: this.id } });
+  protected linkDoCliente(): void {
+    this.dialog.open(LinkClienteDialog, { ...DIALOG, data: { eventoId: this.id } });
   }
 
   protected salvarComoModelo(): void {

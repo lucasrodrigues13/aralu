@@ -216,7 +216,7 @@ public class NegocioFluxoTests
             titulo = "Ligar para o buffet",
             situacao = "Concluida",
             prioridade = "Alta",
-            responsaveis = new[] { new { papel = "Organizer" }, new { papel = "Casal" } },
+            responsaveis = new[] { new { papel = "Organizer" }, new { papel = "Cliente" } },
         }));
         Assert.Equal("Feitas", atualizada.GetProperty("grupoPrazo").GetString());
         Assert.Equal("Alta", atualizada.GetProperty("prioridade").GetString());
@@ -313,14 +313,14 @@ public class NegocioFluxoTests
             titulo = "Montar lista",
             checklist = new object[]
             {
-                new { texto = "Padrinhos", feito = false, prazo = "2027-05-01", responsavel = new { papel = "Casal" } },
+                new { texto = "Padrinhos", feito = false, prazo = "2027-05-01", responsavel = new { papel = "Cliente" } },
                 new { texto = "Pajens", feito = false, prazo = "2027-05-10", responsavel = new { papel = "Organizer" } },
                 new { texto = "Mesas", feito = false },
             },
         }));
         var itens = tarefa.GetProperty("checklist");
         Assert.Equal("2027-05-01", itens[0].GetProperty("prazo").GetString());
-        Assert.Equal("Casal", itens[0].GetProperty("responsavel").GetProperty("papel").GetString());
+        Assert.Equal("Cliente", itens[0].GetProperty("responsavel").GetProperty("papel").GetString());
         Assert.Equal("2027-05-10", itens[1].GetProperty("prazo").GetString());
         Assert.Equal("Organizer", itens[1].GetProperty("responsavel").GetProperty("papel").GetString());
         Assert.Equal(JsonValueKind.Null, itens[2].GetProperty("prazo").ValueKind);

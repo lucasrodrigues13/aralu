@@ -16,7 +16,7 @@ RF-075 e RF-077, no recorte de catálogos e orçamentos do funil. Lista de orça
 
 ## 4. Atores e permissões
 
-O `Organizer` lista, cria, edita e exclui modelos da própria conta. Outro `Organizer` não vê. `Admin` acessa qualquer conta. `Client` não acessa. Assistente e fornecedor com login ficam fora.
+O `Organizer` lista, cria, edita e exclui modelos da própria conta. Outro `Organizer` não vê. `Admin` acessa qualquer conta. O cliente não entra na plataforma (SPEC-060). Assistente e fornecedor com login ficam fora.
 
 ## 5. Pré-condições
 

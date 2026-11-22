@@ -21,7 +21,7 @@ Fora: RF-079. Assistente. Fornecedor com login.
 | Ator | Pode |
 |---|---|
 | Organizer | CRUD dos modelos de briefing da própria conta. |
-| Client | Não edita a biblioteca. Pode responder briefing do evento se a flag de permissão (RF-056) e o fluxo RF-071 permitirem. |
+| Cliente | Não entra na plataforma (SPEC-060). Responder o briefing do evento, se vier, é pelo link do cliente (RF-056, RF-071). |
 | Admin | Acessa modelos de qualquer conta. |
 | Visitante | Não acessa a biblioteca. |
 

@@ -14,9 +14,10 @@ Testes e build passaram, mas as telas abaixo só foram vistas em teste unitário
 
 - [ ] **Gráfico de orçamento** (aba Fornecedores do evento): o excesso aparece em vermelho e a barra fica com contorno vermelho. Serviço contratado entra só pelo contratado, sem somar o estimado dele. Caso real: orçamento 150.000, Buffet 150.000 e Foto 2.000 → "Acima do orçamento em R$ 2.000,00". Código: `pages/eventos/orcamento-graficos.ts`.
 - [ ] **Refazer parcelamento com parcela paga** (aba Dinheiro): alerta vermelho no modal e botão vermelho; salvar troca as parcelas. SPEC-043.
+- [ ] **Cliente sem login e link do cliente ([SPEC-060](specs/060-cliente-sem-login-e-link-do-cliente.md))**: cadastro de cliente sem aba Acesso nem coluna Último acesso, e sem papel marcado de início; o link copiado é `/cliente/<token>`; conta antiga de cliente não entra. Links `/casal/...` já enviados param de abrir: reenviar no formato novo (decisão pendente sobre redirecionar).
 - [ ] **Tela do cliente** (link do cliente): abas Financeiro e Convidados; comprovante como ícone + "Comprovante". Modal "Link do cliente" (antes "Link do casal"); o Copiar copia o link inteiro.
 - [ ] **Aba Dinheiro do organizador**: coluna Comprovante só com ícones (abrir, enviar, excluir).
-- [ ] **Convites (SPEC-059)**: formulário igual no organizador e no cliente (menos Observação; no cliente grava "Preenchido pelo casal" sem mostrar). Vários convidados, gênero, faixa etária, convidado principal obrigatório, único e com telefone. Data de envio única por evento, fora do formulário. Lista de convites recolhida; ao expandir, mostra os convidados.
+- [ ] **Convites (SPEC-059)**: formulário igual no organizador e no cliente (menos Observação; no cliente grava "Preenchido pelo cliente" sem mostrar). Vários convidados, gênero, faixa etária, convidado principal obrigatório, único e com telefone. Data de envio única por evento, fora do formulário. Lista de convites recolhida; ao expandir, mostra os convidados.
 - [ ] **Planilha de convidados**: o botão abre o modal de instruções com o download dentro. O modelo traz dois convites de exemplo (com aviso para apagar), sem Mesa, Custo e Pagamento, e com Gênero e Principal em lista suspensa. A importação vai para uma fila no banco, com modal de histórico e erros por linha.
 - [ ] **Tooltips**: todo botão só de ícone das listas mostra o nome da ação (regra no `design-system.md`). Confira também os botões declarados em várias linhas (`casca.component.ts`, `tarefas.page.ts`, `evento-tarefas.component.ts`, `checklist-tarefa.ts`, `estagios-funil.dialog.ts`, menu do lead em `oportunidades.page.ts`, `tema-botao.ts`). O grep simples não confirma se eles têm `matTooltip`.
 
@@ -56,7 +57,7 @@ O item restante (3) já estão decididos e detalhados (arquivos, regra e testes)
 
 ### Passo 2. Próximo bloco do produto-v1 (§9)
 
-Falta spec dos blocos 8 a 12 e 14 a 17 (convidados, fornecedores, roteiro e cronograma no evento, link do casal, resumo do dia, financeiro da empresa, agenda, aniversários). Escolha com o usuário qual vem primeiro e rascunhe a spec (seção 5 deste arquivo).
+Falta spec dos blocos 8 a 12 e 14 a 17 (convidados, fornecedores, roteiro e cronograma no evento, link do cliente, resumo do dia, financeiro da empresa, agenda, aniversários). Escolha com o usuário qual vem primeiro e rascunhe a spec (seção 5 deste arquivo).
 
 ### Pontos do código que ajudam
 
@@ -120,7 +121,7 @@ Como fazer cada uma:
 1. Copie as 17 seções da SPEC-008 (mesmos títulos, mesma ordem).
 2. Use só o que está no produto-v1 e nos RFs citados. Cite os RFs na seção 3.
 3. O que não estiver decidido vai para a seção 17, "Premissas e pontos não definidos". Não decida sozinho.
-4. Atores: `Organizer` e `Assistant`. A role `Client` não existe mais; o casal usa o link (RF-056).
+4. Atores: `Organizer` e `Assistant`. A role `Client` não existe mais; o cliente usa o link (RF-056).
 5. Ao terminar cada spec, faça um commit só com ela: `docs: rascunho da SPEC-0XX`.
 
 ## 6. Como implementar e testar

@@ -8,7 +8,7 @@ export interface ContratoDoEvento {
   arquivoId: string;
   nome: string;
   tipoConteudo: string;
-  /** "Organizadora", "Casal" ou nulo (contrato enviado antes do registro). */
+  /** "Organizadora", "Cliente" ou nulo (contrato enviado antes do registro). */
   enviadoPor: string | null;
   /** Data do envio (AAAA-MM-DD) ou nulo. */
   enviadoEm: string | null;

@@ -1,6 +1,6 @@
 # 058. Portaria do evento: QR code, link da equipe e check-in
 
-**Status: aprovada (21/11/2026; aprovação antecipada do dono do projeto, repassada pela sessão que abriu o card #25, com as opções mais simples e conservadoras nos pontos em aberto).** Fonte: card #25 do Trello; [produto-v1.md](../produto-v1.md) 5.7 e 6. Usa o RSVP e a lista de presença da [SPEC-054](054-rsvp-com-prazo.md), o QR do convite da [SPEC-021](021-oportunidades-de-rsvp.md)/[SPEC-010](010-convites-convidados-completo.md) (`GeradorQr`) e o padrão de link sem login do casal ([SPEC-046](046-link-do-casal-financeiro.md), [SPEC-052](052-link-do-casal-cadastra-convites.md)).
+**Status: aprovada (21/11/2026; aprovação antecipada do dono do projeto, repassada pela sessão que abriu o card #25, com as opções mais simples e conservadoras nos pontos em aberto).** Fonte: card #25 do Trello; [produto-v1.md](../produto-v1.md) 5.7 e 6. Usa o RSVP e a lista de presença da [SPEC-054](054-rsvp-com-prazo.md), o QR do convite da [SPEC-021](021-oportunidades-de-rsvp.md)/[SPEC-010](010-convites-convidados-completo.md) (`GeradorQr`) e o padrão de link sem login do cliente ([SPEC-046](046-link-do-cliente-financeiro.md), [SPEC-052](052-link-do-cliente-cadastra-convites.md)).
 
 ## 1. Identificador e nome
 
@@ -14,7 +14,7 @@ No dia do evento, uma pessoa da equipe, sem login, abre um link da portaria, esc
 
 RF-063, RF-064. Regra 7 do [roteiro de execução](../roteiro-execucao.md).
 
-Fora (1.1, [produto-v1.md](../produto-v1.md) 6): modo dia completo e QR offline; estatística de chegada por horário; aviso de presença ao casal.
+Fora (1.1, [produto-v1.md](../produto-v1.md) 6): modo dia completo e QR offline; estatística de chegada por horário; aviso de presença ao cliente.
 
 ## 4. Atores e permissões
 
@@ -58,7 +58,7 @@ Depois de confirmar, a página de RSVP mostra o **QR code de entrada** do convit
 
 ## 8. Regras de negócio
 
-- **Link da portaria:** um por evento, sem senha, com código aleatório de 256 bits (mesmo padrão do link do casal). Trocar gera outro código e o antigo deixa de valer. **Desativar apaga o link.** O código só resolve o evento dele; nenhuma rota da portaria aceita convite, convidado ou evento fora dele.
+- **Link da portaria:** um por evento, sem senha, com código aleatório de 256 bits (mesmo padrão do link do cliente). Trocar gera outro código e o antigo deixa de valer. **Desativar apaga o link.** O código só resolve o evento dele; nenhuma rota da portaria aceita convite, convidado ou evento fora dele.
 - **QR de entrada:** carrega o texto `entrada:{código do convite}` (o mesmo código do link de RSVP do convite). Só é gerado com ao menos um convidado confirmado. O QR vale para o convite todo: a tela do convite decide quem entra.
 - **Comparecimento** é por convidado confirmado, guardado na entrada da lista de presença (`PresencasEvento.CompareceuEm`, data e hora UTC). Marcar de novo quem já entrou mantém a hora original. Quem foi desmarcado volta a nulo. Se o convidado desconfirmar e reconfirmar, a entrada nasce de novo (SPEC-054) e o comparecimento zera.
 - **Banco (migration `PortariaDoEvento`, uma só):** tabela nova `LinksPortaria` (`Id`, `EventoId` único, `ContaId`, `Token` único, `CriadoEm`) e coluna `PresencasEvento.CompareceuEm` (data e hora, opcional). Nada é apagado.
@@ -79,7 +79,7 @@ Link: evento, conta, código. Presença: comparecimento (data e hora).
 
 ## 12. Interface
 
-Página pública para celular primeiro, no estilo da página do casal; janela do link conforme o design-system. A leitura do QR usa a câmera do navegador (biblioteca `jsQR`, funciona em Chrome, Safari e Firefox em HTTPS).
+Página pública para celular primeiro, no estilo da página do cliente; janela do link conforme o design-system. A leitura do QR usa a câmera do navegador (biblioteca `jsQR`, funciona em Chrome, Safari e Firefox em HTTPS).
 
 ## 13. Erros
 
@@ -109,8 +109,8 @@ Decididos nesta entrega pela opção mais simples e conservadora (a conferir pel
 1. **O QR carrega o código do convite que já existe** (o do link de RSVP), com o prefixo `entrada:`. Não há código separado: quem vê o QR também tem o link de RSVP do convite, então não ganha poder novo. A equipe da portaria que lê o QR conhece o código, mas o link da portaria não abre o RSVP.
 2. **Um QR por convite** (não por convidado), o convite todo na tela da portaria. O card diz "um QR por convite confirmado, referente aos convidados confirmados".
 3. **Sem horário-limite para o check-in** (o card #24 cogitava "até a hora do evento"): a portaria funciona enquanto o evento estiver em andamento, qualquer dia.
-4. **Link da portaria só pela dona (Organizer)**, como o link do casal; assistente não gerencia.
-5. **Desativar apaga o link** (como o link do casal), sem estado "pausado".
+4. **Link da portaria só pela dona (Organizer)**, como o link do cliente; assistente não gerencia.
+5. **Desativar apaga o link** (como o link do cliente), sem estado "pausado".
 6. **Todos os confirmados vêm marcados** ao abrir um convite que ninguém usou ainda, para a família que chega junta entrar com um toque; a equipe desmarca quem não veio.
 7. **Só confirmados entram.** Convidado pendente ou que disse que não vai aparece na tela do convite, sem caixa de marcar. A portaria não confirma presença na hora (isso é da organizadora, pela edição do convidado).
 8. **Sem leitura offline** e sem conferência quando a internet cair (modo dia completo e QR offline ficam na 1.1). A leitura do QR usa a câmera do navegador (HTTPS); sem câmera, a lista completa com busca cobre.

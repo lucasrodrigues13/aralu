@@ -361,12 +361,12 @@ public class DinheiroFluxoTests
     }
 
     [Fact]
-    public async Task Link_do_casal_libera_o_financeiro_e_o_casal_atua_sem_login()
+    public async Task Link_do_cliente_libera_o_financeiro_e_o_cliente_atua_sem_login()
     {
         var dono = await Entrar();
         var outra = await Entrar();
         var (eventoId, servicoId) = await EventoComFornecedorContratado(dono, 2);
-        var urlLink = $"/api/v1/eventos/{eventoId}/link-casal";
+        var urlLink = $"/api/v1/eventos/{eventoId}/link-cliente";
 
         // Sem link: nada a ver; outra conta não gerencia.
         Assert.False((await Ler(await dono.GetAsync(urlLink))).GetProperty("ativo").GetBoolean());
@@ -376,33 +376,33 @@ public class DinheiroFluxoTests
         var token = gerado.GetProperty("token").GetString()!;
         Assert.False(gerado.GetProperty("financeiroLiberado").GetBoolean());
 
-        // Casal sem login, financeiro fechado: vê o evento, não vê valores nem age.
-        var casal = _banco.Fabrica.CreateClient();
-        var baseCasal = $"/api/v1/publico/casal/{token}";
-        var fechado = await Ler(await casal.GetAsync(baseCasal));
+        // Cliente sem login, financeiro fechado: vê o evento, não vê valores nem age.
+        var cliente = _banco.Fabrica.CreateClient();
+        var baseLink = $"/api/v1/publico/cliente/{token}";
+        var fechado = await Ler(await cliente.GetAsync(baseLink));
         Assert.False(fechado.GetProperty("financeiroLiberado").GetBoolean());
         Assert.Equal(JsonValueKind.Null, fechado.GetProperty("financeiro").ValueKind);
-        Assert.Equal(HttpStatusCode.Forbidden, (await casal.PutAsJsonAsync($"{baseCasal}/pagamentos/{servicoId}/pago", new { pago = true })).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await cliente.PutAsJsonAsync($"{baseLink}/pagamentos/{servicoId}/pago", new { pago = true })).StatusCode);
 
-        // Liberado: o casal marca parcela e pagamento, sobe comprovante e contrato assinado.
+        // Liberado: o cliente marca parcela e pagamento, sobe comprovante e contrato assinado.
         Assert.True((await Ler(await dono.PutAsJsonAsync(urlLink, new { financeiroLiberado = true }))).GetProperty("financeiroLiberado").GetBoolean());
-        var aberto = await Ler(await casal.GetAsync(baseCasal));
+        var aberto = await Ler(await cliente.GetAsync(baseLink));
         var pagamento = Pagamento(aberto.GetProperty("financeiro"));
         var parcelaId = pagamento.GetProperty("parcelas")[0].GetProperty("id").GetGuid();
-        var urlPagamento = $"{baseCasal}/pagamentos/{servicoId}";
+        var urlPagamento = $"{baseLink}/pagamentos/{servicoId}";
 
-        var umaPaga = Pagamento((await Ler(await casal.PutAsJsonAsync($"{urlPagamento}/parcelas/{parcelaId}/pago", new { pago = true }))).GetProperty("financeiro"));
+        var umaPaga = Pagamento((await Ler(await cliente.PutAsJsonAsync($"{urlPagamento}/parcelas/{parcelaId}/pago", new { pago = true }))).GetProperty("financeiro"));
         Assert.True(umaPaga.GetProperty("parcelas")[0].GetProperty("paga").GetBoolean());
         Assert.False(umaPaga.GetProperty("pago").GetBoolean());
-        var tudoPago = Pagamento((await Ler(await casal.PutAsJsonAsync($"{urlPagamento}/pago", new { pago = true }))).GetProperty("financeiro"));
+        var tudoPago = Pagamento((await Ler(await cliente.PutAsJsonAsync($"{urlPagamento}/pago", new { pago = true }))).GetProperty("financeiro"));
         Assert.True(tudoPago.GetProperty("pago").GetBoolean());
 
-        var comComprovante = Pagamento((await Ler(await casal.PostAsync($"{urlPagamento}/parcelas/{parcelaId}/comprovante", Pdf("comprovante.pdf")))).GetProperty("financeiro"));
+        var comComprovante = Pagamento((await Ler(await cliente.PostAsync($"{urlPagamento}/parcelas/{parcelaId}/comprovante", Pdf("comprovante.pdf")))).GetProperty("financeiro"));
         var arquivoId = comComprovante.GetProperty("parcelas")[0].GetProperty("comprovante").GetProperty("arquivoId").GetGuid();
-        Assert.Equal(HttpStatusCode.OK, (await casal.GetAsync($"{baseCasal}/arquivos/{arquivoId}")).StatusCode);
-        Assert.Equal(HttpStatusCode.NotFound, (await casal.GetAsync($"{baseCasal}/arquivos/{Guid.NewGuid()}")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await cliente.GetAsync($"{baseLink}/arquivos/{arquivoId}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await cliente.GetAsync($"{baseLink}/arquivos/{Guid.NewGuid()}")).StatusCode);
 
-        var comContrato = Pagamento((await Ler(await casal.PostAsync($"{urlPagamento}/contrato-assinado", Pdf("contrato.pdf")))).GetProperty("financeiro"));
+        var comContrato = Pagamento((await Ler(await cliente.PostAsync($"{urlPagamento}/contrato-assinado", Pdf("contrato.pdf")))).GetProperty("financeiro"));
         Assert.Equal("contrato.pdf", comContrato.GetProperty("contratoAssinado").GetProperty("nome").GetString());
         var visto = Pagamento((await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/dinheiro"))));
         Assert.True(visto.GetProperty("pago").GetBoolean());
@@ -410,21 +410,21 @@ public class DinheiroFluxoTests
         // Trocar o link desliga o endereço antigo; desativar apaga.
         var trocado = await Ler(await dono.PostAsync(urlLink, null));
         Assert.NotEqual(token, trocado.GetProperty("token").GetString());
-        Assert.Equal(HttpStatusCode.NotFound, (await casal.GetAsync(baseCasal)).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await cliente.GetAsync(baseLink)).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await dono.DeleteAsync(urlLink)).StatusCode);
-        Assert.Equal(HttpStatusCode.NotFound, (await casal.GetAsync($"/api/v1/publico/casal/{trocado.GetProperty("token").GetString()}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await cliente.GetAsync($"/api/v1/publico/cliente/{trocado.GetProperty("token").GetString()}")).StatusCode);
     }
 
     [Fact]
-    public async Task Link_do_casal_cadastra_convites_quando_liberado_e_a_organizadora_define_o_envio()
+    public async Task Link_do_cliente_cadastra_convites_quando_liberado_e_a_organizadora_define_o_envio()
     {
         var dono = await Entrar();
         var outra = await Entrar();
         var (eventoId, _) = await EventoComFornecedorContratado(dono, 1);
-        var urlLink = $"/api/v1/eventos/{eventoId}/link-casal";
+        var urlLink = $"/api/v1/eventos/{eventoId}/link-cliente";
         var token = (await Ler(await dono.PostAsync(urlLink, null))).GetProperty("token").GetString()!;
-        var casal = _banco.Fabrica.CreateClient();
-        var baseCasal = $"/api/v1/publico/casal/{token}";
+        var cliente = _banco.Fabrica.CreateClient();
+        var baseLink = $"/api/v1/publico/cliente/{token}";
         var pedido = new
         {
             nome = "Família Souza",
@@ -438,20 +438,20 @@ public class DinheiroFluxoTests
             },
         };
 
-        // Fechado (padrão): o casal não vê nem cadastra.
-        Assert.Equal(JsonValueKind.Null, (await Ler(await casal.GetAsync(baseCasal))).GetProperty("convites").ValueKind);
-        Assert.Equal(HttpStatusCode.Forbidden, (await casal.PostAsJsonAsync($"{baseCasal}/convites", pedido)).StatusCode);
+        // Fechado (padrão): o cliente não vê nem cadastra.
+        Assert.Equal(JsonValueKind.Null, (await Ler(await cliente.GetAsync(baseLink))).GetProperty("convites").ValueKind);
+        Assert.Equal(HttpStatusCode.Forbidden, (await cliente.PostAsJsonAsync($"{baseLink}/convites", pedido)).StatusCode);
 
-        // Liberado: o casal cadastra e a organizadora vê o convite na aba Convidados.
+        // Liberado: o cliente cadastra e a organizadora vê o convite na aba Convidados.
         var liberado = await Ler(await dono.PutAsJsonAsync(urlLink, new { financeiroLiberado = false, convidadosLiberado = true }));
         Assert.True(liberado.GetProperty("convidadosLiberado").GetBoolean());
-        var semTelefone = await casal.PostAsJsonAsync($"{baseCasal}/convites", new
+        var semTelefone = await cliente.PostAsJsonAsync($"{baseLink}/convites", new
         {
             nome = "Sem telefone",
             convidados = new[] { new { id = (Guid?)null, nome = "Ana", ddi = (string?)null, celular = (string?)null, principal = true } },
         });
         Assert.Equal(HttpStatusCode.BadRequest, semTelefone.StatusCode);
-        var criado = await Ler(await casal.PostAsJsonAsync($"{baseCasal}/convites", pedido));
+        var criado = await Ler(await cliente.PostAsJsonAsync($"{baseLink}/convites", pedido));
         var convite = criado.GetProperty("convites").EnumerateArray().Single();
         Assert.Equal("11999990000", convite.GetProperty("telefone").GetString());
         Assert.Equal(2, convite.GetProperty("convidados").GetArrayLength());
@@ -461,7 +461,7 @@ public class DinheiroFluxoTests
         var lista = await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/convites"));
         var daOrganizadora = lista.GetProperty("convites").EnumerateArray().Single();
         Assert.Equal("souza@exemplo.com", daOrganizadora.GetProperty("email").GetString());
-        Assert.Equal("Preenchido pelo casal", daOrganizadora.GetProperty("observacao").GetString());
+        Assert.Equal("Preenchido pelo cliente", daOrganizadora.GetProperty("observacao").GetString());
         Assert.False(daOrganizadora.TryGetProperty("dataEnvio", out _));
         Assert.Equal(JsonValueKind.Null, lista.GetProperty("dataEnvioConvites").ValueKind);
 
@@ -471,13 +471,13 @@ public class DinheiroFluxoTests
         Assert.Equal("2026-12-01", (await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/convites"))).GetProperty("dataEnvioConvites").GetString());
         Assert.Equal(HttpStatusCode.NotFound, (await outra.PutAsJsonAsync($"/api/v1/eventos/{eventoId}/envio-convites", new { data = "2026-12-01" })).StatusCode);
 
-        // Outra conta não alcança o convite; o casal edita pelo mesmo link e a observação não muda.
+        // Outra conta não alcança o convite; o cliente edita pelo mesmo link e a observação não muda.
         var conviteId = daOrganizadora.GetProperty("id").GetGuid();
         Assert.Equal(HttpStatusCode.NotFound, (await outra.PutAsJsonAsync($"/api/v1/convites/{conviteId}", pedido)).StatusCode);
-        var editado = await Ler(await casal.PutAsJsonAsync($"{baseCasal}/convites/{conviteId}", pedido with { nome = "Souza e família" }));
+        var editado = await Ler(await cliente.PutAsJsonAsync($"{baseLink}/convites/{conviteId}", pedido with { nome = "Souza e família" }));
         Assert.Equal("Souza e família", editado.GetProperty("convites").EnumerateArray().Single().GetProperty("nome").GetString());
         var depois = (await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/convites"))).GetProperty("convites").EnumerateArray().Single();
-        Assert.Equal("Preenchido pelo casal", depois.GetProperty("observacao").GetString());
+        Assert.Equal("Preenchido pelo cliente", depois.GetProperty("observacao").GetString());
     }
 
     [Fact]
@@ -485,46 +485,46 @@ public class DinheiroFluxoTests
     {
         var dono = await Entrar();
         var (eventoId, _) = await EventoComFornecedorContratado(dono, 1);
-        var urlLink = $"/api/v1/eventos/{eventoId}/link-casal";
+        var urlLink = $"/api/v1/eventos/{eventoId}/link-cliente";
         var token = (await Ler(await dono.PostAsync(urlLink, null))).GetProperty("token").GetString()!;
-        var casal = _banco.Fabrica.CreateClient();
-        var baseCasal = $"/api/v1/publico/casal/{token}";
+        var cliente = _banco.Fabrica.CreateClient();
+        var baseLink = $"/api/v1/publico/cliente/{token}";
 
         // Fechado: nenhuma ferramenta responde.
-        Assert.Equal(HttpStatusCode.Forbidden, (await casal.PutAsJsonAsync($"{baseCasal}/prazo-rsvp", new { prazo = "2099-01-01" })).StatusCode);
-        Assert.Equal(HttpStatusCode.Forbidden, (await casal.GetAsync($"{baseCasal}/convites/planilha")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await cliente.PutAsJsonAsync($"{baseLink}/prazo-rsvp", new { prazo = "2099-01-01" })).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await cliente.GetAsync($"{baseLink}/convites/planilha")).StatusCode);
         await dono.PutAsJsonAsync(urlLink, new { financeiroLiberado = false, convidadosLiberado = true });
 
         // Prazo e data de envio: o cliente define e a organizadora vê o mesmo valor.
-        var comPrazo = await Ler(await casal.PutAsJsonAsync($"{baseCasal}/prazo-rsvp", new { prazo = "2099-01-01" }));
+        var comPrazo = await Ler(await cliente.PutAsJsonAsync($"{baseLink}/prazo-rsvp", new { prazo = "2099-01-01" }));
         Assert.Equal("2099-01-01", comPrazo.GetProperty("prazoRsvp").GetString());
-        var comEnvio = await Ler(await casal.PutAsJsonAsync($"{baseCasal}/envio-convites", new { data = "2098-12-01" }));
+        var comEnvio = await Ler(await cliente.PutAsJsonAsync($"{baseLink}/envio-convites", new { data = "2098-12-01" }));
         Assert.Equal("2098-12-01", comEnvio.GetProperty("dataEnvioConvites").GetString());
         var daOrganizadora = await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/convites"));
         Assert.Equal("2099-01-01", daOrganizadora.GetProperty("prazoRsvp").GetString());
         Assert.Equal("2098-12-01", daOrganizadora.GetProperty("dataEnvioConvites").GetString());
 
-        // Planilha padrão e importação; o convite importado pelo cliente grava "Preenchido pelo casal".
-        var modelo = await casal.GetAsync($"{baseCasal}/convites/planilha");
+        // Planilha padrão e importação; o convite importado pelo cliente grava "Preenchido pelo cliente".
+        var modelo = await cliente.GetAsync($"{baseLink}/convites/planilha");
         Assert.Equal(HttpStatusCode.OK, modelo.StatusCode);
         Assert.Equal("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", modelo.Content.Headers.ContentType?.MediaType);
-        var enviada = await Ler(await casal.PostAsync($"{baseCasal}/convites/importar", PlanilhaDeConvites(
+        var enviada = await Ler(await cliente.PostAsync($"{baseLink}/convites/importar", PlanilhaDeConvites(
             ["Família Souza", "+55", "11999990000", "Observação da planilha", "Maria Souza", "Sim"],
             ["Família Souza", "", "", "", "João Souza", "Não"])));
         Assert.Equal("Pendente", enviada.GetProperty("situacao").GetString());
-        var importada = await NegocioFluxoTests.AguardarImportacao(casal, $"{baseCasal}/convites/importacoes", enviada.GetProperty("id").GetGuid());
+        var importada = await NegocioFluxoTests.AguardarImportacao(cliente, $"{baseLink}/convites/importacoes", enviada.GetProperty("id").GetGuid());
         Assert.Equal("Importado", importada.GetProperty("situacao").GetString());
-        var convite = (await Ler(await casal.GetAsync(baseCasal))).GetProperty("convites").EnumerateArray().Single();
+        var convite = (await Ler(await cliente.GetAsync(baseLink))).GetProperty("convites").EnumerateArray().Single();
         Assert.Equal(2, convite.GetProperty("convidados").GetArrayLength());
         var naOrganizadora = (await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/convites"))).GetProperty("convites").EnumerateArray().Single();
-        Assert.Equal("Preenchido pelo casal", naOrganizadora.GetProperty("observacao").GetString());
+        Assert.Equal("Preenchido pelo cliente", naOrganizadora.GetProperty("observacao").GetString());
 
         // Lista de presença: começa vazia e mostra quem confirmou pelo RSVP.
-        Assert.Equal(0, (await Ler(await casal.GetAsync($"{baseCasal}/presencas"))).GetArrayLength());
+        Assert.Equal(0, (await Ler(await cliente.GetAsync($"{baseLink}/presencas"))).GetArrayLength());
         var rsvp = naOrganizadora.GetProperty("token").GetString()!;
         var maria = naOrganizadora.GetProperty("convidados").EnumerateArray().Single(item => item.GetProperty("nome").GetString() == "Maria Souza").GetProperty("id").GetGuid();
-        await casal.PostAsJsonAsync($"/api/v1/rsvp/{rsvp}", new { respostas = new[] { new { convidadoId = maria, situacao = "Confirmado" } } });
-        var presencas = await Ler(await casal.GetAsync($"{baseCasal}/presencas"));
+        await cliente.PostAsJsonAsync($"/api/v1/rsvp/{rsvp}", new { respostas = new[] { new { convidadoId = maria, situacao = "Confirmado" } } });
+        var presencas = await Ler(await cliente.GetAsync($"{baseLink}/presencas"));
         Assert.Equal("Maria Souza", presencas.EnumerateArray().Single().GetProperty("convidado").GetString());
     }
 

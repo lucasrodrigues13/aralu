@@ -1,28 +1,28 @@
 import { TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { of } from 'rxjs';
-import { CasalClient } from '../../core/casal.client';
+import { LinkClienteClient } from '../../core/link-cliente.client';
 import { ToastService } from '../../core/toast.service';
-import { LinkCasalDialog } from './link-casal.dialog';
+import { LinkClienteDialog } from './link-cliente.dialog';
 
 describe('modal Link do cliente', () => {
   const token = 'Zx9-abc_123';
-  const linkCompleto = `${location.origin}/casal/${token}`;
+  const linkCompleto = `${location.origin}/cliente/${token}`;
   const clipboardOriginal = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
   let toast: { sucesso: ReturnType<typeof vi.fn>; erro: ReturnType<typeof vi.fn> };
 
   function abrir() {
     toast = { sucesso: vi.fn(), erro: vi.fn() };
     TestBed.configureTestingModule({
-      imports: [LinkCasalDialog],
+      imports: [LinkClienteDialog],
       providers: [
-        { provide: CasalClient, useValue: { link: () => of({ ativo: true, token, financeiroLiberado: false, convidadosLiberado: false }) } },
+        { provide: LinkClienteClient, useValue: { link: () => of({ ativo: true, token, financeiroLiberado: false, convidadosLiberado: false }) } },
         { provide: ToastService, useValue: toast },
         { provide: MatDialog, useValue: {} },
         { provide: MAT_DIALOG_DATA, useValue: { eventoId: 'e1' } },
       ],
     });
-    const fixture = TestBed.createComponent(LinkCasalDialog);
+    const fixture = TestBed.createComponent(LinkClienteDialog);
     fixture.detectChanges();
     return fixture;
   }
@@ -45,7 +45,7 @@ describe('modal Link do cliente', () => {
     const elemento: HTMLElement = abrir().nativeElement;
 
     expect(elemento.querySelector('h2')?.textContent).toContain('Link do cliente');
-    expect(elemento.textContent).not.toContain('casal');
+    expect(elemento.textContent?.toLowerCase()).not.toContain('casal');
     expect(elemento.querySelector<HTMLInputElement>('input.endereco')?.value).toBe(linkCompleto);
   });
 

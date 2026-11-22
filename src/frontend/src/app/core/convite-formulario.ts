@@ -1,6 +1,6 @@
 /**
  * Formulário único de convite (SPEC-059): o mesmo para a organizadora e para o link do cliente, ao criar e ao editar.
- * Só a observação é diferente: aparece para a organizadora; no link do cliente o backend grava "Preenchido pelo casal".
+ * Só a observação é diferente: aparece para a organizadora; no link do cliente o backend grava "Preenchido pelo cliente".
  */
 
 /** Convidado no formulário: com `id` atualiza o existente; sem `id`, inclui um novo. */

@@ -12,7 +12,7 @@ O Organizer mantém a biblioteca de modelos de roteiro: listar, criar com nome, 
 
 ## 3. Requisitos relacionados
 
-RF-054 (biblioteca de roteiro). RF-069 (roteiro no evento: observação, anexo, impressão, permissão do Client) fica como destino de aplicação, fora do miolo desta biblioteca.
+RF-054 (biblioteca de roteiro). RF-069 (roteiro no evento: observação, anexo, impressão, o que o cliente vê pelo link) fica como destino de aplicação, fora do miolo desta biblioteca.
 
 Fora: RF-079. Assistente. Fornecedor com login.
 
@@ -21,7 +21,7 @@ Fora: RF-079. Assistente. Fornecedor com login.
 | Ator | Pode |
 |---|---|
 | Organizer | CRUD dos modelos de roteiro da própria conta. |
-| Client | Não edita a biblioteca. No evento, ver ou editar o roteiro só com flag (RF-056 / RF-069). |
+| Cliente | Não entra na plataforma (SPEC-060). Ver o roteiro do evento, se vier, é pelo link do cliente (RF-056, RF-069). |
 | Admin | Acessa modelos de qualquer conta. |
 | Visitante | Não acessa. |
 

@@ -54,8 +54,8 @@ public static class Dependencias
         services.AddScoped<PainelServico>();
         services.AddScoped<IDadosDinheiro, DadosDinheiroEf>();
         services.AddScoped<DinheiroServico>();
-        services.AddScoped<IDadosLinkCasal, DadosLinkCasalEf>();
-        services.AddScoped<LinkCasalServico>();
+        services.AddScoped<IDadosLinkCliente, DadosLinkClienteEf>();
+        services.AddScoped<LinkClienteServico>();
         services.AddScoped<IDadosPortaria, DadosPortariaEf>();
         services.AddScoped<PortariaServico>();
         services.AddScoped<IDadosContrato, DadosContratoEf>();
@@ -83,7 +83,6 @@ public static class Dependencias
         services.AddScoped<RelatorioFunilServico>();
         services.AddScoped<ModeloServicoFunilServico>();
         services.AddScoped<ModeloOrcamentoFunilServico>();
-        services.AddScoped<IContaCliente, ContaCliente>();
         services.AddScoped<AssistenteServico>();
         services.AddScoped<BriefingLeadServico>();
         services.AddScoped<IArmazenamentoArquivo, ArmazenamentoArquivo>();
