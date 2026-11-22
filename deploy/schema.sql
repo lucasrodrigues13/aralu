@@ -244,6 +244,7 @@ BEGIN
         "InicioRecepcao" time without time zone,
         "QuantidadePadrinhos" integer,
         "QuantidadeDamas" integer,
+        "SenhaSite" text,
         "NotificarAssessor" boolean NOT NULL,
         "NotificarAssistentes" boolean NOT NULL,
         "NotificarClientes" boolean NOT NULL,
@@ -3718,6 +3719,49 @@ BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122012209_PortariaDoEvento') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
     VALUES ('20261122012209_PortariaDoEvento', '10.0.4');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122143118_RemoveSenhaDoSite') THEN
+    ALTER TABLE "Eventos" DROP COLUMN "SenhaSite";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122143118_RemoveSenhaDoSite') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261122143118_RemoveSenhaDoSite', '10.0.4');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122161142_DataDeEnvioDosConvitesNoEvento') THEN
+    ALTER TABLE "Convites" DROP COLUMN "DataEnvio";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122161142_DataDeEnvioDosConvitesNoEvento') THEN
+    ALTER TABLE "Eventos" ADD "DataEnvioConvites" date;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261122161142_DataDeEnvioDosConvitesNoEvento') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261122161142_DataDeEnvioDosConvitesNoEvento', '10.0.4');
     END IF;
 END $EF$;
 COMMIT;

@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { API_BASE_URL } from './api-base-url';
 import { contaDoVisitante } from './auth.service';
 import { FormaPagamento, ParcelaContrato, ParcelaOrcamento } from './dinheiro.client';
+import { PedidoConvite } from './convite-formulario';
 
 export interface Painel {
   emAndamento: number;
@@ -463,8 +464,6 @@ export interface Convite {
   respondida: boolean;
   convidados: Convidado[];
   email: string | null;
-  /** Data de envio do convite, `aaaa-mm-dd` (SPEC-052). */
-  dataEnvio: string | null;
   /** O link deste convite aceita resposta após o prazo (SPEC-054). */
   excecaoPrazoRsvp: boolean;
 }
@@ -478,6 +477,8 @@ export interface ListaConvites {
   /** Data limite de confirmação, `aaaa-mm-dd`, ou nulo (SPEC-054). */
   prazoRsvp: string | null;
   prazoEncerrado: boolean;
+  /** Data de envio dos convites do evento, `aaaa-mm-dd`, ou nulo (SPEC-059). */
+  dataEnvioConvites: string | null;
 }
 
 /** Entrada da lista de presença: um convidado confirmado, com id único (SPEC-054). */
@@ -999,11 +1000,11 @@ export class NegocioClient {
     return this.http.get<ListaConvites>(`${this.base}/api/v1/eventos/${eventoId}/convites`, { params });
   }
 
-  criarConvite(eventoId: string, pedido: unknown) {
+  criarConvite(eventoId: string, pedido: PedidoConvite) {
     return this.http.post<Convite>(`${this.base}/api/v1/eventos/${eventoId}/convites`, pedido);
   }
 
-  atualizarConvite(id: string, pedido: { nome: string; observacao: string | null; email: string | null; dataEnvio: string | null }) {
+  atualizarConvite(id: string, pedido: PedidoConvite) {
     return this.http.put<Convite>(`${this.base}/api/v1/convites/${id}`, pedido);
   }
 
@@ -1058,6 +1059,11 @@ export class NegocioClient {
       `${this.base}/api/v1/eventos/${eventoId}/prazo-rsvp`,
       { prazo },
     );
+  }
+
+  /** Data de envio dos convites, uma só para o evento (SPEC-059). */
+  definirEnvioConvites(eventoId: string, data: string | null) {
+    return this.http.put<{ data: string | null }>(`${this.base}/api/v1/eventos/${eventoId}/envio-convites`, { data });
   }
 
   definirExcecaoRsvp(conviteId: string, liberada: boolean) {

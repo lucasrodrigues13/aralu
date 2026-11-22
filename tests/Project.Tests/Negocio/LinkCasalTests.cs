@@ -1,4 +1,5 @@
 using Project.Application.Comum;
+using Project.Application.Convidados;
 using Project.Application.Negocio;
 using Project.Domain.Convidados;
 using Project.Domain.Eventos;
@@ -108,8 +109,10 @@ public class LinkCasalTests
         return (servico, dados, token);
     }
 
-    private static ConviteCasalPedido Pedido(string nome = "Família Souza", string? telefone = "11999990000", string? email = "souza@exemplo.com", params ConvidadoCasalPedido[] convidados) =>
-        new(nome, "+55", telefone, email, convidados.Length > 0 ? convidados : [new ConvidadoCasalPedido(null, "Maria Souza"), new ConvidadoCasalPedido(null, "João Souza")]);
+    private static ConvidadoDoFormulario Pessoa(string nome, string? celular = null, Guid? id = null) => new(id, nome, celular is null ? null : "+55", celular);
+
+    private static FormularioConvitePedido Pedido(string nome = "Família Souza", string? telefone = "11999990000", string? email = "souza@exemplo.com", params ConvidadoDoFormulario[] convidados) =>
+        new(nome, email, convidados.Length > 0 ? convidados : [Pessoa("Maria Souza", telefone), Pessoa("João Souza")]);
 
     [Fact]
     public async Task Convidados_nascem_fechados_e_a_marcacao_liga_e_desliga_sem_mexer_no_financeiro()
@@ -128,11 +131,14 @@ public class LinkCasalTests
     }
 
     [Fact]
-    public async Task Casal_cria_convite_com_telefone_no_primeiro_convidado_como_principal()
+    public async Task Casal_cria_convite_com_telefone_por_convidado_e_o_primeiro_como_principal()
     {
         var (servico, dados, token) = await CriarComConvidadosAsync();
 
-        var resultado = await servico.CriarConviteAsync(token, Pedido(), default);
+        var resultado = await servico.CriarConviteAsync(
+            token,
+            Pedido(convidados: [Pessoa("Maria Souza", "11999990000"), Pessoa("João Souza", "11977776666")]),
+            default);
 
         Assert.True(resultado.Ok);
         var convite = Assert.Single(resultado.Valor!.Convites!);
@@ -140,6 +146,7 @@ public class LinkCasalTests
         Assert.Equal("11999990000", convite.Telefone);
         Assert.Equal("souza@exemplo.com", convite.Email);
         Assert.Equal(["Maria Souza", "João Souza"], convite.Convidados.Select(item => item.Nome));
+        Assert.Equal(["11999990000", "11977776666"], convite.Convidados.Select(item => item.Celular));
         Assert.All(convite.Convidados, item => Assert.Equal("Pendente", item.Situacao));
         var gravado = Assert.Single(dados.Convites);
         Assert.Equal(gravado.Convidados[0].Id, gravado.PrincipalId);
@@ -149,13 +156,60 @@ public class LinkCasalTests
     }
 
     [Fact]
-    public async Task Convite_sem_telefone_fica_sem_principal()
+    public async Task Convite_do_casal_grava_a_observacao_sozinho_e_ignora_a_enviada()
     {
         var (servico, dados, token) = await CriarComConvidadosAsync();
 
-        Assert.True((await servico.CriarConviteAsync(token, Pedido(telefone: null), default)).Ok);
+        Assert.True((await servico.CriarConviteAsync(token, Pedido() with { Observacao = "Outra coisa" }, default)).Ok);
 
-        Assert.Null(dados.Convites.Single().PrincipalId);
+        Assert.Equal("Preenchido pelo casal", dados.Convites.Single().Observacao);
+    }
+
+    [Fact]
+    public async Task Edicao_pelo_casal_nao_muda_a_observacao()
+    {
+        var (servico, dados, token) = await CriarComConvidadosAsync();
+        await servico.CriarConviteAsync(token, Pedido(), default);
+        var convite = dados.Convites.Single();
+        convite.Observacao = "Nota da organizadora";
+        var maria = convite.Convidados[0].Id;
+
+        var resultado = await servico.AtualizarConviteAsync(
+            token,
+            convite.Id,
+            Pedido(convidados: Pessoa("Maria Souza", "11999990000", maria)) with { Observacao = "Trocada" },
+            default);
+
+        Assert.True(resultado.Ok);
+        Assert.Equal("Nota da organizadora", convite.Observacao);
+    }
+
+    [Fact]
+    public async Task Casal_marca_a_excecao_do_prazo_e_sem_informar_ela_fica_como_esta()
+    {
+        var (servico, dados, token) = await CriarComConvidadosAsync();
+
+        var criado = await servico.CriarConviteAsync(token, Pedido() with { ExcecaoPrazoRsvp = true }, default);
+        Assert.True(criado.Valor!.Convites!.Single().ExcecaoPrazoRsvp);
+        var convite = dados.Convites.Single();
+        var maria = convite.Convidados[0].Id;
+
+        await servico.AtualizarConviteAsync(token, convite.Id, Pedido(convidados: Pessoa("Maria Souza", "11999990000", maria)), default);
+        Assert.True(convite.ExcecaoPrazoRsvp);
+    }
+
+    [Fact]
+    public async Task Primeiro_convidado_sem_telefone_e_recusado_e_os_demais_sao_opcionais()
+    {
+        var (servico, dados, token) = await CriarComConvidadosAsync();
+
+        var semTelefone = await servico.CriarConviteAsync(token, Pedido(telefone: null), default);
+        Assert.Equal(Codigos.Validacao, semTelefone.Falha!.Codigo);
+        Assert.Equal("Informe o telefone do primeiro convidado.", semTelefone.Falha.Mensagem);
+        Assert.Empty(dados.Convites);
+
+        Assert.True((await servico.CriarConviteAsync(token, Pedido(), default)).Ok);
+        Assert.Null(dados.Convites.Single().Convidados[1].Celular);
     }
 
     [Fact]
@@ -164,8 +218,8 @@ public class LinkCasalTests
         var (servico, dados, token) = await CriarComConvidadosAsync();
 
         Assert.Equal(Codigos.Validacao, (await servico.CriarConviteAsync(token, Pedido(nome: " "), default)).Falha!.Codigo);
-        Assert.Equal(Codigos.Validacao, (await servico.CriarConviteAsync(token, new ConviteCasalPedido("Família", null, null, null, []), default)).Falha!.Codigo);
-        Assert.Equal(Codigos.Validacao, (await servico.CriarConviteAsync(token, Pedido(convidados: new ConvidadoCasalPedido(null, " ")), default)).Falha!.Codigo);
+        Assert.Equal(Codigos.Validacao, (await servico.CriarConviteAsync(token, new FormularioConvitePedido("Família", null, []), default)).Falha!.Codigo);
+        Assert.Equal(Codigos.Validacao, (await servico.CriarConviteAsync(token, Pedido(convidados: Pessoa(" ", "11999990000")), default)).Falha!.Codigo);
         Assert.Equal(Codigos.Validacao, (await servico.CriarConviteAsync(token, Pedido(email: "sem-arroba"), default)).Falha!.Codigo);
         Assert.Empty(dados.Convites);
     }
@@ -184,7 +238,7 @@ public class LinkCasalTests
         var resultado = await servico.AtualizarConviteAsync(
             token,
             convite.Id,
-            Pedido("Souza e família", "11988887777", null, new ConvidadoCasalPedido(maria.Id, "Maria S. Souza"), new ConvidadoCasalPedido(null, "Ana Souza")),
+            Pedido("Souza e família", null, null, Pessoa("Maria S. Souza", "11988887777", maria.Id), Pessoa("Ana Souza", "11955554444")),
             default);
 
         Assert.True(resultado.Ok);
@@ -193,6 +247,7 @@ public class LinkCasalTests
         Assert.Equal("11988887777", lido.Telefone);
         Assert.Null(lido.Email);
         Assert.Equal(["Maria S. Souza", "Ana Souza"], lido.Convidados.Select(item => item.Nome));
+        Assert.Equal("11955554444", lido.Convidados[1].Celular);
         Assert.Equal(SituacaoConvidado.Confirmado, maria.Situacao);
         Assert.Equal("3", maria.Mesa);
         Assert.DoesNotContain(joao, convite.Convidados);
@@ -201,18 +256,18 @@ public class LinkCasalTests
     }
 
     [Fact]
-    public async Task Remover_o_principal_passa_o_telefone_para_quem_ficou()
+    public async Task Remover_o_principal_passa_o_principal_para_o_primeiro_que_ficou()
     {
         var (servico, dados, token) = await CriarComConvidadosAsync();
         await servico.CriarConviteAsync(token, Pedido(), default);
         var convite = dados.Convites.Single();
         var joao = convite.Convidados[1];
 
-        var resultado = await servico.AtualizarConviteAsync(token, convite.Id, Pedido(convidados: new ConvidadoCasalPedido(joao.Id, "João Souza")), default);
+        var resultado = await servico.AtualizarConviteAsync(token, convite.Id, Pedido(convidados: Pessoa("João Souza", "11966665555", joao.Id)), default);
 
         Assert.True(resultado.Ok);
         Assert.Equal(joao.Id, convite.PrincipalId);
-        Assert.Equal("11999990000", joao.Celular);
+        Assert.Equal("11966665555", joao.Celular);
     }
 
     [Fact]
@@ -227,7 +282,7 @@ public class LinkCasalTests
         Assert.Equal(Codigos.Indisponivel, (await servico.AtualizarConviteAsync(token, Guid.NewGuid(), Pedido(), default)).Falha!.Codigo);
         Assert.Equal(
             Codigos.Indisponivel,
-            (await servico.AtualizarConviteAsync(token, convite.Id, Pedido(convidados: new ConvidadoCasalPedido(Guid.NewGuid(), "Outro")), default)).Falha!.Codigo);
+            (await servico.AtualizarConviteAsync(token, convite.Id, Pedido(convidados: Pessoa("Outro", "11999990000", Guid.NewGuid())), default)).Falha!.Codigo);
         Assert.Equal(Codigos.Indisponivel, (await servico.AtualizarConviteAsync(token, alheio.Id, Pedido(), default)).Falha!.Codigo);
     }
 
@@ -275,6 +330,8 @@ public class LinkCasalTests
             Convites.Add(convite);
             return Task.CompletedTask;
         }
+
+        public Task IncluirConvidadoAsync(Convidado convidado, CancellationToken ct) => Task.CompletedTask;
 
         public Task RemoverConvidadoAsync(Convidado convidado, CancellationToken ct)
         {

@@ -446,16 +446,39 @@ public class NegocioFluxoTests
                 new { nome = "Lia", ddi = "+55", celular = "11911112222" },
                 new { nome = "Caio", ddi = (string?)null, celular = (string?)null },
             },
-            principal = 0,
+            observacao = "Cadastro pedido pela noiva",
         }));
         Assert.Equal("+55 11911112222", convite.GetProperty("telefone").GetString());
+        Assert.Equal("Cadastro pedido pela noiva", convite.GetProperty("observacao").GetString());
         Assert.True(convite.GetProperty("convidados").EnumerateArray().First().GetProperty("principal").GetBoolean());
         var token = convite.GetProperty("token").GetString()!;
         var conviteId = convite.GetProperty("id").GetGuid();
+        var ids = convite.GetProperty("convidados").EnumerateArray().Select(pessoa => pessoa.GetProperty("id").GetGuid()).ToArray();
 
-        var renomeado = await Ler(await dono.PutAsJsonAsync($"/api/v1/convites/{conviteId}", new { nome = "Família Souza" }));
+        // Primeiro convidado sem telefone é recusado (SPEC-059).
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/convites", new
+        {
+            nome = "Sem telefone",
+            convidados = new object[] { new { nome = "Ana" } },
+        })).StatusCode);
+
+        // A edição usa o mesmo formulário: nome, convidados com telefone, exceção do prazo e observação.
+        var renomeado = await Ler(await dono.PutAsJsonAsync($"/api/v1/convites/{conviteId}", new
+        {
+            nome = "Família Souza",
+            excecaoPrazoRsvp = true,
+            convidados = new object[]
+            {
+                new { id = ids[0], nome = "Lia", ddi = "+55", celular = "11911112222" },
+                new { id = ids[1], nome = "Caio Souza", ddi = "+55", celular = "11933334444" },
+            },
+        }));
         Assert.Equal("Família Souza", renomeado.GetProperty("nome").GetString());
         Assert.Equal(token, renomeado.GetProperty("token").GetString());
+        Assert.True(renomeado.GetProperty("excecaoPrazoRsvp").GetBoolean());
+        Assert.Equal("11933334444", renomeado.GetProperty("convidados").EnumerateArray().Single(pessoa => pessoa.GetProperty("id").GetGuid() == ids[1]).GetProperty("celular").GetString());
+        Assert.Equal(JsonValueKind.Null, renomeado.GetProperty("observacao").ValueKind);
+        await dono.PutAsJsonAsync($"/api/v1/convites/{conviteId}/excecao-rsvp", new { liberada = false });
 
         // Grupos de convite e transfer saíram da 1.0 (SPEC-036): as rotas não existem mais.
         Assert.Equal(HttpStatusCode.NotFound, (await dono.GetAsync("/api/v1/grupos")).StatusCode);
@@ -489,6 +512,62 @@ public class NegocioFluxoTests
     }
 
     [Fact]
+    public async Task Importacao_agrupa_por_convite_e_exige_telefone_do_primeiro_convidado()
+    {
+        var dono = await Entrar();
+        var evento = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new { tipo = "Formatura", primeiroNome = "Turma" }));
+        var eventoId = evento.GetProperty("id").GetGuid();
+        var url = $"/api/v1/eventos/{eventoId}/convites/importar";
+
+        // O primeiro convidado do convite "Lima" (linha 3) está sem telefone: nada é importado.
+        var invalida = await dono.PostAsync(url, PlanilhaConvites(
+            ["Família Souza", "+55", "11999990000", "", "Maria Souza"],
+            ["Lima", "", "", "", "Ana Lima"],
+            ["Lima", "+55", "21988887777", "", "Bruno Lima"]));
+        Assert.Equal(HttpStatusCode.BadRequest, invalida.StatusCode);
+        var erro = JsonDocument.Parse(await invalida.Content.ReadAsStringAsync()).RootElement.GetProperty("message").GetString();
+        Assert.Equal("Linha 3: O primeiro convidado do convite \"Lima\" precisa de telefone.", erro);
+        Assert.Empty((await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/convites"))).GetProperty("convites").EnumerateArray());
+
+        // Válida: o nome do convite repetido agrupa os convidados; o primeiro é o principal; os demais podem ficar sem telefone.
+        var valida = await dono.PostAsync(url, PlanilhaConvites(
+            ["Família Souza", "+55", "11999990000", "Amigos da noiva", "Maria Souza"],
+            ["Família Souza", "", "", "", "João Souza"],
+            ["Ana Lima", "+55", "21988887777", "", "Ana Lima"]));
+        Assert.Equal(HttpStatusCode.OK, valida.StatusCode);
+        var convites = (await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/convites"))).GetProperty("convites").EnumerateArray().ToArray();
+        Assert.Equal(2, convites.Length);
+        var souza = convites.Single(item => item.GetProperty("nome").GetString() == "Família Souza");
+        Assert.Equal(2, souza.GetProperty("convidados").GetArrayLength());
+        Assert.Equal("+55 11999990000", souza.GetProperty("telefone").GetString());
+        Assert.Equal("Amigos da noiva", souza.GetProperty("observacao").GetString());
+        var principal = souza.GetProperty("convidados").EnumerateArray().Single(item => item.GetProperty("principal").GetBoolean());
+        Assert.Equal("Maria Souza", principal.GetProperty("nome").GetString());
+    }
+
+    private static MultipartFormDataContent PlanilhaConvites(params string[][] linhas)
+    {
+        using var livro = new ClosedXML.Excel.XLWorkbook();
+        var aba = livro.AddWorksheet("Convidados");
+        for (var i = 0; i < Project.Domain.Convidados.PlanilhaConvites.Colunas.Length; i++)
+        {
+            aba.Cell(1, i + 1).Value = Project.Domain.Convidados.PlanilhaConvites.Colunas[i];
+        }
+
+        for (var linha = 0; linha < linhas.Length; linha++)
+        {
+            for (var coluna = 0; coluna < linhas[linha].Length; coluna++)
+            {
+                aba.Cell(linha + 2, coluna + 1).Value = linhas[linha][coluna];
+            }
+        }
+
+        using var memoria = new MemoryStream();
+        livro.SaveAs(memoria);
+        return new MultipartFormDataContent { { new ByteArrayContent(memoria.ToArray()), "arquivo", "convidados.xlsx" } };
+    }
+
+    [Fact]
     public async Task Rsvp_com_prazo_excecao_e_lista_de_presenca()
     {
         var dono = await Entrar();
@@ -498,7 +577,7 @@ public class NegocioFluxoTests
         var convite = await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/convites", new
         {
             nome = "Família",
-            convidados = new object[] { new { nome = "Lia" }, new { nome = "Caio" } },
+            convidados = new object[] { new { nome = "Lia", ddi = "+55", celular = "11911112222" }, new { nome = "Caio" } },
         }));
         var token = convite.GetProperty("token").GetString()!;
         var conviteId = convite.GetProperty("id").GetGuid();

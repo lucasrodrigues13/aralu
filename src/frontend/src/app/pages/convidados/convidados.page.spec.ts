@@ -1,4 +1,4 @@
-import { cardsPorSituacao } from './convidados.page';
+import { cardsPorSituacao, conviteDoFormulario } from './convidados.page';
 
 describe('Cards por situação dos convidados', () => {
   it('mostra sempre os três cards, com 0 quando a situação não tem convidados', () => {
@@ -18,5 +18,21 @@ describe('Cards por situação dos convidados', () => {
 
   it('sem lista carregada todos os cards ficam em 0', () => {
     expect(cardsPorSituacao([]).every((c) => c.quantidade === 0)).toBe(true);
+  });
+});
+
+describe('Convite da organizadora no formulário único (SPEC-059)', () => {
+  it('leva observação e exceção e põe o convidado principal primeiro', () => {
+    const pessoa = (id: string, principal: boolean, celular: string | null) => ({
+      id, nome: id, ddi: celular ? '+55' : null, celular, situacao: 'Pendente', situacaoTela: 'Pendente', situacaoIcone: '',
+      mesa: null, genero: null, faixa: null, custo: null, cpf: null, observacao: null, principal,
+    });
+    const formulario = conviteDoFormulario({
+      id: 'c', eventoId: 'e', nome: 'Família', observacao: 'Pedido da noiva', telefone: '+55 11999990000', token: 't',
+      acessada: false, respondida: false, email: null, excecaoPrazoRsvp: true,
+      convidados: [pessoa('Caio', false, null), pessoa('Lia', true, '11999990000')],
+    });
+    expect(formulario.convidados.map((item) => item.id)).toEqual(['Lia', 'Caio']);
+    expect(formulario).toMatchObject({ observacao: 'Pedido da noiva', excecaoPrazoRsvp: true });
   });
 });

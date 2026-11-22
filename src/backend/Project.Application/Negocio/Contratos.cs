@@ -200,6 +200,9 @@ public interface IDados
 
     Task RemoverConvidadoAsync(Convidado convidado, CancellationToken ct);
 
+    /// <summary>Marca um convidado novo de um convite já existente para inclusão (SPEC-059).</summary>
+    Task IncluirConvidadoAsync(Convidado convidado, CancellationToken ct);
+
     Task<Convidado?> ObterConvidadoAsync(string contaId, Guid id, CancellationToken ct);
 
     Task<IReadOnlyList<ContagemSituacao>> ContarEventosAsync(string contaId, CancellationToken ct, IReadOnlySet<Guid>? liberados = null);

@@ -7,18 +7,20 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTabsModule } from '@angular/material/tabs';
 import { Observable } from 'rxjs';
-import { CasalClient, CasalLeitura, ConviteCasal, PedidoConviteCasal } from '../../core/casal.client';
+import { CasalClient, CasalLeitura, ConviteCasal } from '../../core/casal.client';
+import { ConviteDoFormulario, PedidoConvite } from '../../core/convite-formulario';
 import { ComprovantePagamento, PagamentoFornecedor, ParcelaPagamento, refazerPerdePagamentos } from '../../core/dinheiro.client';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
+import { ConviteFormDados, ConviteFormDialog } from '../../shared/convite-form.dialog';
+import { dadosPreenchidos, resumoDosConvidados } from '../../shared/convite-lista';
 import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { GdDinheiroPipe } from '../../shared/gd-dinheiro.pipe';
 import { STATUS } from '../../shared/status';
 import { ComprovanteDialog } from '../dinheiro/comprovante.dialog';
 import { pagamentosPorMes } from '../dinheiro/pagamentos-por-mes';
-import { ConviteCasalDialog } from './convite-casal.dialog';
 import { ParcelarPagamentoDialog } from '../dinheiro/parcelar-pagamento.dialog';
 
 /** Página do casal, sem login (SPEC-046): acompanha e atualiza o financeiro do evento quando a organizadora libera. */
@@ -132,17 +134,21 @@ import { ParcelarPagamentoDialog } from '../dinheiro/parcelar-pagamento.dialog';
                 @for (convite of convites; track convite.id) {
                   <mat-card class="cardWithShadow"><mat-card-content>
                     <div class="linha">
-                      <div class="min-w-0">
+                      <button mat-icon-button type="button" class="seta" [class.aberta]="aberto(convite.id)" [attr.aria-expanded]="aberto(convite.id)" [attr.aria-controls]="'convidados-' + convite.id" [attr.aria-label]="(aberto(convite.id) ? 'Recolher' : 'Expandir') + ' convidados de ' + convite.nome" (click)="alternar(convite.id)"><mat-icon>chevron_right</mat-icon></button>
+                      <div class="min-w-0 flex-1">
                         <strong>{{ convite.nome }}</strong>
                         <span class="block text-xs text-muted">{{ convite.telefone ? ((convite.ddi ?? '') + ' ' + convite.telefone).trim() : 'Sem telefone' }}{{ convite.email ? ' · ' + convite.email : '' }}</span>
+                        <span class="block text-xs text-muted">{{ resumo(convite) }}</span>
                       </div>
                       <button mat-icon-button type="button" aria-label="Editar convite" (click)="abrirConvite(convite)"><mat-icon>edit</mat-icon></button>
                     </div>
-                    <ul class="convidados">
-                      @for (pessoa of convite.convidados; track pessoa.id) {
-                        <li>{{ pessoa.nome }} <span class="text-xs text-muted">· {{ pessoa.situacao }}</span></li>
-                      }
-                    </ul>
+                    @if (aberto(convite.id)) {
+                      <ul class="convidados" [id]="'convidados-' + convite.id">
+                        @for (pessoa of convite.convidados; track pessoa.id) {
+                          <li>{{ pessoa.nome }} <span class="text-xs text-muted">· {{ pessoa.situacao }}@for (dado of preenchidos(pessoa); track dado) { · {{ dado }} }</span></li>
+                        }
+                      </ul>
+                    }
                   </mat-card-content></mat-card>
                 }
               </div></mat-tab>
@@ -167,6 +173,10 @@ import { ParcelarPagamentoDialog } from '../dinheiro/parcelar-pagamento.dialog';
     .secao .mes { margin: 0; }
     .convidados { margin: 8px 0 0; padding: 0; list-style: none; display: grid; gap: 2px; }
     .linha { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+    .seta { width: 32px; height: 32px; padding: 4px; flex: none; }
+    .seta mat-icon { transition: transform 0.15s; }
+    .seta.aberta mat-icon { transform: rotate(90deg); }
+    .convidados { padding-left: 44px !important; }
     .parcela { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 4px 12px; border-top: 1px solid var(--mat-sys-outline-variant); margin-top: 8px; padding-top: 4px; }
     .acoes { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 4px 8px; margin-top: 8px; }
   `,
@@ -178,6 +188,8 @@ export class CasalPage implements OnInit {
   private readonly toast = inject(ToastService);
   protected readonly status = STATUS;
   protected readonly dados = signal<CasalLeitura | null>(null);
+  /** Convites nascem recolhidos; clicar mostra os convidados (SPEC-059). */
+  private readonly abertos = signal<ReadonlySet<string>>(new Set());
   protected readonly carregando = signal(true);
   protected readonly indisponivel = signal(false);
   protected readonly grupos = computed(() => pagamentosPorMes(this.dados()?.financeiro?.pagamentosFornecedores ?? []));
@@ -197,8 +209,28 @@ export class CasalPage implements OnInit {
     });
   }
 
+  protected aberto(id: string): boolean {
+    return this.abertos().has(id);
+  }
+
+  protected alternar(id: string): void {
+    const abertos = new Set(this.abertos());
+    if (abertos.has(id)) abertos.delete(id);
+    else abertos.add(id);
+    this.abertos.set(abertos);
+  }
+
+  protected resumo(convite: ConviteCasal): string {
+    return resumoDosConvidados(convite.convidados.map((pessoa) => pessoa.situacao));
+  }
+
+  protected preenchidos(pessoa: ConviteCasal['convidados'][number]): string[] {
+    return dadosPreenchidos(pessoa);
+  }
+
   protected abrirConvite(convite: ConviteCasal | null): void {
-    this.dialog.open(ConviteCasalDialog, { ...DIALOG, data: convite }).afterClosed().subscribe((pedido?: PedidoConviteCasal) => {
+    const dados: ConviteFormDados = { convite: convite ? conviteDoFormulario(convite) : null, mostrarObservacao: false };
+    this.dialog.open(ConviteFormDialog, { ...DIALOG, data: dados }).afterClosed().subscribe((pedido?: PedidoConvite) => {
       if (!pedido) return;
       if (convite) this.aplicar(this.casal.atualizarConvite(this.token, convite.id, pedido), 'Convite salvo.');
       else this.aplicar(this.casal.criarConvite(this.token, pedido), 'Convite cadastrado.');
@@ -284,4 +316,14 @@ export class CasalPage implements OnInit {
       error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
     });
   }
+}
+
+/** Convite como o casal vê, no formato do formulário único (SPEC-059). Sem observação: o casal não a vê. */
+export function conviteDoFormulario(convite: ConviteCasal): ConviteDoFormulario {
+  return {
+    nome: convite.nome,
+    email: convite.email,
+    excecaoPrazoRsvp: convite.excecaoPrazoRsvp,
+    convidados: convite.convidados.map((pessoa) => ({ id: pessoa.id, nome: pessoa.nome, ddi: pessoa.ddi, celular: pessoa.celular })),
+  };
 }

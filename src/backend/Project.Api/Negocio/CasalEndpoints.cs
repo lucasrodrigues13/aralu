@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Project.Api.Conta;
 using Project.Application.Comum;
 using Project.Application.Conta;
+using Project.Application.Convidados;
 using Project.Application.Negocio;
 
 namespace Project.Api.Negocio;
@@ -53,10 +54,10 @@ public static class CasalEndpoints
     private static Task<IResult> LerCasal(string token, LinkCasalServico servico, CancellationToken ct) =>
         De(servico.LerCasalAsync(token, ct));
 
-    private static Task<IResult> CriarConvite(string token, ConviteCasalPedido pedido, LinkCasalServico servico, CancellationToken ct) =>
+    private static Task<IResult> CriarConvite(string token, FormularioConvitePedido pedido, LinkCasalServico servico, CancellationToken ct) =>
         De(servico.CriarConviteAsync(token, pedido, ct));
 
-    private static Task<IResult> AtualizarConvite(string token, Guid conviteId, ConviteCasalPedido pedido, LinkCasalServico servico, CancellationToken ct) =>
+    private static Task<IResult> AtualizarConvite(string token, Guid conviteId, FormularioConvitePedido pedido, LinkCasalServico servico, CancellationToken ct) =>
         De(servico.AtualizarConviteAsync(token, conviteId, pedido, ct));
 
     private static Task<IResult> Parcelar(string token, Guid servicoId, PedidoParcelas pedido, LinkCasalServico servico, CancellationToken ct) =>

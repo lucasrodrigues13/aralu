@@ -10,7 +10,8 @@ public sealed record LinhaPlanilha(
     string? Faixa,
     string? Custo,
     string? Situacao,
-    string? Mesa);
+    string? Mesa,
+    int Linha = 0);
 
 public interface IPlanilhaConvites
 {

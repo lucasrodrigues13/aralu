@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { API_BASE_URL } from './api-base-url';
+import { PedidoConvite } from './convite-formulario';
 import { DinheiroEvento, PedidoParcelamentoPagamento } from './dinheiro.client';
 
 /** Link do casal como a organizadora vê (SPEC-046 §6.1). */
@@ -17,6 +18,8 @@ export interface ConvidadoCasal {
   id: string;
   nome: string;
   situacao: string;
+  ddi: string | null;
+  celular: string | null;
 }
 
 export interface ConviteCasal {
@@ -26,15 +29,8 @@ export interface ConviteCasal {
   telefone: string | null;
   email: string | null;
   convidados: ConvidadoCasal[];
-}
-
-/** Pedido de criar ou editar convite: convidado com `id` renomeia o existente; sem `id`, inclui um novo. */
-export interface PedidoConviteCasal {
-  nome: string;
-  ddi: string | null;
-  telefone: string | null;
-  email: string | null;
-  convidados: { id: string | null; nome: string }[];
+  /** O link deste convite aceita resposta após o prazo (SPEC-054). */
+  excecaoPrazoRsvp: boolean;
 }
 
 /** O que a página do casal recebe (SPEC-046 §6.2 e §6.3). `financeiro` é nulo com o financeiro fechado. */
@@ -89,11 +85,11 @@ export class CasalClient {
     return this.http.get<CasalLeitura>(this.publico(token));
   }
 
-  criarConvite(token: string, pedido: PedidoConviteCasal) {
+  criarConvite(token: string, pedido: PedidoConvite) {
     return this.http.post<CasalLeitura>(`${this.publico(token)}/convites`, pedido);
   }
 
-  atualizarConvite(token: string, conviteId: string, pedido: PedidoConviteCasal) {
+  atualizarConvite(token: string, conviteId: string, pedido: PedidoConvite) {
     return this.http.put<CasalLeitura>(`${this.publico(token)}/convites/${conviteId}`, pedido);
   }
 

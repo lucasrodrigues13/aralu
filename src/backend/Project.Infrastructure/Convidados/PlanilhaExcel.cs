@@ -13,18 +13,41 @@ public sealed class PlanilhaExcel : IPlanilhaConvites
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
     }
 
+    /// <summary>
+    /// Modelo de importação (SPEC-059): a aba "Convidados" é a que se preenche (uma linha por convidado; o nome do convite
+    /// se repete nas linhas de quem recebe junto). A aba "Exemplo" mostra o formato e não é importada.
+    /// </summary>
     public byte[] Modelo()
     {
         using var livro = new ClosedXML.Excel.XLWorkbook();
-        var aba = livro.AddWorksheet("Convidados");
+        Cabecalho(livro.AddWorksheet("Convidados"));
+
+        var exemplo = livro.AddWorksheet("Exemplo");
+        Cabecalho(exemplo);
+        for (var linha = 0; linha < PlanilhaConvites.Exemplo.Length; linha++)
+        {
+            for (var coluna = 0; coluna < PlanilhaConvites.Exemplo[linha].Length; coluna++)
+            {
+                exemplo.Cell(linha + 2, coluna + 1).Value = PlanilhaConvites.Exemplo[linha][coluna];
+            }
+        }
+
+        exemplo.Columns().AdjustToContents();
+        using var memoria = new MemoryStream();
+        livro.SaveAs(memoria);
+        return memoria.ToArray();
+    }
+
+    private static void Cabecalho(ClosedXML.Excel.IXLWorksheet aba)
+    {
         for (var i = 0; i < PlanilhaConvites.Colunas.Length; i++)
         {
             aba.Cell(1, i + 1).Value = PlanilhaConvites.Colunas[i];
         }
 
-        using var memoria = new MemoryStream();
-        livro.SaveAs(memoria);
-        return memoria.ToArray();
+        aba.Row(1).Style.Font.Bold = true;
+        aba.SheetView.FreezeRows(1);
+        aba.Columns().AdjustToContents();
     }
 
     public Resultado<IReadOnlyList<LinhaPlanilha>> Ler(Stream arquivo, string? nomeArquivo)
@@ -55,8 +78,10 @@ public sealed class PlanilhaExcel : IPlanilhaConvites
             }
 
             var linhas = new List<LinhaPlanilha>();
+            var numero = 1;
             while (leitor.Read())
             {
+                numero++;
                 string? Celula(int indice) => indice < leitor.FieldCount ? leitor.GetValue(indice)?.ToString() : null;
                 if (Enumerable.Range(0, PlanilhaConvites.Colunas.Length).All(indice => string.IsNullOrWhiteSpace(Celula(indice))))
                 {
@@ -65,7 +90,7 @@ public sealed class PlanilhaExcel : IPlanilhaConvites
 
                 linhas.Add(new LinhaPlanilha(
                     Celula(0), Celula(1), Celula(2), Celula(3), Celula(4), Celula(5),
-                    Celula(6), Celula(7), Celula(8), Celula(9)));
+                    Celula(6), Celula(7), Celula(8), Celula(9), numero));
             }
 
             return Resultado<IReadOnlyList<LinhaPlanilha>>.Sucesso(linhas);

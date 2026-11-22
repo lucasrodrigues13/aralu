@@ -17,14 +17,6 @@ public sealed record ConvidadoPedido(
     string? Cpf,
     string? Observacao);
 
-public sealed record NovoConvite(
-    string? Nome,
-    string? Observacao,
-    IReadOnlyList<ConvidadoPedido>? Convidados,
-    int? Principal,
-    string? Email = null,
-    DateOnly? DataEnvio = null);
-
 public sealed record ConvidadoLeitura(
     Guid Id,
     string Nome,
@@ -52,7 +44,6 @@ public sealed record ConviteLeitura(
     bool Respondida,
     IReadOnlyList<ConvidadoLeitura> Convidados,
     string? Email = null,
-    DateOnly? DataEnvio = null,
     bool ExcecaoPrazoRsvp = false);
 
 public sealed record TotaisLeitura(string Rotulo, int Quantidade);
@@ -64,7 +55,8 @@ public sealed record ListaConvites(
     IReadOnlyList<TotaisLeitura> PorCusto,
     IReadOnlyList<string> Mesas,
     DateOnly? PrazoRsvp = null,
-    bool PrazoEncerrado = false);
+    bool PrazoEncerrado = false,
+    DateOnly? DataEnvioConvites = null);
 
 /// <summary>Página pública do RSVP. Expirado = prazo vencido sem exceção: não traz convidados (SPEC-054).</summary>
 public sealed record RsvpPublico(
@@ -78,6 +70,11 @@ public sealed record PrazoRsvpPedido(DateOnly? Prazo);
 public sealed record ExcecaoRsvpPedido(bool Liberada);
 
 public sealed record PrazoRsvpLeitura(DateOnly? Prazo, bool Encerrado);
+
+/// <summary>Data de envio dos convites do evento (SPEC-059); nula remove.</summary>
+public sealed record EnvioConvitesPedido(DateOnly? Data);
+
+public sealed record EnvioConvitesLeitura(DateOnly? Data);
 
 public sealed record PresencaLeitura(
     Guid Id,
@@ -125,7 +122,27 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
             Contar(todos.Where(item => item.Custo is not null), item => RotuloCusto(item.Custo!.Value)),
             todos.Select(item => Domain.Comum.Texto.Limpo(item.Mesa)).OfType<string>().Distinct(StringComparer.OrdinalIgnoreCase).ToArray(),
             evento.PrazoRsvp,
-            PrazoDoRsvp.Encerrado(evento.PrazoRsvp, hoje)));
+            PrazoDoRsvp.Encerrado(evento.PrazoRsvp, hoje),
+            evento.DataEnvioConvites));
+    }
+
+    /// <summary>Define ou remove a data de envio dos convites, uma só para o evento (SPEC-059).</summary>
+    public async Task<Resultado<EnvioConvitesLeitura>> DefinirEnvioAsync(string contaId, Guid eventoId, DateOnly? data, CancellationToken ct)
+    {
+        var evento = await dados.ObterEventoAsync(contaId, eventoId, ct);
+        if (evento is null)
+        {
+            return Resultado<EnvioConvitesLeitura>.Erro(Codigos.Indisponivel, "Indisponível.");
+        }
+
+        if (evento.Situacao != SituacaoEvento.EmAndamento)
+        {
+            return Resultado<EnvioConvitesLeitura>.Erro(Codigos.Validacao, "O evento não está em andamento.");
+        }
+
+        evento.DataEnvioConvites = data;
+        await dados.SalvarEventoAsync(ct);
+        return Resultado<EnvioConvitesLeitura>.Sucesso(new EnvioConvitesLeitura(data));
     }
 
     /// <summary>Define ou remove a data limite de confirmação do evento (SPEC-054).</summary>
@@ -172,7 +189,8 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
         return Resultado<IReadOnlyList<PresencaLeitura>>.Sucesso(await dados.ListarPresencasAsync(contaId, eventoId, ct));
     }
 
-    public async Task<Resultado<ConviteLeitura>> CriarAsync(string contaId, Guid eventoId, NovoConvite pedido, CancellationToken ct)
+    /// <summary>Cria o convite pelo formulário único (SPEC-059); a observação é livre para a organizadora.</summary>
+    public async Task<Resultado<ConviteLeitura>> CriarAsync(string contaId, Guid eventoId, FormularioConvitePedido pedido, CancellationToken ct)
     {
         var evento = await dados.ObterEventoAsync(contaId, eventoId, ct);
         if (evento is null)
@@ -185,17 +203,27 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
             return Resultado<ConviteLeitura>.Erro(Codigos.Validacao, "O evento não está em andamento.");
         }
 
-        var montado = Montar(contaId, evento, pedido);
-        if (!montado.Ok)
+        var validado = FormularioConvite.Validar(pedido);
+        if (!validado.Ok)
         {
-            return Resultado<ConviteLeitura>.Erro(montado.Falha!.Codigo, montado.Falha.Mensagem);
+            return Resultado<ConviteLeitura>.Erro(validado.Falha!.Codigo, validado.Falha.Mensagem);
         }
 
-        await dados.InserirConvitesAsync([montado.Valor!], ct);
-        return Resultado<ConviteLeitura>.Sucesso(Ler(montado.Valor!));
+        var convite = new Convite
+        {
+            Id = Guid.NewGuid(),
+            EventoId = evento.Id,
+            ContaId = contaId,
+            Observacao = Domain.Comum.Texto.Limpo(pedido.Observacao),
+            Token = Guid.NewGuid().ToString("N"),
+        };
+        FormularioConvite.Aplicar(convite, validado.Valor!, pedido);
+        await dados.InserirConvitesAsync([convite], ct);
+        return Resultado<ConviteLeitura>.Sucesso(Ler(convite));
     }
 
-    public async Task<Resultado<ConviteLeitura>> AtualizarAsync(string contaId, Guid id, NovoConvite pedido, CancellationToken ct)
+    /// <summary>Edita pelo mesmo formulário da criação (SPEC-059): convidados mantêm situação, mesa e demais dados.</summary>
+    public async Task<Resultado<ConviteLeitura>> AtualizarAsync(string contaId, Guid id, FormularioConvitePedido pedido, CancellationToken ct)
     {
         var convite = await dados.ObterConviteAsync(contaId, id, ct);
         if (convite is null)
@@ -209,22 +237,29 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
             return Resultado<ConviteLeitura>.Erro(Codigos.Validacao, "O evento não está em andamento.");
         }
 
-        var nome = Domain.Comum.Texto.Limpo(pedido.Nome);
-        if (nome is null)
+        var validado = FormularioConvite.Validar(pedido);
+        if (!validado.Ok)
         {
-            return Resultado<ConviteLeitura>.Erro(Codigos.Validacao, "Informe o nome do convite.");
+            return Resultado<ConviteLeitura>.Erro(validado.Falha!.Codigo, validado.Falha.Mensagem);
         }
 
-        var email = Domain.Comum.Texto.Limpo(pedido.Email);
-        if (email is not null && !ConviteRegras.EmailValido(email))
+        var aplicado = FormularioConvite.Aplicar(convite, validado.Valor!, pedido);
+        if (!aplicado.Ok)
         {
-            return Resultado<ConviteLeitura>.Erro(Codigos.Validacao, "Informe um e-mail válido.");
+            return Resultado<ConviteLeitura>.Erro(aplicado.Falha!.Codigo, aplicado.Falha.Mensagem);
         }
 
-        convite.Nome = nome;
         convite.Observacao = Domain.Comum.Texto.Limpo(pedido.Observacao);
-        convite.Email = email;
-        convite.DataEnvio = pedido.DataEnvio;
+        foreach (var incluido in aplicado.Valor!.Incluidos)
+        {
+            await dados.IncluirConvidadoAsync(incluido, ct);
+        }
+
+        foreach (var removido in aplicado.Valor.Removidos)
+        {
+            await dados.RemoverConvidadoAsync(removido, ct);
+        }
+
         await dados.SalvarConvitesAsync(ct);
         return Resultado<ConviteLeitura>.Sucesso(Ler(convite));
     }
@@ -350,15 +385,35 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
         var convites = new Dictionary<string, Convite>(StringComparer.OrdinalIgnoreCase);
         foreach (var linha in linhas.Valor)
         {
+            var onde = linha.Linha > 0 ? $"Linha {linha.Linha}: " : "";
             var nomeConvite = Domain.Comum.Texto.Limpo(linha.Convite);
             var nomeConvidado = Domain.Comum.Texto.Limpo(linha.Convidado);
-            if (nomeConvite is null || nomeConvidado is null)
+            if (nomeConvite is null)
             {
-                return Resultado<int>.Erro(Codigos.Validacao, "A planilha tem uma linha sem nome de convite ou de convidado.");
+                return Resultado<int>.Erro(Codigos.Validacao, $"{onde}Informe o nome do convite.");
+            }
+
+            if (nomeConvidado is null)
+            {
+                return Resultado<int>.Erro(Codigos.Validacao, $"{onde}Informe o nome do convidado.");
+            }
+
+            var convidado = ConvidadoDaPlanilha(linha, nomeConvidado);
+            if (!convidado.Ok)
+            {
+                return Resultado<int>.Erro(convidado.Falha!.Codigo, onde + convidado.Falha.Mensagem);
             }
 
             if (!convites.TryGetValue(nomeConvite, out var convite))
             {
+                // Mesma regra do formulário (SPEC-059): o primeiro convidado do convite precisa de telefone e é o principal.
+                if (!ConviteRegras.TemTelefone(convidado.Valor!.Celular))
+                {
+                    return Resultado<int>.Erro(
+                        Codigos.Validacao,
+                        $"{onde}O primeiro convidado do convite \"{nomeConvite}\" precisa de telefone.");
+                }
+
                 convite = new Convite
                 {
                     Id = Guid.NewGuid(),
@@ -371,19 +426,10 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
                 convites[nomeConvite] = convite;
             }
 
-            var convidado = ConvidadoDaPlanilha(linha, nomeConvidado);
-            if (!convidado.Ok)
-            {
-                return Resultado<int>.Erro(convidado.Falha!.Codigo, convidado.Falha.Mensagem);
-            }
-
             convidado.Valor!.Id = Guid.NewGuid();
             convidado.Valor.ConviteId = convite.Id;
             convite.Convidados.Add(convidado.Valor);
-            if (ConviteRegras.TemTelefone(convidado.Valor.Celular))
-            {
-                convite.PrincipalId = convidado.Valor.Id;
-            }
+            convite.PrincipalId ??= convidado.Valor.Id;
         }
 
         await dados.InserirConvitesAsync(convites.Values.ToArray(), ct);
@@ -542,64 +588,6 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
         return Resultado<RsvpPublico>.Sucesso(new RsvpPublico(
             convite.Nome,
             convite.Convidados.Select(item => new ConvidadoPublico(item.Id, item.Nome, item.Situacao)).ToArray()));
-    }
-
-    private static Resultado<Convite> Montar(string contaId, Evento evento, NovoConvite pedido)
-    {
-        var nome = Domain.Comum.Texto.Limpo(pedido.Nome);
-        if (nome is null)
-        {
-            return Resultado<Convite>.Erro(Codigos.Validacao, "Informe o nome do convite.");
-        }
-
-        if (pedido.Convidados is null || pedido.Convidados.Count == 0)
-        {
-            return Resultado<Convite>.Erro(Codigos.Validacao, "Inclua ao menos um convidado.");
-        }
-
-        var email = Domain.Comum.Texto.Limpo(pedido.Email);
-        if (email is not null && !ConviteRegras.EmailValido(email))
-        {
-            return Resultado<Convite>.Erro(Codigos.Validacao, "Informe um e-mail válido.");
-        }
-
-        var convite = new Convite
-        {
-            Id = Guid.NewGuid(),
-            EventoId = evento.Id,
-            ContaId = contaId,
-            Nome = nome,
-            Observacao = Domain.Comum.Texto.Limpo(pedido.Observacao),
-            Email = email,
-            DataEnvio = pedido.DataEnvio,
-            Token = Guid.NewGuid().ToString("N"),
-        };
-
-        foreach (var pedidoConvidado in pedido.Convidados)
-        {
-            var convidado = MontarConvidado(pedidoConvidado);
-            if (!convidado.Ok)
-            {
-                return Resultado<Convite>.Erro(convidado.Falha!.Codigo, convidado.Falha.Mensagem);
-            }
-
-            convidado.Valor!.Id = Guid.NewGuid();
-            convidado.Valor.ConviteId = convite.Id;
-            convite.Convidados.Add(convidado.Valor);
-        }
-
-        if (pedido.Principal is int indice)
-        {
-            if (indice < 0 || indice >= convite.Convidados.Count
-                || !ConviteRegras.PodeSerPrincipal(true, convite.Convidados[indice].Celular))
-            {
-                return Resultado<Convite>.Erro(Codigos.Validacao, "Escolha um convidado deste convite que tenha telefone.");
-            }
-
-            convite.PrincipalId = convite.Convidados[indice].Id;
-        }
-
-        return Resultado<Convite>.Sucesso(convite);
     }
 
     private static Resultado<Convidado> MontarConvidado(ConvidadoPedido pedido)
@@ -796,7 +784,6 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
             convite.RespondidoEm is not null,
             convite.Convidados.Select(item => LerConvidado(item, convite.PrincipalId)).ToArray(),
             convite.Email,
-            convite.DataEnvio,
             convite.ExcecaoPrazoRsvp);
     }
 

@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using Project.Application.Comum;
+using Project.Application.Convidados;
 using Project.Domain.Eventos;
 
 namespace Project.Application.Negocio;
@@ -21,14 +22,17 @@ public sealed record CasalLeitura(
     bool ConvidadosLiberado = false,
     IReadOnlyList<ConviteCasal>? Convites = null);
 
-public sealed record ConvidadoCasal(Guid Id, string Nome, string Situacao);
+public sealed record ConvidadoCasal(Guid Id, string Nome, string Situacao, string? Ddi = null, string? Celular = null);
 
-public sealed record ConviteCasal(Guid Id, string Nome, string? Ddi, string? Telefone, string? Email, IReadOnlyList<ConvidadoCasal> Convidados);
-
-/// <summary>Convidado no pedido do casal: com <paramref name="Id"/> renomeia o existente; sem, inclui um novo.</summary>
-public sealed record ConvidadoCasalPedido(Guid? Id, string? Nome);
-
-public sealed record ConviteCasalPedido(string? Nome, string? Ddi, string? Telefone, string? Email, IReadOnlyList<ConvidadoCasalPedido>? Convidados);
+/// <summary><paramref name="Ddi"/> e <paramref name="Telefone"/> são do convidado principal (SPEC-010).</summary>
+public sealed record ConviteCasal(
+    Guid Id,
+    string Nome,
+    string? Ddi,
+    string? Telefone,
+    string? Email,
+    IReadOnlyList<ConvidadoCasal> Convidados,
+    bool ExcecaoPrazoRsvp = false);
 
 public interface IDadosLinkCasal
 {
@@ -39,6 +43,9 @@ public interface IDadosLinkCasal
     Task InserirConviteAsync(Domain.Convidados.Convite convite, CancellationToken ct);
 
     Task RemoverConvidadoAsync(Domain.Convidados.Convidado convidado, CancellationToken ct);
+
+    /// <summary>Marca um convidado novo de um convite já existente para inclusão (SPEC-059).</summary>
+    Task IncluirConvidadoAsync(Domain.Convidados.Convidado convidado, CancellationToken ct);
 
     Task<EventoDoLink?> ObterEventoAsync(string contaId, Guid eventoId, CancellationToken ct);
 
@@ -288,13 +295,16 @@ public sealed class LinkCasalServico(
             principal?.Celular,
             convite.Email,
             convite.Convidados
-                .Select(item => new ConvidadoCasal(item.Id, item.Nome, Domain.Convidados.Rotulos.SituacaoTela(item.Situacao)))
-                .ToArray());
+                .OrderByDescending(item => item.Id == convite.PrincipalId)
+                .Select(item => new ConvidadoCasal(item.Id, item.Nome, Domain.Convidados.Rotulos.SituacaoTela(item.Situacao), item.Ddi, item.Celular))
+                .ToArray(),
+            convite.ExcecaoPrazoRsvp);
     }
 
-    // ---- Casal: convites (SPEC-052) ----
+    // ---- Casal: convites (SPEC-052 e SPEC-059) ----
 
-    public async Task<Resultado<CasalLeitura>> CriarConviteAsync(string token, ConviteCasalPedido pedido, CancellationToken ct)
+    /// <summary>Cria o convite pelo formulário único (SPEC-059); a observação é sempre "Preenchido pelo casal", gravada aqui.</summary>
+    public async Task<Resultado<CasalLeitura>> CriarConviteAsync(string token, FormularioConvitePedido pedido, CancellationToken ct)
     {
         var contexto = await ResolverAsync(token, Area.Convidados, ct);
         if (contexto.Falha is not null)
@@ -302,7 +312,7 @@ public sealed class LinkCasalServico(
             return Resultado<CasalLeitura>.Erro(contexto.Falha.Codigo, contexto.Falha.Mensagem);
         }
 
-        var validado = Validar(pedido);
+        var validado = FormularioConvite.Validar(pedido);
         if (!validado.Ok)
         {
             return Resultado<CasalLeitura>.Erro(validado.Falha!.Codigo, validado.Falha.Mensagem);
@@ -313,26 +323,16 @@ public sealed class LinkCasalServico(
             Id = Guid.NewGuid(),
             EventoId = contexto.Evento!.Id,
             ContaId = contexto.Evento.ContaId,
-            Nome = validado.Valor.Nome,
-            Email = validado.Valor.Email,
+            Observacao = Domain.Convidados.ConviteRegras.ObservacaoDoCliente,
             Token = Guid.NewGuid().ToString("N"),
         };
-        foreach (var item in pedido.Convidados!)
-        {
-            convite.Convidados.Add(new Domain.Convidados.Convidado
-            {
-                Id = Guid.NewGuid(),
-                ConviteId = convite.Id,
-                Nome = Domain.Comum.Texto.Limpo(item.Nome)!,
-            });
-        }
-
-        DefinirTelefone(convite, pedido);
+        FormularioConvite.Aplicar(convite, validado.Valor!, pedido);
         await dados.InserirConviteAsync(convite, ct);
         return await MontarAsync(contexto, ct);
     }
 
-    public async Task<Resultado<CasalLeitura>> AtualizarConviteAsync(string token, Guid conviteId, ConviteCasalPedido pedido, CancellationToken ct)
+    /// <summary>Edita pelo mesmo formulário; a observação do convite não muda.</summary>
+    public async Task<Resultado<CasalLeitura>> AtualizarConviteAsync(string token, Guid conviteId, FormularioConvitePedido pedido, CancellationToken ct)
     {
         var contexto = await ResolverAsync(token, Area.Convidados, ct);
         if (contexto.Falha is not null)
@@ -346,97 +346,30 @@ public sealed class LinkCasalServico(
             return Resultado<CasalLeitura>.Erro(Codigos.Indisponivel, "Indisponível.");
         }
 
-        var validado = Validar(pedido);
+        var validado = FormularioConvite.Validar(pedido);
         if (!validado.Ok)
         {
             return Resultado<CasalLeitura>.Erro(validado.Falha!.Codigo, validado.Falha.Mensagem);
         }
 
-        var ids = pedido.Convidados!.Where(item => item.Id is not null).Select(item => item.Id!.Value).ToHashSet();
-        if (ids.Any(id => convite.Convidados.All(existente => existente.Id != id)))
+        var aplicado = FormularioConvite.Aplicar(convite, validado.Valor!, pedido);
+        if (!aplicado.Ok)
         {
-            return Resultado<CasalLeitura>.Erro(Codigos.Indisponivel, "Indisponível.");
+            return Resultado<CasalLeitura>.Erro(aplicado.Falha!.Codigo, aplicado.Falha.Mensagem);
         }
 
-        convite.Nome = validado.Valor.Nome;
-        convite.Email = validado.Valor.Email;
-        foreach (var removido in convite.Convidados.Where(item => !ids.Contains(item.Id)).ToArray())
+        foreach (var incluido in aplicado.Valor!.Incluidos)
         {
-            if (convite.PrincipalId == removido.Id)
-            {
-                convite.PrincipalId = null;
-            }
+            await dados.IncluirConvidadoAsync(incluido, ct);
+        }
 
-            convite.Convidados.Remove(removido);
+        foreach (var removido in aplicado.Valor.Removidos)
+        {
             await dados.RemoverConvidadoAsync(removido, ct);
         }
 
-        foreach (var item in pedido.Convidados!)
-        {
-            var nome = Domain.Comum.Texto.Limpo(item.Nome)!;
-            if (item.Id is Guid id)
-            {
-                convite.Convidados.First(existente => existente.Id == id).Nome = nome;
-            }
-            else
-            {
-                convite.Convidados.Add(new Domain.Convidados.Convidado { Id = Guid.NewGuid(), ConviteId = convite.Id, Nome = nome });
-            }
-        }
-
-        DefinirTelefone(convite, pedido);
         await dados.SalvarAsync(ct);
         return await MontarAsync(contexto, ct);
-    }
-
-    private static Resultado<(string Nome, string? Email)> Validar(ConviteCasalPedido pedido)
-    {
-        var nome = Domain.Comum.Texto.Limpo(pedido.Nome);
-        if (nome is null)
-        {
-            return Resultado<(string Nome, string? Email)>.Erro(Codigos.Validacao, "Informe o nome do convite.");
-        }
-
-        if (pedido.Convidados is null || pedido.Convidados.Count == 0)
-        {
-            return Resultado<(string Nome, string? Email)>.Erro(Codigos.Validacao, "Inclua ao menos um convidado.");
-        }
-
-        if (pedido.Convidados.Any(item => Domain.Comum.Texto.Vazio(item.Nome)))
-        {
-            return Resultado<(string Nome, string? Email)>.Erro(Codigos.Validacao, "Informe o nome completo de cada convidado.");
-        }
-
-        var email = Domain.Comum.Texto.Limpo(pedido.Email);
-        if (email is not null && !Domain.Convidados.ConviteRegras.EmailValido(email))
-        {
-            return Resultado<(string Nome, string? Email)>.Erro(Codigos.Validacao, "Informe um e-mail válido.");
-        }
-
-        return Resultado<(string Nome, string? Email)>.Sucesso((nome, email));
-    }
-
-    /// <summary>O telefone do convite é o do convidado principal (SPEC-010); sem principal, o primeiro assume.</summary>
-    private static void DefinirTelefone(Domain.Convidados.Convite convite, ConviteCasalPedido pedido)
-    {
-        var celular = Domain.Comum.Texto.Limpo(pedido.Telefone);
-        var atual = convite.Convidados.FirstOrDefault(item => item.Id == convite.PrincipalId);
-        if (celular is null)
-        {
-            if (atual is not null)
-            {
-                atual.Ddi = null;
-                atual.Celular = null;
-            }
-
-            convite.PrincipalId = null;
-            return;
-        }
-
-        var principal = atual ?? convite.Convidados.First();
-        principal.Ddi = Domain.Comum.Texto.Limpo(pedido.Ddi);
-        principal.Celular = celular;
-        convite.PrincipalId = principal.Id;
     }
 
     private sealed record Contexto(LinkCasal? Link, EventoDoLink? Evento, Falha? Falha);

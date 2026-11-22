@@ -5,6 +5,7 @@ using Project.Application.Arquivos;
 using Project.Application.Cep;
 using Project.Application.Comum;
 using Project.Application.Conta;
+using Project.Application.Convidados;
 using Project.Application.Negocio;
 using Project.Domain.Clientes;
 using Project.Domain.Convidados;
@@ -100,6 +101,7 @@ public static class NegocioEndpoints
         api.MapPost("/eventos/{id:guid}/convites", CriarConvite);
         api.MapPut("/convites/{id:guid}", AtualizarConvite);
         api.MapPut("/eventos/{id:guid}/prazo-rsvp", DefinirPrazoRsvp);
+        api.MapPut("/eventos/{id:guid}/envio-convites", DefinirEnvioConvites);
         api.MapPut("/convites/{id:guid}/excecao-rsvp", DefinirExcecaoRsvp);
         api.MapGet("/eventos/{id:guid}/presencas", Presencas);
         api.MapPost("/convites/{id:guid}/convidados", CriarConvidado);
@@ -1039,7 +1041,7 @@ public static class NegocioEndpoints
                 ct));
         });
 
-    private static Task<IResult> CriarConvite(Guid id, NovoConvite pedido, ClaimsPrincipal usuario, ConviteServico servico, IDados dados, CancellationToken ct) =>
+    private static Task<IResult> CriarConvite(Guid id, FormularioConvitePedido pedido, ClaimsPrincipal usuario, ConviteServico servico, IDados dados, CancellationToken ct) =>
         ComConta(usuario, async conta =>
         {
             var bloqueio = await ExigirModuloEEventoAsync(usuario, conta, id, ModuloCliente.Convidados, dados, ct);
@@ -1051,7 +1053,7 @@ public static class NegocioEndpoints
             return await De(servico.CriarAsync(conta, id, pedido, ct));
         });
 
-    private static Task<IResult> AtualizarConvite(Guid id, NovoConvite pedido, ClaimsPrincipal usuario, ConviteServico servico, IDados dados, CancellationToken ct) =>
+    private static Task<IResult> AtualizarConvite(Guid id, FormularioConvitePedido pedido, ClaimsPrincipal usuario, ConviteServico servico, IDados dados, CancellationToken ct) =>
         ComConta(usuario, async conta =>
         {
             var bloqueio = await ExigirModuloViaConviteAsync(usuario, conta, id, ModuloCliente.Convidados, dados, servico, ct);
@@ -1073,6 +1075,18 @@ public static class NegocioEndpoints
             }
 
             return await De(servico.DefinirPrazoAsync(conta, id, pedido.Prazo, Hoje(), ct));
+        });
+
+    private static Task<IResult> DefinirEnvioConvites(Guid id, EnvioConvitesPedido pedido, ClaimsPrincipal usuario, ConviteServico servico, IDados dados, CancellationToken ct) =>
+        ComConta(usuario, async conta =>
+        {
+            var bloqueio = await ExigirModuloEEventoAsync(usuario, conta, id, ModuloCliente.Convidados, dados, ct);
+            if (bloqueio is not null)
+            {
+                return bloqueio;
+            }
+
+            return await De(servico.DefinirEnvioAsync(conta, id, pedido.Data, ct));
         });
 
     private static Task<IResult> DefinirExcecaoRsvp(Guid id, ExcecaoRsvpPedido pedido, ClaimsPrincipal usuario, ConviteServico servico, IDados dados, CancellationToken ct) =>

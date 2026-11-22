@@ -31,6 +31,46 @@ public class RegrasNegocioTests
     }
 
     [Fact]
+    public void Modelo_traz_a_aba_de_exemplo_que_nao_e_importada()
+    {
+        var planilha = new PlanilhaExcel();
+        using var livro = new ClosedXML.Excel.XLWorkbook(new MemoryStream(planilha.Modelo()));
+
+        Assert.Equal(["Convidados", "Exemplo"], livro.Worksheets.Select(aba => aba.Name));
+        var exemplo = livro.Worksheet("Exemplo");
+        Assert.Equal("Família Souza", exemplo.Cell(2, 1).GetString());
+        Assert.Equal("11999990000", exemplo.Cell(2, 3).GetString());
+        Assert.Equal("Família Souza", exemplo.Cell(3, 1).GetString());
+        Assert.Equal("", exemplo.Cell(3, 3).GetString());
+
+        // O exemplo serve de referência; a importação lê só a primeira aba.
+        Assert.Empty(planilha.Ler(new MemoryStream(planilha.Modelo()), "modelo.xlsx").Valor!);
+    }
+
+    [Fact]
+    public void Leitura_guarda_o_numero_da_linha_e_pula_linhas_vazias()
+    {
+        using var livro = new ClosedXML.Excel.XLWorkbook();
+        var aba = livro.AddWorksheet("Convidados");
+        for (var i = 0; i < PlanilhaConvites.Colunas.Length; i++)
+        {
+            aba.Cell(1, i + 1).Value = PlanilhaConvites.Colunas[i];
+        }
+
+        aba.Cell(2, 1).Value = "Família Souza";
+        aba.Cell(2, 5).Value = "Maria Souza";
+        aba.Cell(4, 1).Value = "Família Souza";
+        aba.Cell(4, 5).Value = "João Souza";
+        using var memoria = new MemoryStream();
+        livro.SaveAs(memoria);
+        memoria.Position = 0;
+
+        var linhas = new PlanilhaExcel().Ler(memoria, "convidados.xlsx").Valor!;
+
+        Assert.Equal([2, 4], linhas.Select(item => item.Linha));
+    }
+
+    [Fact]
     public void Planilha_free_vira_gratuita_e_o_modelo_tem_10_colunas()
     {
         Assert.Equal(CustoConvidado.Gratuita, Rotulos.Custo("Free"));

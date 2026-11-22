@@ -26,6 +26,9 @@ public sealed class Evento
     /// <summary>Data limite para confirmar presença pelo link; vale até o fim do dia. Nulo = sem prazo (SPEC-054).</summary>
     public DateOnly? PrazoRsvp { get; set; }
 
+    /// <summary>Data de envio dos convites, uma só para todos os convites do evento. Nulo = não definida (SPEC-059).</summary>
+    public DateOnly? DataEnvioConvites { get; set; }
+
     public TimeOnly? Hora { get; set; }
 
     public decimal? OrcamentoEstimado { get; set; }

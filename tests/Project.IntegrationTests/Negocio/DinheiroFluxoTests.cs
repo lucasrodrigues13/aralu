@@ -428,10 +428,14 @@ public class DinheiroFluxoTests
         var pedido = new
         {
             nome = "Família Souza",
-            ddi = "+55",
-            telefone = "11999990000",
             email = "souza@exemplo.com",
-            convidados = new[] { new { id = (Guid?)null, nome = "Maria Souza" }, new { id = (Guid?)null, nome = "João Souza" } },
+            excecaoPrazoRsvp = true,
+            observacao = "Ignorada no link do cliente",
+            convidados = new[]
+            {
+                new { id = (Guid?)null, nome = "Maria Souza", ddi = (string?)"+55", celular = (string?)"11999990000" },
+                new { id = (Guid?)null, nome = "João Souza", ddi = (string?)null, celular = (string?)null },
+            },
         };
 
         // Fechado (padrão): o casal não vê nem cadastra.
@@ -441,25 +445,39 @@ public class DinheiroFluxoTests
         // Liberado: o casal cadastra e a organizadora vê o convite na aba Convidados.
         var liberado = await Ler(await dono.PutAsJsonAsync(urlLink, new { financeiroLiberado = false, convidadosLiberado = true }));
         Assert.True(liberado.GetProperty("convidadosLiberado").GetBoolean());
+        var semTelefone = await casal.PostAsJsonAsync($"{baseCasal}/convites", new
+        {
+            nome = "Sem telefone",
+            convidados = new[] { new { id = (Guid?)null, nome = "Ana", ddi = (string?)null, celular = (string?)null } },
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, semTelefone.StatusCode);
         var criado = await Ler(await casal.PostAsJsonAsync($"{baseCasal}/convites", pedido));
         var convite = criado.GetProperty("convites").EnumerateArray().Single();
         Assert.Equal("11999990000", convite.GetProperty("telefone").GetString());
         Assert.Equal(2, convite.GetProperty("convidados").GetArrayLength());
+        Assert.True(convite.GetProperty("excecaoPrazoRsvp").GetBoolean());
+        Assert.False(convite.TryGetProperty("observacao", out _));
 
         var lista = await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/convites"));
         var daOrganizadora = lista.GetProperty("convites").EnumerateArray().Single();
         Assert.Equal("souza@exemplo.com", daOrganizadora.GetProperty("email").GetString());
-        Assert.Equal(JsonValueKind.Null, daOrganizadora.GetProperty("dataEnvio").ValueKind);
+        Assert.Equal("Preenchido pelo casal", daOrganizadora.GetProperty("observacao").GetString());
+        Assert.False(daOrganizadora.TryGetProperty("dataEnvio", out _));
+        Assert.Equal(JsonValueKind.Null, lista.GetProperty("dataEnvioConvites").ValueKind);
 
-        // A organizadora define a data de envio.
+        // A organizadora define a data de envio, uma só para o evento.
+        var envio = await Ler(await dono.PutAsJsonAsync($"/api/v1/eventos/{eventoId}/envio-convites", new { data = "2026-12-01" }));
+        Assert.Equal("2026-12-01", envio.GetProperty("data").GetString());
+        Assert.Equal("2026-12-01", (await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/convites"))).GetProperty("dataEnvioConvites").GetString());
+        Assert.Equal(HttpStatusCode.NotFound, (await outra.PutAsJsonAsync($"/api/v1/eventos/{eventoId}/envio-convites", new { data = "2026-12-01" })).StatusCode);
+
+        // Outra conta não alcança o convite; o casal edita pelo mesmo link e a observação não muda.
         var conviteId = daOrganizadora.GetProperty("id").GetGuid();
-        var atualizado = await Ler(await dono.PutAsJsonAsync($"/api/v1/convites/{conviteId}", new { nome = "Família Souza", email = "souza@exemplo.com", dataEnvio = "2026-12-01" }));
-        Assert.Equal("2026-12-01", atualizado.GetProperty("dataEnvio").GetString());
-
-        // Outra conta não alcança o convite; o casal edita pelo mesmo link.
-        Assert.Equal(HttpStatusCode.NotFound, (await outra.PutAsJsonAsync($"/api/v1/convites/{conviteId}", new { nome = "X" })).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await outra.PutAsJsonAsync($"/api/v1/convites/{conviteId}", pedido)).StatusCode);
         var editado = await Ler(await casal.PutAsJsonAsync($"{baseCasal}/convites/{conviteId}", pedido with { nome = "Souza e família" }));
         Assert.Equal("Souza e família", editado.GetProperty("convites").EnumerateArray().Single().GetProperty("nome").GetString());
+        var depois = (await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/convites"))).GetProperty("convites").EnumerateArray().Single();
+        Assert.Equal("Preenchido pelo casal", depois.GetProperty("observacao").GetString());
     }
 
     private static JsonElement ServicoDe(JsonElement evento, Guid servicoId) =>

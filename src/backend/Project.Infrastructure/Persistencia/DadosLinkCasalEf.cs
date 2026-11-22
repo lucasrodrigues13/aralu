@@ -23,6 +23,12 @@ public sealed class DadosLinkCasalEf(AppDbContext banco) : IDadosLinkCasal
         await banco.SaveChangesAsync(ct);
     }
 
+    public Task IncluirConvidadoAsync(Convidado convidado, CancellationToken ct)
+    {
+        banco.Convidados.Add(convidado);
+        return Task.CompletedTask;
+    }
+
     public Task RemoverConvidadoAsync(Convidado convidado, CancellationToken ct)
     {
         banco.Convidados.Remove(convidado);

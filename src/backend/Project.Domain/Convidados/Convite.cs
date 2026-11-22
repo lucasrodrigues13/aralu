@@ -16,9 +16,6 @@ public sealed class Convite
 
     public string? Email { get; set; }
 
-    /// <summary>Data em que a organizadora enviou (ou vai enviar) o convite (SPEC-052).</summary>
-    public DateOnly? DataEnvio { get; set; }
-
     /// <summary>Exceção da organizadora: o link deste convite segue aceitando respostas após o prazo (SPEC-054).</summary>
     public bool ExcecaoPrazoRsvp { get; set; }
 

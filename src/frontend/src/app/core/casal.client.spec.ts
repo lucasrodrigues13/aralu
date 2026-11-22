@@ -21,7 +21,7 @@ describe('CasalClient: convites (SPEC-052)', () => {
 
   afterEach(() => http.verify());
 
-  const pedido = { nome: 'Família Souza', ddi: '+55', telefone: '11999990000', email: null, convidados: [{ id: null, nome: 'Maria Souza' }] };
+  const pedido = { nome: 'Família Souza', email: null, excecaoPrazoRsvp: false, convidados: [{ id: null, nome: 'Maria Souza', ddi: '+55', celular: '11999990000' }] };
 
   it('cria o convite pelo código do link', () => {
     casal.criarConvite('abc', pedido).subscribe();

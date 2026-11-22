@@ -18,6 +18,10 @@ import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { MascaraDirective } from '../../shared/mascara.directive';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { Convite, ListaConvites, NegocioClient, PresencaEvento } from '../../core/negocio.client';
+import { ConviteDoFormulario, PedidoConvite } from '../../core/convite-formulario';
+import { ConviteFormDados, ConviteFormDialog } from '../../shared/convite-form.dialog';
+import { dadosPreenchidos, resumoDosConvidados } from '../../shared/convite-lista';
+import { PlanilhaInstrucoesDialog } from './planilha-instrucoes.dialog';
 import { EventoAbasComponent } from '../eventos/evento-abas.component';
 
 const SITUACOES = [
@@ -74,11 +78,19 @@ export function cardsPorSituacao(porSituacao: { rotulo: string; quantidade: numb
                 Sem prazo para confirmar presença.
               }
             </p>
+            <p class="text-sm text-muted mt-1 mb-0" data-teste="envio-convites">
+              @if (lista()?.dataEnvioConvites; as envio) {
+                Envio dos convites em {{ envio | gdData }}
+              } @else {
+                Data de envio dos convites não definida.
+              }
+            </p>
           </div>
           <div class="flex flex-wrap gap-2">
+            <button mat-stroked-button type="button" (click)="abrirEnvio()"><mat-icon>send</mat-icon> Data de envio</button>
             <button mat-stroked-button type="button" (click)="abrirPrazo()"><mat-icon>event_busy</mat-icon> Prazo de confirmação</button>
             <button mat-stroked-button type="button" (click)="abrirPresencas()"><mat-icon>fact_check</mat-icon> Lista de presença</button>
-            <button mat-stroked-button type="button" (click)="baixarPlanilha()"><mat-icon>download</mat-icon> Planilha padrão</button>
+            <button mat-stroked-button type="button" (click)="abrirPlanilha()"><mat-icon>description</mat-icon> Planilha padrão</button>
             <button mat-stroked-button type="button" (click)="arquivo.click()"><mat-icon>upload</mat-icon> Importar</button>
             <input #arquivo type="file" accept=".xlsx,.xls" hidden (change)="importar($event)" />
             <button mat-flat-button type="button" (click)="abrirConvite()"><mat-icon>add</mat-icon> Novo convite</button>
@@ -146,28 +158,19 @@ export function cardsPorSituacao(porSituacao: { rotulo: string; quantidade: numb
                   @for (item of dados.convites; track item.id) {
                     <tr>
                       <td>
-                        <strong>{{ item.nome }}</strong>
-                        @if (item.email) { <span class="block text-xs text-muted">{{ item.email }}</span> }
-                        <span class="block text-xs text-muted">{{ item.dataEnvio ? 'Envio em ' + (item.dataEnvio | gdData) : 'Envio não definido' }}</span>
-                        @if (item.excecaoPrazoRsvp) { <span class="block text-xs text-muted">Exceção aberta após o prazo</span> }
-                        <span class="block text-xs text-muted">@if (item.acessada) { acessada } @if (item.respondida) { @if (item.acessada) { · } respondida }</span>
+                        <div class="flex items-start gap-1">
+                          <button mat-icon-button type="button" class="seta" [class.aberta]="aberto(item.id)" [attr.aria-expanded]="aberto(item.id)" [attr.aria-controls]="'convidados-' + item.id" [attr.aria-label]="(aberto(item.id) ? 'Recolher' : 'Expandir') + ' convidados de ' + item.nome" (click)="alternar(item.id)"><mat-icon>chevron_right</mat-icon></button>
+                          <div class="min-w-0 pt-2">
+                            <strong>{{ item.nome }}</strong>
+                            @if (item.email) { <span class="block text-xs text-muted">{{ item.email }}</span> }
+                            @if (item.observacao) { <span class="block text-xs text-muted">{{ item.observacao }}</span> }
+                            @if (item.excecaoPrazoRsvp) { <span class="block text-xs text-muted">Exceção aberta após o prazo</span> }
+                            <span class="block text-xs text-muted">@if (item.acessada) { acessada } @if (item.respondida) { @if (item.acessada) { · } respondida }</span>
+                          </div>
+                        </div>
                       </td>
                       <td>{{ item.telefone || '—' }}</td>
-                      <td>
-                        <ul class="list-none p-0 m-0 divide-y divide-border [&>li]:flex [&>li]:items-center [&>li]:gap-3 [&>li]:py-3 [&>li]:flex-wrap [&>li]:py-1! divide-y-0!">
-                          @for (pessoa of item.convidados; track pessoa.id) {
-                            <li>
-                              <span>{{ pessoa.nome }}</span>
-                              <span [class]="classeSituacao(pessoa.situacaoTela)">{{ pessoa.situacaoTela }}</span>
-                              @if (pessoa.principal) { <span class="inline-block rounded font-semibold px-2 py-1 text-xs whitespace-nowrap bg-light text-muted">Principal</span> }
-                              @if (pessoa.celular && !pessoa.principal) {
-                                <button mat-button type="button" (click)="principal(item.id, pessoa.id)">Usar este telefone</button>
-                              }
-                              <button mat-icon-button type="button" aria-label="Excluir convidado" (click)="excluirConvidado(pessoa.id)"><mat-icon>delete</mat-icon></button>
-                            </li>
-                          }
-                        </ul>
-                      </td>
+                      <td class="text-sm">{{ resumo(item.convidados) }}</td>
                       <td class="text-end! whitespace-nowrap">
                         <button mat-icon-button type="button" aria-label="Copiar link de RSVP" (click)="copiar(item.token)"><mat-icon>link</mat-icon></button>
                         <button mat-icon-button type="button" aria-label="Baixar QR Code" (click)="baixarQr(item.id)"><mat-icon>qr_code_2</mat-icon></button>
@@ -179,6 +182,26 @@ export function cardsPorSituacao(porSituacao: { rotulo: string; quantidade: numb
                         <button mat-icon-button type="button" aria-label="Excluir" (click)="semExclusao('convite')"><mat-icon>delete</mat-icon></button>
                       </td>
                     </tr>
+                    @if (aberto(item.id)) {
+                      <tr class="detalhe">
+                        <td colspan="4" [id]="'convidados-' + item.id">
+                          <ul class="list-none p-0 m-0 pl-12 grid gap-2">
+                            @for (pessoa of item.convidados; track pessoa.id) {
+                              <li class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                                <span class="font-semibold">{{ pessoa.nome }}</span>
+                                <span [class]="classeSituacao(pessoa.situacaoTela)">{{ pessoa.situacaoTela }}</span>
+                                @if (pessoa.principal) { <span class="inline-block rounded font-semibold px-2 py-1 text-xs whitespace-nowrap bg-light text-muted">Principal</span> }
+                                @for (dado of preenchidos(pessoa); track dado) { <span class="text-xs text-muted">{{ dado }}</span> }
+                                @if (pessoa.celular && !pessoa.principal) {
+                                  <button mat-button type="button" (click)="principal(item.id, pessoa.id)">Usar este telefone</button>
+                                }
+                                <button mat-icon-button type="button" aria-label="Excluir convidado" (click)="excluirConvidado(pessoa.id)"><mat-icon>delete</mat-icon></button>
+                              </li>
+                            }
+                          </ul>
+                        </td>
+                      </tr>
+                    }
                   }
                 </tbody>
               </table>
@@ -208,35 +231,20 @@ export function cardsPorSituacao(porSituacao: { rotulo: string; quantidade: numb
       </mat-card-content></mat-card>
     }
 
-    <ng-template #modalEdicao>
-      <h2 mat-dialog-title>Editar convite</h2>
-      <p class="text-muted text-sm px-6 -mt-2 mb-4">Defina o e-mail e a data de envio do convite.</p>
+    <ng-template #modalEnvio>
+      <h2 mat-dialog-title>Data de envio dos convites</h2>
+      <p class="text-muted text-sm px-6 -mt-2 mb-4">Uma data só para todos os convites do evento. Deixe vazio se ainda não definiu.</p>
       <mat-dialog-content>
-        <form id="edicao-form" class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4" [formGroup]="edicao" (ngSubmit)="salvarEdicao()">
-          <div class="campo sm:col-span-2">
-            <mat-label class="font-semibold mb-2 block">Nome do convite</mat-label>
-            <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Nome do convite'" matInput formControlName="nome" /></mat-form-field>
-          </div>
-          <div class="campo sm:col-span-2">
-            <mat-label class="font-semibold mb-2 block">Observação</mat-label>
-            <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Observação'" matInput formControlName="observacao" /></mat-form-field>
-          </div>
+        <form id="envio-form" class="grid grid-cols-1 gap-4" [formGroup]="envioForm" (ngSubmit)="salvarEnvio()">
           <div class="campo">
-            <mat-label class="font-semibold mb-2 block">E-mail</mat-label>
-            <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'E-mail'" matInput type="email" formControlName="email" /></mat-form-field>
-          </div>
-          <div class="campo">
-            <mat-label class="font-semibold mb-2 block">Data de envio do convite</mat-label>
-            <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Data de envio do convite'" matInput type="date" formControlName="dataEnvio" /></mat-form-field>
-          </div>
-          <div class="sm:col-span-2">
-            <mat-checkbox formControlName="excecaoPrazoRsvp">Aceitar confirmação pelo link após o prazo</mat-checkbox>
+            <mat-label class="font-semibold mb-2 block">Data de envio</mat-label>
+            <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Data de envio'" matInput type="date" formControlName="data" /></mat-form-field>
           </div>
         </form>
       </mat-dialog-content>
       <mat-dialog-actions>
         <button mat-stroked-button type="button" mat-dialog-close>Cancelar</button>
-        <button mat-flat-button type="submit" form="edicao-form">Salvar</button>
+        <button mat-flat-button type="submit" form="envio-form">Salvar</button>
       </mat-dialog-actions>
     </ng-template>
 
@@ -283,47 +291,12 @@ export function cardsPorSituacao(porSituacao: { rotulo: string; quantidade: numb
         <button mat-flat-button type="button" mat-dialog-close>Fechar</button>
       </mat-dialog-actions>
     </ng-template>
-
-    <ng-template #modalConvite>
-      <h2 mat-dialog-title>Novo convite</h2>
-      <p class="text-muted text-sm px-6 -mt-2 mb-4">O convite reúne a família; o telefone fica no convite.</p>
-      <mat-dialog-content>
-        <form id="convite-form" class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4" [formGroup]="convite" (ngSubmit)="criarConvite()">
-          <div class="campo sm:col-span-2">
-            <mat-label class="font-semibold mb-2 block">Nome do convite</mat-label>
-            <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Nome do convite'" matInput formControlName="nome" placeholder="Ex.: Joana e família" /></mat-form-field>
-          </div>
-          <div class="campo sm:col-span-2">
-            <mat-label class="font-semibold mb-2 block">Observação</mat-label>
-            <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Observação'" matInput formControlName="observacao" /></mat-form-field>
-          </div>
-          <div class="campo">
-            <mat-label class="font-semibold mb-2 block">E-mail</mat-label>
-            <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'E-mail'" matInput type="email" formControlName="email" /></mat-form-field>
-          </div>
-          <div class="campo">
-            <mat-label class="font-semibold mb-2 block">Data de envio do convite</mat-label>
-            <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Data de envio do convite'" matInput type="date" formControlName="dataEnvio" /></mat-form-field>
-          </div>
-          <div class="campo sm:col-span-2">
-            <mat-label class="font-semibold mb-2 block">Nome do convidado</mat-label>
-            <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Nome do convidado'" matInput formControlName="convidado" /></mat-form-field>
-          </div>
-          <div class="campo">
-            <mat-label class="font-semibold mb-2 block">DDI</mat-label>
-            <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'DDI'" matInput formControlName="ddi" /></mat-form-field>
-          </div>
-          <div class="campo">
-            <mat-label class="font-semibold mb-2 block">Celular</mat-label>
-            <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Celular'" matInput formControlName="celular" gdMascara="celular" /></mat-form-field>
-          </div>
-        </form>
-      </mat-dialog-content>
-      <mat-dialog-actions>
-        <button mat-stroked-button type="button" mat-dialog-close>Cancelar</button>
-        <button mat-flat-button type="submit" form="convite-form">Salvar convite</button>
-      </mat-dialog-actions>
-    </ng-template>
+  `,
+  styles: `
+    .seta { width: 32px; height: 32px; padding: 4px; flex: none; }
+    .seta mat-icon { transition: transform 0.15s; }
+    .seta.aberta mat-icon { transform: rotate(90deg); }
+    tr.detalhe td { padding-top: 0; }
   `,
 })
 export class ConvidadosPage implements OnInit {
@@ -333,29 +306,23 @@ export class ConvidadosPage implements OnInit {
   private readonly toast = inject(ToastService);
   protected readonly lista = signal<ListaConvites | null>(null);
   protected readonly visao = signal('convite');
+  private readonly abertos = signal<ReadonlySet<string>>(new Set());
   protected readonly eventoId = signal('');
   protected readonly cards = computed(() => {
     return cardsPorSituacao(this.lista()?.porSituacao ?? []);
   });
-  private readonly modalConvite = viewChild.required<TemplateRef<unknown>>('modalConvite');
-  private readonly modalEdicao = viewChild.required<TemplateRef<unknown>>('modalEdicao');
-  private refConvite: MatDialogRef<unknown> | null = null;
-  private refEdicao: MatDialogRef<unknown> | null = null;
-  private conviteEmEdicao: string | null = null;
   private readonly dialog = inject(MatDialog);
   protected readonly filtro = this.fb.nonNullable.group({
     nome: '', situacao: '', telefone: '', observacao: '', somenteConfirmados: false,
   });
-  protected readonly convite = this.fb.nonNullable.group({
-    nome: '', observacao: '', convidado: '', ddi: '+55', celular: '', email: '', dataEnvio: '',
-  });
-  protected readonly edicao = this.fb.nonNullable.group({ nome: '', observacao: '', email: '', dataEnvio: '', excecaoPrazoRsvp: false });
+  protected readonly envioForm = this.fb.nonNullable.group({ data: '' });
   protected readonly prazoForm = this.fb.nonNullable.group({ prazo: '' });
   protected readonly presencas = signal<PresencaEvento[]>([]);
   private readonly modalPrazo = viewChild.required<TemplateRef<unknown>>('modalPrazo');
   private readonly modalPresencas = viewChild.required<TemplateRef<unknown>>('modalPresencas');
+  private readonly modalEnvio = viewChild.required<TemplateRef<unknown>>('modalEnvio');
   private refPrazo: MatDialogRef<unknown> | null = null;
-  private excecaoOriginal = false;
+  private refEnvio: MatDialogRef<unknown> | null = null;
 
   ngOnInit(): void {
     const id = this.rota.snapshot.paramMap.get('id') ?? '';
@@ -392,9 +359,36 @@ export class ConvidadosPage implements OnInit {
     this.carregar();
   }
 
+  /** Novo convite pelo formulário único (SPEC-059), com a observação livre da organizadora. */
   protected abrirConvite(): void {
-    this.convite.reset({ ddi: '+55' });
-    this.refConvite = this.dialog.open(this.modalConvite(), DIALOG);
+    this.abrirFormulario(null).subscribe((pedido) => {
+      if (!pedido) return;
+      this.negocio.criarConvite(this.eventoId(), pedido).subscribe({
+        next: () => this.concluir('Convite criado.'),
+        error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+      });
+    });
+  }
+
+  /** Edição pelo mesmo formulário da criação (SPEC-059). */
+  protected abrirEdicao(convite: Convite): void {
+    this.abrirFormulario(conviteDoFormulario(convite)).subscribe((pedido) => {
+      if (!pedido) return;
+      this.negocio.atualizarConvite(convite.id, pedido).subscribe({
+        next: () => this.concluir('Convite salvo.'),
+        error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+      });
+    });
+  }
+
+  private abrirFormulario(convite: ConviteDoFormulario | null) {
+    const dados: ConviteFormDados = { convite, mostrarObservacao: true };
+    return this.dialog.open<ConviteFormDialog, ConviteFormDados, PedidoConvite>(ConviteFormDialog, { ...DIALOG, data: dados }).afterClosed();
+  }
+
+  private concluir(mensagem: string): void {
+    this.toast.sucesso(mensagem);
+    this.carregar();
   }
 
   protected classeSituacao(situacao: string): string {
@@ -402,31 +396,6 @@ export class ConvidadosPage implements OnInit {
     if (texto.startsWith('confirm')) return 'inline-block rounded font-semibold px-2 py-1 text-xs whitespace-nowrap bg-light-success text-success';
     if (texto.startsWith('não') || texto.startsWith('nao') || texto.startsWith('cancel')) return 'inline-block rounded font-semibold px-2 py-1 text-xs whitespace-nowrap bg-light-error text-error';
     return 'inline-block rounded font-semibold px-2 py-1 text-xs whitespace-nowrap bg-light-warning text-warning';
-  }
-
-  protected criarConvite(): void {
-    const valor = this.convite.getRawValue();
-    this.negocio.criarConvite(this.eventoId(), {
-      nome: valor.nome,
-      observacao: valor.observacao,
-      email: valor.email || null,
-      dataEnvio: valor.dataEnvio || null,
-      principal: valor.celular ? 0 : null,
-      convidados: [{
-        nome: valor.convidado,
-        ddi: valor.ddi,
-        celular: valor.celular,
-        situacao: 'Pendente',
-      }],
-    }).subscribe({
-      next: () => {
-        this.convite.reset({ ddi: '+55' });
-        this.refConvite?.close();
-        this.toast.sucesso('Convite criado.');
-        this.carregar();
-      },
-      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
-    });
   }
 
   protected principal(conviteId: string, convidadoId: string): void {
@@ -508,43 +477,6 @@ export class ConvidadosPage implements OnInit {
     });
   }
 
-  protected abrirEdicao(convite: Convite): void {
-    this.conviteEmEdicao = convite.id;
-    this.edicao.reset({ nome: convite.nome, observacao: convite.observacao ?? '', email: convite.email ?? '', dataEnvio: convite.dataEnvio ?? '', excecaoPrazoRsvp: convite.excecaoPrazoRsvp });
-    this.excecaoOriginal = convite.excecaoPrazoRsvp;
-    this.refEdicao = this.dialog.open(this.modalEdicao(), DIALOG);
-  }
-
-  protected salvarEdicao(): void {
-    const id = this.conviteEmEdicao;
-    if (!id) return;
-    const valor = this.edicao.getRawValue();
-    this.negocio.atualizarConvite(id, {
-      nome: valor.nome,
-      observacao: valor.observacao || null,
-      email: valor.email || null,
-      dataEnvio: valor.dataEnvio || null,
-    }).subscribe({
-      next: () => {
-        if (valor.excecaoPrazoRsvp === this.excecaoOriginal) {
-          this.concluirEdicao();
-          return;
-        }
-        this.negocio.definirExcecaoRsvp(id, valor.excecaoPrazoRsvp).subscribe({
-          next: () => this.concluirEdicao(),
-          error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
-        });
-      },
-      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
-    });
-  }
-
-  private concluirEdicao(): void {
-    this.refEdicao?.close();
-    this.toast.sucesso('Convite salvo.');
-    this.carregar();
-  }
-
   protected abrirPrazo(): void {
     this.prazoForm.reset({ prazo: this.lista()?.prazoRsvp ?? '' });
     this.refPrazo = this.dialog.open(this.modalPrazo(), DIALOG_PEQUENO);
@@ -555,6 +487,22 @@ export class ConvidadosPage implements OnInit {
       next: () => {
         this.refPrazo?.close();
         this.toast.sucesso('Prazo salvo.');
+        this.carregar();
+      },
+      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+    });
+  }
+
+  protected abrirEnvio(): void {
+    this.envioForm.reset({ data: this.lista()?.dataEnvioConvites ?? '' });
+    this.refEnvio = this.dialog.open(this.modalEnvio(), DIALOG_PEQUENO);
+  }
+
+  protected salvarEnvio(): void {
+    this.negocio.definirEnvioConvites(this.eventoId(), this.envioForm.getRawValue().data || null).subscribe({
+      next: () => {
+        this.refEnvio?.close();
+        this.toast.sucesso('Data de envio salva.');
         this.carregar();
       },
       error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
@@ -582,18 +530,29 @@ export class ConvidadosPage implements OnInit {
     });
   }
 
-  protected baixarPlanilha(): void {
-    this.negocio.planilha(this.eventoId()).subscribe({
-      next: (blob) => {
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = 'convidados.xlsx';
-        link.click();
-        URL.revokeObjectURL(url);
-      },
-      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
-    });
+  /** Instruções de preenchimento com o download do modelo dentro do modal (SPEC-059). */
+  protected abrirPlanilha(): void {
+    this.dialog.open(PlanilhaInstrucoesDialog, { ...DIALOG, data: this.eventoId() });
+  }
+
+  /** Convites nascem recolhidos; clicar mostra os convidados (SPEC-059). */
+  protected aberto(id: string): boolean {
+    return this.abertos().has(id);
+  }
+
+  protected alternar(id: string): void {
+    const abertos = new Set(this.abertos());
+    if (abertos.has(id)) abertos.delete(id);
+    else abertos.add(id);
+    this.abertos.set(abertos);
+  }
+
+  protected resumo(convidados: Convite['convidados']): string {
+    return resumoDosConvidados(convidados.map((pessoa) => pessoa.situacaoTela));
+  }
+
+  protected preenchidos(pessoa: Convite['convidados'][number]): string[] {
+    return dadosPreenchidos(pessoa);
   }
 
   protected importar(evento: Event): void {
@@ -609,4 +568,16 @@ export class ConvidadosPage implements OnInit {
       error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
     });
   }
+}
+
+/** Convite da organizadora no formato do formulário único (SPEC-059); o convidado principal vem primeiro. */
+export function conviteDoFormulario(convite: Convite): ConviteDoFormulario {
+  const convidados = [...convite.convidados].sort((a, b) => Number(b.principal) - Number(a.principal));
+  return {
+    nome: convite.nome,
+    email: convite.email,
+    observacao: convite.observacao,
+    excecaoPrazoRsvp: convite.excecaoPrazoRsvp,
+    convidados: convidados.map((pessoa) => ({ id: pessoa.id, nome: pessoa.nome, ddi: pessoa.ddi, celular: pessoa.celular })),
+  };
 }

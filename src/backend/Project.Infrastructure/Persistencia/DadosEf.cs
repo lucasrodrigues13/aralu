@@ -751,6 +751,12 @@ public sealed class DadosEf(AppDbContext banco) : IDados
 
     public Task SalvarConvitesAsync(CancellationToken ct) => banco.SaveChangesAsync(ct);
 
+    public Task IncluirConvidadoAsync(Convidado convidado, CancellationToken ct)
+    {
+        banco.Convidados.Add(convidado);
+        return Task.CompletedTask;
+    }
+
     public async Task RemoverConvidadoAsync(Convidado convidado, CancellationToken ct)
     {
         banco.Convidados.Remove(convidado);

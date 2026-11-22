@@ -33,7 +33,7 @@ Evento da conta em andamento.
 ### 6.1. Organizadora
 
 1. Na aba **Convidados**, o botão **Prazo de confirmação** abre um modal com uma data limite (opcional) e **Salvar**. Data vazia = sem prazo. A aba mostra o prazo definido e, passado o prazo, "Prazo encerrado".
-2. Passado o prazo, cada convite que ainda aceita resposta por exceção mostra "Exceção aberta". No modal de edição do convite, a marcação **"Aceitar confirmação pelo link após o prazo"** abre e fecha a exceção daquele convite.
+2. Passado o prazo, cada convite que ainda aceita resposta por exceção mostra "Exceção aberta". No modal de edição do convite, a marcação **"Aceitar confirmação pelo link após o prazo"** abre e fecha a exceção daquele convite. Desde a [SPEC-059](059-formulario-unico-de-convite.md), a marcação está no formulário único de convite, também ao criar e também no link do cliente.
 3. A organizadora confirma manualmente pela edição do convidado (situação), como já fazia; o prazo não bloqueia a edição dela.
 4. O botão **Lista de presença** abre um modal com os confirmados do evento: id, convidado, convite e quando confirmou.
 

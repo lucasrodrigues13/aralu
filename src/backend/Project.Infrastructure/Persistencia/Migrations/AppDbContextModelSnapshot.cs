@@ -409,9 +409,6 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateOnly?>("DataEnvio")
-                        .HasColumnType("date");
-
                     b.Property<string>("Email")
                         .HasColumnType("text");
 
@@ -788,6 +785,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<DateOnly?>("Data")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("DataEnvioConvites")
                         .HasColumnType("date");
 
                     b.Property<TimeOnly?>("Hora")
