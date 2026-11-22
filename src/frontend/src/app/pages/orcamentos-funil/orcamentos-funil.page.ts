@@ -250,23 +250,27 @@ export class RespostaManualDialog {
   imports: [MatButtonToggleModule, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatCheckboxModule, MatTooltipModule, GdDataPipe],
   template: `
     <mat-card class="cardWithShadow">
-      <div class="p-6 flex flex-wrap items-center justify-between gap-4">
-      <div><mat-card-title class="mb-0">Orçamentos</mat-card-title><mat-card-subtitle>Orçamentos comerciais do funil.</mat-card-subtitle></div>
-      <button mat-flat-button type="button" (click)="abrir()"><mat-icon>add</mat-icon> Novo orçamento</button>
-    </div>
+      <div class="p-6">
+        <div><mat-card-title class="mb-0">Orçamentos</mat-card-title><mat-card-subtitle>Orçamentos comerciais do funil.</mat-card-subtitle></div>
+      </div>
       <mat-card-content class="border-t border-border">
-      <div class="flex flex-wrap items-end justify-between gap-4 mb-6">
-        <mat-button-toggle-group [value]="situacao()" (change)="situacao.set($event.value); carregar()" aria-label="Situação">
-          @for (aba of abas; track aba.valor) {
-            <mat-button-toggle [value]="aba.valor">{{ aba.rotulo }}</mat-button-toggle>
-          }
-        </mat-button-toggle-group>
-        <div class="campo w-full sm:w-64">
-          <mat-label class="font-semibold mb-2 block">Buscar</mat-label>
-          <mat-form-field appearance="outline" class="w-full">
-          <mat-icon matIconPrefix>search</mat-icon>
-          <input matInput aria-label="Buscar" placeholder="Buscar" [value]="busca()" (input)="buscar($event)" />
-        </mat-form-field>
+      <div class="barra-lista">
+        <div class="barra-lista-filtros">
+          <mat-button-toggle-group [value]="situacao()" (change)="situacao.set($event.value); carregar()" aria-label="Situação">
+            @for (aba of abas; track aba.valor) {
+              <mat-button-toggle [value]="aba.valor">{{ aba.rotulo }}</mat-button-toggle>
+            }
+          </mat-button-toggle-group>
+          <div class="campo w-full sm:w-64">
+            <mat-label class="font-semibold mb-2 block">Buscar</mat-label>
+            <mat-form-field appearance="outline" class="w-full">
+            <mat-icon matIconPrefix>search</mat-icon>
+            <input matInput aria-label="Buscar" placeholder="Buscar" [value]="busca()" (input)="buscar($event)" />
+          </mat-form-field>
+          </div>
+        </div>
+        <div class="barra-lista-acoes">
+          <button mat-flat-button type="button" (click)="abrir()"><mat-icon>add</mat-icon> Novo orçamento</button>
         </div>
       </div>
       @if (lista().length === 0) {

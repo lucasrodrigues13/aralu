@@ -131,7 +131,7 @@ function hojeLocal(): string {
           @if (parcelasDestaque().length === 0) {
             <p class="text-center text-muted py-10">Nenhuma parcela atrasada ou vencendo nos próximos 7 dias.</p>
           } @else {
-          <div class="relative overflow-auto">
+          <div class="relative">
             <table class="tabela">
               <thead>
                 <tr>
@@ -221,7 +221,7 @@ function hojeLocal(): string {
         @if (visiveis().length === 0) {
           <p class="text-center text-muted py-10">Nenhum contrato para mostrar.</p>
         } @else {
-          <div class="relative overflow-auto">
+          <div class="relative">
             <table class="tabela tabela-contratos">
               <thead>
                 <tr>

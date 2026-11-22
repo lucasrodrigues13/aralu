@@ -78,30 +78,32 @@ export class CriarModeloDialog {
   imports: [MatCardModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatTooltipModule],
   template: `
     <mat-card class="cardWithShadow">
-      <div class="p-6 flex flex-wrap items-center justify-between gap-4">
-      <div>
+      <div class="p-6">
+        <div>
         <mat-card-title class="mb-0">Modelos de evento</mat-card-title>
         <mat-card-subtitle>Biblioteca de modelos para criar eventos.</mat-card-subtitle>
+        </div>
       </div>
-      <div class="flex flex-wrap gap-2">
-        <button mat-stroked-button type="button" (click)="importar()">
+      <mat-card-content class="border-t border-border">
+      <div class="barra-lista">
+        <div class="barra-lista-filtros">
+          <div class="campo w-full sm:w-64">
+            <mat-label class="font-semibold mb-2 block">Buscar</mat-label>
+            <mat-form-field appearance="outline" class="w-full">
+            <mat-icon matIconPrefix>search</mat-icon>
+            <input matInput aria-label="Buscar" placeholder="Buscar por nome" [value]="busca()" (input)="buscar($event)" />
+          </mat-form-field>
+          </div>
+        </div>
+        <div class="barra-lista-acoes">
+          <button mat-stroked-button type="button" (click)="importar()">
           <mat-icon>upload</mat-icon>
           Importar modelo
-        </button>
-        <button mat-flat-button type="button" (click)="criar()">
+          </button>
+          <button mat-flat-button type="button" (click)="criar()">
           <mat-icon>add</mat-icon>
           Novo Modelo de Evento
-        </button>
-      </div>
-    </div>
-      <mat-card-content class="border-t border-border">
-      <div class="flex flex-wrap items-end justify-between gap-4 mb-6">
-        <div class="campo w-full sm:w-64">
-          <mat-label class="font-semibold mb-2 block">Buscar</mat-label>
-          <mat-form-field appearance="outline" class="w-full">
-          <mat-icon matIconPrefix>search</mat-icon>
-          <input matInput aria-label="Buscar" placeholder="Buscar por nome" [value]="busca()" (input)="buscar($event)" />
-        </mat-form-field>
+          </button>
         </div>
       </div>
       @if (modelos().length === 0) {

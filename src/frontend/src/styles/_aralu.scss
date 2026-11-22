@@ -229,6 +229,94 @@ html {
   line-height: 37px;
 }
 
+// ---------------------------------------------------------------- Barra de lista
+// Filtros à esquerda e ações à direita, fixa logo abaixo do topo enquanto a lista rola.
+// Fica no começo do mat-card-content, rente às bordas do cartão.
+.barra-lista {
+  position: sticky;
+  top: 70px; // altura do .topbar, que também é fixo
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin: -24px -24px 24px;
+  padding: 16px 24px;
+  background: var(--mat-card-elevated-container-color, var(--mat-sys-surface));
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+}
+
+.barra-lista-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px;
+  min-width: 0;
+}
+
+.barra-lista-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-left: auto;
+}
+
+// Quando os filtros ficam num cartão próprio acima da lista (ex.: quadro de oportunidades), o cartão inteiro é a barra.
+.barra-lista-cartao {
+  position: sticky;
+  top: 70px;
+  z-index: 5;
+}
+
+// Barra com muitos filtros: no celular os campos empilham e ocupariam a tela, então só fica fixa da largura média em diante.
+@media (max-width: 767px) {
+  .barra-lista-alta {
+    position: static;
+  }
+}
+
+// Dentro de abas (mat-tab-group com .abas-barra-lista): as abas cortam o conteúdo com overflow hidden/auto,
+// o que impede o sticky. "clip" corta igual, mas não cria área de rolagem, então a barra continua fixa.
+.abas-barra-lista .mat-mdc-tab-body-wrapper,
+.abas-barra-lista .mat-mdc-tab-body.mat-mdc-tab-body-active,
+.abas-barra-lista .mat-mdc-tab-body-active .mat-mdc-tab-body-content {
+  overflow: clip !important;
+}
+
+// O corte das abas não deixa a barra avançar sobre o recuo lateral do cartão.
+.abas-barra-lista .barra-lista {
+  margin: -24px 0 24px;
+  padding: 16px 0;
+}
+
+// Os campos de busca não precisam do espaço de mensagem embaixo dentro da barra.
+.barra-lista .mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+
+// ---------------------------------------------------------------- Listas sem rolagem horizontal
+// Nenhuma lista precisa rolar para o lado: a tabela ocupa a largura do cartão e o texto quebra.
+.pageWrapper table,
+.aralu-dialog table {
+  width: 100%;
+  max-width: 100%;
+}
+
+.pageWrapper :is(th, td),
+.aralu-dialog :is(th, td) {
+  overflow-wrap: anywhere;
+}
+
+.pageWrapper th,
+.aralu-dialog th,
+.mat-mdc-table .mat-mdc-header-cell,
+.tabela th {
+  white-space: normal !important;
+}
+
 // ---------------------------------------------------------------- Tabela HTML no desenho do mat-table do template
 .tabela {
   width: 100%;

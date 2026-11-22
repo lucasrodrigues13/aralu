@@ -38,7 +38,7 @@ export const EXEMPLO_PLANILHA = [
         <li>Não mude o cabeçalho. Só a aba <strong>Convidados</strong> é importada; a aba <strong>Instruções</strong> repete estas orientações.</li>
       </ol>
       <p class="font-semibold mb-2">Exemplo que vem no modelo: dois convites, um com três convidados</p>
-      <div class="relative overflow-auto">
+      <div class="relative">
         <table class="tabela" aria-label="Exemplo de preenchimento">
           <thead><tr><th>Nome do convite *</th><th>DDI</th><th>Telefone</th><th>Nome dos convidados *</th><th>Principal *</th><th>Gênero</th><th>Faixa etária</th></tr></thead>
           <tbody>

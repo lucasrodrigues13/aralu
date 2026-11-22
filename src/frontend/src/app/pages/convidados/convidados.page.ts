@@ -51,7 +51,7 @@ export { cardsPorSituacao } from '../../shared/convite-lista';
         (presencas)="abrirPresencas()"
         (planilha)="abrirPlanilha()"
         (importar)="abrirImportacoes()">
-        <mat-button-toggle-group antesDoFiltro [value]="visao()" (change)="visao.set($event.value)" aria-label="Visão da lista" class="mb-6">
+        <mat-button-toggle-group antesDoFiltro [value]="visao()" (change)="visao.set($event.value)" aria-label="Visão da lista">
           <mat-button-toggle value="convite">Por convite</mat-button-toggle>
           <mat-button-toggle value="convidado">Por convidado</mat-button-toggle>
         </mat-button-toggle-group>
@@ -63,7 +63,7 @@ export { cardsPorSituacao } from '../../shared/convite-lista';
               Crie o primeiro convite ou importe a planilha.
             </div>
           } @else if (visao() === 'convite') {
-            <div class="relative overflow-auto">
+            <div class="relative">
               <table class="tabela">
                 <thead>
                   <tr>
@@ -126,7 +126,7 @@ export { cardsPorSituacao } from '../../shared/convite-lista';
               </table>
             </div>
           } @else {
-            <div class="relative overflow-auto">
+            <div class="relative">
               <table class="tabela">
                 <thead>
                   <tr><th>Convidado</th><th>Convite</th><th>Situação</th><th>Mesa</th></tr>

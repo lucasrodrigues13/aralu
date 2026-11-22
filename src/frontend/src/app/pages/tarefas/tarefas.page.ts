@@ -104,7 +104,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
         @if (visiveis().length === 0) {
           <p class="text-center text-muted py-10">Não há tarefa.</p>
         } @else {
-          <div class="relative overflow-auto">
+          <div class="relative">
           <table mat-table class="min-w-full" [dataSource]="visiveis()" multiTemplateDataRows>
             <ng-container matColumnDef="expandir">
               <th mat-header-cell *matHeaderCellDef class="coluna-expandir"><span class="sr-only">Checklist</span></th>

@@ -105,7 +105,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
         @if (secoesEvento().length === 0) {
           <p class="text-center text-muted py-10">Não há tarefa para mostrar.</p>
         } @else {
-          <div class="relative overflow-auto">
+          <div class="relative">
             <table class="tabela agrupada">
               <thead>
                 <tr>

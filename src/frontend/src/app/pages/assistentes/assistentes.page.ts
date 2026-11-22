@@ -17,20 +17,22 @@ import { MatTooltipModule } from '@angular/material/tooltip';
   imports: [MatCardModule, MatButtonModule, MatIconModule, MatTooltipModule],
   template: `
     <mat-card class="cardWithShadow">
-      <div class="p-6 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <mat-card-title class="mb-0">Assistentes</mat-card-title>
-          <mat-card-subtitle>Quem trabalha com você, com login próprio.</mat-card-subtitle>
-        </div>
-        <button mat-flat-button type="button" (click)="convidar()"><mat-icon>person_add</mat-icon>Convidar assistente</button>
+      <div class="p-6">
+        <mat-card-title class="mb-0">Assistentes</mat-card-title>
+        <mat-card-subtitle>Quem trabalha com você, com login próprio.</mat-card-subtitle>
       </div>
       <mat-card-content class="border-t border-border">
+        <div class="barra-lista">
+          <div class="barra-lista-acoes">
+            <button mat-flat-button type="button" (click)="convidar()"><mat-icon>person_add</mat-icon> Convidar assistente</button>
+          </div>
+        </div>
         @if (carregando()) {
           <p class="text-center text-muted py-10">Carregando...</p>
         } @else if (itens().length === 0) {
           <p class="text-center text-muted py-10">Nenhuma assistente ainda. Convide a primeira.</p>
         } @else {
-          <div class="overflow-x-auto">
+          <div>
             <table class="w-full text-left">
               <thead>
                 <tr class="text-muted text-sm">

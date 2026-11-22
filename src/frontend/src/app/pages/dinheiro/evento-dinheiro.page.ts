@@ -50,7 +50,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
           @if (d.pagamentosFornecedores.length === 0) {
             <p class="text-center text-muted py-10">Nenhum pagamento. Eles aparecem ao contratar um fornecedor na aba Fornecedores.</p>
           } @else {
-            <div class="relative overflow-auto">
+            <div class="relative">
               <table class="tabela">
                 <thead>
                   <tr><th></th><th>Serviço</th><th>Fornecedor</th><th class="text-end!">Valor</th><th>Situação</th><th>Comprovante</th><th class="text-end! whitespace-nowrap">Ações</th></tr>

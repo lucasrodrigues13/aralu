@@ -154,36 +154,40 @@ export class TarefaFunilDialog implements OnInit {
   imports: [ReactiveFormsModule, CampoDataComponent, MatButtonToggleModule, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatSelectModule, GdDataPipe, MatTooltipModule],
   template: `
     <mat-card class="cardWithShadow">
-      <div class="p-6 flex flex-wrap items-center justify-between gap-4">
-      <div><mat-card-title class="mb-0">Tarefas do funil</mat-card-title><mat-card-subtitle>Reuniões, ligações, e-mails e tarefas comerciais.</mat-card-subtitle></div>
-      <button mat-flat-button type="button" (click)="abrir()"><mat-icon>add</mat-icon> Adicionar tarefa</button>
-    </div>
+      <div class="p-6">
+        <div><mat-card-title class="mb-0">Tarefas do funil</mat-card-title><mat-card-subtitle>Reuniões, ligações, e-mails e tarefas comerciais.</mat-card-subtitle></div>
+      </div>
       <mat-card-content class="border-t border-border">
-      <div class="flex flex-wrap items-end justify-between gap-4 mb-6">
-        <mat-button-toggle-group [value]="completa()" (change)="completa.set($event.value); carregar()" aria-label="Situação das tarefas">
-          <mat-button-toggle [value]="false">Incompletas</mat-button-toggle>
-          <mat-button-toggle [value]="true">Completas</mat-button-toggle>
-        </mat-button-toggle-group>
-        <div class="campo w-full sm:w-48">
-          <mat-label class="font-semibold mb-2 block">Tipo</mat-label>
-          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
-          <mat-select [attr.aria-label]="'Tipo'" [value]="tipo()" (selectionChange)="tipo.set($event.value); carregar()">
-            <mat-option value="">Todos</mat-option>
-            @for (t of tipos; track t.valor) { <mat-option [value]="t.valor">{{ t.rotulo }}</mat-option> }
-          </mat-select>
-        </mat-form-field>
+      <div class="barra-lista">
+        <div class="barra-lista-filtros">
+          <mat-button-toggle-group [value]="completa()" (change)="completa.set($event.value); carregar()" aria-label="Situação das tarefas">
+            <mat-button-toggle [value]="false">Incompletas</mat-button-toggle>
+            <mat-button-toggle [value]="true">Completas</mat-button-toggle>
+          </mat-button-toggle-group>
+          <div class="campo w-full sm:w-48">
+            <mat-label class="font-semibold mb-2 block">Tipo</mat-label>
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
+            <mat-select [attr.aria-label]="'Tipo'" [value]="tipo()" (selectionChange)="tipo.set($event.value); carregar()">
+              <mat-option value="">Todos</mat-option>
+              @for (t of tipos; track t.valor) { <mat-option [value]="t.valor">{{ t.rotulo }}</mat-option> }
+            </mat-select>
+          </mat-form-field>
+          </div>
+          <div class="campo w-full sm:w-52">
+            <mat-label class="font-semibold mb-2 block">Responsável</mat-label>
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
+            <mat-select [attr.aria-label]="'Responsável'" [value]="responsavel()" (selectionChange)="responsavel.set($event.value); carregar()">
+              <mat-option value="">Todos</mat-option>
+              @for (o of opcoes(); track o.valor) { <mat-option [value]="o.valor">{{ o.rotulo }}</mat-option> }
+            </mat-select>
+          </mat-form-field>
+          </div>
+          <div class="w-full sm:w-44"><app-campo-data [formControl]="prazoDe" rotulo="Prazo de" /></div>
+          <div class="w-full sm:w-44"><app-campo-data [formControl]="prazoAte" rotulo="Prazo até" /></div>
         </div>
-        <div class="campo w-full sm:w-52">
-          <mat-label class="font-semibold mb-2 block">Responsável</mat-label>
-          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
-          <mat-select [attr.aria-label]="'Responsável'" [value]="responsavel()" (selectionChange)="responsavel.set($event.value); carregar()">
-            <mat-option value="">Todos</mat-option>
-            @for (o of opcoes(); track o.valor) { <mat-option [value]="o.valor">{{ o.rotulo }}</mat-option> }
-          </mat-select>
-        </mat-form-field>
+        <div class="barra-lista-acoes">
+          <button mat-flat-button type="button" (click)="abrir()"><mat-icon>add</mat-icon> Adicionar tarefa</button>
         </div>
-        <div class="w-full sm:w-44"><app-campo-data [formControl]="prazoDe" rotulo="Prazo de" /></div>
-        <div class="w-full sm:w-44"><app-campo-data [formControl]="prazoAte" rotulo="Prazo até" /></div>
       </div>
       @if (lista().length === 0) {
         <p class="text-center text-muted py-10">Não há tarefa.</p>

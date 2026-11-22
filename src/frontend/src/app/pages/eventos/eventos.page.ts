@@ -77,22 +77,17 @@ import { MatTooltipModule } from '@angular/material/tooltip';
     }
 
     <mat-card class="cardWithShadow">
-      <div class="p-6 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <mat-card-title class="mb-0">Eventos</mat-card-title>
-          <mat-card-subtitle>Acompanhe os eventos da assessoria.</mat-card-subtitle>
-        </div>
-        <button mat-flat-button type="button" (click)="abrir()">
-          <mat-icon>add</mat-icon>
-          Novo evento
-        </button>
+      <div class="p-6">
+        <mat-card-title class="mb-0">Eventos</mat-card-title>
+        <mat-card-subtitle>Acompanhe os eventos da assessoria.</mat-card-subtitle>
       </div>
       <mat-card-content class="border-t border-border">
+        <div class="barra-lista barra-lista-alta">
+          <div class="barra-lista-filtros flex-col items-start!">
         <mat-button-toggle-group
           [value]="abaAtual()"
           (change)="trocarAba($event.value)"
           aria-label="Situação dos eventos"
-          class="mb-6"
         >
           @for (aba of abas; track aba.valor; let indice = $index) {
             <mat-button-toggle [value]="indice">{{ aba.rotulo }}</mat-button-toggle>
@@ -100,7 +95,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
         </mat-button-toggle-group>
 
         @if (!ehEstatisticas()) {
-          <form class="flex flex-wrap items-end gap-4 mb-6" [formGroup]="filtro" (ngSubmit)="carregar()">
+          <form class="flex flex-wrap items-end gap-4" [formGroup]="filtro" (ngSubmit)="carregar()">
             <div class="campo w-full sm:w-64">
               <mat-label class="font-semibold mb-2 block">Nome</mat-label>
               <mat-form-field appearance="outline" class="w-full">
@@ -131,6 +126,11 @@ import { MatTooltipModule } from '@angular/material/tooltip';
             </div>
           </form>
         }
+          </div>
+          <div class="barra-lista-acoes">
+            <button mat-flat-button type="button" (click)="abrir()"><mat-icon>add</mat-icon> Novo evento</button>
+          </div>
+        </div>
 
         @if (ehEstatisticas()) {
           @if (estatisticas(); as stats) {
@@ -214,7 +214,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
         } @else if (eventos().length === 0) {
           <p class="text-center text-muted py-10">Não há evento para mostrar.</p>
         } @else {
-          <div class="relative overflow-auto">
+          <div class="relative">
             <table mat-table [dataSource]="eventos()" class="min-w-full">
               <ng-container matColumnDef="nome">
                 <th mat-header-cell *matHeaderCellDef class="font-semibold text-sm pl-0!">Evento</th>

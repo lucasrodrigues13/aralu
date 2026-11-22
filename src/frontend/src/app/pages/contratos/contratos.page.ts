@@ -291,21 +291,25 @@ export class ContratoDialog {
   imports: [MatCardModule, MatButtonModule, MatIconModule, MatFormFieldModule, MatInputModule, GdDataPipe, MatTooltipModule],
   template: `
     <mat-card class="cardWithShadow">
-      <div class="p-6 flex flex-wrap items-center justify-between gap-4">
-      <div>
+      <div class="p-6">
+        <div>
         <mat-card-title class="mb-0">Modelos de Contrato</mat-card-title>
         <mat-card-subtitle>Modelos dos contratos que você envia aos clientes, para orçamentos aprovados. Os campos puxam os dados do contratante, do evento, do orçamento aprovado e da sua empresa.</mat-card-subtitle>
+        </div>
       </div>
-      <button mat-flat-button type="button" (click)="abrir()"><mat-icon>add</mat-icon> Novo modelo</button>
-    </div>
       <mat-card-content class="border-t border-border">
-      <div class="flex flex-wrap items-end justify-between gap-4 mb-6">
-        <div class="campo w-full sm:w-64">
-          <mat-label class="font-semibold mb-2 block">Buscar</mat-label>
-          <mat-form-field appearance="outline" class="w-full">
-          <mat-icon matIconPrefix>search</mat-icon>
-          <input matInput aria-label="Buscar" placeholder="Buscar por nome" [value]="busca()" (input)="busca.set($any($event.target).value)" />
-        </mat-form-field>
+      <div class="barra-lista">
+        <div class="barra-lista-filtros">
+          <div class="campo w-full sm:w-64">
+            <mat-label class="font-semibold mb-2 block">Buscar</mat-label>
+            <mat-form-field appearance="outline" class="w-full">
+            <mat-icon matIconPrefix>search</mat-icon>
+            <input matInput aria-label="Buscar" placeholder="Buscar por nome" [value]="busca()" (input)="busca.set($any($event.target).value)" />
+          </mat-form-field>
+          </div>
+        </div>
+        <div class="barra-lista-acoes">
+          <button mat-flat-button type="button" (click)="abrir()"><mat-icon>add</mat-icon> Novo modelo</button>
         </div>
       </div>
       @if (visiveis().length === 0) {

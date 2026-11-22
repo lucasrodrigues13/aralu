@@ -30,7 +30,7 @@ import { montarContratosDoEvento } from './contratos-do-evento';
             liberado, o que o cliente subir também aparece aqui.
           </p>
         } @else {
-          <div class="overflow-x-auto">
+          <div>
             <table class="w-full text-sm">
               <thead>
                 <tr class="text-left text-muted">

@@ -230,15 +230,9 @@ const CLASSE_ETAPA: Record<string, string> = {
   template: `
     <app-evento-abas [eventoId]="id" />
     <mat-card class="cardWithShadow">
-    <div class="p-6 flex flex-wrap items-center justify-between gap-4">
-      <div>
-        <mat-card-title class="mb-0">Fornecedores</mat-card-title>
-        <mat-card-subtitle>{{ evento()?.nome }} · serviços, negociação e pagamentos.</mat-card-subtitle>
-      </div>
-      <div class="flex flex-wrap gap-2">
-        <button mat-stroked-button type="button" (click)="adicionarServico()"><mat-icon>playlist_add</mat-icon> Adicionar serviço</button>
-        <button mat-flat-button type="button" (click)="vincular()"><mat-icon>add</mat-icon> Adicionar fornecedor</button>
-      </div>
+    <div class="p-6">
+      <mat-card-title class="mb-0">Fornecedores</mat-card-title>
+      <mat-card-subtitle>{{ evento()?.nome }} · serviços, negociação e pagamentos.</mat-card-subtitle>
     </div>
     @if (graficos(); as g) {
       <section class="px-6 pb-6" aria-label="Orçamento do evento">
@@ -295,7 +289,8 @@ const CLASSE_ETAPA: Record<string, string> = {
     }
     <mat-card-content class="border-t border-border">
     @if (evento(); as atual) {
-          <div class="flex flex-wrap items-end gap-4 mb-6">
+          <div class="barra-lista">
+           <div class="barra-lista-filtros">
             <div class="campo w-full sm:w-64">
               <mat-label class="font-semibold mb-2 block">Buscar</mat-label>
               <mat-form-field appearance="outline" class="w-full">
@@ -313,6 +308,11 @@ const CLASSE_ETAPA: Record<string, string> = {
                 </mat-select>
               </mat-form-field>
             </div>
+           </div>
+           <div class="barra-lista-acoes">
+             <button mat-stroked-button type="button" (click)="adicionarServico()"><mat-icon>playlist_add</mat-icon> Adicionar serviço</button>
+             <button mat-flat-button type="button" (click)="vincular()"><mat-icon>add</mat-icon> Adicionar fornecedor</button>
+           </div>
           </div>
 
         @if (atual.servicos.length === 0) {
@@ -323,7 +323,7 @@ const CLASSE_ETAPA: Record<string, string> = {
         } @else if (linhas().length === 0) {
           <p class="text-center text-muted py-10">Nada encontrado com esses filtros.</p>
         } @else {
-          <div class="relative overflow-auto">
+          <div class="relative">
             <table class="tabela">
               <thead>
                 <tr>

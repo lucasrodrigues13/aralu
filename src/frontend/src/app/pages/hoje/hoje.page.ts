@@ -193,7 +193,7 @@ function lerPulados(): string[] {
             @if (d.cobrancas.length === 0) {
               <p class="text-center text-muted py-10">Nenhuma parcela de contrato vencida ou vencendo nos próximos 7 dias.</p>
             } @else {
-              <div class="relative overflow-auto mt-4">
+              <div class="relative mt-4">
                 <table class="tabela">
                   <thead>
                     <tr><th>Contrato</th><th>Parcela</th><th class="text-end!">Saldo</th><th class="text-end!">Situação</th></tr>
@@ -225,7 +225,7 @@ function lerPulados(): string[] {
           @if (d.carteira.length === 0) {
             <p class="text-center text-muted py-10">Nenhum evento em andamento.</p>
           } @else {
-            <div class="relative overflow-auto mt-4">
+            <div class="relative mt-4">
               <table class="tabela">
                 <thead>
                   <tr><th>Evento</th><th>Data</th><th>Tarefas feitas</th><th>Responderam</th><th>Atenção</th></tr>
@@ -265,7 +265,7 @@ function lerPulados(): string[] {
           <mat-card-content>
             <mat-card-title>Tarefas sem responsável</mat-card-title>
             <mat-card-subtitle>Tarefas abertas de assistentes que foram removidas</mat-card-subtitle>
-            <div class="relative overflow-auto mt-4">
+            <div class="relative mt-4">
               <table class="tabela">
                 <thead>
                   <tr><th>Tarefa</th><th>Prazo</th><th>Era de</th><th>Novo responsável</th></tr>
@@ -308,7 +308,7 @@ function lerPulados(): string[] {
           @if (d.retornosFunil.length === 0) {
             <p class="text-center text-muted py-10">Nenhum lead para retornar hoje.</p>
           } @else {
-            <div class="relative overflow-auto mt-4">
+            <div class="relative mt-4">
               <table class="tabela">
                 <thead>
                   <tr><th>Lead</th><th>Estágio</th><th class="text-end!">Situação</th></tr>

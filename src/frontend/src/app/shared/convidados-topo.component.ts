@@ -36,7 +36,7 @@ import { MascaraDirective } from './mascara.directive';
     </div>
 
     <mat-card class="cardWithShadow">
-      <div class="p-6 flex flex-wrap items-center justify-between gap-4">
+      <div class="p-6">
         <div>
           <mat-card-title class="mb-0">Convites e convidados</mat-card-title>
           <mat-card-subtitle>Lista do evento e o RSVP de cada convite.</mat-card-subtitle>
@@ -55,18 +55,12 @@ import { MascaraDirective } from './mascara.directive';
             }
           </p>
         </div>
-        <div class="flex flex-wrap gap-2">
-          <button mat-stroked-button type="button" (click)="envio.emit()"><mat-icon>send</mat-icon> Data de envio</button>
-          <button mat-stroked-button type="button" (click)="prazo.emit()"><mat-icon>event_busy</mat-icon> Prazo de confirmação</button>
-          <button mat-stroked-button type="button" (click)="presencas.emit()"><mat-icon>fact_check</mat-icon> Lista de presença</button>
-          <button mat-stroked-button type="button" (click)="planilha.emit()"><mat-icon>description</mat-icon> Planilha padrão</button>
-          <button mat-stroked-button type="button" (click)="importar.emit()"><mat-icon>upload</mat-icon> Importar</button>
-          <button mat-flat-button type="button" (click)="novoConvite.emit()"><mat-icon>add</mat-icon> Novo convite</button>
-        </div>
       </div>
       <mat-card-content class="border-t border-border">
+        <div class="barra-lista barra-lista-alta">
+          <div class="barra-lista-filtros flex-col items-start!">
         <ng-content select="[antesDoFiltro]" />
-        <form class="flex flex-wrap items-end gap-4 mb-6" [formGroup]="filtro" (ngSubmit)="emitirFiltro()">
+        <form class="flex flex-wrap items-end gap-4" [formGroup]="filtro" (ngSubmit)="emitirFiltro()">
           <div class="campo w-full sm:w-64">
             <mat-label class="font-semibold mb-2 block">Convite</mat-label>
             <mat-form-field appearance="outline" class="w-full">
@@ -102,6 +96,16 @@ import { MascaraDirective } from './mascara.directive';
           <mat-checkbox formControlName="somenteConfirmados" class="mb-1">Só confirmados</mat-checkbox>
           <button mat-flat-button type="submit">Filtrar</button>
         </form>
+          </div>
+          <div class="barra-lista-acoes">
+            <button mat-stroked-button type="button" (click)="envio.emit()"><mat-icon>send</mat-icon> Data de envio</button>
+            <button mat-stroked-button type="button" (click)="prazo.emit()"><mat-icon>event_busy</mat-icon> Prazo de confirmação</button>
+            <button mat-stroked-button type="button" (click)="presencas.emit()"><mat-icon>fact_check</mat-icon> Lista de presença</button>
+            <button mat-stroked-button type="button" (click)="planilha.emit()"><mat-icon>description</mat-icon> Planilha padrão</button>
+            <button mat-stroked-button type="button" (click)="importar.emit()"><mat-icon>upload</mat-icon> Importar</button>
+            <button mat-flat-button type="button" (click)="novoConvite.emit()"><mat-icon>add</mat-icon> Novo convite</button>
+          </div>
+        </div>
         <ng-content />
       </mat-card-content>
     </mat-card>

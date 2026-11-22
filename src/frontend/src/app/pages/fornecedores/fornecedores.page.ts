@@ -21,26 +21,25 @@ import { MatTooltipModule } from '@angular/material/tooltip';
   imports: [MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatTabsModule, MatTooltipModule],
   template: `
     <mat-card class="cardWithShadow">
-      <div class="p-6 flex flex-wrap items-center justify-between gap-4">
-      <div>
+      <div class="p-6">
         <mat-card-title class="mb-0">Serviços e Fornecedores</mat-card-title>
         <mat-card-subtitle>Catálogo da conta e lista de serviços.</mat-card-subtitle>
       </div>
-      <button mat-flat-button type="button" (click)="abrirFornecedor()">
-        <mat-icon>add</mat-icon>
-        Novo fornecedor
-      </button>
-    </div>
       <mat-card-content class="border-t border-border">
-      <mat-tab-group dynamicHeight>
+      <mat-tab-group dynamicHeight class="abas-barra-lista">
         <mat-tab label="Fornecedores">
-          <div class="flex flex-wrap items-end justify-between gap-4 mb-6">
-            <div class="campo w-full sm:w-64">
-              <mat-label class="font-semibold mb-2 block">Buscar</mat-label>
-              <mat-form-field appearance="outline" class="w-full">
-              <mat-icon matIconPrefix>search</mat-icon>
-              <input matInput aria-label="Buscar" placeholder="Buscar por nome" [value]="buscaForn()" (input)="buscarForn($event)" />
-            </mat-form-field>
+          <div class="barra-lista">
+            <div class="barra-lista-filtros">
+              <div class="campo w-full sm:w-64">
+                <mat-label class="font-semibold mb-2 block">Buscar</mat-label>
+                <mat-form-field appearance="outline" class="w-full">
+                  <mat-icon matIconPrefix>search</mat-icon>
+                  <input matInput aria-label="Buscar" placeholder="Buscar por nome" [value]="buscaForn()" (input)="buscarForn($event)" />
+                </mat-form-field>
+              </div>
+            </div>
+            <div class="barra-lista-acoes">
+              <button mat-flat-button type="button" (click)="abrirFornecedor()"><mat-icon>add</mat-icon> Novo fornecedor</button>
             </div>
           </div>
           @if (fornecedores().length === 0) {
@@ -71,14 +70,18 @@ import { MatTooltipModule } from '@angular/material/tooltip';
           }
         </mat-tab>
         <mat-tab label="Serviços da conta">
-          <div class="flex flex-wrap items-end justify-between gap-4 mb-6">
-            <button mat-stroked-button type="button" (click)="criarServico()"><mat-icon>add</mat-icon> Adicionar serviço</button>
-            <div class="campo w-full sm:w-64">
-              <mat-label class="font-semibold mb-2 block">Buscar</mat-label>
-              <mat-form-field appearance="outline" class="w-full">
-              <mat-icon matIconPrefix>search</mat-icon>
-              <input matInput aria-label="Buscar" placeholder="Buscar" [value]="buscaServ()" (input)="buscarServ($event)" />
-            </mat-form-field>
+          <div class="barra-lista">
+            <div class="barra-lista-filtros">
+              <div class="campo w-full sm:w-64">
+                <mat-label class="font-semibold mb-2 block">Buscar</mat-label>
+                <mat-form-field appearance="outline" class="w-full">
+                  <mat-icon matIconPrefix>search</mat-icon>
+                  <input matInput aria-label="Buscar" placeholder="Buscar" [value]="buscaServ()" (input)="buscarServ($event)" />
+                </mat-form-field>
+              </div>
+            </div>
+            <div class="barra-lista-acoes">
+              <button mat-flat-button type="button" (click)="criarServico()"><mat-icon>add</mat-icon> Adicionar serviço</button>
             </div>
           </div>
           @if (servicos().length === 0) {

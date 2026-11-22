@@ -702,20 +702,12 @@ export function textoDias(dias: number): string {
   ],
   template: `
     <mat-card class="cardWithShadow">
-      <div class="p-6 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <mat-card-title class="mb-0">Oportunidades</mat-card-title>
-          <mat-card-subtitle>
-            {{ emAberto().qtd }} {{ emAberto().qtd === 1 ? 'lead em aberto' : 'leads em aberto' }}
-            · {{ emAberto().valor | gdDinheiro }} em negociação
-          </mat-card-subtitle>
-        </div>
-        <div class="flex flex-wrap gap-2">
-          <button mat-stroked-button type="button" (click)="gerenciarEstagios()"><mat-icon>view_column</mat-icon> Gerenciar estágios</button>
-          <button mat-stroked-button type="button" (click)="copiarLinkLead()"><mat-icon>link</mat-icon> Link do lead</button>
-          <button mat-stroked-button type="button" (click)="exportar()"><mat-icon>download</mat-icon> Exportar</button>
-          <button mat-flat-button type="button" (click)="abrir()"><mat-icon>add</mat-icon> Nova oportunidade</button>
-        </div>
+      <div class="p-6">
+        <mat-card-title class="mb-0">Oportunidades</mat-card-title>
+        <mat-card-subtitle>
+          {{ emAberto().qtd }} {{ emAberto().qtd === 1 ? 'lead em aberto' : 'leads em aberto' }}
+          · {{ emAberto().valor | gdDinheiro }} em negociação
+        </mat-card-subtitle>
       </div>
     </mat-card>
 
@@ -734,9 +726,9 @@ export function textoDias(dias: number): string {
       }
     </div>
 
-    <mat-card class="cardWithShadow">
-      <mat-card-content>
-        <form class="flex flex-wrap items-end gap-4" [formGroup]="filtros" (ngSubmit)="carregar()">
+    <mat-card class="cardWithShadow barra-lista-cartao barra-lista-alta">
+      <mat-card-content class="flex flex-wrap items-end justify-between gap-4">
+        <form class="barra-lista-filtros" [formGroup]="filtros" (ngSubmit)="carregar()">
           <div class="campo w-full sm:w-64">
             <mat-label class="font-semibold mb-2 block">Buscar</mat-label>
             <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
@@ -771,6 +763,12 @@ export function textoDias(dias: number): string {
             }
           </div>
         </form>
+        <div class="barra-lista-acoes">
+          <button mat-stroked-button type="button" (click)="gerenciarEstagios()"><mat-icon>view_column</mat-icon> Gerenciar estágios</button>
+          <button mat-stroked-button type="button" (click)="copiarLinkLead()"><mat-icon>link</mat-icon> Link do lead</button>
+          <button mat-stroked-button type="button" (click)="exportar()"><mat-icon>download</mat-icon> Exportar</button>
+          <button mat-flat-button type="button" (click)="abrir()"><mat-icon>add</mat-icon> Nova oportunidade</button>
+        </div>
       </mat-card-content>
     </mat-card>
 

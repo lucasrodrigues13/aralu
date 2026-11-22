@@ -20,24 +20,28 @@ import { MatTooltipModule } from '@angular/material/tooltip';
   imports: [MatCardModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatTooltipModule],
   template: `
     <mat-card class="cardWithShadow">
-      <div class="p-6 flex flex-wrap items-center justify-between gap-4">
-      <div>
+      <div class="p-6">
+        <div>
         <mat-card-title class="mb-0">Clientes</mat-card-title>
         <mat-card-subtitle>Contatos da assessoria e os eventos vinculados.</mat-card-subtitle>
+        </div>
       </div>
-      <button mat-flat-button type="button" (click)="abrir()">
-        <mat-icon>add</mat-icon>
-        Novo cliente
-      </button>
-    </div>
       <mat-card-content class="border-t border-border">
-      <div class="flex flex-wrap items-end justify-between gap-4 mb-6">
-        <div class="campo w-full sm:w-64">
-          <mat-label class="font-semibold mb-2 block">Buscar</mat-label>
-          <mat-form-field appearance="outline" class="w-full">
-          <mat-icon matIconPrefix>search</mat-icon>
-          <input matInput aria-label="Buscar" placeholder="Buscar por nome" [value]="busca()" (input)="buscar($event)" />
-        </mat-form-field>
+      <div class="barra-lista">
+        <div class="barra-lista-filtros">
+          <div class="campo w-full sm:w-64">
+            <mat-label class="font-semibold mb-2 block">Buscar</mat-label>
+            <mat-form-field appearance="outline" class="w-full">
+            <mat-icon matIconPrefix>search</mat-icon>
+            <input matInput aria-label="Buscar" placeholder="Buscar por nome" [value]="busca()" (input)="buscar($event)" />
+          </mat-form-field>
+          </div>
+        </div>
+        <div class="barra-lista-acoes">
+          <button mat-flat-button type="button" (click)="abrir()">
+          <mat-icon>add</mat-icon>
+          Novo cliente
+          </button>
         </div>
       </div>
       @if (clientes().length === 0) {

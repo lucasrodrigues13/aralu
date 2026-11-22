@@ -33,7 +33,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
             Este contrato não tem parcelas. Elas vêm do orçamento aceito: defina as parcelas no orçamento antes de gerar o contrato.
           </p>
         } @else {
-          <div class="relative overflow-auto">
+          <div class="relative">
             <table class="tabela">
               <thead>
                 <tr>
