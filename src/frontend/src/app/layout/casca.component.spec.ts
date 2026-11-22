@@ -88,12 +88,12 @@ describe('CascaComponent', () => {
 
   it('ordena os grupos com Modelos por último e põe os modelos do funil em Modelos (SPEC-034)', () => {
     const raiz = montar(false).nativeElement as HTMLElement;
-    const grupos = Array.from(raiz.querySelectorAll('.nav-caption')).map((e) => e.textContent?.trim());
+    const grupos = Array.from(raiz.querySelectorAll('.nav-caption .rotulo-grupo')).map((e) => e.textContent?.trim());
     expect(grupos).toEqual(['Principal', 'Gestão de Eventos', 'Agenda', 'Funil de Vendas', 'Modelos']);
 
     const itensDe = (rotulo: string) => {
       const itens: string[] = [];
-      let atual = Array.from(raiz.querySelectorAll('.nav-caption')).find((e) => e.textContent?.trim() === rotulo)?.nextElementSibling;
+      let atual = Array.from(raiz.querySelectorAll('.nav-caption')).find((e) => e.querySelector('.rotulo-grupo')?.textContent?.trim() === rotulo)?.nextElementSibling;
       while (atual && !atual.classList.contains('nav-caption')) {
         itens.push(atual.textContent?.trim() ?? '');
         atual = atual.nextElementSibling;
@@ -104,6 +104,27 @@ describe('CascaComponent', () => {
     expect(itensDe('Modelos').some((t) => t.includes('Modelo de Orçamento'))).toBe(true);
     expect(itensDe('Funil de Vendas').some((t) => t.includes('Modelos de Serviços') || t.includes('Modelo de Orçamento'))).toBe(false);
     expect(itensDe('Funil de Vendas').some((t) => t.includes('Modelos de contrato'))).toBe(false);
+  });
+
+  it('recolhe grupos e lembra o estado no localStorage ao montar de novo', () => {
+    localStorage.removeItem('aralu.menu.gruposFechados');
+    const fixture = montar(false);
+    const raiz = fixture.nativeElement as HTMLElement;
+    const botao = (rotulo: string) =>
+      Array.from(raiz.querySelectorAll<HTMLButtonElement>('button.nav-caption')).find((b) => b.textContent?.includes(rotulo))!;
+
+    expect(raiz.textContent).toContain('Minha Agenda');
+    botao('Agenda').click();
+    fixture.detectChanges();
+    expect(raiz.textContent).not.toContain('Minha Agenda');
+    expect(botao('Agenda').getAttribute('aria-expanded')).toBe('false');
+
+    TestBed.resetTestingModule();
+    const novo = montar(false).nativeElement as HTMLElement;
+    expect(novo.textContent).not.toContain('Minha Agenda');
+    expect(novo.textContent).toContain('Hoje');
+
+    localStorage.removeItem('aralu.menu.gruposFechados');
   });
 
   it('em tela larga não mostra Novo evento na barra superior', () => {

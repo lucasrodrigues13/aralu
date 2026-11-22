@@ -33,6 +33,17 @@ interface GrupoMenu {
   itens: ItemMenu[];
 }
 
+const CHAVE_GRUPOS_FECHADOS = 'aralu.menu.gruposFechados';
+
+function lerGruposFechados(): ReadonlySet<string> {
+  try {
+    const bruto = JSON.parse(localStorage.getItem(CHAVE_GRUPOS_FECHADOS) ?? '[]');
+    return new Set(Array.isArray(bruto) ? bruto.filter((r): r is string => typeof r === 'string') : []);
+  } catch {
+    return new Set();
+  }
+}
+
 function telaEstreita(): boolean {
   return typeof matchMedia === 'function' && matchMedia('(max-width: 959px)').matches;
 }
@@ -69,8 +80,16 @@ function telaEstreita(): boolean {
           <div class="flex-1 overflow-y-auto">
             <mat-nav-list class="sidebar-list" aria-label="Menu principal">
               @for (grupo of grupos(); track grupo.rotulo) {
-                <div mat-subheader class="nav-caption">{{ grupo.rotulo }}</div>
-                @for (item of grupo.itens; track item.rotulo) {
+                <button
+                  type="button"
+                  class="nav-caption flex w-full items-center justify-between bg-transparent border-0 cursor-pointer text-left"
+                  [attr.aria-expanded]="!grupoFechado(grupo.rotulo)"
+                  (click)="alternarGrupo(grupo.rotulo)"
+                >
+                  <span class="rotulo-grupo">{{ grupo.rotulo }}</span>
+                  <mat-icon class="shrink-0">{{ grupoFechado(grupo.rotulo) ? 'expand_more' : 'expand_less' }}</mat-icon>
+                </button>
+                @for (item of grupoFechado(grupo.rotulo) ? [] : grupo.itens; track item.rotulo) {
                   @if (item.rota && !item.emBreve) {
                     <a
                       mat-list-item
@@ -184,6 +203,26 @@ export class CascaComponent {
   protected readonly menuAberto = signal(false);
 
   protected readonly empresa = signal('');
+
+  /** Grupos recolhidos; lembrados só neste navegador (localStorage), sem backend. */
+  private readonly gruposFechados = signal<ReadonlySet<string>>(lerGruposFechados());
+
+  protected grupoFechado(rotulo: string): boolean {
+    return this.gruposFechados().has(rotulo);
+  }
+
+  protected alternarGrupo(rotulo: string): void {
+    const proximo = new Set(this.gruposFechados());
+    if (!proximo.delete(rotulo)) {
+      proximo.add(rotulo);
+    }
+    this.gruposFechados.set(proximo);
+    try {
+      localStorage.setItem(CHAVE_GRUPOS_FECHADOS, JSON.stringify([...proximo]));
+    } catch {
+      // Armazenamento indisponível: o estado vale só nesta sessão.
+    }
+  }
 
   private readonly todosOsGrupos: GrupoMenu[] = [
     {
