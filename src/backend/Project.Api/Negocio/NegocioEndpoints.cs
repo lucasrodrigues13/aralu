@@ -54,6 +54,7 @@ public static class NegocioEndpoints
         MapearBiblioteca(api, "/modelos-mensagens", Mensagens, CriarMensagem, Mensagem, AtualizarMensagem, ExcluirMensagem, ClonarMensagem);
         api.MapGet("/servicos-conta", ServicosConta).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/servicos-conta", CriarServicoConta).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/servicos-conta/em-massa", CriarServicosContaEmMassa).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapDelete("/servicos-conta/{id:guid}", ExcluirServicoConta).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapGet("/fornecedores", Fornecedores).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/fornecedores", CriarFornecedor).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
@@ -443,6 +444,9 @@ public static class NegocioEndpoints
 
     private static Task<IResult> CriarServicoConta(NovoServicoConta pedido, ClaimsPrincipal usuario, FornecedorServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.CriarServicoAsync(conta, pedido, ct)));
+
+    private static Task<IResult> CriarServicosContaEmMassa(NovosServicosConta pedido, ClaimsPrincipal usuario, FornecedorServico servico, CancellationToken ct) =>
+        ComConta(usuario, conta => De(servico.CriarServicosAsync(conta, pedido, ct)));
 
     private static Task<IResult> ExcluirServicoConta(Guid id, ClaimsPrincipal usuario, FornecedorServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.ExcluirServicoAsync(conta, id, ct)));

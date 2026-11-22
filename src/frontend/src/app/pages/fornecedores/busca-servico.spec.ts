@@ -1,5 +1,5 @@
 import { ServicoConta } from '../../core/negocio.client';
-import { incluirServico, marcarServico, servicoCombina } from './busca-servico';
+import { incluirServico, marcarServico, nomesDaLista, servicoCombina } from './busca-servico';
 
 const banda: ServicoConta = { id: '1', nome: 'Banda', padrao: false };
 const fotografia: ServicoConta = { id: '2', nome: 'Fotografia', padrao: true };
@@ -16,6 +16,11 @@ describe('busca de serviço do fornecedor', () => {
     const lista = incluirServico([fotografia], banda);
     expect(lista.map((s) => s.id)).toEqual(['1', '2']);
     expect(incluirServico(lista, banda)).toBe(lista);
+  });
+
+  it('separa a lista por vírgula, sem vazios nem repetidos', () => {
+    expect(nomesDaLista(' Banda ,fotografia,, Buffet  infantil, banda ,')).toEqual(['Banda', 'fotografia', 'Buffet infantil']);
+    expect(nomesDaLista(' , ')).toEqual([]);
   });
 
   it('marca o serviço sem perder os já marcados nem duplicar', () => {

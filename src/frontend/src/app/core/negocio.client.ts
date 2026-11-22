@@ -784,6 +784,11 @@ export class NegocioClient {
     return this.http.post<ServicoConta>(`${this.base}/api/v1/servicos-conta`, { nome });
   }
 
+  /** Cadastro em massa: `nomes` separados por vírgula. */
+  criarServicosConta(nomes: string) {
+    return this.http.post<ServicoConta[]>(`${this.base}/api/v1/servicos-conta/em-massa`, { nomes });
+  }
+
   excluirServicoConta(id: string) {
     return this.http.delete(`${this.base}/api/v1/servicos-conta/${id}`);
   }

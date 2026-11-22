@@ -18,6 +18,22 @@ export function incluirServico(lista: ServicoConta[], servico: ServicoConta): Se
   return [...lista, servico].sort((a, b) => a.nome.localeCompare(b.nome, 'pt'));
 }
 
+/** Nomes da lista separada por vírgula: sem espaços nas pontas, sem vazios e sem repetidos (ignorando maiúsculas). */
+export function nomesDaLista(texto: string): string[] {
+  const vistos = new Set<string>();
+  return texto
+    .split(',')
+    .map((nome) => nome.trim().replace(/\s+/g, ' '))
+    .filter((nome) => {
+      const chave = nome.toLowerCase();
+      if (!nome || vistos.has(chave)) {
+        return false;
+      }
+      vistos.add(chave);
+      return true;
+    });
+}
+
 export function marcarServico(ids: string[], id: string): string[] {
   return ids.includes(id) ? ids : [...ids, id];
 }

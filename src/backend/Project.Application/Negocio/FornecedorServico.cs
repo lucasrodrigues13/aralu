@@ -9,6 +9,9 @@ public sealed record ServicoContaLeitura(Guid Id, string Nome, bool Padrao);
 
 public sealed record NovoServicoConta(string? Nome);
 
+/// <summary>Cadastro em massa: nomes separados por vírgula.</summary>
+public sealed record NovosServicosConta(string? Nomes);
+
 public sealed record TelefoneFornecedorPedido(string? Responsavel, string? Ddi, string? Numero, bool? Movel);
 
 public sealed record EmailFornecedorPedido(string? Endereco);
@@ -161,6 +164,36 @@ public sealed class FornecedorServico(IDados dados, Arquivos.IArmazenamentoArqui
         };
         await dados.InserirServicoContaAsync(servico, ct);
         return Resultado<ServicoContaLeitura>.Sucesso(new ServicoContaLeitura(servico.Id, servico.Nome, servico.Padrao));
+    }
+
+    public async Task<Resultado<IReadOnlyList<ServicoContaLeitura>>> CriarServicosAsync(string contaId, NovosServicosConta pedido, CancellationToken ct)
+    {
+        var nomes = (pedido.Nomes ?? "")
+            .Split(',')
+            .Select(Domain.Comum.Texto.Limpo)
+            .OfType<string>()
+            .DistinctBy(nome => nome.ToLowerInvariant())
+            .ToArray();
+        if (nomes.Length == 0)
+        {
+            return Resultado<IReadOnlyList<ServicoContaLeitura>>.Erro(Codigos.Validacao, "Informe ao menos um nome de serviço.");
+        }
+
+        var longo = nomes.FirstOrDefault(nome => nome.Length > 200);
+        if (longo is not null)
+        {
+            return Resultado<IReadOnlyList<ServicoContaLeitura>>.Erro(Codigos.Validacao, "O nome do serviço pode ter no máximo 200 caracteres.");
+        }
+
+        var criados = new List<ServicoContaLeitura>(nomes.Length);
+        foreach (var nome in nomes)
+        {
+            // Nomes já validados acima: a criação individual não falha (e reaproveita os existentes).
+            var resultado = await CriarServicoAsync(contaId, new NovoServicoConta(nome), ct);
+            criados.Add(resultado.Valor!);
+        }
+
+        return Resultado<IReadOnlyList<ServicoContaLeitura>>.Sucesso(criados);
     }
 
     public async Task<Resultado<bool>> ExcluirServicoAsync(string contaId, Guid id, CancellationToken ct)

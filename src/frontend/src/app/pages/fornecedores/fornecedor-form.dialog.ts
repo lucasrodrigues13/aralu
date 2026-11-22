@@ -502,13 +502,13 @@ export class FornecedorFormDialog implements OnInit {
       return;
     }
     this.form.controls.servicoContaIds.setValue(valor.filter((id) => id !== NOVO_SERVICO));
-    this.dialog.open(NovoServicoDialog, DIALOG_PEQUENO).afterClosed().subscribe((servico?: ServicoConta) => {
-      if (!servico) {
+    this.dialog.open(NovoServicoDialog, DIALOG_PEQUENO).afterClosed().subscribe((criados?: ServicoConta[]) => {
+      if (!criados?.length) {
         return;
       }
-      this.servicos.update((lista) => incluirServico(lista, servico));
+      this.servicos.update((lista) => criados.reduce(incluirServico, lista));
       const controle = this.form.controls.servicoContaIds;
-      controle.setValue(marcarServico(controle.value ?? [], servico.id));
+      controle.setValue(criados.reduce((ids, servico) => marcarServico(ids, servico.id), controle.value ?? []));
     });
   }
 

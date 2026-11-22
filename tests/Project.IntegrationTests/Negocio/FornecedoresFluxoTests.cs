@@ -95,6 +95,27 @@ public class FornecedoresFluxoTests
         Assert.Equal(HttpStatusCode.NotFound, (await outra.GetAsync($"/api/v1/eventos/{eventoId}/budget")).StatusCode);
     }
 
+    [Fact]
+    public async Task Servicos_em_massa_pela_lista_separada_por_virgula()
+    {
+        var dono = await Entrar();
+        var existente = await Ler(await dono.PostAsJsonAsync("/api/v1/servicos-conta", new { nome = "Banda" }));
+
+        var criados = await Ler(await dono.PostAsJsonAsync("/api/v1/servicos-conta/em-massa", new { nomes = " Fotografia ,banda,, Buffet , fotografia" }));
+        var nomes = criados.EnumerateArray().Select(item => item.GetProperty("nome").GetString()!).ToArray();
+        Assert.Equal(["Fotografia", "Banda", "Buffet"], nomes);
+        Assert.Equal(existente.GetProperty("id").GetGuid(), criados[1].GetProperty("id").GetGuid());
+
+        var catalogo = await Ler(await dono.GetAsync("/api/v1/servicos-conta"));
+        foreach (var nome in nomes)
+        {
+            Assert.Single(catalogo.EnumerateArray(), item => item.GetProperty("nome").GetString() == nome);
+        }
+
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PostAsJsonAsync("/api/v1/servicos-conta/em-massa", new { nomes = " , ," })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PostAsJsonAsync("/api/v1/servicos-conta/em-massa", new { nomes = $"Ok, {new string('x', 201)}" })).StatusCode);
+    }
+
     private async Task<HttpClient> Entrar()
     {
         var email = $"forn-{Guid.NewGuid():N}@aralu.test";
