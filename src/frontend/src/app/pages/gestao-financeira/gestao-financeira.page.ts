@@ -173,7 +173,7 @@ function hojeLocal(): string {
           <p class="text-center text-muted py-10">Nenhum contrato para mostrar.</p>
         } @else {
           <div class="relative overflow-auto">
-            <table class="tabela">
+            <table class="tabela tabela-contratos">
               <thead>
                 <tr>
                   <th>Cliente</th>
@@ -215,7 +215,16 @@ function hojeLocal(): string {
       </mat-card-content>
     </mat-card>
   `,
-  styles: `.valor { font-weight: 600; white-space: nowrap; }`,
+  styles: `
+    .valor { font-weight: 600; white-space: nowrap; }
+    /* Colunas fora do Cliente mais compactas, para a tabela caber sem rolagem horizontal. */
+    .tabela-contratos th:not(:first-child),
+    .tabela-contratos td:not(:first-child) { padding-left: 8px; padding-right: 8px; }
+    .tabela-contratos th:last-child,
+    .tabela-contratos td:last-child { padding-right: 0; }
+    .tabela-contratos th, .tabela-contratos td { font-size: 13px; }
+    .tabela-contratos td:first-child, .tabela-contratos th:first-child { font-size: 14px; padding-right: 12px; }
+  `,
 })
 export class GestaoFinanceiraPage implements OnInit {
   private readonly negocio = inject(NegocioClient);

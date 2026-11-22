@@ -36,7 +36,7 @@ import { CampoDinheiroComponent } from '../../shared/campo-dinheiro';
 import { ContratanteCamposComponent, contratantePedido, grupoContratante } from '../../shared/contratante-campos';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { deDataParaIso, deIsoParaData } from '../../shared/data';
-import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
+import { DIALOG, DIALOG_LARGO, DIALOG_PEQUENO } from '../../shared/dialog';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { GdDinheiroPipe } from '../../shared/gd-dinheiro.pipe';
 import { grupoLocal, localPedido, LocalCamposComponent } from '../../shared/local-campos';
@@ -54,7 +54,7 @@ import { EstagiosFunilDialog } from './estagios-funil.dialog';
     <mat-dialog-content>
       <form class="grid grid-cols-1 gap-4" [formGroup]="form">
         <h3>Contato</h3>
-        <div class="campo">
+        <div class="campo inteira">
           <mat-label class="font-semibold mb-2 block">Nome da oportunidade</mat-label>
           <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Nome'" matInput formControlName="nome" /></mat-form-field>
         </div>
@@ -87,7 +87,14 @@ import { EstagiosFunilDialog } from './estagios-funil.dialog';
                 <mat-label class="font-semibold mb-2 block">E-mail</mat-label>
                 <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'E-mail'" matInput formControlName="email" /></mat-form-field>
               </div>
-              <mat-checkbox formControlName="contratante" (change)="marcarContratante(i, $event.checked)">É o contratante (quem assina o contrato)</mat-checkbox>
+              <div class="contato-rodape">
+                <mat-checkbox formControlName="contratante" (change)="marcarContratante(i, $event.checked)">É o contratante (quem assina o contrato)</mat-checkbox>
+                @if (i > 0) {
+                  <button mat-button type="button" class="text-error" (click)="removerContato(i)" [attr.aria-label]="'Remover contato ' + (i + 1)">
+                    <mat-icon>delete</mat-icon> Remover contato
+                  </button>
+                }
+              </div>
             </div>
           }
         </div>
@@ -103,7 +110,7 @@ import { EstagiosFunilDialog } from './estagios-funil.dialog';
           </mat-select>
         </mat-form-field>
         </div>
-        <div>
+        <div class="meia">
           <app-campo-data formControlName="dataPrevista" rotulo="Data prevista" />
           @if (dataOcupada()) {
             <div class="aviso-repetido bg-light-warning mt-2" role="status">
@@ -220,6 +227,16 @@ import { EstagiosFunilDialog } from './estagios-funil.dialog';
     h4 { margin: 4px 0 0; font-size: 0.875rem; font-weight: 600; }
     .selo-ok { font-size: 16px; width: 16px; height: 16px; vertical-align: -3px; }
     .contato { display: grid; gap: 8px; }
+    .contato + .contato { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--color-border); }
+    .contato-rodape { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+    /* No PC o formulário usa duas colunas; títulos, avisos e blocos compostos ocupam a linha inteira. */
+    @media (min-width: 768px) {
+      form { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 16px; }
+      form > * { grid-column: 1 / -1; }
+      form > .campo:not(.inteira), form > app-campo-data, form > app-campo-hora, form > app-campo-dinheiro, form > .meia { grid-column: auto; }
+      .contato { grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 16px; }
+      .contato-rodape { grid-column: 1 / -1; }
+    }
     .aviso-repetido { display: flex; gap: 10px; align-items: flex-start; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; font-size: 0.875rem; }
     .aviso-repetido p { margin: 0 0 4px; }
     .aviso-repetido a { text-decoration: underline; font-weight: 600; color: inherit; }
@@ -373,6 +390,12 @@ export class OportunidadeDialog implements OnInit {
 
   protected ehDescarte(): boolean {
     return this.estagios().find((e) => e.id === this.form.controls.estagio.value)?.tipo === 'Descartado';
+  }
+
+  /** Remove um contato adicionado; o primeiro nunca sai, para a oportunidade ter sempre ao menos um. */
+  protected removerContato(indice: number): void {
+    if (indice < 1 || indice >= this.contatos.length) return;
+    this.contatos.removeAt(indice);
   }
 
   protected addContato(): void {
@@ -1095,13 +1118,13 @@ export class OportunidadesPage implements OnInit {
       this.abrirPorId(item.id);
       return;
     }
-    this.dialog.open(OportunidadeDialog, { ...DIALOG, data: null }).afterClosed().subscribe((ok) => ok && this.carregar());
+    this.dialog.open(OportunidadeDialog, { ...DIALOG_LARGO, data: null }).afterClosed().subscribe((ok) => ok && this.carregar());
   }
 
   private abrirPorId(id: string): void {
     this.negocio.oportunidade(id).subscribe({
       next: (detalhe) =>
-        this.dialog.open(OportunidadeDialog, { ...DIALOG, data: detalhe }).afterClosed().subscribe((ok) => ok && this.carregar()),
+        this.dialog.open(OportunidadeDialog, { ...DIALOG_LARGO, data: detalhe }).afterClosed().subscribe((ok) => ok && this.carregar()),
       error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
     });
   }

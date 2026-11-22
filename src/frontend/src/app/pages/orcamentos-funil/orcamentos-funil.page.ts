@@ -136,7 +136,7 @@ export class OrcamentoFunilDialog implements OnInit {
       </div>
       <div class="flex flex-wrap gap-2">
         <button mat-stroked-button type="button" (click)="copiar()"><mat-icon>content_copy</mat-icon> Copiar link</button>
-        <a mat-flat-button [href]="whatsapp()" target="_blank" rel="noopener"><mat-icon>chat</mat-icon> Enviar pelo WhatsApp</a>
+        <button mat-flat-button type="button" (click)="abrirWhatsapp()"><mat-icon>chat</mat-icon> Enviar pelo WhatsApp</button>
       </div>
       <p class="text-xs text-muted mt-4">O envio por e-mail chega quando o canal de e-mail estiver pronto.</p>
     </mat-dialog-content>
@@ -160,9 +160,9 @@ export class EnviarPropostaDialog implements OnInit {
     });
   }
 
-  protected whatsapp(): string {
+  protected abrirWhatsapp(): void {
     const c = this.contato();
-    return whatsappProposta(c?.telefone, c?.nome, this.link);
+    window.open(whatsappProposta(c?.telefone, c?.nome, this.link), '_blank', 'noopener');
   }
 
   protected copiar(): void {
@@ -348,6 +348,10 @@ export class OrcamentosFunilPage implements OnInit {
   }
 
   protected parcelar(item: OrcamentoFunil): void {
+    if (item.situacao !== 'EmAndamento') {
+      this.toast.erro('Só orçamentos em andamento podem ser parcelados.');
+      return;
+    }
     if (!item.valor || item.valor <= 0) {
       this.toast.erro('Informe o valor do orçamento antes de parcelar.');
       return;

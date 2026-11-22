@@ -11,7 +11,7 @@ import { NegocioClient, OrcamentoFunil } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { CampoDataComponent } from '../../shared/campo-data';
 import { CampoDinheiroComponent } from '../../shared/campo-dinheiro';
-import { deDataParaIso } from '../../shared/data';
+import { deDataParaIso, deIsoParaData } from '../../shared/data';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { GdDinheiroPipe } from '../../shared/gd-dinheiro.pipe';
 
@@ -91,6 +91,26 @@ export class ParcelasOrcamentoDialog {
     valorEntrada: this.fb.control<number | null>(null),
     dataEntrada: this.fb.control<Date | null>(null),
   });
+
+  constructor() {
+    this.preencherComParcelamentoAtual();
+  }
+
+  /** Reabre com o parcelamento já gerado, para editar em vez de começar do zero. */
+  private preencherComParcelamentoAtual(): void {
+    const atuais = this.dados.parcelas ?? [];
+    if (atuais.length === 0) return;
+    const entrada = atuais.find((p) => p.entrada);
+    const regulares = atuais.filter((p) => !p.entrada).sort((a, b) => a.vencimento.localeCompare(b.vencimento));
+    this.form.patchValue({
+      quantidadeParcelas: regulares.length || 1,
+      primeiraParcela: deIsoParaData(regulares[0]?.vencimento),
+      comEntrada: !!entrada,
+      baseEntrada: 'Valor',
+      valorEntrada: entrada?.valor ?? null,
+      dataEntrada: deIsoParaData(entrada?.vencimento),
+    });
+  }
 
   protected salvar(): void {
     const v = this.form.getRawValue();
