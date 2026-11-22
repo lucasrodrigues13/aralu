@@ -1,6 +1,6 @@
 # 004. Convites e RSVP
 
-**Status: aprovada.** O código segue esta spec. O item 6 do fluxo foi revisto no card #22 (SPEC-010 seção 18). **Grupos de convite e transfer não existem mais, nem no banco nem na API (SPEC-036, 21/11/2026):** as menções a grupo e a transfer abaixo são histórico e não valem.
+**Status: aprovada.** O prazo de confirmação, a exceção por convite e a lista de presença estão na [SPEC-054](054-rsvp-com-prazo.md). O código segue esta spec. O item 6 do fluxo foi revisto no card #22 (SPEC-010 seção 18). **Grupos de convite e transfer não existem mais, nem no banco nem na API (SPEC-036, 21/11/2026):** as menções a grupo e a transfer abaixo são histórico e não valem.
 
 ## 1. Identificador e nome
 

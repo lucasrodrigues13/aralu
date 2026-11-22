@@ -412,6 +412,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<Guid>("EventoId")
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("ExcecaoPrazoRsvp")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Nome")
                         .IsRequired()
                         .HasColumnType("text");
@@ -437,6 +440,34 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .IsUnique();
 
                     b.ToTable("Convites");
+                });
+
+            modelBuilder.Entity("Project.Domain.Convidados.PresencaEvento", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("ConfirmadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ConvidadoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ConviteId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("EventoId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConvidadoId")
+                        .IsUnique();
+
+                    b.HasIndex("EventoId");
+
+                    b.ToTable("PresencasEvento", (string)null);
                 });
 
             modelBuilder.Entity("Project.Domain.Dinheiro.ContratoFornecedor", b =>
@@ -778,6 +809,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<decimal?>("OrcamentoEstimado")
                         .HasPrecision(12, 2)
                         .HasColumnType("numeric(12,2)");
+
+                    b.Property<DateOnly?>("PrazoRsvp")
+                        .HasColumnType("date");
 
                     b.Property<string>("PrimeiroNome")
                         .HasColumnType("text");
@@ -2737,6 +2771,15 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.HasOne("Project.Domain.Eventos.Evento", null)
                         .WithMany()
                         .HasForeignKey("EventoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Project.Domain.Convidados.PresencaEvento", b =>
+                {
+                    b.HasOne("Project.Domain.Convidados.Convidado", null)
+                        .WithMany()
+                        .HasForeignKey("ConvidadoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

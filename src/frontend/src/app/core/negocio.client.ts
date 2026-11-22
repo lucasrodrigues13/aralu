@@ -466,6 +466,8 @@ export interface Convite {
   email: string | null;
   /** Data de envio do convite, `aaaa-mm-dd` (SPEC-052). */
   dataEnvio: string | null;
+  /** O link deste convite aceita resposta após o prazo (SPEC-054). */
+  excecaoPrazoRsvp: boolean;
 }
 
 export interface ListaConvites {
@@ -474,6 +476,19 @@ export interface ListaConvites {
   porFaixa: { rotulo: string; quantidade: number }[];
   porCusto: { rotulo: string; quantidade: number }[];
   mesas: string[];
+  /** Data limite de confirmação, `aaaa-mm-dd`, ou nulo (SPEC-054). */
+  prazoRsvp: string | null;
+  prazoEncerrado: boolean;
+}
+
+/** Entrada da lista de presença: um convidado confirmado, com id único (SPEC-054). */
+export interface PresencaEvento {
+  id: string;
+  conviteId: string;
+  convite: string;
+  convidadoId: string;
+  convidado: string;
+  confirmadoEm: string;
 }
 
 export const PAPEIS = [
@@ -1014,9 +1029,28 @@ export class NegocioClient {
   }
 
   abrirRsvp(token: string) {
-    return this.http.get<{ convite: string; convidados: { id: string; nome: string; situacao: string }[] }>(
-      `${this.base}/api/v1/rsvp/${token}`,
+    return this.http.get<{
+      convite: string;
+      convidados: { id: string; nome: string; situacao: string }[];
+      /** Prazo vencido sem exceção: a página mostra "convite expirado" (SPEC-054). */
+      expirado: boolean;
+      prazo: string | null;
+    }>(`${this.base}/api/v1/rsvp/${token}`);
+  }
+
+  definirPrazoRsvp(eventoId: string, prazo: string | null) {
+    return this.http.put<{ prazo: string | null; encerrado: boolean }>(
+      `${this.base}/api/v1/eventos/${eventoId}/prazo-rsvp`,
+      { prazo },
     );
+  }
+
+  definirExcecaoRsvp(conviteId: string, liberada: boolean) {
+    return this.http.put<Convite>(`${this.base}/api/v1/convites/${conviteId}/excecao-rsvp`, { liberada });
+  }
+
+  presencas(eventoId: string) {
+    return this.http.get<PresencaEvento[]>(`${this.base}/api/v1/eventos/${eventoId}/presencas`);
   }
 
   responderRsvp(

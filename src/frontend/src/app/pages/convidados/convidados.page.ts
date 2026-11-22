@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import { Component, computed, inject, OnInit, signal, TemplateRef, viewChild } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -16,7 +17,7 @@ import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { MascaraDirective } from '../../shared/mascara.directive';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
-import { Convite, ListaConvites, NegocioClient } from '../../core/negocio.client';
+import { Convite, ListaConvites, NegocioClient, PresencaEvento } from '../../core/negocio.client';
 import { EventoAbasComponent } from '../eventos/evento-abas.component';
 
 const SITUACOES = [
@@ -33,7 +34,7 @@ export function cardsPorSituacao(porSituacao: { rotulo: string; quantidade: numb
 
 @Component({
   selector: 'app-convidados',
-  imports: [MatCardModule, MatButtonToggleModule, ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, EventoAbasComponent, MatSelectModule, MatCheckboxModule, MatIconModule, MatDialogModule, MascaraDirective, GdDataPipe],
+  imports: [MatCardModule, MatButtonToggleModule, ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, EventoAbasComponent, MatSelectModule, MatCheckboxModule, MatIconModule, MatDialogModule, MascaraDirective, GdDataPipe, DatePipe],
   template: `
     @if (!eventoId()) {
       <mat-card class="cardWithShadow">
@@ -66,8 +67,17 @@ export function cardsPorSituacao(porSituacao: { rotulo: string; quantidade: numb
           <div>
             <mat-card-title class="mb-0">Convites e convidados</mat-card-title>
             <mat-card-subtitle>Lista do evento e o RSVP de cada convite.</mat-card-subtitle>
+            <p class="text-sm text-muted mt-1 mb-0" data-teste="prazo-rsvp">
+              @if (lista()?.prazoRsvp; as prazo) {
+                Confirmar presença até {{ prazo | gdData }}@if (lista()?.prazoEncerrado) { · <strong>Prazo encerrado</strong> }
+              } @else {
+                Sem prazo para confirmar presença.
+              }
+            </p>
           </div>
           <div class="flex flex-wrap gap-2">
+            <button mat-stroked-button type="button" (click)="abrirPrazo()"><mat-icon>event_busy</mat-icon> Prazo de confirmação</button>
+            <button mat-stroked-button type="button" (click)="abrirPresencas()"><mat-icon>fact_check</mat-icon> Lista de presença</button>
             <button mat-stroked-button type="button" (click)="baixarPlanilha()"><mat-icon>download</mat-icon> Planilha padrão</button>
             <button mat-stroked-button type="button" (click)="arquivo.click()"><mat-icon>upload</mat-icon> Importar</button>
             <input #arquivo type="file" accept=".xlsx,.xls" hidden (change)="importar($event)" />
@@ -139,6 +149,7 @@ export function cardsPorSituacao(porSituacao: { rotulo: string; quantidade: numb
                         <strong>{{ item.nome }}</strong>
                         @if (item.email) { <span class="block text-xs text-muted">{{ item.email }}</span> }
                         <span class="block text-xs text-muted">{{ item.dataEnvio ? 'Envio em ' + (item.dataEnvio | gdData) : 'Envio não definido' }}</span>
+                        @if (item.excecaoPrazoRsvp) { <span class="block text-xs text-muted">Exceção aberta após o prazo</span> }
                         <span class="block text-xs text-muted">@if (item.acessada) { acessada } @if (item.respondida) { @if (item.acessada) { · } respondida }</span>
                       </td>
                       <td>{{ item.telefone || '—' }}</td>
@@ -215,11 +226,57 @@ export function cardsPorSituacao(porSituacao: { rotulo: string; quantidade: numb
             <mat-label class="font-semibold mb-2 block">Data de envio do convite</mat-label>
             <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Data de envio do convite'" matInput type="date" formControlName="dataEnvio" /></mat-form-field>
           </div>
+          <div class="sm:col-span-2">
+            <mat-checkbox formControlName="excecaoPrazoRsvp">Aceitar confirmação pelo link após o prazo</mat-checkbox>
+          </div>
         </form>
       </mat-dialog-content>
       <mat-dialog-actions>
         <button mat-stroked-button type="button" mat-dialog-close>Cancelar</button>
         <button mat-flat-button type="submit" form="edicao-form">Salvar</button>
+      </mat-dialog-actions>
+    </ng-template>
+
+    <ng-template #modalPrazo>
+      <h2 mat-dialog-title>Prazo de confirmação</h2>
+      <p class="text-muted text-sm px-6 -mt-2 mb-4">Depois desta data o link do convite mostra que expirou. Deixe vazio para não ter prazo.</p>
+      <mat-dialog-content>
+        <form id="prazo-form" class="grid grid-cols-1 gap-4" [formGroup]="prazoForm" (ngSubmit)="salvarPrazo()">
+          <div class="campo">
+            <mat-label class="font-semibold mb-2 block">Data limite</mat-label>
+            <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Data limite'" matInput type="date" formControlName="prazo" /></mat-form-field>
+          </div>
+        </form>
+      </mat-dialog-content>
+      <mat-dialog-actions>
+        <button mat-stroked-button type="button" mat-dialog-close>Cancelar</button>
+        <button mat-flat-button type="submit" form="prazo-form">Salvar</button>
+      </mat-dialog-actions>
+    </ng-template>
+
+    <ng-template #modalPresencas>
+      <h2 mat-dialog-title>Lista de presença</h2>
+      <mat-dialog-content>
+        @if (presencas().length === 0) {
+          <p>Ninguém confirmou ainda.</p>
+        } @else {
+          <table class="w-full text-sm">
+            <thead><tr><th class="text-start">Id</th><th class="text-start">Convidado</th><th class="text-start">Convite</th><th class="text-start">Confirmou em</th></tr></thead>
+            <tbody>
+              @for (item of presencas(); track item.id) {
+                <tr>
+                  <td class="font-mono text-xs" [attr.title]="item.id">{{ item.id.slice(0, 8) }}</td>
+                  <td>{{ item.convidado }}</td>
+                  <td>{{ item.convite }}</td>
+                  <td>{{ item.confirmadoEm | date: 'dd/MM/yyyy HH:mm' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </mat-dialog-content>
+      <mat-dialog-actions>
+        <button mat-flat-button type="button" mat-dialog-close>Fechar</button>
       </mat-dialog-actions>
     </ng-template>
 
@@ -288,7 +345,13 @@ export class ConvidadosPage implements OnInit {
   protected readonly convite = this.fb.nonNullable.group({
     nome: '', observacao: '', convidado: '', ddi: '+55', celular: '', email: '', dataEnvio: '',
   });
-  protected readonly edicao = this.fb.nonNullable.group({ nome: '', observacao: '', email: '', dataEnvio: '' });
+  protected readonly edicao = this.fb.nonNullable.group({ nome: '', observacao: '', email: '', dataEnvio: '', excecaoPrazoRsvp: false });
+  protected readonly prazoForm = this.fb.nonNullable.group({ prazo: '' });
+  protected readonly presencas = signal<PresencaEvento[]>([]);
+  private readonly modalPrazo = viewChild.required<TemplateRef<unknown>>('modalPrazo');
+  private readonly modalPresencas = viewChild.required<TemplateRef<unknown>>('modalPresencas');
+  private refPrazo: MatDialogRef<unknown> | null = null;
+  private excecaoOriginal = false;
 
   ngOnInit(): void {
     const id = this.rota.snapshot.paramMap.get('id') ?? '';
@@ -425,7 +488,8 @@ export class ConvidadosPage implements OnInit {
 
   protected abrirEdicao(convite: Convite): void {
     this.conviteEmEdicao = convite.id;
-    this.edicao.reset({ nome: convite.nome, observacao: convite.observacao ?? '', email: convite.email ?? '', dataEnvio: convite.dataEnvio ?? '' });
+    this.edicao.reset({ nome: convite.nome, observacao: convite.observacao ?? '', email: convite.email ?? '', dataEnvio: convite.dataEnvio ?? '', excecaoPrazoRsvp: convite.excecaoPrazoRsvp });
+    this.excecaoOriginal = convite.excecaoPrazoRsvp;
     this.refEdicao = this.dialog.open(this.modalEdicao(), DIALOG);
   }
 
@@ -440,9 +504,46 @@ export class ConvidadosPage implements OnInit {
       dataEnvio: valor.dataEnvio || null,
     }).subscribe({
       next: () => {
-        this.refEdicao?.close();
-        this.toast.sucesso('Convite salvo.');
+        if (valor.excecaoPrazoRsvp === this.excecaoOriginal) {
+          this.concluirEdicao();
+          return;
+        }
+        this.negocio.definirExcecaoRsvp(id, valor.excecaoPrazoRsvp).subscribe({
+          next: () => this.concluirEdicao(),
+          error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+        });
+      },
+      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+    });
+  }
+
+  private concluirEdicao(): void {
+    this.refEdicao?.close();
+    this.toast.sucesso('Convite salvo.');
+    this.carregar();
+  }
+
+  protected abrirPrazo(): void {
+    this.prazoForm.reset({ prazo: this.lista()?.prazoRsvp ?? '' });
+    this.refPrazo = this.dialog.open(this.modalPrazo(), DIALOG_PEQUENO);
+  }
+
+  protected salvarPrazo(): void {
+    this.negocio.definirPrazoRsvp(this.eventoId(), this.prazoForm.getRawValue().prazo || null).subscribe({
+      next: () => {
+        this.refPrazo?.close();
+        this.toast.sucesso('Prazo salvo.');
         this.carregar();
+      },
+      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+    });
+  }
+
+  protected abrirPresencas(): void {
+    this.negocio.presencas(this.eventoId()).subscribe({
+      next: (itens) => {
+        this.presencas.set(itens);
+        this.dialog.open(this.modalPresencas(), DIALOG);
       },
       error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
     });

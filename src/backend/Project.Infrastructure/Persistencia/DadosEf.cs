@@ -731,6 +731,18 @@ public sealed class DadosEf(AppDbContext banco) : IDados
     public Task<bool> EventoEmAndamentoAsync(Guid eventoId, CancellationToken ct) =>
         banco.Eventos.AnyAsync(evento => evento.Id == eventoId && evento.Situacao == SituacaoEvento.EmAndamento, ct);
 
+    public Task<DateOnly?> PrazoRsvpDoEventoAsync(Guid eventoId, CancellationToken ct) =>
+        banco.Eventos.Where(evento => evento.Id == eventoId).Select(evento => evento.PrazoRsvp).FirstOrDefaultAsync(ct);
+
+    public async Task<IReadOnlyList<PresencaLeitura>> ListarPresencasAsync(string contaId, Guid eventoId, CancellationToken ct) =>
+        await (from presenca in banco.PresencasEvento.AsNoTracking()
+               join convite in banco.Convites.AsNoTracking() on presenca.ConviteId equals convite.Id
+               join convidado in banco.Convidados.AsNoTracking() on presenca.ConvidadoId equals convidado.Id
+               where presenca.EventoId == eventoId && convite.ContaId == contaId
+               orderby presenca.ConfirmadoEm, convidado.Nome
+               select new PresencaLeitura(presenca.Id, convite.Id, convite.Nome, convidado.Id, convidado.Nome, presenca.ConfirmadoEm))
+            .ToListAsync(ct);
+
     public async Task InserirConvitesAsync(IReadOnlyList<Convite> convites, CancellationToken ct)
     {
         banco.Convites.AddRange(convites);

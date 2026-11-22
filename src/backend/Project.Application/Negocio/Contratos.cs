@@ -190,6 +190,10 @@ public interface IDados
 
     Task<bool> EventoEmAndamentoAsync(Guid eventoId, CancellationToken ct);
 
+    Task<DateOnly?> PrazoRsvpDoEventoAsync(Guid eventoId, CancellationToken ct);
+
+    Task<IReadOnlyList<PresencaLeitura>> ListarPresencasAsync(string contaId, Guid eventoId, CancellationToken ct);
+
     Task InserirConvitesAsync(IReadOnlyList<Convite> convites, CancellationToken ct);
 
     Task SalvarConvitesAsync(CancellationToken ct);
