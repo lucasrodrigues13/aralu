@@ -18,6 +18,7 @@ import { linkWhatsapp, textoCobranca } from '../dinheiro/cobranca';
 import { ChavePixDialog, ReceberDialog } from '../dinheiro/dinheiro.dialogs';
 import { DefinirParcelasContratoDialog } from './definir-parcelas-contrato.dialog';
 import { ParcelasContratoDialog } from './parcelas-contrato.dialog';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 export type SituacaoFinanceira = 'EmAberto' | 'Atrasados' | 'Quitados' | 'SemParcelas';
 
@@ -62,7 +63,7 @@ function hojeLocal(): string {
  */
 @Component({
   selector: 'app-gestao-financeira',
-  imports: [MatButtonModule, MatCardModule, MatFormFieldModule, MatIconModule, MatInputModule, MatSelectModule, GdDataPipe, GdDinheiroPipe],
+  imports: [MatButtonModule, MatCardModule, MatFormFieldModule, MatIconModule, MatInputModule, MatSelectModule, GdDataPipe, GdDinheiroPipe, MatTooltipModule],
   template: `
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
       <mat-card class="shadow-none text-center mb-0! h-full bg-light-primary">
@@ -203,8 +204,8 @@ function hojeLocal(): string {
                       }
                     </td>
                     <td class="text-end! whitespace-nowrap">
-                      <button mat-icon-button type="button" aria-label="Parcelas do contrato" title="Parcelas do contrato" (click)="abrirParcelas(item)" [disabled]="item.parcelas.length === 0"><mat-icon>payments</mat-icon></button>
-                      <button mat-icon-button type="button" [attr.aria-label]="item.parcelas.length ? 'Refazer parcelamento' : 'Parcelar contrato'" [title]="item.parcelas.length ? 'Refazer parcelamento' : 'Parcelar contrato'" (click)="parcelar(item)"><mat-icon>edit_calendar</mat-icon></button>
+                      <button mat-icon-button type="button" aria-label="Parcelas do contrato" matTooltip="Parcelas do contrato" (click)="abrirParcelas(item)" [disabled]="item.parcelas.length === 0"><mat-icon>payments</mat-icon></button>
+                      <button mat-icon-button type="button" [attr.aria-label]="item.parcelas.length ? 'Refazer parcelamento' : 'Parcelar contrato'" [matTooltip]="item.parcelas.length ? 'Refazer parcelamento' : 'Parcelar contrato'" (click)="parcelar(item)"><mat-icon>edit_calendar</mat-icon></button>
                     </td>
                   </tr>
                 }

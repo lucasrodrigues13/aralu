@@ -16,6 +16,7 @@ import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { deDataParaIso, deIsoParaData } from '../../shared/data';
 import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 /** Dados do modal de compromisso: o item em edição ou a data já escolhida no calendário. */
 export interface CompromissoDialogDados {
@@ -186,7 +187,7 @@ const MAX_NO_DIA = 3;
 
 @Component({
   selector: 'app-agenda',
-  imports: [MatCardModule, MatButtonModule, MatButtonToggleModule, MatIconModule, GdDataPipe],
+  imports: [MatCardModule, MatButtonModule, MatButtonToggleModule, MatIconModule, GdDataPipe, MatTooltipModule],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6 flex flex-wrap items-center justify-between gap-4">
@@ -199,9 +200,9 @@ const MAX_NO_DIA = 3;
       <mat-card-content class="border-t border-border">
       <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div class="flex items-center gap-2">
-          <button mat-icon-button type="button" aria-label="Período anterior" (click)="navegar(-1)"><mat-icon>chevron_left</mat-icon></button>
+          <button mat-icon-button type="button" aria-label="Período anterior" matTooltip="Período anterior" (click)="navegar(-1)"><mat-icon>chevron_left</mat-icon></button>
           <h4 class="text-lg font-semibold min-w-40 text-center first-letter:uppercase">{{ rotuloPeriodo() }}</h4>
-          <button mat-icon-button type="button" aria-label="Próximo período" (click)="navegar(1)"><mat-icon>chevron_right</mat-icon></button>
+          <button mat-icon-button type="button" aria-label="Próximo período" matTooltip="Próximo período" (click)="navegar(1)"><mat-icon>chevron_right</mat-icon></button>
         </div>
         <div class="flex flex-wrap items-center gap-2">
           <button mat-stroked-button type="button" (click)="hoje()">Hoje</button>

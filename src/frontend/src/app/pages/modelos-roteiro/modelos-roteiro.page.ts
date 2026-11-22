@@ -14,10 +14,11 @@ import { CampoHoraComponent } from '../../shared/campo-hora';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { horaParaApi } from '../../shared/mascaras';
 import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-roteiro-editor-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, CampoHoraComponent],
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, CampoHoraComponent, MatTooltipModule],
   template: `
     <h2 mat-dialog-title>{{ dados ? 'Editar roteiro' : 'Novo roteiro' }}</h2>
     <mat-dialog-content>
@@ -35,7 +36,7 @@ import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
                   <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Título'" matInput formControlName="titulo" /></mat-form-field>
                 </div>
                 <app-campo-hora rotulo="Horário" formControlName="horario" />
-                <button mat-icon-button type="button" (click)="removerSecao(i)"><mat-icon>delete</mat-icon></button>
+                <button mat-icon-button aria-label="Remover seção" matTooltip="Remover seção" type="button" (click)="removerSecao(i)"><mat-icon>delete</mat-icon></button>
               </div>
               <div class="campo grow">
                 <mat-label class="font-semibold mb-2 block">Música</mat-label>
@@ -48,7 +49,7 @@ import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
                       <mat-label class="font-semibold mb-2 block">Item</mat-label>
                       <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Item'" matInput formControlName="texto" /></mat-form-field>
                     </div>
-                    <button mat-icon-button type="button" (click)="removerItem(i, j)"><mat-icon>close</mat-icon></button>
+                    <button mat-icon-button aria-label="Remover item" matTooltip="Remover item" type="button" (click)="removerItem(i, j)"><mat-icon>close</mat-icon></button>
                   </div>
                 }
               </div>
@@ -156,7 +157,7 @@ export class RoteiroEditorDialog {
 
 @Component({
   selector: 'app-modelos-roteiro',
-  imports: [MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule],
+  imports: [MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatTooltipModule],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6 flex flex-wrap items-center justify-between gap-4">
@@ -190,9 +191,9 @@ export class RoteiroEditorDialog {
           <ng-container matColumnDef="acoes">
             <th mat-header-cell *matHeaderCellDef class="text-end! whitespace-nowrap">Ações</th>
             <td mat-cell *matCellDef="let item" class="text-end! whitespace-nowrap">
-              <button mat-icon-button type="button" aria-label="Editar" (click)="abrir(item)"><mat-icon>edit</mat-icon></button>
-              <button mat-icon-button type="button" aria-label="Clonar" (click)="clonar(item)"><mat-icon>content_copy</mat-icon></button>
-              <button mat-icon-button type="button" aria-label="Excluir" (click)="excluir(item)"><mat-icon>delete</mat-icon></button>
+              <button mat-icon-button type="button" aria-label="Editar" matTooltip="Editar" (click)="abrir(item)"><mat-icon>edit</mat-icon></button>
+              <button mat-icon-button type="button" aria-label="Clonar" matTooltip="Clonar" (click)="clonar(item)"><mat-icon>content_copy</mat-icon></button>
+              <button mat-icon-button type="button" aria-label="Excluir" matTooltip="Excluir" (click)="excluir(item)"><mat-icon>delete</mat-icon></button>
             </td>
           </ng-container>
           <tr mat-header-row *matHeaderRowDef="colunas"></tr>

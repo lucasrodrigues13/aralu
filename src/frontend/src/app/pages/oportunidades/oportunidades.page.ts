@@ -789,6 +789,7 @@ export function textoDias(dias: number): string {
               <div class="flex items-start justify-between gap-2">
                 <h4 class="text-sm font-semibold leading-snug">{{ item.nome }}</h4>
                 <button mat-icon-button type="button" class="menu-lead" aria-label="Ações do lead"
+matTooltip="Ações do lead"
                   [matMenuTriggerFor]="menu" (click)="$event.stopPropagation()">
                   <mat-icon>more_vert</mat-icon>
                 </button>

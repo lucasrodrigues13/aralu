@@ -23,10 +23,11 @@ import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { chaveResponsavel, opcoesResponsavel, OpcaoResponsavel, pedidoResponsavel, rotuloResponsavel } from '../../shared/responsaveis';
 import { aplicarLink, aplicarLista, aplicarNegrito, EdicaoTexto, htmlDeTextoSimples } from '../../shared/texto-simples';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-tarefa-funil-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, CampoDataComponent],
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, CampoDataComponent, MatTooltipModule],
   template: `
     <h2 mat-dialog-title>{{ dados ? 'Editar tarefa' : 'Nova tarefa' }}</h2>
     <mat-dialog-content>
@@ -64,9 +65,9 @@ import { aplicarLink, aplicarLista, aplicarNegrito, EdicaoTexto, htmlDeTextoSimp
         <div class="campo">
           <mat-label class="font-semibold mb-2 block">Observação</mat-label>
           <div class="flex gap-1 mb-1" role="toolbar" aria-label="Formatação da observação">
-            <button mat-icon-button type="button" aria-label="Negrito" (click)="formatar('negrito')"><mat-icon>format_bold</mat-icon></button>
-            <button mat-icon-button type="button" aria-label="Lista" (click)="formatar('lista')"><mat-icon>format_list_bulleted</mat-icon></button>
-            <button mat-icon-button type="button" aria-label="Link" (click)="formatar('link')"><mat-icon>link</mat-icon></button>
+            <button mat-icon-button type="button" aria-label="Negrito" matTooltip="Negrito" (click)="formatar('negrito')"><mat-icon>format_bold</mat-icon></button>
+            <button mat-icon-button type="button" aria-label="Lista" matTooltip="Lista" (click)="formatar('lista')"><mat-icon>format_list_bulleted</mat-icon></button>
+            <button mat-icon-button type="button" aria-label="Link" matTooltip="Link" (click)="formatar('link')"><mat-icon>link</mat-icon></button>
           </div>
           <mat-form-field appearance="outline" class="w-full"><textarea #observacao [attr.aria-label]="'Observação'" matInput rows="4" formControlName="observacao"></textarea></mat-form-field>
         </div>
@@ -150,7 +151,7 @@ export class TarefaFunilDialog implements OnInit {
 
 @Component({
   selector: 'app-tarefas-funil',
-  imports: [ReactiveFormsModule, CampoDataComponent, MatButtonToggleModule, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatSelectModule, GdDataPipe],
+  imports: [ReactiveFormsModule, CampoDataComponent, MatButtonToggleModule, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatSelectModule, GdDataPipe, MatTooltipModule],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6 flex flex-wrap items-center justify-between gap-4">
@@ -210,14 +211,14 @@ export class TarefaFunilDialog implements OnInit {
           <ng-container matColumnDef="acoes">
             <th mat-header-cell *matHeaderCellDef class="text-end! whitespace-nowrap">Ações</th>
             <td mat-cell *matCellDef="let item" class="text-end! whitespace-nowrap">
-              <button mat-icon-button type="button" (click)="abrir(item)"><mat-icon>edit</mat-icon></button>
+              <button mat-icon-button aria-label="Editar tarefa" matTooltip="Editar tarefa" type="button" (click)="abrir(item)"><mat-icon>edit</mat-icon></button>
               @if (!item.completa) {
-                <button mat-icon-button type="button" (click)="concluir(item)"><mat-icon>check</mat-icon></button>
+                <button mat-icon-button aria-label="Concluir tarefa" matTooltip="Concluir tarefa" type="button" (click)="concluir(item)"><mat-icon>check</mat-icon></button>
               } @else {
-                <button mat-icon-button type="button" (click)="reabrir(item)"><mat-icon>undo</mat-icon></button>
+                <button mat-icon-button aria-label="Reabrir tarefa" matTooltip="Reabrir tarefa" type="button" (click)="reabrir(item)"><mat-icon>undo</mat-icon></button>
               }
               @if (auth.podeExcluirDoFunil(item.criadoPor)) {
-                <button mat-icon-button type="button" (click)="excluir(item)"><mat-icon>delete</mat-icon></button>
+                <button mat-icon-button aria-label="Excluir tarefa" matTooltip="Excluir tarefa" type="button" (click)="excluir(item)"><mat-icon>delete</mat-icon></button>
               }
             </td>
           </ng-container>

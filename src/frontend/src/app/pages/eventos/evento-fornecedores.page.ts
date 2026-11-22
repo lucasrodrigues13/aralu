@@ -30,6 +30,7 @@ import { GdDinheiroPipe } from '../../shared/gd-dinheiro.pipe';
 import { EventoAbasComponent } from './evento-abas.component';
 import { BarraServico, GraficoOrcamento, montarBarrasPorServico, montarGraficoOrcamento } from './orcamento-graficos';
 import { VincularFornecedorDados, VincularFornecedorDialog, VincularFornecedorPedido } from './vincular-fornecedor.dialog';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 interface ContratarResultado {
   valor: number;
@@ -127,7 +128,7 @@ export class NomeServicoDialog {
 
 @Component({
   selector: 'app-subitens-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, CampoDinheiroComponent],
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, CampoDinheiroComponent, MatTooltipModule],
   template: `
     <h2 mat-dialog-title>Subitens — {{ dados.nome }}</h2>
     <mat-dialog-content>
@@ -145,7 +146,7 @@ export class NomeServicoDialog {
                 <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Qtd'" matInput type="number" min="1" formControlName="quantidade" /></mat-form-field>
               </div>
               <app-campo-dinheiro rotulo="Unitário" formControlName="valorUnitario" />
-              <button mat-icon-button type="button" aria-label="Remover" (click)="remover(i)"><mat-icon>delete</mat-icon></button>
+              <button mat-icon-button type="button" aria-label="Remover" matTooltip="Remover" (click)="remover(i)"><mat-icon>delete</mat-icon></button>
             </div>
           }
         </div>
@@ -225,7 +226,7 @@ const CLASSE_ETAPA: Record<string, string> = {
 /** Aba Fornecedores do evento: serviços, negociação, parcelas e orçamento (SPEC-018; SPEC-008 v2, 8.2). */
 @Component({
   selector: 'app-evento-fornecedores',
-  imports: [MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, MatMenuModule, GdDinheiroPipe, DecimalPipe, EventoAbasComponent],
+  imports: [MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, MatMenuModule, GdDinheiroPipe, DecimalPipe, EventoAbasComponent, MatTooltipModule],
   template: `
     <app-evento-abas [eventoId]="id" />
     <mat-card class="cardWithShadow">
@@ -371,7 +372,7 @@ const CLASSE_ETAPA: Record<string, string> = {
                       </td>
                       <td class="text-end! whitespace-nowrap">
                         @if (vinculo.etapa === 'Contratado') {
-                          <button mat-icon-button type="button" aria-label="Mais ações" [matMenuTriggerFor]="menu"><mat-icon>more_vert</mat-icon></button>
+                          <button mat-icon-button type="button" aria-label="Mais ações" matTooltip="Mais ações" [matMenuTriggerFor]="menu"><mat-icon>more_vert</mat-icon></button>
                           <mat-menu #menu="matMenu" xPosition="before">
                             @if (linha.servico.contratoAssinado; as contrato) {
                               <button mat-menu-item type="button" (click)="abrirContrato(contrato.arquivoId)">

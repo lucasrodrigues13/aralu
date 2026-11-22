@@ -21,11 +21,12 @@ import { ChecklistTarefaComponent, progressoChecklist } from './checklist-tarefa
 import { secoesAteEvento } from './grupo-tarefa';
 import { TarefaFormDialog } from './tarefa-form.dialog';
 import { TarefaLeituraDialog } from './tarefa-leitura.dialog';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 /** Tarefas do evento dentro do Resumo (SPEC-051): lista agrupada pela distância até o evento, com todas as ações (SPEC-003 v4). */
 @Component({
   selector: 'app-evento-tarefas',
-  imports: [MatCardModule, MatButtonModule, MatIconModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule, GdDataPipe, ChecklistTarefaComponent],
+  imports: [MatCardModule, MatButtonModule, MatIconModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule, GdDataPipe, ChecklistTarefaComponent, MatTooltipModule],
   template: `
     <mat-card class="cardWithShadow" id="tarefas-do-evento">
     <div class="p-6 flex flex-wrap items-center justify-between gap-4">
@@ -141,6 +142,7 @@ import { TarefaLeituraDialog } from './tarefa-leitura.dialog';
                               [class.aberta]="aberta(tarefa)"
                               [attr.aria-expanded]="aberta(tarefa)"
                               [attr.aria-label]="(aberta(tarefa) ? 'Recolher' : 'Expandir') + ' checklist de ' + tarefa.titulo"
+                              [matTooltip]="(aberta(tarefa) ? 'Recolher' : 'Expandir') + ' checklist de ' + tarefa.titulo"
                               (click)="alternar(tarefa)"
                             >
                               <mat-icon>chevron_right</mat-icon>
@@ -182,9 +184,9 @@ import { TarefaLeituraDialog } from './tarefa-leitura.dialog';
                         <td>{{ nomesResponsaveis(tarefa) }}</td>
                         <td class="text-end! whitespace-nowrap" (click)="$event.stopPropagation()">
                           @if (tarefa.eventoEmAndamento) {
-                            <button mat-icon-button type="button" aria-label="Editar" (click)="editar(tarefa)"><mat-icon>edit</mat-icon></button>
+                            <button mat-icon-button type="button" aria-label="Editar" matTooltip="Editar" (click)="editar(tarefa)"><mat-icon>edit</mat-icon></button>
                           }
-                          <button mat-icon-button type="button" aria-label="Excluir" (click)="excluir()"><mat-icon>delete</mat-icon></button>
+                          <button mat-icon-button type="button" aria-label="Excluir" matTooltip="Excluir" (click)="excluir()"><mat-icon>delete</mat-icon></button>
                         </td>
                       </tr>
                       @if (aberta(tarefa)) {

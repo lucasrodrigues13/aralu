@@ -19,12 +19,13 @@ import { DADOS_ENVIO, DADOS_PRAZO, DataConvitesDialog } from '../../shared/data-
 import { PresencasDialog } from '../../shared/presencas.dialog';
 import { ImportacoesDados, ImportacoesDialog } from '../../shared/importacoes.dialog';
 import { EventoAbasComponent } from '../eventos/evento-abas.component';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 export { cardsPorSituacao } from '../../shared/convite-lista';
 
 @Component({
   selector: 'app-convidados',
-  imports: [MatCardModule, MatButtonToggleModule, MatButtonModule, EventoAbasComponent, MatIconModule, MatDialogModule, ConvidadosTopoComponent],
+  imports: [MatCardModule, MatButtonToggleModule, MatButtonModule, EventoAbasComponent, MatIconModule, MatDialogModule, ConvidadosTopoComponent, MatTooltipModule],
   template: `
     @if (!eventoId()) {
       <mat-card class="cardWithShadow">
@@ -77,7 +78,7 @@ export { cardsPorSituacao } from '../../shared/convite-lista';
                     <tr>
                       <td>
                         <div class="flex items-start gap-1">
-                          <button mat-icon-button type="button" class="seta" [class.aberta]="aberto(item.id)" [attr.aria-expanded]="aberto(item.id)" [attr.aria-controls]="'convidados-' + item.id" [attr.aria-label]="(aberto(item.id) ? 'Recolher' : 'Expandir') + ' convidados de ' + item.nome" (click)="alternar(item.id)"><mat-icon>chevron_right</mat-icon></button>
+                          <button mat-icon-button type="button" class="seta" [class.aberta]="aberto(item.id)" [attr.aria-expanded]="aberto(item.id)" [attr.aria-controls]="'convidados-' + item.id" [attr.aria-label]="(aberto(item.id) ? 'Recolher' : 'Expandir') + ' convidados de ' + item.nome" [matTooltip]="(aberto(item.id) ? 'Recolher' : 'Expandir') + ' convidados de ' + item.nome" (click)="alternar(item.id)"><mat-icon>chevron_right</mat-icon></button>
                           <div class="min-w-0 pt-2">
                             <strong>{{ item.nome }}</strong>
                             @if (item.email) { <span class="block text-xs text-muted">{{ item.email }}</span> }
@@ -90,14 +91,14 @@ export { cardsPorSituacao } from '../../shared/convite-lista';
                       <td>{{ item.telefone || '—' }}</td>
                       <td class="text-sm">{{ resumo(item.convidados) }}</td>
                       <td class="text-end! whitespace-nowrap">
-                        <button mat-icon-button type="button" aria-label="Copiar link de RSVP" (click)="copiar(item.token)"><mat-icon>link</mat-icon></button>
-                        <button mat-icon-button type="button" aria-label="Baixar QR Code" (click)="baixarQr(item.id)"><mat-icon>qr_code_2</mat-icon></button>
+                        <button mat-icon-button type="button" aria-label="Copiar link de RSVP" matTooltip="Copiar link de RSVP" (click)="copiar(item.token)"><mat-icon>link</mat-icon></button>
+                        <button mat-icon-button type="button" aria-label="Baixar QR Code" matTooltip="Baixar QR Code" (click)="baixarQr(item.id)"><mat-icon>qr_code_2</mat-icon></button>
                         @if (temConfirmado(item)) {
-                          <button mat-icon-button type="button" aria-label="Baixar QR de entrada" (click)="baixarQrEntrada(item.id)"><mat-icon>qr_code_scanner</mat-icon></button>
+                          <button mat-icon-button type="button" aria-label="Baixar QR de entrada" matTooltip="Baixar QR de entrada" (click)="baixarQrEntrada(item.id)"><mat-icon>qr_code_scanner</mat-icon></button>
                         }
-                        <button mat-icon-button type="button" aria-label="Enviar pelo WhatsApp" (click)="whatsapp(item.id)"><mat-icon>chat</mat-icon></button>
-                        <button mat-icon-button type="button" aria-label="Editar" (click)="abrirEdicao(item)"><mat-icon>edit</mat-icon></button>
-                        <button mat-icon-button type="button" aria-label="Excluir" (click)="semExclusao('convite')"><mat-icon>delete</mat-icon></button>
+                        <button mat-icon-button type="button" aria-label="Enviar pelo WhatsApp" matTooltip="Enviar pelo WhatsApp" (click)="whatsapp(item.id)"><mat-icon>chat</mat-icon></button>
+                        <button mat-icon-button type="button" aria-label="Editar" matTooltip="Editar" (click)="abrirEdicao(item)"><mat-icon>edit</mat-icon></button>
+                        <button mat-icon-button type="button" aria-label="Excluir" matTooltip="Excluir" (click)="semExclusao('convite')"><mat-icon>delete</mat-icon></button>
                       </td>
                     </tr>
                     @if (aberto(item.id)) {
@@ -113,7 +114,7 @@ export { cardsPorSituacao } from '../../shared/convite-lista';
                                 @if (pessoa.celular && !pessoa.principal) {
                                   <button mat-button type="button" (click)="principal(item.id, pessoa.id)">Usar este telefone</button>
                                 }
-                                <button mat-icon-button type="button" aria-label="Excluir convidado" (click)="excluirConvidado(pessoa.id)"><mat-icon>delete</mat-icon></button>
+                                <button mat-icon-button type="button" aria-label="Excluir convidado" matTooltip="Excluir convidado" (click)="excluirConvidado(pessoa.id)"><mat-icon>delete</mat-icon></button>
                               </li>
                             }
                           </ul>

@@ -21,12 +21,13 @@ import { validarComprovante as validarArquivo } from '../../core/dinheiro.client
 import { AnexoTarefa } from '../../core/negocio.client';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { ChecklistTarefaComponent } from './checklist-tarefa';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 export type AcaoLeitura = 'editar' | 'mudou' | false;
 
 @Component({
   selector: 'app-tarefa-leitura',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, GdDataPipe, ChecklistTarefaComponent],
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, GdDataPipe, ChecklistTarefaComponent, MatTooltipModule],
   template: `
     <h2 mat-dialog-title>{{ tarefa().titulo }}</h2>
     <p class="text-muted text-sm px-6 -mt-2 mb-4">{{ tarefa().evento }}</p>
@@ -69,7 +70,7 @@ export type AcaoLeitura = 'editar' | 'mudou' | false;
                 <button type="button" class="nome-anexo" (click)="abrirAnexo(anexo)">{{ anexo.nome }}</button>
                 <span class="block text-xs text-muted">{{ anexo.enviadoEm | gdData }}</span>
                 @if (tarefa().eventoEmAndamento) {
-                  <button mat-icon-button type="button" [attr.aria-label]="'Remover ' + anexo.nome" (click)="removerAnexo(anexo)"><mat-icon>delete</mat-icon></button>
+                  <button mat-icon-button type="button" [attr.aria-label]="'Remover ' + anexo.nome" [matTooltip]="'Remover ' + anexo.nome" (click)="removerAnexo(anexo)"><mat-icon>delete</mat-icon></button>
                 }
               </li>
             }

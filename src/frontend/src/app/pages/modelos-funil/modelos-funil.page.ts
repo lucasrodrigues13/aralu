@@ -14,6 +14,7 @@ import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { CampoDinheiroComponent } from '../../shared/campo-dinheiro';
 import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 type TipoModelo = 'servico' | 'orcamento';
 
@@ -128,7 +129,7 @@ export class ModeloFunilDialog {
 
 @Component({
   selector: 'app-modelos-funil',
-  imports: [MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule],
+  imports: [MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatTooltipModule],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6 flex flex-wrap items-center justify-between gap-4">
@@ -163,8 +164,8 @@ export class ModeloFunilDialog {
           <ng-container matColumnDef="acoes">
             <th mat-header-cell *matHeaderCellDef class="text-end! whitespace-nowrap">Ações</th>
             <td mat-cell *matCellDef="let item" class="text-end! whitespace-nowrap">
-              <button mat-icon-button type="button" (click)="abrir(item)"><mat-icon>edit</mat-icon></button>
-              <button mat-icon-button type="button" (click)="excluir(item)"><mat-icon>delete</mat-icon></button>
+              <button mat-icon-button aria-label="Editar" matTooltip="Editar" type="button" (click)="abrir(item)"><mat-icon>edit</mat-icon></button>
+              <button mat-icon-button aria-label="Excluir" matTooltip="Excluir" type="button" (click)="excluir(item)"><mat-icon>delete</mat-icon></button>
             </td>
           </ng-container>
           <tr mat-header-row *matHeaderRowDef="colunas"></tr>

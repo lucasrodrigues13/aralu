@@ -18,6 +18,7 @@ import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { DIALOG_LARGO, DIALOG_PEQUENO } from '../../shared/dialog';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { filtrarCampos, inserirMarca, previaDestacada, tagsDesconhecidas } from './mesclagem';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 /** O que o modal devolve: nome, texto e as mudanças de logo e fundo (arquivo novo, null = remover, ausente = sem mudança). */
 export interface ContratoPedido {
@@ -77,7 +78,7 @@ export class AjudaTagsDialog {
 /** Novo/editar modelo de contrato com seletor de tags com busca e ajuda (SPEC-053) e Live Preview (SPEC-055, evolui o "Ver como fica" da SPEC-030 §6.1). */
 @Component({
   selector: 'app-contrato-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatAutocompleteModule, FolhaContrato],
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatAutocompleteModule, FolhaContrato, MatTooltipModule],
   template: `
     <h2 mat-dialog-title>{{ dados.contrato ? 'Editar modelo de contrato' : 'Novo modelo de contrato' }}</h2>
     <p class="text-muted text-sm px-6 -mt-2 mb-4">Clique num campo para inserir no texto. Ele é trocado pelos dados do evento.</p>
@@ -111,7 +112,7 @@ export class AjudaTagsDialog {
                 }
               </mat-autocomplete>
             </mat-form-field>
-            <button mat-icon-button type="button" aria-label="Ajuda sobre as tags" title="Como usar as tags" (click)="abrirAjuda()">
+            <button mat-icon-button type="button" aria-label="Ajuda sobre as tags" matTooltip="Ajuda sobre as tags" (click)="abrirAjuda()">
               <mat-icon>help_outline</mat-icon>
             </button>
           </div>
@@ -287,7 +288,7 @@ export class ContratoDialog {
 /** Tela Contratos (SPEC-030 §6.1): lista e botão "Novo contrato" acima da tabela. */
 @Component({
   selector: 'app-contratos',
-  imports: [MatCardModule, MatButtonModule, MatIconModule, MatFormFieldModule, MatInputModule, GdDataPipe],
+  imports: [MatCardModule, MatButtonModule, MatIconModule, MatFormFieldModule, MatInputModule, GdDataPipe, MatTooltipModule],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6 flex flex-wrap items-center justify-between gap-4">
@@ -318,8 +319,8 @@ export class ContratoDialog {
                 <td>{{ contrato.nome }}</td>
                 <td>{{ contrato.atualizadoEm | gdData }}</td>
                 <td class="text-end! whitespace-nowrap">
-                  <button mat-icon-button type="button" aria-label="Editar" (click)="abrir(contrato)"><mat-icon>edit</mat-icon></button>
-                  <button mat-icon-button type="button" aria-label="Excluir" (click)="excluir(contrato)"><mat-icon>delete</mat-icon></button>
+                  <button mat-icon-button type="button" aria-label="Editar" matTooltip="Editar" (click)="abrir(contrato)"><mat-icon>edit</mat-icon></button>
+                  <button mat-icon-button type="button" aria-label="Excluir" matTooltip="Excluir" (click)="excluir(contrato)"><mat-icon>delete</mat-icon></button>
                 </td>
               </tr>
             }

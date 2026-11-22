@@ -18,6 +18,7 @@ import { DIALOG, DIALOG_LARGO, DIALOG_PEQUENO } from '../../shared/dialog';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { FolhaContrato, imprimirContrato } from '../contratos/folha-contrato';
 import { textoEmHtml } from '../contratos/mesclagem';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-contrato-funil-dialog',
@@ -144,7 +145,7 @@ export class ContratoFunilVerDialog {
 
 @Component({
   selector: 'app-contratos-funil',
-  imports: [MatButtonToggleModule, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, GdDataPipe],
+  imports: [MatButtonToggleModule, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, GdDataPipe, MatTooltipModule],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6 flex flex-wrap items-center justify-between gap-4">
@@ -193,17 +194,17 @@ export class ContratoFunilVerDialog {
           <ng-container matColumnDef="acoes">
             <th mat-header-cell *matHeaderCellDef class="text-end! whitespace-nowrap">Ações</th>
             <td mat-cell *matCellDef="let item" class="text-end! whitespace-nowrap">
-              <button mat-icon-button type="button" aria-label="Ver contrato" title="Ver contrato" (click)="ver(item)"><mat-icon>visibility</mat-icon></button>
+              <button mat-icon-button type="button" aria-label="Ver contrato" matTooltip="Ver contrato" (click)="ver(item)"><mat-icon>visibility</mat-icon></button>
               @if (item.situacao === 'EmAndamento') {
-                <button mat-icon-button type="button" (click)="abrir(item)"><mat-icon>edit</mat-icon></button>
-                <button mat-icon-button type="button" (click)="enviar(item)"><mat-icon>send</mat-icon></button>
-                <button mat-icon-button type="button" (click)="assinar(item)"><mat-icon>draw</mat-icon></button>
-                <button mat-icon-button type="button" (click)="cancelar(item)"><mat-icon>cancel</mat-icon></button>
+                <button mat-icon-button aria-label="Editar contrato" matTooltip="Editar contrato" type="button" (click)="abrir(item)"><mat-icon>edit</mat-icon></button>
+                <button mat-icon-button aria-label="Enviar contrato" matTooltip="Enviar contrato" type="button" (click)="enviar(item)"><mat-icon>send</mat-icon></button>
+                <button mat-icon-button aria-label="Marcar como assinado" matTooltip="Marcar como assinado" type="button" (click)="assinar(item)"><mat-icon>draw</mat-icon></button>
+                <button mat-icon-button aria-label="Cancelar contrato" matTooltip="Cancelar contrato" type="button" (click)="cancelar(item)"><mat-icon>cancel</mat-icon></button>
                 @if (auth.podeExcluirDoFunil(item.criadoPor)) {
-                  <button mat-icon-button type="button" (click)="excluir(item)"><mat-icon>delete</mat-icon></button>
+                  <button mat-icon-button aria-label="Excluir contrato" matTooltip="Excluir contrato" type="button" (click)="excluir(item)"><mat-icon>delete</mat-icon></button>
                 }
               } @else if (item.situacao === 'Assinado') {
-                <button mat-icon-button type="button" (click)="cancelar(item)"><mat-icon>cancel</mat-icon></button>
+                <button mat-icon-button aria-label="Cancelar contrato" matTooltip="Cancelar contrato" type="button" (click)="cancelar(item)"><mat-icon>cancel</mat-icon></button>
               }
             </td>
           </ng-container>

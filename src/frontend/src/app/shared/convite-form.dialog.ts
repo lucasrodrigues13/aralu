@@ -11,6 +11,7 @@ import { MatRadioModule } from '@angular/material/radio';
 import { MatSelectModule } from '@angular/material/select';
 import { ConviteDoFormulario, DDI_PADRAO, FAIXAS, GENEROS, PedidoConvite, pedidoDoFormulario } from '../core/convite-formulario';
 import { MascaraDirective } from './mascara.directive';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 export interface ConviteFormDados {
   /** Nulo = novo convite. */
@@ -25,7 +26,7 @@ export interface ConviteFormDados {
  */
 @Component({
   selector: 'app-convite-form-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatCheckboxModule, MatSelectModule, MatRadioModule, MascaraDirective],
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatCheckboxModule, MatSelectModule, MatRadioModule, MascaraDirective, MatTooltipModule],
   template: `
     <h2 mat-dialog-title>{{ dados.convite ? 'Editar convite' : 'Novo convite' }}</h2>
     <p class="text-muted text-sm px-6 -mt-2 mb-4">Um convite reúne quem recebe junto, como a família. Marque o convidado principal: ele recebe as comunicações e precisa de telefone.</p>
@@ -55,7 +56,7 @@ export interface ConviteFormDados {
                   <mat-form-field appearance="outline" class="w-full">
                     <input [attr.aria-label]="'Nome completo do convidado ' + (i + 1)" matInput formControlName="nome" placeholder="Nome completo" />
                   </mat-form-field>
-                  <button mat-icon-button type="button" aria-label="Remover convidado" [disabled]="convidados.length === 1" (click)="remover(i)"><mat-icon>delete</mat-icon></button>
+                  <button mat-icon-button type="button" aria-label="Remover convidado" matTooltip="Remover convidado" [disabled]="convidados.length === 1" (click)="remover(i)"><mat-icon>delete</mat-icon></button>
                 </div>
                 <mat-radio-button class="col-span-2 sm:col-span-4 -mt-2 mb-2" [value]="i" [attr.data-teste]="'principal-' + i">Convidado principal (recebe as comunicações)</mat-radio-button>
                 <mat-form-field appearance="outline" class="w-full">

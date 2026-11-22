@@ -14,10 +14,11 @@ import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { DIALOG_FORNECEDOR, FornecedorFormDialog } from './fornecedor-form.dialog';
 import { NovoServicoDialog } from './novo-servico.dialog';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-fornecedores',
-  imports: [MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatTabsModule],
+  imports: [MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatTabsModule, MatTooltipModule],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6 flex flex-wrap items-center justify-between gap-4">
@@ -60,8 +61,8 @@ import { NovoServicoDialog } from './novo-servico.dialog';
               <ng-container matColumnDef="acoes">
                 <th mat-header-cell *matHeaderCellDef class="text-end! whitespace-nowrap">Ações</th>
                 <td mat-cell *matCellDef="let item" class="text-end! whitespace-nowrap">
-                  <button mat-icon-button type="button" aria-label="Editar" (click)="abrirFornecedor(item)"><mat-icon>edit</mat-icon></button>
-                  <button mat-icon-button type="button" aria-label="Excluir" (click)="excluirFornecedor(item)"><mat-icon>delete</mat-icon></button>
+                  <button mat-icon-button type="button" aria-label="Editar" matTooltip="Editar" (click)="abrirFornecedor(item)"><mat-icon>edit</mat-icon></button>
+                  <button mat-icon-button type="button" aria-label="Excluir" matTooltip="Excluir" (click)="excluirFornecedor(item)"><mat-icon>delete</mat-icon></button>
                 </td>
               </ng-container>
               <tr mat-header-row *matHeaderRowDef="colsForn"></tr>
@@ -94,7 +95,7 @@ import { NovoServicoDialog } from './novo-servico.dialog';
               <ng-container matColumnDef="acoes">
                 <th mat-header-cell *matHeaderCellDef class="text-end! whitespace-nowrap">Ações</th>
                 <td mat-cell *matCellDef="let item" class="text-end! whitespace-nowrap">
-                  <button mat-icon-button type="button" aria-label="Excluir" (click)="excluirServico(item)"><mat-icon>delete</mat-icon></button>
+                  <button mat-icon-button type="button" aria-label="Excluir" matTooltip="Excluir" (click)="excluirServico(item)"><mat-icon>delete</mat-icon></button>
                 </td>
               </ng-container>
               <tr mat-header-row *matHeaderRowDef="colsServ"></tr>

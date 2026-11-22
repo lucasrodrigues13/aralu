@@ -27,11 +27,12 @@ import { STATUS } from '../../shared/status';
 import { ComprovanteDialog } from '../dinheiro/comprovante.dialog';
 import { pagamentosPorMes } from '../dinheiro/pagamentos-por-mes';
 import { ParcelarPagamentoDialog } from '../dinheiro/parcelar-pagamento.dialog';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 /** Página do casal, sem login (SPEC-046): acompanha e atualiza o financeiro do evento quando a organizadora libera. */
 @Component({
   selector: 'app-casal',
-  imports: [MatCardModule, MatButtonModule, MatCheckboxModule, MatIconModule, MatTabsModule, GdDataPipe, GdDinheiroPipe, ConvidadosTopoComponent],
+  imports: [MatCardModule, MatButtonModule, MatCheckboxModule, MatIconModule, MatTabsModule, GdDataPipe, GdDinheiroPipe, ConvidadosTopoComponent, MatTooltipModule],
   template: `
     <main class="pagina">
       @if (carregando()) {
@@ -90,8 +91,8 @@ import { ParcelarPagamentoDialog } from '../dinheiro/parcelar-pagamento.dialog';
                           </mat-checkbox>
                           <span class="arquivo">
                             @if (parcela.comprovante; as c) {
-                              <button mat-button type="button" [attr.title]="c.nome" (click)="abrir(c)"><mat-icon>{{ icone(c) }}</mat-icon> Comprovante</button>
-                              <button mat-icon-button type="button" aria-label="Excluir comprovante" (click)="excluirComprovante(pagamento, parcela)"><mat-icon>delete</mat-icon></button>
+                              <button mat-button type="button" [matTooltip]="'Abrir comprovante: ' + c.nome" (click)="abrir(c)"><mat-icon>{{ icone(c) }}</mat-icon> Comprovante</button>
+                              <button mat-icon-button type="button" aria-label="Excluir comprovante" matTooltip="Excluir comprovante" (click)="excluirComprovante(pagamento, parcela)"><mat-icon>delete</mat-icon></button>
                             } @else {
                               <button mat-button type="button" (click)="enviarComprovante(pagamento, parcela)"><mat-icon>upload_file</mat-icon> Comprovante</button>
                             }
@@ -102,15 +103,15 @@ import { ParcelarPagamentoDialog } from '../dinheiro/parcelar-pagamento.dialog';
                       <div class="acoes">
                         @if (pagamento.parcelas.length === 0) {
                           @if (pagamento.comprovante; as c) {
-                            <button mat-button type="button" [attr.title]="c.nome" (click)="abrir(c)"><mat-icon>{{ icone(c) }}</mat-icon> Comprovante</button>
-                            <button mat-icon-button type="button" aria-label="Excluir comprovante" (click)="excluirComprovante(pagamento, null)"><mat-icon>delete</mat-icon></button>
+                            <button mat-button type="button" [matTooltip]="'Abrir comprovante: ' + c.nome" (click)="abrir(c)"><mat-icon>{{ icone(c) }}</mat-icon> Comprovante</button>
+                            <button mat-icon-button type="button" aria-label="Excluir comprovante" matTooltip="Excluir comprovante" (click)="excluirComprovante(pagamento, null)"><mat-icon>delete</mat-icon></button>
                           } @else {
                             <button mat-button type="button" (click)="enviarComprovante(pagamento, null)"><mat-icon>upload_file</mat-icon> Comprovante</button>
                           }
                         }
                         @if (pagamento.contratoAssinado; as c) {
                           <button mat-button type="button" (click)="abrir(c)"><mat-icon>description</mat-icon> Contrato: {{ c.nome }}</button>
-                          <button mat-icon-button type="button" aria-label="Excluir contrato assinado" (click)="excluirContrato(pagamento)"><mat-icon>delete</mat-icon></button>
+                          <button mat-icon-button type="button" aria-label="Excluir contrato assinado" matTooltip="Excluir contrato assinado" (click)="excluirContrato(pagamento)"><mat-icon>delete</mat-icon></button>
                         } @else {
                           <button mat-button type="button" (click)="enviarContrato(pagamento)"><mat-icon>upload_file</mat-icon> Contrato assinado</button>
                         }
@@ -150,13 +151,13 @@ import { ParcelarPagamentoDialog } from '../dinheiro/parcelar-pagamento.dialog';
                 @for (convite of convitesFiltrados(); track convite.id) {
                   <mat-card class="cardWithShadow"><mat-card-content>
                     <div class="linha">
-                      <button mat-icon-button type="button" class="seta" [class.aberta]="aberto(convite.id)" [attr.aria-expanded]="aberto(convite.id)" [attr.aria-controls]="'convidados-' + convite.id" [attr.aria-label]="(aberto(convite.id) ? 'Recolher' : 'Expandir') + ' convidados de ' + convite.nome" (click)="alternar(convite.id)"><mat-icon>chevron_right</mat-icon></button>
+                      <button mat-icon-button type="button" class="seta" [class.aberta]="aberto(convite.id)" [attr.aria-expanded]="aberto(convite.id)" [attr.aria-controls]="'convidados-' + convite.id" [attr.aria-label]="(aberto(convite.id) ? 'Recolher' : 'Expandir') + ' convidados de ' + convite.nome" [matTooltip]="(aberto(convite.id) ? 'Recolher' : 'Expandir') + ' convidados de ' + convite.nome" (click)="alternar(convite.id)"><mat-icon>chevron_right</mat-icon></button>
                       <div class="min-w-0 flex-1">
                         <strong>{{ convite.nome }}</strong>
                         <span class="block text-xs text-muted">{{ convite.telefone ? ((convite.ddi ?? '') + ' ' + convite.telefone).trim() : 'Sem telefone' }}{{ convite.email ? ' · ' + convite.email : '' }}</span>
                         <span class="block text-xs text-muted">{{ resumo(convite) }}</span>
                       </div>
-                      <button mat-icon-button type="button" aria-label="Editar convite" (click)="abrirConvite(convite)"><mat-icon>edit</mat-icon></button>
+                      <button mat-icon-button type="button" aria-label="Editar convite" matTooltip="Editar convite" (click)="abrirConvite(convite)"><mat-icon>edit</mat-icon></button>
                     </div>
                     @if (aberto(convite.id)) {
                       <ul class="convidados" [id]="'convidados-' + convite.id">

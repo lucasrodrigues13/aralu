@@ -13,10 +13,11 @@ import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-briefing-editor-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule],
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTooltipModule],
   template: `
     <h2 mat-dialog-title>{{ dados ? 'Editar briefing' : 'Novo briefing' }}</h2>
     <mat-dialog-content>
@@ -40,7 +41,7 @@ import { GdDataPipe } from '../../shared/gd-data.pipe';
                   <mat-label class="font-semibold mb-2 block">Seção</mat-label>
                   <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Seção'" matInput formControlName="titulo" [readonly]="avisoPadrao()" /></mat-form-field>
                 </div>
-                <button mat-icon-button type="button" (click)="removerSecao(i)" [disabled]="avisoPadrao()"><mat-icon>delete</mat-icon></button>
+                <button mat-icon-button aria-label="Remover seção" matTooltip="Remover seção" type="button" (click)="removerSecao(i)" [disabled]="avisoPadrao()"><mat-icon>delete</mat-icon></button>
               </div>
               <div class="campo grow">
                 <mat-label class="font-semibold mb-2 block">Descrição</mat-label>
@@ -53,7 +54,7 @@ import { GdDataPipe } from '../../shared/gd-data.pipe';
                       <mat-label class="font-semibold mb-2 block">Pergunta (texto curto)</mat-label>
                       <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Pergunta (texto curto)'" matInput formControlName="enunciado" [readonly]="avisoPadrao()" /></mat-form-field>
                     </div>
-                    <button mat-icon-button type="button" (click)="removerPergunta(i, j)" [disabled]="avisoPadrao()"><mat-icon>close</mat-icon></button>
+                    <button mat-icon-button aria-label="Remover pergunta" matTooltip="Remover pergunta" type="button" (click)="removerPergunta(i, j)" [disabled]="avisoPadrao()"><mat-icon>close</mat-icon></button>
                   </div>
                 }
               </div>
@@ -181,7 +182,7 @@ export class BriefingEditorDialog {
 
 @Component({
   selector: 'app-modelos-briefing',
-  imports: [MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, GdDataPipe],
+  imports: [MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, GdDataPipe, MatTooltipModule],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6 flex flex-wrap items-center justify-between gap-4">
@@ -226,9 +227,9 @@ export class BriefingEditorDialog {
           <ng-container matColumnDef="acoes">
             <th mat-header-cell *matHeaderCellDef class="text-end! whitespace-nowrap">Ações</th>
             <td mat-cell *matCellDef="let item" class="text-end! whitespace-nowrap">
-              <button mat-icon-button type="button" aria-label="Editar" (click)="abrir(item)"><mat-icon>edit</mat-icon></button>
-              <button mat-icon-button type="button" aria-label="Clonar" (click)="clonar(item)"><mat-icon>content_copy</mat-icon></button>
-              <button mat-icon-button type="button" aria-label="Excluir" (click)="excluir(item)" [disabled]="item.padrao"><mat-icon>delete</mat-icon></button>
+              <button mat-icon-button type="button" aria-label="Editar" matTooltip="Editar" (click)="abrir(item)"><mat-icon>edit</mat-icon></button>
+              <button mat-icon-button type="button" aria-label="Clonar" matTooltip="Clonar" (click)="clonar(item)"><mat-icon>content_copy</mat-icon></button>
+              <button mat-icon-button type="button" aria-label="Excluir" matTooltip="Excluir" (click)="excluir(item)" [disabled]="item.padrao"><mat-icon>delete</mat-icon></button>
             </td>
           </ng-container>
           <tr mat-header-row *matHeaderRowDef="colunas"></tr>

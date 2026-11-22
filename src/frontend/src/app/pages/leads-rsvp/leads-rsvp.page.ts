@@ -9,10 +9,11 @@ import { mensagemDeErro } from '../../core/mensagem-erro';
 import { LeadRsvp, NegocioClient } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-leads-rsvp',
-  imports: [MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, GdDataPipe],
+  imports: [MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, GdDataPipe, MatTooltipModule],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6 flex flex-wrap items-center justify-between gap-4">
@@ -50,9 +51,9 @@ import { GdDataPipe } from '../../shared/gd-data.pipe';
           <ng-container matColumnDef="acoes">
             <th mat-header-cell *matHeaderCellDef class="text-end! whitespace-nowrap">Ações</th>
             <td mat-cell *matCellDef="let item" class="text-end! whitespace-nowrap">
-              <button mat-icon-button type="button" aria-label="Gerar oportunidade" (click)="gerar(item)"><mat-icon>trending_up</mat-icon></button>
-              <button mat-icon-button type="button" aria-label="Contatar" (click)="contatar(item)"><mat-icon>phone</mat-icon></button>
-              <button mat-icon-button type="button" aria-label="Descartar" (click)="descartar(item)"><mat-icon>delete</mat-icon></button>
+              <button mat-icon-button type="button" aria-label="Gerar oportunidade" matTooltip="Gerar oportunidade" (click)="gerar(item)"><mat-icon>trending_up</mat-icon></button>
+              <button mat-icon-button type="button" aria-label="Contatar" matTooltip="Contatar" (click)="contatar(item)"><mat-icon>phone</mat-icon></button>
+              <button mat-icon-button type="button" aria-label="Descartar" matTooltip="Descartar" (click)="descartar(item)"><mat-icon>delete</mat-icon></button>
             </td>
           </ng-container>
           <tr mat-header-row *matHeaderRowDef="colunas"></tr>
