@@ -56,7 +56,7 @@ describe('CascaComponent', () => {
     expect(texto).toContain('Gestão Financeira');
     expect(texto).not.toContain('Pagamentos');
     expect(texto.indexOf('Principal')).toBeLessThan(texto.indexOf('Gestão Financeira'));
-    expect(texto.indexOf('Gestão Financeira')).toBeLessThan(texto.indexOf('Gestão de eventos'));
+    expect(texto.indexOf('Gestão Financeira')).toBeLessThan(texto.indexOf('Gestão de Eventos'));
   });
 
   it('em tela estreita deixa o menu fechado e oferece abrir e fechar', () => {
@@ -89,7 +89,7 @@ describe('CascaComponent', () => {
   it('ordena os grupos com Modelos por último e põe os modelos do funil em Modelos (SPEC-034)', () => {
     const raiz = montar(false).nativeElement as HTMLElement;
     const grupos = Array.from(raiz.querySelectorAll('.nav-caption')).map((e) => e.textContent?.trim());
-    expect(grupos).toEqual(['Principal', 'Gestão de eventos', 'Agenda', 'Funil de vendas', 'Modelos']);
+    expect(grupos).toEqual(['Principal', 'Gestão de Eventos', 'Agenda', 'Funil de Vendas', 'Modelos']);
 
     const itensDe = (rotulo: string) => {
       const itens: string[] = [];
@@ -100,10 +100,10 @@ describe('CascaComponent', () => {
       }
       return itens;
     };
-    expect(itensDe('Modelos').some((t) => t.includes('Modelos de serviços'))).toBe(true);
-    expect(itensDe('Modelos').some((t) => t.includes('Modelo de orçamento'))).toBe(true);
-    expect(itensDe('Funil de vendas').some((t) => t.includes('Modelos de serviços') || t.includes('Modelo de orçamento'))).toBe(false);
-    expect(itensDe('Funil de vendas').some((t) => t.includes('Modelos de contrato'))).toBe(false);
+    expect(itensDe('Modelos').some((t) => t.includes('Modelos de Serviços'))).toBe(true);
+    expect(itensDe('Modelos').some((t) => t.includes('Modelo de Orçamento'))).toBe(true);
+    expect(itensDe('Funil de Vendas').some((t) => t.includes('Modelos de Serviços') || t.includes('Modelo de Orçamento'))).toBe(false);
+    expect(itensDe('Funil de Vendas').some((t) => t.includes('Modelos de contrato'))).toBe(false);
   });
 
   it('em tela larga não mostra Novo evento na barra superior', () => {
