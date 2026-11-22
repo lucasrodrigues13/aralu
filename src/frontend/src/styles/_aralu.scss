@@ -264,13 +264,6 @@ html {
   margin-left: auto;
 }
 
-// Quando os filtros ficam num cartão próprio acima da lista (ex.: quadro de oportunidades), o cartão inteiro é a barra.
-.barra-lista-cartao {
-  position: sticky;
-  top: 70px;
-  z-index: 5;
-}
-
 // Barra com muitos filtros: no celular os campos empilham e ocupariam a tela, então só fica fixa da largura média em diante.
 @media (max-width: 767px) {
   .barra-lista-alta {

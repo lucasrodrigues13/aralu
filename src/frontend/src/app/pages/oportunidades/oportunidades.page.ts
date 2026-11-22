@@ -726,7 +726,8 @@ export function textoDias(dias: number): string {
       }
     </div>
 
-    <mat-card class="cardWithShadow barra-lista-cartao barra-lista-alta">
+    <!-- Não é fixa como nas listas: no quadro ela cobriria o topo das colunas ao rolar. -->
+    <mat-card class="cardWithShadow">
       <mat-card-content class="flex flex-wrap items-end justify-between gap-4">
         <form class="barra-lista-filtros" [formGroup]="filtros" (ngSubmit)="carregar()">
           <div class="campo w-full sm:w-64">
