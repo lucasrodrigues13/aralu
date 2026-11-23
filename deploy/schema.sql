@@ -4023,3 +4023,42 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261123132301_ModeloDeContratoEmWord') THEN
+    ALTER TABLE "ContratosFunil" ADD "DocumentoArquivoId" uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261123132301_ModeloDeContratoEmWord') THEN
+    ALTER TABLE "ContratosConta" ADD "Formato" text NOT NULL DEFAULT 'texto';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261123132301_ModeloDeContratoEmWord') THEN
+    ALTER TABLE "ContratosConta" ADD "WordArquivoId" uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261123132301_ModeloDeContratoEmWord') THEN
+    ALTER TABLE "ContratosConta" ADD "WordNome" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261123132301_ModeloDeContratoEmWord') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261123132301_ModeloDeContratoEmWord', '10.0.4');
+    END IF;
+END $EF$;
+COMMIT;
+
