@@ -1,4 +1,11 @@
 import { Component, ElementRef, effect, input, signal, viewChild } from '@angular/core';
+import { ajustarPaginasWord } from './paginacao-word';
+
+/** Mede só depois que as imagens carregarem, para a altura de cada bloco estar certa. */
+function esperarImagens(el: HTMLElement): Promise<unknown> {
+  const pendentes = Array.from(el.querySelectorAll('img')).filter((img) => !img.complete);
+  return Promise.all(pendentes.map((img) => new Promise((ok) => { img.onload = img.onerror = ok; })));
+}
 
 /**
  * Live Preview do modelo Word: desenha o .docx (já com os exemplos no lugar das tags, destacados em amarelo)
@@ -55,6 +62,8 @@ export class PreviaWordComponent {
         ignoreLastRenderedPageBreak: true,
         useBase64URL: true,
       });
+      await esperarImagens(el);
+      ajustarPaginasWord(el);
     } catch {
       this.erro.set('Não foi possível mostrar este documento. Confira se ele abre normalmente no Word.');
     }

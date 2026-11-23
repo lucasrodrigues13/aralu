@@ -92,6 +92,134 @@ export class AjudaTagsDialog {
   }
 }
 
+/**
+ * Contrato de exemplo do help do modo "Escrever na plataforma": curto (uma página), genérico, sem dado pessoal real,
+ * com as tags no lugar dos dados e o espaço de assinatura escrito no próprio texto.
+ */
+export const CONTRATO_EXEMPLO = [
+  'QUADRO-RESUMO',
+  'CONTRATADA: {{contratada_nome}}, CPF/CNPJ nº {{contratada_documento}}, com endereço em {{contratada_endereco}}, representada por {{contratada_responsavel}}.',
+  'CONTRATANTE: {{contratante_nome}}, {{contratante_nacionalidade}}, {{contratante_estado_civil}}, {{contratante_profissao}}, CPF/CNPJ nº {{contratante_documento}}, residente em {{contratante_endereco}}, e-mail {{contratante_email}}, celular {{contratante_telefone}}.',
+  'EVENTO: {{evento_tipo}} em {{evento_data}}, cerimônia em {{evento_local_cerimonia}}, recepção em {{evento_local_recepcao}}, cerca de {{evento_convidados}} convidados.',
+  'VALOR: {{contrato_valor}}, pago assim: {{contrato_parcelas}}. Pix: {{contratada_pix}}.',
+  '',
+  'CLÁUSULA 1ª – DO OBJETO. Assessoria completa do evento do Quadro-Resumo: planejamento, apoio na escolha dos fornecedores, roteiros, ensaio e coordenação no dia, com 1 cerimonialista e 2 assistentes.',
+  'CLÁUSULA 2ª – DO PAGAMENTO. O saldo deve estar quitado até 10 dias antes do evento; atrasos têm multa de 2% e juros de 1% ao mês.',
+  'CLÁUSULA 3ª – DA DESISTÊNCIA. Em até 7 dias da assinatura, a desistência tem devolução integral; depois, a CONTRATADA retém parte do valor conforme a antecedência.',
+  'CLÁUSULA 4ª – DO FORO. Foro da comarca do domicílio do(a) CONTRATANTE.',
+  '',
+  'E, por estarem de acordo, as partes assinam este contrato em {{data_hoje}}.',
+  '',
+  '______________________________________',
+  '{{contratada_nome}} – CONTRATADA',
+  '',
+  '______________________________________',
+  '{{contratante_nome}} – CONTRATANTE',
+].join('\n');
+
+/** Logo e fundo de exemplo, desenhados na hora (PNG), para o help mostrar o contrato completo sem arquivo real. */
+function imagemExemplo(largura: number, altura: number, desenhar: (ctx: CanvasRenderingContext2D) => void): string | null {
+  const tela = document.createElement('canvas');
+  tela.width = largura;
+  tela.height = altura;
+  const ctx = tela.getContext('2d');
+  if (!ctx) return null;
+  desenhar(ctx);
+  return tela.toDataURL('image/png');
+}
+
+const LOGO_EXEMPLO = () =>
+  imagemExemplo(400, 160, (ctx) => {
+    ctx.strokeStyle = '#9a6b5b';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(200, 58, 44, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = '#9a6b5b';
+    ctx.textAlign = 'center';
+    ctx.font = 'italic 40px Georgia, serif';
+    ctx.fillText('CE', 200, 72);
+    ctx.font = '22px Georgia, serif';
+    ctx.fillText('CERIMONIAL EXEMPLO', 200, 140);
+  });
+
+const FUNDO_EXEMPLO = () =>
+  imagemExemplo(595, 842, (ctx) => {
+    const degrade = ctx.createLinearGradient(0, 0, 595, 842);
+    degrade.addColorStop(0, '#f3d9cf');
+    degrade.addColorStop(1, '#e8c3b4');
+    ctx.fillStyle = degrade;
+    ctx.fillRect(0, 0, 595, 842);
+    ctx.strokeStyle = '#b07a66';
+    ctx.lineWidth = 3;
+    for (const [x, y, r] of [[60, 60, 90], [540, 790, 120], [300, 430, 180]]) {
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  });
+
+/** Como funciona o modelo escrito na plataforma: texto, tags, imagens, assinatura e um contrato de exemplo. */
+@Component({
+  selector: 'app-ajuda-texto-dialog',
+  imports: [MatDialogModule, MatButtonModule, MatIconModule, FolhaContrato],
+  template: `
+    <h2 mat-dialog-title>Como funciona o modelo escrito na plataforma</h2>
+    <mat-dialog-content>
+      <ol class="passos text-sm">
+        <li><strong>Escreva o texto do contrato</strong> no campo "Texto do contrato", do jeito que ele deve chegar ao cliente: título, cláusulas e parágrafos. Cada quebra de linha do texto vira uma linha no contrato; deixe uma linha vazia para separar os blocos.</li>
+        <li><strong>Use tags no lugar dos dados que mudam</strong> de cliente para cliente, como nome, CPF, data e local do evento e valor. Clique no texto onde o dado deve entrar e escolha a tag em "Inserir tag no cursor". Ela aparece assim: <code ngNonBindable>{{contratante_nome}}</code>.</li>
+        <li>Quando o contrato é gerado para uma oportunidade, cada tag é trocada pelo dado real do cliente, do evento, do orçamento aprovado e da sua empresa. Se faltar algum dado, aparece uma linha em branco (________) para preencher à mão.</li>
+        <li><strong>Logo e imagem de fundo</strong> são opcionais: envie nos campos "Logo" e "Imagem de fundo". A logo fica centralizada no topo e o fundo cobre cada folha, com transparência.</li>
+        <li><strong>Inclua o espaço para assinatura no final do texto</strong>: uma linha (______) e, embaixo, o nome e o papel de cada parte. Use as tags <code ngNonBindable>{{contratante_nome}}</code> e <code ngNonBindable>{{contratada_nome}}</code> para os nomes saírem preenchidos.</li>
+        <li>Abra o <strong>Live Preview</strong> para ver o contrato como chega ao cliente, com exemplos no lugar das tags. Use "Ver em tela cheia" para ler com mais espaço.</li>
+      </ol>
+
+      <h3 class="text-base font-semibold mb-2">Exemplo de contrato</h3>
+      <p class="text-muted text-xs mb-3">Um modelo pequeno e genérico, com logo, imagem de fundo, tags e espaço para assinatura. Os dados destacados são exemplos fictícios.</p>
+      <div class="exemplo">
+        <div class="texto-exemplo">
+          <div class="flex items-center justify-between mb-2">
+            <span class="font-semibold text-sm">Texto para colar no editor</span>
+            <button mat-button type="button" (click)="copiar()"><mat-icon>{{ copiado() ? 'check' : 'content_copy' }}</mat-icon> {{ copiado() ? 'Copiado!' : 'Copiar texto' }}</button>
+          </div>
+          <pre>{{ exemplo }}</pre>
+        </div>
+        <div class="previa-exemplo">
+          <span class="font-semibold text-sm block mb-2">Como chega ao cliente</span>
+          <app-folha-contrato titulo="Contrato de Assessoria e Cerimonial" [html]="previa" [logoUrl]="logoUrl" [fundoUrl]="fundoUrl" />
+        </div>
+      </div>
+      <p class="text-muted text-xs mt-3 mb-0">Prefere usar um contrato que já tem pronto? Escolha "Enviar meu documento Word" e veja "Como preparar o Word".</p>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-stroked-button type="button" (click)="ref.close(exemplo)"><mat-icon>edit_note</mat-icon> Usar este exemplo no texto</button>
+      <button mat-flat-button type="button" mat-dialog-close>Entendi</button>
+    </mat-dialog-actions>
+  `,
+  styles: `
+    .passos { margin: 0 0 20px; padding-left: 20px; display: grid; gap: 8px; line-height: 1.5; }
+    code { font-size: 12px; }
+    .exemplo { display: grid; grid-template-columns: 1fr; gap: 16px; }
+    @media (min-width: 1000px) { .exemplo { grid-template-columns: minmax(0, 1fr) 640px; } }
+    pre { margin: 0; max-height: 70vh; overflow: auto; white-space: pre-wrap; font: 12px/1.5 ui-monospace, Consolas, monospace; padding: 12px; border: 1px solid var(--mat-sys-outline-variant); border-radius: var(--mat-sys-corner-small); }
+    .previa-exemplo { min-width: 0; }
+  `,
+})
+export class AjudaTextoDialog {
+  protected readonly dados = inject<{ campos: CampoMesclagem[] }>(MAT_DIALOG_DATA);
+  protected readonly ref = inject(MatDialogRef<AjudaTextoDialog, string>);
+  protected readonly exemplo = CONTRATO_EXEMPLO;
+  protected readonly previa = previaDestacada(CONTRATO_EXEMPLO, this.dados.campos);
+  protected readonly logoUrl = LOGO_EXEMPLO();
+  protected readonly fundoUrl = FUNDO_EXEMPLO();
+  protected readonly copiado = signal(false);
+
+  protected copiar(): void {
+    void navigator.clipboard?.writeText(this.exemplo).then(() => this.copiado.set(true));
+  }
+}
+
 /** Orientações para preparar o próprio Word: como escrever as tags e a lista completa, com botão de copiar. */
 @Component({
   selector: 'app-ajuda-word-dialog',
@@ -233,7 +361,12 @@ export class PreviaAmpliadaDialog {
             <mat-button-toggle value="texto"><mat-icon>edit_note</mat-icon> Escrever na plataforma</mat-button-toggle>
             <mat-button-toggle value="word"><mat-icon>description</mat-icon> Enviar meu documento Word</mat-button-toggle>
           </mat-button-toggle-group>
-          <span class="text-muted text-xs block mt-1">Escolha uma das opções. O modelo usa só a opção escolhida.</span>
+          <div class="flex flex-wrap items-center gap-2 mt-1">
+            <span class="text-muted text-xs">Escolha uma das opções. O modelo usa só a opção escolhida.</span>
+            @if (!ehWord()) {
+              <button mat-button type="button" (click)="abrirAjudaTexto()"><mat-icon>help_outline</mat-icon> Como funciona</button>
+            }
+          </div>
         </div>
         @if (ehWord()) {
           <div class="word">
@@ -489,6 +622,15 @@ export class ContratoDialog {
         setTimeout(() => URL.revokeObjectURL(url), 1000);
       },
     });
+  }
+
+  protected abrirAjudaTexto(): void {
+    this.dialog
+      .open(AjudaTextoDialog, { ...DIALOG_LARGO, width: 'min(1200px, calc(100vw - 32px))', maxHeight: '95vh', data: { campos: this.dados.campos } })
+      .afterClosed()
+      .subscribe((texto?: string) => {
+        if (texto) this.form.controls.texto.setValue(texto);
+      });
   }
 
   protected abrirAjudaWord(): void {
