@@ -23,6 +23,7 @@ import { NovoServicoDialog } from './novo-servico.dialog';
 import { MascaraDirective } from '../../shared/mascara.directive';
 import { TipoMascara, aplicarMascara } from '../../shared/mascaras';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { EditorRico } from '../../shared/editor-rico';
 
 interface BancoBrasil {
   ispb: string;
@@ -44,7 +45,7 @@ export const DIALOG_FORNECEDOR = DIALOG_LARGO;
 
 @Component({
   selector: 'app-fornecedor-form-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatCheckboxModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatTabsModule, MatIconModule, MatAutocompleteModule, MatChipsModule, MascaraDirective, CampoDinheiroComponent, MatTooltipModule, CampoDdiComponent],
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatCheckboxModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatTabsModule, MatIconModule, MatAutocompleteModule, MatChipsModule, MascaraDirective, CampoDinheiroComponent, MatTooltipModule, CampoDdiComponent, EditorRico],
   template: `
     <h2 mat-dialog-title>{{ dados ? 'Editar fornecedor' : 'Novo fornecedor' }}</h2>
     <mat-dialog-content>
@@ -316,7 +317,7 @@ export const DIALOG_FORNECEDOR = DIALOG_LARGO;
             <div class="aba">
               <div class="campo full">
                 <mat-label class="font-semibold mb-2 block">Diferencial</mat-label>
-                <mat-form-field appearance="outline" class="w-full"><textarea [attr.aria-label]="'Diferencial'" matInput rows="4" formControlName="diferencial"></textarea></mat-form-field>
+                <app-editor-rico formControlName="diferencial" rotulo="Diferencial" altura="180px" />
               </div>
               <mat-checkbox formControlName="diferencialVisivelCliente">Visível ao cliente</mat-checkbox>
             </div>
@@ -325,7 +326,7 @@ export const DIALOG_FORNECEDOR = DIALOG_LARGO;
             <div class="aba">
               <div class="campo full">
                 <mat-label class="font-semibold mb-2 block">Informações gerais</mat-label>
-                <mat-form-field appearance="outline" class="w-full"><textarea [attr.aria-label]="'Informações gerais'" matInput rows="4" formControlName="informacoesGerais"></textarea></mat-form-field>
+                <app-editor-rico formControlName="informacoesGerais" rotulo="Informações gerais" altura="180px" />
               </div>
             </div>
           </mat-tab>
@@ -333,7 +334,7 @@ export const DIALOG_FORNECEDOR = DIALOG_LARGO;
             <div class="aba">
               <div class="campo full">
                 <mat-label class="font-semibold mb-2 block">Portfólio</mat-label>
-                <mat-form-field appearance="outline" class="w-full"><textarea [attr.aria-label]="'Portfólio'" matInput rows="4" formControlName="portfolio"></textarea></mat-form-field>
+                <app-editor-rico formControlName="portfolio" rotulo="Portfólio" altura="180px" />
               </div>
             </div>
           </mat-tab>

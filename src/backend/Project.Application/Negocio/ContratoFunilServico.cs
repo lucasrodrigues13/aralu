@@ -102,7 +102,7 @@ public sealed class ContratoFunilServico(IDados dados, IDadosContrato modelos, I
                 $"Faltam dados do contratante para gerar o contrato: {string.Join(", ", faltam)}. Preencha na oportunidade ou no cadastro do cliente.");
         }
 
-        var conteudo = Domain.Comum.Texto.Limpo(pedido.Conteudo);
+        var conteudo = HtmlSeguro.LimparRico(pedido.Conteudo);
         Guid? modeloId = pedido.ModeloId;
         Guid? logoId = null;
         Guid? fundoId = null;
@@ -135,7 +135,7 @@ public sealed class ContratoFunilServico(IDados dados, IDadosContrato modelos, I
         var perfil = await dados.ObterPerfilAsync(contaId, ct);
         var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
         var valores = ContratoPreenchimento.Valores(contratante, oportunidade, perfil, aprovado, hoje);
-        conteudo = Mesclagem.Preencher(conteudo, valores);
+        conteudo = Mesclagem.Preencher(conteudo, valores, html: HtmlSeguro.EhHtml(conteudo));
         Guid? documentoId = null;
         if (modeloWord is not null)
         {
@@ -202,7 +202,7 @@ public sealed class ContratoFunilServico(IDados dados, IDadosContrato modelos, I
             return Resultado<ContratoFunilLeitura>.Erro(Codigos.Validacao, "Este contrato foi gerado de um documento Word: baixe o arquivo para ajustar o texto.");
         }
 
-        var conteudo = Domain.Comum.Texto.Limpo(pedido.Conteudo);
+        var conteudo = HtmlSeguro.LimparRico(pedido.Conteudo);
         if (conteudo is null)
         {
             return Resultado<ContratoFunilLeitura>.Erro(Codigos.Validacao, "Informe o conteúdo do contrato.");

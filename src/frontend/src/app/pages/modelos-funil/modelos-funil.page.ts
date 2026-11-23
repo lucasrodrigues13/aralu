@@ -15,12 +15,13 @@ import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { CampoDinheiroComponent } from '../../shared/campo-dinheiro';
 import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { EditorRico } from '../../shared/editor-rico';
 
 type TipoModelo = 'servico' | 'orcamento';
 
 @Component({
   selector: 'app-modelo-funil-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, CampoDinheiroComponent],
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, CampoDinheiroComponent, EditorRico],
   template: `
     <h2 mat-dialog-title>{{ dados.item ? 'Editar' : 'Novo' }} modelo</h2>
     <mat-dialog-content>
@@ -38,11 +39,11 @@ type TipoModelo = 'servico' | 'orcamento';
         } @else {
           <div class="campo">
             <mat-label class="font-semibold mb-2 block">Texto</mat-label>
-            <mat-form-field appearance="outline" class="w-full"><textarea [attr.aria-label]="'Texto'" matInput rows="8" formControlName="texto" #area></textarea></mat-form-field>
+            <app-editor-rico #editorTexto formControlName="texto" rotulo="Texto" altura="260px" />
           </div>
           <div class="params">
             @for (p of parametros; track p) {
-              <button mat-stroked-button type="button" (click)="inserir(p, area)">{{ p }}</button>
+              <button mat-stroked-button type="button" (click)="inserir(p, editorTexto)">{{ p }}</button>
             }
           </div>
           @if (dados.tipo === 'orcamento') {
@@ -55,15 +56,9 @@ type TipoModelo = 'servico' | 'orcamento';
               <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Cor secundária'" matInput formControlName="corSecundaria" placeholder="#aabbcc" /></mat-form-field>
             </div>
             <div class="campo">
-              <mat-label class="font-semibold mb-2 block">HTML da tela de aceite (opcional)</mat-label>
-              <mat-form-field appearance="outline" class="w-full">
-                <textarea [attr.aria-label]="'HTML da tela de aceite'" matInput rows="8" maxlength="50000" formControlName="htmlAceite" placeholder="<h2>Por que nos escolher</h2><p>…</p>"></textarea>
-                <mat-hint>Aparece para o cliente na tela de aceite. Por segurança só ficam títulos, texto, listas, tabelas, links e imagens https; scripts, estilos e formulários são removidos.</mat-hint>
-              </mat-form-field>
-              @if (form.controls.htmlAceite.value.trim()) {
-                <p class="text-xs text-muted mt-2">Prévia (já filtrada):</p>
-                <div class="previa" [innerHTML]="form.controls.htmlAceite.value"></div>
-              }
+              <span class="font-semibold mb-2 block">Tela de aceite (opcional)</span>
+              <app-editor-rico formControlName="htmlAceite" rotulo="Tela de aceite" altura="200px" placeholder="Ex.: Por que nos escolher" />
+              <p class="text-xs text-muted mt-1 mb-0">Aparece para o cliente na tela de aceite, com a formatação que você aplicar aqui.</p>
             </div>
           }
         }
@@ -94,11 +89,8 @@ export class ModeloFunilDialog {
     htmlAceite: [(this.dados.item as ModeloOrcamentoFunil | null)?.htmlAceite ?? ''],
   });
 
-  protected inserir(param: string, area: HTMLTextAreaElement): void {
-    const atual = this.form.controls.texto.value;
-    const inicio = area.selectionStart ?? atual.length;
-    const fim = area.selectionEnd ?? atual.length;
-    this.form.controls.texto.setValue(atual.slice(0, inicio) + param + atual.slice(fim));
+  protected inserir(param: string, editor: EditorRico): void {
+    editor.inserirTag(param.replace(/^\{\{|\}\}$/g, ''));
   }
 
   protected salvar(): void {

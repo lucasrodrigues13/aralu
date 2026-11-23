@@ -33,6 +33,7 @@
             "styles": [
               "node_modules/@fontsource-variable/dm-sans/index.css",
               "src/globals.css",
+              "node_modules/quill/dist/quill.snow.css",
               "src/styles.scss"
             ],
             "stylePreprocessorOptions": {

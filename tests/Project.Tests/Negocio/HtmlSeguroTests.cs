@@ -192,4 +192,27 @@ public class HtmlSeguroTests
 
         Assert.Equal(uma, HtmlSeguro.Sanitizar(uma));
     }
+
+    [Fact]
+    public void Mantem_alinhamento_e_listas_do_editor_e_descarta_outras_classes()
+    {
+        var html = HtmlSeguro.Sanitizar("<p class=\"ql-align-center x\">a</p><ol start=\"3\"><li data-list=\"bullet\" class=\"evil\">b</li></ol>");
+
+        Assert.Equal("<p class=\"ql-align-center\">a</p><ol start=\"3\"><li data-list=\"bullet\">b</li></ol>", html);
+    }
+
+    [Theory]
+    [InlineData("<p><br></p>", false)]
+    [InlineData("<p>&nbsp;</p>", false)]
+    [InlineData("<p>oi</p>", true)]
+    public void TemTexto_ignora_paragrafo_vazio(string html, bool esperado) =>
+        Assert.Equal(esperado, HtmlSeguro.TemTexto(html));
+
+    [Theory]
+    [InlineData("  texto antigo  ", "texto antigo")]
+    [InlineData("<p><br></p>", null)]
+    [InlineData("<p onclick=\"x()\">oi<script>a()</script></p>", "<p>oi</p>")]
+    [InlineData("   ", null)]
+    public void LimparRico_sanitiza_html_e_preserva_texto_antigo(string entrada, string? esperado) =>
+        Assert.Equal(esperado, HtmlSeguro.LimparRico(entrada));
 }

@@ -32,7 +32,8 @@ import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { DIALOG_LARGO, DIALOG_PEQUENO } from '../../shared/dialog';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
-import { filtrarCampos, inserirMarca, previaDestacada, tagsDesconhecidas } from './mesclagem';
+import { filtrarCampos, previaDestacada, tagsDesconhecidas } from './mesclagem';
+import { EditorRico } from '../../shared/editor-rico';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 /** O que o modal devolve: nome, texto e as mudanças de logo e fundo (arquivo novo, null = remover, ausente = sem mudança). */
@@ -340,6 +341,7 @@ export class PreviaAmpliadaDialog {
     MatButtonToggleModule,
     MatProgressBarModule,
     PreviaWordComponent,
+    EditorRico,
   ],
   template: `
     <h2 mat-dialog-title>{{ dados.contrato ? 'Editar modelo de contrato' : 'Novo modelo de contrato' }}</h2>
@@ -438,8 +440,8 @@ export class PreviaAmpliadaDialog {
         <div class="ferramentas">
           <div class="seletor-tags">
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Inserir tag no cursor</mat-label>
-              <input matInput [formControl]="busca" [matAutocomplete]="auto" aria-label="Buscar tag para inserir" placeholder="Digite para buscar (ex.: nome, data, valor)" />
+              <mat-icon matPrefix>sell</mat-icon>
+              <input matInput [formControl]="busca" [matAutocomplete]="auto" aria-label="Inserir tag no cursor" placeholder="Inserir tag no cursor" />
               <mat-autocomplete #auto="matAutocomplete" (optionSelected)="escolher($event.option.value)">
                 @for (campo of filtrados(); track campo.marca) {
                   <mat-option [value]="campo">
@@ -464,11 +466,10 @@ export class PreviaAmpliadaDialog {
         </div>
         <div class="editor" [class.com-previa]="previaAberta()">
           <div class="campo texto">
-            <mat-label class="font-semibold mb-2 block">Texto do contrato</mat-label>
-            <mat-form-field appearance="outline" class="w-full">
-              <textarea [attr.aria-label]="'Texto do contrato'" #texto matInput rows="18" formControlName="texto" required></textarea>
-              @if (form.controls.texto.invalid) { <mat-error>Informe o texto.</mat-error> }
-            </mat-form-field>
+            <span class="font-semibold mb-2 block">Texto do contrato</span>
+            <app-editor-rico formControlName="texto" rotulo="Texto do contrato" altura="420px"
+              [invalido]="form.controls.texto.invalid && (form.controls.texto.touched || tentouSalvar())" />
+            @if (form.controls.texto.invalid && (form.controls.texto.touched || tentouSalvar())) { <p class="erro mt-1" role="alert">Informe o texto.</p> }
           </div>
           @if (previaAberta()) {
             <div class="painel-previa" aria-label="Live Preview">
@@ -539,7 +540,7 @@ export class ContratoDialog {
   protected readonly enviandoWord = signal(false);
   protected readonly erroWord = signal('');
   protected readonly tentouSalvar = signal(false);
-  private readonly areaTexto = viewChild<ElementRef<HTMLTextAreaElement>>('texto');
+  private readonly editorTexto = viewChild(EditorRico);
   /** Live Preview (SPEC-055): painel ao lado do texto, atualizado a cada tecla. */
   protected readonly previaAberta = signal(false);
   protected readonly form = this.fb.nonNullable.group({
@@ -703,16 +704,7 @@ export class ContratoDialog {
   }
 
   protected inserir(campo: CampoMesclagem): void {
-    const area = this.areaTexto()?.nativeElement;
-    const texto = this.form.controls.texto.value;
-    const inicio = area?.selectionStart ?? texto.length;
-    const fim = area?.selectionEnd ?? texto.length;
-    const novo = inserirMarca(texto, inicio, fim, campo.marca);
-    this.form.controls.texto.setValue(novo.texto);
-    setTimeout(() => {
-      area?.focus();
-      area?.setSelectionRange(novo.cursor, novo.cursor);
-    });
+    this.editorTexto()?.inserirTag(campo.marca);
   }
 
   protected salvar(): void {

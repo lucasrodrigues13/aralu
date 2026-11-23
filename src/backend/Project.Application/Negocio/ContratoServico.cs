@@ -92,7 +92,12 @@ public sealed class ContratoServico(IDadosContrato dados, IArmazenamentoArquivo?
         else
         {
             texto = pedido.Texto?.Trim();
-            if (string.IsNullOrEmpty(texto))
+            if (HtmlSeguro.EhHtml(texto))
+            {
+                texto = HtmlSeguro.Sanitizar(texto, HtmlSeguro.LimiteContrato);
+            }
+
+            if (string.IsNullOrEmpty(texto) || !HtmlSeguro.TemTexto(texto))
             {
                 return Resultado<ContratoLeitura>.Erro(Codigos.Validacao, "Informe o texto do contrato.");
             }

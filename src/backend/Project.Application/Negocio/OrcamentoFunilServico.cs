@@ -126,7 +126,7 @@ public sealed class OrcamentoFunilServico(IDados dados)
             return Resultado<OrcamentoFunilLeitura>.Erro(Codigos.Validacao, "O valor não pode ser negativo.");
         }
 
-        var conteudo = Domain.Comum.Texto.Limpo(pedido.Conteudo);
+        var conteudo = HtmlSeguro.LimparRico(pedido.Conteudo);
         Guid? modeloId = pedido.ModeloId;
         string? htmlAceite = null;
         if (conteudo is null && modeloId is Guid mid)
@@ -191,7 +191,7 @@ public sealed class OrcamentoFunilServico(IDados dados)
             return Resultado<OrcamentoFunilLeitura>.Erro(Codigos.Validacao, "Só orçamentos em andamento podem ser editados.");
         }
 
-        var conteudo = Domain.Comum.Texto.Limpo(pedido.Conteudo);
+        var conteudo = HtmlSeguro.LimparRico(pedido.Conteudo);
         if (conteudo is null)
         {
             return Resultado<OrcamentoFunilLeitura>.Erro(Codigos.Validacao, "Informe o conteúdo do orçamento.");

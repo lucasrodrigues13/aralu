@@ -689,10 +689,10 @@ public sealed class FornecedorServico(IDados dados, Arquivos.IArmazenamentoArqui
             DocumentosBancarios = documentoBancario,
             PixTipo = Domain.Comum.Texto.Limpo(pedido.PixTipo),
             PixChave = pixChave,
-            Diferencial = Domain.Comum.Texto.Limpo(pedido.Diferencial),
+            Diferencial = HtmlSeguro.LimparRico(pedido.Diferencial),
             DiferencialVisivelCliente = pedido.DiferencialVisivelCliente ?? false,
-            InformacoesGerais = Domain.Comum.Texto.Limpo(pedido.InformacoesGerais),
-            Portfolio = Domain.Comum.Texto.Limpo(pedido.Portfolio),
+            InformacoesGerais = HtmlSeguro.LimparRico(pedido.InformacoesGerais),
+            Portfolio = HtmlSeguro.LimparRico(pedido.Portfolio),
         };
 
         foreach (var servicoId in servicoIds)

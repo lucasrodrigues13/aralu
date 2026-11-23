@@ -45,4 +45,12 @@ public class ParametrosOrcamentoTests
 
         Assert.Equal("Data: . Obs: {{outra}}", texto);
     }
+
+    [Fact]
+    public void Em_html_o_valor_entra_escapado()
+    {
+        var texto = ParametrosOrcamento.Aplicar("<p><strong>{{nome_oportunidade}}</strong></p>", new Oportunidade { Nome = "Ana & <Beto>" }, null, new DateOnly(2026, 1, 1), null);
+
+        Assert.Equal("<p><strong>Ana &amp; &lt;Beto&gt;</strong></p>", texto);
+    }
 }

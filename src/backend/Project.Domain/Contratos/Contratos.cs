@@ -76,7 +76,8 @@ public static partial class Mesclagem
     ];
 
     /// <summary>Troca cada {{marca}} conhecida pelo valor. Valor vazio vira uma linha em branco; marca desconhecida fica como está.</summary>
-    public static string Preencher(string texto, IReadOnlyDictionary<string, string?> valores) =>
+    /// <remarks>Com <paramref name="html"/>, o texto é HTML do editor e os valores entram escapados.</remarks>
+    public static string Preencher(string texto, IReadOnlyDictionary<string, string?> valores, bool html = false) =>
         MarcaRegex().Replace(texto, encontrado =>
         {
             var marca = encontrado.Groups[1].Value.ToLowerInvariant();
@@ -85,7 +86,8 @@ public static partial class Mesclagem
                 return encontrado.Value;
             }
 
-            return valores.TryGetValue(marca, out var valor) && !string.IsNullOrWhiteSpace(valor) ? valor! : Vazio;
+            var valor = valores.TryGetValue(marca, out var lido) && !string.IsNullOrWhiteSpace(lido) ? lido! : Vazio;
+            return html ? System.Net.WebUtility.HtmlEncode(valor) : valor;
         });
 
     /// <summary>Valores das marcas contratada_* a partir do perfil; o endereço é montado dos campos estruturados (SPEC-038).</summary>

@@ -79,4 +79,12 @@ public class MesclagemTests
     {
         Assert.Equal("{{evento_nome}}", Mesclagem.Preencher("{{evento_nome}}", new Dictionary<string, string?> { ["evento_nome"] = "X" }));
     }
+
+    [Fact]
+    public void Em_html_o_valor_entra_escapado()
+    {
+        var valores = new Dictionary<string, string?> { ["contratante_nome"] = "Ana <b>&</b>" };
+
+        Assert.Equal("<p><strong>Ana &lt;b&gt;&amp;&lt;/b&gt;</strong></p>", Mesclagem.Preencher("<p><strong>{{contratante_nome}}</strong></p>", valores, html: true));
+    }
 }

@@ -211,7 +211,7 @@ public sealed class ModeloOrcamentoFunilServico(IDados dados)
     private static Resultado<ModeloOrcamentoFunil> Montar(string contaId, Guid id, SalvarModeloOrcamentoFunil pedido)
     {
         var nome = Domain.Comum.Texto.Limpo(pedido.Nome);
-        var texto = Domain.Comum.Texto.Limpo(pedido.Texto);
+        var texto = HtmlSeguro.LimparRico(pedido.Texto);
         if (nome is null)
         {
             return Resultado<ModeloOrcamentoFunil>.Erro(Codigos.Validacao, "Informe o nome do modelo.");

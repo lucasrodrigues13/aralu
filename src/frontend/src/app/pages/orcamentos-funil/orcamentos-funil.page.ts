@@ -21,10 +21,11 @@ import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { linkProposta, SELO_PROPOSTA, whatsappProposta } from '../../shared/proposta';
 import { ParcelasOrcamentoDialog } from './parcelas-orcamento.dialog';
+import { EditorRico } from '../../shared/editor-rico';
 
 @Component({
   selector: 'app-orcamento-funil-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, CampoDinheiroComponent],
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, CampoDinheiroComponent, EditorRico],
   template: `
     <h2 mat-dialog-title>{{ dados ? 'Editar orçamento' : 'Novo orçamento' }}</h2>
     <mat-dialog-content>
@@ -50,7 +51,7 @@ import { ParcelasOrcamentoDialog } from './parcelas-orcamento.dialog';
         }
         <div class="campo">
           <mat-label class="font-semibold mb-2 block">Conteúdo</mat-label>
-          <mat-form-field appearance="outline" class="w-full"><textarea [attr.aria-label]="'Conteúdo'" matInput rows="8" formControlName="conteudo"></textarea></mat-form-field>
+          <app-editor-rico formControlName="conteudo" rotulo="Conteúdo" altura="260px" />
         </div>
         <app-campo-dinheiro rotulo="Valor" formControlName="valor" />
       </form>

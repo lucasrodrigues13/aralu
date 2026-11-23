@@ -32,14 +32,40 @@ public static partial class HtmlSeguro
         "svg", "math", "textarea", "title", "head", "select", "option", "applet", "xmp", "plaintext", "noembed", "noframes",
     };
 
-    public static string Sanitizar(string? html)
+    /// <summary>Texto do contrato (editor com formatação) pode ser bem mais longo que a tela de aceite.</summary>
+    public const int LimiteContrato = 500_000;
+
+    /// <summary>Conteúdo gravado pelo editor começa com uma tag; texto antigo (sem HTML), não.</summary>
+    public static bool EhHtml(string? texto) => texto is not null && Regex.IsMatch(texto, @"^\s*<[a-zA-Z]");
+
+    /// <summary>
+    /// Campo com editor de formatação: HTML é sanitizado (e vira null se não tiver texto visível);
+    /// texto antigo, sem HTML, só perde os espaços das pontas.
+    /// </summary>
+    public static string? LimparRico(string? texto, int limite = LimiteContrato)
+    {
+        var limpo = Domain.Comum.Texto.Limpo(texto);
+        if (limpo is null || !EhHtml(limpo))
+        {
+            return limpo;
+        }
+
+        var html = Sanitizar(limpo, limite);
+        return TemTexto(html) ? html : null;
+    }
+
+    /// <summary>Há texto visível (fora das tags)? Um "<p><br></p>" vazio não conta.</summary>
+    public static bool TemTexto(string? texto) =>
+        !string.IsNullOrWhiteSpace(texto) && !string.IsNullOrWhiteSpace(WebUtility.HtmlDecode(Regex.Replace(texto, "<[^>]*>", "")));
+
+    public static string Sanitizar(string? html, int limite = LimiteEntrada)
     {
         if (string.IsNullOrWhiteSpace(html))
         {
             return "";
         }
 
-        var entrada = html.Length > LimiteEntrada ? html[..LimiteEntrada] : html;
+        var entrada = html.Length > limite ? html[..limite] : html;
         var saida = new StringBuilder(entrada.Length);
         var abertas = new List<string>();
         var i = 0;
@@ -250,7 +276,17 @@ public static partial class HtmlSeguro
                     break;
                 case ("img", "width" or "height"):
                 case ("td" or "th", "colspan" or "rowspan"):
+                case ("ol", "start"):
                     seguro = Regex.IsMatch(valor, "^[0-9]{1,4}$") ? valor : null;
+                    break;
+                case ("li", "data-list"):
+                    seguro = valor is "bullet" or "ordered" ? valor : null;
+                    break;
+                case (_, "class"):
+                    // Só as classes de alinhamento e recuo do editor (Quill).
+                    var classes = valor.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                        .Where(c => Regex.IsMatch(c, "^ql-(align-(center|right|justify)|indent-[1-8])$"));
+                    seguro = string.Join(' ', classes) is { Length: > 0 } lista ? lista : null;
                     break;
             }
 

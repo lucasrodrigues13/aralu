@@ -11,6 +11,7 @@ import { faltaParaContrato, NegocioClient, PropostaPublica, RespostaProposta } f
 import { ContratanteCamposComponent, contratantePedido, grupoContratante, preencherContratante } from '../../shared/contratante-campos';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { GdDinheiroPipe } from '../../shared/gd-dinheiro.pipe';
+import { ehHtml } from '../../shared/editor-rico';
 
 const LIMITE = 1000;
 
@@ -36,7 +37,11 @@ const RESPONDIDO: Record<RespostaProposta, { titulo: string; texto: string; icon
               <h1>Proposta{{ p.titulo ? ': ' + p.titulo : '' }}</h1>
               @if (p.validoAte) { <span class="block text-xs text-muted">Válida até {{ p.validoAte | gdData }}.</span> }
             </header>
-            <div class="texto">{{ p.conteudo }}</div>
+            @if (ehHtml(p.conteudo)) {
+              <div class="texto rico" [innerHTML]="p.conteudo"></div>
+            } @else {
+              <div class="texto">{{ p.conteudo }}</div>
+            }
             @if (p.htmlAceite) {
               <section class="apresentacao" aria-label="Apresentação da proposta" [innerHTML]="p.htmlAceite"></section>
             }
@@ -141,6 +146,11 @@ const RESPONDIDO: Record<RespostaProposta, { titulo: string; texto: string; icon
     h2 { font-size: 17px; margin: 0 0 12px; }
     .dados-contrato { font-size: 15px; font-weight: 600; margin: 16px 0 4px; }
     .texto { white-space: pre-wrap; font-size: 15px; line-height: 1.7; overflow-wrap: anywhere; }
+    .texto.rico { white-space: normal; }
+    .texto.rico ::ng-deep :is(p, h2, h3, ol, ul) { margin: 0; }
+    :is(.texto.rico, .apresentacao) ::ng-deep .ql-align-center { text-align: center; }
+    :is(.texto.rico, .apresentacao) ::ng-deep .ql-align-right { text-align: right; }
+    :is(.texto.rico, .apresentacao) ::ng-deep .ql-align-justify { text-align: justify; }
     .apresentacao { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--mat-sys-outline-variant); overflow-wrap: anywhere; line-height: 1.6; }
     .apresentacao img { max-width: 100%; height: auto; }
     .apresentacao table { border-collapse: collapse; max-width: 100%; }
@@ -162,6 +172,7 @@ const RESPONDIDO: Record<RespostaProposta, { titulo: string; texto: string; icon
   `,
 })
 export class PropostaPublicaPage implements OnInit {
+  protected readonly ehHtml = ehHtml;
   private readonly negocio = inject(NegocioClient);
   private readonly rota = inject(ActivatedRoute);
   protected readonly limite = LIMITE;

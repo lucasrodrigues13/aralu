@@ -19,11 +19,12 @@ import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { FolhaContrato, imprimirContrato } from '../contratos/folha-contrato';
 import { textoEmHtml } from '../contratos/mesclagem';
 import { PreviaWordComponent } from '../contratos/previa-word';
+import { EditorRico } from '../../shared/editor-rico';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-contrato-funil-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule],
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, EditorRico],
   template: `
     <h2 mat-dialog-title>{{ dados ? 'Editar contrato' : 'Novo contrato' }}</h2>
     <mat-dialog-content>
@@ -52,7 +53,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
         } @else {
         <div class="campo">
           <mat-label class="font-semibold mb-2 block">Conteúdo</mat-label>
-          <mat-form-field appearance="outline" class="w-full"><textarea [attr.aria-label]="'Conteúdo'" matInput rows="8" formControlName="conteudo"></textarea></mat-form-field>
+          <app-editor-rico formControlName="conteudo" rotulo="Conteúdo" altura="320px" />
         </div>
         }
       </form>

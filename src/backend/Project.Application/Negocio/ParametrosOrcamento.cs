@@ -43,8 +43,12 @@ public static class ParametrosOrcamento
         };
 
         // Padrão único de tags ({{nome_tag}}), como no contrato; tag fora da lista fica como está.
+        // Texto do editor (HTML): os valores entram escapados.
+        var html = HtmlSeguro.EhHtml(texto);
         return Regex.Replace(texto, @"\{\{\s*([A-Za-z0-9_]+)\s*\}\}",
-            encontrado => valores.TryGetValue(encontrado.Groups[1].Value, out var valorTexto) ? valorTexto : encontrado.Value);
+            encontrado => valores.TryGetValue(encontrado.Groups[1].Value, out var valorTexto)
+                ? (html ? System.Net.WebUtility.HtmlEncode(valorTexto) : valorTexto)
+                : encontrado.Value);
     }
 
     private static string RotuloTipo(TipoEvento? tipo) => tipo switch

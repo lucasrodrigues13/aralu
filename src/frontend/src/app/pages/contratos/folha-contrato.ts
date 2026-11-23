@@ -46,6 +46,14 @@ import { Component, ElementRef, afterRenderEffect, input, signal, untracked, vie
     .numero { position: absolute; bottom: 20px; right: 51px; font: 10px Georgia, serif; color: #777; }
     .conteudo ::ng-deep mark { background: color-mix(in oklab, var(--mat-sys-primary) 18%, transparent); color: inherit; border-radius: 4px; padding: 0 2px; }
     .conteudo ::ng-deep mark.desconhecida { background: #fde68a; }
+    .conteudo ::ng-deep :is(p, h2, h3, ol, ul) { margin: 0; }
+    .conteudo ::ng-deep h2 { font-size: 14px; }
+    .conteudo ::ng-deep h3 { font-size: 13px; }
+    .conteudo ::ng-deep :is(ol, ul) { padding-left: 24px; }
+    .conteudo ::ng-deep .ql-align-center { text-align: center; }
+    .conteudo ::ng-deep .ql-align-right { text-align: right; }
+    .conteudo ::ng-deep .ql-align-justify { text-align: justify; }
+    .conteudo ::ng-deep a { color: inherit; text-decoration: underline; }
   `,
 })
 export class FolhaContrato {
@@ -64,7 +72,7 @@ export class FolhaContrato {
   constructor() {
     afterRenderEffect({
       read: () => {
-        const linhas = this.html().split(/<br\s*\/?>/i);
+        const linhas = blocosDoContrato(this.html());
         const el = this.medidor().nativeElement;
         const cabecalho = (this.logoUrl() ? '<img class="logo" alt="">' : '') + `<h3 class="titulo">x</h3>`;
         el.innerHTML = cabecalho + linhas.map((linha) => `<div class="linha">${linha}</div>`).join('');
@@ -92,6 +100,22 @@ export class FolhaContrato {
   }
 }
 
+/** A janela de impressão não passa pelo sanitizador do Angular: tira scripts, eventos e URLs perigosas antes. */
+function limparHtml(html: string): string {
+  const doc = new DOMParser().parseFromString(`<body>${html}</body>`, 'text/html');
+  doc.querySelectorAll('script, style, iframe, object, embed, link, meta, form').forEach((el) => el.remove());
+  doc.querySelectorAll('*').forEach((el) => {
+    for (const atributo of Array.from(el.attributes)) {
+      const nome = atributo.name.toLowerCase();
+      const valor = atributo.value.trim().toLowerCase();
+      if (nome.startsWith('on') || nome === 'style' || ((nome === 'href' || nome === 'src') && !/^(https?:|mailto:|blob:|#)/.test(valor))) {
+        el.removeAttribute(atributo.name);
+      }
+    }
+  });
+  return doc.body.innerHTML;
+}
+
 function escaparAtributo(valor: string): string {
   return valor.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
@@ -113,12 +137,42 @@ export function imprimirContrato(titulo: string, html: string, logoUrl: string |
   .fundo { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.18; z-index: -1; }
   .logo { display: block; margin: 0 auto 12px; max-width: 200px; max-height: 80px; object-fit: contain; }
   h1 { text-align: center; font-size: 14pt; margin: 0 0 16px; }
+  p, h2, h3, ol, ul { margin: 0; }
+  .ql-align-center { text-align: center; } .ql-align-right { text-align: right; } .ql-align-justify { text-align: justify; }
 </style></head><body>
 ${fundoUrl ? `<img class="fundo" src="${escaparAtributo(fundoUrl)}" alt="">` : ''}
 ${logoUrl ? `<img class="logo" src="${escaparAtributo(logoUrl)}" alt="Logo">` : ''}
 <h1>${escaparAtributo(titulo)}</h1>
-<div>${html}</div>
+<div>${limparHtml(html)}</div>
 <script>window.addEventListener('load', function () { window.print(); });</script>
 </body></html>`);
   janela.document.close();
+}
+
+/**
+ * Divide o conteúdo em blocos para paginar. Texto antigo: uma linha por <br>. HTML do editor: cada parágrafo ou
+ * título é um bloco, e cada item de lista vira um bloco próprio (na mesma lista, com a numeração mantida).
+ */
+export function blocosDoContrato(html: string): string[] {
+  if (!/^\s*<[a-z]/i.test(html)) {
+    return html.split(/<br\s*\/?>/i);
+  }
+  const corpo = new DOMParser().parseFromString(`<body>${html}</body>`, 'text/html').body;
+  const blocos: string[] = [];
+  for (const no of Array.from(corpo.childNodes)) {
+    if (no instanceof HTMLOListElement || no instanceof HTMLUListElement) {
+      const tag = no.tagName.toLowerCase();
+      let numero = no instanceof HTMLOListElement ? no.start || 1 : 1;
+      for (const item of Array.from(no.children)) {
+        const inicio = tag === 'ol' ? ` start="${numero}"` : '';
+        blocos.push(`<${tag}${inicio}>${item.outerHTML}</${tag}>`);
+        numero++;
+      }
+    } else if (no instanceof HTMLElement) {
+      blocos.push(no.outerHTML);
+    } else if (no.textContent?.trim()) {
+      blocos.push(no.textContent);
+    }
+  }
+  return blocos;
 }
