@@ -35,6 +35,9 @@ public sealed class ContratoFunil
 
     public Guid? FundoArquivoId { get; set; }
 
+    /// <summary>Contrato gerado de modelo Word: o .docx já preenchido, no armazenamento de arquivos.</summary>
+    public Guid? DocumentoArquivoId { get; set; }
+
     /// <summary>Parcelas a receber do cliente, copiadas do orçamento aprovado ao gerar o contrato (SPEC-040).</summary>
     public List<Project.Domain.Dinheiro.ParcelaContrato> Parcelas { get; set; } = [];
 }

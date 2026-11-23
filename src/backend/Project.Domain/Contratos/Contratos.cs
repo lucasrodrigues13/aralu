@@ -20,9 +20,25 @@ public sealed class ContratoConta
     /// <summary>Arquivo da imagem de fundo do contrato, no armazenamento de arquivos. Sem chave estrangeira (SPEC-056).</summary>
     public Guid? FundoArquivoId { get; set; }
 
+    /// <summary>Como o modelo foi feito: <see cref="FormatoModelo.Texto"/> (editor da plataforma) ou <see cref="FormatoModelo.Word"/> (.docx próprio).</summary>
+    public string Formato { get; set; } = FormatoModelo.Texto;
+
+    /// <summary>Documento Word do modelo (formato "word"), no armazenamento de arquivos.</summary>
+    public Guid? WordArquivoId { get; set; }
+
+    /// <summary>Nome original do .docx enviado, para mostrar ao organizador.</summary>
+    public string? WordNome { get; set; }
+
     public DateTimeOffset CriadoEm { get; set; }
 
     public DateTimeOffset AtualizadoEm { get; set; }
+}
+
+/// <summary>Formatos de modelo de contrato: escrito no editor ou documento Word próprio (um ou outro).</summary>
+public static class FormatoModelo
+{
+    public const string Texto = "texto";
+    public const string Word = "word";
 }
 
 /// <summary>Uma tag: a marca, o que representa (Rotulo), de onde puxa o valor (Fonte) e um exemplo (SPEC-053).</summary>

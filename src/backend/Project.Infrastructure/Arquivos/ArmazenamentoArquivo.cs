@@ -20,6 +20,8 @@ public sealed class ArmazenamentoArquivo(
     ILogger<ArmazenamentoArquivo> logs) : IArmazenamentoArquivo
 {
     private const string Mensagem = "A imagem não foi aceita. Use JPG, PNG ou WebP de até 5 MB.";
+    private const string MensagemWord = "O arquivo não foi aceito. Envie um documento Word (.docx) de até 10 MB.";
+    private const long MaxWordBytes = 10 * 1024 * 1024;
     private const string MensagemDocumento = "O arquivo não foi aceito. Use JPG, JPEG, PNG ou PDF de até 5 MB.";
 
     public Task<Resultado<ArquivoGuardado>> GuardarImagemAsync(
@@ -36,14 +38,23 @@ public sealed class ArmazenamentoArquivo(
         CancellationToken ct) =>
         GuardarAsync(conteudo, nomeOriginal, contaId, documento: true, ct);
 
+    public Task<Resultado<ArquivoGuardado>> GuardarWordAsync(
+        Stream conteudo,
+        string? nomeOriginal,
+        string contaId,
+        CancellationToken ct) =>
+        GuardarAsync(conteudo, nomeOriginal, contaId, documento: true, ct, word: true);
+
     private async Task<Resultado<ArquivoGuardado>> GuardarAsync(
         Stream conteudo,
         string? nomeOriginal,
         string contaId,
         bool documento,
-        CancellationToken ct)
+        CancellationToken ct,
+        bool word = false)
     {
-        var mensagem = documento ? MensagemDocumento : Mensagem;
+        var mensagem = word ? MensagemWord : documento ? MensagemDocumento : Mensagem;
+        var limite = word ? MaxWordBytes : opcoes.Value.MaxImageBytes;
         var raiz = Raiz();
         var tempDir = Path.Combine(raiz, "temp");
         Directory.CreateDirectory(tempDir);
@@ -59,7 +70,7 @@ public sealed class ArmazenamentoArquivo(
                 while ((lidos = await conteudo.ReadAsync(buffer, ct)) > 0)
                 {
                     total += lidos;
-                    if (total > opcoes.Value.MaxImageBytes)
+                    if (total > limite)
                     {
                         return Resultado<ArquivoGuardado>.Erro(Codigos.Validacao, mensagem);
                     }
@@ -73,14 +84,14 @@ public sealed class ArmazenamentoArquivo(
                 return Resultado<ArquivoGuardado>.Erro(Codigos.Validacao, mensagem);
             }
 
-            var tipo = Detectar(temp);
-            var aceito = tipo is not null && (documento ? tipo.Value.Extensao is ".jpg" or ".png" or ".pdf" : tipo.Value.Extensao is not ".pdf");
+            var tipo = word ? DetectarWord(temp) : Detectar(temp);
+            var aceito = tipo is not null && (word ? tipo.Value.Extensao is ".docx" : documento ? tipo.Value.Extensao is ".jpg" or ".png" or ".pdf" : tipo.Value.Extensao is not ".pdf");
             if (!aceito || !ExtensaoConfere(nomeOriginal, tipo!.Value.Extensao))
             {
                 return Resultado<ArquivoGuardado>.Erro(Codigos.Validacao, mensagem);
             }
 
-            if (documento && tipo.Value.Extensao is ".jpg" or ".png"
+            if (documento && !word && tipo.Value.Extensao is ".jpg" or ".png"
                 && ReducaoImagem.Reduzir(temp, tipo.Value.Extensao == ".jpg") is byte[] reduzida)
             {
                 await File.WriteAllBytesAsync(temp, reduzida, ct);
@@ -89,7 +100,7 @@ public sealed class ArmazenamentoArquivo(
 
             var agora = DateTime.UtcNow;
             var nomeFisico = $"{Guid.NewGuid():N}{tipo.Value.Extensao}";
-            var relativo = Path.Combine(documento ? "documentos" : "images", agora.Year.ToString("0000"), agora.Month.ToString("00"), nomeFisico);
+            var relativo = Path.Combine(word ? "word" : documento ? "documentos" : "images", agora.Year.ToString("0000"), agora.Month.ToString("00"), nomeFisico);
             final = Path.GetFullPath(Path.Combine(raiz, relativo));
             if (!final.StartsWith(raiz, StringComparison.OrdinalIgnoreCase))
             {
@@ -204,6 +215,12 @@ public sealed class ArmazenamentoArquivo(
 
         return null;
     }
+
+    /// <summary>.docx: zip com word/document.xml legível.</summary>
+    private static (string Extensao, string Mime)? DetectarWord(string caminho) =>
+        Project.Domain.Contratos.MesclagemWord.EhDocx(File.ReadAllBytes(caminho))
+            ? (".docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+            : null;
 
     private static bool ExtensaoConfere(string? nomeOriginal, string extensaoDetectada)
     {

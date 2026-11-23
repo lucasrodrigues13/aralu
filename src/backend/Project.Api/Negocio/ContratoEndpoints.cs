@@ -22,6 +22,9 @@ public static class ContratoEndpoints
         cadastro.MapPost("", Criar);
         cadastro.MapPut("/{id:guid}", Atualizar);
         cadastro.MapDelete("/{id:guid}", Excluir);
+        cadastro.MapPost("/word", EnviarWord).DisableAntiforgery();
+        cadastro.MapGet("/word/{arquivoId:guid}/previa", (Guid arquivoId, ClaimsPrincipal usuario, ContratoServico servico, CancellationToken ct) =>
+            ComConta(usuario, conta => De(servico.PreviaWordAsync(conta, arquivoId, ct))));
         cadastro.MapPost("/{id:guid}/logo", (Guid id, IFormFile? arquivo, ClaimsPrincipal usuario, ContratoServico servico, IArmazenamentoArquivo armazenamento, CancellationToken ct) =>
             EnviarImagem(id, true, arquivo, usuario, servico, armazenamento, ct)).DisableAntiforgery();
         cadastro.MapDelete("/{id:guid}/logo", (Guid id, ClaimsPrincipal usuario, ContratoServico servico) =>
@@ -72,6 +75,22 @@ public static class ContratoEndpoints
             }
 
             return Results.Ok(new { arquivoId = guardado.Valor.Id });
+        });
+
+    /// <summary>Documento Word do modelo: só .docx, até 10 MB. Fica guardado até o modelo ser salvo com ele.</summary>
+    private static Task<IResult> EnviarWord(IFormFile? arquivo, ClaimsPrincipal usuario, IArmazenamentoArquivo armazenamento, CancellationToken ct) =>
+        ComConta(usuario, async conta =>
+        {
+            if (arquivo is null || arquivo.Length == 0)
+            {
+                return Results.Json(new ErroResposta(Codigos.Validacao, "O arquivo não foi aceito. Envie um documento Word (.docx) de até 10 MB."), statusCode: StatusCodes.Status400BadRequest);
+            }
+
+            await using var fluxo = arquivo.OpenReadStream();
+            var guardado = await armazenamento.GuardarWordAsync(fluxo, arquivo.FileName, conta, ct);
+            return guardado.Ok && guardado.Valor is not null
+                ? Results.Ok(new { arquivoId = guardado.Valor.Id, nome = guardado.Valor.NomeOriginal })
+                : Results.Json(new ErroResposta(guardado.Falha!.Codigo, guardado.Falha.Mensagem), statusCode: StatusCodes.Status400BadRequest);
         });
 
     private static Task<IResult> RemoverImagem(Guid id, bool logo, ClaimsPrincipal usuario, ContratoServico servico) =>

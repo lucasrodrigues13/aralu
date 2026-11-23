@@ -22,6 +22,13 @@ public interface IArmazenamentoArquivo
         string contaId,
         CancellationToken ct);
 
+    /// <summary>Modelo de contrato em Word: somente .docx, até 10 MB.</summary>
+    Task<Comum.Resultado<ArquivoGuardado>> GuardarWordAsync(
+        Stream conteudo,
+        string? nomeOriginal,
+        string contaId,
+        CancellationToken ct);
+
     Task<ArquivoAberto?> AbrirAsync(Guid id, string contaId, CancellationToken ct);
 
     Task DescartarAsync(Guid id, CancellationToken ct);

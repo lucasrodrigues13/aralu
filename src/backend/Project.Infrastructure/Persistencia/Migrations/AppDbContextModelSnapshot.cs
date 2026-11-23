@@ -298,6 +298,10 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<DateTimeOffset>("CriadoEm")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Formato")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<Guid?>("FundoArquivoId")
                         .HasColumnType("uuid");
 
@@ -311,6 +315,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
                     b.Property<string>("Texto")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("WordArquivoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("WordNome")
                         .HasColumnType("text");
 
                     b.HasKey("Id");
@@ -1529,6 +1539,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
                     b.Property<string>("CriadoPor")
                         .HasColumnType("text");
+
+                    b.Property<Guid?>("DocumentoArquivoId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset?>("EnviadoEm")
                         .HasColumnType("timestamp with time zone");

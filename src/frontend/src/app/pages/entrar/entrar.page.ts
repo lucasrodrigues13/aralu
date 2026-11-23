@@ -66,8 +66,11 @@ export class EntrarPage {
   private readonly rota = inject(ActivatedRoute);
 
   constructor() {
-    if (this.rota.snapshot.queryParamMap.get('aviso') === 'acesso-removido') {
+    const aviso = this.rota.snapshot.queryParamMap.get('aviso');
+    if (aviso === 'acesso-removido') {
       this.toast.erro('Seu acesso foi removido.');
+    } else if (aviso === 'sessao-expirada') {
+      this.toast.erro('Sua sessão expirou. Entre novamente.');
     }
   }
 

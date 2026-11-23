@@ -22,9 +22,11 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   return next(pedido).pipe(
     catchError((erro: unknown) => {
       // SPEC-032 §6.5: a assistente removida cai na tela de entrar no próximo pedido.
-      if (erro instanceof HttpErrorResponse && erro.status === 401 && erro.error?.code === 'acesso_removido') {
+      // Qualquer outro 401 com token enviado = sessão expirada: volta direto para entrar.
+      if (token && erro instanceof HttpErrorResponse && erro.status === 401) {
+        const aviso = erro.error?.code === 'acesso_removido' ? 'acesso-removido' : 'sessao-expirada';
         auth.sair();
-        void router.navigate(['/entrar'], { queryParams: { aviso: 'acesso-removido' } });
+        void router.navigate(['/entrar'], { queryParams: { aviso } });
       }
 
       return throwError(() => erro);

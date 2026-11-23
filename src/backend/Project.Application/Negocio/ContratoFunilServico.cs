@@ -1,3 +1,4 @@
+using Project.Application.Arquivos;
 using Project.Application.Comum;
 using Project.Domain.Contratos;
 using Project.Domain.Dinheiro;
@@ -23,21 +24,22 @@ public sealed record ContratoFunilLeitura(
     string? OportunidadeTelefone = null,
     string? ChavePix = null,
     Guid? LogoArquivoId = null,
-    Guid? FundoArquivoId = null);
+    Guid? FundoArquivoId = null,
+    Guid? DocumentoArquivoId = null);
 
 public sealed record SalvarContratoFunil(Guid? OportunidadeId, string? Conteudo, Guid? ModeloId);
 
 /// <summary>Modelo de contrato da tela única "Modelos de Contrato" (SPEC-039), como o contrato do funil o enxerga.</summary>
-public sealed record ModeloParaContratoFunil(Guid Id, string Nome, string Texto);
+public sealed record ModeloParaContratoFunil(Guid Id, string Nome, string Texto, string Formato = FormatoModelo.Texto);
 
 /// <summary>Contratos das oportunidades. O modelo vem da tela única de modelos de contrato (SPEC-039).</summary>
-public sealed class ContratoFunilServico(IDados dados, IDadosContrato modelos)
+public sealed class ContratoFunilServico(IDados dados, IDadosContrato modelos, IArmazenamentoArquivo? arquivos = null)
 {
     /// <summary>Modelos da conta para escolher ao criar o contrato (a assistente também escolhe, sem abrir a tela de modelos).</summary>
     public async Task<IReadOnlyList<ModeloParaContratoFunil>> ModelosAsync(string contaId, CancellationToken ct) =>
         (await modelos.ListarAsync(contaId, ct))
             .OrderBy(item => item.Nome, StringComparer.CurrentCultureIgnoreCase)
-            .Select(item => new ModeloParaContratoFunil(item.Id, item.Nome, item.Texto))
+            .Select(item => new ModeloParaContratoFunil(item.Id, item.Nome, item.Texto, item.Formato))
             .ToArray();
 
     public async Task<IReadOnlyList<ContratoFunilLeitura>> ListarAsync(
@@ -104,12 +106,20 @@ public sealed class ContratoFunilServico(IDados dados, IDadosContrato modelos)
         Guid? modeloId = pedido.ModeloId;
         Guid? logoId = null;
         Guid? fundoId = null;
+        ContratoConta? modeloWord = null;
         if (modeloId is Guid mid)
         {
             var modelo = await modelos.ObterAsync(contaId, mid, ct);
             if (modelo is null)
             {
                 return Resultado<ContratoFunilLeitura>.Erro(Codigos.Validacao, "Modelo inválido.");
+            }
+
+            if (modelo.Formato == FormatoModelo.Word)
+            {
+                // O Word é o próprio documento: o texto digitado não vale, o contrato sai do .docx do modelo.
+                modeloWord = modelo;
+                conteudo = modelo.Texto;
             }
 
             conteudo ??= modelo.Texto;
@@ -124,7 +134,22 @@ public sealed class ContratoFunilServico(IDados dados, IDadosContrato modelos)
 
         var perfil = await dados.ObterPerfilAsync(contaId, ct);
         var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
-        conteudo = Mesclagem.Preencher(conteudo, ContratoPreenchimento.Valores(contratante, oportunidade, perfil, aprovado, hoje));
+        var valores = ContratoPreenchimento.Valores(contratante, oportunidade, perfil, aprovado, hoje);
+        conteudo = Mesclagem.Preencher(conteudo, valores);
+        Guid? documentoId = null;
+        if (modeloWord is not null)
+        {
+            var gerado = await GerarWordAsync(contaId, modeloWord, valores, oportunidade.Nome, ct);
+            if (!gerado.Ok)
+            {
+                return Resultado<ContratoFunilLeitura>.Erro(gerado.Falha!.Codigo, gerado.Falha.Mensagem);
+            }
+
+            documentoId = gerado.Valor.Id;
+            conteudo = gerado.Valor.Texto;
+            logoId = null;
+            fundoId = null;
+        }
 
         var item = new ContratoFunil
         {
@@ -137,6 +162,7 @@ public sealed class ContratoFunilServico(IDados dados, IDadosContrato modelos)
             ModeloId = modeloId,
             LogoArquivoId = logoId,
             FundoArquivoId = fundoId,
+            DocumentoArquivoId = documentoId,
             CriadoPor = criadoPor,
             Parcelas = (aprovado?.Parcelas ?? [])
                 .OrderBy(parcela => parcela.Numero)
@@ -169,6 +195,11 @@ public sealed class ContratoFunilServico(IDados dados, IDadosContrato modelos)
         if (item.Situacao != SituacaoContratoFunil.EmAndamento)
         {
             return Resultado<ContratoFunilLeitura>.Erro(Codigos.Validacao, "Só contratos em andamento podem ser editados.");
+        }
+
+        if (item.DocumentoArquivoId is not null)
+        {
+            return Resultado<ContratoFunilLeitura>.Erro(Codigos.Validacao, "Este contrato foi gerado de um documento Word: baixe o arquivo para ajustar o texto.");
         }
 
         var conteudo = Domain.Comum.Texto.Limpo(pedido.Conteudo);
@@ -437,6 +468,50 @@ public sealed class ContratoFunilServico(IDados dados, IDadosContrato modelos)
             item.Parcelas.Sum(parcela => parcela.Recebido),
             item.Parcelas.Sum(parcela => parcela.Saldo),
             LogoArquivoId: item.LogoArquivoId,
-            FundoArquivoId: item.FundoArquivoId);
+            FundoArquivoId: item.FundoArquivoId,
+            DocumentoArquivoId: item.DocumentoArquivoId);
+    }
+
+    /// <summary>Preenche o .docx do modelo com os dados reais e guarda o resultado; devolve o arquivo e o texto simples.</summary>
+    private async Task<Resultado<(Guid Id, string Texto)>> GerarWordAsync(
+        string contaId,
+        ContratoConta modelo,
+        IReadOnlyDictionary<string, string?> valores,
+        string oportunidadeNome,
+        CancellationToken ct)
+    {
+        const string falha = "O documento Word do modelo não foi encontrado. Envie o arquivo .docx de novo no modelo.";
+        if (arquivos is null || modelo.WordArquivoId is not Guid wordId)
+        {
+            return Resultado<(Guid, string)>.Erro(Codigos.Validacao, falha);
+        }
+
+        byte[] original;
+        using (var aberto = await arquivos.AbrirAsync(wordId, contaId, ct))
+        {
+            if (aberto is null)
+            {
+                return Resultado<(Guid, string)>.Erro(Codigos.Validacao, falha);
+            }
+
+            using var memoria = new MemoryStream();
+            await aberto.Conteudo.CopyToAsync(memoria, ct);
+            original = memoria.ToArray();
+        }
+
+        if (!MesclagemWord.EhDocx(original))
+        {
+            return Resultado<(Guid, string)>.Erro(Codigos.Validacao, falha);
+        }
+
+        var preenchido = MesclagemWord.Preencher(original, valores);
+        var nome = $"Contrato - {Domain.Comum.Texto.Limpo(oportunidadeNome) ?? modelo.Nome}.docx";
+        var guardado = await arquivos.GuardarWordAsync(new MemoryStream(preenchido), nome, contaId, ct);
+        if (!guardado.Ok || guardado.Valor is null)
+        {
+            return Resultado<(Guid, string)>.Erro(guardado.Falha!.Codigo, guardado.Falha.Mensagem);
+        }
+
+        return Resultado<(Guid, string)>.Sucesso((guardado.Valor.Id, MesclagemWord.Texto(preenchido)));
     }
 }

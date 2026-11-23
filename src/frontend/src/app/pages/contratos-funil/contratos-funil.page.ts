@@ -18,6 +18,7 @@ import { DIALOG, DIALOG_LARGO, DIALOG_PEQUENO } from '../../shared/dialog';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { FolhaContrato, imprimirContrato } from '../contratos/folha-contrato';
 import { textoEmHtml } from '../contratos/mesclagem';
+import { PreviaWordComponent } from '../contratos/previa-word';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
@@ -46,10 +47,14 @@ import { MatTooltipModule } from '@angular/material/tooltip';
           </mat-form-field>
           </div>
         }
+        @if (modeloWord()) {
+          <p class="text-sm text-muted m-0">Este modelo é um documento Word: o contrato é gerado do arquivo do modelo, com as tags trocadas pelos dados da oportunidade. Depois de gerado, use "Ver" para baixar o .docx.</p>
+        } @else {
         <div class="campo">
           <mat-label class="font-semibold mb-2 block">Conteúdo</mat-label>
           <mat-form-field appearance="outline" class="w-full"><textarea [attr.aria-label]="'Conteúdo'" matInput rows="8" formControlName="conteudo"></textarea></mat-form-field>
         </div>
+        }
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
@@ -66,6 +71,8 @@ export class ContratoFunilDialog implements OnInit {
   protected readonly ref = inject(MatDialogRef<ContratoFunilDialog, boolean>);
   protected readonly oportunidades = signal<Oportunidade[]>([]);
   protected readonly modelos = signal<ModeloParaContratoFunil[]>([]);
+  /** Modelo Word escolhido: o texto não é editado aqui, o contrato sai do .docx. */
+  protected readonly modeloWord = signal(false);
   protected readonly form = this.fb.nonNullable.group({
     oportunidadeId: [this.dados?.oportunidadeId ?? '', Validators.required],
     modeloId: [this.dados?.modeloId ?? null as string | null],
@@ -79,6 +86,7 @@ export class ContratoFunilDialog implements OnInit {
 
   protected aplicarModelo(id: string | null): void {
     const modelo = this.modelos().find((m) => m.id === id);
+    this.modeloWord.set(modelo?.formato === 'word');
     if (!modelo) return;
     // As tags ficam no texto; o servidor as preenche ao gerar o contrato (SPEC-050).
     this.form.controls.conteudo.setValue(modelo.texto);
@@ -106,15 +114,23 @@ export class ContratoFunilDialog implements OnInit {
 /** Contrato gerado como chega ao cliente: logo, texto e fundo do modelo, com botão de imprimir (SPEC-056). */
 @Component({
   selector: 'app-contrato-funil-ver-dialog',
-  imports: [MatDialogModule, MatButtonModule, MatIconModule, FolhaContrato],
+  imports: [MatDialogModule, MatButtonModule, MatIconModule, FolhaContrato, PreviaWordComponent],
   template: `
     <h2 mat-dialog-title>Contrato de {{ dados.oportunidadeNome }}</h2>
     <mat-dialog-content>
-      <app-folha-contrato titulo="Contrato" [html]="html" [logoUrl]="logoUrl()" [fundoUrl]="fundoUrl()" />
+      @if (dados.documentoArquivoId) {
+        <app-previa-word [documento]="word()" />
+      } @else {
+        <app-folha-contrato titulo="Contrato" [html]="html" [logoUrl]="logoUrl()" [fundoUrl]="fundoUrl()" />
+      }
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <button mat-stroked-button type="button" mat-dialog-close>Fechar</button>
-      <button mat-flat-button type="button" (click)="imprimir()"><mat-icon>print</mat-icon> Imprimir</button>
+      @if (dados.documentoArquivoId) {
+        <button mat-flat-button type="button" [disabled]="!wordBlob()" (click)="baixarWord()"><mat-icon>download</mat-icon> Baixar Word</button>
+      } @else {
+        <button mat-flat-button type="button" (click)="imprimir()"><mat-icon>print</mat-icon> Imprimir</button>
+      }
     </mat-dialog-actions>
   `,
 })
@@ -124,13 +140,34 @@ export class ContratoFunilVerDialog {
   protected readonly html = textoEmHtml(this.dados.conteudo);
   protected readonly logoUrl = signal<string | null>(null);
   protected readonly fundoUrl = signal<string | null>(null);
+  protected readonly word = signal<ArrayBuffer | null>(null);
+  protected readonly wordBlob = signal<Blob | null>(null);
 
   constructor() {
+    if (this.dados.documentoArquivoId) {
+      this.negocio.baixarArquivo(this.dados.documentoArquivoId).subscribe({
+        next: (blob) => {
+          this.wordBlob.set(blob);
+          void blob.arrayBuffer().then((bytes) => this.word.set(bytes));
+        },
+      });
+    }
     this.carregar(this.dados.logoArquivoId, this.logoUrl);
     this.carregar(this.dados.fundoArquivoId, this.fundoUrl);
     inject(DestroyRef).onDestroy(() => {
       for (const url of [this.logoUrl(), this.fundoUrl()]) if (url) URL.revokeObjectURL(url);
     });
+  }
+
+  protected baixarWord(): void {
+    const blob = this.wordBlob();
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Contrato - ${this.dados.oportunidadeNome || 'cliente'}.docx`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
   protected imprimir(): void {
@@ -200,7 +237,9 @@ export class ContratoFunilVerDialog {
             <td mat-cell *matCellDef="let item" class="text-end! whitespace-nowrap">
               <button mat-icon-button type="button" aria-label="Ver contrato" matTooltip="Ver contrato" (click)="ver(item)"><mat-icon>visibility</mat-icon></button>
               @if (item.situacao === 'EmAndamento') {
-                <button mat-icon-button aria-label="Editar contrato" matTooltip="Editar contrato" type="button" (click)="abrir(item)"><mat-icon>edit</mat-icon></button>
+                @if (!item.documentoArquivoId) {
+                  <button mat-icon-button aria-label="Editar contrato" matTooltip="Editar contrato" type="button" (click)="abrir(item)"><mat-icon>edit</mat-icon></button>
+                }
                 <button mat-icon-button aria-label="Enviar contrato" matTooltip="Enviar contrato" type="button" (click)="enviar(item)"><mat-icon>send</mat-icon></button>
                 <button mat-icon-button aria-label="Marcar como assinado" matTooltip="Marcar como assinado" type="button" (click)="assinar(item)"><mat-icon>draw</mat-icon></button>
                 <button mat-icon-button aria-label="Cancelar contrato" matTooltip="Cancelar contrato" type="button" (click)="cancelar(item)"><mat-icon>cancel</mat-icon></button>
@@ -249,7 +288,7 @@ export class ContratosFunilPage implements OnInit {
   }
 
   protected ver(item: ContratoFunil): void {
-    this.dialog.open(ContratoFunilVerDialog, { ...DIALOG_LARGO, data: item });
+    this.dialog.open(ContratoFunilVerDialog, { ...DIALOG_LARGO, width: 'min(1100px, calc(100vw - 32px))', data: item });
   }
 
   protected enviar(item: ContratoFunil): void {

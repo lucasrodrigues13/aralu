@@ -9,7 +9,22 @@ import { MAT_DIALOG_DATA, MatDialog, MatDialogModule, MatDialogRef } from '@angu
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { CampoMesclagem, Contrato, ContratoClient, ContratoResumo, IMAGEM_MODELO_ACEITA, ImagemDoModelo, imagemModeloValida } from '../../core/contrato.client';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import {
+  CampoMesclagem,
+  Contrato,
+  ContratoClient,
+  ContratoResumo,
+  FormatoModelo,
+  IMAGEM_MODELO_ACEITA,
+  PreviaWord,
+  ImagemDoModelo,
+  imagemModeloValida,
+  WORD_ACEITO,
+  wordValido,
+} from '../../core/contrato.client';
+import { PreviaWordComponent } from './previa-word';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { NegocioClient } from '../../core/negocio.client';
 import { FolhaContrato } from './folha-contrato';
@@ -24,6 +39,8 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 export interface ContratoPedido {
   nome: string;
   texto: string;
+  formato: FormatoModelo;
+  wordArquivoId: string | null;
   imagens: Partial<Record<ImagemDoModelo, File | null>>;
 }
 
@@ -75,13 +92,132 @@ export class AjudaTagsDialog {
   }
 }
 
+/** Orientações para preparar o próprio Word: como escrever as tags e a lista completa, com botão de copiar. */
+@Component({
+  selector: 'app-ajuda-word-dialog',
+  imports: [MatDialogModule, MatButtonModule, MatIconModule, MatTooltipModule],
+  template: `
+    <h2 mat-dialog-title>Como preparar o seu contrato no Word</h2>
+    <mat-dialog-content>
+      <ol class="passos text-sm">
+        <li>Abra o seu contrato no <strong>Microsoft Word</strong> (ou Google Docs / LibreOffice) e salve no formato <strong>.docx</strong>. Outros formatos (.doc, .pdf, .odt) não são aceitos.</li>
+        <li>No lugar de cada dado que muda de cliente para cliente, escreva a <strong>tag</strong> entre chaves duplas, por exemplo <code ngNonBindable>{{contratante_nome}}</code>. Use o botão <mat-icon class="mini">content_copy</mat-icon> da tabela para copiar e cole no Word.</li>
+        <li>Escreva a tag <strong>sem espaços nem acentos</strong> e com as chaves duplas dos dois lados. Maiúsculas e minúsculas tanto faz.</li>
+        <li>A formatação é mantida: o valor entra com a mesma fonte, tamanho, cor, negrito ou itálico aplicados à tag. Para deixar o nome do cliente em negrito, deixe a tag em negrito.</li>
+        <li>Tags funcionam no texto, em tabelas, no <strong>cabeçalho</strong> e no <strong>rodapé</strong>. Logo, imagens, numeração de páginas e espaços para assinatura do seu Word ficam como estão.</li>
+        <li>Envie o arquivo e confira o <strong>Live Preview</strong>: os valores em amarelo são exemplos. Tags com erro de digitação aparecem no aviso e não são trocadas.</li>
+        <li>Quando um dado não existir no cadastro, o contrato mostra uma linha em branco (________) para preencher à mão.</li>
+        <li>Para mudar o texto depois, edite o arquivo no seu computador e envie de novo no modelo. Contratos já gerados não mudam.</li>
+      </ol>
+      <div class="tabela-tags">
+        <table class="w-full text-sm">
+          <thead>
+            <tr><th>Tag para colar no Word</th><th>O que representa</th><th>De onde puxa o valor</th><th>Exemplo</th></tr>
+          </thead>
+          <tbody>
+            @for (campo of dados.campos; track campo.marca) {
+              <tr>
+                <td class="whitespace-nowrap">
+                  <code>{{ marca(campo) }}</code>
+                  <button mat-icon-button type="button" class="copiar" [attr.aria-label]="'Copiar ' + marca(campo)" [matTooltip]="copiada() === campo.marca ? 'Copiada!' : 'Copiar'" (click)="copiar(campo)">
+                    <mat-icon>{{ copiada() === campo.marca ? 'check' : 'content_copy' }}</mat-icon>
+                  </button>
+                </td>
+                <td>{{ campo.rotulo }}</td>
+                <td>{{ campo.fonte }}</td>
+                <td>{{ campo.exemplo }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-stroked-button type="button" (click)="copiarTodas()"><mat-icon>content_copy</mat-icon> Copiar todas as tags</button>
+      <button mat-flat-button type="button" mat-dialog-close>Fechar</button>
+    </mat-dialog-actions>
+  `,
+  styles: `
+    .passos { margin: 0 0 16px; padding-left: 20px; display: grid; gap: 6px; line-height: 1.5; }
+    .mini { font-size: 16px; width: 16px; height: 16px; vertical-align: middle; }
+    .tabela-tags { overflow-x: auto; }
+    th { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--mat-sys-outline-variant); }
+    td { vertical-align: middle; padding: 4px 8px; border-bottom: 1px solid var(--mat-sys-outline-variant); }
+    code { font-size: 12px; white-space: nowrap; }
+    .copiar { transform: scale(0.8); }
+  `,
+})
+export class AjudaWordDialog {
+  protected readonly dados = inject<{ campos: CampoMesclagem[] }>(MAT_DIALOG_DATA);
+  protected readonly copiada = signal<string | null>(null);
+
+  protected marca(campo: CampoMesclagem): string {
+    return `{{${campo.marca}}}`;
+  }
+
+  protected copiar(campo: CampoMesclagem): void {
+    void navigator.clipboard?.writeText(this.marca(campo)).then(() => this.copiada.set(campo.marca));
+  }
+
+  protected copiarTodas(): void {
+    const texto = this.dados.campos.map((campo) => `${this.marca(campo)}\t${campo.rotulo}`).join('\n');
+    void navigator.clipboard?.writeText(texto).then(() => this.copiada.set('*'));
+  }
+}
+
+/** Live Preview em tela cheia (os dois formatos): só a visualização, num modal grande. */
+@Component({
+  selector: 'app-previa-ampliada-dialog',
+  imports: [MatDialogModule, MatButtonModule, MatIconModule, FolhaContrato, PreviaWordComponent],
+  template: `
+    <div class="topo">
+      <h2 mat-dialog-title class="m-0!">Live Preview · {{ dados.titulo }}</h2>
+      <button mat-icon-button type="button" aria-label="Fechar" mat-dialog-close><mat-icon>close</mat-icon></button>
+    </div>
+    <mat-dialog-content class="conteudo">
+      @if (dados.word) {
+        <app-previa-word [documento]="dados.word" [ampliada]="true" />
+      } @else {
+        <div class="folha-grande">
+          <app-folha-contrato [titulo]="dados.titulo" [html]="dados.html" [logoUrl]="dados.logoUrl" [fundoUrl]="dados.fundoUrl" />
+        </div>
+      }
+    </mat-dialog-content>
+    <p class="text-muted text-xs px-6 pb-4 m-0">Os valores destacados são exemplos. No contrato real entram os dados do cliente, do evento e do orçamento aprovado.</p>
+  `,
+  styles: `
+    .topo { display: flex; align-items: center; justify-content: space-between; padding-right: 12px; }
+    .conteudo { max-height: none !important; height: calc(95vh - 140px); display: flex; flex-direction: column; }
+    .conteudo > * { flex: 1; min-height: 0; }
+    .folha-grande ::ng-deep .area { max-height: none; height: 100%; box-sizing: border-box; }
+  `,
+})
+export class PreviaAmpliadaDialog {
+  protected readonly dados = inject<{ titulo: string; html: string; logoUrl: string | null; fundoUrl: string | null; word: string | null }>(MAT_DIALOG_DATA);
+}
+
 /** Novo/editar modelo de contrato com seletor de tags com busca e ajuda (SPEC-053) e Live Preview (SPEC-055, evolui o "Ver como fica" da SPEC-030 §6.1). */
 @Component({
   selector: 'app-contrato-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatAutocompleteModule, FolhaContrato, MatTooltipModule],
+  imports: [
+    ReactiveFormsModule,
+    MatDialogModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatIconModule,
+    MatAutocompleteModule,
+    FolhaContrato,
+    MatTooltipModule,
+    MatButtonToggleModule,
+    MatProgressBarModule,
+    PreviaWordComponent,
+  ],
   template: `
     <h2 mat-dialog-title>{{ dados.contrato ? 'Editar modelo de contrato' : 'Novo modelo de contrato' }}</h2>
-    <p class="text-muted text-sm px-6 -mt-2 mb-4">Clique num campo para inserir no texto. Ele é trocado pelos dados do evento.</p>
+    <p class="text-muted text-sm px-6 -mt-2 mb-4">
+      {{ ehWord() ? 'Envie o seu contrato em Word com as tags no lugar dos dados. Elas são trocadas pelos dados do evento.' : 'Clique num campo para inserir no texto. Ele é trocado pelos dados do evento.' }}
+    </p>
     <mat-dialog-content>
       <form id="contrato" class="grid grid-cols-1 gap-4" [formGroup]="form" (ngSubmit)="salvar()">
         <div class="campo">
@@ -91,12 +227,66 @@ export class AjudaTagsDialog {
           @if (form.controls.nome.invalid) { <mat-error>Informe o nome.</mat-error> }
         </mat-form-field>
         </div>
+        <div class="campo">
+          <span class="font-semibold mb-2 block" id="rotulo-formato">Como você quer criar o modelo?</span>
+          <mat-button-toggle-group class="formato" aria-labelledby="rotulo-formato" [value]="formato()" (change)="trocarFormato($event.value)">
+            <mat-button-toggle value="texto"><mat-icon>edit_note</mat-icon> Escrever na plataforma</mat-button-toggle>
+            <mat-button-toggle value="word"><mat-icon>description</mat-icon> Enviar meu documento Word</mat-button-toggle>
+          </mat-button-toggle-group>
+          <span class="text-muted text-xs block mt-1">Escolha uma das opções. O modelo usa só a opção escolhida.</span>
+        </div>
+        @if (ehWord()) {
+          <div class="word">
+            <div class="flex flex-wrap items-center gap-2">
+              <mat-icon class="text-muted">description</mat-icon>
+              <span class="font-medium">{{ wordNome() || 'Nenhum documento enviado' }}</span>
+              <span class="flex-1"></span>
+              <button mat-stroked-button type="button" [disabled]="enviandoWord()" (click)="entradaWord.click()">
+                <mat-icon>upload</mat-icon> {{ wordArquivoId() ? 'Trocar documento' : 'Enviar documento .docx' }}
+              </button>
+              @if (wordArquivoId()) {
+                <button mat-button type="button" (click)="baixarWord()"><mat-icon>download</mat-icon> Baixar</button>
+              }
+              <button mat-button type="button" (click)="abrirAjudaWord()"><mat-icon>help_outline</mat-icon> Como preparar o Word</button>
+              <input #entradaWord type="file" hidden [accept]="aceitaWord" aria-label="Documento Word do modelo" (change)="escolherWord($event)" />
+            </div>
+            <span class="text-muted text-xs block mt-1">Somente Word (.docx), até 10 MB. A logo, o fundo e o layout vêm do próprio documento.</span>
+            @if (enviandoWord()) { <mat-progress-bar mode="indeterminate" class="mt-2" /> }
+            @if (erroWord()) { <p class="aviso mt-2" role="alert">{{ erroWord() }}</p> }
+            @if (tentouSalvar() && !wordArquivoId()) { <p class="erro mt-2" role="alert">Envie o documento Word do modelo.</p> }
+            @if (previaWord(); as previa) {
+              @if (previa.desconhecidas.length > 0) {
+                <p class="aviso mt-2" role="status">Tag que não existe e não será trocada: {{ previa.desconhecidas.join(', ') }}. Confira a grafia em "Como preparar o Word".</p>
+              } @else if (previa.tags.length === 0) {
+                <p class="aviso mt-2" role="status">Nenhuma tag encontrada no documento. Sem tags, o contrato sai igual para todos os clientes.</p>
+              } @else {
+                <p class="ok mt-2" role="status"><mat-icon class="mini">check_circle</mat-icon> {{ previa.tags.length }} {{ previa.tags.length === 1 ? 'tag reconhecida' : 'tags reconhecidas' }}.</p>
+              }
+            }
+          </div>
+        }
         <div class="barra-previa">
-          <button mat-stroked-button type="button" [attr.aria-pressed]="previaAberta()" (click)="previaAberta.set(!previaAberta())">
-            <mat-icon>{{ previaAberta() ? 'visibility_off' : 'visibility' }}</mat-icon> {{ previaAberta() ? 'Fechar Live Preview' : 'Live Preview' }}
+          @if (!ehWord()) {
+            <button mat-stroked-button type="button" [attr.aria-pressed]="previaAberta()" (click)="previaAberta.set(!previaAberta())">
+              <mat-icon>{{ previaAberta() ? 'visibility_off' : 'visibility' }}</mat-icon> {{ previaAberta() ? 'Fechar Live Preview' : 'Live Preview' }}
+            </button>
+          }
+          <button mat-stroked-button type="button" [disabled]="ehWord() && !previaWord()" (click)="ampliar()">
+            <mat-icon>open_in_full</mat-icon> Ver em tela cheia
           </button>
           <span class="text-muted text-xs">Mostra como o contrato chega ao cliente, com exemplos no lugar das tags.</span>
         </div>
+        @if (ehWord()) {
+          <div class="painel-previa" aria-label="Live Preview">
+            <span class="font-semibold mb-2 block">Live Preview · como chega ao cliente</span>
+            @if (previaWord(); as previa) {
+              <app-previa-word [documento]="previa.documento" />
+              <p class="text-muted text-xs mt-2">Os valores em amarelo são exemplos. No contrato real entram os dados do evento; sem dado, aparece ________.</p>
+            } @else {
+              <p class="vazio text-muted text-sm">Envie o documento .docx para ver o Live Preview.</p>
+            }
+          </div>
+        } @else {
         <div class="seletor-tags">
             <mat-form-field appearance="outline" class="w-full">
               <mat-label>Inserir tag no cursor</mat-label>
@@ -156,6 +346,7 @@ export class AjudaTagsDialog {
             </div>
           }
         </div>
+        }
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
@@ -167,7 +358,14 @@ export class AjudaTagsDialog {
     .barra-previa { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
     .seletor-tags { display: flex; align-items: flex-start; gap: 8px; }
     .editor { display: grid; grid-template-columns: 1fr; gap: 16px; }
-    @media (min-width: 900px) { .editor.com-previa { grid-template-columns: 1fr 1fr; } }
+    @media (min-width: 900px) { .editor.com-previa { grid-template-columns: minmax(320px, 2fr) 3fr; } }
+    .painel-previa ::ng-deep .area { max-height: 78vh; }
+    .formato { flex-wrap: wrap; }
+    .word { padding: 12px 16px; border: 1px solid var(--mat-sys-outline-variant); border-radius: var(--mat-sys-corner-medium); }
+    .mini { font-size: 16px; width: 16px; height: 16px; vertical-align: middle; }
+    .ok { margin: 0; font-size: 12px; color: #166534; }
+    .erro { margin: 0; font-size: 12px; color: var(--mat-sys-error); }
+    .vazio { padding: 48px 16px; text-align: center; border: 1px dashed var(--mat-sys-outline-variant); border-radius: var(--mat-sys-corner-small); }
     .texto { width: 100%; }
     .texto textarea { font-family: inherit; line-height: 1.5; }
     .painel-previa { min-width: 0; }
@@ -192,6 +390,17 @@ export class ContratoDialog {
   /** Mudança pendente por imagem: arquivo novo, null (remover) ou ausente (sem mudança). */
   private readonly mudancas: Partial<Record<ImagemDoModelo, File | null>> = {};
   protected readonly erroImagem = signal('');
+  private readonly contratoClient = inject(ContratoClient);
+  protected readonly aceitaWord = WORD_ACEITO;
+  /** Formato escolhido: um ou outro (escrever na plataforma ou documento Word próprio). */
+  protected readonly formato = signal<FormatoModelo>(this.dados.contrato?.formato === 'word' || this.dados.contrato?.wordArquivoId ? 'word' : 'texto');
+  protected readonly ehWord = computed(() => this.formato() === 'word');
+  protected readonly wordArquivoId = signal<string | null>(this.dados.contrato?.wordArquivoId ?? null);
+  protected readonly wordNome = signal<string | null>(this.dados.contrato?.wordNome ?? null);
+  protected readonly previaWord = signal<PreviaWord | null>(null);
+  protected readonly enviandoWord = signal(false);
+  protected readonly erroWord = signal('');
+  protected readonly tentouSalvar = signal(false);
   private readonly areaTexto = viewChild<ElementRef<HTMLTextAreaElement>>('texto');
   /** Live Preview (SPEC-055): painel ao lado do texto, atualizado a cada tecla. */
   protected readonly previaAberta = signal(false);
@@ -218,6 +427,90 @@ export class ContratoDialog {
     this.carregarExistente('logo', contrato?.logoArquivoId);
     this.carregarExistente('fundo', contrato?.fundoArquivoId);
     inject(DestroyRef).onDestroy(() => Object.values(this.urls()).forEach((url) => url && URL.revokeObjectURL(url)));
+    this.trocarFormato(this.formato());
+    if (this.wordArquivoId()) this.carregarPreviaWord(this.wordArquivoId()!);
+  }
+
+  protected trocarFormato(formato: FormatoModelo): void {
+    this.formato.set(formato);
+    // Texto é obrigatório só no editor da plataforma; no Word o conteúdo vem do documento.
+    const texto = this.form.controls.texto;
+    texto.setValidators(formato === 'texto' ? [Validators.required, Validators.pattern(/\S/)] : []);
+    texto.updateValueAndValidity();
+  }
+
+  protected escolherWord(evento: Event): void {
+    const entrada = evento.target as HTMLInputElement;
+    const arquivo = entrada.files?.[0];
+    entrada.value = '';
+    if (!arquivo) return;
+    const erro = wordValido(arquivo);
+    this.erroWord.set(erro ?? '');
+    if (erro) return;
+    this.enviandoWord.set(true);
+    this.contratoClient.enviarWord(arquivo).subscribe({
+      next: (enviado) => {
+        this.wordArquivoId.set(enviado.arquivoId);
+        this.wordNome.set(enviado.nome);
+        this.carregarPreviaWord(enviado.arquivoId);
+      },
+      error: (falha: unknown) => {
+        this.enviandoWord.set(false);
+        this.erroWord.set(mensagemDeErro(falha));
+      },
+    });
+  }
+
+  private carregarPreviaWord(arquivoId: string): void {
+    this.enviandoWord.set(true);
+    this.contratoClient.previaWord(arquivoId).subscribe({
+      next: (previa) => {
+        this.enviandoWord.set(false);
+        this.previaWord.set(previa);
+      },
+      error: (falha: unknown) => {
+        this.enviandoWord.set(false);
+        this.previaWord.set(null);
+        this.erroWord.set(mensagemDeErro(falha));
+      },
+    });
+  }
+
+  protected baixarWord(): void {
+    const id = this.wordArquivoId();
+    if (!id) return;
+    this.negocio.baixarArquivo(id).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = this.wordNome() || 'modelo.docx';
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      },
+    });
+  }
+
+  protected abrirAjudaWord(): void {
+    this.dialog.open(AjudaWordDialog, { ...DIALOG_LARGO, width: 'min(1000px, calc(100vw - 32px))', data: { campos: this.dados.campos } });
+  }
+
+  /** Live Preview num modal grande, só com a visualização. */
+  protected ampliar(): void {
+    this.dialog.open(PreviaAmpliadaDialog, {
+      ...DIALOG_LARGO,
+      width: 'min(1280px, calc(100vw - 32px))',
+      height: '95vh',
+      maxHeight: '95vh',
+      autoFocus: false,
+      data: {
+        titulo: this.nomeAtual() || 'Contrato',
+        html: this.previa(),
+        logoUrl: this.urlDe('logo'),
+        fundoUrl: this.urlDe('fundo'),
+        word: this.ehWord() ? (this.previaWord()?.documento ?? null) : null,
+      },
+    });
   }
 
   protected urlDe(qual: ImagemDoModelo): string | null {
@@ -276,12 +569,19 @@ export class ContratoDialog {
   }
 
   protected salvar(): void {
-    if (this.form.invalid) {
+    this.tentouSalvar.set(true);
+    if (this.form.invalid || (this.ehWord() && (!this.wordArquivoId() || this.enviandoWord()))) {
       this.form.markAllAsTouched();
       return;
     }
     const valor = this.form.getRawValue();
-    this.ref.close({ nome: valor.nome.trim(), texto: valor.texto, imagens: { ...this.mudancas } });
+    this.ref.close({
+      nome: valor.nome.trim(),
+      texto: this.ehWord() ? '' : valor.texto,
+      formato: this.formato(),
+      wordArquivoId: this.ehWord() ? this.wordArquivoId() : null,
+      imagens: this.ehWord() ? {} : { ...this.mudancas },
+    });
   }
 }
 
@@ -316,11 +616,12 @@ export class ContratoDialog {
         <p class="text-center text-muted py-10">{{ contratos().length === 0 ? 'Nenhum modelo cadastrado.' : 'Nenhum modelo com esse nome.' }}</p>
       } @else {
         <table class="tabela">
-          <thead><tr><th>Nome</th><th>Atualizado em</th><th class="text-end! whitespace-nowrap">Ações</th></tr></thead>
+          <thead><tr><th>Nome</th><th>Tipo</th><th>Atualizado em</th><th class="text-end! whitespace-nowrap">Ações</th></tr></thead>
           <tbody>
             @for (contrato of visiveis(); track contrato.id) {
               <tr>
                 <td>{{ contrato.nome }}</td>
+                <td>{{ contrato.formato === 'word' ? 'Documento Word' : 'Escrito na plataforma' }}</td>
                 <td>{{ contrato.atualizadoEm | gdData }}</td>
                 <td class="text-end! whitespace-nowrap">
                   <button mat-icon-button type="button" aria-label="Editar" matTooltip="Editar" (click)="abrir(contrato)"><mat-icon>edit</mat-icon></button>
@@ -355,9 +656,9 @@ export class ContratosPage implements OnInit {
 
   protected abrir(resumo?: ContratoResumo): void {
     const abrirDialogo = (contrato: Contrato | null) =>
-      this.dialog.open(ContratoDialog, { ...DIALOG_LARGO, width: 'min(1180px, calc(100vw - 32px))', data: { contrato, campos: this.campos } }).afterClosed().subscribe((pedido?: ContratoPedido) => {
+      this.dialog.open(ContratoDialog, { ...DIALOG_LARGO, width: 'min(1480px, calc(100vw - 32px))', maxHeight: '95vh', data: { contrato, campos: this.campos } }).afterClosed().subscribe((pedido?: ContratoPedido) => {
         if (!pedido) return;
-        this.contratoClient.salvar(contrato?.id ?? null, { nome: pedido.nome, texto: pedido.texto }).pipe(
+        this.contratoClient.salvar(contrato?.id ?? null, { nome: pedido.nome, texto: pedido.texto, formato: pedido.formato, wordArquivoId: pedido.wordArquivoId }).pipe(
           // Logo e fundo (SPEC-056) vão depois do modelo salvo, que precisa existir para receber o arquivo.
           switchMap((salvo) => {
             const passos = (['logo', 'fundo'] as ImagemDoModelo[])

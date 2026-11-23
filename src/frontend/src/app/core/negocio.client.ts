@@ -1557,6 +1557,8 @@ export interface ContratoFunil {
   /** Logo e fundo copiados do modelo ao gerar o contrato (SPEC-056). */
   logoArquivoId?: string | null;
   fundoArquivoId?: string | null;
+  /** Gerado de modelo Word: o .docx já preenchido. */
+  documentoArquivoId?: string | null;
 }
 
 export interface OrcamentoFunil {
@@ -1647,6 +1649,8 @@ export interface ModeloParaContratoFunil {
   id: string;
   nome: string;
   texto: string;
+  /** "word": o contrato sai do documento Word do modelo, sem editar o texto aqui. */
+  formato?: 'texto' | 'word';
 }
 
 export type TipoEstagioFunil = 'Aberto' | 'Contratado' | 'Descartado';
