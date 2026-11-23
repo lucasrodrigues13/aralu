@@ -20,7 +20,7 @@ public class ParametrosOrcamentoTests
         };
 
         var texto = ParametrosOrcamento.Aplicar(
-            "#nome_oportunidade|#tipo_evento|#data_evento|#convidados|#local_cerimonia|#local_recepcao|#VALOR|#validade|#nome_assessoria",
+            "{{nome_oportunidade}}|{{tipo_evento}}|{{data_evento}}|{{convidados}}|{{local_cerimonia}}|{{local_recepcao}}|{{VALOR}}|{{validade}}|{{nome_assessoria}}",
             lead,
             12500m,
             new DateOnly(2026, 11, 20),
@@ -41,8 +41,8 @@ public class ParametrosOrcamentoTests
     [Fact]
     public void Dado_ausente_vira_vazio_e_texto_fora_da_lista_fica_como_esta()
     {
-        var texto = ParametrosOrcamento.Aplicar("Data: #data_evento. Obs: #outra", new Oportunidade { Nome = "Lead" }, null, new DateOnly(2026, 1, 1), null);
+        var texto = ParametrosOrcamento.Aplicar("Data: {{data_evento}}. Obs: {{outra}}", new Oportunidade { Nome = "Lead" }, null, new DateOnly(2026, 1, 1), null);
 
-        Assert.Equal("Data: . Obs: #outra", texto);
+        Assert.Equal("Data: . Obs: {{outra}}", texto);
     }
 }

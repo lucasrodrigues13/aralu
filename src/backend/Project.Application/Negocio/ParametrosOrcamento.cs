@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.RegularExpressions;
 using Project.Domain.Eventos;
 using Project.Domain.Funil;
 
@@ -14,15 +15,15 @@ public static class ParametrosOrcamento
 
     public static readonly IReadOnlyList<string> Lista =
     [
-        "#nome_oportunidade",
-        "#tipo_evento",
-        "#data_evento",
-        "#convidados",
-        "#local_cerimonia",
-        "#local_recepcao",
-        "#valor",
-        "#validade",
-        "#nome_assessoria",
+        "{{nome_oportunidade}}",
+        "{{tipo_evento}}",
+        "{{data_evento}}",
+        "{{convidados}}",
+        "{{local_cerimonia}}",
+        "{{local_recepcao}}",
+        "{{valor}}",
+        "{{validade}}",
+        "{{nome_assessoria}}",
     ];
 
     public static string Aplicar(string texto, Oportunidade oportunidade, decimal? valor, DateOnly hoje, string? nomeAssessoria)
@@ -30,24 +31,20 @@ public static class ParametrosOrcamento
         var pt = CultureInfo.GetCultureInfo("pt-BR");
         var valores = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
-            ["#nome_oportunidade"] = oportunidade.Nome,
-            ["#tipo_evento"] = RotuloTipo(oportunidade.TipoEvento),
-            ["#data_evento"] = oportunidade.DataPrevista?.ToString("dd/MM/yyyy", pt) ?? "",
-            ["#convidados"] = oportunidade.QuantidadeConvidados?.ToString(pt) ?? "",
-            ["#local_cerimonia"] = oportunidade.LocalCerimonia ?? "",
-            ["#local_recepcao"] = oportunidade.LocalRecepcao ?? "",
-            ["#valor"] = (valor ?? oportunidade.ValorProposta)?.ToString("C", pt) ?? "",
-            ["#validade"] = hoje.AddDays(DiasDeValidade).ToString("dd/MM/yyyy", pt),
-            ["#nome_assessoria"] = nomeAssessoria ?? "",
+            ["nome_oportunidade"] = oportunidade.Nome,
+            ["tipo_evento"] = RotuloTipo(oportunidade.TipoEvento),
+            ["data_evento"] = oportunidade.DataPrevista?.ToString("dd/MM/yyyy", pt) ?? "",
+            ["convidados"] = oportunidade.QuantidadeConvidados?.ToString(pt) ?? "",
+            ["local_cerimonia"] = oportunidade.LocalCerimonia ?? "",
+            ["local_recepcao"] = oportunidade.LocalRecepcao ?? "",
+            ["valor"] = (valor ?? oportunidade.ValorProposta)?.ToString("C", pt) ?? "",
+            ["validade"] = hoje.AddDays(DiasDeValidade).ToString("dd/MM/yyyy", pt),
+            ["nome_assessoria"] = nomeAssessoria ?? "",
         };
 
-        var resultado = texto;
-        foreach (var (parametro, valorTexto) in valores)
-        {
-            resultado = resultado.Replace(parametro, valorTexto, StringComparison.OrdinalIgnoreCase);
-        }
-
-        return resultado;
+        // Padrão único de tags ({{nome_tag}}), como no contrato; tag fora da lista fica como está.
+        return Regex.Replace(texto, @"\{\{\s*([A-Za-z0-9_]+)\s*\}\}",
+            encontrado => valores.TryGetValue(encontrado.Groups[1].Value, out var valorTexto) ? valorTexto : encontrado.Value);
     }
 
     private static string RotuloTipo(TipoEvento? tipo) => tipo switch

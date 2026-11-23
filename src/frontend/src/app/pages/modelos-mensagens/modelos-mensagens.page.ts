@@ -58,10 +58,10 @@ export class MensagemEditorDialog {
   protected readonly parametros = this.dados?.parametros?.length
     ? this.dados.parametros
     : [
-        '#nome_da_empresa', '#nome_evento', '#tipo_evento', '#data_evento', '#hora_evento',
-        '#local_cerimonia', '#local_recepcao', '#endereco_cerimonia', '#endereco_recepcao',
-        '#convite', '#link_convite', '#link_unico', '#nome_convidados', '#mesa_dos_convidados',
-        '#site_url', '#prazo_rsvp', '#qr_code',
+        '{{nome_da_empresa}}', '{{nome_evento}}', '{{tipo_evento}}', '{{data_evento}}', '{{hora_evento}}',
+        '{{local_cerimonia}}', '{{local_recepcao}}', '{{endereco_cerimonia}}', '{{endereco_recepcao}}',
+        '{{convite}}', '{{link_convite}}', '{{link_unico}}', '{{nome_convidados}}', '{{mesa_dos_convidados}}',
+        '{{site_url}}', '{{prazo_rsvp}}', '{{qr_code}}',
       ];
   protected readonly form = this.fb.nonNullable.group({
     nome: [this.dados?.nome ?? '', Validators.required],

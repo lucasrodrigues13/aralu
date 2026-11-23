@@ -83,7 +83,7 @@ export class ModeloFunilDialog {
   protected readonly dados = inject<{ tipo: TipoModelo; item: ModeloServicoFunil | ModeloOrcamentoFunil | null }>(MAT_DIALOG_DATA);
   protected readonly ref = inject(MatDialogRef<ModeloFunilDialog, boolean>);
   /** Orçamento: lista fechada (SPEC-031 §17, ponto 12). */
-  protected readonly parametros = ['#nome_oportunidade', '#tipo_evento', '#data_evento', '#convidados', '#local_cerimonia', '#local_recepcao', '#valor', '#validade', '#nome_assessoria'];
+  protected readonly parametros = ['{{nome_oportunidade}}', '{{tipo_evento}}', '{{data_evento}}', '{{convidados}}', '{{local_cerimonia}}', '{{local_recepcao}}', '{{valor}}', '{{validade}}', '{{nome_assessoria}}'];
   protected readonly form = this.fb.nonNullable.group({
     nome: [(this.dados.item as { nome?: string } | null)?.nome ?? '', Validators.required],
     descricao: [(this.dados.item as ModeloServicoFunil | null)?.descricao ?? ''],

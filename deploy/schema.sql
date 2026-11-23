@@ -4062,3 +4062,27 @@ BEGIN
 END $EF$;
 COMMIT;
 
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261123161740_TagsComChavesDuplas') THEN
+
+    UPDATE "ModelosMensagem" SET "Texto" = regexp_replace("Texto", '#(nome_da_empresa|nome_evento|tipo_evento|data_evento|hora_evento|local_cerimonia|local_recepcao|endereco_cerimonia|endereco_recepcao|convite|link_convite|link_unico|nome_convidados|mesa_dos_convidados|site_url|prazo_rsvp|qr_code)\y', '{{\1}}', 'gi') WHERE "Texto" ~* '#(nome_da_empresa|nome_evento|tipo_evento|data_evento|hora_evento|local_cerimonia|local_recepcao|endereco_cerimonia|endereco_recepcao|convite|link_convite|link_unico|nome_convidados|mesa_dos_convidados|site_url|prazo_rsvp|qr_code)\y';
+    UPDATE "ModelosOrcamentoFunil" SET "Texto" = regexp_replace("Texto", '#(nome_oportunidade|tipo_evento|data_evento|convidados|local_cerimonia|local_recepcao|valor|validade|nome_assessoria)\y', '{{\1}}', 'gi') WHERE "Texto" ~* '#(nome_oportunidade|tipo_evento|data_evento|convidados|local_cerimonia|local_recepcao|valor|validade|nome_assessoria)\y';
+    UPDATE "ModelosOrcamentoFunil" SET "HtmlAceite" = regexp_replace("HtmlAceite", '#(nome_oportunidade|tipo_evento|data_evento|convidados|local_cerimonia|local_recepcao|valor|validade|nome_assessoria)\y', '{{\1}}', 'gi') WHERE "HtmlAceite" ~* '#(nome_oportunidade|tipo_evento|data_evento|convidados|local_cerimonia|local_recepcao|valor|validade|nome_assessoria)\y';
+
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261123161740_TagsComChavesDuplas') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261123161740_TagsComChavesDuplas', '10.0.4');
+    END IF;
+END $EF$;
+COMMIT;
+
+

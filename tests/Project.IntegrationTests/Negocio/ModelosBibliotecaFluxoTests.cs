@@ -64,9 +64,9 @@ public class ModelosBibliotecaFluxoTests
         var mensagem = await Ler(await dono.PostAsJsonAsync("/api/v1/modelos-mensagens", new
         {
             nome = "RSVP",
-            texto = "Olá, confirme presença em #nome_evento",
+            texto = "Olá, confirme presença em {{nome_evento}}",
         }));
-        Assert.Contains(mensagem.GetProperty("parametros").EnumerateArray(), item => item.GetString() == "#nome_evento");
+        Assert.Contains(mensagem.GetProperty("parametros").EnumerateArray(), item => item.GetString() == "{{nome_evento}}");
         var mensagemClone = await Ler(await dono.PostAsJsonAsync($"/api/v1/modelos-mensagens/{mensagem.GetProperty("id").GetGuid()}/clonar", new { }));
         Assert.Equal(HttpStatusCode.OK, (await dono.DeleteAsync($"/api/v1/modelos-mensagens/{mensagemClone.GetProperty("id").GetGuid()}")).StatusCode);
         Assert.Empty((await Ler(await outra.GetAsync("/api/v1/modelos-mensagens"))).EnumerateArray());

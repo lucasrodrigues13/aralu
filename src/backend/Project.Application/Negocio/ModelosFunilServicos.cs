@@ -27,13 +27,13 @@ public static class TokensFunil
 {
     public static readonly string[] Todos =
     [
-        "#nome_oportunidade",
-        "#data_prevista",
-        "#horario",
-        "#local_cerimonia",
-        "#local_recepcao",
-        "#quantidade_convidados",
-        "#valor_proposta",
+        "{{nome_oportunidade}}",
+        "{{data_prevista}}",
+        "{{horario}}",
+        "{{local_cerimonia}}",
+        "{{local_recepcao}}",
+        "{{quantidade_convidados}}",
+        "{{valor_proposta}}",
     ];
 }
 

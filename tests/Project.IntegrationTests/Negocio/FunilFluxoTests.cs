@@ -73,7 +73,7 @@ public class FunilFluxoTests
         var modeloOrcamento = await Ler(await dono.PostAsJsonAsync("/api/v1/modelos-orcamento-funil", new
         {
             nome = "Padrão",
-            texto = "Proposta para #nome_oportunidade",
+            texto = "Proposta para {{nome_oportunidade}}",
         }));
         var modeloContrato = await Ler(await dono.PostAsJsonAsync("/api/v1/contratos", new
         {
@@ -547,7 +547,7 @@ public class FunilFluxoTests
         var modelo = await Ler(await dono.PostAsJsonAsync("/api/v1/modelos-orcamento-funil", new
         {
             nome = "Padrão",
-            texto = "Olá #nome_oportunidade, seu #tipo_evento em #data_evento tem #convidados convidados.",
+            texto = "Olá {{nome_oportunidade}}, seu {{tipo_evento}} em {{data_evento}} tem {{convidados}} convidados.",
         }));
         var lead = await Ler(await dono.PostAsJsonAsync("/api/v1/oportunidades", new
         {
@@ -564,7 +564,7 @@ public class FunilFluxoTests
         Assert.Equal("Olá Ana e Beto, seu Casamento em 14/09/2030 tem 120 convidados.", aplicado.GetProperty("texto").GetString());
 
         var parametros = await Ler(await dono.GetAsync("/api/v1/orcamentos-funil/parametros"));
-        Assert.Contains("#validade", parametros.EnumerateArray().Select(item => item.GetString()));
+        Assert.Contains("{{validade}}", parametros.EnumerateArray().Select(item => item.GetString()));
     }
 
     private async Task<HttpClient> Entrar()
