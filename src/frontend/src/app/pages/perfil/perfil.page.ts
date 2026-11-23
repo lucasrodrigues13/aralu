@@ -18,9 +18,57 @@ import { aplicarMascara } from '../../shared/mascaras';
   imports: [ReactiveFormsModule, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatIconModule, MascaraDirective, CampoDataComponent],
   template: `
     <form [formGroup]="formulario" (ngSubmit)="salvar()">
-      <div class="grid grid-cols-12 gap-6 items-start">
-        <div class="col-span-12 lg:col-span-8">
-          <mat-card class="cardWithShadow">
+      <div class="grid grid-cols-12 gap-6">
+        <div class="col-span-12 lg:col-span-6">
+          <mat-card class="cardWithShadow h-full">
+            <mat-card-content class="flex flex-col items-center justify-center gap-4 text-center h-full">
+              @if (preview()) {
+                <img [src]="preview()" alt="Foto do perfil" class="size-28 rounded-full object-cover" />
+                <div class="flex gap-3">
+                  <button mat-flat-button type="button" (click)="escolherFoto()">Alterar</button>
+                  <button mat-stroked-button type="button" (click)="removerFoto()">Remover</button>
+                </div>
+              } @else {
+                <span class="size-28 rounded-full bg-light-primary text-primary flex items-center justify-center">
+                  <mat-icon class="text-5xl! size-12!">apartment</mat-icon>
+                </span>
+                <button mat-stroked-button type="button" (click)="escolherFoto()">Enviar foto</button>
+              }
+              @if (nomeCurto()) {
+                <h5 class="text-base font-semibold">{{ nomeCurto() }}</h5>
+              }
+              <input
+                #arquivo
+                hidden
+                type="file"
+                accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+                (change)="enviarFoto($event)"
+              />
+            </mat-card-content>
+          </mat-card>
+        </div>
+
+        <div class="col-span-12 lg:col-span-6">
+          <mat-card class="cardWithShadow h-full">
+            <div class="p-6"><mat-card-title class="mb-0">Recebimentos</mat-card-title></div>
+            <mat-card-content class="border-t border-border">
+              <div class="campo">
+                <mat-label class="font-semibold mb-2 block">Chave Pix</mat-label>
+                <mat-form-field appearance="outline" class="w-full">
+                  <input aria-label="Chave Pix" matInput formControlName="chavePix" maxlength="140" placeholder="CPF, CNPJ, e-mail, celular ou chave aleatória" />
+                  <mat-hint>Vai junto na mensagem de "Cobrar" do Dinheiro do evento.</mat-hint>
+                </mat-form-field>
+              </div>
+              <div class="flex justify-end gap-3 mt-6">
+                <button mat-stroked-button type="button" (click)="cancelar()">Cancelar</button>
+                <button mat-flat-button type="submit">Salvar</button>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+
+        <div class="col-span-12 lg:col-span-6">
+          <mat-card class="cardWithShadow h-full">
             <div class="p-6">
               <mat-card-title class="mb-0">{{ titulo() }}</mat-card-title>
               <mat-card-subtitle>Dados da assessoria.</mat-card-subtitle>
@@ -61,8 +109,10 @@ import { aplicarMascara } from '../../shared/mascaras';
               </div>
             </mat-card-content>
           </mat-card>
+        </div>
 
-          <mat-card class="cardWithShadow">
+        <div class="col-span-12 lg:col-span-6">
+          <mat-card class="cardWithShadow h-full">
             <div class="p-6"><mat-card-title class="mb-0">Endereço</mat-card-title></div>
             <mat-card-content class="border-t border-border">
               <div class="grid grid-cols-12 gap-x-6 gap-y-4">
@@ -115,56 +165,6 @@ import { aplicarMascara } from '../../shared/mascaras';
                   </mat-form-field>
                 </div>
               </div>
-            </mat-card-content>
-          </mat-card>
-
-          <mat-card class="cardWithShadow">
-            <div class="p-6"><mat-card-title class="mb-0">Recebimentos</mat-card-title></div>
-            <mat-card-content class="border-t border-border">
-              <div class="campo">
-                <mat-label class="font-semibold mb-2 block">Chave Pix</mat-label>
-                <mat-form-field appearance="outline" class="w-full">
-                  <input aria-label="Chave Pix" matInput formControlName="chavePix" maxlength="140" placeholder="CPF, CNPJ, e-mail, celular ou chave aleatória" />
-                  <mat-hint>Vai junto na mensagem de "Cobrar" do Dinheiro do evento.</mat-hint>
-                </mat-form-field>
-              </div>
-            </mat-card-content>
-          </mat-card>
-        </div>
-
-        <div class="col-span-12 lg:col-span-4">
-          <mat-card class="cardWithShadow">
-            <mat-card-content class="flex flex-col items-center gap-4 text-center">
-              @if (preview()) {
-                <div class="relative size-28 rounded-full overflow-hidden group">
-                  <img [src]="preview()" alt="Foto do perfil" class="size-full object-cover" />
-                  <div class="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/55 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100">
-                    <button mat-button class="text-white!" type="button" (click)="escolherFoto()">Alterar</button>
-                    <button mat-button class="text-white!" type="button" (click)="removerFoto()">Remover</button>
-                  </div>
-                </div>
-                @if (nomeCurto()) {
-                  <h5 class="text-base font-semibold">{{ nomeCurto() }}</h5>
-                }
-              } @else {
-                <span class="size-28 rounded-full bg-light-primary text-primary flex items-center justify-center">
-                  <mat-icon class="text-5xl! size-12!">apartment</mat-icon>
-                </span>
-                <button mat-stroked-button type="button" (click)="escolherFoto()">Enviar foto</button>
-              }
-              <input
-                #arquivo
-                hidden
-                type="file"
-                accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
-                (change)="enviarFoto($event)"
-              />
-            </mat-card-content>
-          </mat-card>
-          <mat-card class="cardWithShadow">
-            <mat-card-content class="flex flex-col gap-6 p-4">
-              <button mat-flat-button type="submit" class="w-full">Salvar</button>
-              <button mat-stroked-button type="button" class="w-full" (click)="cancelar()">Cancelar</button>
             </mat-card-content>
           </mat-card>
         </div>

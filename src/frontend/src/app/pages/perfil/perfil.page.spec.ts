@@ -60,7 +60,7 @@ describe('PerfilPage', () => {
   it('sem foto mostra só Enviar foto', () => {
     const raiz = montar(perfilVazio);
 
-    expect(raiz.querySelector('mat-card-title')?.textContent).toContain('Editar Ana Lima');
+    expect([...raiz.querySelectorAll('mat-card-title')].map((t) => t.textContent).join(' ')).toContain('Editar Ana Lima');
     expect(raiz.textContent).toContain('Enviar foto');
     expect(raiz.textContent).not.toContain('Remover');
   });
