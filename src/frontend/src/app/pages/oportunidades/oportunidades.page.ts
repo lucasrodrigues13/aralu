@@ -714,12 +714,12 @@ export function textoDias(dias: number): string {
     <div class="totais mb-6">
       @for (estagio of estagios(); track estagio.id; let i = $index) {
         <a class="block no-underline" [href]="'#' + ancora(estagio)" (click)="rolar($event, estagio)">
-          <mat-card class="shadow-none text-center mb-0! h-full card-hover" [class]="'bg-light-' + estagio.cor">
+          <mat-card class="resumo-estagio shadow-none text-center mb-0! h-full card-hover" [style.--cor-estagio]="corEstagio(estagio)">
             <mat-card-content>
-              <mat-icon [class]="'text-' + estagio.cor">{{ icone(estagio, i) }}</mat-icon>
-              <h4 class="text-sm font-semibold mt-2!" [class]="'text-' + estagio.cor">{{ estagio.nome }}</h4>
-              <h6 class="text-xl font-semibold mt-2!" [class]="'text-' + estagio.cor">{{ resumo(estagio).qtd }}</h6>
-              <span class="block text-xs mt-1" [class]="'text-' + estagio.cor">{{ resumo(estagio).valor | gdDinheiro }}</span>
+              <mat-icon>{{ icone(estagio, i) }}</mat-icon>
+              <h4 class="text-sm font-semibold mt-2!">{{ estagio.nome }}</h4>
+              <h6 class="text-xl font-semibold mt-2!">{{ resumo(estagio).qtd }}</h6>
+              <span class="block text-xs mt-1">{{ resumo(estagio).valor | gdDinheiro }}</span>
             </mat-card-content>
           </mat-card>
         </a>
@@ -778,13 +778,13 @@ export function textoDias(dias: number): string {
     }
     <div class="quadro" cdkDropListGroup>
       @for (estagio of estagios(); track estagio.id; let i = $index) {
-        <section class="coluna" [id]="ancora(estagio)" [style.--cor-estagio]="'var(--color-' + estagio.cor + ')'"
+        <section class="coluna" [id]="ancora(estagio)" [style.--cor-estagio]="corEstagio(estagio)"
           cdkDropList [cdkDropListData]="estagio" (cdkDropListDropped)="soltar($event)">
           <header class="mb-4">
             <div class="flex items-center gap-2">
-              <mat-icon [class]="'text-' + estagio.cor">{{ icone(estagio, i) }}</mat-icon>
+              <mat-icon class="icone-estagio">{{ icone(estagio, i) }}</mat-icon>
               <h3 class="text-base font-semibold">{{ estagio.nome }}</h3>
-              <span class="contador ml-auto" [class]="'bg-light-' + estagio.cor + ' text-' + estagio.cor">{{ resumo(estagio).qtd }}</span>
+              <span class="contador ml-auto">{{ resumo(estagio).qtd }}</span>
             </div>
             <span class="block text-sm text-muted mt-1">{{ resumo(estagio).valor | gdDinheiro }} no total</span>
           </header>
@@ -887,7 +887,7 @@ matTooltip="Ações do lead"
               </ul>
 
               <footer class="flex flex-wrap items-center justify-between gap-2 mt-3 pt-3">
-                <span class="text-xs text-muted" [matTooltip]="'Entrou em ' + item.estagio + ' em ' + (item.entradaNoEstagioEm | gdData)">
+                <span class="text-xs text-muted inline-flex items-center gap-1" [matTooltip]="'Entrou em ' + item.estagio + ' em ' + (item.entradaNoEstagioEm | gdData)">
                   <mat-icon class="relogio">schedule</mat-icon> {{ diasNoEstagio(item) }}
                 </span>
                 @if (item.clienteId) {
@@ -949,7 +949,10 @@ matTooltip="Ações do lead"
     }
     .coluna.cdk-drop-list-dragging { outline-color: var(--cor-estagio); }
     .coluna.cdk-drop-list-dragging .vazio { display: none; }
-    .contador { border-radius: 999px; padding: 0 8px; font-size: 0.75rem; font-weight: 600; line-height: 20px; }
+    .resumo-estagio { background-color: color-mix(in srgb, var(--cor-estagio) 14%, transparent) !important; }
+    .resumo-estagio mat-icon, .resumo-estagio h4, .resumo-estagio h6, .resumo-estagio span,
+    .icone-estagio { color: var(--cor-estagio) !important; }
+    .contador { background-color: color-mix(in srgb, var(--cor-estagio) 14%, transparent); color: var(--cor-estagio); border-radius: 999px; padding: 0 8px; font-size: 0.75rem; font-weight: 600; line-height: 20px; }
     .lead {
       background: var(--mat-sys-surface);
       border: 1px solid var(--color-border);
@@ -972,7 +975,9 @@ matTooltip="Ações do lead"
     .whats { margin-left: auto; display: inline-flex; color: var(--color-success); }
     .whats .mat-icon { font-size: 18px; width: 18px; height: 18px; }
     .lead footer { border-top: 1px dashed var(--color-border); }
-    .relogio, .selo { font-size: 14px; width: 14px; height: 14px; vertical-align: -2px; }
+    .relogio, .selo { font-size: 14px; width: 14px; height: 14px; line-height: 14px; }
+    .selo { vertical-align: -2px; }
+    .relogio { overflow: visible; }
     a[routerLink] { text-decoration: none; }
     .acao-lead { min-height: 32px; height: 32px; font-size: 0.8125rem; }
     .detalhes li.linha-retorno { flex-wrap: wrap; row-gap: 2px; }
@@ -1053,6 +1058,11 @@ export class OportunidadesPage implements OnInit {
         error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
       });
     });
+  }
+
+  /** Cor do estágio (personalizada ou padrão) — mesma fonte para o resumo do topo e a coluna do board. */
+  protected corEstagio(estagio: EstagioFunil): string {
+    return `var(--color-${estagio.cor})`;
   }
 
   protected icone(estagio: EstagioFunil, indice: number): string {
