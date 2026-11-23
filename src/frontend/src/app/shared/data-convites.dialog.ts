@@ -2,8 +2,8 @@ import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
+import { CampoDataComponent } from './campo-data';
+import { deDataParaIso, deIsoParaData } from './data';
 
 export interface DataConvitesDados {
   titulo: string;
@@ -16,16 +16,13 @@ export interface DataConvitesDados {
 /** Data opcional da aba Convidados: prazo de confirmação (SPEC-054) e data de envio (SPEC-059). Fecha com `{ data }`. */
 @Component({
   selector: 'app-data-convites-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule],
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, CampoDataComponent],
   template: `
     <h2 mat-dialog-title>{{ dados.titulo }}</h2>
     <p class="text-muted text-sm px-6 -mt-2 mb-4">{{ dados.texto }}</p>
     <mat-dialog-content>
       <form id="data-convites-form" class="grid grid-cols-1 gap-4" [formGroup]="form" (ngSubmit)="salvar()">
-        <div class="campo">
-          <mat-label class="font-semibold mb-2 block">{{ dados.rotulo }}</mat-label>
-          <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="dados.rotulo" matInput type="date" formControlName="data" /></mat-form-field>
-        </div>
+        <app-campo-data [rotulo]="dados.rotulo" formControlName="data" />
       </form>
     </mat-dialog-content>
     <mat-dialog-actions>
@@ -37,10 +34,10 @@ export interface DataConvitesDados {
 export class DataConvitesDialog {
   protected readonly dados = inject<DataConvitesDados>(MAT_DIALOG_DATA);
   private readonly ref = inject(MatDialogRef<DataConvitesDialog, { data: string | null }>);
-  protected readonly form = inject(FormBuilder).nonNullable.group({ data: this.dados.valor ?? '' });
+  protected readonly form = inject(FormBuilder).group({ data: deIsoParaData(this.dados.valor) });
 
   protected salvar(): void {
-    this.ref.close({ data: this.form.getRawValue().data || null });
+    this.ref.close({ data: deDataParaIso(this.form.getRawValue().data) });
   }
 }
 

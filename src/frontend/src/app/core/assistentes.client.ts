@@ -10,7 +10,7 @@ export interface Assistente {
   nascimento: string | null;
   podeVerFinanceiro: boolean;
   somenteDela: boolean;
-  situacao: 'Convidada' | 'Ativa' | 'Removida';
+  situacao: 'Convidada' | 'Ativa' | 'Removida' | 'Inativa';
   convidadaEm: string;
   primeiroAcessoEm: string | null;
   conviteEnviado: boolean | null;
@@ -80,8 +80,13 @@ export class AssistentesClient {
     return this.http.post<Assistente>(`${this.base}/api/v1/assistentes/${id}/reenviar`, null);
   }
 
-  remover(id: string) {
-    return this.http.delete<void>(`${this.base}/api/v1/assistentes/${id}`);
+  /** Desativa o acesso sem apagar o cadastro (pode ser reativado). */
+  desativar(id: string) {
+    return this.http.post<void>(`${this.base}/api/v1/assistentes/${id}/desativar`, null);
+  }
+
+  reativar(id: string) {
+    return this.http.post<Assistente>(`${this.base}/api/v1/assistentes/${id}/reativar`, null);
   }
 
   aceitarConvite(usuarioId: string, token: string, senha: string, confirmacao: string) {

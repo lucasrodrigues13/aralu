@@ -1686,6 +1686,14 @@ export const CORES_ESTAGIO = [
   { valor: 'error', rotulo: 'Vermelho' },
   { valor: 'primary', rotulo: 'Petróleo' },
   { valor: 'secondary', rotulo: 'Dourado' },
+  { valor: 'roxo', rotulo: 'Roxo' },
+  { valor: 'rosa', rotulo: 'Rosa' },
+  { valor: 'laranja', rotulo: 'Laranja' },
+  { valor: 'turquesa', rotulo: 'Turquesa' },
+  { valor: 'indigo', rotulo: 'Índigo' },
+  { valor: 'lima', rotulo: 'Lima' },
+  { valor: 'marrom', rotulo: 'Marrom' },
+  { valor: 'cinza', rotulo: 'Cinza' },
 ];
 
 export const MAXIMO_ESTAGIOS_ABERTOS = 8;

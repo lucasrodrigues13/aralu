@@ -4,7 +4,11 @@ public enum SituacaoAssistente
 {
     Convidada,
     Ativa,
+    /// <summary>Login legado apagado (antes da desativação existir).</summary>
     Removida,
+
+    /// <summary>Acesso desativado pela dona: cadastro e login ficam guardados para reativar.</summary>
+    Inativa,
 }
 
 /// <summary>Assistente da conta (SPEC-032). O login fica no Identity (<see cref="UsuarioId"/>).</summary>

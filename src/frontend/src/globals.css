@@ -10,6 +10,16 @@
     --lightsuccess-color: #13deb940;
     --lightinfo-color: #8754ec26;
     --lightwarning-color: #ffad1f40;
+
+    /* Cores extras dos estágios do funil (CORES_ESTAGIO) */
+    --color-roxo: #8b5cf6;
+    --color-rosa: #ec4899;
+    --color-laranja: #f97316;
+    --color-turquesa: #14b8a6;
+    --color-indigo: #4f46e5;
+    --color-lima: #84cc16;
+    --color-marrom: #a16207;
+    --color-cinza: #64748b;
 }
 
 @theme {

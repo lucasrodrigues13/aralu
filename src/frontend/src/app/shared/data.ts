@@ -29,6 +29,18 @@ export function deDataParaIso(data: Date | null | undefined): string | null {
   return `${ano}-${mes}-${dia}`;
 }
 
+/** Máscara de digitação: só dígitos, com as barras entrando sozinhas (`dd/mm/aaaa`). */
+export function mascararDataBr(texto: string): string {
+  const digitos = texto.replace(/\D/g, '').slice(0, 8);
+  if (digitos.length <= 2) {
+    return digitos;
+  }
+  if (digitos.length <= 4) {
+    return `${digitos.slice(0, 2)}/${digitos.slice(2)}`;
+  }
+  return `${digitos.slice(0, 2)}/${digitos.slice(2, 4)}/${digitos.slice(4)}`;
+}
+
 /** Exibe data ISO ou Date como `dd/MM/yyyy`. */
 export function formatarDataBr(valor: string | Date | null | undefined): string {
   if (!valor) {

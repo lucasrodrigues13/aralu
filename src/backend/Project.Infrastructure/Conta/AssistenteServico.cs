@@ -92,7 +92,7 @@ public sealed class AssistenteServico(
         await banco.Assistentes.AsNoTracking()
             .Where(item => item.ContaId == contaId)
             .OrderBy(item => item.Nome)
-            .Select(item => new NomeAssistente(item.Id, item.Nome, item.Situacao == SituacaoAssistente.Removida))
+            .Select(item => new NomeAssistente(item.Id, item.Nome, item.Situacao == SituacaoAssistente.Removida || item.Situacao == SituacaoAssistente.Inativa))
             .ToListAsync(ct);
 
     public Task<Assistente?> PorUsuarioAsync(string usuarioId, CancellationToken ct) =>
@@ -114,7 +114,7 @@ public sealed class AssistenteServico(
                 item => item.UsuarioId == existente.Id && item.ContaId == contaId && item.Situacao != SituacaoAssistente.Removida, ct);
             return Resultado<AssistenteLeitura>.Erro(
                 daConta ? "ja_assistente" : Codigos.Validacao,
-                daConta ? "Este e-mail já é de uma assistente desta conta." : "Este e-mail já pertence a outra conta.");
+                daConta ? "Este e-mail já é de uma assistente desta conta. Se o acesso dela está desativado, reative na lista." : "Este e-mail já pertence a outra conta.");
         }
 
         var usuario = new ApplicationUser { UserName = endereco, Email = endereco, EmailConfirmed = true };
@@ -237,7 +237,11 @@ public sealed class AssistenteServico(
         return Resultado<AssistenteLeitura>.Sucesso(Ler(assistente, enviado));
     }
 
-    public async Task<Resultado<bool>> RemoverAsync(string contaId, Guid id, CancellationToken ct)
+    /// <summary>
+    /// Desativa o acesso sem apagar cadastro nem login: o acesso cai no próximo pedido (§6.5)
+    /// e a dona pode reativar depois (ex.: freela que volta).
+    /// </summary>
+    public async Task<Resultado<bool>> DesativarAsync(string contaId, Guid id, CancellationToken ct)
     {
         var assistente = await DaContaAsync(contaId, id, ct);
         if (assistente is null)
@@ -245,19 +249,62 @@ public sealed class AssistenteServico(
             return Resultado<bool>.Erro(Codigos.Indisponivel, "Assistente não encontrada.");
         }
 
-        assistente.Situacao = SituacaoAssistente.Removida;
+        if (assistente.Situacao == SituacaoAssistente.Inativa)
+        {
+            return Resultado<bool>.Sucesso(true);
+        }
+
+        assistente.Situacao = SituacaoAssistente.Inativa;
         assistente.RemovidaEm = DateTimeOffset.UtcNow;
-        await banco.EventosAssistentes.Where(item => item.AssistenteId == assistente.Id).ExecuteDeleteAsync(ct);
         await banco.SaveChangesAsync(ct);
 
-        // Apaga o login: o e-mail fica livre e o acesso cai no próximo pedido (§6.5).
+        // Novo carimbo invalida links de convite pendentes.
         var usuario = await usuarios.FindByIdAsync(assistente.UsuarioId);
         if (usuario is not null)
         {
-            await usuarios.DeleteAsync(usuario);
+            await usuarios.UpdateSecurityStampAsync(usuario);
         }
 
         return Resultado<bool>.Sucesso(true);
+    }
+
+    /// <summary>Devolve o acesso: quem já criou a senha volta ativa; quem não criou recebe convite novo.</summary>
+    public async Task<Resultado<AssistenteLeitura>> ReativarAsync(string contaId, Guid id, CancellationToken ct)
+    {
+        var assistente = await DaContaAsync(contaId, id, ct);
+        if (assistente is null)
+        {
+            return Resultado<AssistenteLeitura>.Erro(Codigos.Indisponivel, "Assistente não encontrada.");
+        }
+
+        if (assistente.Situacao != SituacaoAssistente.Inativa)
+        {
+            return Resultado<AssistenteLeitura>.Erro(Codigos.Validacao, "O acesso desta assistente já está liberado.");
+        }
+
+        var usuario = await usuarios.FindByIdAsync(assistente.UsuarioId);
+        if (usuario is null)
+        {
+            return Resultado<AssistenteLeitura>.Erro(Codigos.Indisponivel, "Assistente não encontrada.");
+        }
+
+        assistente.RemovidaEm = null;
+        bool? enviado = null;
+        if (await usuarios.HasPasswordAsync(usuario))
+        {
+            assistente.Situacao = SituacaoAssistente.Ativa;
+            await banco.SaveChangesAsync(ct);
+        }
+        else
+        {
+            assistente.Situacao = SituacaoAssistente.Convidada;
+            assistente.ConvidadaEm = DateTimeOffset.UtcNow;
+            await banco.SaveChangesAsync(ct);
+            await usuarios.UpdateSecurityStampAsync(usuario);
+            enviado = await EnviarConviteAsync(usuario, assistente, ct);
+        }
+
+        return Resultado<AssistenteLeitura>.Sucesso(Ler(assistente, enviado));
     }
 
     public async Task<Resultado<bool>> AceitarConviteAsync(string? usuarioId, string? token, string? senha, string? confirmacao, CancellationToken ct)

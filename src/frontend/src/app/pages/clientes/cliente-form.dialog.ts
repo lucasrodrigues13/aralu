@@ -10,13 +10,14 @@ import { mensagemDeErro } from '../../core/mensagem-erro';
 import { Cliente, ESTADOS_CIVIS, NegocioClient, PAPEIS, ROTULO_PAPEL } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { CampoDataComponent } from '../../shared/campo-data';
+import { CampoDdiComponent } from '../../shared/campo-ddi';
 import { deDataParaIso, deIsoParaData } from '../../shared/data';
 import { MascaraDirective } from '../../shared/mascara.directive';
 import { aplicarMascara } from '../../shared/mascaras';
 
 @Component({
   selector: 'app-cliente-form',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatTabsModule, MascaraDirective, CampoDataComponent],
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatTabsModule, MascaraDirective, CampoDataComponent, CampoDdiComponent],
   template: `
     <h2 mat-dialog-title>{{ edicao ? 'Editar cliente' : 'Novo cliente' }}</h2>
     <mat-dialog-content>
@@ -40,13 +41,12 @@ import { aplicarMascara } from '../../shared/mascaras';
               <mat-label class="font-semibold mb-2 block">E-mail</mat-label>
               <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'E-mail'" matInput type="email" formControlName="email" /></mat-form-field>
             </div>
-            <div class="campo">
-              <mat-label class="font-semibold mb-2 block">DDI</mat-label>
-              <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'DDI'" matInput formControlName="ddi" /></mat-form-field>
-            </div>
-            <div class="campo">
-              <mat-label class="font-semibold mb-2 block">Celular</mat-label>
-              <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Celular'" matInput formControlName="celular" gdMascara="celular" /></mat-form-field>
+            <div class="flex gap-2 items-start">
+              <app-campo-ddi rotulo="DDI" formControlName="ddi" />
+              <div class="campo flex-1 min-w-0">
+                <mat-label class="font-semibold mb-2 block">Celular</mat-label>
+                <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Celular'" matInput formControlName="celular" gdMascara="celular" /></mat-form-field>
+              </div>
             </div>
             <div class="campo">
               <mat-label class="font-semibold mb-2 block">Telefone fixo</mat-label>

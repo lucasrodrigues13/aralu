@@ -25,7 +25,9 @@ public static class AssistenteEndpoints
         dona.MapPost("", Convidar);
         dona.MapPut("/{id:guid}", Atualizar);
         dona.MapPost("/{id:guid}/reenviar", Reenviar);
-        dona.MapDelete("/{id:guid}", Remover);
+        dona.MapDelete("/{id:guid}", Desativar);
+        dona.MapPost("/{id:guid}/desativar", Desativar);
+        dona.MapPost("/{id:guid}/reativar", Reativar);
 
         app.MapGet("/api/v1/admin/assistentes", async (AssistenteServico servico, CancellationToken ct) =>
             Results.Ok(await servico.ListarParaAdminAsync(ct))).RequireAuthorization(policy => policy.RequireRole(Papeis.Admin));
@@ -123,15 +125,26 @@ public static class AssistenteEndpoints
         return resultado.Ok ? Results.Ok(resultado.Valor) : Falha(resultado.Falha!);
     }
 
-    private static async Task<IResult> Remover(Guid id, ClaimsPrincipal usuario, AssistenteServico servico, CancellationToken ct)
+    private static async Task<IResult> Desativar(Guid id, ClaimsPrincipal usuario, AssistenteServico servico, CancellationToken ct)
     {
         if (Conta(usuario) is not { } conta)
         {
             return Results.Unauthorized();
         }
 
-        var resultado = await servico.RemoverAsync(conta, id, ct);
+        var resultado = await servico.DesativarAsync(conta, id, ct);
         return resultado.Ok ? Results.NoContent() : Falha(resultado.Falha!);
+    }
+
+    private static async Task<IResult> Reativar(Guid id, ClaimsPrincipal usuario, AssistenteServico servico, CancellationToken ct)
+    {
+        if (Conta(usuario) is not { } conta)
+        {
+            return Results.Unauthorized();
+        }
+
+        var resultado = await servico.ReativarAsync(conta, id, ct);
+        return resultado.Ok ? Results.Ok(resultado.Valor) : Falha(resultado.Falha!);
     }
 
     private static async Task<IResult> MinhaConta(ClaimsPrincipal usuario, AssistenteServico servico, CancellationToken ct)

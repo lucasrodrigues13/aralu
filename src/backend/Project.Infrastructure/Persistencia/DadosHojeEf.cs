@@ -16,7 +16,7 @@ public sealed class DadosHojeEf(AppDbContext banco) : IDadosHoje
     public async Task<IReadOnlyList<TarefaSemResponsavelAtivo>> TarefasSemResponsavelAtivoAsync(string contaId, CancellationToken ct)
     {
         var removidas = await banco.Assistentes.AsNoTracking()
-            .Where(item => item.ContaId == contaId && item.Situacao == SituacaoAssistente.Removida)
+            .Where(item => item.ContaId == contaId && (item.Situacao == SituacaoAssistente.Removida || item.Situacao == SituacaoAssistente.Inativa))
             .ToDictionaryAsync(item => item.Id.ToString(), item => item.Nome, ct);
         if (removidas.Count == 0)
         {

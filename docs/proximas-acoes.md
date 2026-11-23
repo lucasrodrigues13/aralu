@@ -40,6 +40,25 @@ A fila é processada dentro da própria API, sem worker (decisão do usuário: n
 - [ ] **Decisão:** alerta por serviço, por exemplo "Contratado acima do estimado em R$ X" (hoje o Buffet contratou 150.000 com estimado de 15.500, e nada avisa). Precisa de spec.
 - [ ] **Decisão:** na tela do cliente, o botão do contrato assinado ainda mostra "Contrato: nome-do-arquivo". Pode virar só ícone + "Contrato", como foi feito com o comprovante.
 
+### 0.4.1 Segurança: revogar o JWT (revisitar no futuro, levantado em 22/11/2026)
+
+Revisão de 22/11: os arquivos estão protegidos. `GET /api/v1/arquivos/{id}` exige login e filtra por `ContaId` (`ArmazenamentoArquivo.AbrirAsync`), e o link do cliente confere se o arquivo é do evento. O id sozinho não dá acesso a nada. A **pior brecha** encontrada é outra: o JWT não pode ser revogado. "Sair" é um no-op (`ContaEndpoints.Sair`), e o token continua valendo **até 8h** (`Jwt:ExpiryHours`) mesmo depois de sair ou trocar a senha. Quem copiar o token usa a conta nesse período. Hoje só a assistente desativada perde o acesso na hora (`AssistenteEndpoints.AplicarPermissoes`).
+
+Proposta:
+- [ ] **Decisão:** pôr o `SecurityStamp` como claim no JWT e conferir a cada request, com cache de 30–60s. Ao trocar ou resetar a senha, todos os tokens caem.
+- [ ] **Decisão:** "Sair" derruba só o token atual (lista de revogação por `jti` até expirar) ou não faz nada no servidor. Usar o stamp no logout derrubaria **todos os dispositivos e abas** do usuário.
+- [ ] Reduzir `Jwt:ExpiryHours` para 1–2h.
+
+Efeitos colaterais a considerar:
+- Uma leitura do stamp por request. Com cache, o custo some, mas a revogação atrasa até o tempo do cache.
+- O Identity também troca o stamp em troca de e-mail, 2FA e login externo, e isso desloga tudo.
+- No deploy, os tokens antigos não têm a claim. Rejeitar obriga todo mundo a entrar de novo uma vez, e é o mais simples.
+- O frontend precisa tratar um 401 no meio do uso, mandando para o login. Dá para reaproveitar o tratamento de `acesso_removido`.
+- Conferir se `AdminEndpoints.AplicarContaDoAdmin` valida o stamp do usuário logado, e não o da conta vista. Testes que montam o JWT na mão precisam da claim.
+- Os links públicos (cliente, portaria, RSVP, proposta) não são afetados.
+
+Menores: o token fica no `sessionStorage` e não há CSP no deploy (um XSS leria o token). Uploads aceitam 50 MB por request, sem rate limit nas rotas autenticadas.
+
 ### 0.5 Anterior a 22/11
 
 ## 0-antigo. Próxima tarefa (atualizada em 20/11/2026)

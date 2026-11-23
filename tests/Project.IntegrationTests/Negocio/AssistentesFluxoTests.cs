@@ -93,9 +93,16 @@ public class AssistentesFluxoTests
         var nomes = await Ler(await dona.GetAsync("/api/v1/assistentes/nomes"));
         Assert.True(nomes.EnumerateArray().First(item => item.GetProperty("id").GetGuid() == assistenteId).GetProperty("removida").GetBoolean());
 
-        // O e-mail volta a ficar livre para um novo convite.
+        // O cadastro continua na lista, desativado, e o e-mail segue preso a ele.
+        var lista = await Ler(await dona.GetAsync("/api/v1/assistentes"));
+        Assert.Equal("Inativa", lista.EnumerateArray().First(item => item.GetProperty("id").GetGuid() == assistenteId).GetProperty("situacao").GetString());
         var novo = await dona.PostAsJsonAsync("/api/v1/assistentes", new { nome = "Ana de novo", email, podeVerFinanceiro = false, somenteDela = false });
-        Assert.Equal(HttpStatusCode.Created, novo.StatusCode);
+        Assert.Equal(HttpStatusCode.Conflict, novo.StatusCode);
+
+        // Reativar devolve o acesso com a mesma senha e os mesmos eventos marcados.
+        var reativada = await Ler(await dona.PostAsync($"/api/v1/assistentes/{assistenteId}/reativar", null));
+        Assert.Equal("Ativa", reativada.GetProperty("situacao").GetString());
+        Assert.Equal(HttpStatusCode.OK, (await assistente.GetAsync($"/api/v1/eventos/{marcado}")).StatusCode);
     }
 
     [Fact]

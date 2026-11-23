@@ -3,6 +3,7 @@ import { ControlValueAccessor, FormControl, NG_VALUE_ACCESSOR, ReactiveFormsModu
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { mascararDataBr } from './data';
 
 /** Campo de data pt-BR (`dd/MM/yyyy`) ligado a `Date | null` no formulário. */
 @Component({
@@ -25,6 +26,10 @@ import { MatInputModule } from '@angular/material/input';
         [matDatepicker]="picker"
         [formControl]="controle"
         placeholder="dd/mm/aaaa"
+        inputmode="numeric"
+        maxlength="10"
+        autocomplete="off"
+        (input)="mascarar($event)"
         [attr.aria-label]="ariaLabel || rotulo"
       />
       <mat-datepicker-toggle matIconSuffix [for]="picker" />
@@ -51,6 +56,22 @@ export class CampoDataComponent implements ControlValueAccessor {
       this.propagar(valor);
       this.tocado();
     });
+  }
+
+  /**
+   * Aplica `dd/mm/aaaa` enquanto a pessoa digita. Se o texto mudou, dispara outro `input`
+   * para o datepicker ler o valor já mascarado (a segunda passada não muda nada e para aí).
+   */
+  protected mascarar(evento: Event): void {
+    const campo = evento.target as HTMLInputElement;
+    const apagando = (evento as InputEvent).inputType?.startsWith('delete') ?? false;
+    const mascarado = apagando ? campo.value : mascararDataBr(campo.value);
+    if (mascarado === campo.value) {
+      return;
+    }
+    campo.value = mascarado;
+    campo.setSelectionRange(mascarado.length, mascarado.length);
+    campo.dispatchEvent(new Event('input', { bubbles: true }));
   }
 
   writeValue(valor: Date | null): void {

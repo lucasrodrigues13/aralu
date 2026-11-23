@@ -77,7 +77,7 @@ export function nomeRepetido(nomes: string[]): string | null {
               <mat-icon>drag_indicator</mat-icon>
             </button>
             <mat-form-field appearance="outline" subscriptSizing="dynamic" class="cor">
-              <mat-select [formControl]="linha.cor" aria-label="Cor do estágio">
+              <mat-select [formControl]="linha.cor" aria-label="Cor do estágio" panelWidth="200px" panelClass="painel-cores-estagio">
                 <mat-select-trigger><span class="bolinha" [style.background]="'var(--color-' + linha.cor.value + ')'"></span></mat-select-trigger>
                 @for (c of cores; track c.valor) {
                   <mat-option [value]="c.valor"><span class="bolinha" [style.background]="'var(--color-' + c.valor + ')'"></span> {{ c.rotulo }}</mat-option>
@@ -108,7 +108,7 @@ export function nomeRepetido(nomes: string[]): string | null {
         <div class="linha fixa">
           <mat-icon class="cadeado" matTooltip="Estágio fixo: só a cor muda">lock</mat-icon>
           <mat-form-field appearance="outline" subscriptSizing="dynamic" class="cor">
-            <mat-select [formControl]="fixo.tipo === 'Contratado' ? corContratado : corDescartado" [attr.aria-label]="'Cor de ' + fixo.nome">
+            <mat-select [formControl]="fixo.tipo === 'Contratado' ? corContratado : corDescartado" [attr.aria-label]="'Cor de ' + fixo.nome" panelWidth="200px" panelClass="painel-cores-estagio">
               <mat-select-trigger>
                 <span class="bolinha" [style.background]="'var(--color-' + (fixo.tipo === 'Contratado' ? corContratado.value : corDescartado.value) + ')'"></span>
               </mat-select-trigger>
@@ -159,6 +159,10 @@ export function nomeRepetido(nomes: string[]): string | null {
     .qtd { min-width: 24px; text-align: center; }
     .cadeado { opacity: 0.5; font-size: 20px; width: 20px; height: 20px; margin-right: 14px; }
     .bolinha { display: inline-block; width: 14px; height: 14px; border-radius: 50%; vertical-align: -2px; margin-right: 4px; }
+    ::ng-deep .painel-cores-estagio .mat-mdc-option .bolinha {
+      display: inline-block; width: 16px; height: 16px; border-radius: 50%; vertical-align: -3px; margin-right: 10px;
+    }
+    ::ng-deep .painel-cores-estagio { max-height: 360px !important; }
     .titulo-fixos { margin: 20px 0 8px; font-size: 0.95rem; }
     .cdk-drag-preview { box-shadow: 0 8px 24px rgb(0 0 0 / 0.15); }
     .cdk-drag-placeholder { opacity: 0.3; }

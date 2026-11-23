@@ -29,7 +29,8 @@ public static class CoresEstagio
     public const string Padrao = "info";
 
     /// <summary>Paleta fechada do tema (tokens de cor do frontend).</summary>
-    public static readonly string[] Paleta = ["info", "warning", "success", "error", "primary", "secondary"];
+    public static readonly string[] Paleta = ["info", "warning", "success", "error", "primary", "secondary",
+        "roxo", "rosa", "laranja", "turquesa", "indigo", "lima", "marrom", "cinza"];
 
     public static bool Valida(string? cor) => cor is not null && Paleta.Contains(cor);
 }

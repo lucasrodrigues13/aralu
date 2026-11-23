@@ -1,3 +1,4 @@
+import { CampoDdiComponent } from '../../shared/campo-ddi';
 import { HttpBackend, HttpClient } from '@angular/common/http';
 import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -43,7 +44,7 @@ export const DIALOG_FORNECEDOR = DIALOG_LARGO;
 
 @Component({
   selector: 'app-fornecedor-form-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatCheckboxModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatTabsModule, MatIconModule, MatAutocompleteModule, MatChipsModule, MascaraDirective, CampoDinheiroComponent, MatTooltipModule],
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatCheckboxModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatTabsModule, MatIconModule, MatAutocompleteModule, MatChipsModule, MascaraDirective, CampoDinheiroComponent, MatTooltipModule, CampoDdiComponent],
   template: `
     <h2 mat-dialog-title>{{ dados ? 'Editar fornecedor' : 'Novo fornecedor' }}</h2>
     <mat-dialog-content>
@@ -111,10 +112,7 @@ export const DIALOG_FORNECEDOR = DIALOG_LARGO;
               <div class="lista" formArrayName="telefones">
                 @for (tel of telefones.controls; track $index; let i = $index) {
                   <div class="linha" [formGroupName]="i">
-                    <div class="campo">
-                      <mat-label class="font-semibold mb-2 block">DDI</mat-label>
-                      <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'DDI'" matInput formControlName="ddi" /></mat-form-field>
-                    </div>
+                    <app-campo-ddi rotulo="DDI" formControlName="ddi" [comMais]="false" />
                     <div class="campo">
                       <mat-label class="font-semibold mb-2 block">Telefone</mat-label>
                       <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Telefone'" matInput formControlName="numero" gdMascara="celular" /></mat-form-field>
@@ -365,7 +363,7 @@ export const DIALOG_FORNECEDOR = DIALOG_LARGO;
     .lista { display: flex; flex-direction: column; gap: 8px; }
     .linha {
       display: grid;
-      grid-template-columns: 120px minmax(0, 1fr) auto auto;
+      grid-template-columns: 112px minmax(0, 1fr) auto auto;
       gap: 8px 12px;
       align-items: center;
     }
