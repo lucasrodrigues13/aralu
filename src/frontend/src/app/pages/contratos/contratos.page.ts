@@ -398,18 +398,12 @@ export class PreviaAmpliadaDialog {
             }
           </div>
         }
-        <div class="barra-previa">
-          @if (!ehWord()) {
-            <button mat-stroked-button type="button" [attr.aria-pressed]="previaAberta()" (click)="previaAberta.set(!previaAberta())">
-              <mat-icon>{{ previaAberta() ? 'visibility_off' : 'visibility' }}</mat-icon> {{ previaAberta() ? 'Fechar Live Preview' : 'Live Preview' }}
-            </button>
-          }
-          <button mat-stroked-button type="button" [disabled]="ehWord() && !previaWord()" (click)="ampliar()">
-            <mat-icon>open_in_full</mat-icon> Ver em tela cheia
-          </button>
-          <span class="text-muted text-xs">Mostra como o contrato chega ao cliente, com exemplos no lugar das tags.</span>
-        </div>
         @if (ehWord()) {
+          <div class="barra-previa">
+            <button mat-stroked-button type="button" [disabled]="!previaWord()" (click)="ampliar()">
+              <mat-icon>open_in_full</mat-icon> Ver em tela cheia
+            </button>
+          </div>
           <div class="painel-previa" aria-label="Live Preview">
             <span class="font-semibold mb-2 block">Live Preview · como chega ao cliente</span>
             @if (previaWord(); as previa) {
@@ -420,25 +414,6 @@ export class PreviaAmpliadaDialog {
             }
           </div>
         } @else {
-        <div class="seletor-tags">
-            <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Inserir tag no cursor</mat-label>
-              <input matInput [formControl]="busca" [matAutocomplete]="auto" aria-label="Buscar tag para inserir" placeholder="Digite para buscar (ex.: nome, data, valor)" />
-              <mat-autocomplete #auto="matAutocomplete" (optionSelected)="escolher($event.option.value)">
-                @for (campo of filtrados(); track campo.marca) {
-                  <mat-option [value]="campo">
-                    <span class="font-medium">{{ campo.marca }}</span>
-                    <span class="text-muted text-xs"> · {{ campo.rotulo }}</span>
-                  </mat-option>
-                } @empty {
-                  <mat-option disabled>Nenhuma tag encontrada</mat-option>
-                }
-              </mat-autocomplete>
-            </mat-form-field>
-            <button mat-icon-button type="button" aria-label="Ajuda sobre as tags" matTooltip="Ajuda sobre as tags" (click)="abrirAjuda()">
-              <mat-icon>help_outline</mat-icon>
-            </button>
-          </div>
         <div class="imagens">
           @for (qual of qualidades; track qual.id) {
             <div class="imagem">
@@ -459,6 +434,33 @@ export class PreviaAmpliadaDialog {
             </div>
           }
           @if (erroImagem()) { <p class="aviso" role="alert">{{ erroImagem() }}</p> }
+        </div>
+        <div class="ferramentas">
+          <div class="seletor-tags">
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Inserir tag no cursor</mat-label>
+              <input matInput [formControl]="busca" [matAutocomplete]="auto" aria-label="Buscar tag para inserir" placeholder="Digite para buscar (ex.: nome, data, valor)" />
+              <mat-autocomplete #auto="matAutocomplete" (optionSelected)="escolher($event.option.value)">
+                @for (campo of filtrados(); track campo.marca) {
+                  <mat-option [value]="campo">
+                    <span class="font-medium">{{ campo.marca }}</span>
+                    <span class="text-muted text-xs"> · {{ campo.rotulo }}</span>
+                  </mat-option>
+                } @empty {
+                  <mat-option disabled>Nenhuma tag encontrada</mat-option>
+                }
+              </mat-autocomplete>
+            </mat-form-field>
+            <button mat-icon-button type="button" aria-label="Ajuda sobre as tags" matTooltip="Ajuda sobre as tags" (click)="abrirAjuda()">
+              <mat-icon>help_outline</mat-icon>
+            </button>
+          </div>
+          <button mat-stroked-button type="button" [attr.aria-pressed]="previaAberta()" (click)="previaAberta.set(!previaAberta())">
+            <mat-icon>{{ previaAberta() ? 'visibility_off' : 'visibility' }}</mat-icon> {{ previaAberta() ? 'Fechar Live Preview' : 'Live Preview' }}
+          </button>
+          <button mat-stroked-button type="button" (click)="ampliar()">
+            <mat-icon>open_in_full</mat-icon> Tela cheia
+          </button>
         </div>
         <div class="editor" [class.com-previa]="previaAberta()">
           <div class="campo texto">
@@ -489,7 +491,10 @@ export class PreviaAmpliadaDialog {
   `,
   styles: `
     .barra-previa { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
-    .seletor-tags { display: flex; align-items: flex-start; gap: 8px; }
+    .ferramentas { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+    .seletor-tags { display: flex; align-items: center; gap: 4px; flex: 0 1 340px; min-width: 240px; }
+    .seletor-tags mat-form-field { flex: 1; }
+    .seletor-tags ::ng-deep .mat-mdc-form-field-subscript-wrapper { display: none; }
     .editor { display: grid; grid-template-columns: 1fr; gap: 16px; }
     @media (min-width: 900px) { .editor.com-previa { grid-template-columns: minmax(320px, 2fr) 3fr; } }
     .painel-previa ::ng-deep .area { max-height: 78vh; }
