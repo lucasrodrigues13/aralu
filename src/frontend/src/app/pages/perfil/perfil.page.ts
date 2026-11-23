@@ -21,22 +21,27 @@ import { aplicarMascara } from '../../shared/mascaras';
       <div class="grid grid-cols-12 gap-6">
         <div class="col-span-12 lg:col-span-6">
           <mat-card class="cardWithShadow h-full">
-            <mat-card-content class="flex flex-col items-center justify-center gap-4 text-center h-full">
+            <mat-card-content class="flex items-center gap-6 h-full">
               @if (preview()) {
-                <img [src]="preview()" alt="Foto do perfil" class="size-28 rounded-full object-cover" />
-                <div class="flex gap-3">
-                  <button mat-flat-button type="button" (click)="escolherFoto()">Alterar</button>
-                  <button mat-stroked-button type="button" (click)="removerFoto()">Remover</button>
-                </div>
+                <img [src]="preview()" alt="Foto do perfil" class="size-24 shrink-0 rounded-full object-cover" />
               } @else {
-                <span class="size-28 rounded-full bg-light-primary text-primary flex items-center justify-center">
+                <span class="size-24 shrink-0 rounded-full bg-light-primary text-primary flex items-center justify-center">
                   <mat-icon class="text-5xl! size-12!">apartment</mat-icon>
                 </span>
-                <button mat-stroked-button type="button" (click)="escolherFoto()">Enviar foto</button>
               }
-              @if (nomeCurto()) {
-                <h5 class="text-base font-semibold">{{ nomeCurto() }}</h5>
-              }
+              <div class="flex flex-col gap-3 min-w-0">
+                @if (nomeCurto()) {
+                  <h5 class="text-base font-semibold truncate">{{ nomeCurto() }}</h5>
+                }
+                <div class="flex gap-3">
+                  @if (preview()) {
+                    <button mat-flat-button type="button" (click)="escolherFoto()">Alterar</button>
+                    <button mat-stroked-button type="button" (click)="removerFoto()">Remover</button>
+                  } @else {
+                    <button mat-stroked-button type="button" (click)="escolherFoto()">Enviar foto</button>
+                  }
+                </div>
+              </div>
               <input
                 #arquivo
                 hidden
@@ -59,10 +64,6 @@ import { aplicarMascara } from '../../shared/mascaras';
                   <mat-hint>Vai junto na mensagem de "Cobrar" do Dinheiro do evento.</mat-hint>
                 </mat-form-field>
               </div>
-              <div class="flex justify-end gap-3 mt-6">
-                <button mat-stroked-button type="button" (click)="cancelar()">Cancelar</button>
-                <button mat-flat-button type="submit">Salvar</button>
-              </div>
             </mat-card-content>
           </mat-card>
         </div>
@@ -70,7 +71,7 @@ import { aplicarMascara } from '../../shared/mascaras';
         <div class="col-span-12 lg:col-span-6">
           <mat-card class="cardWithShadow h-full">
             <div class="p-6">
-              <mat-card-title class="mb-0">{{ titulo() }}</mat-card-title>
+              <mat-card-title class="mb-0">Informações pessoais</mat-card-title>
               <mat-card-subtitle>Dados da assessoria.</mat-card-subtitle>
             </div>
             <mat-card-content class="border-t border-border">
@@ -168,6 +169,15 @@ import { aplicarMascara } from '../../shared/mascaras';
             </mat-card-content>
           </mat-card>
         </div>
+
+        <div class="col-span-12">
+          <mat-card class="cardWithShadow">
+            <mat-card-content class="flex justify-end gap-3 p-4!">
+              <button mat-stroked-button type="button" (click)="cancelar()">Cancelar</button>
+              <button mat-flat-button type="submit">Salvar</button>
+            </mat-card-content>
+          </mat-card>
+        </div>
       </div>
     </form>
   `,
@@ -208,11 +218,6 @@ export class PerfilPage implements OnInit {
       next: (perfil) => this.aplicar(perfil, true),
       error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
     });
-  }
-
-  protected titulo(): string {
-    const nome = this.nomeCurto();
-    return nome ? `Editar ${nome}` : 'Editar perfil';
   }
 
   protected nomeCurto(): string {
