@@ -32,6 +32,15 @@ import { SelecionarBibliotecaDialog, ItemBiblioteca } from './selecionar-bibliot
 import { SelecionarServicosModeloDialog, ServicoEscolhido } from './selecionar-servicos-modelo.dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
+/** Valor do filtro de grupo que mostra todos; não colide com nomes de grupo, que são aparados. */
+const TODOS_GRUPOS = ' todos';
+
+interface GrupoTarefas {
+  chave: string;
+  nome: string;
+  indices: number[];
+}
+
 interface DadosServicoModelo {
   nome: string;
   valorEstimado: number | null;
@@ -93,7 +102,6 @@ export class EditarServicoModeloDialog {
           </div>
         </div>
         <div class="flex flex-wrap gap-2">
-          <button mat-stroked-button type="button" (click)="colarTarefas()"><mat-icon>content_paste</mat-icon> Colar tarefas</button>
           <button mat-stroked-button type="button" (click)="clonar()"><mat-icon>content_copy</mat-icon> Clonar</button>
           <button mat-stroked-button type="button" (click)="excluir()"><mat-icon>delete</mat-icon> Excluir</button>
           <button mat-flat-button type="button" (click)="salvar()">Salvar</button>
@@ -117,22 +125,65 @@ export class EditarServicoModeloDialog {
               </mat-form-field>
             </div>
           </div>
-          <ng-template #vinculosTpl let-tipo="tipo" let-titulo="titulo" let-singular="singular" let-itens="itens">
-            <div class="flex flex-col gap-3 pt-4">
-              <div class="flex justify-end"><button mat-stroked-button type="button" (click)="adicionarVinculos(tipo, titulo, itens)"><mat-icon>add</mat-icon> Adicionar {{ titulo }}</button></div>
-              @for (item of vinculados(tipo, itens); track item.id) {
-                <div class="flex items-center justify-between gap-2 border border-border rounded px-4 py-2">
-                  <span>{{ item.nome }}</span>
-                  <button mat-icon-button type="button" [attr.aria-label]="'Remover ' + singular" [matTooltip]="'Remover ' + singular" (click)="removerVinculo(tipo, item.id)"><mat-icon>close</mat-icon></button>
+          <ng-template #vinculosTpl let-tipo="tipo" let-titulo="titulo" let-singular="singular" let-itens="itens" let-cabecalho="cabecalho" let-icone="icone">
+            @let vinculadosTipo = vinculados(tipo, itens);
+            @let listaTipo = vinculadosFiltrados(tipo, itens);
+            <div class="pt-6 pb-4">
+              <h4 class="text-base font-semibold mb-0">{{ cabecalho }}</h4>
+              <p class="text-sm text-muted mt-1 mb-0">Modelos de {{ singular }} que entram em cada evento criado com este modelo.</p>
+              <p class="text-sm text-muted mt-1 mb-0">{{ vinculadosTipo.length }} {{ vinculadosTipo.length === 1 ? 'vinculado' : 'vinculados' }}</p>
+            </div>
+            <div class="border-t border-border pt-6">
+              <div class="barra-lista">
+                <div class="barra-lista-filtros">
+                  <div class="campo w-full sm:w-64">
+                    <mat-label class="font-semibold mb-2 block">Buscar</mat-label>
+                    <mat-form-field appearance="outline" class="w-full">
+                      <mat-icon matIconPrefix>search</mat-icon>
+                      <input matInput aria-label="Buscar" [placeholder]="'Nome do ' + singular" [value]="buscaVinculo(tipo)" (input)="buscarVinculo(tipo, $event)" />
+                    </mat-form-field>
+                  </div>
                 </div>
-              } @empty {
-                <p class="text-sm text-muted">Nenhum modelo de {{ singular }} vinculado.</p>
+                <div class="barra-lista-acoes">
+                  <button mat-flat-button type="button" (click)="adicionarVinculos(tipo, titulo, itens)"><mat-icon>add_link</mat-icon> Adicionar {{ titulo }}</button>
+                </div>
+              </div>
+              @if (vinculadosTipo.length === 0) {
+                <div class="flex flex-col items-center gap-3 text-center text-muted py-10">
+                  <p>Nenhum modelo de {{ singular }} vinculado.</p>
+                  <button mat-flat-button type="button" (click)="adicionarVinculos(tipo, titulo, itens)"><mat-icon>add_link</mat-icon> Adicionar {{ titulo }}</button>
+                </div>
+              } @else if (listaTipo.length === 0) {
+                <p class="text-center text-muted py-10">Nada encontrado com essa busca.</p>
+              } @else {
+                <ul class="servicos-lista" [attr.aria-label]="cabecalho">
+                  @for (item of listaTipo; track item.id) {
+                    <li class="servico">
+                      <div class="servico-cabecalho vinculo">
+                        <mat-icon class="seta text-muted">{{ icone }}</mat-icon>
+                        <span class="servico-texto"><span class="nome">{{ item.nome }}</span></span>
+                        <div class="servico-acoes">
+                          <button mat-icon-button type="button" [attr.aria-label]="'Remover ' + singular" [matTooltip]="'Remover ' + singular" (click)="removerVinculo(tipo, item.id)"><mat-icon>link_off</mat-icon></button>
+                        </div>
+                      </div>
+                    </li>
+                  }
+                </ul>
               }
             </div>
           </ng-template>
-          <mat-tab-group>
+          <mat-tab-group class="abas-barra-lista">
             <mat-tab label="Checklist">
-              <div class="pt-4">
+              <div class="pt-6 pb-4">
+                <h4 class="text-base font-semibold mb-0">Checklist do modelo</h4>
+                <p class="text-sm text-muted mt-1 mb-0">Serviços e itens que entram em cada evento criado com este modelo.</p>
+                <p class="text-sm text-muted mt-1 mb-0" data-teste="resumo-checklist">
+                  {{ servicos.length }} {{ servicos.length === 1 ? 'serviço' : 'serviços' }} ·
+                  {{ totalItens() }} {{ totalItens() === 1 ? 'item' : 'itens' }} ·
+                  Estimado {{ totalEstimado() | gdDinheiro }}
+                </p>
+              </div>
+              <div class="border-t border-border pt-6">
                 <div class="barra-lista">
                   <div class="barra-lista-filtros">
                     <div class="campo w-full sm:w-64">
@@ -142,8 +193,23 @@ export class EditarServicoModeloDialog {
                         <input matInput aria-label="Buscar" placeholder="Serviço ou item" [value]="busca()" (input)="buscar($event)" />
                       </mat-form-field>
                     </div>
+                    <div class="campo w-full sm:w-44">
+                      <mat-label class="font-semibold mb-2 block">Situação</mat-label>
+                      <mat-form-field appearance="outline" class="w-full">
+                        <mat-select aria-label="Situação" [value]="situacao()" (valueChange)="situacao.set($event)">
+                          <mat-option value="">Todos</mat-option>
+                          <mat-option value="comItens">Com itens</mat-option>
+                          <mat-option value="semItens">Sem itens</mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                    </div>
                   </div>
                   <div class="barra-lista-acoes">
+                    @if (servicos.length > 0) {
+                      <button mat-stroked-button type="button" (click)="alternarTodos()">
+                        <mat-icon>{{ todosAbertos() ? 'unfold_less' : 'unfold_more' }}</mat-icon> {{ todosAbertos() ? 'Recolher todos' : 'Expandir todos' }}
+                      </button>
+                    }
                     <button mat-flat-button type="button" (click)="adicionarServicos()"><mat-icon>playlist_add</mat-icon> Adicionar serviços</button>
                   </div>
                 </div>
@@ -154,7 +220,7 @@ export class EditarServicoModeloDialog {
                     <button mat-flat-button type="button" (click)="adicionarServicos()"><mat-icon>playlist_add</mat-icon> Adicionar serviços</button>
                   </div>
                 } @else if (!algumVisivel()) {
-                  <p class="text-center text-muted py-10">Nada encontrado com essa busca.</p>
+                  <p class="text-center text-muted py-10">Nada encontrado com esses filtros.</p>
                 } @else {
                   <ul class="servicos-lista" aria-label="Serviços do checklist" formArrayName="servicos">
                     @for (servico of servicos.controls; track servico; let i = $index) {
@@ -219,59 +285,126 @@ export class EditarServicoModeloDialog {
               </div>
             </mat-tab>
             <mat-tab label="Tarefas">
-              <div formArrayName="tarefas" class="flex flex-col gap-4">
-                <div class="flex justify-end pt-4"><button mat-stroked-button type="button" (click)="adicionarTarefa()"><mat-icon>add</mat-icon> Adicionar tarefa</button></div>
-                @for (tarefa of tarefas.controls; track $index; let i = $index) {
-                  <mat-card class="border! border-border! shadow-none mb-0!" [formGroupName]="i">
-                    <mat-card-content>
-                      <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1.2fr)_minmax(120px,180px)_minmax(220px,300px)_auto] gap-4 items-end">
-                        <div class="campo">
-                          <mat-label class="font-semibold mb-2 block">Título</mat-label>
-                          <mat-form-field appearance="outline" class="w-full"><input aria-label="Título" matInput formControlName="titulo" /></mat-form-field>
-                        </div>
-                        <div class="campo">
-                          <mat-label class="font-semibold mb-2 block">Grupo</mat-label>
-                          <mat-form-field appearance="outline" class="w-full"><input aria-label="Grupo" matInput formControlName="grupo" maxlength="80" /></mat-form-field>
-                        </div>
-                        <div class="flex gap-2 items-end min-w-0">
-                          @if (mostraQuantidade(i)) {
-                            <div class="campo w-24 shrink-0">
-                              <mat-label class="font-semibold mb-2 block">Prazo</mat-label>
-                              <mat-form-field appearance="outline" class="w-full">
-                                <input aria-label="Prazo" matInput type="number" min="0" max="999" formControlName="quantidade" />
-                              </mat-form-field>
-                            </div>
+              @let grupos = gruposVisiveis();
+              <div class="pt-6 pb-4">
+                <h4 class="text-base font-semibold mb-0">Tarefas do modelo</h4>
+                <p class="text-sm text-muted mt-1 mb-0">Tarefas criadas em cada evento, com o prazo contado a partir da data do evento.</p>
+                <p class="text-sm text-muted mt-1 mb-0" data-teste="resumo-tarefas">
+                  {{ tarefas.length }} {{ tarefas.length === 1 ? 'tarefa' : 'tarefas' }} ·
+                  {{ gruposTarefas().length }} {{ gruposTarefas().length === 1 ? 'grupo' : 'grupos' }}
+                </p>
+              </div>
+              <div class="border-t border-border pt-6" formArrayName="tarefas">
+                <div class="barra-lista">
+                  <div class="barra-lista-filtros">
+                    <div class="campo w-full sm:w-64">
+                      <mat-label class="font-semibold mb-2 block">Buscar</mat-label>
+                      <mat-form-field appearance="outline" class="w-full">
+                        <mat-icon matIconPrefix>search</mat-icon>
+                        <input matInput aria-label="Buscar tarefa" placeholder="Tarefa ou grupo" [value]="buscaTarefa()" (input)="buscaTarefa.set($any($event.target).value)" />
+                      </mat-form-field>
+                    </div>
+                    <div class="campo w-full sm:w-44">
+                      <mat-label class="font-semibold mb-2 block">Grupo</mat-label>
+                      <mat-form-field appearance="outline" class="w-full">
+                        <mat-select aria-label="Grupo" [value]="grupoFiltro()" (valueChange)="grupoFiltro.set($event)">
+                          <mat-option [value]="todosGrupos">Todos</mat-option>
+                          @for (grupo of gruposTarefas(); track grupo.chave) {
+                            <mat-option [value]="grupo.chave">{{ grupo.nome }}</mat-option>
                           }
-                          <div class="campo flex-1">
-                            <mat-label class="font-semibold mb-2 block">{{ mostraQuantidade(i) ? 'Unidade' : 'Prazo' }}</mat-label>
-                            <mat-form-field appearance="outline" class="w-full">
-                              <mat-select [attr.aria-label]="mostraQuantidade(i) ? 'Unidade' : 'Prazo'" formControlName="unidade">
-                                @for (u of unidadesPrazo; track u.valor) {
-                                  <mat-option [value]="u.valor">{{ u.rotulo }}</mat-option>
-                                }
-                              </mat-select>
-                            </mat-form-field>
+                        </mat-select>
+                      </mat-form-field>
+                    </div>
+                  </div>
+                  <div class="barra-lista-acoes">
+                    @if (tarefas.length > 0) {
+                      <button mat-stroked-button type="button" (click)="alternarTodosGrupos()">
+                        <mat-icon>{{ todosGruposAbertos() ? 'unfold_less' : 'unfold_more' }}</mat-icon> {{ todosGruposAbertos() ? 'Recolher todos' : 'Expandir todos' }}
+                      </button>
+                    }
+                    <button mat-stroked-button type="button" (click)="colarTarefas()"><mat-icon>content_paste</mat-icon> Colar tarefas</button>
+                    <button mat-flat-button type="button" (click)="adicionarTarefa(grupoFiltro() === todosGrupos ? null : grupoFiltro())"><mat-icon>add_task</mat-icon> Adicionar tarefa</button>
+                  </div>
+                </div>
+
+                @if (tarefas.length === 0) {
+                  <div class="flex flex-col items-center gap-3 text-center text-muted py-10">
+                    <p>Nenhuma tarefa neste modelo ainda.</p>
+                    <button mat-flat-button type="button" (click)="adicionarTarefa(null)"><mat-icon>add_task</mat-icon> Adicionar tarefa</button>
+                  </div>
+                } @else if (grupos.length === 0) {
+                  <p class="text-center text-muted py-10">Nada encontrado com esses filtros.</p>
+                } @else {
+                  <ul class="servicos-lista" aria-label="Tarefas do modelo">
+                    @for (grupo of grupos; track grupo.chave) {
+                      <li class="servico" [class.aberto]="grupoAberto(grupo.chave)">
+                        <div class="servico-cabecalho">
+                          <button type="button" class="servico-alternar" [attr.aria-expanded]="grupoAberto(grupo.chave)"
+                            [attr.aria-controls]="'tarefas-grupo-' + $index" (click)="alternarGrupo(grupo.chave)">
+                            <mat-icon class="seta">expand_more</mat-icon>
+                            <span class="servico-texto">
+                              <span class="nome">{{ grupo.nome }}</span>
+                              <span class="block text-xs text-muted">{{ grupo.chave ? 'Grupo de tarefas' : 'Tarefas sem grupo informado' }}</span>
+                            </span>
+                            <span class="inline-block rounded font-semibold px-2 py-1 text-xs whitespace-nowrap neutro">
+                              {{ grupo.indices.length }} {{ grupo.indices.length === 1 ? 'tarefa' : 'tarefas' }}
+                            </span>
+                          </button>
+                          <div class="servico-acoes">
+                            <button mat-stroked-button type="button" (click)="adicionarTarefa(grupo.chave)"><mat-icon>add</mat-icon> Tarefa</button>
                           </div>
                         </div>
-                        <button mat-icon-button type="button" aria-label="Remover tarefa" matTooltip="Remover tarefa" (click)="removerTarefa(i)"><mat-icon>delete</mat-icon></button>
-                      </div>
-                      <p class="text-sm text-muted mt-2">{{ textoPrazo(i) }}</p>
-                    </mat-card-content>
-                  </mat-card>
+                        @if (grupoAberto(grupo.chave)) {
+                          <div class="itens" [id]="'tarefas-grupo-' + $index">
+                            @for (i of grupo.indices; track tarefas.at(i)) {
+                              <div class="tarefa" [formGroupName]="i">
+                                <div class="min-w-0">
+                                  <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+                                    <input aria-label="Título" matInput formControlName="titulo" placeholder="Título da tarefa" />
+                                  </mat-form-field>
+                                  <span class="block text-xs text-muted mt-1">{{ textoPrazo(i) }}</span>
+                                </div>
+                                <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+                                  <input aria-label="Grupo" matInput formControlName="grupo" maxlength="80" placeholder="Grupo" />
+                                </mat-form-field>
+                                @if (mostraQuantidade(i)) {
+                                  <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+                                    <input aria-label="Prazo" matInput type="number" min="0" max="999" formControlName="quantidade" />
+                                  </mat-form-field>
+                                } @else {
+                                  <span></span>
+                                }
+                                <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+                                  <mat-select [attr.aria-label]="mostraQuantidade(i) ? 'Unidade' : 'Prazo'" formControlName="unidade">
+                                    @for (u of unidadesPrazo; track u.valor) {
+                                      <mat-option [value]="u.valor">{{ u.rotulo }}</mat-option>
+                                    }
+                                  </mat-select>
+                                </mat-form-field>
+                                <div class="item-acoes">
+                                  <button mat-icon-button type="button" aria-label="Remover tarefa" matTooltip="Remover tarefa" (click)="removerTarefa(i)"><mat-icon>delete</mat-icon></button>
+                                </div>
+                              </div>
+                            }
+                          </div>
+                        }
+                      </li>
+                    }
+                  </ul>
                 }
               </div>
             </mat-tab>
             <mat-tab label="Briefings">
-              <ng-container [ngTemplateOutlet]="vinculosTpl" [ngTemplateOutletContext]="{ tipo: 'Briefing', titulo: 'briefings', singular: 'briefing', itens: briefings() }" />
+              <ng-container [ngTemplateOutlet]="vinculosTpl" [ngTemplateOutletContext]="{ tipo: 'Briefing', cabecalho: 'Briefings do modelo', icone: 'assignment', titulo: 'briefings', singular: 'briefing', itens: briefings() }" />
             </mat-tab>
             <mat-tab label="Roteiros">
-              <ng-container [ngTemplateOutlet]="vinculosTpl" [ngTemplateOutletContext]="{ tipo: 'Roteiro', titulo: 'roteiros', singular: 'roteiro', itens: roteiros() }" />
+              <ng-container [ngTemplateOutlet]="vinculosTpl" [ngTemplateOutletContext]="{ tipo: 'Roteiro', cabecalho: 'Roteiros do modelo', icone: 'format_list_numbered', titulo: 'roteiros', singular: 'roteiro', itens: roteiros() }" />
             </mat-tab>
             <mat-tab label="Inspirações">
-              <ng-container [ngTemplateOutlet]="vinculosTpl" [ngTemplateOutletContext]="{ tipo: 'Inspiracao', titulo: 'inspirações', singular: 'inspiração', itens: inspiracoes() }" />
+              <ng-container [ngTemplateOutlet]="vinculosTpl" [ngTemplateOutletContext]="{ tipo: 'Inspiracao', cabecalho: 'Inspirações do modelo', icone: 'photo_library', titulo: 'inspirações', singular: 'inspiração', itens: inspiracoes() }" />
             </mat-tab>
             <mat-tab label="RSVP e Mensagens">
-              <ng-container [ngTemplateOutlet]="vinculosTpl" [ngTemplateOutletContext]="{ tipo: 'Mensagem', titulo: 'mensagens', singular: 'mensagem', itens: mensagens() }" />
+              <ng-container [ngTemplateOutlet]="vinculosTpl" [ngTemplateOutletContext]="{ tipo: 'Mensagem', cabecalho: 'RSVP e mensagens do modelo', icone: 'forum', titulo: 'mensagens', singular: 'mensagem', itens: mensagens() }" />
             </mat-tab>
           </mat-tab-group>
         </form>
@@ -293,11 +426,19 @@ export class EditarServicoModeloDialog {
     .itens { background: rgba(128,128,128,.1); border-top: 1px solid rgba(128,128,128,.3); }
     .item { display: grid; grid-template-columns: 200px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 10px 16px 10px 52px; }
     .item + .item { border-top: 1px dashed rgba(128,128,128,.2); }
+    .tarefa { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(120px, 1fr) 80px minmax(130px, 170px) auto; align-items: start; gap: 12px; padding: 10px 16px 10px 52px; }
+    .tarefa + .tarefa { border-top: 1px dashed rgba(128,128,128,.2); }
+    .tarefa:hover { background: rgba(128,128,128,.08); }
+    .tarefa .item-acoes { padding-top: 4px; }
+    .servico-cabecalho.vinculo { padding: 8px 12px 8px 16px; gap: 12px; }
     .item.vazio { display: flex; justify-content: space-between; align-items: center; }
     .item-acoes { display: flex; align-items: center; justify-content: flex-end; gap: 4px; }
     @media (max-width: 900px) {
       .item { grid-template-columns: 1fr auto; padding-left: 16px; }
       .item > mat-form-field:first-child { grid-column: 1 / -1; }
+      .tarefa { grid-template-columns: 1fr 1fr; padding-left: 16px; }
+      .tarefa > :first-child { grid-column: 1 / -1; }
+      .tarefa .item-acoes { grid-column: 1 / -1; justify-content: flex-start; padding-top: 0; }
     }
   `,
 })
@@ -317,6 +458,12 @@ export class ModeloEventoEditorPage implements OnInit {
   protected readonly mensagens = signal<MensagemModelo[]>([]);
   private readonly vinculosMap = signal<Record<string, string[]>>({});
   protected readonly busca = signal('');
+  protected readonly situacao = signal<'' | 'comItens' | 'semItens'>('');
+  protected readonly buscaTarefa = signal('');
+  protected readonly grupoFiltro = signal<string>(TODOS_GRUPOS);
+  protected readonly todosGrupos = TODOS_GRUPOS;
+  private readonly gruposAbertos = signal<Set<string>>(new Set());
+  private readonly buscasVinculo = signal<Record<string, string>>({});
   protected readonly abertos = signal<Set<AbstractControl>>(new Set());
   private id = '';
 
@@ -392,6 +539,21 @@ export class ModeloEventoEditorPage implements OnInit {
     return itens.filter((item) => ids.includes(item.id));
   }
 
+  protected buscaVinculo(tipo: string): string {
+    return this.buscasVinculo()[tipo] ?? '';
+  }
+
+  protected buscarVinculo(tipo: string, evento: Event): void {
+    const termo = (evento.target as HTMLInputElement).value;
+    this.buscasVinculo.update((buscas) => ({ ...buscas, [tipo]: termo }));
+  }
+
+  protected vinculadosFiltrados(tipo: string, itens: ItemBiblioteca[]): ItemBiblioteca[] {
+    const termo = normalizar(this.buscaVinculo(tipo));
+    const lista = this.vinculados(tipo, itens);
+    return termo ? lista.filter((item) => normalizar(item.nome).includes(termo)) : lista;
+  }
+
   protected adicionarVinculos(tipo: string, titulo: string, itens: ItemBiblioteca[]): void {
     const atuais = this.vinculos(tipo);
     this.dialog.open(SelecionarBibliotecaDialog, {
@@ -437,6 +599,11 @@ export class ModeloEventoEditorPage implements OnInit {
   }
 
   protected servicoVisivel(indice: number): boolean {
+    const situacao = this.situacao();
+    const qtdItens = this.itensDe(indice).length;
+    if ((situacao === 'comItens' && qtdItens === 0) || (situacao === 'semItens' && qtdItens > 0)) {
+      return false;
+    }
     const termo = normalizar(this.busca());
     if (!termo) {
       return true;
@@ -447,6 +614,28 @@ export class ModeloEventoEditorPage implements OnInit {
 
   protected algumVisivel(): boolean {
     return this.servicos.controls.some((_, i) => this.servicoVisivel(i));
+  }
+
+  protected totalItens(): number {
+    return this.servicos.controls.reduce((soma, _, i) => soma + this.itensDe(i).length, 0);
+  }
+
+  protected totalEstimado(): number | null {
+    const valores = this.servicos.controls.map((_, i) => this.valorEstimado(i)).filter((valor): valor is number => valor !== null);
+    return valores.length > 0 ? valores.reduce((soma, valor) => soma + valor, 0) : null;
+  }
+
+  protected todosAbertos(): boolean {
+    const visiveis = this.servicos.controls.filter((_, i) => this.servicoVisivel(i));
+    return visiveis.length > 0 && visiveis.every((servico) => this.abertos().has(servico));
+  }
+
+  protected alternarTodos(): void {
+    if (this.todosAbertos()) {
+      this.abertos.set(new Set());
+      return;
+    }
+    this.abertos.set(new Set(this.servicos.controls.filter((_, i) => this.servicoVisivel(i))));
   }
 
   protected estaAberto(servico: AbstractControl): boolean {
@@ -514,8 +703,60 @@ export class ModeloEventoEditorPage implements OnInit {
     this.itensDe(servico).removeAt(item);
   }
 
-  protected adicionarTarefa(): void {
-    this.tarefas.push(this.novaTarefa('', null, null));
+  /** Grupos das tarefas na ordem em que aparecem; a chave vazia junta as tarefas sem grupo. */
+  protected gruposTarefas(): GrupoTarefas[] {
+    const grupos = new Map<string, GrupoTarefas>();
+    this.tarefas.controls.forEach((tarefa, i) => {
+      const chave = chaveGrupo(tarefa.get('grupo')?.value);
+      const grupo = grupos.get(chave) ?? { chave, nome: chave || 'Sem grupo', indices: [] };
+      grupo.indices.push(i);
+      grupos.set(chave, grupo);
+    });
+    return [...grupos.values()];
+  }
+
+  protected gruposVisiveis(): GrupoTarefas[] {
+    const termo = normalizar(this.buscaTarefa());
+    const filtro = this.grupoFiltro();
+    return this.gruposTarefas()
+      .filter((grupo) => filtro === TODOS_GRUPOS || grupo.chave === filtro)
+      .map((grupo) => {
+        if (!termo || normalizar(grupo.nome).includes(termo)) {
+          return grupo;
+        }
+        const indices = grupo.indices.filter((i) => normalizar(String(this.tarefas.at(i).get('titulo')?.value ?? '')).includes(termo));
+        return { ...grupo, indices };
+      })
+      .filter((grupo) => grupo.indices.length > 0);
+  }
+
+  protected grupoAberto(chave: string): boolean {
+    // Buscando, os grupos abrem para mostrar as tarefas encontradas.
+    return !!normalizar(this.buscaTarefa()) || this.gruposAbertos().has(chave);
+  }
+
+  protected alternarGrupo(chave: string): void {
+    const novos = new Set(this.gruposAbertos());
+    if (!novos.delete(chave)) novos.add(chave);
+    this.gruposAbertos.set(novos);
+  }
+
+  private abrirGrupo(chave: string): void {
+    this.gruposAbertos.set(new Set(this.gruposAbertos()).add(chave));
+  }
+
+  protected todosGruposAbertos(): boolean {
+    const grupos = this.gruposVisiveis();
+    return grupos.length > 0 && grupos.every((grupo) => this.grupoAberto(grupo.chave));
+  }
+
+  protected alternarTodosGrupos(): void {
+    this.gruposAbertos.set(this.todosGruposAbertos() ? new Set() : new Set(this.gruposVisiveis().map((grupo) => grupo.chave)));
+  }
+
+  protected adicionarTarefa(grupo: string | null): void {
+    this.tarefas.push(this.novaTarefa('', grupo || null, null));
+    this.abrirGrupo(chaveGrupo(grupo));
   }
 
   protected colarTarefas(): void {
@@ -618,15 +859,22 @@ export class ModeloEventoEditorPage implements OnInit {
 
   private novaTarefa(titulo: string, grupo: string | null, diasAntes: number | null) {
     const decomposto = prazoDeDias(diasAntes);
+    const campoGrupo = this.fb.control(grupo, { updateOn: 'blur' });
+    campoGrupo.valueChanges.subscribe((valor) => this.abrirGrupo(chaveGrupo(valor)));
     return this.fb.group({
       titulo: [titulo, Validators.required],
-      grupo: [grupo],
+      grupo: campoGrupo,
       quantidade: [decomposto.quantidade as number | null],
       unidade: [decomposto.unidade as UnidadePrazo],
     });
   }
+
 }
 
 function normalizar(texto: string): string {
   return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+}
+
+function chaveGrupo(valor: unknown): string {
+  return typeof valor === 'string' ? valor.trim() : '';
 }
