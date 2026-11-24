@@ -58,7 +58,11 @@ public sealed record FornecedorNoServicoLeitura(
     string Fornecedor,
     EtapaNegociacao Etapa,
     decimal? ValorOrcamento,
-    string? Observacoes);
+    string? Observacoes,
+    ComprovantePagamentoLeitura? ContratoAssinado = null,
+    string? ContratoAssinadoPor = null,
+    DateOnly? ContratoAssinadoEm = null,
+    bool TemPagamento = false);
 
 public sealed record ServicoLeitura(
     Guid Id,
@@ -71,10 +75,7 @@ public sealed record ServicoLeitura(
     Guid? ServicoContaId,
     IReadOnlyList<ParcelaLeitura> Parcelas,
     IReadOnlyList<SubitemLeitura> Subitens,
-    IReadOnlyList<FornecedorNoServicoLeitura> Fornecedores,
-    ComprovantePagamentoLeitura? ContratoAssinado = null,
-    string? ContratoAssinadoPor = null,
-    DateOnly? ContratoAssinadoEm = null);
+    IReadOnlyList<FornecedorNoServicoLeitura> Fornecedores);
 
 public sealed record LocalLeitura(
     string? Nome,

@@ -556,9 +556,14 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<Guid>("ServicoId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid>("VinculoId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("ServicoId")
+                    b.HasIndex("ServicoId");
+
+                    b.HasIndex("VinculoId")
                         .IsUnique();
 
                     b.ToTable("ContratosFornecedor", (string)null);
@@ -2893,8 +2898,14 @@ namespace Project.Infrastructure.Persistencia.Migrations
             modelBuilder.Entity("Project.Domain.Dinheiro.ContratoFornecedor", b =>
                 {
                     b.HasOne("Project.Domain.Eventos.ServicoEvento", null)
-                        .WithOne("Contrato")
-                        .HasForeignKey("Project.Domain.Dinheiro.ContratoFornecedor", "ServicoId")
+                        .WithMany("Contratos")
+                        .HasForeignKey("ServicoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Project.Domain.Eventos.FornecedorNoServico", null)
+                        .WithOne()
+                        .HasForeignKey("Project.Domain.Dinheiro.ContratoFornecedor", "VinculoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -3375,7 +3386,7 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
             modelBuilder.Entity("Project.Domain.Eventos.ServicoEvento", b =>
                 {
-                    b.Navigation("Contrato");
+                    b.Navigation("Contratos");
 
                     b.Navigation("Fornecedores");
 

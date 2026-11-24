@@ -333,12 +333,14 @@ export interface EventoServico {
     etapa: string;
     valorOrcamento: number | null;
     observacoes: string | null;
+    /** Contrato assinado com este fornecedor (SPEC-045); pode vir antes de contratar. */
+    contratoAssinado?: { arquivoId: string; nome: string; tipoConteudo: string } | null;
+    /** "Organizadora" ou "Cliente"; nulo em contratos enviados antes do registro (SPEC-048). */
+    contratoAssinadoPor?: string | null;
+    contratoAssinadoEm?: string | null;
+    /** Há pagamento ou comprovante no Dinheiro: voltar e excluir ficam bloqueados. */
+    temPagamento?: boolean;
   }[];
-  /** Contrato assinado pelo fornecedor e pelo cliente, anexado pelo organizador (SPEC-045). */
-  contratoAssinado: { arquivoId: string; nome: string; tipoConteudo: string } | null;
-  /** "Organizadora" ou "Cliente"; nulo em contratos enviados antes do registro (SPEC-048). */
-  contratoAssinadoPor?: string | null;
-  contratoAssinadoEm?: string | null;
 }
 
 export interface ResponsavelTarefa {
@@ -850,15 +852,25 @@ export class NegocioClient {
     );
   }
 
-  /** Anexa (ou troca) o contrato assinado do serviço contratado. */
-  enviarContratoAssinado(eventoId: string, servicoId: string, arquivo: File) {
+  /** Anexa (ou troca) o contrato assinado com o fornecedor do serviço. */
+  enviarContratoAssinado(eventoId: string, servicoId: string, vinculoId: string, arquivo: File) {
     const dados = new FormData();
     dados.append('arquivo', arquivo);
-    return this.http.post<EventoDetalhe>(`${this.base}/api/v1/eventos/${eventoId}/servicos/${servicoId}/contrato-assinado`, dados);
+    return this.http.post<EventoDetalhe>(`${this.base}/api/v1/eventos/${eventoId}/servicos/${servicoId}/fornecedores/${vinculoId}/contrato-assinado`, dados);
   }
 
-  excluirContratoAssinado(eventoId: string, servicoId: string) {
-    return this.http.delete<EventoDetalhe>(`${this.base}/api/v1/eventos/${eventoId}/servicos/${servicoId}/contrato-assinado`);
+  excluirContratoAssinado(eventoId: string, servicoId: string, vinculoId: string) {
+    return this.http.delete<EventoDetalhe>(`${this.base}/api/v1/eventos/${eventoId}/servicos/${servicoId}/fornecedores/${vinculoId}/contrato-assinado`);
+  }
+
+  /** Tira o fornecedor do serviço (bloqueado com pagamento registrado). */
+  removerFornecedorServico(eventoId: string, servicoId: string, vinculoId: string) {
+    return this.http.delete<EventoDetalhe>(`${this.base}/api/v1/eventos/${eventoId}/servicos/${servicoId}/fornecedores/${vinculoId}`);
+  }
+
+  /** Tira o serviço do evento (bloqueado com pagamento registrado). */
+  removerServicoEvento(eventoId: string, servicoId: string) {
+    return this.http.delete<EventoDetalhe>(`${this.base}/api/v1/eventos/${eventoId}/servicos/${servicoId}`);
   }
 
   budget(eventoId: string) {

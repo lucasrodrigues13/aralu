@@ -56,7 +56,7 @@ public static class ResumoDoEvento
         var contratados = servicos.Count(servico => servico.Contratado);
         var semFornecedor = servicos.Length - contratados;
         var parcelasPendentes = servicos
-            .SelectMany(servico => servico.Contrato?.Parcelas ?? [])
+            .SelectMany(servico => servico.ContratosAtivos.SelectMany(contrato => contrato.Parcelas))
             .Where(parcela => parcela.Situacao == SituacaoParcela.Pendente)
             .ToArray();
         var vencidas = parcelasPendentes.Count(parcela => parcela.Vencimento < hoje);
@@ -118,17 +118,9 @@ public static class ResumoDoEvento
 
     /// <summary>Quanto já foi pago ao fornecedor do serviço: parcelas pagas, ou o valor todo se o pagamento sem parcelas está pago (SPEC-043).</summary>
     private static decimal ValorPagoDoServico(ServicoEvento servico)
-    {
-        var contrato = servico.Contrato;
-        if (contrato is null)
-        {
-            return 0m;
-        }
-
-        return contrato.Parcelas.Count > 0
+        => servico.ContratosAtivos.Sum(contrato => contrato.Parcelas.Count > 0
             ? contrato.Parcelas.Where(parcela => parcela.Situacao == SituacaoParcela.Pago).Sum(parcela => parcela.Valor)
-            : contrato.Pago ? servico.ValorContratado ?? 0m : 0m;
-    }
+            : contrato.Pago ? servico.ValorDoContrato(contrato) : 0m);
 
     public static bool EstaAtrasada(Tarefa tarefa, DateOnly hoje) =>
         tarefa.Situacao != SituacaoTarefa.Concluida

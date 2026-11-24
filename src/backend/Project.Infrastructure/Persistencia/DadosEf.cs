@@ -129,7 +129,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
     public Task<Evento?> ObterEventoAsync(string contaId, Guid id, CancellationToken ct) =>
         banco.Eventos
             .Include(evento => evento.Tags)
-            .Include(evento => evento.Servicos).ThenInclude(servico => servico.Contrato).ThenInclude(contrato => contrato!.Parcelas)
+            .Include(evento => evento.Servicos).ThenInclude(servico => servico.Contratos).ThenInclude(contrato => contrato.Parcelas)
             .Include(evento => evento.Servicos).ThenInclude(servico => servico.Subitens)
             .Include(evento => evento.Servicos).ThenInclude(servico => servico.Fornecedores)
             .FirstOrDefaultAsync(evento => evento.Id == id && evento.ContaId == contaId, ct);
@@ -220,7 +220,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
 
     public Task<ServicoEvento?> ObterServicoEventoAsync(string contaId, Guid eventoId, Guid servicoId, CancellationToken ct) =>
         banco.Set<ServicoEvento>().AsNoTracking()
-            .Include(servico => servico.Contrato).ThenInclude(contrato => contrato!.Parcelas)
+            .Include(servico => servico.Contratos).ThenInclude(contrato => contrato.Parcelas)
             .Include(servico => servico.Subitens)
             .Include(servico => servico.Fornecedores)
             .FirstOrDefaultAsync(
@@ -330,20 +330,43 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         }
     }
 
-    public async Task GarantirContratoFornecedorAsync(Guid servicoId, CancellationToken ct)
+    public async Task GarantirContratoFornecedorAsync(Guid servicoId, Guid vinculoId, CancellationToken ct)
     {
-        if (await banco.Set<ContratoFornecedor>().AnyAsync(item => item.ServicoId == servicoId, ct))
+        if (await banco.Set<ContratoFornecedor>().AnyAsync(item => item.VinculoId == vinculoId, ct))
         {
             return;
         }
 
-        banco.Set<ContratoFornecedor>().Add(new ContratoFornecedor { Id = Guid.NewGuid(), ServicoId = servicoId });
+        banco.Set<ContratoFornecedor>().Add(new ContratoFornecedor { Id = Guid.NewGuid(), ServicoId = servicoId, VinculoId = vinculoId });
         await banco.SaveChangesAsync(ct);
     }
 
-    public Task GravarContratoAssinadoAsync(Guid servicoId, Guid? arquivoId, string? nome, string? tipoConteudo, string? enviadoPor, DateOnly? enviadoEm, CancellationToken ct) =>
-        banco.Set<ContratoFornecedor>()
-            .Where(item => item.ServicoId == servicoId)
+    public async Task RecalcularContratadoAsync(Guid servicoId, CancellationToken ct)
+    {
+        var valores = await banco.Set<FornecedorNoServico>()
+            .Where(vinculo => vinculo.ServicoId == servicoId && vinculo.Etapa == EtapaNegociacao.Contratado)
+            .Select(vinculo => vinculo.ValorOrcamento ?? 0m)
+            .ToListAsync(ct);
+        decimal? total = valores.Count > 0 ? valores.Sum() : null;
+        await banco.Set<ServicoEvento>()
+            .Where(servico => servico.Id == servicoId)
+            .ExecuteUpdateAsync(
+                atualizacao => atualizacao
+                    .SetProperty(servico => servico.Contratado, valores.Count > 0)
+                    .SetProperty(servico => servico.ValorContratado, total),
+                ct);
+    }
+
+    public Task RemoverFornecedorDoServicoAsync(Guid vinculoId, CancellationToken ct) =>
+        banco.Set<FornecedorNoServico>().Where(vinculo => vinculo.Id == vinculoId).ExecuteDeleteAsync(ct);
+
+    public Task RemoverServicoAsync(Guid servicoId, CancellationToken ct) =>
+        banco.Set<ServicoEvento>().Where(servico => servico.Id == servicoId).ExecuteDeleteAsync(ct);
+
+    public async Task GravarContratoAssinadoAsync(Guid vinculoId, Guid? arquivoId, string? nome, string? tipoConteudo, string? enviadoPor, DateOnly? enviadoEm, CancellationToken ct)
+    {
+        await banco.Set<ContratoFornecedor>()
+            .Where(item => item.VinculoId == vinculoId)
             .ExecuteUpdateAsync(
                 atualizacao => atualizacao
                     .SetProperty(item => item.ContratoAssinadoArquivoId, arquivoId)
@@ -352,6 +375,10 @@ public sealed class DadosEf(AppDbContext banco) : IDados
                     .SetProperty(item => item.ContratoAssinadoEnviadoPor, enviadoPor)
                     .SetProperty(item => item.ContratoAssinadoEnviadoEm, enviadoEm),
                 ct);
+
+        // ExecuteUpdate não passa pelo rastreador: a leitura seguinte do evento precisa vir do banco.
+        banco.ChangeTracker.Clear();
+    }
 
     public Task AtualizarEtapaNegociacaoAsync(
         Guid vinculoId,
@@ -364,15 +391,6 @@ public sealed class DadosEf(AppDbContext banco) : IDados
                 atualizacao => atualizacao
                     .SetProperty(vinculo => vinculo.Etapa, etapa)
                     .SetProperty(vinculo => vinculo.ValorOrcamento, valorOrcamento),
-                ct);
-
-    public Task MarcarServicoContratadoAsync(Guid servicoId, bool contratado, decimal? valorContratado, CancellationToken ct) =>
-        banco.Set<ServicoEvento>()
-            .Where(servico => servico.Id == servicoId)
-            .ExecuteUpdateAsync(
-                atualizacao => atualizacao
-                    .SetProperty(servico => servico.Contratado, contratado)
-                    .SetProperty(servico => servico.ValorContratado, valorContratado),
                 ct);
 
     public async Task<IReadOnlyList<Tarefa>> ListarTarefasAsync(string contaId, Guid? eventoId, CancellationToken ct)

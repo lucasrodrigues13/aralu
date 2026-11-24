@@ -58,8 +58,8 @@ public static class EventoMapeamento
                     servico.OcultoParaClient,
                     servico.Ordem,
                     servico.ServicoContaId,
-                    (servico.Contrato?.Parcelas ?? [])
-                        .OrderBy(parcela => parcela.Numero)
+                    servico.ContratosAtivos.SelectMany(contrato => contrato.Parcelas)
+                        .OrderBy(parcela => parcela.Vencimento).ThenBy(parcela => parcela.Numero)
                         .Select(parcela => new ParcelaLeitura(
                             parcela.Numero,
                             parcela.Vencimento,
@@ -73,21 +73,26 @@ public static class EventoMapeamento
                         item.Quantidade,
                         item.ValorUnitario,
                         item.Quantidade * item.ValorUnitario)).ToArray(),
-                    servico.Fornecedores.Select(item => new FornecedorNoServicoLeitura(
-                        item.Id,
-                        item.FornecedorId,
-                        nomesFornecedores.GetValueOrDefault(item.FornecedorId, ""),
-                        item.Etapa,
-                        item.ValorOrcamento,
-                        item.Observacoes)).ToArray(),
-                    servico.Contrato is { ContratoAssinadoArquivoId: Guid arquivoId }
-                        ? new ComprovantePagamentoLeitura(
-                            arquivoId,
-                            servico.Contrato.ContratoAssinadoNome ?? "contrato",
-                            servico.Contrato.ContratoAssinadoTipoConteudo ?? "application/octet-stream")
-                        : null,
-                    servico.Contrato?.ContratoAssinadoEnviadoPor,
-                    servico.Contrato?.ContratoAssinadoEnviadoEm))
+                    servico.Fornecedores.Select(item =>
+                    {
+                        var contrato = servico.Contratos.FirstOrDefault(c => c.VinculoId == item.Id);
+                        return new FornecedorNoServicoLeitura(
+                            item.Id,
+                            item.FornecedorId,
+                            nomesFornecedores.GetValueOrDefault(item.FornecedorId, ""),
+                            item.Etapa,
+                            item.ValorOrcamento,
+                            item.Observacoes,
+                            contrato is { ContratoAssinadoArquivoId: Guid arquivoId }
+                                ? new ComprovantePagamentoLeitura(
+                                    arquivoId,
+                                    contrato.ContratoAssinadoNome ?? "contrato",
+                                    contrato.ContratoAssinadoTipoConteudo ?? "application/octet-stream")
+                                : null,
+                            contrato?.ContratoAssinadoEnviadoPor,
+                            contrato?.ContratoAssinadoEnviadoEm,
+                            contrato?.TemPagamento ?? false);
+                    }).ToArray()))
                 .ToArray(),
             tarefas.Count(tarefa => tarefa.Situacao == SituacaoTarefa.Concluida),
             tarefas.Count,

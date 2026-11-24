@@ -100,14 +100,25 @@ public class ResumoDoEventoTests
         Data = data,
     };
 
-    private static ServicoEvento Servico(bool contratado, decimal? valor = null, ParcelaContratoFornecedor[]? parcelas = null) => new()
+    private static ServicoEvento Servico(bool contratado, decimal? valor = null, ParcelaContratoFornecedor[]? parcelas = null)
     {
-        Id = Guid.NewGuid(),
-        Nome = "Buffet",
-        Contratado = contratado,
-        ValorContratado = valor,
-        Contrato = parcelas is null ? null : new ContratoFornecedor { Id = Guid.NewGuid(), Parcelas = parcelas.ToList() },
-    };
+        var vinculo = new FornecedorNoServico
+        {
+            Id = Guid.NewGuid(),
+            // Parcelas só existem para fornecedor contratado (os pagamentos da aba Dinheiro).
+            Etapa = contratado || parcelas is not null ? EtapaNegociacao.Contratado : EtapaNegociacao.Orcamento,
+            ValorOrcamento = valor,
+        };
+        return new ServicoEvento
+        {
+            Id = Guid.NewGuid(),
+            Nome = "Buffet",
+            Contratado = contratado,
+            ValorContratado = valor,
+            Fornecedores = [vinculo],
+            Contratos = parcelas is null ? [] : [new ContratoFornecedor { Id = Guid.NewGuid(), VinculoId = vinculo.Id, Parcelas = parcelas.ToList() }],
+        };
+    }
 
     private static ParcelaContratoFornecedor Parcela(DateOnly vencimento, SituacaoParcela situacao = SituacaoParcela.Pendente, decimal valor = 500m) => new()
     {

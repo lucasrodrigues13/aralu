@@ -67,8 +67,10 @@ public static class NegocioEndpoints
         api.MapPost("/eventos/{id:guid}/servicos/{servicoId:guid}/fornecedores/{vinculoId:guid}/avancar", AvancarEtapa).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/eventos/{id:guid}/servicos/{servicoId:guid}/fornecedores/{vinculoId:guid}/voltar", VoltarEtapa).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/eventos/{id:guid}/servicos/{servicoId:guid}/fornecedores/{vinculoId:guid}/contratar", ContratarFornecedor).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
-        api.MapPost("/eventos/{id:guid}/servicos/{servicoId:guid}/contrato-assinado", EnviarContratoAssinado).DisableAntiforgery().RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
-        api.MapDelete("/eventos/{id:guid}/servicos/{servicoId:guid}/contrato-assinado", ExcluirContratoAssinado).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapDelete("/eventos/{id:guid}/servicos/{servicoId:guid}", RemoverServicoEvento).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapDelete("/eventos/{id:guid}/servicos/{servicoId:guid}/fornecedores/{vinculoId:guid}", RemoverFornecedorServico).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/eventos/{id:guid}/servicos/{servicoId:guid}/fornecedores/{vinculoId:guid}/contrato-assinado", EnviarContratoAssinado).DisableAntiforgery().RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapDelete("/eventos/{id:guid}/servicos/{servicoId:guid}/fornecedores/{vinculoId:guid}/contrato-assinado", ExcluirContratoAssinado).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapGet("/eventos/{id:guid}/budget", Budget).RequireAuthorization(AssistenteEndpoints.PoliticaFinanceiro);
         api.MapGet("/eventos/{id:guid}/resumo", ResumoEvento).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapGet("/eventos/{id:guid}/assistentes", AssistentesDoEvento).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
@@ -534,6 +536,7 @@ public static class NegocioEndpoints
     private static Task<IResult> EnviarContratoAssinado(
         Guid id,
         Guid servicoId,
+        Guid vinculoId,
         HttpRequest request,
         ClaimsPrincipal usuario,
         FornecedorServico servico,
@@ -554,11 +557,17 @@ public static class NegocioEndpoints
             }
 
             await using var fluxo = arquivo.OpenReadStream();
-            return await De(servico.EnviarContratoAssinadoAsync(conta, id, servicoId, fluxo, arquivo.FileName, Hoje(), ct));
+            return await De(servico.EnviarContratoAssinadoAsync(conta, id, vinculoId, fluxo, arquivo.FileName, Hoje(), ct));
         });
 
-    private static Task<IResult> ExcluirContratoAssinado(Guid id, Guid servicoId, ClaimsPrincipal usuario, FornecedorServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.ExcluirContratoAssinadoAsync(conta, id, servicoId, Hoje(), ct)));
+    private static Task<IResult> ExcluirContratoAssinado(Guid id, Guid vinculoId, ClaimsPrincipal usuario, FornecedorServico servico, CancellationToken ct) =>
+        ComConta(usuario, conta => De(servico.ExcluirContratoAssinadoAsync(conta, id, vinculoId, Hoje(), ct)));
+
+    private static Task<IResult> RemoverServicoEvento(Guid id, Guid servicoId, ClaimsPrincipal usuario, FornecedorServico servico, CancellationToken ct) =>
+        ComConta(usuario, conta => De(servico.RemoverServicoAsync(conta, id, servicoId, Hoje(), ct)));
+
+    private static Task<IResult> RemoverFornecedorServico(Guid id, Guid servicoId, Guid vinculoId, ClaimsPrincipal usuario, FornecedorServico servico, CancellationToken ct) =>
+        ComConta(usuario, conta => De(servico.RemoverFornecedorDoServicoAsync(conta, id, servicoId, vinculoId, Hoje(), ct)));
 
     private static Task<IResult> Budget(Guid id, ClaimsPrincipal usuario, FornecedorServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.BudgetAsync(conta, id, ct)));

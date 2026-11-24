@@ -69,7 +69,7 @@ public class FornecedoresFluxoTests
             .Single(item => item.GetProperty("id").GetGuid() == servicoId);
         Assert.True(servicoContratado.GetProperty("contratado").GetBoolean());
         Assert.Equal(0, servicoContratado.GetProperty("parcelas").GetArrayLength());
-        Assert.Equal(JsonValueKind.Null, servicoContratado.GetProperty("contratoAssinado").ValueKind);
+        Assert.Equal(JsonValueKind.Null, servicoContratado.GetProperty("fornecedores")[0].GetProperty("contratoAssinado").ValueKind);
         Assert.Equal("Contratado", servicoContratado.GetProperty("fornecedores")[0].GetProperty("etapa").GetString());
 
         var comSubitem = await Ler(await dono.PutAsJsonAsync(

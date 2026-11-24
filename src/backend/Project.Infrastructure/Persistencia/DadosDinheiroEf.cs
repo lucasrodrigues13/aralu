@@ -10,15 +10,16 @@ public sealed class DadosDinheiroEf(AppDbContext banco) : IDadosDinheiro
 {
     public Task<Evento?> ObterEventoAsync(string contaId, Guid eventoId, CancellationToken ct) =>
         banco.Eventos
-            .Include(evento => evento.Servicos).ThenInclude(servico => servico.Contrato).ThenInclude(contrato => contrato!.Parcelas)
+            .Include(evento => evento.Servicos).ThenInclude(servico => servico.Contratos).ThenInclude(contrato => contrato.Parcelas)
             .Include(evento => evento.Servicos).ThenInclude(servico => servico.Subitens)
+            .Include(evento => evento.Servicos).ThenInclude(servico => servico.Fornecedores)
             .AsSplitQuery()
             .FirstOrDefaultAsync(evento => evento.Id == eventoId && evento.ContaId == contaId, ct);
 
     public async Task<IReadOnlyList<PagamentoFornecedorLeitura>> PagamentosFornecedoresAsync(string contaId, Guid eventoId, CancellationToken ct)
     {
         var evento = await banco.Eventos.AsNoTracking()
-            .Include(item => item.Servicos).ThenInclude(servico => servico.Contrato).ThenInclude(contrato => contrato!.Parcelas)
+            .Include(item => item.Servicos).ThenInclude(servico => servico.Contratos).ThenInclude(contrato => contrato.Parcelas)
             .Include(item => item.Servicos).ThenInclude(servico => servico.Fornecedores)
             .AsSplitQuery()
             .FirstOrDefaultAsync(item => item.Id == eventoId && item.ContaId == contaId, ct);
@@ -38,30 +39,27 @@ public sealed class DadosDinheiroEf(AppDbContext banco) : IDadosDinheiro
             .ToDictionaryAsync(fornecedor => fornecedor.Id, fornecedor => fornecedor.Nome, ct);
 
         return evento.Servicos
-            .Where(servico => servico.Contrato is not null)
             .OrderBy(servico => servico.Ordem)
-            .Select(servico =>
+            .SelectMany(servico => servico.ContratosAtivos.Select(contrato => (servico, contrato)))
+            .Select(par =>
             {
-                var contrato = servico.Contrato;
-                var parcelas = (contrato?.Parcelas ?? []).OrderBy(parcela => parcela.Numero).ToArray();
-                var contratado = servico.Fornecedores.FirstOrDefault(vinculo => vinculo.Etapa == EtapaNegociacao.Contratado);
-                string? fornecedor = null;
-                if (contratado is not null)
-                {
-                    nomes.TryGetValue(contratado.FornecedorId, out fornecedor);
-                }
+                var (servico, contrato) = par;
+                var parcelas = contrato.Parcelas.OrderBy(parcela => parcela.Numero).ToArray();
+                var contratado = servico.Fornecedores.First(vinculo => vinculo.Id == contrato.VinculoId);
+                nomes.TryGetValue(contratado.FornecedorId, out var fornecedor);
 
                 var pendentes = parcelas.Where(parcela => parcela.Situacao == SituacaoParcela.Pendente).ToArray();
                 DateOnly? vencimento = parcelas.Length == 0
                     ? null
                     : pendentes.Length > 0 ? pendentes.Min(parcela => parcela.Vencimento) : parcelas.Max(parcela => parcela.Vencimento);
                 return new PagamentoFornecedorLeitura(
+                    contrato.VinculoId,
                     evento.Id,
                     evento.Nome,
                     servico.Id,
                     servico.Nome,
                     fornecedor,
-                    servico.ValorContratado ?? parcelas.Sum(parcela => parcela.Valor),
+                    contratado.ValorOrcamento ?? parcelas.Sum(parcela => parcela.Valor),
                     contrato?.EstaPago ?? false,
                     parcelas.Length > 0
                         ? contrato!.EstaPago ? parcelas.Max(parcela => parcela.PagoEm) : null

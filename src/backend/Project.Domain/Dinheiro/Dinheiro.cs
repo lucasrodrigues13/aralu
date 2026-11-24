@@ -84,6 +84,9 @@ public sealed class ContratoFornecedor
 
     public Guid ServicoId { get; set; }
 
+    /// <summary>Fornecedor do serviço com quem o contrato foi feito: um contrato por fornecedor (vários contratados no mesmo serviço).</summary>
+    public Guid VinculoId { get; set; }
+
     public List<ParcelaContratoFornecedor> Parcelas { get; set; } = [];
 
     /// <summary>Só vale quando não há parcelas; com parcelas, o pagamento está pago quando todas estão pagas.</summary>
@@ -108,6 +111,11 @@ public sealed class ContratoFornecedor
     public string? ContratoAssinadoEnviadoPor { get; set; }
 
     public DateOnly? ContratoAssinadoEnviadoEm { get; set; }
+
+    /// <summary>Há pagamento ou comprovante registrado: o contrato não pode ser desfeito sem antes ajustar o Dinheiro.</summary>
+    public bool TemPagamento =>
+        Pago || ComprovanteArquivoId is not null
+        || Parcelas.Any(parcela => parcela.Situacao == SituacaoParcela.Pago || parcela.ComprovanteArquivoId is not null);
 
     public bool EstaPago => Parcelas.Count > 0 ? Parcelas.All(parcela => parcela.Situacao == SituacaoParcela.Pago) : Pago;
 

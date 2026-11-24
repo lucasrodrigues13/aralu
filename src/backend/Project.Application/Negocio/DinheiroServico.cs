@@ -19,6 +19,7 @@ public sealed record ParcelaPagamentoLeitura(
 
 /// <summary>Um pagamento a fornecedor: o serviço contratado do evento, com ou sem parcelas (SPEC-043).</summary>
 public sealed record PagamentoFornecedorLeitura(
+    Guid PagamentoId,
     Guid EventoId,
     string Evento,
     Guid ServicoId,
@@ -80,19 +81,20 @@ public sealed class DinheiroServico(IDadosDinheiro dados, IPlanilhaBudget planil
     public async Task<Resultado<DinheiroEventoLeitura>> ParcelarAsync(
         string contaId,
         Guid eventoId,
-        Guid servicoId,
+        Guid pagamentoId,
         PedidoParcelas pedido,
         CancellationToken ct)
     {
-        var (evento, servico) = await ObterServicoAsync(contaId, eventoId, servicoId, ct);
-        if (evento is null || servico is null)
+        var (evento, servico, contrato) = await ObterPagamentoAsync(contaId, eventoId, pagamentoId, ct);
+        if (evento is null || servico is null || contrato is null)
         {
             return Resultado<DinheiroEventoLeitura>.Erro(Codigos.Indisponivel, Indisponivel);
         }
 
-        if (servico.ValorContratado is not decimal total || total <= 0)
+        var total = servico.ValorDoContrato(contrato);
+        if (total <= 0)
         {
-            return Resultado<DinheiroEventoLeitura>.Erro(Codigos.Validacao, "O serviço não tem valor contratado para parcelar.");
+            return Resultado<DinheiroEventoLeitura>.Erro(Codigos.Validacao, "O fornecedor não tem valor contratado para parcelar.");
         }
 
         if (pedido.QuantidadeParcelas is not int quantidade || quantidade < 1 || quantidade > MaximoParcelas || pedido.PrimeiraParcela is not DateOnly primeira)
@@ -106,7 +108,6 @@ public sealed class DinheiroServico(IDadosDinheiro dados, IPlanilhaBudget planil
             return Resultado<DinheiroEventoLeitura>.Erro(Codigos.Validacao, "A entrada informada não fecha com o valor total.");
         }
 
-        var contrato = servico.Contrato!;
         if (BloqueioDoParcelamento(contrato) is not null && !pedido.SubstituirPagamentos)
         {
             return Resultado<DinheiroEventoLeitura>.Erro(
@@ -146,16 +147,16 @@ public sealed class DinheiroServico(IDadosDinheiro dados, IPlanilhaBudget planil
     }
 
     /// <summary>Volta o pagamento a inteiro, sem parcelas (SPEC-043 §6.2).</summary>
-    public async Task<Resultado<DinheiroEventoLeitura>> RemoverParcelamentoAsync(string contaId, Guid eventoId, Guid servicoId, CancellationToken ct)
+    public async Task<Resultado<DinheiroEventoLeitura>> RemoverParcelamentoAsync(string contaId, Guid eventoId, Guid pagamentoId, CancellationToken ct)
     {
-        var (evento, servico) = await ObterServicoAsync(contaId, eventoId, servicoId, ct);
-        if (evento is null || servico is null)
+        var (evento, servico, contrato) = await ObterPagamentoAsync(contaId, eventoId, pagamentoId, ct);
+        if (evento is null || servico is null || contrato is null)
         {
             return Resultado<DinheiroEventoLeitura>.Erro(Codigos.Indisponivel, Indisponivel);
         }
 
-        var contrato = servico.Contrato;
-        if (contrato is null || contrato.Parcelas.Count == 0)
+
+        if (contrato.Parcelas.Count == 0)
         {
             return Resultado<DinheiroEventoLeitura>.Erro(Codigos.Validacao, "O pagamento não está parcelado.");
         }
@@ -177,18 +178,17 @@ public sealed class DinheiroServico(IDadosDinheiro dados, IPlanilhaBudget planil
     public async Task<Resultado<DinheiroEventoLeitura>> DefinirPagoAsync(
         string contaId,
         Guid eventoId,
-        Guid servicoId,
+        Guid pagamentoId,
         bool pago,
         DateOnly hoje,
         CancellationToken ct)
     {
-        var (evento, servico) = await ObterServicoAsync(contaId, eventoId, servicoId, ct);
-        if (evento is null || servico is null)
+        var (evento, servico, contrato) = await ObterPagamentoAsync(contaId, eventoId, pagamentoId, ct);
+        if (evento is null || servico is null || contrato is null)
         {
             return Resultado<DinheiroEventoLeitura>.Erro(Codigos.Indisponivel, Indisponivel);
         }
 
-        var contrato = servico.Contrato!;
         contrato.DefinirPago(pago, hoje);
         await dados.SalvarAsync(ct);
         return await RecarregarAsync(contaId, eventoId, ct);
@@ -198,14 +198,14 @@ public sealed class DinheiroServico(IDadosDinheiro dados, IPlanilhaBudget planil
     public async Task<Resultado<DinheiroEventoLeitura>> DefinirParcelaPagaAsync(
         string contaId,
         Guid eventoId,
-        Guid servicoId,
+        Guid pagamentoId,
         Guid parcelaId,
         bool paga,
         DateOnly hoje,
         CancellationToken ct)
     {
-        var (evento, servico) = await ObterServicoAsync(contaId, eventoId, servicoId, ct);
-        var parcela = servico?.Contrato?.Parcelas.FirstOrDefault(item => item.Id == parcelaId);
+        var (evento, servico, contrato) = await ObterPagamentoAsync(contaId, eventoId, pagamentoId, ct);
+        var parcela = contrato?.Parcelas.FirstOrDefault(item => item.Id == parcelaId);
         if (evento is null || parcela is null)
         {
             return Resultado<DinheiroEventoLeitura>.Erro(Codigos.Indisponivel, Indisponivel);
@@ -228,19 +228,19 @@ public sealed class DinheiroServico(IDadosDinheiro dados, IPlanilhaBudget planil
     public async Task<Resultado<DinheiroEventoLeitura>> EnviarComprovanteAsync(
         string contaId,
         Guid eventoId,
-        Guid servicoId,
+        Guid pagamentoId,
         Guid? parcelaId,
         Stream conteudo,
         string? nomeArquivo,
         CancellationToken ct)
     {
-        var (evento, servico) = await ObterServicoAsync(contaId, eventoId, servicoId, ct);
-        if (evento is null || servico is null)
+        var (evento, servico, contrato) = await ObterPagamentoAsync(contaId, eventoId, pagamentoId, ct);
+        if (evento is null || servico is null || contrato is null)
         {
             return Resultado<DinheiroEventoLeitura>.Erro(Codigos.Indisponivel, Indisponivel);
         }
 
-        var alvo = AlvoDoComprovante(servico, parcelaId);
+        var alvo = AlvoDoComprovante(contrato, parcelaId);
         if (alvo.Falha is not null)
         {
             return Resultado<DinheiroEventoLeitura>.Erro(alvo.Falha.Codigo, alvo.Falha.Mensagem);
@@ -280,17 +280,17 @@ public sealed class DinheiroServico(IDadosDinheiro dados, IPlanilhaBudget planil
     public async Task<Resultado<DinheiroEventoLeitura>> ExcluirComprovanteAsync(
         string contaId,
         Guid eventoId,
-        Guid servicoId,
+        Guid pagamentoId,
         Guid? parcelaId,
         CancellationToken ct)
     {
-        var (evento, servico) = await ObterServicoAsync(contaId, eventoId, servicoId, ct);
-        if (evento is null || servico is null)
+        var (evento, servico, contrato) = await ObterPagamentoAsync(contaId, eventoId, pagamentoId, ct);
+        if (evento is null || servico is null || contrato is null)
         {
             return Resultado<DinheiroEventoLeitura>.Erro(Codigos.Indisponivel, Indisponivel);
         }
 
-        var alvo = AlvoDoComprovante(servico, parcelaId);
+        var alvo = AlvoDoComprovante(contrato, parcelaId);
         var arquivoId = alvo.Parcela?.ComprovanteArquivoId ?? alvo.Contrato?.ComprovanteArquivoId;
         if (alvo.Falha is not null || arquivoId is null)
         {
@@ -353,33 +353,37 @@ public sealed class DinheiroServico(IDadosDinheiro dados, IPlanilhaBudget planil
         return null;
     }
 
-    private async Task<(Evento? Evento, ServicoEvento? Servico)> ObterServicoAsync(string contaId, Guid eventoId, Guid servicoId, CancellationToken ct)
+    /// <summary>O pagamento é o contrato de um fornecedor contratado; o id do pagamento é o do vínculo serviço × fornecedor.</summary>
+    private async Task<(Evento? Evento, ServicoEvento? Servico, ContratoFornecedor? Contrato)> ObterPagamentoAsync(string contaId, Guid eventoId, Guid pagamentoId, CancellationToken ct)
     {
         var evento = await dados.ObterEventoAsync(contaId, eventoId, ct);
-        var servico = evento?.Servicos.FirstOrDefault(item => item.Id == servicoId && item.Contrato is not null);
-        return (evento, servico);
+        foreach (var servico in evento?.Servicos ?? [])
+        {
+            var contrato = servico.ContratosAtivos.FirstOrDefault(item => item.VinculoId == pagamentoId);
+            if (contrato is not null)
+            {
+                return (evento, servico, contrato);
+            }
+        }
+
+        return (evento, null, null);
     }
 
     private static (ContratoFornecedor? Contrato, ParcelaContratoFornecedor? Parcela, Falha? Falha) AlvoDoComprovante(
-        ServicoEvento servico,
+        ContratoFornecedor contrato,
         Guid? parcelaId)
     {
         if (parcelaId is Guid id)
         {
-            var parcela = servico.Contrato?.Parcelas.FirstOrDefault(item => item.Id == id);
+            var parcela = contrato.Parcelas.FirstOrDefault(item => item.Id == id);
             return parcela is null
                 ? (null, null, new Falha(Codigos.Indisponivel, Indisponivel))
-                : (servico.Contrato, parcela, null);
+                : (contrato, parcela, null);
         }
 
-        if (servico.Contrato?.Parcelas.Count > 0)
-        {
-            return (null, null, new Falha(Codigos.Validacao, "Pagamento parcelado: o comprovante é de cada parcela."));
-        }
-
-        return servico.Contrato is null
-            ? (null, null, new Falha(Codigos.Indisponivel, Indisponivel))
-            : (servico.Contrato, null, null);
+        return contrato.Parcelas.Count > 0
+            ? (null, null, new Falha(Codigos.Validacao, "Pagamento parcelado: o comprovante é de cada parcela."))
+            : (contrato, null, null);
     }
 
     private async Task<Resultado<DinheiroEventoLeitura>> RecarregarAsync(string contaId, Guid eventoId, CancellationToken ct)

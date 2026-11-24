@@ -130,37 +130,37 @@ export class LinkClienteClient {
     return this.http.get<ImportacaoConvidados[]>(`${this.publico(token)}/convites/importacoes`);
   }
 
-  parcelar(token: string, servicoId: string, pedido: PedidoParcelamentoPagamento) {
-    return this.http.put<PaginaClienteLeitura>(`${this.pagamento(token, servicoId)}/parcelamento`, pedido);
+  parcelar(token: string, pagamentoId: string, pedido: PedidoParcelamentoPagamento) {
+    return this.http.put<PaginaClienteLeitura>(`${this.pagamento(token, pagamentoId)}/parcelamento`, pedido);
   }
 
-  removerParcelamento(token: string, servicoId: string) {
-    return this.http.delete<PaginaClienteLeitura>(`${this.pagamento(token, servicoId)}/parcelamento`);
+  removerParcelamento(token: string, pagamentoId: string) {
+    return this.http.delete<PaginaClienteLeitura>(`${this.pagamento(token, pagamentoId)}/parcelamento`);
   }
 
-  marcarPagamento(token: string, servicoId: string, pago: boolean) {
-    return this.http.put<PaginaClienteLeitura>(`${this.pagamento(token, servicoId)}/pago`, { pago });
+  marcarPagamento(token: string, pagamentoId: string, pago: boolean) {
+    return this.http.put<PaginaClienteLeitura>(`${this.pagamento(token, pagamentoId)}/pago`, { pago });
   }
 
-  marcarParcela(token: string, servicoId: string, parcelaId: string, pago: boolean) {
-    return this.http.put<PaginaClienteLeitura>(`${this.pagamento(token, servicoId)}/parcelas/${parcelaId}/pago`, { pago });
+  marcarParcela(token: string, pagamentoId: string, parcelaId: string, pago: boolean) {
+    return this.http.put<PaginaClienteLeitura>(`${this.pagamento(token, pagamentoId)}/parcelas/${parcelaId}/pago`, { pago });
   }
 
   /** Comprovante da parcela, ou do pagamento quando `parcelaId` é nulo. */
-  enviarComprovante(token: string, servicoId: string, parcelaId: string | null, arquivo: File) {
-    return this.http.post<PaginaClienteLeitura>(this.comprovante(token, servicoId, parcelaId), this.formulario(arquivo));
+  enviarComprovante(token: string, pagamentoId: string, parcelaId: string | null, arquivo: File) {
+    return this.http.post<PaginaClienteLeitura>(this.comprovante(token, pagamentoId, parcelaId), this.formulario(arquivo));
   }
 
-  excluirComprovante(token: string, servicoId: string, parcelaId: string | null) {
-    return this.http.delete<PaginaClienteLeitura>(this.comprovante(token, servicoId, parcelaId));
+  excluirComprovante(token: string, pagamentoId: string, parcelaId: string | null) {
+    return this.http.delete<PaginaClienteLeitura>(this.comprovante(token, pagamentoId, parcelaId));
   }
 
-  enviarContratoAssinado(token: string, servicoId: string, arquivo: File) {
-    return this.http.post<PaginaClienteLeitura>(`${this.pagamento(token, servicoId)}/contrato-assinado`, this.formulario(arquivo));
+  enviarContratoAssinado(token: string, pagamentoId: string, arquivo: File) {
+    return this.http.post<PaginaClienteLeitura>(`${this.pagamento(token, pagamentoId)}/contrato-assinado`, this.formulario(arquivo));
   }
 
-  excluirContratoAssinado(token: string, servicoId: string) {
-    return this.http.delete<PaginaClienteLeitura>(`${this.pagamento(token, servicoId)}/contrato-assinado`);
+  excluirContratoAssinado(token: string, pagamentoId: string) {
+    return this.http.delete<PaginaClienteLeitura>(`${this.pagamento(token, pagamentoId)}/contrato-assinado`);
   }
 
   baixarArquivo(token: string, arquivoId: string) {
@@ -171,12 +171,12 @@ export class LinkClienteClient {
     return `${this.base}/api/v1/publico/cliente/${token}`;
   }
 
-  private pagamento(token: string, servicoId: string) {
-    return `${this.publico(token)}/pagamentos/${servicoId}`;
+  private pagamento(token: string, pagamentoId: string) {
+    return `${this.publico(token)}/pagamentos/${pagamentoId}`;
   }
 
-  private comprovante(token: string, servicoId: string, parcelaId: string | null) {
-    const base = this.pagamento(token, servicoId);
+  private comprovante(token: string, pagamentoId: string, parcelaId: string | null) {
+    const base = this.pagamento(token, pagamentoId);
     return parcelaId ? `${base}/parcelas/${parcelaId}/comprovante` : `${base}/comprovante`;
   }
 

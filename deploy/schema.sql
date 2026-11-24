@@ -4062,7 +4062,6 @@ BEGIN
 END $EF$;
 COMMIT;
 
-
 START TRANSACTION;
 
 DO $EF$
@@ -4085,4 +4084,78 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261123185740_ContratoPorFornecedor') THEN
+    DROP INDEX "IX_ContratosFornecedor_ServicoId";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261123185740_ContratoPorFornecedor') THEN
+    ALTER TABLE "ContratosFornecedor" ADD "VinculoId" uuid NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261123185740_ContratoPorFornecedor') THEN
+    UPDATE "ContratosFornecedor" c SET "VinculoId" = v."Id"
+    FROM (
+        SELECT DISTINCT ON ("ServicoId") "Id", "ServicoId"
+        FROM "FornecedorNoServico"
+        ORDER BY "ServicoId", ("Etapa" = 'Contratado') DESC, "Id"
+    ) v
+    WHERE v."ServicoId" = c."ServicoId";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261123185740_ContratoPorFornecedor') THEN
+    DELETE FROM "ContratosFornecedor" WHERE "VinculoId" = '00000000-0000-0000-0000-000000000000';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261123185740_ContratoPorFornecedor') THEN
+    UPDATE "FornecedorNoServico" v SET "ValorOrcamento" = s."ValorContratado"
+    FROM "ServicoEvento" s
+    WHERE s."Id" = v."ServicoId" AND v."Etapa" = 'Contratado' AND v."ValorOrcamento" IS NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261123185740_ContratoPorFornecedor') THEN
+    CREATE INDEX "IX_ContratosFornecedor_ServicoId" ON "ContratosFornecedor" ("ServicoId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261123185740_ContratoPorFornecedor') THEN
+    CREATE UNIQUE INDEX "IX_ContratosFornecedor_VinculoId" ON "ContratosFornecedor" ("VinculoId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261123185740_ContratoPorFornecedor') THEN
+    ALTER TABLE "ContratosFornecedor" ADD CONSTRAINT "FK_ContratosFornecedor_FornecedorNoServico_VinculoId" FOREIGN KEY ("VinculoId") REFERENCES "FornecedorNoServico" ("Id") ON DELETE CASCADE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261123185740_ContratoPorFornecedor') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261123185740_ContratoPorFornecedor', '10.0.4');
+    END IF;
+END $EF$;
+COMMIT;
 

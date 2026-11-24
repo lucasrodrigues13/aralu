@@ -3,7 +3,7 @@ import { pagamentosPorMes } from './pagamentos-por-mes';
 
 function pagamento(valor: number, vencimento: string | null): PagamentoFornecedor {
   return {
-    eventoId: 'e', evento: 'Evento', servicoId: `s${valor}`, servico: 'Serviço', fornecedor: null,
+    pagamentoId: `p${valor}`, eventoId: 'e', evento: 'Evento', servicoId: `s${valor}`, servico: 'Serviço', fornecedor: null,
     valor, pago: false, pagoEm: null, vencimento, comprovante: null, parcelas: [], contratoAssinado: null,
   };
 }

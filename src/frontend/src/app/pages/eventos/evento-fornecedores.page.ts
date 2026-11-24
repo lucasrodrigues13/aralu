@@ -1,7 +1,7 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, map, Observable } from 'rxjs';
 import { DecimalPipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -11,6 +11,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { validarComprovante } from '../../core/dinheiro.client';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import {
@@ -20,6 +21,7 @@ import {
   EventoServico,
   FornecedorResumo,
   NegocioClient,
+  ServicoConta,
 } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { CampoDinheiroComponent } from '../../shared/campo-dinheiro';
@@ -27,10 +29,11 @@ import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { ComprovanteDialog } from '../dinheiro/comprovante.dialog';
 import { GdDinheiroPipe } from '../../shared/gd-dinheiro.pipe';
+import { DIALOG_FORNECEDOR, FornecedorFormDialog } from '../fornecedores/fornecedor-form.dialog';
+import { NovoServicoDialog } from '../fornecedores/novo-servico.dialog';
 import { EventoAbasComponent } from './evento-abas.component';
 import { BarraServico, GraficoOrcamento, montarBarrasPorServico, montarGraficoOrcamento } from './orcamento-graficos';
-import { VincularFornecedorDados, VincularFornecedorDialog, VincularFornecedorPedido } from './vincular-fornecedor.dialog';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { OpcaoSelecao, SeletorMultiploDados, SeletorMultiploDialog } from './seletor-multiplo.dialog';
 
 interface ContratarResultado {
   valor: number;
@@ -42,7 +45,7 @@ interface ContratarResultado {
   imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, CampoDinheiroComponent],
   template: `
     <h2 mat-dialog-title>Contratar fornecedor</h2>
-    <p class="text-muted text-sm px-6 -mt-2 mb-4">{{ dados.fornecedor }} · {{ dados.servico }}. O parcelamento é feito depois, na aba Dinheiro.</p>
+    <p class="text-muted text-sm px-6 -mt-2 mb-4">{{ dados.fornecedor }} · {{ dados.servico }}. O parcelamento é feito depois, na aba Financeiro.</p>
     <mat-dialog-content>
       <form id="contratar" class="grid grid-cols-1 gap-4" [formGroup]="form" (submit)="confirmar(); $event.preventDefault()">
         <app-campo-dinheiro rotulo="Valor" formControlName="valor" />
@@ -90,42 +93,6 @@ export class ContratarDialog {
     this.ref.close({ valor: this.form.controls.valor.value, arquivo: this.arquivo });
   }
 }
-
-@Component({
-  selector: 'app-nome-servico-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule],
-  template: `
-    <h2 mat-dialog-title>Adicionar serviço</h2>
-    <mat-dialog-content>
-      <div class="campo cheia">
-        <mat-label class="font-semibold mb-2 block">Nome do serviço</mat-label>
-        <mat-form-field appearance="outline" class="w-full">
-        <input [attr.aria-label]="'Nome do serviço'" matInput [formControl]="nome" />
-      </mat-form-field>
-      </div>
-    </mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button mat-stroked-button type="button" (click)="ref.close()">Cancelar</button>
-      <button mat-flat-button type="button" (click)="ok()">Adicionar</button>
-    </mat-dialog-actions>
-  `,
-  styles: `.cheia { width: 100%; }`,
-})
-export class NomeServicoDialog {
-  private readonly fb = inject(FormBuilder);
-  protected readonly ref = inject(MatDialogRef<NomeServicoDialog, string>);
-  protected readonly nome = this.fb.nonNullable.control('', Validators.required);
-
-  protected ok(): void {
-    const valor = this.nome.value.trim();
-    if (!valor) {
-      this.nome.markAsTouched();
-      return;
-    }
-    this.ref.close(valor);
-  }
-}
-
 @Component({
   selector: 'app-subitens-dialog',
   imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, CampoDinheiroComponent, MatTooltipModule],
@@ -206,14 +173,13 @@ export class SubitensDialog {
   }
 }
 
+
 type Vinculo = EventoServico['fornecedores'][number];
 
-interface LinhaFornecedor {
+interface ServicoVisivel {
   servico: EventoServico;
-  vinculo: Vinculo | null;
-  /** Primeira linha do serviço: leva o nome e ocupa as linhas dos demais vínculos. */
-  primeira: boolean;
-  linhasDoServico: number;
+  vinculos: Vinculo[];
+  contratados: number;
 }
 
 const SEM_FORNECEDOR = 'SemFornecedor';
@@ -223,16 +189,16 @@ const CLASSE_ETAPA: Record<string, string> = {
   Contratado: 'ok',
 };
 
-/** Aba Fornecedores do evento: serviços, negociação, parcelas e orçamento (SPEC-018; SPEC-008 v2, 8.2). */
+/** Aba Fornecedores do evento: lista de serviços, cada um com N fornecedores (SPEC-018; SPEC-008 v2, 8.2). */
 @Component({
   selector: 'app-evento-fornecedores',
-  imports: [MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, MatMenuModule, GdDinheiroPipe, DecimalPipe, EventoAbasComponent, MatTooltipModule],
+  imports: [MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, MatMenuModule, GdDinheiroPipe, DecimalPipe, EventoAbasComponent, MatTooltipModule, RouterLink],
   template: `
     <app-evento-abas [eventoId]="id" />
     <mat-card class="cardWithShadow">
     <div class="p-6">
       <mat-card-title class="mb-0">Fornecedores</mat-card-title>
-      <mat-card-subtitle>{{ evento()?.nome }} · serviços, negociação e pagamentos.</mat-card-subtitle>
+      <mat-card-subtitle>{{ evento()?.nome }} · serviços, fornecedores e contratos.</mat-card-subtitle>
     </div>
     @if (graficos(); as g) {
       <section class="px-6 pb-6" aria-label="Orçamento do evento">
@@ -310,106 +276,101 @@ const CLASSE_ETAPA: Record<string, string> = {
             </div>
            </div>
            <div class="barra-lista-acoes">
-             <button mat-stroked-button type="button" (click)="adicionarServico()"><mat-icon>playlist_add</mat-icon> Adicionar serviço</button>
-             <button mat-flat-button type="button" (click)="vincular()"><mat-icon>add</mat-icon> Adicionar fornecedor</button>
+             <button mat-flat-button type="button" (click)="adicionarServicos()"><mat-icon>playlist_add</mat-icon> Adicionar serviço</button>
            </div>
           </div>
 
         @if (atual.servicos.length === 0) {
           <div class="flex flex-col items-center gap-3 text-center text-muted py-10">
-            <p>Nenhum fornecedor neste evento ainda.</p>
-            <button mat-flat-button type="button" (click)="vincular()"><mat-icon>add</mat-icon> Adicionar fornecedor</button>
+            <p>Nenhum serviço neste evento ainda.</p>
+            <button mat-flat-button type="button" (click)="adicionarServicos()"><mat-icon>playlist_add</mat-icon> Adicionar serviço</button>
           </div>
-        } @else if (linhas().length === 0) {
+        } @else if (visiveis().length === 0) {
           <p class="text-center text-muted py-10">Nada encontrado com esses filtros.</p>
         } @else {
-          <div class="relative">
-            <table class="tabela">
-              <thead>
-                <tr>
-                  <th>Serviço</th>
-                  <th>Fornecedor</th>
-                  <th>Etapa</th>
-                  <th class="text-end!">Valor</th>
-                  <th class="text-end! whitespace-nowrap">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (linha of linhas(); track linha.chave) {
-                  <tr>
-                    @if (linha.primeira) {
-                      <td class="servico" [attr.rowspan]="linha.linhasDoServico">
-                        <span class="nome">{{ linha.servico.nome }}</span>
-                        <span class="block text-xs text-muted">
-                          Estimado {{ linha.servico.valorEstimado | gdDinheiro }}
-                          @if (linha.servico.contratado) { · Contratado {{ linha.servico.valorContratado | gdDinheiro }} }
-                        </span>
-                        <div class="servico-acoes">
-                          <button mat-button type="button" (click)="vincular(linha.servico)"><mat-icon>add</mat-icon> Fornecedor</button>
-                          <button mat-button type="button" (click)="editarSubitens(linha.servico)"><mat-icon>calculate</mat-icon> Estimado</button>
-                        </div>
-                      </td>
-                    }
-                    @if (linha.vinculo; as vinculo) {
-                      <td>
-                        <span class="nome">{{ vinculo.fornecedor }}</span>
-                        @if (vinculo.observacoes) { <span class="block text-xs text-muted">{{ vinculo.observacoes }}</span> }
-                      </td>
-                      <td>
-                        <span [class]="classeEtapa(vinculo.etapa)">{{ rotuloEtapa(vinculo.etapa) }}</span>
-                        @if (vinculo.etapa === 'Contratado' && linha.servico.contratoAssinado; as contrato) {
-                          <span class="block text-xs text-muted mt-1"><mat-icon class="mini">verified</mat-icon> {{ contrato.nome }}</span>
-                        }
-                      </td>
-                      <td class="text-end! valor">
-                        @if (vinculo.etapa === 'Contratado') {
-                          {{ linha.servico.valorContratado | gdDinheiro }}
-                        } @else if (vinculo.valorOrcamento !== null) {
-                          {{ vinculo.valorOrcamento | gdDinheiro }}
-                        } @else {
-                          <span class="block text-xs text-muted">—</span>
-                        }
-                      </td>
-                      <td class="text-end! whitespace-nowrap">
-                        @if (vinculo.etapa === 'Contratado') {
-                          <button mat-icon-button type="button" aria-label="Mais ações" matTooltip="Mais ações" [matMenuTriggerFor]="menu"><mat-icon>more_vert</mat-icon></button>
-                          <mat-menu #menu="matMenu" xPosition="before">
-                            @if (linha.servico.contratoAssinado; as contrato) {
-                              <button mat-menu-item type="button" (click)="abrirContrato(contrato.arquivoId)">
-                                <mat-icon>description</mat-icon> Abrir contrato assinado
-                              </button>
-                              <button mat-menu-item type="button" (click)="anexarContrato(linha.servico)">
-                                <mat-icon>upload_file</mat-icon> Substituir contrato assinado
-                              </button>
-                              <button mat-menu-item type="button" (click)="excluirContrato(linha.servico)">
-                                <mat-icon>delete</mat-icon> Excluir contrato assinado
-                              </button>
-                            } @else {
-                              <button mat-menu-item type="button" (click)="anexarContrato(linha.servico)">
-                                <mat-icon>upload_file</mat-icon> Anexar contrato assinado
-                              </button>
-                            }
-                            <button mat-menu-item type="button" (click)="voltar(linha.servico, vinculo.id)">
-                              <mat-icon>undo</mat-icon> Voltar para orçamento
-                            </button>
-                          </mat-menu>
-                        } @else {
-                          <button mat-stroked-button class="contratar" type="button" (click)="contratar(linha.servico, vinculo.id)">Contratar</button>
-                        }
-                      </td>
+          <ul class="servicos-lista" aria-label="Serviços do evento">
+            @for (item of visiveis(); track item.servico.id) {
+              <li class="servico" [class.aberto]="estaAberto(item.servico.id)">
+                <div class="servico-cabecalho">
+                  <button type="button" class="servico-alternar" [attr.aria-expanded]="estaAberto(item.servico.id)"
+                    [attr.aria-controls]="'fornecedores-' + item.servico.id" (click)="alternar(item.servico.id)">
+                    <mat-icon class="seta">expand_more</mat-icon>
+                    <span class="servico-texto">
+                      <span class="nome">{{ item.servico.nome }}</span>
+                      <span class="block text-xs text-muted">
+                        Estimado {{ estimado(item.servico) | gdDinheiro }}
+                        @if (item.contratados > 0) { · Contratado {{ item.servico.valorContratado | gdDinheiro }} }
+                      </span>
+                    </span>
+                    @if (item.servico.fornecedores.length === 0) {
+                      <span class="inline-block rounded font-semibold px-2 py-1 text-xs whitespace-nowrap bg-light-error text-error">Sem fornecedor</span>
                     } @else {
-                      <td><span class="block text-xs text-muted">Nenhum fornecedor</span></td>
-                      <td><span class="inline-block rounded font-semibold px-2 py-1 text-xs whitespace-nowrap bg-light-error text-error">Sem fornecedor</span></td>
-                      <td class="text-end!"><span class="block text-xs text-muted">—</span></td>
-                      <td class="text-end! whitespace-nowrap">
-                        <button mat-stroked-button class="contratar" type="button" (click)="vincular(linha.servico)">Vincular</button>
-                      </td>
+                      <span [class]="classeEtapa(item.contratados > 0 ? 'Contratado' : 'Orcamento')">
+                        {{ item.contratados }} de {{ item.servico.fornecedores.length }} {{ item.servico.fornecedores.length === 1 ? 'contratado' : 'contratados' }}
+                      </span>
                     }
-                  </tr>
+                  </button>
+                  <div class="servico-acoes">
+                    <button mat-stroked-button type="button" (click)="adicionarFornecedores(item.servico)"><mat-icon>add</mat-icon> Fornecedor</button>
+                    <button mat-icon-button type="button" aria-label="Ações do serviço" matTooltip="Ações do serviço" [matMenuTriggerFor]="menuServico"><mat-icon>more_vert</mat-icon></button>
+                    <mat-menu #menuServico="matMenu" xPosition="before">
+                      <button mat-menu-item type="button" (click)="editarSubitens(item.servico)"><mat-icon>calculate</mat-icon> Valor estimado e subitens</button>
+                      <button mat-menu-item type="button" (click)="excluirServico(item.servico)"><mat-icon>delete</mat-icon> Excluir serviço</button>
+                    </mat-menu>
+                  </div>
+                </div>
+                @if (estaAberto(item.servico.id)) {
+                  <div class="fornecedores" [id]="'fornecedores-' + item.servico.id">
+                    @for (vinculo of item.vinculos; track vinculo.id) {
+                      <div class="fornecedor">
+                        <div class="fornecedor-nome">
+                          <span class="nome">{{ vinculo.fornecedor }}</span>
+                          @if (vinculo.observacoes) { <span class="block text-xs text-muted">{{ vinculo.observacoes }}</span> }
+                        </div>
+                        <div class="fornecedor-etapa"><span [class]="classeEtapa(vinculo.etapa)">{{ rotuloEtapa(vinculo.etapa) }}</span></div>
+                        <div class="fornecedor-valor">
+                          <span class="block text-xs text-muted">{{ vinculo.etapa === 'Contratado' ? 'Contratado' : 'Estimado' }}</span>
+                          @if (vinculo.valorOrcamento !== null) { <span class="valor">{{ vinculo.valorOrcamento | gdDinheiro }}</span> }
+                          @else { <span class="text-muted">—</span> }
+                        </div>
+                        <div class="fornecedor-contrato">
+                          @if (vinculo.contratoAssinado; as contrato) {
+                            <button mat-button type="button" class="contrato" [matMenuTriggerFor]="menuContrato" aria-label="Contrato anexado">
+                              <mat-icon>description</mat-icon> Contrato
+                            </button>
+                            <mat-menu #menuContrato="matMenu" xPosition="before">
+                              <button mat-menu-item type="button" (click)="abrirContrato(contrato.arquivoId)"><mat-icon>open_in_new</mat-icon> Abrir contrato</button>
+                              <button mat-menu-item type="button" (click)="anexarContrato(item.servico, vinculo)"><mat-icon>upload_file</mat-icon> Substituir contrato</button>
+                              <button mat-menu-item type="button" (click)="excluirContrato(item.servico, vinculo)"><mat-icon>delete</mat-icon> Excluir contrato</button>
+                            </mat-menu>
+                          } @else {
+                            <button mat-button type="button" (click)="anexarContrato(item.servico, vinculo)"><mat-icon>upload_file</mat-icon> Contrato</button>
+                          }
+                        </div>
+                        <div class="fornecedor-acoes">
+                          @if (vinculo.etapa === 'Contratado') {
+                            <a mat-button [routerLink]="['/eventos', id, 'dinheiro']" matTooltip="Configurar o pagamento na aba Financeiro"><mat-icon>payments</mat-icon> Pagamento</a>
+                            <button mat-icon-button type="button" aria-label="Voltar para orçamento" matTooltip="Voltar para orçamento"
+                              [disabled]="vinculo.temPagamento" (click)="voltar(item.servico, vinculo)"><mat-icon>undo</mat-icon></button>
+                          } @else {
+                            <button mat-stroked-button class="contratar" type="button" (click)="contratar(item.servico, vinculo)"><mat-icon>check</mat-icon> Contratado</button>
+                          }
+                          <button mat-icon-button type="button" aria-label="Excluir fornecedor do serviço"
+                            [matTooltip]="vinculo.temPagamento ? 'Tem pagamento registrado no Dinheiro' : 'Excluir fornecedor do serviço'"
+                            [disabled]="vinculo.temPagamento" (click)="excluirFornecedor(item.servico, vinculo)"><mat-icon>delete</mat-icon></button>
+                        </div>
+                      </div>
+                    } @empty {
+                      <div class="fornecedor vazio">
+                        <span class="text-sm text-muted">Nenhum fornecedor neste serviço.</span>
+                        <button mat-button type="button" (click)="adicionarFornecedores(item.servico)"><mat-icon>add</mat-icon> Adicionar fornecedor</button>
+                      </div>
+                    }
+                  </div>
                 }
-              </tbody>
-            </table>
-          </div>
+              </li>
+            }
+          </ul>
         }
     }
     </mat-card-content>
@@ -438,14 +399,28 @@ const CLASSE_ETAPA: Record<string, string> = {
     .num { min-width: 90px; text-align: right; font-size: 12px; white-space: nowrap; }
     .legenda-servicos { font-size: 12px; margin: 12px 0 0; }
     .legenda-servicos .ponto:not(:first-child) { margin-left: 12px; }
-    td.servico { vertical-align: top; min-width: 200px; }
-    .servico-acoes { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0 0 -12px; }
-    .servico-acoes button { height: 28px; font-size: 12px; color: var(--mat-sys-surface-container-lowest); }
-    .servico-acoes mat-icon { font-size: 16px; width: 16px; height: 16px; }
     .valor { font-weight: 600; white-space: nowrap; }
-    .mini { font-size: 14px; width: 14px; height: 14px; vertical-align: middle; }
-    /* A célula do serviço ocupa várias linhas: o hover pinta só a linha do fornecedor. */
-    tbody tr:hover td.servico { background: transparent !important; }
+
+    .servicos-lista { list-style: none; padding: 0; margin: 0; border: 1px solid rgba(128,128,128,.25); border-radius: 8px; overflow: hidden; }
+    .servico + .servico { border-top: 1px solid rgba(128,128,128,.25); }
+    .servico-cabecalho { display: flex; align-items: center; gap: 8px; padding: 8px 12px 8px 4px; }
+    .servico-cabecalho:hover, .fornecedor:hover { background: rgba(128,128,128,.08); }
+    .servico-alternar { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 8px; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; border-radius: 6px; }
+    .servico-alternar:focus-visible { outline: 2px solid var(--mat-sys-primary); }
+    .servico-texto { flex: 1; min-width: 0; }
+    .seta { transition: transform .15s; flex-shrink: 0; }
+    .servico.aberto .seta { transform: rotate(180deg); }
+    .servico-acoes { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+    .fornecedores { background: rgba(128,128,128,.1); border-top: 1px solid rgba(128,128,128,.3); }
+    .fornecedor { display: grid; grid-template-columns: minmax(160px, 2fr) 110px minmax(110px, 1fr) minmax(140px, 1.4fr) auto; align-items: center; gap: 12px; padding: 10px 16px 10px 52px; }
+    .fornecedor + .fornecedor { border-top: 1px dashed rgba(128,128,128,.2); }
+    .fornecedor.vazio { display: flex; justify-content: space-between; }
+    .fornecedor-acoes { display: flex; align-items: center; justify-content: flex-end; gap: 4px; white-space: nowrap; }
+    .contrato { max-width: 100%; }
+    @media (max-width: 900px) {
+      .fornecedor { grid-template-columns: 1fr auto; padding-left: 16px; }
+      .fornecedor-acoes { grid-column: 1 / -1; justify-content: flex-start; flex-wrap: wrap; }
+    }
   `,
 })
 export class EventoFornecedoresPage implements OnInit {
@@ -459,6 +434,7 @@ export class EventoFornecedoresPage implements OnInit {
   protected readonly semFornecedor = SEM_FORNECEDOR;
   protected readonly busca = signal('');
   protected readonly etapa = signal('');
+  protected readonly abertos = signal<Set<string>>(new Set());
   protected readonly budget = signal<BudgetEvento | null>(null);
   protected readonly graficos = computed<{ dados: BudgetEvento; orcamento: GraficoOrcamento; servicos: BarraServico[] } | null>(() => {
     const dados = this.budget();
@@ -468,25 +444,25 @@ export class EventoFornecedoresPage implements OnInit {
   });
   protected id = '';
 
-  protected readonly linhas = computed(() => {
+  /** Serviços que passam na busca e no filtro; os fornecedores mostrados são os que batem. */
+  protected readonly visiveis = computed<ServicoVisivel[]>(() => {
     const termo = normalizar(this.busca());
     const etapa = this.etapa();
-    const resultado: (LinhaFornecedor & { chave: string })[] = [];
+    const resultado: ServicoVisivel[] = [];
     for (const servico of this.evento()?.servicos ?? []) {
+      const contratados = servico.fornecedores.filter((vinculo) => vinculo.etapa === 'Contratado').length;
+      if (etapa === SEM_FORNECEDOR) {
+        if (servico.fornecedores.length === 0 && (!termo || normalizar(servico.nome).includes(termo))) {
+          resultado.push({ servico, vinculos: [], contratados });
+        }
+        continue;
+      }
       const servicoBate = !termo || normalizar(servico.nome).includes(termo);
-      const vinculos: (Vinculo | null)[] = servico.fornecedores.length ? servico.fornecedores : [null];
-      const visiveis = vinculos.filter((vinculo) => {
-        const etapaBate = !etapa || (vinculo ? vinculo.etapa === etapa : etapa === SEM_FORNECEDOR);
-        const textoBate = servicoBate || (!!vinculo && normalizar(vinculo.fornecedor).includes(termo));
-        return etapaBate && textoBate;
-      });
-      visiveis.forEach((vinculo, indice) => resultado.push({
-        chave: `${servico.id}:${vinculo?.id ?? ''}`,
-        servico,
-        vinculo,
-        primeira: indice === 0,
-        linhasDoServico: visiveis.length,
-      }));
+      const vinculos = servico.fornecedores.filter((vinculo) =>
+        (!etapa || vinculo.etapa === etapa) && (servicoBate || normalizar(vinculo.fornecedor).includes(termo)));
+      if (vinculos.length > 0 || (!etapa && servicoBate)) {
+        resultado.push({ servico, vinculos, contratados });
+      }
     }
     return resultado;
   });
@@ -498,7 +474,34 @@ export class EventoFornecedoresPage implements OnInit {
   }
 
   protected buscar(evento: Event): void {
-    this.busca.set((evento.target as HTMLInputElement).value);
+    const termo = (evento.target as HTMLInputElement).value;
+    this.busca.set(termo);
+    // Buscando por fornecedor, o serviço abre para mostrar quem bateu.
+    if (normalizar(termo)) {
+      const novos = new Set(this.abertos());
+      this.visiveis().forEach((item) => {
+        if (item.vinculos.length > 0) novos.add(item.servico.id);
+      });
+      this.abertos.set(novos);
+    }
+  }
+
+  protected estaAberto(servicoId: string): boolean {
+    return this.abertos().has(servicoId);
+  }
+
+  protected alternar(servicoId: string): void {
+    const novos = new Set(this.abertos());
+    if (!novos.delete(servicoId)) novos.add(servicoId);
+    this.abertos.set(novos);
+  }
+
+  private abrir(servicoId: string): void {
+    this.abertos.set(new Set(this.abertos()).add(servicoId));
+  }
+
+  protected estimado(servico: EventoServico): number | null {
+    return servico.subitens.length > 0 ? servico.subitens.reduce((soma, item) => soma + item.total, 0) : servico.valorEstimado;
   }
 
   protected rotuloEtapa(etapa: string): string {
@@ -509,37 +512,91 @@ export class EventoFornecedoresPage implements OnInit {
     return `inline-block rounded font-semibold px-2 py-1 text-xs whitespace-nowrap ${CLASSE_ETAPA[etapa] ?? 'neutro'}`;
   }
 
-  protected vincular(servico?: EventoServico): void {
+  /** Serviços do catálogo da conta (ou um novo); os que já estão no evento vêm bloqueados. */
+  protected adicionarServicos(): void {
     const atual = this.evento();
     if (!atual) {
       return;
     }
-    const dados: VincularFornecedorDados = { servicos: atual.servicos, fornecedores: this.fornecedores(), servicoId: servico?.id };
-    // Foco no modal, não no campo: o autocomplete abriria a lista assim que o modal aparece.
-    this.dialog.open(VincularFornecedorDialog, { ...DIALOG, autoFocus: 'dialog', data: dados }).afterClosed().subscribe((pedido?: VincularFornecedorPedido) => {
-      if (pedido) {
-        void this.gravarVinculos(pedido, atual);
+    const noEvento = new Set(atual.servicos.map((servico) => normalizar(servico.nome)));
+    const opcao = (servico: ServicoConta): OpcaoSelecao => ({
+      id: servico.id,
+      nome: servico.nome,
+      bloqueada: noEvento.has(normalizar(servico.nome)),
+      motivo: 'Já está no evento',
+    });
+    this.negocio.servicosConta().subscribe({
+      next: (catalogo) => {
+        const nomes = new Map(catalogo.map((servico) => [servico.id, servico.nome]));
+        const dados: SeletorMultiploDados = {
+          titulo: 'Adicionar serviços',
+          rotulo: 'Serviços',
+          descricao: 'Escolha os serviços do evento. Os fornecedores entram depois, em cada serviço.',
+          placeholder: 'Buscar serviço',
+          textoCriar: 'Cadastrar novo serviço',
+          confirmar: 'Adicionar',
+          opcoes: catalogo.map(opcao),
+          criar: (termo) => this.dialog.open(NovoServicoDialog, { ...DIALOG_PEQUENO, data: { nome: termo } }).afterClosed().pipe(
+            map((criados?: ServicoConta[]) => (criados ?? []).map((servico) => {
+              nomes.set(servico.id, servico.nome);
+              return opcao(servico);
+            })),
+          ),
+        };
+        this.dialog.open(SeletorMultiploDialog, { ...DIALOG, autoFocus: 'dialog', data: dados }).afterClosed().subscribe((ids?: string[]) => {
+          if (ids?.length) {
+            void this.gravarServicos(ids.map((id) => nomes.get(id) ?? '').filter((nome) => !!nome));
+          }
+        });
+      },
+      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+    });
+  }
+
+  /** Fornecedores do cadastro (ou um novo) para o serviço; os que já estão nele vêm bloqueados. */
+  protected adicionarFornecedores(servico: EventoServico): void {
+    const noServico = new Set(servico.fornecedores.map((vinculo) => vinculo.fornecedorId));
+    const opcao = (fornecedor: FornecedorResumo): OpcaoSelecao => ({
+      id: fornecedor.id,
+      nome: fornecedor.nome,
+      detalhe: fornecedor.servicos.join(', ') || 'Sem serviço informado',
+      bloqueada: noServico.has(fornecedor.id),
+      motivo: 'Já está neste serviço',
+    });
+    const dados: SeletorMultiploDados = {
+      titulo: `Adicionar fornecedor · ${servico.nome}`,
+      rotulo: 'Fornecedores',
+      descricao: 'Os fornecedores entram em Orçamento. Marque como contratado na lista.',
+      placeholder: 'Buscar no cadastro',
+      textoCriar: 'Criar novo fornecedor',
+      confirmar: 'Adicionar',
+      opcoes: this.fornecedores().map(opcao),
+      criar: () => this.cadastrarFornecedor().pipe(map((criado) => (criado ? [opcao(criado)] : []))),
+    };
+    this.dialog.open(SeletorMultiploDialog, { ...DIALOG, autoFocus: 'dialog', data: dados }).afterClosed().subscribe((ids?: string[]) => {
+      if (ids?.length) {
+        void this.gravarFornecedores(servico, ids);
       }
     });
   }
 
-  protected adicionarServico(): void {
-    this.dialog.open(NomeServicoDialog, DIALOG_PEQUENO).afterClosed().subscribe((nome) => {
-      if (!nome) {
-        return;
-      }
-      this.negocio.adicionarServicoEvento(this.id, nome).subscribe({
-        next: (evento) => {
-          this.toast.sucesso('Serviço adicionado.');
-          this.evento.set(evento);
-        },
-        error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
-      });
-    });
+  protected excluirServico(servico: EventoServico): void {
+    const contratados = servico.fornecedores.filter((vinculo) => vinculo.etapa === 'Contratado').length;
+    const texto = contratados > 0
+      ? `Excluir "${servico.nome}" do evento? Os fornecedores, contratos anexados e pagamentos sem registro deste serviço saem da aba Financeiro.`
+      : `Excluir "${servico.nome}" do evento? Os fornecedores vinculados saem junto.`;
+    this.confirmar('Excluir serviço', texto, () => this.negocio.removerServicoEvento(this.id, servico.id), 'Serviço excluído.');
   }
 
-  protected voltar(servico: EventoServico, vinculoId: string): void {
-    this.negocio.voltarEtapa(this.id, servico.id, vinculoId).subscribe({
+  protected excluirFornecedor(servico: EventoServico, vinculo: Vinculo): void {
+    const texto = vinculo.etapa === 'Contratado'
+      ? `Excluir "${vinculo.fornecedor}" de ${servico.nome}? O pagamento dele sai da aba Financeiro.`
+      : `Excluir "${vinculo.fornecedor}" de ${servico.nome}?`;
+    this.confirmar('Excluir fornecedor', texto, () => this.negocio.removerFornecedorServico(this.id, servico.id, vinculo.id), 'Fornecedor excluído do serviço.');
+  }
+
+  protected voltar(servico: EventoServico, vinculo: Vinculo): void {
+    this.negocio.voltarEtapa(this.id, servico.id, vinculo.id).subscribe({
       next: () => {
         this.toast.sucesso('Fornecedor voltou para orçamento.');
         this.recarregar();
@@ -548,29 +605,28 @@ export class EventoFornecedoresPage implements OnInit {
     });
   }
 
-  protected contratar(servico: EventoServico, vinculoId: string): void {
-    const vinculo = servico.fornecedores.find((item) => item.id === vinculoId);
+  protected contratar(servico: EventoServico, vinculo: Vinculo): void {
     this.dialog.open(ContratarDialog, {
       ...DIALOG,
-      data: { fornecedor: vinculo?.fornecedor ?? '', servico: servico.nome, valor: vinculo?.valorOrcamento ?? null },
+      data: { fornecedor: vinculo.fornecedor, servico: servico.nome, valor: vinculo.valorOrcamento, temContrato: !!vinculo.contratoAssinado },
     }).afterClosed().subscribe((pedido?: ContratarResultado) => {
       if (!pedido) {
         return;
       }
-      this.negocio.contratarFornecedor(this.id, servico.id, vinculoId, { valor: pedido.valor }).subscribe({
+      this.negocio.contratarFornecedor(this.id, servico.id, vinculo.id, { valor: pedido.valor }).subscribe({
         next: () => {
           if (!pedido.arquivo) {
-            this.toast.sucesso('Fornecedor contratado.');
+            this.toast.sucesso('Fornecedor contratado. Configure o pagamento na aba Financeiro.');
             this.recarregar();
             return;
           }
-          this.negocio.enviarContratoAssinado(this.id, servico.id, pedido.arquivo).subscribe({
+          this.negocio.enviarContratoAssinado(this.id, servico.id, vinculo.id, pedido.arquivo).subscribe({
             next: () => {
-              this.toast.sucesso('Fornecedor contratado e contrato assinado anexado.');
+              this.toast.sucesso('Fornecedor contratado e contrato anexado. Configure o pagamento na aba Financeiro.');
               this.recarregar();
             },
             error: (erro: unknown) => {
-              this.toast.erro(`Fornecedor contratado, mas o contrato não foi anexado: ${mensagemDeErro(erro)} Anexe pelo menu da linha.`);
+              this.toast.erro(`Fornecedor contratado, mas o contrato não foi anexado: ${mensagemDeErro(erro)} Anexe pela linha do fornecedor.`);
               this.recarregar();
             },
           });
@@ -580,14 +636,14 @@ export class EventoFornecedoresPage implements OnInit {
     });
   }
 
-  protected anexarContrato(servico: EventoServico): void {
-    this.dialog.open(ComprovanteDialog, { ...DIALOG_PEQUENO, data: { titulo: 'Contrato assinado' } }).afterClosed().subscribe((arquivo?: File) => {
+  protected anexarContrato(servico: EventoServico, vinculo: Vinculo): void {
+    this.dialog.open(ComprovanteDialog, { ...DIALOG_PEQUENO, data: { titulo: `Contrato · ${vinculo.fornecedor}` } }).afterClosed().subscribe((arquivo?: File) => {
       if (!arquivo) {
         return;
       }
-      this.negocio.enviarContratoAssinado(this.id, servico.id, arquivo).subscribe({
+      this.negocio.enviarContratoAssinado(this.id, servico.id, vinculo.id, arquivo).subscribe({
         next: (evento) => {
-          this.toast.sucesso('Contrato assinado anexado.');
+          this.toast.sucesso('Contrato anexado.');
           this.evento.set(evento);
         },
         error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
@@ -595,17 +651,17 @@ export class EventoFornecedoresPage implements OnInit {
     });
   }
 
-  protected excluirContrato(servico: EventoServico): void {
+  protected excluirContrato(servico: EventoServico, vinculo: Vinculo): void {
     this.dialog.open(ConfirmaDialog, {
       ...DIALOG_PEQUENO,
-      data: { titulo: 'Excluir contrato assinado', texto: `Excluir "${servico.contratoAssinado?.nome ?? 'contrato'}"? O arquivo é apagado.`, confirmar: 'Excluir' },
+      data: { titulo: 'Excluir contrato', texto: `Excluir o contrato de ${vinculo.fornecedor}? O arquivo é apagado.`, confirmar: 'Excluir' },
     }).afterClosed().subscribe((confirmou) => {
       if (!confirmou) {
         return;
       }
-      this.negocio.excluirContratoAssinado(this.id, servico.id).subscribe({
+      this.negocio.excluirContratoAssinado(this.id, servico.id, vinculo.id).subscribe({
         next: (evento) => {
-          this.toast.sucesso('Contrato assinado excluído.');
+          this.toast.sucesso('Contrato excluído.');
           this.evento.set(evento);
         },
         error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
@@ -662,29 +718,72 @@ export class EventoFornecedoresPage implements OnInit {
     return `${barra.nome}: estimado ${formatarReais(barra.estimado)}, contratado ${formatarReais(barra.contratado)}`;
   }
 
-  /** Um vínculo em Orçamento por serviço marcado; serviços novos são criados antes (SPEC-045 §6.1). */
-  private async gravarVinculos(pedido: VincularFornecedorPedido, atual: EventoDetalhe): Promise<void> {
-    const existentes = new Set(atual.servicos.map((item) => item.id));
+  private confirmar(titulo: string, texto: string, acao: () => Observable<EventoDetalhe>, sucesso: string): void {
+    this.dialog.open(ConfirmaDialog, { ...DIALOG_PEQUENO, data: { titulo, texto, confirmar: 'Excluir' } }).afterClosed().subscribe((confirmou) => {
+      if (!confirmou) {
+        return;
+      }
+      acao().subscribe({
+        next: () => {
+          this.toast.sucesso(sucesso);
+          this.recarregar();
+        },
+        error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+      });
+    });
+  }
+
+  private cadastrarFornecedor(): Observable<FornecedorResumo | null> {
+    const antes = new Set(this.fornecedores().map((item) => item.id));
+    return new Observable<FornecedorResumo | null>((assinante) => {
+      this.dialog.open(FornecedorFormDialog, { ...DIALOG_FORNECEDOR, data: null }).afterClosed().subscribe((ok) => {
+        if (!ok) {
+          assinante.next(null);
+          assinante.complete();
+          return;
+        }
+        this.negocio.fornecedores().subscribe({
+          next: (lista) => {
+            this.fornecedores.set(lista);
+            assinante.next(lista.find((item) => !antes.has(item.id)) ?? null);
+            assinante.complete();
+          },
+          error: () => {
+            assinante.next(null);
+            assinante.complete();
+          },
+        });
+      });
+    });
+  }
+
+  /** Cria os serviços em sequência; o backend reaproveita o do catálogo com o mesmo nome. */
+  private async gravarServicos(nomes: string[]): Promise<void> {
     let feitos = 0;
     try {
-      for (const escolha of pedido.servicos) {
-        let servicoId = escolha.servicoId;
-        if (!servicoId) {
-          const evento = await firstValueFrom(this.negocio.adicionarServicoEvento(this.id, escolha.novoServico ?? ''));
-          const criado = evento.servicos.find((item) => !existentes.has(item.id));
-          if (!criado) {
-            throw new Error('Não foi possível criar o serviço.');
-          }
-          existentes.add(criado.id);
-          servicoId = criado.id;
-        }
-        await firstValueFrom(this.negocio.adicionarFornecedorServico(this.id, servicoId, pedido.fornecedorId, pedido.etapa));
+      for (const nome of nomes) {
+        this.evento.set(await firstValueFrom(this.negocio.adicionarServicoEvento(this.id, nome)));
         feitos++;
       }
-      this.toast.sucesso(feitos === 1 ? 'Fornecedor adicionado.' : `Fornecedor adicionado em ${feitos} serviços.`);
+      this.toast.sucesso(feitos === 1 ? 'Serviço adicionado.' : `${feitos} serviços adicionados.`);
     } catch (erro) {
-      this.toast.erro(erro instanceof Error ? erro.message : mensagemDeErro(erro));
+      this.toast.erro(mensagemDeErro(erro));
     }
+    this.recarregar();
+  }
+
+  private async gravarFornecedores(servico: EventoServico, fornecedorIds: string[]): Promise<void> {
+    let feitos = 0;
+    try {
+      for (const fornecedorId of fornecedorIds) {
+        await firstValueFrom(this.negocio.adicionarFornecedorServico(this.id, servico.id, fornecedorId, 'Orcamento'));
+        feitos++;
+      }
+      this.toast.sucesso(feitos === 1 ? 'Fornecedor adicionado.' : `${feitos} fornecedores adicionados.`);
+    } catch (erro) {
+      this.toast.erro(mensagemDeErro(erro));
+    }
+    this.abrir(servico.id);
     this.recarregar();
   }
 

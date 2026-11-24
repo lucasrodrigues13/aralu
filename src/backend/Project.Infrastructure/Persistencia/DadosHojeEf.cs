@@ -139,7 +139,9 @@ public sealed class DadosHojeEf(AppDbContext banco) : IDadosHoje
         await banco.Eventos.AsNoTracking()
             .Where(evento => evento.ContaId == contaId && eventoIds.Contains(evento.Id))
             .SelectMany(evento => evento.Servicos)
-            .Select(servico => servico.Contrato).Where(contrato => contrato != null).SelectMany(contrato => contrato!.Parcelas)
+            .SelectMany(servico => servico.Contratos.Where(contrato => servico.Fornecedores.Any(vinculo =>
+                vinculo.Id == contrato.VinculoId && vinculo.Etapa == Project.Domain.Fornecedores.EtapaNegociacao.Contratado)))
+            .SelectMany(contrato => contrato.Parcelas)
             .Where(parcela => parcela.Situacao == SituacaoParcela.Pendente && parcela.Vencimento >= de && parcela.Vencimento <= ate)
             .Select(parcela => new PagamentoSemanaDado(parcela.Vencimento, parcela.Valor))
             .ToListAsync(ct);

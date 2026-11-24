@@ -408,18 +408,19 @@ public sealed class FornecedorServico(IDados dados, Arquivos.IArmazenamentoArqui
             return Resultado<EventoDetalhe>.Erro(Codigos.Validacao, "Este fornecedor já está no serviço.");
         }
 
-        await dados.InserirFornecedorNoServicoAsync(new FornecedorNoServico
+        var novo = new FornecedorNoServico
         {
             Id = Guid.NewGuid(),
             ServicoId = servico.Id,
             FornecedorId = fornecedorId,
             Etapa = etapa,
-        }, ct);
+        };
+        await dados.InserirFornecedorNoServicoAsync(novo, ct);
 
         if (etapa == EtapaNegociacao.Contratado)
         {
-            await dados.MarcarServicoContratadoAsync(servico.Id, true, servico.ValorContratado, ct);
-            await dados.GarantirContratoFornecedorAsync(servico.Id, ct);
+            await dados.GarantirContratoFornecedorAsync(servico.Id, novo.Id, ct);
+            await dados.RecalcularContratadoAsync(servico.Id, ct);
             await dados.ConcluirTarefasLigadasAsync(contaId, servico.Id, ct);
         }
 
@@ -466,7 +467,8 @@ public sealed class FornecedorServico(IDados dados, Arquivos.IArmazenamentoArqui
         }
 
         // Contratar de novo mantém o contrato (parcelas, pagos, comprovantes); o valor não pode destoar das parcelas.
-        if (servico.Contrato is { Parcelas.Count: > 0 } existente && existente.Parcelas.Sum(parcela => parcela.Valor) != valor)
+        var existente = servico.Contratos.FirstOrDefault(contrato => contrato.VinculoId == vinculo.Id);
+        if (existente is { Parcelas.Count: > 0 } && existente.Parcelas.Sum(parcela => parcela.Valor) != valor)
         {
             return Resultado<EventoDetalhe>.Erro(
                 Codigos.Validacao,
@@ -474,25 +476,85 @@ public sealed class FornecedorServico(IDados dados, Arquivos.IArmazenamentoArqui
         }
 
         await dados.AtualizarEtapaNegociacaoAsync(vinculo.Id, EtapaNegociacao.Contratado, valor, ct);
-        await dados.MarcarServicoContratadoAsync(servico.Id, true, valor, ct);
-        await dados.GarantirContratoFornecedorAsync(servico.Id, ct);
+        await dados.GarantirContratoFornecedorAsync(servico.Id, vinculo.Id, ct);
+        await dados.RecalcularContratadoAsync(servico.Id, ct);
         await dados.ConcluirTarefasLigadasAsync(contaId, servico.Id, ct);
         return await DetalheEventoAsync(contaId, eventoId, hoje, ct);
     }
 
-    /// <summary>Guarda o contrato assinado do serviço contratado e apaga o anterior (SPEC-045 §6.4).</summary>
-    public async Task<Resultado<EventoDetalhe>> EnviarContratoAssinadoAsync(
+    /// <summary>Tira o fornecedor do serviço. Com pagamento ou comprovante no Dinheiro, fica bloqueado.</summary>
+    public async Task<Resultado<EventoDetalhe>> RemoverFornecedorDoServicoAsync(
         string contaId,
         Guid eventoId,
         Guid servicoId,
+        Guid vinculoId,
+        DateOnly hoje,
+        CancellationToken ct)
+    {
+        var servico = await dados.ObterServicoEventoAsync(contaId, eventoId, servicoId, ct);
+        var vinculo = servico?.Fornecedores.FirstOrDefault(item => item.Id == vinculoId);
+        if (servico is null || vinculo is null)
+        {
+            return Resultado<EventoDetalhe>.Erro(Codigos.Indisponivel, "Indisponível.");
+        }
+
+        var contrato = servico.Contratos.FirstOrDefault(item => item.VinculoId == vinculoId);
+        if (contrato?.TemPagamento == true)
+        {
+            return Resultado<EventoDetalhe>.Erro(Codigos.Validacao, "Este fornecedor tem pagamento registrado. Desfaça os pagamentos na aba Dinheiro antes.");
+        }
+
+        await dados.RemoverFornecedorDoServicoAsync(vinculoId, ct);
+        await dados.RecalcularContratadoAsync(servico.Id, ct);
+        if (contrato?.ContratoAssinadoArquivoId is Guid arquivoId)
+        {
+            await armazenamento.DescartarAsync(arquivoId, ct);
+        }
+
+        return await DetalheEventoAsync(contaId, eventoId, hoje, ct);
+    }
+
+    /// <summary>Tira o serviço do evento. Com pagamento de algum fornecedor no Dinheiro, fica bloqueado.</summary>
+    public async Task<Resultado<EventoDetalhe>> RemoverServicoAsync(
+        string contaId,
+        Guid eventoId,
+        Guid servicoId,
+        DateOnly hoje,
+        CancellationToken ct)
+    {
+        var servico = await dados.ObterServicoEventoAsync(contaId, eventoId, servicoId, ct);
+        if (servico is null)
+        {
+            return Resultado<EventoDetalhe>.Erro(Codigos.Indisponivel, "Indisponível.");
+        }
+
+        if (servico.Contratos.Any(contrato => contrato.TemPagamento))
+        {
+            return Resultado<EventoDetalhe>.Erro(Codigos.Validacao, "O serviço tem pagamento registrado. Desfaça os pagamentos na aba Dinheiro antes.");
+        }
+
+        await dados.RemoverServicoAsync(servico.Id, ct);
+        foreach (var arquivoId in servico.Contratos.Select(contrato => contrato.ContratoAssinadoArquivoId).OfType<Guid>())
+        {
+            await armazenamento.DescartarAsync(arquivoId, ct);
+        }
+
+        return await DetalheEventoAsync(contaId, eventoId, hoje, ct);
+    }
+
+    /// <summary>Guarda o contrato assinado do fornecedor (vínculo) e apaga o anterior (SPEC-045 §6.4). Vale antes de contratar.</summary>
+    public async Task<Resultado<EventoDetalhe>> EnviarContratoAssinadoAsync(
+        string contaId,
+        Guid eventoId,
+        Guid vinculoId,
         Stream conteudo,
         string? nomeArquivo,
         DateOnly hoje,
         CancellationToken ct,
         bool peloCliente = false)
     {
-        var servico = await dados.ObterServicoEventoAsync(contaId, eventoId, servicoId, ct);
-        if (servico?.Contrato is null)
+        var (servico, contrato) = await ServicoDoVinculoAsync(contaId, eventoId, vinculoId, ct);
+        if (servico is null)
         {
             return Resultado<EventoDetalhe>.Erro(Codigos.Indisponivel, "Indisponível.");
         }
@@ -505,8 +567,9 @@ public sealed class FornecedorServico(IDados dados, Arquivos.IArmazenamentoArqui
 
         var arquivo = guardado.Valor!;
         var nome = arquivo.NomeOriginal.Length > 260 ? arquivo.NomeOriginal[..260] : arquivo.NomeOriginal;
-        await dados.GravarContratoAssinadoAsync(servico.Id, arquivo.Id, nome, arquivo.TipoConteudo, peloCliente ? "Cliente" : "Organizadora", hoje, ct);
-        if (servico.Contrato.ContratoAssinadoArquivoId is Guid anterior)
+        await dados.GarantirContratoFornecedorAsync(servico.Id, vinculoId, ct);
+        await dados.GravarContratoAssinadoAsync(vinculoId, arquivo.Id, nome, arquivo.TipoConteudo, peloCliente ? "Cliente" : "Organizadora", hoje, ct);
+        if (contrato?.ContratoAssinadoArquivoId is Guid anterior)
         {
             await armazenamento.DescartarAsync(anterior, ct);
         }
@@ -517,19 +580,30 @@ public sealed class FornecedorServico(IDados dados, Arquivos.IArmazenamentoArqui
     public async Task<Resultado<EventoDetalhe>> ExcluirContratoAssinadoAsync(
         string contaId,
         Guid eventoId,
-        Guid servicoId,
+        Guid vinculoId,
         DateOnly hoje,
         CancellationToken ct)
     {
-        var servico = await dados.ObterServicoEventoAsync(contaId, eventoId, servicoId, ct);
-        if (servico?.Contrato?.ContratoAssinadoArquivoId is not Guid arquivoId)
+        var (_, contrato) = await ServicoDoVinculoAsync(contaId, eventoId, vinculoId, ct);
+        if (contrato?.ContratoAssinadoArquivoId is not Guid arquivoId)
         {
             return Resultado<EventoDetalhe>.Erro(Codigos.Indisponivel, "Indisponível.");
         }
 
-        await dados.GravarContratoAssinadoAsync(servico.Id, null, null, null, null, null, ct);
+        await dados.GravarContratoAssinadoAsync(vinculoId, null, null, null, null, null, ct);
         await armazenamento.DescartarAsync(arquivoId, ct);
         return await DetalheEventoAsync(contaId, eventoId, hoje, ct);
+    }
+
+    private async Task<(ServicoEvento? Servico, Domain.Dinheiro.ContratoFornecedor? Contrato)> ServicoDoVinculoAsync(
+        string contaId,
+        Guid eventoId,
+        Guid vinculoId,
+        CancellationToken ct)
+    {
+        var evento = await dados.ObterEventoAsync(contaId, eventoId, ct);
+        var servico = evento?.Servicos.FirstOrDefault(item => item.Fornecedores.Any(vinculo => vinculo.Id == vinculoId));
+        return (servico, servico?.Contratos.FirstOrDefault(item => item.VinculoId == vinculoId));
     }
 
     public async Task<Resultado<BudgetEvento>> BudgetAsync(string contaId, Guid eventoId, CancellationToken ct)
@@ -581,17 +655,21 @@ public sealed class FornecedorServico(IDados dados, Arquivos.IArmazenamentoArqui
                 avancar ? "Não é possível avançar esta etapa." : "Não é possível voltar esta etapa.");
         }
 
+        // Sair de Contratado com pagamento registrado deixaria o Dinheiro sem dono: bloqueia.
+        if (vinculo.Etapa == EtapaNegociacao.Contratado
+            && servico.Contratos.FirstOrDefault(item => item.VinculoId == vinculo.Id)?.TemPagamento == true)
+        {
+            return Resultado<EventoDetalhe>.Erro(Codigos.Validacao, "Este fornecedor tem pagamento registrado. Desfaça os pagamentos na aba Dinheiro antes.");
+        }
+
         await dados.AtualizarEtapaNegociacaoAsync(vinculo.Id, destino.Value, vinculo.ValorOrcamento, ct);
         if (destino == EtapaNegociacao.Contratado)
         {
-            await dados.MarcarServicoContratadoAsync(servico.Id, true, servico.ValorContratado, ct);
-            await dados.GarantirContratoFornecedorAsync(servico.Id, ct);
+            await dados.GarantirContratoFornecedorAsync(servico.Id, vinculo.Id, ct);
             await dados.ConcluirTarefasLigadasAsync(contaId, servico.Id, ct);
         }
-        else if (!servico.Fornecedores.Any(item => item.Id != vinculo.Id && item.Etapa == EtapaNegociacao.Contratado))
-        {
-            await dados.MarcarServicoContratadoAsync(servico.Id, false, servico.ValorContratado, ct);
-        }
+
+        await dados.RecalcularContratadoAsync(servico.Id, ct);
 
         return await DetalheEventoAsync(contaId, eventoId, hoje, ct);
     }

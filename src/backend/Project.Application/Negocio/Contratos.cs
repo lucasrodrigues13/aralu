@@ -101,15 +101,22 @@ public interface IDados
 
     Task SubstituirSubitensAsync(Guid servicoId, IReadOnlyList<SubitemServico> subitens, decimal? valorEstimado, CancellationToken ct);
 
-    /// <summary>Cria o contrato de fornecedor do serviço, sem parcelas, se ainda não existe. Nunca troca um existente (SPEC-045 §6.3).</summary>
-    Task GarantirContratoFornecedorAsync(Guid servicoId, CancellationToken ct);
+    /// <summary>Cria o contrato do fornecedor (vínculo), sem parcelas, se ainda não existe. Nunca troca um existente (SPEC-045 §6.3).</summary>
+    Task GarantirContratoFornecedorAsync(Guid servicoId, Guid vinculoId, CancellationToken ct);
 
-    /// <summary>Guarda (ou limpa, com arquivo nulo) o contrato assinado do contrato de fornecedor do serviço.</summary>
-    Task GravarContratoAssinadoAsync(Guid servicoId, Guid? arquivoId, string? nome, string? tipoConteudo, string? enviadoPor, DateOnly? enviadoEm, CancellationToken ct);
+    /// <summary>Guarda (ou limpa, com arquivo nulo) o contrato assinado do contrato do fornecedor (vínculo).</summary>
+    Task GravarContratoAssinadoAsync(Guid vinculoId, Guid? arquivoId, string? nome, string? tipoConteudo, string? enviadoPor, DateOnly? enviadoEm, CancellationToken ct);
 
     Task AtualizarEtapaNegociacaoAsync(Guid vinculoId, EtapaNegociacao etapa, decimal? valorOrcamento, CancellationToken ct);
 
-    Task MarcarServicoContratadoAsync(Guid servicoId, bool contratado, decimal? valorContratado, CancellationToken ct);
+    /// <summary>Refaz "contratado" e o valor contratado do serviço a partir dos fornecedores contratados (soma dos valores).</summary>
+    Task RecalcularContratadoAsync(Guid servicoId, CancellationToken ct);
+
+    /// <summary>Tira o fornecedor do serviço; o contrato dele (e parcelas) vai junto.</summary>
+    Task RemoverFornecedorDoServicoAsync(Guid vinculoId, CancellationToken ct);
+
+    /// <summary>Tira o serviço do evento com fornecedores, contratos e subitens; tarefas ligadas ficam sem serviço.</summary>
+    Task RemoverServicoAsync(Guid servicoId, CancellationToken ct);
 
     Task<IReadOnlyList<Tarefa>> ListarTarefasAsync(string contaId, Guid? eventoId, CancellationToken ct);
 

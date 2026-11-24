@@ -117,8 +117,16 @@ public sealed class ServicoEvento
 
     public int Ordem { get; set; }
 
-    /// <summary>Contrato com o fornecedor, com as parcelas a pagar (SPEC-040). Nulo enquanto o serviço não foi contratado.</summary>
-    public Project.Domain.Dinheiro.ContratoFornecedor? Contrato { get; set; }
+    /// <summary>Contratos com os fornecedores do serviço (um por vínculo), com as parcelas a pagar (SPEC-040).</summary>
+    public List<Project.Domain.Dinheiro.ContratoFornecedor> Contratos { get; set; } = [];
+
+    /// <summary>Contratos dos fornecedores que estão em Contratado: são os pagamentos da aba Dinheiro.</summary>
+    public IEnumerable<Project.Domain.Dinheiro.ContratoFornecedor> ContratosAtivos =>
+        Contratos.Where(contrato => Fornecedores.Any(vinculo => vinculo.Id == contrato.VinculoId && vinculo.Etapa == EtapaNegociacao.Contratado));
+
+    /// <summary>Valor contratado com o fornecedor do contrato (o valor do vínculo).</summary>
+    public decimal ValorDoContrato(Project.Domain.Dinheiro.ContratoFornecedor contrato) =>
+        Fornecedores.FirstOrDefault(vinculo => vinculo.Id == contrato.VinculoId)?.ValorOrcamento ?? 0m;
 
     public List<SubitemServico> Subitens { get; set; } = [];
 

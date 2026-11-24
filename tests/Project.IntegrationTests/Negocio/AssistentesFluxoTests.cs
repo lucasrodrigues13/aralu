@@ -467,7 +467,7 @@ public class AssistentesFluxoTests
             $"/api/v1/eventos/{eventoId}/servicos/{servicoId}/fornecedores/{vinculoId}/contratar",
             new { valor = 4000 })).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await dona.PutAsJsonAsync(
-            $"/api/v1/eventos/{eventoId}/dinheiro/pagamentos/{servicoId}/parcelamento",
+            $"/api/v1/eventos/{eventoId}/dinheiro/pagamentos/{vinculoId}/parcelamento",
             new { quantidadeParcelas = 2, primeiraParcela = "2026-12-10", comEntrada = false })).StatusCode);
     }
 

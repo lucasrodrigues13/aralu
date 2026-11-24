@@ -163,8 +163,8 @@ public class DinheiroFluxoTests
     {
         var dono = await Entrar();
         var outra = await Entrar();
-        var (eventoId, servicoId) = await EventoComFornecedorContratado(dono, 2);
-        var url = $"/api/v1/eventos/{eventoId}/dinheiro/pagamentos/{servicoId}";
+        var (eventoId, servicoId, pagamentoId) = await EventoComFornecedorContratado(dono, 2);
+        var url = $"/api/v1/eventos/{eventoId}/dinheiro/pagamentos/{pagamentoId}";
 
         var inicial = Pagamento(await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/dinheiro")));
         Assert.False(inicial.GetProperty("pago").GetBoolean());
@@ -198,8 +198,8 @@ public class DinheiroFluxoTests
     public async Task Pagamento_pode_ser_parcelado_e_o_parcelamento_so_muda_sem_pagamento()
     {
         var dono = await Entrar();
-        var (eventoId, servicoId) = await EventoComFornecedorContratado(dono, 1);
-        var url = $"/api/v1/eventos/{eventoId}/dinheiro/pagamentos/{servicoId}";
+        var (eventoId, servicoId, pagamentoId) = await EventoComFornecedorContratado(dono, 1);
+        var url = $"/api/v1/eventos/{eventoId}/dinheiro/pagamentos/{pagamentoId}";
 
         // Sem parcelas: remover o parcelamento; depois marcar pago direto.
         var semParcelas = Pagamento(await Ler(await dono.DeleteAsync($"{url}/parcelamento")));
@@ -256,8 +256,8 @@ public class DinheiroFluxoTests
     {
         var dono = await Entrar();
         var outra = await Entrar();
-        var (eventoId, servicoId) = await EventoComFornecedorContratado(dono, 2);
-        var url = $"/api/v1/eventos/{eventoId}/dinheiro/pagamentos/{servicoId}";
+        var (eventoId, servicoId, pagamentoId) = await EventoComFornecedorContratado(dono, 2);
+        var url = $"/api/v1/eventos/{eventoId}/dinheiro/pagamentos/{pagamentoId}";
         var parcelaId = Pagamento(await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/dinheiro"))).GetProperty("parcelas")[0].GetProperty("id").GetGuid();
 
         using var texto = new MultipartFormDataContent { { new ByteArrayContent(System.Text.Encoding.UTF8.GetBytes("oi")), "arquivo", "nota.txt" } };
@@ -316,38 +316,39 @@ public class DinheiroFluxoTests
     {
         var dono = await Entrar();
         var outra = await Entrar();
-        var (eventoId, servicoId) = await EventoComFornecedorContratado(dono, 2);
+        var (eventoId, servicoId, pagamentoId) = await EventoComFornecedorContratado(dono, 2);
         var urlServico = $"/api/v1/eventos/{eventoId}/servicos/{servicoId}";
-        var urlPagamento = $"/api/v1/eventos/{eventoId}/dinheiro/pagamentos/{servicoId}";
+        var urlVinculo = $"{urlServico}/fornecedores/{pagamentoId}";
+        var urlPagamento = $"/api/v1/eventos/{eventoId}/dinheiro/pagamentos/{pagamentoId}";
 
         // Anexar, trocar (o arquivo antigo some), recusar tipo inválido e isolar por conta.
         using var primeiro = Pdf("contrato.pdf");
-        var anexado = await Ler(await dono.PostAsync($"{urlServico}/contrato-assinado", primeiro));
-        var arquivoId = ServicoDe(anexado, servicoId).GetProperty("contratoAssinado").GetProperty("arquivoId").GetGuid();
+        var anexado = await Ler(await dono.PostAsync($"{urlVinculo}/contrato-assinado", primeiro));
+        var arquivoId = VinculoDe(anexado, servicoId).GetProperty("contratoAssinado").GetProperty("arquivoId").GetGuid();
         Assert.Equal(HttpStatusCode.OK, (await dono.GetAsync($"/api/v1/arquivos/{arquivoId}")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await outra.GetAsync($"/api/v1/arquivos/{arquivoId}")).StatusCode);
         using var alheio = Pdf("alheio.pdf");
-        Assert.Equal(HttpStatusCode.NotFound, (await outra.PostAsync($"{urlServico}/contrato-assinado", alheio)).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await outra.PostAsync($"{urlVinculo}/contrato-assinado", alheio)).StatusCode);
         using var texto = new MultipartFormDataContent { { new ByteArrayContent(System.Text.Encoding.ASCII.GetBytes("texto")), "arquivo", "contrato.txt" } };
-        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PostAsync($"{urlServico}/contrato-assinado", texto)).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PostAsync($"{urlVinculo}/contrato-assinado", texto)).StatusCode);
         using var segundo = Pdf("contrato-2.pdf");
-        var trocado = await Ler(await dono.PostAsync($"{urlServico}/contrato-assinado", segundo));
-        Assert.Equal("contrato-2.pdf", ServicoDe(trocado, servicoId).GetProperty("contratoAssinado").GetProperty("nome").GetString());
+        var trocado = await Ler(await dono.PostAsync($"{urlVinculo}/contrato-assinado", segundo));
+        Assert.Equal("contrato-2.pdf", VinculoDe(trocado, servicoId).GetProperty("contratoAssinado").GetProperty("nome").GetString());
         Assert.Equal(HttpStatusCode.NotFound, (await dono.GetAsync($"/api/v1/arquivos/{arquivoId}")).StatusCode);
 
-        // Pagar uma parcela e comprovar; voltar para orçamento e contratar de novo mantém tudo.
+        // Com parcela paga e comprovada: voltar para orçamento, excluir o fornecedor e excluir o serviço ficam bloqueados.
         var parcelas = Pagamento(await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/dinheiro"))).GetProperty("parcelas").EnumerateArray().ToArray();
         await Ler(await dono.PutAsJsonAsync($"{urlPagamento}/parcelas/{parcelas[0].GetProperty("id").GetGuid()}/pago", new { pago = true }));
         using var recibo = Pdf("recibo.pdf");
         await Ler(await dono.PostAsync($"{urlPagamento}/parcelas/{parcelas[0].GetProperty("id").GetGuid()}/comprovante", recibo));
-        var vinculoId = ServicoDe(await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}")), servicoId)
-            .GetProperty("fornecedores")[0].GetProperty("id").GetGuid();
-        await Ler(await dono.PostAsJsonAsync($"{urlServico}/fornecedores/{vinculoId}/voltar", new { }));
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PostAsJsonAsync($"{urlVinculo}/voltar", new { })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.DeleteAsync(urlVinculo)).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.DeleteAsync(urlServico)).StatusCode);
 
-        // Valor diferente da soma das parcelas é recusado; o mesmo valor mantém o contrato.
-        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PostAsJsonAsync($"{urlServico}/fornecedores/{vinculoId}/contratar", new { valor = 3000 })).StatusCode);
-        var recontratado = await Ler(await dono.PostAsJsonAsync($"{urlServico}/fornecedores/{vinculoId}/contratar", new { valor = 4000 }));
-        Assert.Equal("contrato-2.pdf", ServicoDe(recontratado, servicoId).GetProperty("contratoAssinado").GetProperty("nome").GetString());
+        // Contratar de novo: valor diferente da soma das parcelas é recusado; o mesmo valor mantém o contrato.
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PostAsJsonAsync($"{urlVinculo}/contratar", new { valor = 3000 })).StatusCode);
+        var recontratado = await Ler(await dono.PostAsJsonAsync($"{urlVinculo}/contratar", new { valor = 4000 }));
+        Assert.Equal("contrato-2.pdf", VinculoDe(recontratado, servicoId).GetProperty("contratoAssinado").GetProperty("nome").GetString());
         var pagamento = Pagamento(await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/dinheiro")));
         var mantidas = pagamento.GetProperty("parcelas").EnumerateArray().ToArray();
         Assert.Equal(2, mantidas.Length);
@@ -355,9 +356,9 @@ public class DinheiroFluxoTests
         Assert.Equal("recibo.pdf", mantidas[0].GetProperty("comprovante").GetProperty("nome").GetString());
 
         // Excluir apaga o arquivo e some da leitura.
-        var excluido = await Ler(await dono.DeleteAsync($"{urlServico}/contrato-assinado"));
-        Assert.Equal(JsonValueKind.Null, ServicoDe(excluido, servicoId).GetProperty("contratoAssinado").ValueKind);
-        Assert.Equal(HttpStatusCode.NotFound, (await dono.DeleteAsync($"{urlServico}/contrato-assinado")).StatusCode);
+        var excluido = await Ler(await dono.DeleteAsync($"{urlVinculo}/contrato-assinado"));
+        Assert.Equal(JsonValueKind.Null, VinculoDe(excluido, servicoId).GetProperty("contratoAssinado").ValueKind);
+        Assert.Equal(HttpStatusCode.NotFound, (await dono.DeleteAsync($"{urlVinculo}/contrato-assinado")).StatusCode);
     }
 
     [Fact]
@@ -365,7 +366,7 @@ public class DinheiroFluxoTests
     {
         var dono = await Entrar();
         var outra = await Entrar();
-        var (eventoId, servicoId) = await EventoComFornecedorContratado(dono, 2);
+        var (eventoId, servicoId, pagamentoId) = await EventoComFornecedorContratado(dono, 2);
         var urlLink = $"/api/v1/eventos/{eventoId}/link-cliente";
 
         // Sem link: nada a ver; outra conta não gerencia.
@@ -382,14 +383,14 @@ public class DinheiroFluxoTests
         var fechado = await Ler(await cliente.GetAsync(baseLink));
         Assert.False(fechado.GetProperty("financeiroLiberado").GetBoolean());
         Assert.Equal(JsonValueKind.Null, fechado.GetProperty("financeiro").ValueKind);
-        Assert.Equal(HttpStatusCode.Forbidden, (await cliente.PutAsJsonAsync($"{baseLink}/pagamentos/{servicoId}/pago", new { pago = true })).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await cliente.PutAsJsonAsync($"{baseLink}/pagamentos/{pagamentoId}/pago", new { pago = true })).StatusCode);
 
         // Liberado: o cliente marca parcela e pagamento, sobe comprovante e contrato assinado.
         Assert.True((await Ler(await dono.PutAsJsonAsync(urlLink, new { financeiroLiberado = true }))).GetProperty("financeiroLiberado").GetBoolean());
         var aberto = await Ler(await cliente.GetAsync(baseLink));
         var pagamento = Pagamento(aberto.GetProperty("financeiro"));
         var parcelaId = pagamento.GetProperty("parcelas")[0].GetProperty("id").GetGuid();
-        var urlPagamento = $"{baseLink}/pagamentos/{servicoId}";
+        var urlPagamento = $"{baseLink}/pagamentos/{pagamentoId}";
 
         var umaPaga = Pagamento((await Ler(await cliente.PutAsJsonAsync($"{urlPagamento}/parcelas/{parcelaId}/pago", new { pago = true }))).GetProperty("financeiro"));
         Assert.True(umaPaga.GetProperty("parcelas")[0].GetProperty("paga").GetBoolean());
@@ -420,7 +421,7 @@ public class DinheiroFluxoTests
     {
         var dono = await Entrar();
         var outra = await Entrar();
-        var (eventoId, _) = await EventoComFornecedorContratado(dono, 1);
+        var (eventoId, _, _) = await EventoComFornecedorContratado(dono, 1);
         var urlLink = $"/api/v1/eventos/{eventoId}/link-cliente";
         var token = (await Ler(await dono.PostAsync(urlLink, null))).GetProperty("token").GetString()!;
         var cliente = _banco.Fabrica.CreateClient();
@@ -484,7 +485,7 @@ public class DinheiroFluxoTests
     public async Task Link_do_cliente_usa_as_ferramentas_da_aba_convidados()
     {
         var dono = await Entrar();
-        var (eventoId, _) = await EventoComFornecedorContratado(dono, 1);
+        var (eventoId, _, _) = await EventoComFornecedorContratado(dono, 1);
         var urlLink = $"/api/v1/eventos/{eventoId}/link-cliente";
         var token = (await Ler(await dono.PostAsync(urlLink, null))).GetProperty("token").GetString()!;
         var cliente = _banco.Fabrica.CreateClient();
@@ -554,13 +555,59 @@ public class DinheiroFluxoTests
     private static JsonElement ServicoDe(JsonElement evento, Guid servicoId) =>
         evento.GetProperty("servicos").EnumerateArray().Single(item => item.GetProperty("id").GetGuid() == servicoId);
 
+    private static JsonElement VinculoDe(JsonElement evento, Guid servicoId) =>
+        ServicoDe(evento, servicoId).GetProperty("fornecedores").EnumerateArray().Single();
+
+    [Fact]
+    public async Task Dois_fornecedores_contratados_no_mesmo_servico_geram_dois_pagamentos_e_somam_o_contratado()
+    {
+        var dono = await Entrar();
+        var (eventoId, servicoId, primeiroId) = await EventoComFornecedorContratado(dono, 0);
+        var urlServico = $"/api/v1/eventos/{eventoId}/servicos/{servicoId}";
+        var servicoConta = await Ler(await dono.PostAsJsonAsync("/api/v1/servicos-conta", new { nome = $"Serviço {Guid.NewGuid():N}" }));
+        var outro = await Ler(await dono.PostAsJsonAsync("/api/v1/fornecedores", new
+        {
+            nome = "Segundo Fornecedor",
+            servicoContaIds = new[] { servicoConta.GetProperty("id").GetGuid() },
+            emails = new[] { new { endereco = "segundo@exemplo.com" } },
+            telefones = new[] { new { numero = "11999990001", movel = true } },
+        }));
+        var comDois = await Ler(await dono.PostAsJsonAsync($"{urlServico}/fornecedores", new { fornecedorId = outro.GetProperty("id").GetGuid(), etapa = "Orcamento" }));
+        var segundoId = ServicoDe(comDois, servicoId).GetProperty("fornecedores").EnumerateArray()
+            .Single(item => item.GetProperty("id").GetGuid() != primeiroId).GetProperty("id").GetGuid();
+
+        // Contrato assinado antes de contratar: fica no fornecedor, sem aparecer no Dinheiro.
+        var anexado = await Ler(await dono.PostAsync($"{urlServico}/fornecedores/{segundoId}/contrato-assinado", Pdf("segundo.pdf")));
+        Assert.Equal("segundo.pdf", ServicoDe(anexado, servicoId).GetProperty("fornecedores").EnumerateArray()
+            .Single(item => item.GetProperty("id").GetGuid() == segundoId).GetProperty("contratoAssinado").GetProperty("nome").GetString());
+        Assert.Single((await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/dinheiro"))).GetProperty("pagamentosFornecedores").EnumerateArray());
+
+        var contratado = await Ler(await dono.PostAsJsonAsync($"{urlServico}/fornecedores/{segundoId}/contratar", new { valor = 1000 }));
+        var servico = ServicoDe(contratado, servicoId);
+        Assert.True(servico.GetProperty("contratado").GetBoolean());
+        Assert.Equal(5000m, servico.GetProperty("valorContratado").GetDecimal());
+        var dinheiro = await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/dinheiro"));
+        var pagamentos = dinheiro.GetProperty("pagamentosFornecedores").EnumerateArray().ToArray();
+        Assert.Equal(2, pagamentos.Length);
+        Assert.Equal(new[] { primeiroId, segundoId }.Order(), pagamentos.Select(item => item.GetProperty("pagamentoId").GetGuid()).Order());
+        Assert.Equal(5000m, dinheiro.GetProperty("contratado").GetDecimal());
+
+        // Sem pagamento registrado: excluir o fornecedor tira o pagamento dele; excluir o serviço tira o resto.
+        var semSegundo = await Ler(await dono.DeleteAsync($"{urlServico}/fornecedores/{segundoId}"));
+        Assert.Equal(4000m, ServicoDe(semSegundo, servicoId).GetProperty("valorContratado").GetDecimal());
+        Assert.Single((await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/dinheiro"))).GetProperty("pagamentosFornecedores").EnumerateArray());
+        var semServico = await Ler(await dono.DeleteAsync(urlServico));
+        Assert.DoesNotContain(semServico.GetProperty("servicos").EnumerateArray(), item => item.GetProperty("id").GetGuid() == servicoId);
+        Assert.Empty((await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/dinheiro"))).GetProperty("pagamentosFornecedores").EnumerateArray());
+    }
+
     private static MultipartFormDataContent Pdf(string nome) =>
         new() { { new ByteArrayContent(System.Text.Encoding.ASCII.GetBytes("%PDF-1.4\n%%EOF")), "arquivo", nome } };
 
     private static JsonElement Pagamento(JsonElement dinheiro) => dinheiro.GetProperty("pagamentosFornecedores").EnumerateArray().Single();
 
     /// <summary>Evento com um serviço contratado (valor 4000, em <paramref name="parcelas"/> parcelas a partir de 10/12/2026).</summary>
-    private static async Task<(Guid EventoId, Guid ServicoId)> EventoComFornecedorContratado(HttpClient dono, int parcelas)
+    private static async Task<(Guid EventoId, Guid ServicoId, Guid PagamentoId)> EventoComFornecedorContratado(HttpClient dono, int parcelas)
     {
         var evento = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new { tipo = "Casamento", primeiroNome = "Gil", segundoNome = "Ana" }));
         var eventoId = evento.GetProperty("id").GetGuid();
@@ -589,11 +636,11 @@ public class DinheiroFluxoTests
         if (parcelas > 0)
         {
             Assert.Equal(HttpStatusCode.OK, (await dono.PutAsJsonAsync(
-                $"/api/v1/eventos/{eventoId}/dinheiro/pagamentos/{servicoId}/parcelamento",
+                $"/api/v1/eventos/{eventoId}/dinheiro/pagamentos/{vinculoId}/parcelamento",
                 new { quantidadeParcelas = parcelas, primeiraParcela = "2026-12-10", comEntrada = false })).StatusCode);
         }
 
-        return (eventoId, servicoId);
+        return (eventoId, servicoId, vinculoId);
     }
 
     private async Task<HttpClient> Entrar()

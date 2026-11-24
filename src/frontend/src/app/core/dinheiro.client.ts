@@ -71,6 +71,8 @@ export interface ParcelaPagamento {
 
 /** Um pagamento a fornecedor: o serviço contratado do evento, com ou sem parcelas (SPEC-043). */
 export interface PagamentoFornecedor {
+  /** Id do pagamento: o vínculo serviço × fornecedor (um pagamento por fornecedor contratado). */
+  pagamentoId: string;
   eventoId: string;
   evento: string;
   servicoId: string;
@@ -138,39 +140,39 @@ export class DinheiroClient {
     return this.http.get<DinheiroEvento>(`${this.base}/api/v1/eventos/${eventoId}/dinheiro`);
   }
 
-  private pagamento(eventoId: string, servicoId: string) {
-    return `${this.base}/api/v1/eventos/${eventoId}/dinheiro/pagamentos/${servicoId}`;
+  private pagamento(eventoId: string, pagamentoId: string) {
+    return `${this.base}/api/v1/eventos/${eventoId}/dinheiro/pagamentos/${pagamentoId}`;
   }
 
-  parcelar(eventoId: string, servicoId: string, pedido: PedidoParcelamentoPagamento) {
-    return this.http.put<DinheiroEvento>(`${this.pagamento(eventoId, servicoId)}/parcelamento`, pedido);
+  parcelar(eventoId: string, pagamentoId: string, pedido: PedidoParcelamentoPagamento) {
+    return this.http.put<DinheiroEvento>(`${this.pagamento(eventoId, pagamentoId)}/parcelamento`, pedido);
   }
 
-  removerParcelamento(eventoId: string, servicoId: string) {
-    return this.http.delete<DinheiroEvento>(`${this.pagamento(eventoId, servicoId)}/parcelamento`);
+  removerParcelamento(eventoId: string, pagamentoId: string) {
+    return this.http.delete<DinheiroEvento>(`${this.pagamento(eventoId, pagamentoId)}/parcelamento`);
   }
 
-  marcarPagamento(eventoId: string, servicoId: string, pago: boolean) {
-    return this.http.put<DinheiroEvento>(`${this.pagamento(eventoId, servicoId)}/pago`, { pago });
+  marcarPagamento(eventoId: string, pagamentoId: string, pago: boolean) {
+    return this.http.put<DinheiroEvento>(`${this.pagamento(eventoId, pagamentoId)}/pago`, { pago });
   }
 
-  marcarParcela(eventoId: string, servicoId: string, parcelaId: string, pago: boolean) {
-    return this.http.put<DinheiroEvento>(`${this.pagamento(eventoId, servicoId)}/parcelas/${parcelaId}/pago`, { pago });
+  marcarParcela(eventoId: string, pagamentoId: string, parcelaId: string, pago: boolean) {
+    return this.http.put<DinheiroEvento>(`${this.pagamento(eventoId, pagamentoId)}/parcelas/${parcelaId}/pago`, { pago });
   }
 
   /** Comprovante da parcela, ou do pagamento quando `parcelaId` é nulo. */
-  enviarComprovante(eventoId: string, servicoId: string, parcelaId: string | null, arquivo: File) {
+  enviarComprovante(eventoId: string, pagamentoId: string, parcelaId: string | null, arquivo: File) {
     const dados = new FormData();
     dados.append('arquivo', arquivo);
-    return this.http.post<DinheiroEvento>(this.comprovante(eventoId, servicoId, parcelaId), dados);
+    return this.http.post<DinheiroEvento>(this.comprovante(eventoId, pagamentoId, parcelaId), dados);
   }
 
-  excluirComprovante(eventoId: string, servicoId: string, parcelaId: string | null) {
-    return this.http.delete<DinheiroEvento>(this.comprovante(eventoId, servicoId, parcelaId));
+  excluirComprovante(eventoId: string, pagamentoId: string, parcelaId: string | null) {
+    return this.http.delete<DinheiroEvento>(this.comprovante(eventoId, pagamentoId, parcelaId));
   }
 
-  private comprovante(eventoId: string, servicoId: string, parcelaId: string | null) {
-    const base = this.pagamento(eventoId, servicoId);
+  private comprovante(eventoId: string, pagamentoId: string, parcelaId: string | null) {
+    const base = this.pagamento(eventoId, pagamentoId);
     return parcelaId ? `${base}/parcelas/${parcelaId}/comprovante` : `${base}/comprovante`;
   }
 

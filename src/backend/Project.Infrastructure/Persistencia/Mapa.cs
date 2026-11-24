@@ -42,9 +42,10 @@ public static class Mapa
         evento.HasMany(item => item.Tags).WithMany(tag => tag.Eventos);
 
         var servicoEvento = modelBuilder.Entity<ServicoEvento>();
+        servicoEvento.Ignore(servico => servico.ContratosAtivos);
         servicoEvento.Property(servico => servico.ValorEstimado).HasPrecision(12, 2);
         servicoEvento.Property(servico => servico.ValorContratado).HasPrecision(12, 2);
-        servicoEvento.HasOne(servico => servico.Contrato).WithOne().HasForeignKey<Project.Domain.Dinheiro.ContratoFornecedor>(contrato => contrato.ServicoId).OnDelete(DeleteBehavior.Cascade);
+        servicoEvento.HasMany(servico => servico.Contratos).WithOne().HasForeignKey(contrato => contrato.ServicoId).OnDelete(DeleteBehavior.Cascade);
         servicoEvento.HasMany(servico => servico.Subitens).WithOne().HasForeignKey(item => item.ServicoId).OnDelete(DeleteBehavior.Cascade);
         servicoEvento.HasMany(servico => servico.Fornecedores).WithOne().HasForeignKey(item => item.ServicoId).OnDelete(DeleteBehavior.Cascade);
 
@@ -261,7 +262,9 @@ public static class Mapa
 
         var contratoFornecedor = modelBuilder.Entity<Project.Domain.Dinheiro.ContratoFornecedor>();
         contratoFornecedor.ToTable("ContratosFornecedor");
-        contratoFornecedor.HasIndex(item => item.ServicoId).IsUnique();
+        contratoFornecedor.HasIndex(item => item.ServicoId);
+        contratoFornecedor.HasIndex(item => item.VinculoId).IsUnique();
+        contratoFornecedor.HasOne<FornecedorNoServico>().WithOne().HasForeignKey<Project.Domain.Dinheiro.ContratoFornecedor>(item => item.VinculoId).OnDelete(DeleteBehavior.Cascade);
         contratoFornecedor.HasMany(item => item.Parcelas).WithOne().HasForeignKey(item => item.ContratoFornecedorId).OnDelete(DeleteBehavior.Cascade);
 
         var parcelaFornecedor = modelBuilder.Entity<Project.Domain.Dinheiro.ParcelaContratoFornecedor>();

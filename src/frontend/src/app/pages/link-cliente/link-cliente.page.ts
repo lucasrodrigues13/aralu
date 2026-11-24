@@ -71,7 +71,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
                 }
                 @for (grupo of grupos(); track grupo.chave) {
                   <h2 class="mes">{{ grupo.mes }} · {{ grupo.total | gdDinheiro }}</h2>
-                  @for (pagamento of grupo.itens; track pagamento.servicoId) {
+                  @for (pagamento of grupo.itens; track pagamento.pagamentoId) {
                     <mat-card class="cardWithShadow pagamento"><mat-card-content>
                       <div class="linha">
                         <div class="min-w-0">
@@ -306,45 +306,45 @@ export class LinkClientePage implements OnInit {
 
   protected parcelar(pagamento: PagamentoFornecedor): void {
     this.dialog.open(ParcelarPagamentoDialog, { ...DIALOG, data: pagamento }).afterClosed().subscribe((pedido) => {
-      if (pedido) this.aplicar(this.cliente.parcelar(this.token, pagamento.servicoId, pedido), 'Parcelamento salvo.');
+      if (pedido) this.aplicar(this.cliente.parcelar(this.token, pagamento.pagamentoId, pedido), 'Parcelamento salvo.');
     });
   }
 
   protected removerParcelamento(pagamento: PagamentoFornecedor): void {
     this.confirmar('Remover parcelamento', `Voltar "${pagamento.servico}" a um pagamento só, sem parcelas?`, 'Remover', () =>
-      this.aplicar(this.cliente.removerParcelamento(this.token, pagamento.servicoId), 'Parcelamento removido.'));
+      this.aplicar(this.cliente.removerParcelamento(this.token, pagamento.pagamentoId), 'Parcelamento removido.'));
   }
 
   protected marcarPagamento(pagamento: PagamentoFornecedor, pago: boolean): void {
-    this.aplicar(this.cliente.marcarPagamento(this.token, pagamento.servicoId, pago), pago ? 'Pagamento marcado como pago.' : 'Pagamento desfeito.');
+    this.aplicar(this.cliente.marcarPagamento(this.token, pagamento.pagamentoId, pago), pago ? 'Pagamento marcado como pago.' : 'Pagamento desfeito.');
   }
 
   protected marcarParcela(pagamento: PagamentoFornecedor, parcela: ParcelaPagamento, paga: boolean): void {
-    this.aplicar(this.cliente.marcarParcela(this.token, pagamento.servicoId, parcela.id, paga), paga ? 'Parcela marcada como paga.' : 'Parcela desfeita.');
+    this.aplicar(this.cliente.marcarParcela(this.token, pagamento.pagamentoId, parcela.id, paga), paga ? 'Parcela marcada como paga.' : 'Parcela desfeita.');
   }
 
   protected enviarComprovante(pagamento: PagamentoFornecedor, parcela: ParcelaPagamento | null): void {
     this.dialog.open(ComprovanteDialog, DIALOG_PEQUENO).afterClosed().subscribe((arquivo?: File) => {
-      if (arquivo) this.aplicar(this.cliente.enviarComprovante(this.token, pagamento.servicoId, parcela?.id ?? null, arquivo), 'Comprovante enviado.');
+      if (arquivo) this.aplicar(this.cliente.enviarComprovante(this.token, pagamento.pagamentoId, parcela?.id ?? null, arquivo), 'Comprovante enviado.');
     });
   }
 
   protected excluirComprovante(pagamento: PagamentoFornecedor, parcela: ParcelaPagamento | null): void {
     const nome = (parcela ?? pagamento).comprovante?.nome ?? 'comprovante';
     this.confirmar('Excluir comprovante', `Excluir "${nome}"? O arquivo é apagado.`, 'Excluir', () =>
-      this.aplicar(this.cliente.excluirComprovante(this.token, pagamento.servicoId, parcela?.id ?? null), 'Comprovante excluído.'));
+      this.aplicar(this.cliente.excluirComprovante(this.token, pagamento.pagamentoId, parcela?.id ?? null), 'Comprovante excluído.'));
   }
 
   protected enviarContrato(pagamento: PagamentoFornecedor): void {
     this.dialog.open(ComprovanteDialog, { ...DIALOG_PEQUENO, data: { titulo: 'Enviar contrato assinado' } }).afterClosed().subscribe((arquivo?: File) => {
-      if (arquivo) this.aplicar(this.cliente.enviarContratoAssinado(this.token, pagamento.servicoId, arquivo), 'Contrato assinado enviado.');
+      if (arquivo) this.aplicar(this.cliente.enviarContratoAssinado(this.token, pagamento.pagamentoId, arquivo), 'Contrato assinado enviado.');
     });
   }
 
   protected excluirContrato(pagamento: PagamentoFornecedor): void {
     const nome = pagamento.contratoAssinado?.nome ?? 'contrato';
     this.confirmar('Excluir contrato assinado', `Excluir "${nome}"? O arquivo é apagado.`, 'Excluir', () =>
-      this.aplicar(this.cliente.excluirContratoAssinado(this.token, pagamento.servicoId), 'Contrato assinado excluído.'));
+      this.aplicar(this.cliente.excluirContratoAssinado(this.token, pagamento.pagamentoId), 'Contrato assinado excluído.'));
   }
 
   protected abrir(arquivo: ComprovantePagamento): void {

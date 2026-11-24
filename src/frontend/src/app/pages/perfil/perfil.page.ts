@@ -61,7 +61,7 @@ import { aplicarMascara } from '../../shared/mascaras';
                 <mat-label class="font-semibold mb-2 block">Chave Pix</mat-label>
                 <mat-form-field appearance="outline" class="w-full">
                   <input aria-label="Chave Pix" matInput formControlName="chavePix" maxlength="140" placeholder="CPF, CNPJ, e-mail, celular ou chave aleatória" />
-                  <mat-hint>Vai junto na mensagem de "Cobrar" do Dinheiro do evento.</mat-hint>
+                  <mat-hint>Vai junto na mensagem de "Cobrar" do Financeiro do evento.</mat-hint>
                 </mat-form-field>
               </div>
             </mat-card-content>
