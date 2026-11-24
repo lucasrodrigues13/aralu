@@ -12,10 +12,14 @@ public sealed class Tarefa
 
     public string? Descricao { get; set; }
 
-    /// <summary>Copiado do modelo na criação/aplicação (SPEC-012 §8.2). Exibição na lista fica na SPEC-003.</summary>
-    public string? Grupo { get; set; }
-
+    /// <summary>
+    /// Data exata, ou o prazo efetivo de uma tarefa relativa (data do evento + <see cref="PrazoRelativo"/>), mantido
+    /// junto com a data do evento para que listas, Hoje e Agenda leiam uma data só (SPEC-012 v3 §8.1).
+    /// </summary>
     public DateOnly? Prazo { get; set; }
+
+    /// <summary>Prazo relativo: dias em relação à data do evento (negativo = antes). Nulo = data exata ou sem prazo.</summary>
+    public int? PrazoRelativo { get; set; }
 
     public SituacaoTarefa Situacao { get; set; } = SituacaoTarefa.Pendente;
 

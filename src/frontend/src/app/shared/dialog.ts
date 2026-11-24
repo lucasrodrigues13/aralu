@@ -14,3 +14,6 @@ export const DIALOG_PEQUENO = { ...BASE, width: 'min(448px, calc(100vw - 32px))'
 
 /** Cadastro com abas: 840px. */
 export const DIALOG_LARGO = { ...BASE, width: 'min(840px, calc(100vw - 32px))' };
+
+/** Grade de "Adicionar tarefas em massa" (SPEC-012 v3 §6.4): 1100px. */
+export const DIALOG_EM_MASSA = { ...BASE, width: 'min(1100px, calc(100vw - 32px))' };

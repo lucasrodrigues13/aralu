@@ -16,6 +16,7 @@ export interface SelecionarServicosDados {
 }
 
 export interface ServicoEscolhido {
+  servicoContaId: string;
   nome: string;
   valorEstimado: number | null;
 }
@@ -157,7 +158,7 @@ export class SelecionarServicosModeloDialog implements OnInit {
     this.ref.close(
       this.catalogo()
         .filter((servico) => marcados.has(servico.id))
-        .map((servico) => ({ nome: servico.nome, valorEstimado: this.valorDe(servico.id).value })),
+        .map((servico) => ({ servicoContaId: servico.id, nome: servico.nome, valorEstimado: this.valorDe(servico.id).value })),
     );
   }
 }

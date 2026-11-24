@@ -4159,3 +4159,215 @@ BEGIN
 END $EF$;
 COMMIT;
 
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261124190000_ServicosETarefasDoModelo') THEN
+    ALTER TABLE "ServicoModelo" ADD "ServicoContaId" uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261124190000_ServicosETarefasDoModelo') THEN
+    ALTER TABLE "TarefaModelo" ADD "Descricao" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261124190000_ServicosETarefasDoModelo') THEN
+    ALTER TABLE "TarefaModelo" ADD "PrazoRelativo" integer;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261124190000_ServicosETarefasDoModelo') THEN
+    ALTER TABLE "TarefaModelo" ADD "Prioridade" text NOT NULL DEFAULT 'Media';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261124190000_ServicosETarefasDoModelo') THEN
+    ALTER TABLE "TarefaModelo" ADD "Visibilidade" text NOT NULL DEFAULT 'SoEu';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261124190000_ServicosETarefasDoModelo') THEN
+    ALTER TABLE "TarefaModelo" ADD "Responsaveis" text NOT NULL DEFAULT 'Organizer';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261124190000_ServicosETarefasDoModelo') THEN
+    ALTER TABLE "TarefaModelo" ADD "ServicoModeloId" uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261124190000_ServicosETarefasDoModelo') THEN
+    ALTER TABLE "Tarefas" ADD "PrazoRelativo" integer;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261124190000_ServicosETarefasDoModelo') THEN
+    ALTER TABLE "ItensChecklistTarefa" ADD "PrazoRelativo" integer;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261124190000_ServicosETarefasDoModelo') THEN
+    CREATE TABLE "ItensChecklistTarefaModelo" (
+        "Id" uuid NOT NULL,
+        "TarefaModeloId" uuid NOT NULL,
+        "Texto" text NOT NULL,
+        "Ordem" integer NOT NULL,
+        "PrazoRelativo" integer,
+        "ResponsavelPapel" text,
+        CONSTRAINT "PK_ItensChecklistTarefaModelo" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_ItensChecklistTarefaModelo_TarefaModelo_TarefaModeloId" FOREIGN KEY ("TarefaModeloId") REFERENCES "TarefaModelo" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261124190000_ServicosETarefasDoModelo') THEN
+    UPDATE "TarefaModelo" SET "PrazoRelativo" = -"DiasAntes" WHERE "DiasAntes" IS NOT NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261124190000_ServicosETarefasDoModelo') THEN
+    INSERT INTO "ServicosConta" ("Id", "ContaId", "Nome", "Padrao")
+    SELECT gen_random_uuid(), x."ContaId", x."Nome", FALSE
+    FROM (
+        SELECT DISTINCT ON (m."ContaId", lower(btrim(s."Nome"))) m."ContaId", left(btrim(s."Nome"), 200) AS "Nome"
+        FROM "ServicoModelo" s
+        JOIN "Modelos" m ON m."Id" = s."ModeloId"
+        WHERE btrim(s."Nome") <> ''
+          AND NOT EXISTS (
+              SELECT 1 FROM "ServicosConta" c
+              WHERE c."ContaId" = m."ContaId" AND lower(c."Nome") = lower(btrim(s."Nome")))
+        ORDER BY m."ContaId", lower(btrim(s."Nome"))
+    ) x;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261124190000_ServicosETarefasDoModelo') THEN
+    UPDATE "ServicoModelo" s SET "ServicoContaId" = c."Id"
+    FROM "Modelos" m, "ServicosConta" c
+    WHERE m."Id" = s."ModeloId" AND c."ContaId" = m."ContaId" AND lower(c."Nome") = lower(btrim(s."Nome"));
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261124190000_ServicosETarefasDoModelo') THEN
+    INSERT INTO "TarefaModelo" ("Id", "ModeloId", "Titulo", "ServicoModeloId", "Prioridade", "Visibilidade", "Responsaveis")
+    SELECT gen_random_uuid(), s."ModeloId", left(btrim(i."Texto"), 200), s."Id", 'Media', 'SoEu', 'Organizer'
+    FROM "ItemServicoModelo" i
+    JOIN "ServicoModelo" s ON s."Id" = i."ServicoId"
+    WHERE btrim(i."Texto") <> '';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261124190000_ServicosETarefasDoModelo') THEN
+    UPDATE "TarefaModelo" t SET "ServicoModeloId" = s."Id"
+    FROM "ServicoModelo" s
+    WHERE t."ServicoModeloId" IS NULL AND t."Grupo" IS NOT NULL
+      AND s."ModeloId" = t."ModeloId" AND lower(btrim(s."Nome")) = lower(btrim(t."Grupo"));
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261124190000_ServicosETarefasDoModelo') THEN
+    UPDATE "Tarefas" t SET "ServicoEventoId" = s."Id"
+    FROM "ServicoEvento" s
+    WHERE t."ServicoEventoId" IS NULL AND t."Grupo" IS NOT NULL
+      AND s."EventoId" = t."EventoId" AND lower(btrim(s."Nome")) = lower(btrim(t."Grupo"));
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261124190000_ServicosETarefasDoModelo') THEN
+    DROP TABLE "ItemServicoModelo";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261124190000_ServicosETarefasDoModelo') THEN
+    ALTER TABLE "TarefaModelo" DROP COLUMN "DiasAntes";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261124190000_ServicosETarefasDoModelo') THEN
+    ALTER TABLE "TarefaModelo" DROP COLUMN "Grupo";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261124190000_ServicosETarefasDoModelo') THEN
+    ALTER TABLE "Tarefas" DROP COLUMN "Grupo";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261124190000_ServicosETarefasDoModelo') THEN
+    CREATE INDEX "IX_ServicoModelo_ServicoContaId" ON "ServicoModelo" ("ServicoContaId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261124190000_ServicosETarefasDoModelo') THEN
+    CREATE INDEX "IX_TarefaModelo_ServicoModeloId" ON "TarefaModelo" ("ServicoModeloId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261124190000_ServicosETarefasDoModelo') THEN
+    CREATE INDEX "IX_ItensChecklistTarefaModelo_TarefaModeloId" ON "ItensChecklistTarefaModelo" ("TarefaModeloId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261124190000_ServicosETarefasDoModelo') THEN
+    ALTER TABLE "TarefaModelo" ADD CONSTRAINT "FK_TarefaModelo_ServicoModelo_ServicoModeloId" FOREIGN KEY ("ServicoModeloId") REFERENCES "ServicoModelo" ("Id") ON DELETE SET NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261124190000_ServicosETarefasDoModelo') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261124190000_ServicosETarefasDoModelo', '10.0.4');
+    END IF;
+END $EF$;
+
+COMMIT;

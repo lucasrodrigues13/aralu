@@ -7,5 +7,6 @@ public interface IPlanilhaTarefasModelo
 {
     byte[] Modelo();
 
-    Resultado<ResultadoLeituraTarefas> Ler(Stream arquivo, string? nomeArquivo);
+    /// <param name="aceitaData">Falso no modelo de evento (só prazo relativo); verdadeiro no evento.</param>
+    Resultado<ResultadoLeituraTarefas> Ler(Stream arquivo, string? nomeArquivo, bool aceitaData);
 }

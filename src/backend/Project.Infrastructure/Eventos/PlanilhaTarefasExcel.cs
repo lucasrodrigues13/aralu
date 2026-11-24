@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using ExcelDataReader;
 using Project.Application.Comum;
@@ -6,6 +7,7 @@ using Project.Domain.Eventos;
 
 namespace Project.Infrastructure.Eventos;
 
+/// <summary>Planilha de tarefas (SPEC-012 v3 §8.7): modelo para baixar e leitura de .xlsx/.csv.</summary>
 public sealed class PlanilhaTarefasExcel : IPlanilhaTarefasModelo
 {
     private const long MaximoBytes = 2 * 1024 * 1024;
@@ -22,129 +24,119 @@ public sealed class PlanilhaTarefasExcel : IPlanilhaTarefasModelo
         for (var i = 0; i < PlanilhaTarefasModelo.Colunas.Length; i++)
         {
             aba.Cell(1, i + 1).Value = PlanilhaTarefasModelo.Colunas[i];
+            aba.Cell(1, i + 1).Style.Font.Bold = true;
         }
 
+        for (var linha = 0; linha < PlanilhaTarefasModelo.Exemplos.Length; linha++)
+        {
+            var valores = PlanilhaTarefasModelo.Exemplos[linha];
+            for (var coluna = 0; coluna < valores.Length; coluna++)
+            {
+                aba.Cell(linha + 2, coluna + 1).Value = valores[coluna];
+            }
+        }
+
+        aba.Columns().AdjustToContents();
         using var memoria = new MemoryStream();
         livro.SaveAs(memoria);
         return memoria.ToArray();
     }
 
-    public Resultado<ResultadoLeituraTarefas> Ler(Stream arquivo, string? nomeArquivo)
+    public Resultado<ResultadoLeituraTarefas> Ler(Stream arquivo, string? nomeArquivo, bool aceitaData)
     {
         var extensao = Path.GetExtension(nomeArquivo ?? "").ToLowerInvariant();
         if (extensao is not ".xlsx" and not ".xls" and not ".csv")
         {
-            return Resultado<ResultadoLeituraTarefas>.Erro(
-                Codigos.Validacao, "Envie uma planilha .xlsx ou .csv.");
+            return Resultado<ResultadoLeituraTarefas>.Erro(Codigos.Validacao, "Envie uma planilha .xlsx ou .csv.");
         }
 
         if (arquivo.CanSeek && arquivo.Length > MaximoBytes)
         {
-            return Resultado<ResultadoLeituraTarefas>.Erro(
-                Codigos.Validacao, "A planilha tem no máximo 2 MB.");
+            return Resultado<ResultadoLeituraTarefas>.Erro(Codigos.Validacao, "A planilha tem no máximo 2 MB.");
         }
 
         try
         {
-            if (extensao == ".csv")
+            var linhas = extensao == ".csv" ? LerCsv(arquivo) : LerExcel(arquivo);
+            if (linhas.Count == 0)
             {
-                return LerCsv(arquivo);
+                return Resultado<ResultadoLeituraTarefas>.Erro(Codigos.Validacao, "A planilha precisa da coluna Tarefa.");
             }
 
-            using var leitor = ExcelReaderFactory.CreateReader(arquivo);
-            return LerLeitor(leitor);
+            if (!PlanilhaTarefasModelo.TentarMapearCabecalho(linhas[0], out var colunas, out var erro))
+            {
+                return Resultado<ResultadoLeituraTarefas>.Erro(Codigos.Validacao, erro!);
+            }
+
+            var dados = new List<LinhaPlanilhaTarefa>();
+            for (var i = 1; i < linhas.Count; i++)
+            {
+                var celulas = linhas[i];
+                string? Celula(int? indice) => indice is int idx && idx >= 0 && idx < celulas.Count ? celulas[idx] : null;
+                var linha = new LinhaPlanilhaTarefa(
+                    Celula(colunas.Tarefa),
+                    Celula(colunas.Servico),
+                    Celula(colunas.Prazo),
+                    Celula(colunas.Responsaveis),
+                    Celula(colunas.Prioridade),
+                    Celula(colunas.Descricao));
+                if (celulas.All(string.IsNullOrWhiteSpace))
+                {
+                    continue;
+                }
+
+                dados.Add(linha);
+            }
+
+            return Resultado<ResultadoLeituraTarefas>.Sucesso(ImportacaoTarefasModelo.LerPlanilha(dados, aceitaData));
         }
         catch (Exception)
         {
-            return Resultado<ResultadoLeituraTarefas>.Erro(
-                Codigos.Validacao, "A planilha não pôde ser importada.");
+            return Resultado<ResultadoLeituraTarefas>.Erro(Codigos.Validacao, "A planilha não pôde ser importada.");
         }
     }
 
-    private static Resultado<ResultadoLeituraTarefas> LerCsv(Stream arquivo)
+    private static List<IReadOnlyList<string?>> LerExcel(Stream arquivo)
     {
-        using var reader = new StreamReader(arquivo, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
-        var linhasBrutas = new List<string[]>();
-        while (reader.ReadLine() is { } linha)
-        {
-            linhasBrutas.Add(PartirCsv(linha));
-        }
-
-        if (linhasBrutas.Count == 0)
-        {
-            return Resultado<ResultadoLeituraTarefas>.Erro(
-                Codigos.Validacao, "A planilha precisa da coluna Tarefa.");
-        }
-
-        var cabecalho = linhasBrutas[0].Select(c => (string?)c).ToArray();
-        if (!PlanilhaTarefasModelo.TentarMapearCabecalho(cabecalho, out var iTarefa, out var iGrupo, out var iPrazo, out var erro))
-        {
-            return Resultado<ResultadoLeituraTarefas>.Erro(Codigos.Validacao, erro!);
-        }
-
-        var linhas = new List<(string? Grupo, string? Tarefa, string? Prazo)>();
-        for (var i = 1; i < linhasBrutas.Count; i++)
-        {
-            var cols = linhasBrutas[i];
-            string? Celula(int? indice) =>
-                indice is int idx && idx < cols.Length ? cols[idx] : null;
-
-            var tarefa = Celula(iTarefa);
-            var grupo = Celula(iGrupo);
-            var prazo = Celula(iPrazo);
-            if (string.IsNullOrWhiteSpace(tarefa) && string.IsNullOrWhiteSpace(grupo) && string.IsNullOrWhiteSpace(prazo))
-            {
-                continue;
-            }
-
-            linhas.Add((grupo, tarefa, prazo));
-        }
-
-        return Resultado<ResultadoLeituraTarefas>.Sucesso(ImportacaoTarefasModelo.LerPlanilha(linhas));
-    }
-
-    private static Resultado<ResultadoLeituraTarefas> LerLeitor(IExcelDataReader leitor)
-    {
-        if (!leitor.Read())
-        {
-            return Resultado<ResultadoLeituraTarefas>.Erro(
-                Codigos.Validacao, "A planilha precisa da coluna Tarefa.");
-        }
-
-        var cabecalho = new string?[leitor.FieldCount];
-        for (var i = 0; i < leitor.FieldCount; i++)
-        {
-            cabecalho[i] = leitor.GetValue(i)?.ToString();
-        }
-
-        if (!PlanilhaTarefasModelo.TentarMapearCabecalho(cabecalho, out var iTarefa, out var iGrupo, out var iPrazo, out var erro))
-        {
-            return Resultado<ResultadoLeituraTarefas>.Erro(Codigos.Validacao, erro!);
-        }
-
-        var linhas = new List<(string? Grupo, string? Tarefa, string? Prazo)>();
+        using var leitor = ExcelReaderFactory.CreateReader(arquivo);
+        var linhas = new List<IReadOnlyList<string?>>();
         while (leitor.Read())
         {
-            string? Celula(int? indice) =>
-                indice is int idx && idx < leitor.FieldCount ? leitor.GetValue(idx)?.ToString() : null;
-
-            var tarefa = Celula(iTarefa);
-            var grupo = Celula(iGrupo);
-            var prazo = Celula(iPrazo);
-            if (string.IsNullOrWhiteSpace(tarefa) && string.IsNullOrWhiteSpace(grupo) && string.IsNullOrWhiteSpace(prazo))
+            var celulas = new string?[leitor.FieldCount];
+            for (var i = 0; i < leitor.FieldCount; i++)
             {
-                continue;
+                celulas[i] = leitor.GetValue(i) switch
+                {
+                    null => null,
+                    DateTime data => data.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture),
+                    var valor => Convert.ToString(valor, CultureInfo.InvariantCulture),
+                };
             }
 
-            linhas.Add((grupo, tarefa, prazo));
+            linhas.Add(celulas);
         }
 
-        return Resultado<ResultadoLeituraTarefas>.Sucesso(ImportacaoTarefasModelo.LerPlanilha(linhas));
+        return linhas;
     }
 
-    private static string[] PartirCsv(string linha)
+    private static List<IReadOnlyList<string?>> LerCsv(Stream arquivo)
     {
-        var partes = new List<string>();
+        using var reader = new StreamReader(arquivo, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
+        var linhas = new List<IReadOnlyList<string?>>();
+        char? separador = null;
+        while (reader.ReadLine() is { } linha)
+        {
+            // O separador sai do cabeçalho: o Excel em português salva CSV com ";".
+            separador ??= linha.Count(c => c == ';') > linha.Count(c => c == ',') ? ';' : ',';
+            linhas.Add(PartirCsv(linha, separador.Value));
+        }
+
+        return linhas;
+    }
+
+    private static string?[] PartirCsv(string linha, char separador)
+    {
+        var partes = new List<string?>();
         var atual = new StringBuilder();
         var entreAspas = false;
         for (var i = 0; i < linha.Length; i++)
@@ -162,7 +154,7 @@ public sealed class PlanilhaTarefasExcel : IPlanilhaTarefasModelo
                     entreAspas = !entreAspas;
                 }
             }
-            else if ((c == ',' || c == ';') && !entreAspas)
+            else if (c == separador && !entreAspas)
             {
                 partes.Add(atual.ToString());
                 atual.Clear();

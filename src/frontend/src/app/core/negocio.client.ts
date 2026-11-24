@@ -33,38 +33,58 @@ export interface Perfil {
   chavePix: string | null;
 }
 
-export interface ItemServicoModelo {
-  id: string;
-  tipo: string;
-  texto: string;
-}
-
+/** Serviço do modelo, ligado ao cadastro da conta (SPEC-012 v3 §8.4). */
 export interface ServicoModelo {
   id: string;
+  servicoContaId: string | null;
   nome: string;
   valorEstimado: number | null;
-  itens: ItemServicoModelo[];
+  /** Falso quando o serviço saiu do cadastro da conta. */
+  noCadastro: boolean;
 }
 
+export interface ItemChecklistModelo {
+  id: string;
+  texto: string;
+  prazoRelativo: number | null;
+  responsavelPapel: string | null;
+}
+
+/** Tarefa do modelo: mesmo formato da tarefa do evento, sem data exata (SPEC-012 v3 §8.2). */
 export interface TarefaModelo {
   id: string;
+  servicoModeloId: string | null;
   titulo: string;
-  grupo: string | null;
-  diasAntes: number | null;
+  descricao: string | null;
+  /** Dias em relação à data do evento: negativo = antes, 0 = no dia, positivo = depois. */
+  prazoRelativo: number | null;
+  prioridade: string;
+  visibilidade: string;
+  responsaveis: string[];
+  checklist: ItemChecklistModelo[];
 }
 
-export interface PreviaTarefaImportada {
+/** Linha lida da lista colada ou da planilha para a grade em massa (SPEC-012 v3 §6.4). */
+export interface TarefaLidaEmMassa {
   titulo: string;
-  grupo: string | null;
-  diasAntes: number | null;
-  prazoLegivel: string | null;
-  aviso: string | null;
+  servico: string | null;
+  prazoRelativo: number | null;
+  prazoData: string | null;
+  responsaveis: string[];
+  prioridade: string | null;
+  descricao: string | null;
+  avisos: string[];
 }
 
-export interface PreviaImportacaoTarefas {
-  tarefas: PreviaTarefaImportada[];
+export interface LeituraTarefasEmMassa {
+  tarefas: TarefaLidaEmMassa[];
   linhasIgnoradas: string[];
-  total: number;
+}
+
+export interface ResultadoTarefasEmMassa {
+  adicionadas: number;
+  repetidas: number;
+  servicosNovos: number;
 }
 
 export interface PreviaAplicarModelo {
@@ -254,13 +274,6 @@ export const ETAPAS_NEGOCIACAO = [
   { valor: 'Contratado', rotulo: 'Contratado' },
 ];
 
-export const TIPOS_ITEM_CHECKLIST = [
-  { valor: 'Tarefa', rotulo: 'Tarefa' },
-  { valor: 'Fornecedor', rotulo: 'Fornecedor' },
-  { valor: 'Alinhamento', rotulo: 'Alinhamento' },
-  { valor: 'Comparativo', rotulo: 'Comparativo' },
-];
-
 export const MESES = [
   'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez',
 ];
@@ -355,6 +368,8 @@ export interface ItemChecklistTarefa {
   cancelado: boolean;
   prazo: string | null;
   responsavel: ResponsavelTarefa | null;
+  /** Prazo relativo à data do evento; com ele, `prazo` é o prazo efetivo. */
+  prazoRelativo: number | null;
 }
 
 export interface ComentarioTarefa {
@@ -378,7 +393,8 @@ export interface Tarefa {
   evento: string;
   titulo: string;
   descricao: string | null;
-  grupo: string | null;
+  /** Prazo relativo à data do evento (SPEC-012 v3 §8.1); com ele, `prazo` é o prazo efetivo (nulo sem data do evento). */
+  prazoRelativo: number | null;
   prazo: string | null;
   situacao: string;
   responsavelContaId: string;
@@ -530,8 +546,17 @@ export const VISIBILIDADES_TAREFA = [
   { valor: 'Compartilhada', rotulo: 'Compartilhada' },
 ];
 
+/** Papéis que podem ser responsáveis (SPEC-012 v3 §8.3). No evento, "Assistente" sem pessoa = todas as assistentes ativas. */
 export const PAPEIS_RESPONSAVEL_TAREFA = [
-  { valor: 'Organizer', rotulo: 'Eu' },
+  { valor: 'Organizer', rotulo: 'Organizador' },
+  { valor: 'Assistente', rotulo: 'Assistente (todas)' },
+  { valor: 'Cliente', rotulo: 'Cliente' },
+];
+
+/** Papéis do modelo de evento: só papéis, sem pessoa (SPEC-012 v3 §8.3). */
+export const PAPEIS_RESPONSAVEL_MODELO = [
+  { valor: 'Organizer', rotulo: 'Organizador' },
+  { valor: 'Assistente', rotulo: 'Assistente' },
   { valor: 'Cliente', rotulo: 'Cliente' },
 ];
 
@@ -591,19 +616,13 @@ export class NegocioClient {
     return this.http.post<Modelo>(`${this.base}/api/v1/modelos/${id}/clonar`, {});
   }
 
-  previaImportarTarefasModelo(dados: FormData | { texto: string }, modeloId?: string) {
-    const url = modeloId
-      ? `${this.base}/api/v1/modelos/${modeloId}/tarefas/importar/previa`
-      : `${this.base}/api/v1/modelos/importar/previa`;
-    return this.http.post<PreviaImportacaoTarefas>(url, dados);
+  /** Lê a lista colada ou a planilha para a grade em massa. Não grava (SPEC-012 v3 §6.4). */
+  lerTarefasEmMassa(dados: FormData | { texto: string }, paraModelo: boolean) {
+    return this.http.post<LeituraTarefasEmMassa>(`${this.base}/api/v1/tarefas/em-massa/leitura?paraModelo=${paraModelo}`, dados);
   }
 
-  importarModeloNovo(dados: FormData) {
-    return this.http.post<Modelo>(`${this.base}/api/v1/modelos/importar`, dados);
-  }
-
-  importarTarefasModelo(modeloId: string, dados: FormData) {
-    return this.http.post<Modelo>(`${this.base}/api/v1/modelos/${modeloId}/tarefas/importar`, dados);
+  adicionarTarefasEmMassa(eventoId: string, linhas: unknown[]) {
+    return this.http.post<ResultadoTarefasEmMassa>(`${this.base}/api/v1/eventos/${eventoId}/tarefas/em-massa`, { linhas });
   }
 
   planilhaTarefasModelo() {

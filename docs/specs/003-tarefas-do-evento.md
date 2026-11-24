@@ -1,8 +1,20 @@
 # 003. Tarefas do evento
 
-**Status: aprovada (versão 4, 21/11/2026).** A versão 3 (aprovada em 18/11/2026) está no histórico do Git e é o que o código faz hoje; a v4 só acrescenta prazo e responsável por item da checklist (§6.8, card #21 do Trello). Fonte da v3: pedido de 18/11/2026 para a aba Tarefas do evento seguir a lista de eventos. RF-061 e [produto-v1.md](../produto-v1.md) 5.5 acompanham a v3.
+**Status: aprovada (versão 5, 24/11/2026), junto com a [SPEC-012 v3](012-modelos-de-evento.md).** A v5 muda o prazo (sem prazo, relativo ou data exata), passa os responsáveis para papéis com troca opcional por pessoa, remove o grupo, usa o seletor de serviço com busca e acrescenta "Adicionar tarefas em massa". Resumo na seção "Mudanças da v5" logo abaixo; onde o texto antigo contradiz esse resumo, vale o resumo. A v4 foi aprovada em 21/11/2026 e é o que o código faz hoje.
+
+Histórico: versão 4 (21/11/2026). A versão 3 (aprovada em 18/11/2026) está no histórico do Git e é o que o código faz hoje; a v4 só acrescenta prazo e responsável por item da checklist (§6.8, card #21 do Trello). Fonte da v3: pedido de 18/11/2026 para a aba Tarefas do evento seguir a lista de eventos. RF-061 e [produto-v1.md](../produto-v1.md) 5.5 acompanham a v3.
 
 **Onde fica a lista:** desde 21/11/2026 a lista do evento (§6.1 a §6.8) aparece dentro da aba Resumo, não numa aba própria ([SPEC-051](051-resumo-do-evento-com-tarefas.md), card #20). Onde esta spec diz "aba Tarefas do evento", leia "lista de tarefas no Resumo".
+
+## Mudanças da v5 (24/11/2026)
+
+1. **Prazo da tarefa e do item da checklist** tem três tipos: **Sem prazo**, **Relativo** (N dias, semanas ou meses antes ou depois do evento, ou "No dia do evento") e **Data exata**. Regras de exibição, prazo efetivo e evento sem data na SPEC-012 v3 §8.1. O relativo acompanha a data do evento sozinho; o modal "Mover prazos" só trata data exata (SPEC-012 v3 §6.7).
+2. **Agrupamento da lista (§6.2)** usa o prazo efetivo. Evento sem data: tarefas relativas entram no grupo da distância ("6 semanas antes"), tarefas com data exata no mês da data e as demais em "Sem prazo".
+3. **Responsáveis (§6.5)**: a escolha mostra **Organizador**, **Assistente (todas)**, cada assistente ativa pelo nome e **Cliente**. O papel "Assistente" vale para todas as assistentes ativas (Hoje, "minhas tarefas" e filtro de responsável com a opção "Assistente (papel)"). Tarefa nova começa com Organizador. O item da checklist segue a mesma lista, com no máximo um. "Equipe" continua fora da escolha.
+4. **Grupo removido**: sai do formulário, da leitura, da linha da lista e dos dados (§5, §6.1, §6.2, §6.4, §8, §11). Migração na SPEC-012 v3 §8.10.
+5. **Serviço (§6.1 e §6.6)**: o seletor tem busca e "+ Adicionar serviço", como na tela de fornecedor (SPEC-018, card #27). Escolher um serviço do cadastro que o evento não tem inclui o serviço no evento.
+6. **Adicionar tarefas em massa**: na barra da lista de tarefas do evento, ao lado de "Nova tarefa", abre o modal da SPEC-012 v3 §6.4 (grade, lista colada, planilha, ajuda e planilha modelo). No evento, o prazo aceita também data exata.
+7. **Aplicar modelo (§6.8 item 8 e §7)**: as tarefas aplicadas vêm com serviço, prazo relativo, descrição, prioridade, visibilidade, responsáveis por papel e checklist com prazo relativo e responsável por papel (SPEC-012 v3 §8.8). Duplicidade por serviço + título.
 
 ## 1. Identificador e nome
 
@@ -29,7 +41,7 @@ Fora deste rascunho: mural da equipe, caixa global de anexos, lembrete de aniver
 
 ## 5. Pré-condições
 
-Usuário autenticado (SPEC-001) ou link do cliente (quando o bloco 11 existir). Evento da conta em andamento para criar e editar. Campo **grupo** já pode vir do modelo (SPEC-012).
+Usuário autenticado (SPEC-001) ou link do cliente (quando o bloco 11 existir). Evento da conta em andamento para criar e editar. Tarefas podem vir de um modelo (SPEC-012 v3 §8.8).
 
 ## 6. Fluxo principal
 
@@ -37,7 +49,7 @@ Usuário autenticado (SPEC-001) ou link do cliente (quando o bloco 11 existir). 
 
 1. Na aba Tarefas do evento, o cabeçalho tem o botão **Nova tarefa**, no mesmo lugar e no mesmo peso do botão "Novo evento" da lista de eventos. "Aplicar modelo" continua ao lado (SPEC-012).
 2. "Nova tarefa" abre o modal de criação sobre a lista. A rota não muda. O modal segue o padrão das outras telas (design-system 5.10): título do modal, frase de apoio, corpo com os campos e rodapé com Cancelar e Salvar.
-3. O título é obrigatório. Prazo, responsáveis, visibilidade, prioridade, grupo, descrição, serviço e checklist são opcionais e já entram neste modal. A situação nasce pendente e não é pedida na criação.
+3. O título é obrigatório. Prazo (sem prazo, relativo ou data exata), visibilidade, prioridade, descrição, serviço e checklist são opcionais; responsáveis começam com Organizador e já entram neste modal. A situação nasce pendente e não é pedida na criação.
 4. Salvar grava a tarefa e ela aparece na lista. Cancelar, Esc ou toque fora fecha sem gravar. Não há linha de criação na própria lista.
 
 ### 6.2. Lista do evento
@@ -47,7 +59,7 @@ A aba Tarefas do evento é uma lista no padrão da lista de eventos: cabeçalho,
 - "N meses antes" (meses completos até o evento), "N semanas antes", "N dias antes", "No dia do evento", "Depois do evento" e "Sem prazo", nessa ordem (do mais longe para o mais perto do evento).
 - Evento sem data: os grupos são o mês do prazo ("novembro de 2026") e "Sem prazo".
 - Cada grupo tem um cabeçalho com o nome em caixa alta e a contagem ("3 tarefas"); clicar no cabeçalho recolhe ou abre o grupo.
-- A linha mostra um ponto colorido da situação, o título (com grupo de texto e progresso da checklist), o prazo, o serviço ligado e os responsáveis. A última coluna traz Editar e Excluir. Dentro do grupo, ordem pelo prazo e depois pelo título.
+- A linha mostra um ponto colorido da situação, o título (com o progresso da checklist), o prazo, o serviço ligado e os responsáveis. A última coluna traz Editar e Excluir. Dentro do grupo, ordem pelo prazo e depois pelo título.
 
 A barra da lista, à direita, tem a busca pelo título e os filtros de situação, responsável, serviço e "só com checklist", e mostra quantas tarefas foram encontradas. Não há troca de visão para quadro na aba do evento.
 
@@ -57,12 +69,12 @@ Pendente, em andamento, concluída e atrasada aparecem na coluna da tabela e no 
 
 ### 6.4. Leitura e edição
 
-1. Tocar na tarefa abre a **leitura** (título, prazo, responsáveis, visibilidade, prioridade, grupo, checklist, anexos, comentários, serviço).
+1. Tocar na tarefa abre a **leitura** (título, prazo, responsáveis, visibilidade, prioridade, checklist, anexos, comentários, serviço).
 2. "Editar" abre o modal de edição. Não abre direto no formulário ao tocar.
 
 ### 6.5. Responsáveis, visibilidade e prioridade
 
-- Responsáveis: um ou mais entre a dona (Organizer), assistente, membro da equipe ou cliente.
+- Responsáveis: um ou mais entre os papéis Organizador, Assistente (todas) e Cliente, ou uma assistente específica (v5, item 3).
 - Visibilidade: só eu / cliente / compartilhada.
 - Prioridade: baixa / média / alta (padrão: média).
 
@@ -87,7 +99,7 @@ Lista de tarefas de todos os eventos da conta, com filtros: situação, respons�
 5. Na checklist expandida (tabela e leitura), o item mostra o prazo (dia/mês) e o nome do responsável ao lado do texto. Item com prazo anterior a hoje, nem feito nem cancelado, mostra o prazo em destaque de atraso. Prazo e responsável se alteram só no modal de edição; marcar feito ou cancelado continua gravando na hora.
 6. A ordem dos itens não muda: segue a ordem em que foram escritos, não o prazo.
 7. A tarefa e o agrupamento da §6.2 continuam usando só o prazo da tarefa; o prazo do item não move a tarefa de grupo.
-8. Aplicar modelo (SPEC-012) e tarefas criadas por outras telas continuam gerando itens sem prazo e sem responsável.
+8. Aplicar modelo traz os itens com prazo relativo e responsável por papel, quando o modelo tiver (v5, item 7). Tarefas criadas por outras telas continuam gerando itens sem prazo e sem responsável.
 
 ## 7. Fluxos alternativos
 
@@ -97,14 +109,13 @@ Lista de tarefas de todos os eventos da conta, com filtros: situação, respons�
 - Cliente tenta editar campo que não é "marcar feita": indisponível, inclusive prazo e responsável do item.
 - Responsável do item aponta para assistente que não é da conta: recusado, nada é gravado.
 - Sem tarefas, ou filtro sem resultado: a lista diz que não há tarefa para mostrar.
-- Aplicar modelo (SPEC-012): tarefas novas entram com grupo copiado e responsáveis = Organizer.
+- Aplicar modelo (SPEC-012 v3 §8.8): tarefas novas entram com serviço, prazo relativo e responsáveis por papel copiados do modelo.
 
 ## 8. Regras de negócio
 
 - Situação inicial: pendente. Atrasada pode continuar manual neste rascunho; cálculo automático fica na §17.
-- Prazo é data concreta no evento (não "dias antes").
+- Prazo: sem prazo, relativo ao evento ou data exata (SPEC-012 v3 §8.1).
 - Mudar a data do evento e mover prazos: SPEC-012 §6.6 (já implementado). Prazos dos itens: pendência da v4, §17, ponto 7.
-- O grupo de texto (SPEC-012) é opcional, até 80 caracteres; exibido na lista.
 - Comentários e perguntas: thread simples na tarefa (autor, texto, data). Sem menções neste corte, salvo decisão na §17.
 
 ## 9. Validações
@@ -117,7 +128,7 @@ Pendente → qualquer das quatro; concluída pode voltar. Sem estado "arquivada"
 
 ## 11. Dados necessários
 
-Título; descrição opcional; prazo; situação; grupo (texto); responsáveis (lista); visibilidade; prioridade; checklist (itens com texto, feito, cancelado ou pendente, prazo opcional e responsável opcional); anexos; comentários; serviço do evento opcional; evento; conta.
+Título; descrição opcional; tipo de prazo com deslocamento relativo ou data exata; situação; responsáveis (lista de papéis ou pessoas); visibilidade; prioridade; checklist (itens com texto, feito, cancelado ou pendente, prazo opcional e responsável opcional); anexos; comentários; serviço do evento opcional; evento; conta.
 
 ## 12. Interface
 
@@ -144,11 +155,11 @@ Validação no campo, dentro do modal. Outra conta: indisponível. Falha ao grav
 
 ## 15. Cenários de teste
 
-Abrir "Nova tarefa" e fechar sem salvar (nada é criado). Criar só com título e ver a linha na tabela. Filtro de situação. Abrir leitura sem editar. Dois responsáveis. Prioridade. Visibilidade. Checklist. Isolamento entre contas. Tarefa com grupo vindo do modelo. Evento concluído sem o botão "Nova tarefa". (v4) Criar tarefa com três itens de prazos e responsáveis diferentes e reabrir (tudo gravado); editar tirando prazo e responsável de um item (limpos); prazo de item inválido (recusado); assistente de outra conta como responsável do item (recusado); item atrasado em destaque; marcar o item feito sem apagar prazo e responsável; cliente não altera prazo nem responsável do item.
+Abrir "Nova tarefa" e fechar sem salvar (nada é criado). Criar só com título e ver a linha na tabela. Filtro de situação. Abrir leitura sem editar. Dois responsáveis. Prioridade. Visibilidade. Checklist. Isolamento entre contas. Tarefa com serviço e prazo relativo vindos do modelo. (v5) Prazo relativo antes e depois, troca para data exata e de volta; evento sem data com tarefa relativa; responsável Assistente (papel) e troca por assistente específica; adicionar em massa com serviço novo. Evento concluído sem o botão "Nova tarefa". (v4) Criar tarefa com três itens de prazos e responsáveis diferentes e reabrir (tudo gravado); editar tirando prazo e responsável de um item (limpos); prazo de item inválido (recusado); assistente de outra conta como responsável do item (recusado); item atrasado em destaque; marcar o item feito sem apagar prazo e responsável; cliente não altera prazo nem responsável do item.
 
 ## 16. Dependências
 
-SPEC-001, SPEC-002, SPEC-008, SPEC-012 (grupo e aplicar modelo), SPEC-018 (serviço). Bloco 11 (link do cliente) para a parte do cliente. SPEC-032 (assistentes como responsáveis); equipe e cliente em outra spec.
+SPEC-001, SPEC-002, SPEC-008, SPEC-012 v3 (prazo relativo, papéis, aplicar modelo, adicionar em massa), SPEC-018 (serviço). Bloco 11 (link do cliente) para a parte do cliente. SPEC-032 (assistentes como responsáveis); equipe e cliente em outra spec.
 
 ## 17. Premissas e pontos não definidos
 

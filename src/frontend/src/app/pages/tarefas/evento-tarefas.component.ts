@@ -13,13 +13,15 @@ import { mensagemDeErro } from '../../core/mensagem-erro';
 import { NegocioClient, SITUACOES_TAREFA, Tarefa } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
-import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
+import { DIALOG, DIALOG_EM_MASSA, DIALOG_PEQUENO } from '../../shared/dialog';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { chaveResponsavel, opcoesResponsavel, OpcaoResponsavel, rotuloResponsavel } from '../../shared/responsaveis';
 import { AplicarModeloDialog } from '../eventos/aplicar-modelo.dialog';
 import { ChecklistTarefaComponent, progressoChecklist } from './checklist-tarefa';
 import { secoesAteEvento } from './grupo-tarefa';
 import { TarefaFormDialog } from './tarefa-form.dialog';
+import { AdicionarTarefasEmMassaDialog } from './adicionar-tarefas-em-massa.dialog';
+import { exibirPrazoRelativo } from '../../shared/prazo-modelo';
 import { TarefaLeituraDialog } from './tarefa-leitura.dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
@@ -39,6 +41,10 @@ import { MatTooltipModule } from '@angular/material/tooltip';
           <button mat-stroked-button type="button" (click)="aplicarModelo()">
             <mat-icon>playlist_add</mat-icon>
             Aplicar modelo
+          </button>
+          <button mat-stroked-button type="button" (click)="emMassa()">
+            <mat-icon>library_add</mat-icon>
+            Adicionar em massa
           </button>
           <button mat-flat-button type="button" (click)="nova()">
             <mat-icon>add</mat-icon>
@@ -162,20 +168,17 @@ import { MatTooltipModule } from '@angular/material/tooltip';
                             <span class="ponto" [class]="'ponto ' + corSituacao(tarefa.situacao)" [title]="rotulo(tarefa.situacao)"></span>
                             <div class="texto-tarefa">
                               {{ tarefa.titulo }}
-                              @if (tarefa.grupo || tarefa.checklist.length > 0) {
+                              @if (tarefa.checklist.length > 0) {
                                 <span class="block text-xs text-muted">
-                                  {{ tarefa.grupo }}
-                                  @if (tarefa.checklist.length > 0) {
-                                    @if (tarefa.grupo) { · }
-                                    <span class="progresso"><mat-icon>checklist</mat-icon>{{ progresso(tarefa).feitos }}/{{ progresso(tarefa).total }}</span>
-                                  }
+                                  <span class="progresso"><mat-icon>checklist</mat-icon>{{ progresso(tarefa).feitos }}/{{ progresso(tarefa).total }}</span>
                                 </span>
                               }
                             </div>
                           </div>
                         </td>
                         <td class="prazo">
-                          {{ tarefa.prazo ? (tarefa.prazo | gdData) : '—' }}
+                          {{ tarefa.prazo ? (tarefa.prazo | gdData) : (tarefa.prazoRelativo != null ? '' : '—') }}
+                          @if (tarefa.prazoRelativo != null) { <span class="block text-xs text-muted">{{ prazoRelativoTexto(tarefa.prazoRelativo) }}</span> }
                           @if (prazoBadge(tarefa); as badge) {
                             <span class="ml-2 inline-block rounded font-semibold px-2 py-1 text-xs whitespace-nowrap" [class]="badge.classe">{{ badge.rotulo }}</span>
                           }
@@ -392,6 +395,17 @@ export class EventoTarefasComponent implements OnInit {
         this.carregar();
       },
     });
+  }
+
+  /** Adicionar tarefas em massa (SPEC-003 v5, item 6). */
+  protected emMassa(): void {
+    this.dialog.open(AdicionarTarefasEmMassaDialog, { ...DIALOG_EM_MASSA, data: { modo: 'evento', eventoId: this.eventoId() } }).afterClosed().subscribe((salvo) => {
+      if (salvo) this.carregar();
+    });
+  }
+
+  protected prazoRelativoTexto(dias: number): string {
+    return exibirPrazoRelativo(dias);
   }
 
   protected nova(): void {

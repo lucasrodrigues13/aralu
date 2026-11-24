@@ -409,7 +409,7 @@ export class HojePage implements OnInit {
         return this.negocio.atualizarTarefa(atual.id, {
           titulo: atual.titulo,
           descricao: atual.descricao,
-          grupo: atual.grupo,
+          prazoRelativo: atual.prazoRelativo,
           prazo: atual.prazo,
           situacao: atual.situacao,
           prioridade: atual.prioridade,

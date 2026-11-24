@@ -11,16 +11,20 @@ public sealed record ItemChecklistPedido(
     bool Feito,
     bool Cancelado = false,
     DateOnly? Prazo = null,
-    ResponsavelPedido? Responsavel = null);
+    ResponsavelPedido? Responsavel = null,
+    int? PrazoRelativo = null);
 
 public sealed record MarcarItemChecklist(bool Feito, bool Cancelado);
 
 public sealed record ConcluirTarefa(bool Concluida);
 
+/// <summary>
+/// Prazo (SPEC-012 v3 §8.1): <c>PrazoRelativo</c> preenchido = relativo à data do evento (o <c>Prazo</c> enviado é
+/// ignorado e vira o prazo efetivo); senão <c>Prazo</c> é a data exata; os dois nulos = sem prazo.
+/// </summary>
 public sealed record SalvarTarefa(
     string? Titulo,
     string? Descricao,
-    string? Grupo,
     DateOnly? Prazo,
     SituacaoTarefa? Situacao,
     PrioridadeTarefa? Prioridade,
@@ -28,7 +32,8 @@ public sealed record SalvarTarefa(
     Guid? ServicoEventoId,
     bool AtualizarServico,
     IReadOnlyList<ResponsavelPedido>? Responsaveis,
-    IReadOnlyList<ItemChecklistPedido>? Checklist);
+    IReadOnlyList<ItemChecklistPedido>? Checklist,
+    int? PrazoRelativo = null);
 
 public sealed record ComentarioPedido(string? Texto);
 
@@ -40,7 +45,8 @@ public sealed record ItemChecklistLeitura(
     bool Feito,
     bool Cancelado,
     DateOnly? Prazo,
-    ResponsavelLeitura? Responsavel);
+    ResponsavelLeitura? Responsavel,
+    int? PrazoRelativo);
 
 public sealed record AnexoTarefaLeitura(Guid Id, Guid ArquivoId, string Nome, string TipoConteudo, DateTimeOffset EnviadoEm);
 
@@ -52,7 +58,7 @@ public sealed record TarefaLeitura(
     string Evento,
     string Titulo,
     string? Descricao,
-    string? Grupo,
+    int? PrazoRelativo,
     DateOnly? Prazo,
     SituacaoTarefa Situacao,
     string ResponsavelContaId,
@@ -175,10 +181,9 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
             return Resultado<TarefaLeitura>.Erro(Codigos.Validacao, "Informe o título.");
         }
 
-        var grupo = Domain.Comum.Texto.Limpo(pedido.Grupo);
-        if (grupo is { Length: > 80 })
+        if (FalhaDePrazo(pedido) is Falha prazoInvalido)
         {
-            return Resultado<TarefaLeitura>.Erro(Codigos.Validacao, "O grupo tem no máximo 80 caracteres.");
+            return Resultado<TarefaLeitura>.Erro(prazoInvalido.Codigo, prazoInvalido.Mensagem);
         }
 
         if (FalhaDeEnum(pedido.Prioridade, "Escolha a prioridade.") is Falha prioridade)
@@ -216,8 +221,7 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
             ContaId = contaId,
             Titulo = titulo,
             Descricao = Domain.Comum.Texto.Limpo(pedido.Descricao),
-            Grupo = grupo,
-            Prazo = pedido.Prazo,
+            PrazoRelativo = pedido.PrazoRelativo,
             Situacao = SituacaoTarefa.Pendente,
             ResponsavelContaId = contaId,
             Prioridade = pedido.Prioridade ?? PrioridadeTarefa.Media,
@@ -226,6 +230,9 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
         };
         AplicarResponsaveis(tarefa, contaId, pedido.Responsaveis);
         AplicarChecklist(tarefa, contaId, pedido.Checklist);
+        var dataEvento = await dados.DataDoEventoAsync(contaId, eventoId, ct);
+        tarefa.Prazo = pedido.PrazoRelativo is null ? pedido.Prazo : null;
+        PrazosRelativos.Recalcular(tarefa, dataEvento);
         await dados.InserirTarefaAsync(tarefa, ct);
         return Resultado<TarefaLeitura>.Sucesso(await LerUmaAsync(contaId, tarefa, hoje, ct));
     }
@@ -255,10 +262,9 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
             return Resultado<TarefaLeitura>.Erro(Codigos.Validacao, "Escolha a situação da tarefa.");
         }
 
-        var grupo = Domain.Comum.Texto.Limpo(pedido.Grupo);
-        if (grupo is { Length: > 80 })
+        if (FalhaDePrazo(pedido) is Falha prazoInvalido)
         {
-            return Resultado<TarefaLeitura>.Erro(Codigos.Validacao, "O grupo tem no máximo 80 caracteres.");
+            return Resultado<TarefaLeitura>.Erro(prazoInvalido.Codigo, prazoInvalido.Mensagem);
         }
 
         if (FalhaDeEnum(pedido.Prioridade, "Escolha a prioridade.") is Falha prioridade)
@@ -290,9 +296,10 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
         }
 
         tarefa.Titulo = titulo;
+        var dataDoEvento = await dados.DataDoEventoAsync(contaId, tarefa.EventoId, ct);
         tarefa.Descricao = Domain.Comum.Texto.Limpo(pedido.Descricao);
-        tarefa.Grupo = grupo;
-        tarefa.Prazo = pedido.Prazo;
+        tarefa.PrazoRelativo = pedido.PrazoRelativo;
+        tarefa.Prazo = pedido.PrazoRelativo is int relativo ? PrazosRelativos.Efetivo(dataDoEvento, relativo) : pedido.Prazo;
         tarefa.Situacao = situacao;
         if (pedido.Prioridade is PrioridadeTarefa novaPrioridade)
         {
@@ -316,7 +323,13 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
 
         if (pedido.Checklist is not null)
         {
-            await dados.SubstituirChecklistAsync(tarefa.Id, MontarChecklist(tarefa, contaId, pedido.Checklist), ct);
+            var itens = MontarChecklist(tarefa, contaId, pedido.Checklist);
+            foreach (var item in itens.Where(item => item.PrazoRelativo is not null))
+            {
+                item.Prazo = PrazosRelativos.Efetivo(dataDoEvento, item.PrazoRelativo);
+            }
+
+            await dados.SubstituirChecklistAsync(tarefa.Id, itens, ct);
         }
 
         await dados.SalvarTarefaAsync(ct);
@@ -485,7 +498,7 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
             contexto?.Nome ?? "",
             tarefa.Titulo,
             tarefa.Descricao,
-            tarefa.Grupo,
+            tarefa.PrazoRelativo,
             tarefa.Prazo,
             tarefa.Situacao,
             tarefa.ResponsavelContaId,
@@ -502,7 +515,8 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
                     item.Feito,
                     item.Cancelado,
                     item.Prazo,
-                    item.ResponsavelPapel is PapelResponsavel papel ? new ResponsavelLeitura(papel, item.ResponsavelReferenciaId) : null))
+                    item.ResponsavelPapel is PapelResponsavel papel ? new ResponsavelLeitura(papel, item.ResponsavelReferenciaId) : null,
+                    item.PrazoRelativo))
                 .ToArray(),
             tarefa.Comentarios
                 .OrderBy(item => item.CriadoEm)
@@ -577,7 +591,8 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
             Feito = pedido.Feito && !pedido.Cancelado,
             Cancelado = pedido.Cancelado,
             Ordem = ordem++,
-            Prazo = pedido.Prazo,
+            Prazo = pedido.PrazoRelativo is null ? pedido.Prazo : null,
+            PrazoRelativo = pedido.PrazoRelativo,
             ResponsavelPapel = pedido.Responsavel?.Papel,
             ResponsavelReferenciaId = pedido.Responsavel?.Papel switch
             {
@@ -586,6 +601,17 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
                 _ => null,
             },
         }).ToList();
+    }
+
+    private static Falha? FalhaDePrazo(SalvarTarefa pedido)
+    {
+        if (!PrazosRelativos.Valido(pedido.PrazoRelativo)
+            || (pedido.Checklist ?? []).Any(item => !PrazosRelativos.Valido(item.PrazoRelativo)))
+        {
+            return new Falha(Codigos.Validacao, "Use um prazo de até 999 meses antes ou depois do evento.");
+        }
+
+        return null;
     }
 
     private static Falha? FalhaDeEnum<TEnum>(TEnum? valor, string mensagem)
@@ -612,8 +638,9 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
                 return new Falha(Codigos.Validacao, "Membro da equipe ainda não pode ser responsável.");
             }
 
+            // Assistente sem referência é o papel: todas as assistentes ativas (SPEC-012 v3 §8.3).
             if (pedido.Papel == PapelResponsavel.Assistente
-                && (pedido.ReferenciaId is null || !assistentesPermitidas.Contains(pedido.ReferenciaId)))
+                && pedido.ReferenciaId is not null && !assistentesPermitidas.Contains(pedido.ReferenciaId))
             {
                 return new Falha(Codigos.Validacao, "Escolha uma assistente ativa da conta.");
             }
@@ -642,7 +669,7 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
             }
 
             if (responsavel.Papel == PapelResponsavel.Assistente
-                && (responsavel.ReferenciaId is null || !assistentesPermitidas.Contains(responsavel.ReferenciaId)))
+                && responsavel.ReferenciaId is not null && !assistentesPermitidas.Contains(responsavel.ReferenciaId))
             {
                 return new Falha(Codigos.Validacao, "Escolha uma assistente ativa da conta para o item.");
             }

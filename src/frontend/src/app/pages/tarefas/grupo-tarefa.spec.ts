@@ -94,3 +94,14 @@ describe('secoesAteEvento', () => {
     expect(secoes.map((secao) => secao.rotulo)).toEqual(['novembro de 2026', 'dezembro de 2026']);
   });
 });
+
+describe('secoesAteEvento com prazo relativo (SPEC-012 v3 §8.1)', () => {
+  it('evento sem data: a tarefa relativa entra no grupo da distância', () => {
+    const base = { situacao: 'Pendente', eventoId: 'e', servicoEventoId: null, tags: [], responsaveis: [], grupoPrazo: null };
+    const secoes = secoesAteEvento([
+      { ...base, titulo: 'Relativa', prazo: null, prazoRelativo: -42 },
+      { ...base, titulo: 'Sem prazo', prazo: null, prazoRelativo: null },
+    ], null);
+    expect(secoes.map((secao) => secao.rotulo)).toEqual(['1 mês antes', 'Sem prazo']);
+  });
+});

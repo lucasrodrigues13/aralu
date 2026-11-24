@@ -158,6 +158,101 @@ public static partial class PrazoModelo
         return true;
     }
 
+    /// <summary>
+    /// Lê o prazo da SPEC-012 v3 §8.6: "6 semanas" ou "6 semanas antes", "2 semanas depois", "no dia" e, quando
+    /// <paramref name="aceitaData"/>, uma data ("15/03/2027" ou "2027-03-15"). Devolve o deslocamento relativo
+    /// (negativo = antes) ou a data. Falso se o texto não for reconhecido.
+    /// </summary>
+    public static bool TentarLerPrazo(string? texto, bool aceitaData, out int? relativo, out DateOnly? data)
+    {
+        relativo = null;
+        data = null;
+        var limpo = texto?.Trim();
+        if (string.IsNullOrEmpty(limpo))
+        {
+            return false;
+        }
+
+        if (aceitaData && TentarLerData(limpo, out var exata))
+        {
+            data = exata;
+            return true;
+        }
+
+        var normalizado = Normalizar(limpo);
+        if (normalizado is "no dia" or "no dia do evento" or "dia do evento" or "na data do evento")
+        {
+            relativo = 0;
+            return true;
+        }
+
+        var match = PrazoRelativoRegex().Match(normalizado);
+        if (!match.Success
+            || !int.TryParse(match.Groups[1].Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var qtd)
+            || qtd is < 0 or > MaximoNaUnidade)
+        {
+            return false;
+        }
+
+        var dias = match.Groups[2].Value switch
+        {
+            "dia" or "dias" => qtd,
+            "semana" or "semanas" => qtd * 7,
+            _ => qtd * 30,
+        };
+        relativo = match.Groups[3].Value == "depois" ? dias : -dias;
+        return true;
+    }
+
+    /// <summary>Exibe o deslocamento relativo: "6 semanas antes", "2 semanas depois", "No dia do evento".</summary>
+    public static string ExibirRelativo(int? deslocamento)
+    {
+        if (deslocamento is null)
+        {
+            return "Sem prazo";
+        }
+
+        if (deslocamento == 0)
+        {
+            return "No dia do evento";
+        }
+
+        var sentido = deslocamento < 0 ? "antes" : "depois";
+        var dias = Math.Abs(deslocamento.Value);
+        if (dias % 30 == 0)
+        {
+            var meses = dias / 30;
+            return meses == 1 ? $"1 mês {sentido}" : $"{meses} meses {sentido}";
+        }
+
+        if (dias % 7 == 0)
+        {
+            var semanas = dias / 7;
+            return semanas == 1 ? $"1 semana {sentido}" : $"{semanas} semanas {sentido}";
+        }
+
+        return dias == 1 ? $"1 dia {sentido}" : $"{dias} dias {sentido}";
+    }
+
+    private static readonly string[] FormatosData = ["dd/MM/yyyy", "d/M/yyyy", "dd/MM/yy", "d/M/yy", "yyyy-MM-dd"];
+
+    public static bool TentarLerData(string texto, out DateOnly data) =>
+        DateOnly.TryParseExact(
+            texto.Trim(),
+            FormatosData,
+            CultureInfo.InvariantCulture,
+            DateTimeStyles.None,
+            out data);
+
+    private static string Normalizar(string texto) =>
+        texto.ToLowerInvariant()
+            .Replace("é", "e", StringComparison.Ordinal)
+            .Replace("ê", "e", StringComparison.Ordinal)
+            .Trim();
+
     [GeneratedRegex(@"^(\d+)\s*(dias?|semanas?|mes(?:es)?)(?:\s+antes)?$", RegexOptions.CultureInvariant)]
     private static partial Regex PrazoTextoRegex();
+
+    [GeneratedRegex(@"^(\d+)\s*(dias?|semanas?|mes(?:es)?)(?:\s+(antes|depois))?(?:\s+do\s+evento)?$", RegexOptions.CultureInvariant)]
+    private static partial Regex PrazoRelativoRegex();
 }

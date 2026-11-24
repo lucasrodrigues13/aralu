@@ -223,9 +223,11 @@ export class EventoFormPage implements OnInit {
 
     this.negocio.tarefasDoEvento(this.id).subscribe({
       next: (tarefas) => {
-        // SPEC-012 §6.6: também conta tarefa sem prazo que tenha item aberto com prazo.
+        // SPEC-012 v3 §6.7: só data exata entra na pergunta; o prazo relativo acompanha a data sozinho.
         const afetadas = tarefas.some(
-          (t) => t.situacao !== 'Concluida' && (!!t.prazo || t.checklist.some((item) => !!item.prazo && !item.feito && !item.cancelado)),
+          (t) => t.situacao !== 'Concluida'
+            && ((!!t.prazo && t.prazoRelativo == null)
+              || t.checklist.some((item) => !!item.prazo && item.prazoRelativo == null && !item.feito && !item.cancelado)),
         );
         if (!afetadas) {
           this.gravar(null);

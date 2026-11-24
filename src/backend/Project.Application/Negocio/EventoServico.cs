@@ -362,7 +362,8 @@ public sealed class EventoServico(IDados dados, IConsultaCep cep)
             var tarefas = await dados.ListarTarefasAsync(contaId, id, ct);
             foreach (var tarefa in tarefas)
             {
-                if (tarefa.Situacao == SituacaoTarefa.Concluida || tarefa.Prazo is null)
+                // Tarefa relativa acompanha a data sozinha (SPEC-012 v3 §6.7); "Mover" só trata data exata.
+                if (tarefa.Situacao == SituacaoTarefa.Concluida || tarefa.Prazo is null || tarefa.PrazoRelativo is not null)
                 {
                     continue;
                 }
@@ -401,6 +402,11 @@ public sealed class EventoServico(IDados dados, IConsultaCep cep)
         await dados.SubstituirTagsAsync(evento, LimparTags(pedido.Tags), ct);
         await dados.SincronizarAgendaAsync(evento, ct);
         await dados.SalvarEventoAsync(ct);
+        if (dataAnterior != evento.Data)
+        {
+            await dados.RecalcularPrazosRelativosAsync(contaId, id, evento.Data, ct);
+        }
+
         return Resultado<EventoDetalhe>.Sucesso(await DetalheAsync(contaId, evento, hoje, ct));
     }
 

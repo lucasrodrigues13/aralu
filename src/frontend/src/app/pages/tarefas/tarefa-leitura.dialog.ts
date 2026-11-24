@@ -21,6 +21,7 @@ import { validarComprovante as validarArquivo } from '../../core/dinheiro.client
 import { AnexoTarefa } from '../../core/negocio.client';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { ChecklistTarefaComponent } from './checklist-tarefa';
+import { exibirPrazoRelativo } from '../../shared/prazo-modelo';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 export type AcaoLeitura = 'editar' | 'mudou' | false;
@@ -33,12 +34,11 @@ export type AcaoLeitura = 'editar' | 'mudou' | false;
     <p class="text-muted text-sm px-6 -mt-2 mb-4">{{ tarefa().evento }}</p>
     <mat-dialog-content>
       <dl class="leitura">
-        <div><dt>Prazo</dt><dd>{{ tarefa().prazo | gdData }}</dd></div>
+        <div><dt>Prazo</dt><dd>{{ tarefa().prazo ? (tarefa().prazo | gdData) : (tarefa().prazoRelativo == null ? '—' : '') }}@if (tarefa().prazoRelativo != null) { <span class="text-muted"> ({{ prazoRelativoTexto(tarefa().prazoRelativo!) }})</span> }</dd></div>
         <div><dt>Situação</dt><dd>{{ rotulo(situacoes, tarefa().situacao) }}</dd></div>
         <div><dt>Responsáveis</dt><dd>{{ responsaveis() }}</dd></div>
         <div><dt>Visibilidade</dt><dd>{{ rotulo(visibilidades, tarefa().visibilidade) }}</dd></div>
         <div><dt>Prioridade</dt><dd>{{ rotulo(prioridades, tarefa().prioridade) }}</dd></div>
-        <div><dt>Grupo</dt><dd>{{ tarefa().grupo || '—' }}</dd></div>
         <div><dt>Serviço</dt><dd>{{ tarefa().servico || '—' }}</dd></div>
       </dl>
       @if (tarefa().descricao) { <p>{{ tarefa().descricao }}</p> }
@@ -119,6 +119,7 @@ export type AcaoLeitura = 'editar' | 'mudou' | false;
 export class TarefaLeituraDialog {
   private readonly dados = inject<Tarefa>(MAT_DIALOG_DATA);
   protected readonly ref = inject(MatDialogRef<TarefaLeituraDialog, AcaoLeitura>);
+  protected readonly prazoRelativoTexto = exibirPrazoRelativo;
   private readonly negocio = inject(NegocioClient);
   private readonly toast = inject(ToastService);
   private readonly assistentes = inject(AssistentesClient);

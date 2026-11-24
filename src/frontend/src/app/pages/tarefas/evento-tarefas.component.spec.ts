@@ -13,7 +13,7 @@ function tarefa(parcial: Partial<Tarefa> & Pick<Tarefa, 'id' | 'titulo'>): Taref
     eventoId: 'evento-1',
     evento: 'Ana & Bruno',
     descricao: null,
-    grupo: null,
+    prazoRelativo: null,
     prazo: null,
     situacao: 'Pendente',
     responsavelContaId: 'conta',
@@ -63,7 +63,7 @@ describe('Tarefas do evento no Resumo', () => {
 
   it('agrupa as tarefas pela distância até o evento', () => {
     const fixture = montar('EmAndamento', [
-      tarefa({ id: '1', titulo: 'Depois', prazo: '2026-12-01', grupo: 'Cerimônia' }),
+      tarefa({ id: '1', titulo: 'Depois', prazo: '2026-12-01' }),
       tarefa({ id: '2', titulo: 'Antes', prazo: '2026-11-18' }),
     ]);
     const raiz = fixture.nativeElement as HTMLElement;
@@ -71,12 +71,12 @@ describe('Tarefas do evento no Resumo', () => {
     const linhas = [...raiz.querySelectorAll('tr.linha-tarefa')].map((linha) => linha.textContent ?? '');
 
     expect(raiz.textContent).toContain('Nova tarefa');
+    expect(raiz.textContent).toContain('Adicionar em massa');
     expect(raiz.textContent).toContain('2 tarefas encontradas');
     expect(raiz.querySelector('mat-button-toggle-group')).toBeNull();
     expect(grupos).toEqual(['1 mês antes', '2 semanas antes']);
     expect(linhas[0]).toContain('Antes');
     expect(linhas[1]).toContain('Depois');
-    expect(linhas[1]).toContain('Cerimônia');
   });
 
   it('não mostra Nova tarefa quando o evento não está em andamento', () => {

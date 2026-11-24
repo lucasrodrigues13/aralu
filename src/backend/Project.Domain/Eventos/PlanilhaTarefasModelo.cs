@@ -1,59 +1,86 @@
+using System.Globalization;
+using System.Text;
+
 namespace Project.Domain.Eventos;
 
+/// <summary>Índices das colunas reconhecidas no cabeçalho da planilha de tarefas.</summary>
+public sealed record ColunasPlanilhaTarefas(
+    int Tarefa,
+    int? Servico,
+    int? Prazo,
+    int? Responsaveis,
+    int? Prioridade,
+    int? Descricao);
+
+/// <summary>Colunas da planilha de tarefas (SPEC-012 v3 §8.7). A coluna "Grupo" da v2 é lida como Serviço.</summary>
 public static class PlanilhaTarefasModelo
 {
     public const string ColunaTarefa = "Tarefa";
-    public const string ColunaGrupo = "Grupo";
+    public const string ColunaServico = "Serviço";
     public const string ColunaPrazo = "Prazo";
+    public const string ColunaResponsaveis = "Responsáveis";
+    public const string ColunaPrioridade = "Prioridade";
+    public const string ColunaDescricao = "Descrição";
 
-    public static readonly string[] Colunas = [ColunaTarefa, ColunaGrupo, ColunaPrazo];
+    public static readonly string[] Colunas = [ColunaTarefa, ColunaServico, ColunaPrazo, ColunaResponsaveis, ColunaPrioridade, ColunaDescricao];
 
-    /// <summary>
-    /// Resolve índices das colunas pelo cabeçalho (ordem livre). Exige a coluna Tarefa.
-    /// </summary>
-    public static bool TentarMapearCabecalho(
-        IReadOnlyList<string?> cabecalho,
-        out int tarefa,
-        out int? grupo,
-        out int? prazo,
-        out string? erro)
+    /// <summary>Linhas de exemplo da planilha modelo.</summary>
+    public static readonly string[][] Exemplos =
+    [
+        ["Pedir 3 orçamentos", "Buffet", "6 meses antes", "Organizador", "Alta", "Comparar cardápio e preço por pessoa"],
+        ["Degustação", "Buffet", "3 meses antes", "Organizador; Cliente", "Média", ""],
+        ["Pedir depoimento", "", "2 semanas depois", "Assistente", "Baixa", ""],
+    ];
+
+    /// <summary>Resolve os índices das colunas pelo cabeçalho (ordem livre, sem diferenciar acentos). Exige Tarefa.</summary>
+    public static bool TentarMapearCabecalho(IReadOnlyList<string?> cabecalho, out ColunasPlanilhaTarefas colunas, out string? erro)
     {
-        tarefa = -1;
-        grupo = null;
-        prazo = null;
-        erro = null;
-
+        int? tarefa = null, servico = null, prazo = null, responsaveis = null, prioridade = null, descricao = null;
         for (var i = 0; i < cabecalho.Count; i++)
         {
-            var nome = cabecalho[i]?.Trim();
-            if (string.IsNullOrEmpty(nome))
+            switch (Normalizar(cabecalho[i]))
             {
-                continue;
-            }
-
-            if (NomeIgual(nome, ColunaTarefa))
-            {
-                tarefa = i;
-            }
-            else if (NomeIgual(nome, ColunaGrupo))
-            {
-                grupo = i;
-            }
-            else if (NomeIgual(nome, ColunaPrazo))
-            {
-                prazo = i;
+                case "tarefa":
+                    tarefa ??= i;
+                    break;
+                case "servico":
+                    servico = i;
+                    break;
+                case "grupo":
+                    servico ??= i;
+                    break;
+                case "prazo":
+                    prazo ??= i;
+                    break;
+                case "responsaveis" or "responsavel":
+                    responsaveis ??= i;
+                    break;
+                case "prioridade":
+                    prioridade ??= i;
+                    break;
+                case "descricao":
+                    descricao ??= i;
+                    break;
             }
         }
 
-        if (tarefa < 0)
-        {
-            erro = "A planilha precisa da coluna Tarefa.";
-            return false;
-        }
-
-        return true;
+        colunas = new ColunasPlanilhaTarefas(tarefa ?? -1, servico, prazo, responsaveis, prioridade, descricao);
+        erro = tarefa is null ? "A planilha precisa da coluna Tarefa." : null;
+        return tarefa is not null;
     }
 
-    private static bool NomeIgual(string a, string b) =>
-        string.Equals(a, b, StringComparison.OrdinalIgnoreCase);
+    private static string Normalizar(string? texto)
+    {
+        var limpo = (texto ?? "").Trim().ToLowerInvariant().Normalize(NormalizationForm.FormD);
+        var sb = new StringBuilder(limpo.Length);
+        foreach (var c in limpo)
+        {
+            if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+            {
+                sb.Append(c);
+            }
+        }
+
+        return sb.ToString();
+    }
 }

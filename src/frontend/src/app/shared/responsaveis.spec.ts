@@ -13,10 +13,16 @@ describe('responsáveis da tarefa (SPEC-032)', () => {
     expect(pedidoResponsavel('Cliente')).toEqual({ papel: 'Cliente' });
   });
 
-  it('lista a dona, o cliente e só as assistentes ativas', () => {
+  it('lista os papéis (Organizador, Assistente, Cliente) e só as assistentes ativas pelo nome', () => {
     const opcoes = opcoesResponsavel(nomes, 'Eu');
-    expect(opcoes.map((item) => item.valor)).toEqual(['Organizer', 'Cliente', 'Assistente:a1']);
-    expect(opcoes[0].rotulo).toBe('Eu');
+    expect(opcoes.map((item) => item.valor)).toEqual(['Organizer', 'Assistente', 'Cliente', 'Assistente:a1']);
+    expect(opcoes[0].rotulo).toBe('Organizador (eu)');
+    expect(opcoes[1].rotulo).toBe('Assistente (todas)');
+  });
+
+  it('o papel Assistente sem pessoa vira a chave "Assistente" e volta sem referência', () => {
+    expect(chaveResponsavel({ papel: 'Assistente', referenciaId: null })).toBe('Assistente');
+    expect(pedidoResponsavel('Assistente')).toEqual({ papel: 'Assistente' });
   });
 
   it('mantém a assistente removida só quando ela já está na tarefa, com o selo', () => {

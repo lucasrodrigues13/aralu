@@ -38,10 +38,8 @@ public static class NegocioEndpoints
         api.MapDelete("/modelos/{id:guid}", ExcluirModelo).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/modelos/{id:guid}/clonar", ClonarModelo).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapGet("/modelos/tarefas/planilha", PlanilhaTarefasModeloPadrao).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
-        api.MapPost("/modelos/importar/previa", PreviaImportarModelo).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe)).DisableAntiforgery();
-        api.MapPost("/modelos/importar", ImportarModeloNovo).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe)).DisableAntiforgery();
-        api.MapPost("/modelos/{id:guid}/tarefas/importar/previa", PreviaImportarTarefasModelo).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe)).DisableAntiforgery();
-        api.MapPost("/modelos/{id:guid}/tarefas/importar", ImportarTarefasModelo).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe)).DisableAntiforgery();
+        api.MapPost("/tarefas/em-massa/leitura", LerTarefasEmMassa).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe)).DisableAntiforgery();
+        api.MapPost("/eventos/{id:guid}/tarefas/em-massa", AdicionarTarefasEmMassa).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/eventos/{id:guid}/aplicar-modelo/previa", PreviaAplicarModelo).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/eventos/{id:guid}/aplicar-modelo", AplicarModelo).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/eventos/{id:guid}/salvar-como-modelo/previa", PreviaSalvarComoModelo).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
@@ -260,57 +258,32 @@ public static class NegocioEndpoints
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             "tarefas-modelo.xlsx");
 
-    private static Task<IResult> PreviaImportarModelo(
-        HttpRequest request, ClaimsPrincipal usuario, ModeloImportacaoServico servico, CancellationToken ct) =>
-        ComConta(usuario, async _ => await PreviaImportacaoAsync(request, servico, ct));
-
-    private static Task<IResult> ImportarModeloNovo(
-        HttpRequest request, ClaimsPrincipal usuario, ModeloImportacaoServico servico, CancellationToken ct) =>
-        ComConta(usuario, async conta =>
+    /// <summary>Lê a lista colada (campo "texto") ou a planilha (campo "arquivo") para a grade em massa. Não grava.</summary>
+    private static Task<IResult> LerTarefasEmMassa(
+        HttpRequest request, bool? paraModelo, ClaimsPrincipal usuario, ModeloImportacaoServico servico, CancellationToken ct) =>
+        ComConta(usuario, async _ =>
         {
-            var form = await request.ReadFormAsync(ct);
-            var nome = form["nome"].ToString();
-            if (!Enum.TryParse<TipoEvento>(form["tipo"].ToString(), ignoreCase: true, out var tipo))
-            {
-                return Validacao("Informe o tipo do modelo.");
-            }
-
-            var texto = form["texto"].ToString();
-            var arquivo = form.Files.GetFile("arquivo");
-            if (arquivo is not null)
-            {
-                await using var fluxo = arquivo.OpenReadStream();
-                return await De(servico.ImportarNovoAsync(conta, nome, tipo, texto, fluxo, arquivo.FileName, ct));
-            }
-
-            return await De(servico.ImportarNovoAsync(conta, nome, tipo, texto, null, null, ct));
-        });
-
-    private static Task<IResult> PreviaImportarTarefasModelo(
-        Guid id, HttpRequest request, ClaimsPrincipal usuario, ModeloImportacaoServico servico, CancellationToken ct) =>
-        ComConta(usuario, async _ => await PreviaImportacaoAsync(request, servico, ct));
-
-    private static Task<IResult> ImportarTarefasModelo(
-        Guid id, HttpRequest request, ClaimsPrincipal usuario, ModeloImportacaoServico servico, CancellationToken ct) =>
-        ComConta(usuario, async conta =>
-        {
+            var modelo = paraModelo ?? false;
             if (request.HasFormContentType)
             {
                 var form = await request.ReadFormAsync(ct);
-                var texto = form["texto"].ToString();
                 var arquivo = form.Files.GetFile("arquivo");
                 if (arquivo is not null)
                 {
                     await using var fluxo = arquivo.OpenReadStream();
-                    return await De(servico.ImportarNoModeloAsync(conta, id, texto, fluxo, arquivo.FileName, ct));
+                    return await De(Task.FromResult(servico.Ler(null, fluxo, arquivo.FileName, modelo)));
                 }
 
-                return await De(servico.ImportarNoModeloAsync(conta, id, texto, null, null, ct));
+                return await De(Task.FromResult(servico.Ler(form["texto"].ToString(), null, null, modelo)));
             }
 
             var pedido = await request.ReadFromJsonAsync<ImportarTextoPedido>(cancellationToken: ct);
-            return await De(servico.ImportarNoModeloAsync(conta, id, pedido?.Texto, null, null, ct));
+            return await De(Task.FromResult(servico.Ler(pedido?.Texto, null, null, modelo)));
         });
+
+    private static Task<IResult> AdicionarTarefasEmMassa(
+        Guid id, TarefasEmMassaEvento pedido, ClaimsPrincipal usuario, ModeloImportacaoServico servico, CancellationToken ct) =>
+        ComConta(usuario, conta => De(servico.AdicionarEmMassaNoEventoAsync(conta, id, pedido, ct)));
 
     private static Task<IResult> PreviaAplicarModelo(
         Guid id, AplicarModeloPedido pedido, ClaimsPrincipal usuario, ModeloImportacaoServico servico, CancellationToken ct) =>
@@ -328,25 +301,6 @@ public static class NegocioEndpoints
         Guid id, SalvarComoModeloPedido pedido, ClaimsPrincipal usuario, ModeloImportacaoServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.SalvarComoModeloAsync(conta, id, pedido.Nome, ct)));
 
-    private static async Task<IResult> PreviaImportacaoAsync(
-        HttpRequest request, ModeloImportacaoServico servico, CancellationToken ct)
-    {
-        if (request.HasFormContentType)
-        {
-            var form = await request.ReadFormAsync(ct);
-            var arquivo = form.Files.GetFile("arquivo");
-            if (arquivo is not null)
-            {
-                await using var fluxo = arquivo.OpenReadStream();
-                return await De(Task.FromResult(servico.PreviaArquivo(fluxo, arquivo.FileName)));
-            }
-
-            return Results.Ok(servico.PreviaTexto(form["texto"].ToString()));
-        }
-
-        var pedido = await request.ReadFromJsonAsync<ImportarTextoPedido>(cancellationToken: ct);
-        return Results.Ok(servico.PreviaTexto(pedido?.Texto));
-    }
 
     private static Task<IResult> Estatisticas(ClaimsPrincipal usuario, EstatisticasServico servico, Project.Infrastructure.Persistencia.AppDbContext banco, CancellationToken ct) =>
         ComConta(usuario, async conta => Results.Ok(await servico.ObterAsync(conta, DateTimeOffset.UtcNow, ct, await EscopoAssistente.LiberadosAsync(usuario, banco, ct))));

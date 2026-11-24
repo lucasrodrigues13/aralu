@@ -136,13 +136,9 @@ import { MatTooltipModule } from '@angular/material/tooltip';
               <th mat-header-cell *matHeaderCellDef>Tarefa</th>
               <td mat-cell *matCellDef="let tarefa">
                 {{ tarefa.titulo }}
-                @if (tarefa.grupo || tarefa.checklist.length > 0) {
+                @if (tarefa.checklist.length > 0) {
                   <span class="block text-xs text-muted">
-                    {{ tarefa.grupo }}
-                    @if (tarefa.checklist.length > 0) {
-                      @if (tarefa.grupo) { · }
-                      <span class="progresso"><mat-icon>checklist</mat-icon>{{ progresso(tarefa).feitos }}/{{ progresso(tarefa).total }}</span>
-                    }
+                    <span class="progresso"><mat-icon>checklist</mat-icon>{{ progresso(tarefa).feitos }}/{{ progresso(tarefa).total }}</span>
                   </span>
                 }
               </td>

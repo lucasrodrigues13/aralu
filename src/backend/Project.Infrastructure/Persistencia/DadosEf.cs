@@ -231,14 +231,14 @@ public sealed class DadosEf(AppDbContext banco) : IDados
 
     public async Task RemoverConteudoModeloAsync(ModeloEvento modelo, CancellationToken ct)
     {
-        foreach (var servico in modelo.Servicos)
+        foreach (var tarefa in modelo.Tarefas)
         {
-            foreach (var item in servico.Itens.ToList())
+            foreach (var item in tarefa.Checklist.ToList())
             {
                 banco.Entry(item).State = EntityState.Detached;
             }
 
-            servico.Itens.Clear();
+            tarefa.Checklist.Clear();
         }
 
         var modeloId = modelo.Id;
@@ -262,11 +262,11 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         modelo.Tarefas.Clear();
         modelo.Vinculos.Clear();
 
-        await banco.Set<ItemServicoModelo>()
-            .Where(item => banco.Set<ServicoModelo>().Any(servico => servico.Id == item.ServicoId && servico.ModeloId == modeloId))
+        await banco.Set<ItemChecklistTarefaModelo>()
+            .Where(item => banco.Set<TarefaModelo>().Any(tarefa => tarefa.Id == item.TarefaModeloId && tarefa.ModeloId == modeloId))
             .ExecuteDeleteAsync(ct);
-        await banco.Set<ServicoModelo>().Where(servico => servico.ModeloId == modeloId).ExecuteDeleteAsync(ct);
         await banco.Set<TarefaModelo>().Where(tarefa => tarefa.ModeloId == modeloId).ExecuteDeleteAsync(ct);
+        await banco.Set<ServicoModelo>().Where(servico => servico.ModeloId == modeloId).ExecuteDeleteAsync(ct);
         await banco.Set<VinculoModeloEvento>().Where(vinculo => vinculo.ModeloId == modeloId).ExecuteDeleteAsync(ct);
     }
 
@@ -473,6 +473,21 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         foreach (var item in itens)
         {
             item.DeslocarPrazo(dias);
+        }
+
+        await banco.SaveChangesAsync(ct);
+    }
+
+    public async Task RecalcularPrazosRelativosAsync(string contaId, Guid eventoId, DateOnly? dataEvento, CancellationToken ct)
+    {
+        var tarefas = await banco.Tarefas
+            .Include(tarefa => tarefa.Checklist)
+            .Where(tarefa => tarefa.ContaId == contaId && tarefa.EventoId == eventoId
+                && (tarefa.PrazoRelativo != null || tarefa.Checklist.Any(item => item.PrazoRelativo != null)))
+            .ToListAsync(ct);
+        foreach (var tarefa in tarefas)
+        {
+            PrazosRelativos.Recalcular(tarefa, dataEvento);
         }
 
         await banco.SaveChangesAsync(ct);
@@ -758,6 +773,12 @@ public sealed class DadosEf(AppDbContext banco) : IDados
             .OrderBy(evento => evento.Nome)
             .Select(evento => new EventoAndamento(evento.Id, evento.Nome, evento.Data))
             .ToListAsync(ct);
+
+    public Task<DateOnly?> DataDoEventoAsync(string contaId, Guid eventoId, CancellationToken ct) =>
+        banco.Eventos.AsNoTracking()
+            .Where(evento => evento.Id == eventoId && evento.ContaId == contaId)
+            .Select(evento => evento.Data)
+            .FirstOrDefaultAsync(ct);
 
     public async Task<SituacaoEvento?> SituacaoDoEventoAsync(string contaId, Guid eventoId, CancellationToken ct)
     {
@@ -1719,9 +1740,10 @@ public sealed class DadosEf(AppDbContext banco) : IDados
 
     private IQueryable<ModeloEvento> ModelosCompletos() =>
         banco.Modelos
-            .Include(modelo => modelo.Servicos).ThenInclude(servico => servico.Itens)
-            .Include(modelo => modelo.Tarefas)
-            .Include(modelo => modelo.Vinculos);
+            .Include(modelo => modelo.Servicos)
+            .Include(modelo => modelo.Tarefas).ThenInclude(tarefa => tarefa.Checklist)
+            .Include(modelo => modelo.Vinculos)
+            .AsSplitQuery();
 
     private IQueryable<ModeloBriefing> BriefingsCompletos() =>
         banco.ModelosBriefing

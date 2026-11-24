@@ -1,13 +1,25 @@
 using Project.Application.Comum;
 using Project.Domain.Eventos;
+using Project.Domain.Fornecedores;
+using Project.Domain.Tarefas;
 
 namespace Project.Application.Negocio;
 
-public sealed record ItemServicoModeloLeitura(Guid Id, TipoItemServicoModelo Tipo, string Texto);
+/// <summary>Serviço do modelo (SPEC-012 v3 §8.4). <c>NoCadastro</c> falso = o serviço saiu do cadastro da conta.</summary>
+public sealed record ServicoModeloLeitura(Guid Id, Guid? ServicoContaId, string Nome, decimal? ValorEstimado, bool NoCadastro);
 
-public sealed record ServicoModeloLeitura(Guid Id, string Nome, decimal? ValorEstimado, IReadOnlyList<ItemServicoModeloLeitura> Itens);
+public sealed record ItemChecklistModeloLeitura(Guid Id, string Texto, int? PrazoRelativo, PapelResponsavel? ResponsavelPapel);
 
-public sealed record TarefaModeloLeitura(Guid Id, string Titulo, string? Grupo, int? DiasAntes);
+public sealed record TarefaModeloLeitura(
+    Guid Id,
+    Guid? ServicoModeloId,
+    string Titulo,
+    string? Descricao,
+    int? PrazoRelativo,
+    PrioridadeTarefa Prioridade,
+    VisibilidadeTarefa Visibilidade,
+    IReadOnlyList<PapelResponsavel> Responsaveis,
+    IReadOnlyList<ItemChecklistModeloLeitura> Checklist);
 
 public sealed record VinculoModeloLeitura(Guid Id, TipoVinculoModelo Tipo, Guid BibliotecaId);
 
@@ -29,11 +41,24 @@ public sealed record ModeloLeitura(
 
 public sealed record NovoModelo(string? Nome, TipoEvento? Tipo, IReadOnlyList<string>? Servicos, IReadOnlyList<string>? Tarefas);
 
-public sealed record ItemServicoModeloPedido(TipoItemServicoModelo? Tipo, string? Texto);
+/// <summary>
+/// Serviço no pedido de gravação. <c>Chave</c> é como as tarefas do mesmo pedido apontam para ele (o id atual ou um
+/// valor provisório da tela). Sem <c>ServicoContaId</c>, o serviço é procurado no cadastro pelo nome e, se não existir,
+/// é cadastrado.
+/// </summary>
+public sealed record ServicoModeloPedido(string? Chave, Guid? ServicoContaId, string? Nome, decimal? ValorEstimado);
 
-public sealed record ServicoModeloPedido(string? Nome, decimal? ValorEstimado, IReadOnlyList<ItemServicoModeloPedido>? Itens);
+public sealed record ItemChecklistModeloPedido(string? Texto, int? PrazoRelativo, PapelResponsavel? ResponsavelPapel);
 
-public sealed record TarefaModeloPedido(string? Titulo, string? Grupo, int? DiasAntes);
+public sealed record TarefaModeloPedido(
+    string? ServicoChave,
+    string? Titulo,
+    string? Descricao,
+    int? PrazoRelativo,
+    PrioridadeTarefa? Prioridade,
+    VisibilidadeTarefa? Visibilidade,
+    IReadOnlyList<PapelResponsavel>? Responsaveis,
+    IReadOnlyList<ItemChecklistModeloPedido>? Checklist);
 
 public sealed record VinculoModeloPedido(TipoVinculoModelo? Tipo, Guid? BibliotecaId);
 
@@ -54,10 +79,17 @@ public sealed record AtualizarModelo(
 
 public sealed class ModeloServico(IDados dados)
 {
+    public const int MaximoTitulo = 200;
+
+    /// <summary>Papéis que podem ser escolhidos hoje (SPEC-012 v3 §8.3). "Equipe" fica reservado.</summary>
+    public static bool PapelEscolhivel(PapelResponsavel papel) =>
+        papel is PapelResponsavel.Organizer or PapelResponsavel.Assistente or PapelResponsavel.Cliente;
+
     public async Task<IReadOnlyList<ModeloLeitura>> ListarAsync(string contaId, string? nome, CancellationToken ct)
     {
         var modelos = await dados.ListarModelosAsync(contaId, nome, ct);
-        return modelos.Select(Ler).ToArray();
+        var cadastro = await CadastroAsync(contaId, ct);
+        return modelos.Select(modelo => Ler(modelo, cadastro)).ToArray();
     }
 
     public async Task<Resultado<ModeloLeitura>> ObterAsync(string contaId, Guid id, CancellationToken ct)
@@ -65,7 +97,7 @@ public sealed class ModeloServico(IDados dados)
         var modelo = await dados.ObterModeloAsync(contaId, id, ct);
         return modelo is null
             ? Resultado<ModeloLeitura>.Erro(Codigos.Indisponivel, "Indisponível.")
-            : Resultado<ModeloLeitura>.Sucesso(Ler(modelo));
+            : Resultado<ModeloLeitura>.Sucesso(Ler(modelo, await CadastroAsync(contaId, ct)));
     }
 
     public async Task<Resultado<ModeloLeitura>> CriarAsync(string contaId, NovoModelo pedido, CancellationToken ct)
@@ -90,16 +122,17 @@ public sealed class ModeloServico(IDados dados)
         };
         foreach (var servico in Nomes(pedido.Servicos))
         {
-            modelo.Servicos.Add(new ServicoModelo { Id = Guid.NewGuid(), ModeloId = modelo.Id, Nome = servico });
+            var catalogo = await GarantirNoCadastroAsync(contaId, null, servico, ct);
+            modelo.Servicos.Add(new ServicoModelo { Id = Guid.NewGuid(), ModeloId = modelo.Id, ServicoContaId = catalogo.Id, Nome = catalogo.Nome });
         }
 
         foreach (var tarefa in Nomes(pedido.Tarefas))
         {
-            modelo.Tarefas.Add(new TarefaModelo { Id = Guid.NewGuid(), ModeloId = modelo.Id, Titulo = tarefa });
+            modelo.Tarefas.Add(new TarefaModelo { Id = Guid.NewGuid(), ModeloId = modelo.Id, Titulo = Cortar(tarefa) });
         }
 
         await dados.InserirModeloAsync(modelo, ct);
-        return Resultado<ModeloLeitura>.Sucesso(Ler(modelo));
+        return Resultado<ModeloLeitura>.Sucesso(Ler(modelo, await CadastroAsync(contaId, ct)));
     }
 
     public async Task<Resultado<ModeloLeitura>> AtualizarAsync(string contaId, Guid id, AtualizarModelo pedido, CancellationToken ct)
@@ -141,42 +174,63 @@ public sealed class ModeloServico(IDados dados)
             PermiteConvites = pedido.Permissoes?.Convites ?? modelo.PermiteConvites,
         };
 
-        await dados.RemoverConteudoModeloAsync(modelo, ct);
-
+        // Serviços: um por serviço do cadastro; a chave do pedido aponta para o serviço gravado.
+        var porChave = new Dictionary<string, Guid>(StringComparer.Ordinal);
+        var porCadastro = new Dictionary<Guid, ServicoModelo>();
         foreach (var servico in pedido.Servicos ?? [])
         {
-            var servicoId = Guid.NewGuid();
-            var entidade = new ServicoModelo
+            var catalogo = await GarantirNoCadastroAsync(contaId, servico.ServicoContaId, Domain.Comum.Texto.Limpo(servico.Nome)!, ct);
+            if (!porCadastro.TryGetValue(catalogo.Id, out var entidade))
             {
-                Id = servicoId,
-                ModeloId = modeloId,
-                Nome = Domain.Comum.Texto.Limpo(servico.Nome)!,
-                ValorEstimado = servico.ValorEstimado,
-            };
-            foreach (var item in servico.Itens ?? [])
-            {
-                entidade.Itens.Add(new ItemServicoModelo
+                entidade = new ServicoModelo
                 {
                     Id = Guid.NewGuid(),
-                    ServicoId = servicoId,
-                    Tipo = item.Tipo!.Value,
-                    Texto = Domain.Comum.Texto.Limpo(item.Texto)!,
-                });
+                    ModeloId = modeloId,
+                    ServicoContaId = catalogo.Id,
+                    Nome = catalogo.Nome,
+                    ValorEstimado = servico.ValorEstimado,
+                };
+                porCadastro[catalogo.Id] = entidade;
+                atualizado.Servicos.Add(entidade);
             }
 
-            atualizado.Servicos.Add(entidade);
+            if (Domain.Comum.Texto.Limpo(servico.Chave) is string chave)
+            {
+                porChave[chave] = entidade.Id;
+            }
         }
 
         foreach (var tarefa in pedido.Tarefas ?? [])
         {
-            atualizado.Tarefas.Add(new TarefaModelo
+            var tarefaId = Guid.NewGuid();
+            var chave = Domain.Comum.Texto.Limpo(tarefa.ServicoChave);
+            var entidade = new TarefaModelo
             {
-                Id = Guid.NewGuid(),
+                Id = tarefaId,
                 ModeloId = modeloId,
-                Titulo = Domain.Comum.Texto.Limpo(tarefa.Titulo)!,
-                Grupo = GrupoLimpo(tarefa.Grupo),
-                DiasAntes = tarefa.DiasAntes,
-            });
+                ServicoModeloId = chave is not null && porChave.TryGetValue(chave, out var servicoId) ? servicoId : null,
+                Titulo = Cortar(Domain.Comum.Texto.Limpo(tarefa.Titulo)!),
+                Descricao = Domain.Comum.Texto.Limpo(tarefa.Descricao),
+                PrazoRelativo = tarefa.PrazoRelativo,
+                Prioridade = tarefa.Prioridade ?? PrioridadeTarefa.Media,
+                Visibilidade = tarefa.Visibilidade ?? VisibilidadeTarefa.SoEu,
+                Responsaveis = PapeisResponsaveis.Escrever(PapeisOuOrganizador(tarefa.Responsaveis)),
+            };
+            var ordem = 0;
+            foreach (var item in tarefa.Checklist ?? [])
+            {
+                entidade.Checklist.Add(new ItemChecklistTarefaModelo
+                {
+                    Id = Guid.NewGuid(),
+                    TarefaModeloId = tarefaId,
+                    Texto = Domain.Comum.Texto.Limpo(item.Texto)!,
+                    Ordem = ordem++,
+                    PrazoRelativo = item.PrazoRelativo,
+                    ResponsavelPapel = item.ResponsavelPapel,
+                });
+            }
+
+            atualizado.Tarefas.Add(entidade);
         }
 
         foreach (var vinculo in pedido.Vinculos ?? [])
@@ -190,8 +244,9 @@ public sealed class ModeloServico(IDados dados)
             });
         }
 
+        await dados.RemoverConteudoModeloAsync(modelo, ct);
         await dados.GravarModeloAtualizadoAsync(atualizado, ct);
-        return Resultado<ModeloLeitura>.Sucesso(Ler(atualizado));
+        return Resultado<ModeloLeitura>.Sucesso(Ler(atualizado, await CadastroAsync(contaId, ct)));
     }
 
     public async Task<Resultado<ModeloLeitura>> ClonarAsync(string contaId, Guid id, CancellationToken ct)
@@ -215,40 +270,24 @@ public sealed class ModeloServico(IDados dados)
             PermiteConvites = origem.PermiteConvites,
         };
 
+        var novosIds = new Dictionary<Guid, Guid>();
         foreach (var servico in origem.Servicos)
         {
-            var servicoId = Guid.NewGuid();
-            var novo = new ServicoModelo
+            var novoId = Guid.NewGuid();
+            novosIds[servico.Id] = novoId;
+            copia.Servicos.Add(new ServicoModelo
             {
-                Id = servicoId,
+                Id = novoId,
                 ModeloId = copia.Id,
+                ServicoContaId = servico.ServicoContaId,
                 Nome = servico.Nome,
                 ValorEstimado = servico.ValorEstimado,
-            };
-            foreach (var item in servico.Itens)
-            {
-                novo.Itens.Add(new ItemServicoModelo
-                {
-                    Id = Guid.NewGuid(),
-                    ServicoId = servicoId,
-                    Tipo = item.Tipo,
-                    Texto = item.Texto,
-                });
-            }
-
-            copia.Servicos.Add(novo);
+            });
         }
 
         foreach (var tarefa in origem.Tarefas)
         {
-            copia.Tarefas.Add(new TarefaModelo
-            {
-                Id = Guid.NewGuid(),
-                ModeloId = copia.Id,
-                Titulo = tarefa.Titulo,
-                Grupo = tarefa.Grupo,
-                DiasAntes = tarefa.DiasAntes,
-            });
+            copia.Tarefas.Add(CopiarTarefa(tarefa, copia.Id, tarefa.ServicoModeloId is Guid antigo && novosIds.TryGetValue(antigo, out var novo) ? novo : null));
         }
 
         foreach (var vinculo in origem.Vinculos)
@@ -263,7 +302,7 @@ public sealed class ModeloServico(IDados dados)
         }
 
         await dados.InserirModeloAsync(copia, ct);
-        return Resultado<ModeloLeitura>.Sucesso(Ler(copia));
+        return Resultado<ModeloLeitura>.Sucesso(Ler(copia, await CadastroAsync(contaId, ct)));
     }
 
     public async Task<Resultado<bool>> ExcluirAsync(string contaId, Guid id, CancellationToken ct)
@@ -278,6 +317,65 @@ public sealed class ModeloServico(IDados dados)
         return Resultado<bool>.Sucesso(true);
     }
 
+    /// <summary>Serviço do cadastro da conta pelo id; senão pelo nome; senão cadastra (SPEC-012 v3 §8.4).</summary>
+    internal async Task<ServicoConta> GarantirNoCadastroAsync(string contaId, Guid? servicoContaId, string nome, CancellationToken ct)
+    {
+        if (servicoContaId is Guid id && await dados.ObterServicoContaAsync(contaId, id, ct) is ServicoConta pelaChave)
+        {
+            return pelaChave;
+        }
+
+        var limpo = nome.Length > 200 ? nome[..200] : nome;
+        if (await dados.ObterServicoContaPorNomeAsync(contaId, limpo, ct) is ServicoConta peloNome)
+        {
+            return peloNome;
+        }
+
+        var novo = new ServicoConta { Id = Guid.NewGuid(), ContaId = contaId, Nome = limpo, Padrao = false };
+        await dados.InserirServicoContaAsync(novo, ct);
+        return novo;
+    }
+
+    internal static TarefaModelo CopiarTarefa(TarefaModelo tarefa, Guid modeloId, Guid? servicoModeloId)
+    {
+        var id = Guid.NewGuid();
+        return new TarefaModelo
+        {
+            Id = id,
+            ModeloId = modeloId,
+            ServicoModeloId = servicoModeloId,
+            Titulo = tarefa.Titulo,
+            Descricao = tarefa.Descricao,
+            PrazoRelativo = tarefa.PrazoRelativo,
+            Prioridade = tarefa.Prioridade,
+            Visibilidade = tarefa.Visibilidade,
+            Responsaveis = tarefa.Responsaveis,
+            Checklist = tarefa.Checklist
+                .OrderBy(item => item.Ordem)
+                .Select(item => new ItemChecklistTarefaModelo
+                {
+                    Id = Guid.NewGuid(),
+                    TarefaModeloId = id,
+                    Texto = item.Texto,
+                    Ordem = item.Ordem,
+                    PrazoRelativo = item.PrazoRelativo,
+                    ResponsavelPapel = item.ResponsavelPapel,
+                })
+                .ToList(),
+        };
+    }
+
+    internal static IReadOnlyList<PapelResponsavel> PapeisOuOrganizador(IReadOnlyList<PapelResponsavel>? papeis)
+    {
+        var validos = (papeis ?? []).Where(PapelEscolhivel).Distinct().ToArray();
+        return validos.Length > 0 ? validos : [PapelResponsavel.Organizer];
+    }
+
+    internal static string Cortar(string titulo) => titulo.Length > MaximoTitulo ? titulo[..MaximoTitulo] : titulo;
+
+    private async Task<IReadOnlyDictionary<Guid, string>> CadastroAsync(string contaId, CancellationToken ct) =>
+        (await dados.ListarServicosContaAsync(contaId, null, ct)).ToDictionary(servico => servico.Id, servico => servico.Nome);
+
     private static string? ValidarConteudo(AtualizarModelo pedido)
     {
         foreach (var servico in pedido.Servicos ?? [])
@@ -291,19 +389,6 @@ public sealed class ModeloServico(IDados dados)
             {
                 return "Use um número maior ou igual a zero.";
             }
-
-            foreach (var item in servico.Itens ?? [])
-            {
-                if (item.Tipo is not TipoItemServicoModelo tipo || !Enum.IsDefined(tipo))
-                {
-                    return "Informe o tipo do item do serviço.";
-                }
-
-                if (Domain.Comum.Texto.Limpo(item.Texto) is null)
-                {
-                    return "Informe o texto do item do serviço.";
-                }
-            }
         }
 
         foreach (var tarefa in pedido.Tarefas ?? [])
@@ -313,15 +398,42 @@ public sealed class ModeloServico(IDados dados)
                 return "Informe o título da tarefa.";
             }
 
-            var grupo = Domain.Comum.Texto.Limpo(tarefa.Grupo);
-            if (grupo is { Length: > 80 })
+            if (!PrazosRelativos.Valido(tarefa.PrazoRelativo))
             {
-                return "O grupo tem no máximo 80 caracteres.";
+                return "Use um prazo de até 999 meses antes ou depois do evento.";
             }
 
-            if (tarefa.DiasAntes is < 0)
+            if (tarefa.Prioridade is PrioridadeTarefa prioridade && !Enum.IsDefined(prioridade))
             {
-                return "Use um prazo maior ou igual a zero.";
+                return "Escolha a prioridade.";
+            }
+
+            if (tarefa.Visibilidade is VisibilidadeTarefa visibilidade && !Enum.IsDefined(visibilidade))
+            {
+                return "Escolha a visibilidade.";
+            }
+
+            if ((tarefa.Responsaveis ?? []).Any(papel => !Enum.IsDefined(papel) || !PapelEscolhivel(papel)))
+            {
+                return "Escolha o responsável: Organizador, Assistente ou Cliente.";
+            }
+
+            foreach (var item in tarefa.Checklist ?? [])
+            {
+                if (Domain.Comum.Texto.Limpo(item.Texto) is null)
+                {
+                    return "Informe o texto do item da checklist.";
+                }
+
+                if (!PrazosRelativos.Valido(item.PrazoRelativo))
+                {
+                    return "Use um prazo de até 999 meses antes ou depois do evento.";
+                }
+
+                if (item.ResponsavelPapel is PapelResponsavel papel && (!Enum.IsDefined(papel) || !PapelEscolhivel(papel)))
+                {
+                    return "Escolha o responsável do item.";
+                }
             }
         }
 
@@ -336,16 +448,29 @@ public sealed class ModeloServico(IDados dados)
         return null;
     }
 
-    private static ModeloLeitura Ler(ModeloEvento modelo) => new(
+    internal static ModeloLeitura Ler(ModeloEvento modelo, IReadOnlyDictionary<Guid, string> cadastro) => new(
         modelo.Id,
         modelo.Nome,
         modelo.Tipo,
-        modelo.Servicos.Select(servico => new ServicoModeloLeitura(
-            servico.Id,
-            servico.Nome,
-            servico.ValorEstimado,
-            servico.Itens.Select(item => new ItemServicoModeloLeitura(item.Id, item.Tipo, item.Texto)).ToArray())).ToArray(),
-        modelo.Tarefas.Select(tarefa => new TarefaModeloLeitura(tarefa.Id, tarefa.Titulo, tarefa.Grupo, tarefa.DiasAntes)).ToArray(),
+        modelo.Servicos.Select(servico =>
+        {
+            var noCadastro = servico.ServicoContaId is Guid id && cadastro.ContainsKey(id);
+            var nome = noCadastro ? cadastro[servico.ServicoContaId!.Value] : servico.Nome;
+            return new ServicoModeloLeitura(servico.Id, servico.ServicoContaId, nome, servico.ValorEstimado, noCadastro);
+        }).ToArray(),
+        modelo.Tarefas.Select(tarefa => new TarefaModeloLeitura(
+            tarefa.Id,
+            tarefa.ServicoModeloId,
+            tarefa.Titulo,
+            tarefa.Descricao,
+            tarefa.PrazoRelativo,
+            tarefa.Prioridade,
+            tarefa.Visibilidade,
+            PapeisOuOrganizador(tarefa.Papeis()),
+            tarefa.Checklist
+                .OrderBy(item => item.Ordem)
+                .Select(item => new ItemChecklistModeloLeitura(item.Id, item.Texto, item.PrazoRelativo, item.ResponsavelPapel))
+                .ToArray())).ToArray(),
         new PermissoesModeloLeitura(
             modelo.PermiteGerais,
             modelo.PermitePlanejamento,
@@ -356,6 +481,4 @@ public sealed class ModeloServico(IDados dados)
 
     private static IEnumerable<string> Nomes(IReadOnlyList<string>? valores) =>
         (valores ?? []).Select(Domain.Comum.Texto.Limpo).OfType<string>();
-
-    private static string? GrupoLimpo(string? valor) => Domain.Comum.Texto.Limpo(valor);
 }

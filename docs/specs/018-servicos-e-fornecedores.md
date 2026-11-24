@@ -2,6 +2,8 @@
 
 **Status: aprovada (revisão do card #27: busca e "Cadastrar novo serviço" no seletor de serviços do fornecedor).** O código segue esta spec. Fonte: [inventario-referencia.md](../inventario-referencia.md) §1.9, §1.10, §1.11, §1.12 e §1.13. Catálogo de modelos de serviço do funil permanece na SPEC-026.
 
+> **SPEC-012 v3 (24/11/2026, aprovada).** O serviço do modelo de evento passa a ser ligado ao serviço do cadastro da conta (não só ao nome), e o seletor de serviço com busca e "+ Adicionar serviço" do card #27 passa a ser usado também na tarefa do evento, na tarefa do modelo e na grade de "Adicionar tarefas em massa" (SPEC-012 v3 §8.4). Renomear um serviço no cadastro renomeia nos modelos. A "checklist" do modelo citada nas dependências (§16) passou a ser a aba "Serviços e tarefas".
+
 > **Card #29 (21/11/2026, [SPEC-047](047-graficos-de-orcamento-no-evento.md)).** O modal "Planejamento de budget" (§12) foi substituído por cards com gráficos no topo da aba Fornecedores; os números e as regras do §8 não mudaram. O critério 6 vale para os gráficos (indicadores e barras), não mais para um modal; o estimado e os subitens seguem editáveis pelo botão "Estimado" de cada serviço.
 
 > **Card #41 (21/11/2026, [SPEC-040](040-parcelas-por-documento.md)).** `ParcelaServico` saiu do banco. Ao contratar, o sistema cria o `ContratoFornecedor` do serviço, com as parcelas a pagar (mesma estrutura e mesmo gerador). A leitura do serviço (`parcelas`), a aba Fornecedores, a aba Dinheiro do evento, a tela Pagamentos e a tela Hoje leem dele. O serviço "Assessoria e Organização" e `POST /eventos/{id}/assessoria` saíram.

@@ -3,6 +3,8 @@ export interface TarefaAgrupavel {
   grupoPrazo: string | null;
   situacao: string;
   prazo: string | null;
+  /** Prazo relativo à data do evento (SPEC-012 v3 §8.1); sem data do evento, decide o grupo. */
+  prazoRelativo?: number | null;
   titulo: string;
   eventoId: string;
   servicoEventoId: string | null;
@@ -147,7 +149,10 @@ export function grupoAteEvento(prazo: string | null, dataEvento: string | null):
 export function secoesAteEvento<T extends TarefaAgrupavel>(tarefas: T[], dataEvento: string | null): SecaoTarefas<T>[] {
   const grupos = new Map<string, { rotulo: string; ordem: number; tarefas: T[] }>();
   for (const tarefa of tarefas) {
-    const grupo = grupoAteEvento(tarefa.prazo, dataEvento);
+    // Evento sem data: a tarefa relativa entra no grupo da distância ("6 semanas antes"), contada a partir de uma data de referência.
+    const grupo = !dataEvento && !tarefa.prazo && tarefa.prazoRelativo != null
+      ? grupoAteEvento(somarDias(REFERENCIA, tarefa.prazoRelativo), REFERENCIA)
+      : grupoAteEvento(tarefa.prazo, dataEvento);
     const atual = grupos.get(grupo.id) ?? { rotulo: grupo.rotulo, ordem: grupo.ordem, tarefas: [] };
     atual.tarefas.push(tarefa);
     grupos.set(grupo.id, atual);
@@ -155,4 +160,11 @@ export function secoesAteEvento<T extends TarefaAgrupavel>(tarefas: T[], dataEve
   return [...grupos.entries()]
     .sort(([, a], [, b]) => b.ordem - a.ordem)
     .map(([id, grupo]) => ({ id, rotulo: grupo.rotulo, tarefas: grupo.tarefas.sort(porPrazoETitulo) }));
+}
+
+const REFERENCIA = '2000-07-01';
+
+function somarDias(dia: string, dias: number): string {
+  const [ano, mes, d] = dia.split('-').map(Number);
+  return new Date(Date.UTC(ano, mes - 1, d + dias)).toISOString().slice(0, 10);
 }

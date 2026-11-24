@@ -28,8 +28,15 @@ public static class Mapa
         modelo.HasMany(item => item.Vinculos).WithOne().HasForeignKey(vinculo => vinculo.ModeloId).OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<ServicoModelo>().Property(servico => servico.ValorEstimado).HasPrecision(12, 2);
-        modelBuilder.Entity<ServicoModelo>().HasMany(servico => servico.Itens).WithOne().HasForeignKey(item => item.ServicoId).OnDelete(DeleteBehavior.Cascade);
-        modelBuilder.Entity<ItemServicoModelo>().Property(item => item.Tipo).HasConversion<string>();
+        modelBuilder.Entity<ServicoModelo>().HasIndex(servico => servico.ServicoContaId);
+
+        var tarefaModelo = modelBuilder.Entity<TarefaModelo>();
+        tarefaModelo.Property(item => item.Prioridade).HasConversion<string>();
+        tarefaModelo.Property(item => item.Visibilidade).HasConversion<string>();
+        tarefaModelo.HasOne<ServicoModelo>().WithMany().HasForeignKey(item => item.ServicoModeloId).OnDelete(DeleteBehavior.SetNull);
+        tarefaModelo.HasMany(item => item.Checklist).WithOne().HasForeignKey(item => item.TarefaModeloId).OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<ItemChecklistTarefaModelo>().ToTable("ItensChecklistTarefaModelo");
+        modelBuilder.Entity<ItemChecklistTarefaModelo>().Property(item => item.ResponsavelPapel).HasConversion<string>();
         modelBuilder.Entity<VinculoModeloEvento>().Property(vinculo => vinculo.Tipo).HasConversion<string>();
 
         var evento = modelBuilder.Entity<Evento>();

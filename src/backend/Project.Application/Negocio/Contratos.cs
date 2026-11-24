@@ -145,6 +145,9 @@ public interface IDados
     /// <summary>Move o prazo dos itens abertos das tarefas não concluídas do evento (SPEC-012 §6.6).</summary>
     Task MoverPrazosDosItensAsync(string contaId, Guid eventoId, int dias, CancellationToken ct);
 
+    /// <summary>Recalcula o prazo efetivo das tarefas e itens com prazo relativo depois que a data do evento mudou.</summary>
+    Task RecalcularPrazosRelativosAsync(string contaId, Guid eventoId, DateOnly? dataEvento, CancellationToken ct);
+
     Task InserirAnexoTarefaAsync(AnexoTarefa anexo, CancellationToken ct);
 
     /// <summary>Remove o anexo da tarefa e devolve o arquivo dele, ou null se não existir.</summary>
@@ -211,6 +214,8 @@ public interface IDados
     Task<IReadOnlyList<EventoAndamento>> ListarEmAndamentoAsync(string contaId, CancellationToken ct);
 
     Task<SituacaoEvento?> SituacaoDoEventoAsync(string contaId, Guid eventoId, CancellationToken ct);
+
+    Task<DateOnly?> DataDoEventoAsync(string contaId, Guid eventoId, CancellationToken ct);
 
     Task<IReadOnlyList<ContagemMes>> ContarEventosPorMesAsync(string contaId, int ano, CancellationToken ct, IReadOnlySet<Guid>? liberados = null);
 

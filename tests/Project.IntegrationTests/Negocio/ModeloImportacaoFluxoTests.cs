@@ -1,7 +1,6 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.WebUtilities;
 using Project.IntegrationTests.Suporte;
@@ -16,41 +15,49 @@ public class ModeloImportacaoFluxoTests
 
     public ModeloImportacaoFluxoTests(BancoFixture banco) => _banco = banco;
 
+    /// <summary>SPEC-012 v3: leitura em massa, modelo com serviços e tarefas, aplicar duas vezes, prazo relativo, salvar como modelo.</summary>
     [Fact]
-    public async Task Importar_aplicar_duas_vezes_salvar_como_modelo_e_isolar()
+    public async Task Serviços_e_tarefas_do_modelo_aplicar_prazo_relativo_salvar_como_modelo_e_isolar()
     {
         var dono = await Entrar();
         var outra = await Entrar();
 
-        var previa = await Ler(await dono.PostAsJsonAsync("/api/v1/modelos/importar/previa", new
+        // Leitura em massa: só lê, não grava.
+        var lido = await Ler(await dono.PostAsJsonAsync("/api/v1/tarefas/em-massa/leitura?paraModelo=true", new
         {
             texto = """
-                Cerimônia:
-                - Reservar igreja (6 semanas)
-                - Confirmar padrinhos (30 dias)
+                Buffet:
+                - Pedir orçamentos (6 semanas)
+                - Degustação (30 dias)
+                - Pedir depoimento (2 semanas depois)
                 """,
         }));
-        Assert.Equal(2, previa.GetProperty("total").GetInt32());
+        Assert.Equal(3, lido.GetProperty("tarefas").GetArrayLength());
+        Assert.Equal(-42, lido.GetProperty("tarefas")[0].GetProperty("prazoRelativo").GetInt32());
+        Assert.Equal("Buffet", lido.GetProperty("tarefas")[0].GetProperty("servico").GetString());
 
-        using var formNovo = new MultipartFormDataContent
-        {
-            { new StringContent("Pacote importado"), "nome" },
-            { new StringContent("Casamento"), "tipo" },
-            { new StringContent("""
-                Cerimônia:
-                - Reservar igreja (6 semanas)
-                Serviços:
-                - Contratar buffet (2 meses)
-                """), "texto" },
-        };
-        var modelo = await Ler(await dono.PostAsync("/api/v1/modelos/importar", formNovo));
+        var modelo = await Ler(await dono.PostAsJsonAsync("/api/v1/modelos", new { nome = "Pacote", tipo = "Casamento" }));
         var modeloId = modelo.GetProperty("id").GetGuid();
-        Assert.Equal(2, modelo.GetProperty("tarefas").GetArrayLength());
-
-        var modeloAtualizado = await Ler(await dono.PostAsJsonAsync(
-            $"/api/v1/modelos/{modeloId}/tarefas/importar",
-            new { texto = "- Lista de presentes (10 dias)" }));
-        Assert.Equal(3, modeloAtualizado.GetProperty("tarefas").GetArrayLength());
+        var salvo = await Ler(await dono.PutAsJsonAsync($"/api/v1/modelos/{modeloId}", new
+        {
+            nome = "Pacote",
+            tipo = "Casamento",
+            servicos = new[] { new { chave = "s1", nome = "Buffet", valorEstimado = 25000m } },
+            tarefas = new object[]
+            {
+                new { servicoChave = "s1", titulo = "Pedir orçamentos", prazoRelativo = -42, responsaveis = new[] { "Organizer", "Cliente" }, checklist = new[] { new { texto = "Comparar cardápios", prazoRelativo = -35, responsavelPapel = "Assistente" } } },
+                new { servicoChave = "s1", titulo = "Pedir depoimento", prazoRelativo = 14, responsaveis = new[] { "Assistente" } },
+                new { servicoChave = (string?)null, titulo = "Enviar save the date", prazoRelativo = (int?)null, responsaveis = Array.Empty<string>() },
+            },
+        }));
+        Assert.Equal(1, salvo.GetProperty("servicos").GetArrayLength());
+        var servicoModelo = salvo.GetProperty("servicos")[0];
+        Assert.True(servicoModelo.GetProperty("noCadastro").GetBoolean());
+        Assert.Equal(3, salvo.GetProperty("tarefas").GetArrayLength());
+        Assert.Equal(servicoModelo.GetProperty("id").GetGuid(), salvo.GetProperty("tarefas")[0].GetProperty("servicoModeloId").GetGuid());
+        Assert.Equal("Organizer", salvo.GetProperty("tarefas")[2].GetProperty("responsaveis")[0].GetString());
+        var cadastro = await Ler(await dono.GetAsync("/api/v1/servicos-conta"));
+        Assert.Contains(cadastro.EnumerateArray(), servico => servico.GetProperty("nome").GetString() == "Buffet");
 
         var evento = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new
         {
@@ -60,56 +67,84 @@ public class ModeloImportacaoFluxoTests
             data = "2027-06-20",
         }));
         var eventoId = evento.GetProperty("id").GetGuid();
-        // A criação não copia mais o modelo (SPEC-037): o evento nasce sem tarefas e o modelo entra por "aplicar modelo".
-        Assert.Equal(0, (await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/tarefas"))).GetArrayLength());
+
+        var previa = await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/aplicar-modelo/previa", new { modeloId }));
+        Assert.Equal(3, previa.GetProperty("tarefasNovas").GetInt32());
+        Assert.Equal(1, previa.GetProperty("servicosNovos").GetInt32());
         await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/aplicar-modelo", new { modeloId }));
-        var tarefas1 = await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/tarefas"));
-        Assert.Equal(3, tarefas1.GetArrayLength());
+        var tarefas = await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/tarefas"));
+        Assert.Equal(3, tarefas.GetArrayLength());
+        var orcamentos = tarefas.EnumerateArray().Single(t => t.GetProperty("titulo").GetString() == "Pedir orçamentos");
+        Assert.Equal(-42, orcamentos.GetProperty("prazoRelativo").GetInt32());
+        Assert.Equal("2027-05-09", orcamentos.GetProperty("prazo").GetString());
+        Assert.Equal("Buffet", orcamentos.GetProperty("servico").GetString());
+        Assert.Equal("2027-05-16", orcamentos.GetProperty("checklist")[0].GetProperty("prazo").GetString());
+        var depoimento = tarefas.EnumerateArray().Single(t => t.GetProperty("titulo").GetString() == "Pedir depoimento");
+        Assert.Equal("2027-07-04", depoimento.GetProperty("prazo").GetString());
+        Assert.Equal(JsonValueKind.Null, depoimento.GetProperty("responsaveis")[0].GetProperty("referenciaId").ValueKind);
 
-        var eventoVazio = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new
+        // Aplicar de novo não muda nada.
+        var segunda = await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/aplicar-modelo/previa", new { modeloId }));
+        Assert.Equal(0, segunda.GetProperty("tarefasNovas").GetInt32());
+        Assert.Equal(0, segunda.GetProperty("servicosNovos").GetInt32());
+        await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/aplicar-modelo", new { modeloId }));
+        Assert.Equal(3, (await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/tarefas"))).GetArrayLength());
+
+        // Data exata numa tarefa nova; a relativa acompanha a data do evento sem perguntar.
+        await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/tarefas", new { titulo = "Pagar sinal", prazo = "2027-03-01" }));
+        await Ler(await dono.PutAsJsonAsync($"/api/v1/eventos/{eventoId}", new
         {
-            tipo = "Casamento",
-            primeiroNome = "Carla",
-            segundoNome = "Diego",
-            data = "2027-07-10",
+            primeiroNome = "Ana",
+            segundoNome = "Bruno",
+            data = "2027-06-30",
+            moverPrazos = false,
         }));
-        var eventoVazioId = eventoVazio.GetProperty("id").GetGuid();
+        var depois = await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoId}/tarefas"));
+        Assert.Equal("2027-05-19", depois.EnumerateArray().Single(t => t.GetProperty("titulo").GetString() == "Pedir orçamentos").GetProperty("prazo").GetString());
+        Assert.Equal("2027-03-01", depois.EnumerateArray().Single(t => t.GetProperty("titulo").GetString() == "Pagar sinal").GetProperty("prazo").GetString());
 
-        var previaAplicar = await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoVazioId}/aplicar-modelo/previa", new { modeloId }));
-        Assert.Equal(3, previaAplicar.GetProperty("tarefasNovas").GetInt32());
-        await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoVazioId}/aplicar-modelo", new { modeloId }));
-        var tarefasAplicadas = await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoVazioId}/tarefas"));
-        Assert.Equal(3, tarefasAplicadas.GetArrayLength());
-
-        var previaSegunda = await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoVazioId}/aplicar-modelo/previa", new { modeloId }));
-        Assert.Equal(0, previaSegunda.GetProperty("tarefasNovas").GetInt32());
-        await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoVazioId}/aplicar-modelo", new { modeloId }));
-        Assert.Equal(3, (await Ler(await dono.GetAsync($"/api/v1/eventos/{eventoVazioId}/tarefas"))).GetArrayLength());
-
-        var semData = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new
+        // Em massa no evento: serviço novo é cadastrado; repetida (mesmo serviço e título) fica de fora.
+        var emMassa = await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/tarefas/em-massa", new
         {
-            tipo = "Casamento",
-            primeiroNome = "Eva",
-            segundoNome = "Fábio",
+            linhas = new object[]
+            {
+                new { titulo = "Escolher fotógrafo", servicoNome = "Fotografia", prazoRelativo = -60 },
+                new { titulo = "Pedir orçamentos", servicoNome = "Buffet" },
+                new { titulo = "Comprar alianças", prazo = "2027-04-10", responsaveis = new[] { new { papel = "Cliente" } } },
+            },
         }));
+        Assert.Equal(2, emMassa.GetProperty("adicionadas").GetInt32());
+        Assert.Equal(1, emMassa.GetProperty("repetidas").GetInt32());
+        Assert.Equal(1, emMassa.GetProperty("servicosNovos").GetInt32());
+
+        // Evento sem data: a relativa fica sem data até o evento ter data.
+        var semData = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new { tipo = "Casamento", primeiroNome = "Eva", segundoNome = "Fábio" }));
         var semDataId = semData.GetProperty("id").GetGuid();
-        var previaSemData = await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{semDataId}/aplicar-modelo/previa", new { modeloId }));
-        Assert.True(previaSemData.GetProperty("eventoSemData").GetBoolean());
+        Assert.True((await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{semDataId}/aplicar-modelo/previa", new { modeloId }))).GetProperty("eventoSemData").GetBoolean());
         await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{semDataId}/aplicar-modelo", new { modeloId }));
         var tarefasSemData = await Ler(await dono.GetAsync($"/api/v1/eventos/{semDataId}/tarefas"));
         Assert.All(tarefasSemData.EnumerateArray(), t => Assert.Equal(JsonValueKind.Null, t.GetProperty("prazo").ValueKind));
+        await Ler(await dono.PutAsJsonAsync($"/api/v1/eventos/{semDataId}", new { primeiroNome = "Eva", segundoNome = "Fábio", data = "2027-08-01" }));
+        var comData = await Ler(await dono.GetAsync($"/api/v1/eventos/{semDataId}/tarefas"));
+        Assert.Equal("2027-06-20", comData.EnumerateArray().Single(t => t.GetProperty("titulo").GetString() == "Pedir orçamentos").GetProperty("prazo").GetString());
 
+        // Salvar como modelo: data exata vira relativa (antes ou depois), serviço vai junto.
         var previaSalvar = await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/salvar-como-modelo/previa", new { nome = (string?)null }));
         Assert.Contains("Modelo —", previaSalvar.GetProperty("nomeSugerido").GetString());
-        var salvo = await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/salvar-como-modelo", new { nome = "Modelo Ana & Bruno" }));
-        Assert.Equal("Modelo Ana & Bruno", salvo.GetProperty("nome").GetString());
-        Assert.True(salvo.GetProperty("tarefas").GetArrayLength() >= 3);
+        var novoModelo = await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/salvar-como-modelo", new { nome = "Modelo Ana & Bruno" }));
+        Assert.Equal(2, novoModelo.GetProperty("servicos").GetArrayLength());
+        var sinal = novoModelo.GetProperty("tarefas").EnumerateArray().Single(t => t.GetProperty("titulo").GetString() == "Pagar sinal");
+        Assert.Equal(-121, sinal.GetProperty("prazoRelativo").GetInt32());
+        var alianca = novoModelo.GetProperty("tarefas").EnumerateArray().Single(t => t.GetProperty("titulo").GetString() == "Comprar alianças");
+        Assert.Equal("Cliente", alianca.GetProperty("responsaveis")[0].GetString());
 
         Assert.Equal(HttpStatusCode.NotFound, (await outra.GetAsync($"/api/v1/modelos/{modeloId}")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound,
             (await outra.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/aplicar-modelo", new { modeloId })).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound,
             (await outra.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/salvar-como-modelo", new { nome = "X" })).StatusCode);
+        Assert.NotEqual(HttpStatusCode.OK,
+            (await outra.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/tarefas/em-massa", new { linhas = new[] { new { titulo = "X" } } })).StatusCode);
     }
 
     private async Task<HttpClient> Entrar()

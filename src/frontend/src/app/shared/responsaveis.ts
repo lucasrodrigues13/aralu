@@ -12,7 +12,7 @@ export interface OpcaoResponsavel {
   rotulo: string;
 }
 
-/** Chave usada nos seletores: "Organizer", "Cliente" ou "Assistente:<id>". */
+/** Chave usada nos seletores: "Organizer", "Cliente", "Assistente" (o papel: todas) ou "Assistente:<id>". */
 export function chaveResponsavel(item: ResponsavelItem): string {
   return item.papel === 'Assistente' && item.referenciaId ? `Assistente:${item.referenciaId}` : item.papel;
 }
@@ -23,14 +23,17 @@ export function pedidoResponsavel(chave: string): { papel: string; referenciaId?
   return referencia ? { papel, referenciaId: referencia } : { papel };
 }
 
-/** Opções do seletor: a dona, o cliente e as assistentes ativas (mais as removidas que já estão na tarefa). */
+/** Opções do seletor: os papéis (Organizador, Assistente, Cliente) e as assistentes ativas pelo nome (mais as removidas que já estão na tarefa). */
 export function opcoesResponsavel(
   assistentes: NomeAssistente[],
   rotuloDona: string,
   incluirRemovidas: string[] = [],
 ): OpcaoResponsavel[] {
   return [
-    ...PAPEIS_RESPONSAVEL_TAREFA.map((papel) => ({ valor: papel.valor, rotulo: papel.valor === 'Organizer' ? rotuloDona : papel.rotulo })),
+    ...PAPEIS_RESPONSAVEL_TAREFA.map((papel) => ({
+      valor: papel.valor,
+      rotulo: papel.valor === 'Organizer' ? `Organizador (${rotuloDona.toLowerCase()})` : papel.rotulo,
+    })),
     ...assistentes
       .filter((item) => !item.removida || incluirRemovidas.includes(`Assistente:${item.id}`))
       .map((item) => ({ valor: `Assistente:${item.id}`, rotulo: item.removida ? `${item.nome} (removida)` : item.nome })),

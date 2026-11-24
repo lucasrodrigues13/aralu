@@ -924,28 +924,33 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.ToTable("FornecedorNoServico");
                 });
 
-            modelBuilder.Entity("Project.Domain.Eventos.ItemServicoModelo", b =>
+            modelBuilder.Entity("Project.Domain.Eventos.ItemChecklistTarefaModelo", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("ServicoId")
+                    b.Property<int>("Ordem")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("PrazoRelativo")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ResponsavelPapel")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("TarefaModeloId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("Texto")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("Tipo")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("ServicoId");
+                    b.HasIndex("TarefaModeloId");
 
-                    b.ToTable("ItemServicoModelo");
+                    b.ToTable("ItensChecklistTarefaModelo", (string)null);
                 });
 
             modelBuilder.Entity("Project.Domain.Eventos.LinkCliente", b =>
@@ -1114,6 +1119,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<Guid?>("ServicoContaId")
+                        .HasColumnType("uuid");
+
                     b.Property<decimal?>("ValorEstimado")
                         .HasPrecision(12, 2)
                         .HasColumnType("numeric(12,2)");
@@ -1121,6 +1129,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ModeloId");
+
+                    b.HasIndex("ServicoContaId");
 
                     b.ToTable("ServicoModelo");
                 });
@@ -1180,22 +1190,39 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<int?>("DiasAntes")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Grupo")
+                    b.Property<string>("Descricao")
                         .HasColumnType("text");
 
                     b.Property<Guid>("ModeloId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("PrazoRelativo")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Prioridade")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Responsaveis")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("ServicoModeloId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("Titulo")
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("Visibilidade")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ModeloId");
+
+                    b.HasIndex("ServicoModeloId");
 
                     b.ToTable("TarefaModelo");
                 });
@@ -2582,6 +2609,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<DateOnly?>("Prazo")
                         .HasColumnType("date");
 
+                    b.Property<int?>("PrazoRelativo")
+                        .HasColumnType("integer");
+
                     b.Property<string>("ResponsavelPapel")
                         .HasColumnType("text");
 
@@ -2641,11 +2671,11 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<Guid>("EventoId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Grupo")
-                        .HasColumnType("text");
-
                     b.Property<DateOnly?>("Prazo")
                         .HasColumnType("date");
+
+                    b.Property<int?>("PrazoRelativo")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Prioridade")
                         .IsRequired()
@@ -3071,11 +3101,11 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Project.Domain.Eventos.ItemServicoModelo", b =>
+            modelBuilder.Entity("Project.Domain.Eventos.ItemChecklistTarefaModelo", b =>
                 {
-                    b.HasOne("Project.Domain.Eventos.ServicoModelo", null)
-                        .WithMany("Itens")
-                        .HasForeignKey("ServicoId")
+                    b.HasOne("Project.Domain.Eventos.TarefaModelo", null)
+                        .WithMany("Checklist")
+                        .HasForeignKey("TarefaModeloId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -3132,6 +3162,11 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .HasForeignKey("ModeloId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("Project.Domain.Eventos.ServicoModelo", null)
+                        .WithMany()
+                        .HasForeignKey("ServicoModeloId")
+                        .OnDelete(DeleteBehavior.SetNull);
                 });
 
             modelBuilder.Entity("Project.Domain.Eventos.VinculoModeloEvento", b =>
@@ -3393,9 +3428,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Navigation("Subitens");
                 });
 
-            modelBuilder.Entity("Project.Domain.Eventos.ServicoModelo", b =>
+            modelBuilder.Entity("Project.Domain.Eventos.TarefaModelo", b =>
                 {
-                    b.Navigation("Itens");
+                    b.Navigation("Checklist");
                 });
 
             modelBuilder.Entity("Project.Domain.Fornecedores.Fornecedor", b =>

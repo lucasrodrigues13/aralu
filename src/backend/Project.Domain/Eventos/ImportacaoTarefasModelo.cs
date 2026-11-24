@@ -1,36 +1,59 @@
-using System.Text;
 using System.Text.RegularExpressions;
+using Project.Domain.Tarefas;
 
 namespace Project.Domain.Eventos;
 
-public sealed record TarefaImportada(string Titulo, string? Grupo, int? DiasAntes, string? Aviso);
+/// <summary>
+/// Uma linha lida da lista colada ou da planilha (SPEC-012 v3 §8.6 e §8.7). É só leitura: a tela mostra numa grade
+/// editável e só grava o que a pessoa confirmar. Responsáveis e serviço vêm como texto; a tela resolve contra as
+/// assistentes e o cadastro de serviços.
+/// </summary>
+public sealed record TarefaImportada(
+    string Titulo,
+    string? Servico,
+    int? PrazoRelativo,
+    DateOnly? PrazoData,
+    IReadOnlyList<string> Responsaveis,
+    PrioridadeTarefa? Prioridade,
+    string? Descricao,
+    IReadOnlyList<string> Avisos);
 
 public sealed record ResultadoLeituraTarefas(
     IReadOnlyList<TarefaImportada> Tarefas,
     IReadOnlyList<string> LinhasIgnoradas);
 
-/// <summary>Leitura de texto colado e de linhas de planilha (SPEC-012 §8.3 e §8.4).</summary>
+/// <summary>Linha da planilha já separada nas colunas da SPEC-012 v3 §8.7.</summary>
+public sealed record LinhaPlanilhaTarefa(
+    string? Tarefa,
+    string? Servico,
+    string? Prazo,
+    string? Responsaveis,
+    string? Prioridade,
+    string? Descricao);
+
+/// <summary>Leitura de texto colado e de linhas de planilha (SPEC-012 v3 §8.6 e §8.7).</summary>
 public static partial class ImportacaoTarefasModelo
 {
     public const int MaximoTitulo = 200;
-    public const int MaximoGrupo = 80;
+    public const int MaximoServico = 200;
     public const int MaximoLinhas = 500;
 
     private static readonly Regex Marcadores = MarcadoresRegex();
     private static readonly Regex PrazoEntreParenteses = PrazoParentesesRegex();
 
-    public static ResultadoLeituraTarefas LerTexto(string? texto)
+    /// <param name="aceitaData">Falso no modelo (só prazo relativo); verdadeiro no evento.</param>
+    public static ResultadoLeituraTarefas LerTexto(string? texto, bool aceitaData)
     {
         var linhas = (texto ?? "")
             .Replace("\r\n", "\n", StringComparison.Ordinal)
             .Replace('\r', '\n')
             .Split('\n');
-        return LerLinhasDeTexto(linhas);
+        return LerLinhasDeTexto(linhas, aceitaData);
     }
 
-    public static ResultadoLeituraTarefas LerLinhasDeTexto(IEnumerable<string?> linhas)
+    public static ResultadoLeituraTarefas LerLinhasDeTexto(IEnumerable<string?> linhas, bool aceitaData)
     {
-        string? grupoAtual = null;
+        string? servicoAtual = null;
         var tarefas = new List<TarefaImportada>();
         var ignoradas = new List<string>();
         var vistos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -49,9 +72,9 @@ public static partial class ImportacaoTarefasModelo
                 continue;
             }
 
-            if (EhTituloDeGrupo(linha))
+            if (EhTituloDeServico(linha))
             {
-                grupoAtual = NormalizarGrupo(linha.TrimEnd(':').Trim());
+                servicoAtual = NormalizarServico(RemoverMarcadores(linha.TrimEnd(':').Trim()));
                 continue;
             }
 
@@ -63,45 +86,27 @@ public static partial class ImportacaoTarefasModelo
                 continue;
             }
 
-            string? aviso = null;
-            if (titulo.Length > MaximoTitulo)
-            {
-                titulo = titulo[..MaximoTitulo];
-                aviso = "Título cortado em 200 caracteres.";
-            }
-
-            int? dias = null;
-            if (prazoTexto is not null)
-            {
-                if (!PrazoModelo.TentarLer(prazoTexto, out dias))
-                {
-                    aviso = JuntarAvisos(aviso, "Prazo ilegível; tarefa sem prazo.");
-                    dias = null;
-                }
-            }
-
-            var chave = Chave(grupoAtual, titulo);
-            if (!vistos.Add(chave))
+            var avisos = new List<string>();
+            titulo = CortarTitulo(titulo, avisos);
+            var (relativo, data) = LerPrazo(prazoTexto, aceitaData, avisos);
+            if (!vistos.Add(Chave(servicoAtual, titulo)))
             {
                 continue;
             }
 
-            tarefas.Add(new TarefaImportada(titulo, grupoAtual, dias, aviso));
+            tarefas.Add(new TarefaImportada(titulo, servicoAtual, relativo, data, [], null, null, avisos));
         }
 
         return new ResultadoLeituraTarefas(tarefas, ignoradas);
     }
 
-    /// <summary>
-    /// Lê linhas já mapeadas da planilha (cabeçalho reconhecido). Prazo sem parênteses.
-    /// </summary>
-    public static ResultadoLeituraTarefas LerPlanilha(IEnumerable<(string? Grupo, string? Tarefa, string? Prazo)> linhas)
+    public static ResultadoLeituraTarefas LerPlanilha(IEnumerable<LinhaPlanilhaTarefa> linhas, bool aceitaData)
     {
         var tarefas = new List<TarefaImportada>();
         var ignoradas = new List<string>();
         var vistos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var (grupoBruto, tarefaBruta, prazoBruto) in linhas)
+        foreach (var linha in linhas)
         {
             if (tarefas.Count >= MaximoLinhas)
             {
@@ -109,10 +114,10 @@ public static partial class ImportacaoTarefasModelo
                 break;
             }
 
-            var titulo = tarefaBruta?.Trim();
+            var titulo = linha.Tarefa?.Trim();
             if (string.IsNullOrEmpty(titulo))
             {
-                if (!string.IsNullOrWhiteSpace(grupoBruto) || !string.IsNullOrWhiteSpace(prazoBruto))
+                if (!string.IsNullOrWhiteSpace(linha.Servico) || !string.IsNullOrWhiteSpace(linha.Prazo))
                 {
                     ignoradas.Add("Linha sem coluna Tarefa.");
                 }
@@ -120,37 +125,31 @@ public static partial class ImportacaoTarefasModelo
                 continue;
             }
 
-            string? aviso = null;
-            if (titulo.Length > MaximoTitulo)
-            {
-                titulo = titulo[..MaximoTitulo];
-                aviso = "Título cortado em 200 caracteres.";
-            }
-
-            var grupo = NormalizarGrupo(grupoBruto);
-            int? dias = null;
-            if (!string.IsNullOrWhiteSpace(prazoBruto))
-            {
-                if (!PrazoModelo.TentarLer(prazoBruto, out dias))
-                {
-                    aviso = JuntarAvisos(aviso, "Prazo ilegível; tarefa sem prazo.");
-                    dias = null;
-                }
-            }
-
-            var chave = Chave(grupo, titulo);
-            if (!vistos.Add(chave))
+            var avisos = new List<string>();
+            titulo = CortarTitulo(titulo, avisos);
+            var servico = NormalizarServico(linha.Servico);
+            var (relativo, data) = LerPrazo(linha.Prazo, aceitaData, avisos);
+            var prioridade = LerPrioridade(linha.Prioridade, avisos);
+            if (!vistos.Add(Chave(servico, titulo)))
             {
                 continue;
             }
 
-            tarefas.Add(new TarefaImportada(titulo, grupo, dias, aviso));
+            tarefas.Add(new TarefaImportada(
+                titulo,
+                servico,
+                relativo,
+                data,
+                PartirResponsaveis(linha.Responsaveis),
+                prioridade,
+                Comum.Texto.Limpo(linha.Descricao),
+                avisos));
         }
 
         return new ResultadoLeituraTarefas(tarefas, ignoradas);
     }
 
-    public static bool EhTituloDeGrupo(string linha)
+    public static bool EhTituloDeServico(string linha)
     {
         var limpo = linha.Trim();
         if (limpo.EndsWith(':'))
@@ -178,18 +177,72 @@ public static partial class ImportacaoTarefasModelo
 
     public static string RemoverMarcadores(string linha) => Marcadores.Replace(linha.TrimStart(), "").Trim();
 
+    /// <summary>Responsáveis da célula: separados por ";", "," ou "/".</summary>
+    public static IReadOnlyList<string> PartirResponsaveis(string? texto) =>
+        (texto ?? "")
+            .Split([';', ',', '/'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+    private static (int? Relativo, DateOnly? Data) LerPrazo(string? texto, bool aceitaData, List<string> avisos)
+    {
+        if (string.IsNullOrWhiteSpace(texto))
+        {
+            return (null, null);
+        }
+
+        if (!PrazoModelo.TentarLerPrazo(texto, aceitaData: true, out var relativo, out var data))
+        {
+            avisos.Add("Prazo não reconhecido.");
+            return (null, null);
+        }
+
+        if (data is not null && !aceitaData)
+        {
+            avisos.Add("Modelo aceita só prazo relativo.");
+            return (null, null);
+        }
+
+        return (relativo, data);
+    }
+
+    private static PrioridadeTarefa? LerPrioridade(string? texto, List<string> avisos)
+    {
+        var limpo = texto?.Trim().ToLowerInvariant().Replace("é", "e", StringComparison.Ordinal);
+        switch (limpo)
+        {
+            case null or "":
+                return null;
+            case "baixa":
+                return PrioridadeTarefa.Baixa;
+            case "media":
+                return PrioridadeTarefa.Media;
+            case "alta":
+                return PrioridadeTarefa.Alta;
+            default:
+                avisos.Add("Prioridade não reconhecida.");
+                return null;
+        }
+    }
+
+    private static string CortarTitulo(string titulo, List<string> avisos)
+    {
+        if (titulo.Length <= MaximoTitulo)
+        {
+            return titulo;
+        }
+
+        avisos.Add("Título cortado em 200 caracteres.");
+        return titulo[..MaximoTitulo];
+    }
+
     private static (string Titulo, string? Prazo) SepararPrazoEntreParenteses(string linha)
     {
         var match = PrazoEntreParenteses.Match(linha);
-        if (!match.Success)
-        {
-            return (linha, null);
-        }
-
-        return (linha[..match.Index].TrimEnd(), match.Groups[1].Value.Trim());
+        return match.Success ? (linha[..match.Index].TrimEnd(), match.Groups[1].Value.Trim()) : (linha, null);
     }
 
-    private static string? NormalizarGrupo(string? valor)
+    private static string? NormalizarServico(string? valor)
     {
         var limpo = valor?.Trim();
         if (string.IsNullOrEmpty(limpo))
@@ -197,19 +250,11 @@ public static partial class ImportacaoTarefasModelo
             return null;
         }
 
-        return limpo.Length > MaximoGrupo ? limpo[..MaximoGrupo] : limpo;
+        return limpo.Length > MaximoServico ? limpo[..MaximoServico] : limpo;
     }
 
-    private static string Chave(string? grupo, string titulo)
-    {
-        var sb = new StringBuilder();
-        sb.Append(grupo ?? "");
-        sb.Append('\u001f');
-        sb.Append(titulo);
-        return sb.ToString();
-    }
-
-    private static string JuntarAvisos(string? a, string b) => string.IsNullOrEmpty(a) ? b : $"{a} {b}";
+    private static string Chave(string? servico, string titulo) =>
+        Comum.Texto.ChaveComparacao(servico ?? "") + "\u001f" + Comum.Texto.ChaveComparacao(titulo);
 
     [GeneratedRegex(@"^(?:(?:[-*•]|\[[ xX]\]|\d+[.)])\s*)+", RegexOptions.CultureInvariant)]
     private static partial Regex MarcadoresRegex();

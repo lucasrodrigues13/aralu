@@ -9,7 +9,7 @@ import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
   template: `
     <h2 mat-dialog-title>Data do evento alterada</h2>
     <mat-dialog-content>
-      Mover os prazos das tarefas não concluídas junto com a data?
+      Mover os prazos com data exata das tarefas não concluídas junto com a data? Os prazos relativos ao evento acompanham a data sozinhos.
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <button mat-stroked-button type="button" (click)="ref.close(undefined)">Cancelar</button>
