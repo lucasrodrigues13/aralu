@@ -52,7 +52,7 @@ import { InspiracaoVisualizarDialog } from './inspiracao-visualizar.dialog';
             <th mat-header-cell *matHeaderCellDef>Nome</th>
             <td mat-cell *matCellDef="let item">
               <button type="button" class="link-nome" (click)="visualizar(item)">{{ item.nome }}</button>
-              <span class="block text-xs text-muted">{{ item.itens.length }} item(ns)</span>
+              <span class="text-muted"> - {{ item.itens.length }} item(ns)</span>
             </td>
           </ng-container>
           <ng-container matColumnDef="acoes">
