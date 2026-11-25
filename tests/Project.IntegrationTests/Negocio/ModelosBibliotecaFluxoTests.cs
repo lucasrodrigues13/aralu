@@ -16,6 +16,48 @@ public class ModelosBibliotecaFluxoTests
     public ModelosBibliotecaFluxoTests(BancoFixture banco) => _banco = banco;
 
     [Fact]
+    public async Task Importa_briefing_por_planilha_tudo_ou_nada()
+    {
+        var dono = await Entrar();
+        Assert.Equal(HttpStatusCode.OK, (await dono.GetAsync("/api/v1/modelos-briefing/planilha")).StatusCode);
+
+        static MultipartFormDataContent Arquivo(string nome, params string[][] linhas)
+        {
+            using var livro = new ClosedXML.Excel.XLWorkbook();
+            var aba = livro.AddWorksheet("Briefing");
+            aba.Cell(1, 1).Value = "Seção *";
+            aba.Cell(1, 2).Value = "Pergunta *";
+            for (var i = 0; i < linhas.Length; i++)
+            {
+                aba.Cell(i + 2, 1).Value = linhas[i][0];
+                aba.Cell(i + 2, 2).Value = linhas[i][1];
+            }
+
+            var memoria = new MemoryStream();
+            livro.SaveAs(memoria);
+            return new MultipartFormDataContent
+            {
+                { new StringContent(nome), "nome" },
+                { new ByteArrayContent(memoria.ToArray()), "arquivo", "briefing.xlsx" },
+            };
+        }
+
+        var comErro = await Ler(await dono.PostAsync("/api/v1/modelos-briefing/importar", Arquivo("Ruim", ["Noiva", "Nome"], ["Noiva", ""])));
+        Assert.Equal("Linha 3: informe a pergunta.", comErro.GetProperty("erros").EnumerateArray().Single().GetString());
+        Assert.DoesNotContain((await Ler(await dono.GetAsync("/api/v1/modelos-briefing"))).EnumerateArray(), item => item.GetProperty("nome").GetString() == "Ruim");
+
+        var importado = await Ler(await dono.PostAsync("/api/v1/modelos-briefing/importar",
+            Arquivo("Casamento importado", ["Noiva", "Nome"], ["Noivo", "Nome"], ["noiva", "Idade"])));
+        Assert.Equal(2, importado.GetProperty("secoes").GetInt32());
+        Assert.Equal(3, importado.GetProperty("perguntas").GetInt32());
+        var detalhe = await Ler(await dono.GetAsync($"/api/v1/modelos-briefing/{importado.GetProperty("id").GetGuid()}"));
+        Assert.Equal("Casamento importado", detalhe.GetProperty("nome").GetString());
+        var secoes = detalhe.GetProperty("secoes").EnumerateArray().ToList();
+        Assert.Equal("Noiva", secoes[0].GetProperty("titulo").GetString());
+        Assert.Equal(["Nome", "Idade"], secoes[0].GetProperty("perguntas").EnumerateArray().Select(p => p.GetProperty("enunciado").GetString()));
+    }
+
+    [Fact]
     public async Task Bibliotecas_criam_clonam_excluem_e_isolam()
     {
         var dono = await Entrar();

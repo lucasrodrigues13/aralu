@@ -148,6 +148,13 @@ export interface EstatisticasEventos {
   };
 }
 
+export interface ResultadoImportacaoBriefing {
+  id: string | null;
+  secoes: number;
+  perguntas: number;
+  erros: string[];
+}
+
 export interface Briefing {
   id: string;
   nome: string;
@@ -658,6 +665,17 @@ export class NegocioClient {
   briefings(nome = '') {
     const params = nome ? new HttpParams().set('nome', nome) : undefined;
     return this.http.get<Briefing[]>(`${this.base}/api/v1/modelos-briefing`, { params });
+  }
+
+  planilhaBriefing() {
+    return this.http.get(`${this.base}/api/v1/modelos-briefing/planilha`, { responseType: 'blob' });
+  }
+
+  importarBriefing(nome: string, arquivo: File) {
+    const dados = new FormData();
+    dados.append('nome', nome);
+    dados.append('arquivo', arquivo);
+    return this.http.post<ResultadoImportacaoBriefing>(`${this.base}/api/v1/modelos-briefing/importar`, dados);
   }
 
   briefing(id: string) {

@@ -14,6 +14,7 @@ import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { ImportarBriefingDialog } from './importar-briefing.dialog';
 
 @Component({
   selector: 'app-briefing-editor-dialog',
@@ -203,6 +204,7 @@ export class BriefingEditorDialog {
           </div>
         </div>
         <div class="barra-lista-acoes">
+          <button mat-stroked-button type="button" (click)="importar()"><mat-icon>upload_file</mat-icon> Importar planilha</button>
           <button mat-flat-button type="button" (click)="abrir()">
           <mat-icon>add</mat-icon>
           Novo Modelo de Briefing
@@ -271,6 +273,10 @@ export class ModelosBriefingPage implements OnInit {
       return;
     }
     this.dialog.open(BriefingEditorDialog, { ...DIALOG, data: dados }).afterClosed().subscribe((ok) => ok && this.carregar());
+  }
+
+  protected importar(): void {
+    this.dialog.open(ImportarBriefingDialog, DIALOG).afterClosed().subscribe((ok) => ok && this.carregar());
   }
 
   protected clonar(item: Briefing): void {
