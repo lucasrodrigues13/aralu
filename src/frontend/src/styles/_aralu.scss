@@ -787,3 +787,69 @@ body:has(.mainWrapper) app-tema.tema-fixo {
 .sidebar-list.mdc-list .menu-list-item:focus-visible {
   z-index: auto;
 }
+
+// Cabeçalho dos grupos do menu lateral: maior e com fundo próprio para se distinguir dos itens.
+.sidebar-list .nav-caption {
+  min-height: 44px;
+  margin: 12px 0 4px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--mat-sys-primary) 8%, transparent);
+  color: inherit;
+  transition: background-color 200ms ease;
+
+  &:hover {
+    background: color-mix(in srgb, var(--mat-sys-primary) 14%, transparent);
+  }
+
+  .seta-grupo {
+    transition: transform 250ms ease;
+
+    &.fechado {
+      transform: rotate(180deg);
+    }
+  }
+}
+
+// Abrir e fechar grupo: itens deslizam e aparecem/somem suavemente.
+.sidebar-list .item-grupo-entra {
+  animation: item-grupo-entra 250ms ease-out;
+}
+
+.sidebar-list .item-grupo-sai {
+  animation: item-grupo-sai 200ms ease-in forwards;
+}
+
+@keyframes item-grupo-entra {
+  from {
+    opacity: 0;
+    max-height: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    max-height: 56px;
+    transform: none;
+  }
+}
+
+@keyframes item-grupo-sai {
+  from {
+    opacity: 1;
+    max-height: 56px;
+  }
+  to {
+    opacity: 0;
+    max-height: 0;
+    transform: translateY(-6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-list .item-grupo-entra,
+  .sidebar-list .item-grupo-sai {
+    animation: none;
+  }
+}

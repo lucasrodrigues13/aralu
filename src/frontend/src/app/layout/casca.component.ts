@@ -84,18 +84,20 @@ function telaEstreita(): boolean {
               @for (grupo of grupos(); track grupo.rotulo) {
                 <button
                   type="button"
-                  class="nav-caption flex w-full items-center justify-between bg-transparent border-0 cursor-pointer text-left"
+                  class="nav-caption flex w-full items-center justify-between border-0 cursor-pointer text-left"
                   [attr.aria-expanded]="!grupoFechado(grupo.rotulo)"
                   (click)="alternarGrupo(grupo.rotulo)"
                 >
                   <span class="rotulo-grupo">{{ grupo.rotulo }}</span>
-                  <mat-icon class="shrink-0">{{ grupoFechado(grupo.rotulo) ? 'expand_more' : 'expand_less' }}</mat-icon>
+                  <mat-icon class="seta-grupo shrink-0" [class.fechado]="grupoFechado(grupo.rotulo)">expand_less</mat-icon>
                 </button>
                 @for (item of grupoFechado(grupo.rotulo) ? [] : grupo.itens; track item.rotulo) {
                   @if (item.rota && !item.emBreve) {
                     <a
                       mat-list-item
                       class="menu-list-item"
+                      animate.enter="item-grupo-entra"
+                      animate.leave="item-grupo-sai"
                       [routerLink]="item.rota"
                       routerLinkActive="activeMenu"
                       (click)="fecharMenu()"
@@ -104,7 +106,7 @@ function telaEstreita(): boolean {
                       <span class="hide-menu">{{ item.rotulo }}</span>
                     </a>
                   } @else {
-                    <mat-list-item class="menu-list-item disabled" title="Em breve" aria-disabled="true">
+                    <mat-list-item class="menu-list-item disabled" animate.enter="item-grupo-entra" animate.leave="item-grupo-sai" title="Em breve" aria-disabled="true">
                       <mat-icon matListItemIcon>{{ item.icone }}</mat-icon>
                       <span class="hide-menu">{{ item.rotulo }}</span>
                     </mat-list-item>

@@ -57,6 +57,9 @@ public sealed class InspiracaoServico(IDados dados)
         modelo.Itens.Clear();
         foreach (var item in montado.Valor.Itens)
         {
+            // Id vazio: o EF gera um novo e grava como inclusão. Com Id preenchido ele trata o item como já existente
+            // e tenta um UPDATE que não acha linha nenhuma, e o salvamento falha.
+            item.Id = Guid.Empty;
             modelo.Itens.Add(item);
         }
 

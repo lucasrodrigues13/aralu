@@ -194,7 +194,12 @@ public class ModelosBibliotecaFluxoTests
         Assert.Equal(HttpStatusCode.OK, (await dono.DeleteAsync($"/api/v1/modelos-cronograma/{cronogramaClone.GetProperty("id").GetGuid()}")).StatusCode);
 
         var inspiracao = await Ler(await dono.PostAsJsonAsync("/api/v1/modelos-inspiracoes", new { nome = "Decoração" }));
-        var inspiracaoClone = await Ler(await dono.PostAsJsonAsync($"/api/v1/modelos-inspiracoes/{inspiracao.GetProperty("id").GetGuid()}/clonar", new { }));
+        var inspiracaoId = inspiracao.GetProperty("id").GetGuid();
+        var editadaUmaVez = await dono.PutAsJsonAsync($"/api/v1/modelos-inspiracoes/{inspiracaoId}", new { nome = "Decoração", itens = new[] { new { url = "https://exemplo.com/a.jpg", arquivoId = (Guid?)null } } });
+        Assert.Equal(HttpStatusCode.OK, editadaUmaVez.StatusCode);
+        var editadaDuasVezes = await Ler(await dono.PutAsJsonAsync($"/api/v1/modelos-inspiracoes/{inspiracaoId}", new { nome = "Decoração", itens = new[] { new { url = "https://exemplo.com/b.jpg", arquivoId = (Guid?)null }, new { url = "https://exemplo.com/c.jpg", arquivoId = (Guid?)null } } }));
+        Assert.Equal(2, editadaDuasVezes.GetProperty("itens").GetArrayLength());
+        var inspiracaoClone =await Ler(await dono.PostAsJsonAsync($"/api/v1/modelos-inspiracoes/{inspiracao.GetProperty("id").GetGuid()}/clonar", new { }));
         Assert.Equal(HttpStatusCode.OK, (await dono.DeleteAsync($"/api/v1/modelos-inspiracoes/{inspiracaoClone.GetProperty("id").GetGuid()}")).StatusCode);
 
         var mensagem = await Ler(await dono.PostAsJsonAsync("/api/v1/modelos-mensagens", new
