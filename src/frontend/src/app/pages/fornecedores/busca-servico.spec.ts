@@ -1,5 +1,5 @@
 import { ServicoConta } from '../../core/negocio.client';
-import { incluirServico, marcarServico, nomesDaLista, servicoCombina } from './busca-servico';
+import { incluirServico, marcarServico, nomesDaLista, nomesDoTexto, servicoCombina } from './busca-servico';
 
 const banda: ServicoConta = { id: '1', nome: 'Banda', padrao: false };
 const fotografia: ServicoConta = { id: '2', nome: 'Fotografia', padrao: true };
@@ -27,5 +27,11 @@ describe('busca de serviço do fornecedor', () => {
     expect(marcarServico(['2'], '1')).toEqual(['2', '1']);
     const marcados = ['2'];
     expect(marcarServico(marcados, '2')).toBe(marcados);
+  });
+});
+
+describe('nomes de arquivo importado', () => {
+  it('aceita vírgula, ponto e vírgula e uma linha por serviço', () => {
+    expect(nomesDoTexto('﻿"Buffet"\r\nEspaço;Banda\nbuffet, Foto ,\n')).toEqual(['Buffet', 'Espaço', 'Banda', 'Foto']);
   });
 });

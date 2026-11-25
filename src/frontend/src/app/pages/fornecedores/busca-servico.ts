@@ -37,3 +37,8 @@ export function nomesDaLista(texto: string): string[] {
 export function marcarServico(ids: string[], id: string): string[] {
   return ids.includes(id) ? ids : [...ids, id];
 }
+
+/** Nomes vindos do texto de um arquivo .txt/.csv: aceita vírgula, ponto e vírgula ou quebra de linha, e tira aspas. */
+export function nomesDoTexto(texto: string): string[] {
+  return nomesDaLista(texto.replace(/^﻿/, '').replace(/["']/g, '').replace(/[;\r\n]+/g, ','));
+}
