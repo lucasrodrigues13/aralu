@@ -11,8 +11,9 @@ import { mensagemDeErro } from '../../core/mensagem-erro';
 import { Cronograma, NegocioClient } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
-import { DIALOG_LARGO, DIALOG_PEQUENO } from '../../shared/dialog';
+import { DIALOG, DIALOG_LARGO, DIALOG_PEQUENO } from '../../shared/dialog';
 import { CronogramaEditorDialog } from './cronograma-editor.dialog';
+import { ImportarCronogramaDialog } from './importar-cronograma.dialog';
 
 @Component({
   selector: 'app-modelos-cronograma',
@@ -37,6 +38,7 @@ import { CronogramaEditorDialog } from './cronograma-editor.dialog';
           </div>
         </div>
         <div class="barra-lista-acoes">
+          <button mat-stroked-button type="button" (click)="importar()"><mat-icon>upload_file</mat-icon> Importar planilha</button>
           <button mat-flat-button type="button" (click)="abrir()">
           <mat-icon>add</mat-icon>
           Novo Modelo de Cronograma
@@ -85,6 +87,10 @@ export class ModelosCronogramaPage implements OnInit {
   protected buscar(evento: Event): void {
     this.busca.set((evento.target as HTMLInputElement).value);
     this.carregar();
+  }
+
+  protected importar(): void {
+    this.dialog.open(ImportarCronogramaDialog, DIALOG).afterClosed().subscribe((ok) => ok && this.carregar());
   }
 
   protected abrir(item?: Cronograma): void {

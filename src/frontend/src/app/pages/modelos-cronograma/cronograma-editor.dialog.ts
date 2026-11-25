@@ -7,9 +7,10 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { mensagemDeErro } from '../../core/mensagem-erro';
-import { Cronograma, NegocioClient } from '../../core/negocio.client';
+import { Cronograma, NegocioClient, PAPEIS_RESPONSAVEL_MODELO } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { CampoDataComponent } from '../../shared/campo-data';
 import { CampoHoraComponent } from '../../shared/campo-hora';
@@ -23,7 +24,7 @@ import { moverControle } from '../../shared/mestre-detalhe';
   selector: 'app-cronograma-editor-dialog',
   imports: [
     ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule,
-    MatMenuModule, MatTooltipModule, CdkDropList, CdkDrag, CampoDataComponent, CampoHoraComponent, GdDataPipe,
+    MatMenuModule, MatSelectModule, MatTooltipModule, CdkDropList, CdkDrag, CampoDataComponent, CampoHoraComponent, GdDataPipe,
   ],
   template: `
     <h2 mat-dialog-title>{{ dados ? 'Editar cronograma' : 'Novo cronograma' }}</h2>
@@ -69,13 +70,21 @@ import { moverControle } from '../../shared/mestre-detalhe';
                     <button mat-menu-item type="button" (click)="removerItem(selecionado())"><mat-icon>delete</mat-icon> Remover item</button>
                   </mat-menu>
                 </div>
+                <mat-form-field appearance="outline" class="w-full mt-2" subscriptSizing="dynamic">
+                  <textarea aria-label="Descrição do item" matInput rows="2" formControlName="descricao" placeholder="Descrição (opcional): o que preencher ou checar"></textarea>
+                </mat-form-field>
                 <div class="linha mt-3">
                   <app-campo-data rotulo="Data" formControlName="data" />
                   <app-campo-hora rotulo="Hora" formControlName="hora" />
                 </div>
                 <div class="campo mt-2">
                   <mat-label class="font-semibold mb-2 block">Responsável</mat-label>
-                  <mat-form-field appearance="outline" class="w-full"><input aria-label="Responsável" matInput formControlName="responsavel" /></mat-form-field>
+                  <mat-form-field appearance="outline" class="w-full">
+                    <mat-select aria-label="Responsável" formControlName="responsavel" placeholder="Sem responsável">
+                      <mat-option value="">Sem responsável</mat-option>
+                      @for (papel of papeis; track papel.valor) { <mat-option [value]="papel.valor">{{ papel.rotulo }}</mat-option> }
+                    </mat-select>
+                  </mat-form-field>
                 </div>
                 <div class="campo">
                   <mat-label class="font-semibold mb-2 block">Recado aos fornecedores</mat-label>
@@ -106,6 +115,7 @@ export class CronogramaEditorDialog {
   protected readonly dados = inject<Cronograma | null>(MAT_DIALOG_DATA);
   protected readonly ref = inject(MatDialogRef<CronogramaEditorDialog, boolean>);
   protected readonly selecionado = signal(0);
+  protected readonly papeis = PAPEIS_RESPONSAVEL_MODELO;
 
   protected readonly form = this.fb.group({
     titulo: [this.dados?.titulo ?? '', Validators.required],
@@ -115,7 +125,7 @@ export class CronogramaEditorDialog {
 
   constructor() {
     for (const item of this.dados?.itens ?? []) {
-      this.itens.push(this.novoItem(item.rotulo ?? '', deIsoParaData(item.data), (item.hora ?? '').slice(0, 5), item.responsavel ?? '', item.recadoFornecedores ?? ''));
+      this.itens.push(this.novoItem(item.rotulo ?? '', item.descricao ?? '', deIsoParaData(item.data), (item.hora ?? '').slice(0, 5), this.papel(item.responsavel), item.recadoFornecedores ?? ''));
     }
   }
 
@@ -128,7 +138,7 @@ export class CronogramaEditorDialog {
   }
 
   protected adicionarItem(): void {
-    this.itens.push(this.novoItem('', null, '', '', ''));
+    this.itens.push(this.novoItem('', '', null, '', '', ''));
     this.selecionado.set(this.itens.length - 1);
   }
 
@@ -147,13 +157,14 @@ export class CronogramaEditorDialog {
     const valor = this.form.getRawValue() as {
       titulo: string | null;
       descricao: string | null;
-      itens: { rotulo: string; data: Date | null; hora: string; responsavel: string; recadoFornecedores: string }[];
+      itens: { rotulo: string; descricao: string; data: Date | null; hora: string; responsavel: string; recadoFornecedores: string }[];
     };
     const pedido = {
       titulo: valor.titulo,
       descricao: valor.descricao || null,
       itens: valor.itens.map((item) => ({
         rotulo: item.rotulo || null,
+        descricao: item.descricao || null,
         data: deDataParaIso(item.data),
         hora: horaParaApi(item.hora),
         responsavel: item.responsavel || null,
@@ -170,7 +181,12 @@ export class CronogramaEditorDialog {
     });
   }
 
-  private novoItem(rotulo: string, data: Date | null, hora: string, responsavel: string, recado: string): FormGroup {
-    return this.fb.group({ rotulo: [rotulo], data: [data], hora: [hora], responsavel: [responsavel], recadoFornecedores: [recado] });
+  /** Só papéis entram no campo; um texto livre antigo fica vazio até ser escolhido de novo. */
+  private papel(valor: string | null): string {
+    return this.papeis.some((papel) => papel.valor === valor) ? (valor as string) : '';
+  }
+
+  private novoItem(rotulo: string, descricao: string, data: Date | null, hora: string, responsavel: string, recado: string): FormGroup {
+    return this.fb.group({ rotulo: [rotulo], descricao: [descricao], data: [data], hora: [hora], responsavel: [responsavel], recadoFornecedores: [recado] });
   }
 }

@@ -148,6 +148,12 @@ export interface EstatisticasEventos {
   };
 }
 
+export interface ResultadoImportacaoCronograma {
+  id: string | null;
+  itens: number;
+  erros: string[];
+}
+
 export interface ResultadoImportacaoRoteiro {
   id: string | null;
   momentos: number;
@@ -197,6 +203,7 @@ export interface Cronograma {
   itens: {
     id: string;
     rotulo: string | null;
+    descricao: string | null;
     data: string | null;
     hora: string | null;
     responsavel: string | null;
@@ -770,6 +777,17 @@ export class NegocioClient {
 
   cronograma(id: string) {
     return this.http.get<Cronograma>(`${this.base}/api/v1/modelos-cronograma/${id}`);
+  }
+
+  planilhaCronograma() {
+    return this.http.get(`${this.base}/api/v1/modelos-cronograma/planilha`, { responseType: 'blob' });
+  }
+
+  importarCronograma(titulo: string, arquivo: File) {
+    const dados = new FormData();
+    dados.append('nome', titulo);
+    dados.append('arquivo', arquivo);
+    return this.http.post<ResultadoImportacaoCronograma>(`${this.base}/api/v1/modelos-cronograma/importar`, dados);
   }
 
   criarCronograma(pedido: unknown) {

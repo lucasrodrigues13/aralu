@@ -54,6 +54,7 @@ public static class Dependencias
         services.AddScoped<FornecedorImportacaoServico>();
         services.AddScoped<BriefingImportacaoServico>();
         services.AddScoped<RoteiroImportacaoServico>();
+        services.AddScoped<CronogramaImportacaoServico>();
         services.AddScoped<PainelServico>();
         services.AddScoped<IDadosDinheiro, DadosDinheiroEf>();
         services.AddScoped<DinheiroServico>();
@@ -99,6 +100,7 @@ public static class Dependencias
         services.AddSingleton<IPlanilhaFornecedores, Fornecedores.PlanilhaFornecedoresExcel>();
         services.AddSingleton<IPlanilhaBriefing, Modelos.PlanilhaBriefingExcel>();
         services.AddSingleton<IPlanilhaRoteiro, Modelos.PlanilhaRoteiroExcel>();
+        services.AddSingleton<IPlanilhaCronograma, Modelos.PlanilhaCronogramaExcel>();
         services.AddSingleton<IGeradorQr, GeradorQr>();
         services.AddScoped<IEmailSender<ApplicationUser>, MailKitEmailSender>();
         services.AddScoped<GarantiaDePapeis>();

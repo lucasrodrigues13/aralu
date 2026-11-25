@@ -51,6 +51,8 @@ public static class NegocioEndpoints
         api.MapGet("/modelos-roteiro/planilha", PlanilhaRoteiroModelo).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/modelos-roteiro/importar", ImportarRoteiro).DisableAntiforgery().RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         MapearBiblioteca(api, "/modelos-roteiro", Roteiros, CriarRoteiro, Roteiro, AtualizarRoteiro, ExcluirRoteiro, ClonarRoteiro);
+        api.MapGet("/modelos-cronograma/planilha", PlanilhaCronogramaModelo).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/modelos-cronograma/importar", ImportarCronograma).DisableAntiforgery().RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         MapearBiblioteca(api, "/modelos-cronograma", Cronogramas, CriarCronograma, Cronograma, AtualizarCronograma, ExcluirCronograma, ClonarCronograma);
         MapearBiblioteca(api, "/modelos-inspiracoes", Inspiracoes, CriarInspiracao, Inspiracao, AtualizarInspiracao, ExcluirInspiracao, ClonarInspiracao);
         MapearBiblioteca(api, "/modelos-mensagens", Mensagens, CriarMensagem, Mensagem, AtualizarMensagem, ExcluirMensagem, ClonarMensagem);
@@ -384,6 +386,25 @@ public static class NegocioEndpoints
 
     private static Task<IResult> ClonarRoteiro(Guid id, ClaimsPrincipal usuario, RoteiroServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.ClonarAsync(conta, id, ct)));
+
+    private static IResult PlanilhaCronogramaModelo(CronogramaImportacaoServico servico) =>
+        Results.File(servico.Modelo(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "cronograma.xlsx");
+
+    /// <summary>Importa a planilha (campo "arquivo") como um novo modelo com o nome do campo "nome": tudo ou nada.</summary>
+    private static Task<IResult> ImportarCronograma(
+        HttpRequest request, ClaimsPrincipal usuario, CronogramaImportacaoServico servico, CancellationToken ct) =>
+        ComConta(usuario, async conta =>
+        {
+            var formulario = request.HasFormContentType ? await request.ReadFormAsync(ct) : null;
+            var arquivo = formulario?.Files.GetFile("arquivo");
+            if (arquivo is null)
+            {
+                return await De(Task.FromResult(Resultado<ResultadoImportacaoCronograma>.Erro(Codigos.Validacao, "Envie a planilha.")));
+            }
+
+            await using var fluxo = arquivo.OpenReadStream();
+            return await De(servico.ImportarAsync(conta, formulario!["nome"].ToString(), fluxo, arquivo.FileName, ct));
+        });
 
     private static Task<IResult> Cronogramas(ClaimsPrincipal usuario, CronogramaServico servico, string? nome, CancellationToken ct) =>
         ComConta(usuario, async conta => Results.Ok(await servico.ListarAsync(conta, nome, ct)));

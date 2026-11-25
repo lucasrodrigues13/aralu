@@ -2192,6 +2192,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<DateOnly?>("Data")
                         .HasColumnType("date");
 
+                    b.Property<string>("Descricao")
+                        .HasColumnType("text");
+
                     b.Property<TimeOnly?>("Hora")
                         .HasColumnType("time without time zone");
 

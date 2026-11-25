@@ -6,6 +6,7 @@ namespace Project.Application.Negocio;
 public sealed record ItemCronogramaLeitura(
     Guid Id,
     string? Rotulo,
+    string? Descricao,
     DateOnly? Data,
     TimeOnly? Hora,
     string? Responsavel,
@@ -20,6 +21,7 @@ public sealed record CronogramaLeitura(
 
 public sealed record ItemCronogramaPedido(
     string? Rotulo,
+    string? Descricao,
     DateOnly? Data,
     TimeOnly? Hora,
     string? Responsavel,
@@ -103,6 +105,7 @@ public sealed class CronogramaServico(IDados dados)
                 Id = Guid.NewGuid(),
                 ModeloId = copia.Id,
                 Rotulo = item.Rotulo,
+                Descricao = item.Descricao,
                 Data = item.Data,
                 Hora = item.Hora,
                 Responsavel = item.Responsavel,
@@ -150,9 +153,10 @@ public sealed class CronogramaServico(IDados dados)
                 Id = Guid.NewGuid(),
                 ModeloId = id,
                 Rotulo = Domain.Comum.Texto.Limpo(item.Rotulo),
+                Descricao = Domain.Comum.Texto.Limpo(item.Descricao),
                 Data = item.Data,
                 Hora = item.Hora,
-                Responsavel = Domain.Comum.Texto.Limpo(item.Responsavel),
+                Responsavel = ResponsaveisCronograma.Normalizar(item.Responsavel),
                 RecadoFornecedores = Domain.Comum.Texto.Limpo(item.RecadoFornecedores),
                 Ordem = ordem++,
             });
@@ -168,6 +172,7 @@ public sealed class CronogramaServico(IDados dados)
         modelo.Itens.OrderBy(item => item.Ordem).Select(item => new ItemCronogramaLeitura(
             item.Id,
             item.Rotulo,
+            item.Descricao,
             item.Data,
             item.Hora,
             item.Responsavel,

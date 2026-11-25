@@ -105,6 +105,53 @@ public class ModelosBibliotecaFluxoTests
     }
 
     [Fact]
+    public async Task Importa_cronograma_por_planilha_com_descricao_e_papel()
+    {
+        var dono = await Entrar();
+        Assert.Equal(HttpStatusCode.OK, (await dono.GetAsync("/api/v1/modelos-cronograma/planilha")).StatusCode);
+
+        static MultipartFormDataContent Arquivo(string titulo, params string[][] linhas)
+        {
+            using var livro = new ClosedXML.Excel.XLWorkbook();
+            var aba = livro.AddWorksheet("Cronograma");
+            string[] cabecalho = ["Item *", "Descrição", "Data", "Hora", "Responsável", "Recado aos fornecedores"];
+            for (var c = 0; c < cabecalho.Length; c++)
+            {
+                aba.Cell(1, c + 1).Value = cabecalho[c];
+            }
+
+            for (var i = 0; i < linhas.Length; i++)
+            {
+                for (var c = 0; c < linhas[i].Length; c++)
+                {
+                    aba.Cell(i + 2, c + 1).SetValue(linhas[i][c]);
+                }
+            }
+
+            var memoria = new MemoryStream();
+            livro.SaveAs(memoria);
+            return new MultipartFormDataContent
+            {
+                { new StringContent(titulo), "nome" },
+                { new ByteArrayContent(memoria.ToArray()), "arquivo", "cronograma.xlsx" },
+            };
+        }
+
+        var comErro = await Ler(await dono.PostAsync("/api/v1/modelos-cronograma/importar", Arquivo("Ruim", ["Flores", "", "", "", "Fotógrafo", ""])));
+        Assert.Equal("Linha 2: responsável deve ser Organizador, Assistente ou Cliente.", comErro.GetProperty("erros").EnumerateArray().Single().GetString());
+
+        var importado = await Ler(await dono.PostAsync("/api/v1/modelos-cronograma/importar",
+            Arquivo("Montagem", ["Entrega das flores", "Quais flores?", "", "08:00", "Organizador", "Entrada lateral"], ["Chegada do buffet", "", "", "", "", ""])));
+        Assert.Equal(2, importado.GetProperty("itens").GetInt32());
+        var detalhe = await Ler(await dono.GetAsync($"/api/v1/modelos-cronograma/{importado.GetProperty("id").GetGuid()}"));
+        Assert.Equal("Montagem", detalhe.GetProperty("titulo").GetString());
+        var primeiro = detalhe.GetProperty("itens").EnumerateArray().First();
+        Assert.Equal("Quais flores?", primeiro.GetProperty("descricao").GetString());
+        Assert.Equal("Organizer", primeiro.GetProperty("responsavel").GetString());
+        Assert.Equal("Entrada lateral", primeiro.GetProperty("recadoFornecedores").GetString());
+    }
+
+    [Fact]
     public async Task Bibliotecas_criam_clonam_excluem_e_isolam()
     {
         var dono = await Entrar();
