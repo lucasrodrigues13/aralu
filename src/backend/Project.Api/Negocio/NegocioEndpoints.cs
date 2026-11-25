@@ -54,6 +54,7 @@ public static class NegocioEndpoints
         api.MapGet("/modelos-cronograma/planilha", PlanilhaCronogramaModelo).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/modelos-cronograma/importar", ImportarCronograma).DisableAntiforgery().RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         MapearBiblioteca(api, "/modelos-cronograma", Cronogramas, CriarCronograma, Cronograma, AtualizarCronograma, ExcluirCronograma, ClonarCronograma);
+        api.MapPost("/modelos-inspiracoes/arquivos", EnviarArquivoInspiracao).DisableAntiforgery().RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         MapearBiblioteca(api, "/modelos-inspiracoes", Inspiracoes, CriarInspiracao, Inspiracao, AtualizarInspiracao, ExcluirInspiracao, ClonarInspiracao);
         MapearBiblioteca(api, "/modelos-mensagens", Mensagens, CriarMensagem, Mensagem, AtualizarMensagem, ExcluirMensagem, ClonarMensagem);
         api.MapGet("/servicos-conta", ServicosConta).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
@@ -426,6 +427,22 @@ public static class NegocioEndpoints
 
     private static Task<IResult> Inspiracoes(ClaimsPrincipal usuario, InspiracaoServico servico, string? nome, CancellationToken ct) =>
         ComConta(usuario, async conta => Results.Ok(await servico.ListarAsync(conta, nome, ct)));
+
+    /// <summary>Imagem ou PDF da galeria: JPG, JPEG, PNG ou PDF até 5 MB; imagens grandes são reduzidas no servidor.</summary>
+    private static Task<IResult> EnviarArquivoInspiracao(IFormFile? arquivo, ClaimsPrincipal usuario, IArmazenamentoArquivo armazenamento, CancellationToken ct) =>
+        ComConta(usuario, async conta =>
+        {
+            if (arquivo is null || arquivo.Length == 0)
+            {
+                return Results.Json(new ErroResposta(Codigos.Validacao, "O arquivo não foi aceito. Use JPG, JPEG, PNG ou PDF de até 5 MB."), statusCode: StatusCodes.Status400BadRequest);
+            }
+
+            await using var fluxo = arquivo.OpenReadStream();
+            var guardado = await armazenamento.GuardarDocumentoAsync(fluxo, arquivo.FileName, conta, ct);
+            return guardado.Ok && guardado.Valor is not null
+                ? Results.Ok(new { arquivoId = guardado.Valor.Id, nome = guardado.Valor.NomeOriginal, tipoConteudo = guardado.Valor.TipoConteudo })
+                : Results.Json(new ErroResposta(guardado.Falha!.Codigo, guardado.Falha.Mensagem), statusCode: StatusCodes.Status400BadRequest);
+        });
 
     private static Task<IResult> CriarInspiracao(SalvarInspiracao pedido, ClaimsPrincipal usuario, InspiracaoServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.CriarAsync(conta, pedido, ct)));

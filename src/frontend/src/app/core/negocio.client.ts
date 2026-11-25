@@ -815,6 +815,12 @@ export class NegocioClient {
     return this.http.get<Inspiracao>(`${this.base}/api/v1/modelos-inspiracoes/${id}`);
   }
 
+  enviarArquivoInspiracao(arquivo: File) {
+    const dados = new FormData();
+    dados.append('arquivo', arquivo);
+    return this.http.post<{ arquivoId: string; nome: string; tipoConteudo: string }>(`${this.base}/api/v1/modelos-inspiracoes/arquivos`, dados);
+  }
+
   criarInspiracao(pedido: unknown) {
     return this.http.post<Inspiracao>(`${this.base}/api/v1/modelos-inspiracoes`, pedido);
   }

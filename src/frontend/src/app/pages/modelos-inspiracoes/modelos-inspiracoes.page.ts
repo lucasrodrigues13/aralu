@@ -11,8 +11,9 @@ import { mensagemDeErro } from '../../core/mensagem-erro';
 import { Inspiracao, NegocioClient } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
-import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
+import { DIALOG, DIALOG_LARGO, DIALOG_PEQUENO } from '../../shared/dialog';
 import { InspiracaoEditorDialog } from './inspiracao-editor.dialog';
+import { InspiracaoVisualizarDialog } from './inspiracao-visualizar.dialog';
 
 @Component({
   selector: 'app-modelos-inspiracoes',
@@ -50,7 +51,7 @@ import { InspiracaoEditorDialog } from './inspiracao-editor.dialog';
           <ng-container matColumnDef="nome">
             <th mat-header-cell *matHeaderCellDef>Nome</th>
             <td mat-cell *matCellDef="let item">
-              {{ item.nome }}
+              <button type="button" class="link-nome" (click)="visualizar(item)">{{ item.nome }}</button>
               <span class="block text-xs text-muted">{{ item.itens.length }} item(ns)</span>
             </td>
           </ng-container>
@@ -69,6 +70,7 @@ import { InspiracaoEditorDialog } from './inspiracao-editor.dialog';
     </mat-card-content>
     </mat-card>
   `,
+  styles: `.link-nome { background: none; border: 0; padding: 0; font: inherit; color: var(--mat-sys-primary); cursor: pointer; text-align: start; } .link-nome:hover { text-decoration: underline; }`,
 })
 export class ModelosInspiracoesPage implements OnInit {
   private readonly negocio = inject(NegocioClient);
@@ -96,6 +98,13 @@ export class ModelosInspiracoesPage implements OnInit {
       return;
     }
     this.dialog.open(InspiracaoEditorDialog, { ...DIALOG, data: null }).afterClosed().subscribe((ok) => ok && this.carregar());
+  }
+
+  protected visualizar(item: Inspiracao): void {
+    this.negocio.inspiracao(item.id).subscribe({
+      next: (detalhe) => this.dialog.open(InspiracaoVisualizarDialog, { ...DIALOG_LARGO, data: detalhe }),
+      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+    });
   }
 
   protected clonar(item: Inspiracao): void {
