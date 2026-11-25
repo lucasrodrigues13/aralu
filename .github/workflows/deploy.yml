@@ -1,4 +1,7 @@
-# Dispara no push da main e também pelo botão "Run workflow".
+# Dispara no push da main (produção) ou da staging (staging), e também pelo botão "Run workflow".
+#   main     -> /opt/aralu          projeto Compose "aralu"
+#   staging  -> /opt/aralu-staging  projeto Compose "aralu-staging"
+# Cada diretório tem o próprio .env; o projeto separa containers, rede e volumes (o banco inclusive).
 # Os valores não ficam neste arquivo. Cadastre os segredos do repositório:
 #   SSH_HOST          IP público da VPS
 #   SSH_USER          usuário SSH, em geral root
@@ -9,9 +12,10 @@ name: Deploy
 
 on:
   push:
-    branches: [main]
+    branches: [main, staging]
   workflow_dispatch:
 
+# Um deploy por vez na VPS, para os dois ambientes não compilarem ao mesmo tempo.
 concurrency:
   group: deploy-vps
   cancel-in-progress: false
@@ -21,6 +25,7 @@ permissions:
 
 jobs:
   deploy:
+    if: github.ref_name == 'main' || github.ref_name == 'staging'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -31,12 +36,20 @@ jobs:
           SSH_USER: ${{ secrets.SSH_USER }}
           SSH_PORT: ${{ secrets.SSH_PORT }}
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          BRANCH: ${{ github.ref_name }}
         run: |
           set -euo pipefail
           if [ -z "${SSH_HOST}" ] || [ -z "${SSH_USER}" ] || [ -z "${SSH_PRIVATE_KEY}" ]; then
             echo "Cadastre SSH_HOST, SSH_USER e SSH_PRIVATE_KEY nos segredos do repositório."
             exit 1
           fi
+          if [ "$BRANCH" = "main" ]; then
+            projeto="aralu"
+          else
+            projeto="aralu-staging"
+          fi
+          dir="/opt/${projeto}"
+          echo "Publicando a branch ${BRANCH} em ${dir} (projeto ${projeto})."
           port="${SSH_PORT:-22}"
           install -m 700 -d ~/.ssh
           printf '%s\n' "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/aralu_deploy
@@ -44,12 +57,12 @@ jobs:
           ssh-keyscan -p "$port" -H "$SSH_HOST" >> ~/.ssh/known_hosts
           destino="${SSH_USER}@${SSH_HOST}"
           ssh_base="ssh -i ${HOME}/.ssh/aralu_deploy -p ${port} -o StrictHostKeyChecking=yes -o ConnectTimeout=20 -o ServerAliveInterval=30"
-          $ssh_base "$destino" "mkdir -p /opt/aralu"
+          $ssh_base "$destino" "mkdir -p ${dir}"
           rsync -az --delete \
             --exclude '.git/' \
             --exclude '.env' \
             --exclude 'node_modules/' \
             -e "$ssh_base" \
-            ./ "${destino}:/opt/aralu/"
-          $ssh_base "$destino" "if [ ! -f /opt/aralu/.env ]; then cp /opt/aralu/.env.example /opt/aralu/.env; chmod 600 /opt/aralu/.env; echo 'Preencha /opt/aralu/.env e rode este workflow de novo.'; exit 1; fi"
-          $ssh_base "$destino" "cd /opt/aralu && docker compose -f compose.production.yaml up -d --build --remove-orphans --wait"
+            ./ "${destino}:${dir}/"
+          $ssh_base "$destino" "if [ ! -f ${dir}/.env ]; then cp ${dir}/.env.example ${dir}/.env; chmod 600 ${dir}/.env; echo 'Preencha ${dir}/.env e rode este workflow de novo.'; exit 1; fi"
+          $ssh_base "$destino" "cd ${dir} && docker compose -p ${projeto} -f compose.production.yaml up -d --build --remove-orphans --wait"

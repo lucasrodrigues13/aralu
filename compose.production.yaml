@@ -1,6 +1,7 @@
-# VPS de teste. Segredos vêm do .env ao lado deste arquivo, que não entra no Git.
-# O workflow publica este diretório em /opt/aralu e roda:
-#   docker compose -f compose.production.yaml up -d --build --remove-orphans --wait
+# Produção e staging usam este mesmo arquivo. Segredos vêm do .env ao lado dele, que não entra no Git.
+# O workflow publica a branch main em /opt/aralu e a branch staging em /opt/aralu-staging, e roda:
+#   docker compose -p <projeto> -f compose.production.yaml up -d --build --remove-orphans --wait
+# O nome do projeto (aralu ou aralu-staging) separa containers, rede e volumes, inclusive o banco.
 
 name: aralu
 
@@ -15,6 +16,7 @@ services:
       - banco:/var/lib/postgresql/data
     networks:
       - interna
+    mem_limit: ${POSTGRES_MEM_LIMIT:-1g}
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-aralu} -d ${POSTGRES_DB:-aralu}"]
@@ -53,8 +55,9 @@ services:
       Jwt__ExpiryHours: "8"
       DataProtection__KeysPath: /keys
       Storage__Root: /storage
-      PublicUrl: http://${DOMAIN:?defina DOMAIN no .env}
-      Cors__Origins__0: http://${DOMAIN:?defina DOMAIN no .env}
+      App__Environment: ${APP_ENV:-production}
+      PublicUrl: ${PUBLIC_SCHEME:-http}://${DOMAIN:?defina DOMAIN no .env}
+      Cors__Origins__0: ${PUBLIC_SCHEME:-http}://${DOMAIN:?defina DOMAIN no .env}
       Email__Host: ${EMAIL_HOST:-smtp.office365.com}
       Email__Port: ${EMAIL_PORT:-587}
       Email__Username: ${EMAIL_USERNAME:?defina EMAIL_USERNAME no .env}
@@ -78,6 +81,7 @@ services:
         condition: service_completed_successfully
     networks:
       - interna
+    mem_limit: ${API_MEM_LIMIT:-1g}
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/127.0.0.1/8080'"]
@@ -94,7 +98,8 @@ services:
     ports:
       # As portas 80/443 da VPS são do proxy em /opt/proxy (repo jm-reboques-lp, infra/proxy).
       # O frontend só escuta no loopback; o proxy repassa o tráfego HTTP para cá.
-      - "127.0.0.1:8081:80"
+      # Produção usa 8081 e staging 8082 (FRONTEND_PORT no .env).
+      - "127.0.0.1:${FRONTEND_PORT:-8081}:80"
     volumes:
       - caddy_data:/data
       - caddy_config:/config
