@@ -41,8 +41,13 @@ import { moverControle } from '../../shared/mestre-detalhe';
 
         <div class="mestre-detalhe" formArrayName="itens">
           <nav class="mestre" aria-label="Itens do cronograma">
-            <div cdkDropList (cdkDropListDropped)="moverItem($event)">
+            <div class="busca">
+              <mat-icon aria-hidden="true">search</mat-icon>
+              <input type="search" aria-label="Buscar item" placeholder="Buscar item" [value]="busca()" (input)="busca.set($any($event.target).value)" />
+            </div>
+            <div cdkDropList (cdkDropListDropped)="moverItem($event)" [cdkDropListDisabled]="!!busca().trim()">
               @for (item of itens.controls; track item; let i = $index) {
+                @if (combina(item.value.rotulo)) {
                 <button type="button" cdkDrag class="opcao" [class.ativa]="i === selecionado()" [attr.aria-current]="i === selecionado() ? 'true' : null" (click)="selecionado.set(i)">
                   <span class="opcao-texto">
                     <span class="titulo" [class.vazio]="!item.value.rotulo">{{ item.value.rotulo || 'Item sem rótulo' }}</span>
@@ -51,8 +56,12 @@ import { moverControle } from '../../shared/mestre-detalhe';
                     }
                   </span>
                 </button>
+                }
               } @empty {
                 <p class="text-sm text-muted px-3 py-2 m-0">Nenhum item ainda.</p>
+              }
+              @if (itens.length > 0 && busca().trim() && !algumCombina()) {
+                <p class="text-sm text-muted px-3 py-2 m-0">Nenhum item com esse nome.</p>
               }
             </div>
             <button mat-button type="button" class="adicionar" (click)="adicionarItem()"><mat-icon>add</mat-icon> Item</button>
@@ -107,6 +116,12 @@ import { moverControle } from '../../shared/mestre-detalhe';
     </mat-dialog-actions>
   `,
   styleUrl: '../../shared/mestre-detalhe.scss',
+  styles: `
+    :host { --mestre-altura: calc(90vh - 400px); }
+    .busca { display: flex; align-items: center; gap: 6px; padding: 4px 8px; margin-bottom: 4px; border: 1px solid var(--mat-sys-outline-variant); border-radius: 7px; }
+    .busca mat-icon { font-size: 18px; width: 18px; height: 18px; color: var(--mat-sys-on-surface-variant); }
+    .busca input { flex: 1; min-width: 0; border: 0; outline: 0; background: none; color: inherit; font: inherit; font-size: 0.875rem; padding: 4px 0; }
+  `,
 })
 export class CronogramaEditorDialog {
   private readonly fb = inject(FormBuilder);
@@ -116,6 +131,7 @@ export class CronogramaEditorDialog {
   protected readonly ref = inject(MatDialogRef<CronogramaEditorDialog, boolean>);
   protected readonly selecionado = signal(0);
   protected readonly papeis = PAPEIS_RESPONSAVEL_MODELO;
+  protected readonly busca = signal('');
 
   protected readonly form = this.fb.group({
     titulo: [this.dados?.titulo ?? '', Validators.required],
@@ -137,7 +153,22 @@ export class CronogramaEditorDialog {
     return this.itens.length > 0 ? this.itens.at(Math.min(this.selecionado(), this.itens.length - 1)) : null;
   }
 
+  /** Busca rápida pelo rótulo, sem diferenciar maiúsculas e acentos. Enquanto filtra, não dá para arrastar. */
+  protected combina(rotulo: string | null): boolean {
+    const termo = this.normalizar(this.busca());
+    return !termo || this.normalizar(rotulo).includes(termo);
+  }
+
+  protected algumCombina(): boolean {
+    return this.itens.controls.some((item) => this.combina(item.value.rotulo));
+  }
+
+  private normalizar(texto: string | null): string {
+    return (texto ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+  }
+
   protected adicionarItem(): void {
+    this.busca.set('');
     this.itens.push(this.novoItem('', '', null, '', '', ''));
     this.selecionado.set(this.itens.length - 1);
   }
