@@ -210,6 +210,12 @@ export interface ServicoConta {
   padrao: boolean;
 }
 
+export interface ResultadoImportacaoFornecedores {
+  criados: number;
+  servicosCriados: number;
+  erros: string[];
+}
+
 export interface FornecedorResumo {
   id: string;
   nome: string;
@@ -821,6 +827,16 @@ export class NegocioClient {
 
   fornecedor(id: string) {
     return this.http.get<Fornecedor>(`${this.base}/api/v1/fornecedores/${id}`);
+  }
+
+  planilhaFornecedores() {
+    return this.http.get(`${this.base}/api/v1/fornecedores/planilha`, { responseType: 'blob' });
+  }
+
+  importarFornecedores(arquivo: File) {
+    const dados = new FormData();
+    dados.append('arquivo', arquivo);
+    return this.http.post<ResultadoImportacaoFornecedores>(`${this.base}/api/v1/fornecedores/importar`, dados);
   }
 
   criarFornecedor(pedido: unknown) {

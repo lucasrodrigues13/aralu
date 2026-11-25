@@ -56,6 +56,8 @@ public static class NegocioEndpoints
         api.MapDelete("/servicos-conta/{id:guid}", ExcluirServicoConta).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapGet("/fornecedores", Fornecedores).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/fornecedores", CriarFornecedor).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapGet("/fornecedores/planilha", PlanilhaFornecedoresModelo).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/fornecedores/importar", ImportarFornecedores).DisableAntiforgery().RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapGet("/fornecedores/{id:guid}", Fornecedor).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPut("/fornecedores/{id:guid}", AtualizarFornecedor).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapDelete("/fornecedores/{id:guid}", ExcluirFornecedor).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
@@ -406,6 +408,24 @@ public static class NegocioEndpoints
 
     private static Task<IResult> ExcluirServicoConta(Guid id, ClaimsPrincipal usuario, FornecedorServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.ExcluirServicoAsync(conta, id, ct)));
+
+    private static IResult PlanilhaFornecedoresModelo(FornecedorImportacaoServico servico) =>
+        Results.File(servico.Modelo(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "fornecedores.xlsx");
+
+    /// <summary>Importa a planilha (campo "arquivo"): tudo ou nada; com erros, devolve a lista e não grava.</summary>
+    private static Task<IResult> ImportarFornecedores(
+        HttpRequest request, ClaimsPrincipal usuario, FornecedorImportacaoServico servico, CancellationToken ct) =>
+        ComConta(usuario, async conta =>
+        {
+            var arquivo = request.HasFormContentType ? (await request.ReadFormAsync(ct)).Files.GetFile("arquivo") : null;
+            if (arquivo is null)
+            {
+                return await De(Task.FromResult(Resultado<ResultadoImportacaoFornecedores>.Erro(Codigos.Validacao, "Envie a planilha.")));
+            }
+
+            await using var fluxo = arquivo.OpenReadStream();
+            return await De(servico.ImportarAsync(conta, fluxo, arquivo.FileName, ct));
+        });
 
     private static Task<IResult> Fornecedores(ClaimsPrincipal usuario, FornecedorServico servico, string? nome, CancellationToken ct) =>
         ComConta(usuario, async conta => Results.Ok(await servico.ListarAsync(conta, nome, ct)));

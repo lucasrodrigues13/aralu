@@ -119,10 +119,14 @@ export const DIALOG_FORNECEDOR = DIALOG_LARGO;
                       <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Telefone'" matInput formControlName="numero" gdMascara="celular" /></mat-form-field>
                     </div>
                     <mat-checkbox formControlName="movel">Móvel</mat-checkbox>
-                    <button mat-icon-button type="button" aria-label="Remover telefone" matTooltip="Remover telefone" (click)="removerTelefone(i)"><mat-icon>close</mat-icon></button>
+                    <div class="botoes">
+                      <button mat-icon-button type="button" aria-label="Adicionar outro telefone" matTooltip="Adicionar outro telefone" (click)="adicionarTelefone(i)"><mat-icon>add_circle_outline</mat-icon></button>
+                      @if (telefones.length > 1) {
+                        <button mat-icon-button type="button" aria-label="Remover telefone" matTooltip="Remover telefone" (click)="removerTelefone(i)"><mat-icon>close</mat-icon></button>
+                      }
+                    </div>
                   </div>
                 }
-                <button mat-stroked-button type="button" class="acao" (click)="adicionarTelefone()">Adicionar telefone</button>
               </div>
               <div class="lista" formArrayName="emails">
                 @for (email of emails.controls; track $index; let i = $index) {
@@ -131,10 +135,14 @@ export const DIALOG_FORNECEDOR = DIALOG_LARGO;
                       <mat-label class="font-semibold mb-2 block">E-mail</mat-label>
                       <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'E-mail'" matInput formControlName="endereco" /></mat-form-field>
                     </div>
-                    <button mat-icon-button type="button" aria-label="Remover e-mail" matTooltip="Remover e-mail" (click)="removerEmail(i)"><mat-icon>close</mat-icon></button>
+                    <div class="botoes">
+                      <button mat-icon-button type="button" aria-label="Adicionar outro e-mail" matTooltip="Adicionar outro e-mail" (click)="adicionarEmail(i)"><mat-icon>add_circle_outline</mat-icon></button>
+                      @if (emails.length > 1) {
+                        <button mat-icon-button type="button" aria-label="Remover e-mail" matTooltip="Remover e-mail" (click)="removerEmail(i)"><mat-icon>close</mat-icon></button>
+                      }
+                    </div>
                   </div>
                 }
-                <button mat-stroked-button type="button" class="acao" (click)="adicionarEmail()">Adicionar e-mail</button>
               </div>
             </div>
           </mat-tab>
@@ -369,6 +377,9 @@ export const DIALOG_FORNECEDOR = DIALOG_LARGO;
       align-items: center;
     }
     .linha.email { grid-template-columns: minmax(0, 1fr) auto; }
+    .botoes { display: flex; align-items: center; min-width: 96px; padding-top: 28px; }
+    .botoes .mat-mdc-icon-button { color: var(--mat-sys-on-surface-variant); }
+    .botoes .mat-mdc-icon-button:first-child { color: var(--mat-sys-primary); }
     .linha.orcamento { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto auto; }
     .acao { align-self: flex-start; justify-self: start; }
     .full { width: 100%; }
@@ -491,6 +502,13 @@ export class FornecedorFormDialog implements OnInit {
     for (const email of this.dados?.emails ?? []) {
       this.emails.push(this.fb.group({ endereco: [email.endereco] }));
     }
+    // O primeiro telefone e o primeiro e-mail já ficam abertos para preencher.
+    if (this.telefones.length === 0) {
+      this.adicionarTelefone();
+    }
+    if (this.emails.length === 0) {
+      this.adicionarEmail();
+    }
     for (const orc of this.dados?.orcamentos ?? []) {
       this.orcamentos.push(this.fb.group({
         titulo: [orc.titulo],
@@ -595,16 +613,17 @@ export class FornecedorFormDialog implements OnInit {
     });
   }
 
-  protected adicionarTelefone(): void {
-    this.telefones.push(this.fb.group({ responsavel: [''], ddi: ['55'], numero: [''], movel: [true] }));
+  /** Insere logo abaixo da linha cujo "+" foi clicado. */
+  protected adicionarTelefone(depois = this.telefones.length - 1): void {
+    this.telefones.insert(depois + 1, this.fb.group({ responsavel: [''], ddi: ['55'], numero: [''], movel: [true] }));
   }
 
   protected removerTelefone(i: number): void {
     this.telefones.removeAt(i);
   }
 
-  protected adicionarEmail(): void {
-    this.emails.push(this.fb.group({ endereco: [''] }));
+  protected adicionarEmail(depois = this.emails.length - 1): void {
+    this.emails.insert(depois + 1, this.fb.group({ endereco: [''] }));
   }
 
   protected removerEmail(i: number): void {

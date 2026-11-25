@@ -14,6 +14,7 @@ import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { DIALOG_FORNECEDOR, FornecedorFormDialog } from './fornecedor-form.dialog';
 import { NovoServicoDialog } from './novo-servico.dialog';
+import { ImportarFornecedoresDialog } from './importar-fornecedores.dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
@@ -39,6 +40,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
               </div>
             </div>
             <div class="barra-lista-acoes">
+              <button mat-stroked-button type="button" (click)="importarFornecedores()"><mat-icon>upload_file</mat-icon> Importar planilha</button>
               <button mat-flat-button type="button" (click)="abrirFornecedor()"><mat-icon>add</mat-icon> Novo fornecedor</button>
             </div>
           </div>
@@ -146,6 +148,15 @@ export class FornecedoresPage implements OnInit {
       return;
     }
     this.dialog.open(FornecedorFormDialog, { ...DIALOG_FORNECEDOR, data: null }).afterClosed().subscribe((ok) => {
+      if (ok) {
+        this.carregarFornecedores();
+        this.carregarServicos();
+      }
+    });
+  }
+
+  protected importarFornecedores(): void {
+    this.dialog.open(ImportarFornecedoresDialog, DIALOG).afterClosed().subscribe((ok) => {
       if (ok) {
         this.carregarFornecedores();
         this.carregarServicos();

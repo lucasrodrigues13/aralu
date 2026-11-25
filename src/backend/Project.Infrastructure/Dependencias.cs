@@ -51,6 +51,7 @@ public static class Dependencias
         services.AddScoped<InspiracaoServico>();
         services.AddScoped<MensagemServico>();
         services.AddScoped<FornecedorServico>();
+        services.AddScoped<FornecedorImportacaoServico>();
         services.AddScoped<PainelServico>();
         services.AddScoped<IDadosDinheiro, DadosDinheiroEf>();
         services.AddScoped<DinheiroServico>();
@@ -93,6 +94,7 @@ public static class Dependencias
         });
         services.AddSingleton<IPlanilhaConvites, PlanilhaExcel>();
         services.AddSingleton<IPlanilhaTarefasModelo, Eventos.PlanilhaTarefasExcel>();
+        services.AddSingleton<IPlanilhaFornecedores, Fornecedores.PlanilhaFornecedoresExcel>();
         services.AddSingleton<IGeradorQr, GeradorQr>();
         services.AddScoped<IEmailSender<ApplicationUser>, MailKitEmailSender>();
         services.AddScoped<GarantiaDePapeis>();

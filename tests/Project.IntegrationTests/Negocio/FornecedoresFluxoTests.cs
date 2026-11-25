@@ -116,6 +116,74 @@ public class FornecedoresFluxoTests
         Assert.Equal(HttpStatusCode.BadRequest, (await dono.PostAsJsonAsync("/api/v1/servicos-conta/em-massa", new { nomes = $"Ok, {new string('x', 201)}" })).StatusCode);
     }
 
+    [Fact]
+    public async Task Importa_fornecedores_por_planilha_tudo_ou_nada()
+    {
+        var dono = await Entrar();
+        var modelo = await dono.GetAsync("/api/v1/fornecedores/planilha");
+        Assert.Equal(HttpStatusCode.OK, modelo.StatusCode);
+
+        static MultipartFormDataContent Arquivo(Action<ClosedXML.Excel.XLWorkbook> preencher)
+        {
+            using var livro = new ClosedXML.Excel.XLWorkbook();
+            preencher(livro);
+            var memoria = new MemoryStream();
+            livro.SaveAs(memoria);
+            var conteudo = new ByteArrayContent(memoria.ToArray());
+            return new MultipartFormDataContent { { conteudo, "arquivo", "fornecedores.xlsx" } };
+        }
+
+        var comErro = await Ler(await dono.PostAsync("/api/v1/fornecedores/importar", Arquivo(livro =>
+        {
+            var aba = livro.AddWorksheet("Fornecedores");
+            aba.Cell(1, 1).Value = "Nome *";
+            aba.Cell(1, 2).Value = "Serviços *";
+            aba.Cell(1, 3).Value = "E-mail";
+            aba.Cell(2, 1).Value = "Ok";
+            aba.Cell(2, 2).Value = "Bolo";
+            aba.Cell(3, 1).Value = "Ruim";
+            aba.Cell(3, 2).Value = "Bolo";
+            aba.Cell(3, 3).Value = "sem-arroba";
+        })));
+        Assert.Equal(0, comErro.GetProperty("criados").GetInt32());
+        Assert.Equal("Linha 3: Informe um e-mail válido.", comErro.GetProperty("erros").EnumerateArray().Single().GetString());
+        Assert.Empty((await Ler(await dono.GetAsync("/api/v1/fornecedores"))).EnumerateArray());
+
+        var importado = await Ler(await dono.PostAsync("/api/v1/fornecedores/importar", Arquivo(livro =>
+        {
+            var aba = livro.AddWorksheet("Fornecedores");
+            aba.Cell(1, 1).Value = "Nome *";
+            aba.Cell(1, 2).Value = "Serviços *";
+            aba.Cell(2, 1).Value = "Doce Mel";
+            aba.Cell(2, 2).Value = "Bolo, Doces";
+            aba.Cell(3, 1).Value = "Bolo Bom";
+            aba.Cell(3, 2).Value = "bolo";
+            var bancos = livro.AddWorksheet("Dados bancários");
+            bancos.Cell(1, 1).Value = "Fornecedor *";
+            bancos.Cell(1, 2).Value = "Tipo de Pix";
+            bancos.Cell(1, 3).Value = "Chave Pix";
+            bancos.Cell(2, 1).Value = "Doce Mel";
+            bancos.Cell(2, 2).Value = "Chave aleatória";
+            bancos.Cell(2, 3).Value = "abc-123";
+        })));
+        Assert.Equal(2, importado.GetProperty("criados").GetInt32());
+        Assert.Equal(2, importado.GetProperty("servicosCriados").GetInt32());
+        var lista = (await Ler(await dono.GetAsync("/api/v1/fornecedores"))).EnumerateArray().ToList();
+        var doce = lista.Single(item => item.GetProperty("nome").GetString() == "Doce Mel");
+        var detalhe = await Ler(await dono.GetAsync($"/api/v1/fornecedores/{doce.GetProperty("id").GetGuid()}"));
+        Assert.Equal("Aleatoria", detalhe.GetProperty("pixTipo").GetString());
+
+        var repetido = await Ler(await dono.PostAsync("/api/v1/fornecedores/importar", Arquivo(livro =>
+        {
+            var aba = livro.AddWorksheet("Fornecedores");
+            aba.Cell(1, 1).Value = "Nome";
+            aba.Cell(1, 2).Value = "Serviços";
+            aba.Cell(2, 1).Value = "doce mel";
+            aba.Cell(2, 2).Value = "Bolo";
+        })));
+        Assert.Contains("já está cadastrado", repetido.GetProperty("erros")[0].GetString());
+    }
+
     private async Task<HttpClient> Entrar()
     {
         var email = $"forn-{Guid.NewGuid():N}@aralu.test";

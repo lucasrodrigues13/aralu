@@ -685,7 +685,15 @@ public sealed class FornecedorServico(IDados dados, Arquivos.IArmazenamentoArqui
         return Resultado<EventoDetalhe>.Sucesso(await EventoMapeamento.DetalheAsync(dados, contaId, evento, hoje, ct));
     }
 
-    private async Task<Resultado<Fornecedor>> MontarAsync(string contaId, Guid id, SalvarFornecedor pedido, CancellationToken ct)
+    /// <summary>Confere o pedido sem gravar; os serviços ficam de fora (a importação ainda vai criá-los).</summary>
+    public async Task<Resultado<bool>> ValidarSemServicosAsync(string contaId, SalvarFornecedor pedido, CancellationToken ct)
+    {
+        var montado = await MontarAsync(contaId, Guid.NewGuid(), pedido, ct, conferirServicos: false);
+        return montado.Ok ? Resultado<bool>.Sucesso(true) : Resultado<bool>.Erro(montado.Falha!.Codigo, montado.Falha.Mensagem);
+    }
+
+    private async Task<Resultado<Fornecedor>> MontarAsync(
+        string contaId, Guid id, SalvarFornecedor pedido, CancellationToken ct, bool conferirServicos = true)
     {
         var nome = Domain.Comum.Texto.Limpo(pedido.Nome);
         if (nome is null)
@@ -694,13 +702,12 @@ public sealed class FornecedorServico(IDados dados, Arquivos.IArmazenamentoArqui
         }
 
         var servicoIds = (pedido.ServicoContaIds ?? []).Distinct().ToArray();
-        if (servicoIds.Length == 0)
+        if (conferirServicos && servicoIds.Length == 0)
         {
             return Resultado<Fornecedor>.Erro(Codigos.Validacao, "Informe ao menos um serviço.");
         }
 
-        var nomes = await dados.NomesServicosContaAsync(contaId, servicoIds, ct);
-        if (nomes.Count != servicoIds.Length)
+        if (conferirServicos && (await dados.NomesServicosContaAsync(contaId, servicoIds, ct)).Count != servicoIds.Length)
         {
             return Resultado<Fornecedor>.Erro(Codigos.Validacao, "Informe serviços válidos da conta.");
         }
