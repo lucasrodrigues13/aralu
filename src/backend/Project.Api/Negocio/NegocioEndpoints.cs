@@ -48,6 +48,8 @@ public static class NegocioEndpoints
         api.MapGet("/modelos-briefing/planilha", PlanilhaBriefingModelo).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/modelos-briefing/importar", ImportarBriefing).DisableAntiforgery().RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         MapearBiblioteca(api, "/modelos-briefing", Briefings, CriarBriefing, Briefing, AtualizarBriefing, ExcluirBriefing, ClonarBriefing);
+        api.MapGet("/modelos-roteiro/planilha", PlanilhaRoteiroModelo).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/modelos-roteiro/importar", ImportarRoteiro).DisableAntiforgery().RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         MapearBiblioteca(api, "/modelos-roteiro", Roteiros, CriarRoteiro, Roteiro, AtualizarRoteiro, ExcluirRoteiro, ClonarRoteiro);
         MapearBiblioteca(api, "/modelos-cronograma", Cronogramas, CriarCronograma, Cronograma, AtualizarCronograma, ExcluirCronograma, ClonarCronograma);
         MapearBiblioteca(api, "/modelos-inspiracoes", Inspiracoes, CriarInspiracao, Inspiracao, AtualizarInspiracao, ExcluirInspiracao, ClonarInspiracao);
@@ -345,6 +347,25 @@ public static class NegocioEndpoints
 
     private static Task<IResult> ClonarBriefing(Guid id, ClaimsPrincipal usuario, BriefingServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.ClonarAsync(conta, id, ct)));
+
+    private static IResult PlanilhaRoteiroModelo(RoteiroImportacaoServico servico) =>
+        Results.File(servico.Modelo(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "roteiro.xlsx");
+
+    /// <summary>Importa a planilha (campo "arquivo") como um novo modelo com o nome do campo "nome": tudo ou nada.</summary>
+    private static Task<IResult> ImportarRoteiro(
+        HttpRequest request, ClaimsPrincipal usuario, RoteiroImportacaoServico servico, CancellationToken ct) =>
+        ComConta(usuario, async conta =>
+        {
+            var formulario = request.HasFormContentType ? await request.ReadFormAsync(ct) : null;
+            var arquivo = formulario?.Files.GetFile("arquivo");
+            if (arquivo is null)
+            {
+                return await De(Task.FromResult(Resultado<ResultadoImportacaoRoteiro>.Erro(Codigos.Validacao, "Envie a planilha.")));
+            }
+
+            await using var fluxo = arquivo.OpenReadStream();
+            return await De(servico.ImportarAsync(conta, formulario!["nome"].ToString(), fluxo, arquivo.FileName, ct));
+        });
 
     private static Task<IResult> Roteiros(ClaimsPrincipal usuario, RoteiroServico servico, string? nome, CancellationToken ct) =>
         ComConta(usuario, async conta => Results.Ok(await servico.ListarAsync(conta, nome, ct)));

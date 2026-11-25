@@ -11,7 +11,8 @@ import { mensagemDeErro } from '../../core/mensagem-erro';
 import { Roteiro, NegocioClient } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
-import { DIALOG_LARGO, DIALOG_PEQUENO } from '../../shared/dialog';
+import { DIALOG, DIALOG_LARGO, DIALOG_PEQUENO } from '../../shared/dialog';
+import { ImportarRoteiroDialog } from './importar-roteiro.dialog';
 import { RoteiroEditorDialog } from './roteiro-editor.dialog';
 
 @Component({
@@ -37,6 +38,7 @@ import { RoteiroEditorDialog } from './roteiro-editor.dialog';
           </div>
         </div>
         <div class="barra-lista-acoes">
+          <button mat-stroked-button type="button" (click)="importar()"><mat-icon>upload_file</mat-icon> Importar planilha</button>
           <button mat-flat-button type="button" (click)="abrir()">
           <mat-icon>add</mat-icon>
           Novo Modelo de Roteiro
@@ -82,6 +84,10 @@ export class ModelosRoteiroPage implements OnInit {
   protected buscar(evento: Event): void {
     this.busca.set((evento.target as HTMLInputElement).value);
     this.carregar();
+  }
+
+  protected importar(): void {
+    this.dialog.open(ImportarRoteiroDialog, DIALOG).afterClosed().subscribe((ok) => ok && this.carregar());
   }
 
   protected abrir(item?: Roteiro): void {

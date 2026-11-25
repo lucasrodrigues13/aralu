@@ -148,6 +148,13 @@ export interface EstatisticasEventos {
   };
 }
 
+export interface ResultadoImportacaoRoteiro {
+  id: string | null;
+  momentos: number;
+  itens: number;
+  erros: string[];
+}
+
 export interface ResultadoImportacaoBriefing {
   id: string | null;
   secoes: number;
@@ -676,6 +683,17 @@ export class NegocioClient {
     dados.append('nome', nome);
     dados.append('arquivo', arquivo);
     return this.http.post<ResultadoImportacaoBriefing>(`${this.base}/api/v1/modelos-briefing/importar`, dados);
+  }
+
+  planilhaRoteiro() {
+    return this.http.get(`${this.base}/api/v1/modelos-roteiro/planilha`, { responseType: 'blob' });
+  }
+
+  importarRoteiro(nome: string, arquivo: File) {
+    const dados = new FormData();
+    dados.append('nome', nome);
+    dados.append('arquivo', arquivo);
+    return this.http.post<ResultadoImportacaoRoteiro>(`${this.base}/api/v1/modelos-roteiro/importar`, dados);
   }
 
   briefing(id: string) {

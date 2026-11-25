@@ -58,6 +58,53 @@ public class ModelosBibliotecaFluxoTests
     }
 
     [Fact]
+    public async Task Importa_roteiro_por_planilha_tudo_ou_nada()
+    {
+        var dono = await Entrar();
+        Assert.Equal(HttpStatusCode.OK, (await dono.GetAsync("/api/v1/modelos-roteiro/planilha")).StatusCode);
+
+        static MultipartFormDataContent Arquivo(string nome, params string[][] linhas)
+        {
+            using var livro = new ClosedXML.Excel.XLWorkbook();
+            var aba = livro.AddWorksheet("Roteiro");
+            string[] cabecalho = ["Momento *", "Horário", "Música", "Item"];
+            for (var c = 0; c < cabecalho.Length; c++)
+            {
+                aba.Cell(1, c + 1).Value = cabecalho[c];
+            }
+
+            for (var i = 0; i < linhas.Length; i++)
+            {
+                for (var c = 0; c < linhas[i].Length; c++)
+                {
+                    aba.Cell(i + 2, c + 1).SetValue(linhas[i][c]);
+                }
+            }
+
+            var memoria = new MemoryStream();
+            livro.SaveAs(memoria);
+            return new MultipartFormDataContent
+            {
+                { new StringContent(nome), "nome" },
+                { new ByteArrayContent(memoria.ToArray()), "arquivo", "roteiro.xlsx" },
+            };
+        }
+
+        var comErro = await Ler(await dono.PostAsync("/api/v1/modelos-roteiro/importar", Arquivo("Ruim", ["Chegada", "tarde", "", "Item"])));
+        Assert.Equal("Linha 2: horário inválido. Use o formato 15:30.", comErro.GetProperty("erros").EnumerateArray().Single().GetString());
+
+        var importado = await Ler(await dono.PostAsync("/api/v1/modelos-roteiro/importar",
+            Arquivo("Cerimônia importada", ["Chegada", "15:30", "", "Checar alianças"], ["Saída", "", "Marcha", ""], ["chegada", "", "", "Checar microfone"])));
+        Assert.Equal(2, importado.GetProperty("momentos").GetInt32());
+        Assert.Equal(2, importado.GetProperty("itens").GetInt32());
+        var detalhe = await Ler(await dono.GetAsync($"/api/v1/modelos-roteiro/{importado.GetProperty("id").GetGuid()}"));
+        var secoes = detalhe.GetProperty("secoes").EnumerateArray().ToList();
+        Assert.StartsWith("15:30", secoes[0].GetProperty("horario").GetString());
+        Assert.Equal(["Checar alianças", "Checar microfone"], secoes[0].GetProperty("itens").EnumerateArray().Select(i => i.GetProperty("texto").GetString()));
+        Assert.Equal("Marcha", secoes[1].GetProperty("musica").GetString());
+    }
+
+    [Fact]
     public async Task Bibliotecas_criam_clonam_excluem_e_isolam()
     {
         var dono = await Entrar();
