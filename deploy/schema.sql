@@ -4159,7 +4159,6 @@ BEGIN
 END $EF$;
 COMMIT;
 
-
 START TRANSACTION;
 
 DO $EF$
@@ -4369,5 +4368,23 @@ BEGIN
     VALUES ('20261124190000_ServicosETarefasDoModelo', '10.0.4');
     END IF;
 END $EF$;
-
 COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261125202305_DescricaoItemCronograma') THEN
+    ALTER TABLE "ItemCronograma" ADD "Descricao" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261125202305_DescricaoItemCronograma') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261125202305_DescricaoItemCronograma', '10.0.4');
+    END IF;
+END $EF$;
+COMMIT;
+
