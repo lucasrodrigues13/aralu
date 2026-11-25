@@ -70,17 +70,17 @@ import { PreviasArquivo } from './previas-arquivo';
     .conteudo { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 16px; align-items: start; }
     .conteudo.so-um { grid-template-columns: minmax(0, 1fr); }
     @media (max-width: 720px) { .conteudo { grid-template-columns: minmax(0, 1fr); } }
-    .palco { position: relative; display: flex; align-items: center; justify-content: center; height: min(52vh, 440px); background: var(--mat-sys-surface-container); border-radius: 8px; overflow: hidden; }
+    .palco { position: relative; display: flex; align-items: center; justify-content: center; height: min(62vh, 600px); background: var(--mat-sys-surface-container); border-radius: 8px; overflow: hidden; }
     .palco img { max-width: 100%; max-height: 100%; object-fit: contain; }
     .seta { position: absolute; top: 50%; transform: translateY(-50%); background: color-mix(in srgb, var(--mat-sys-surface) 85%, transparent); }
     .esquerda { left: 8px; }
     .direita { right: 8px; }
     .contador { position: absolute; bottom: 8px; right: 12px; font-size: 0.75rem; padding: 2px 8px; border-radius: 999px; background: color-mix(in srgb, var(--mat-sys-surface) 85%, transparent); }
     .miniaturas { display: flex; gap: 8px; overflow-x: auto; padding: 10px 2px 2px; }
-    .miniatura { flex: none; width: 60px; height: 60px; padding: 0; border: 2px solid transparent; border-radius: 6px; overflow: hidden; cursor: pointer; background: var(--mat-sys-surface-container); opacity: .7; }
+    .miniatura { flex: none; width: 72px; height: 72px; padding: 0; border: 2px solid transparent; border-radius: 6px; overflow: hidden; cursor: pointer; background: var(--mat-sys-surface-container); opacity: .7; }
     .miniatura.ativa { border-color: var(--mat-sys-primary); opacity: 1; }
     .miniatura img { width: 100%; height: 100%; object-fit: cover; }
-    .links { display: flex; flex-direction: column; border: 1px solid var(--mat-sys-outline-variant); border-radius: 8px; max-height: min(52vh, 440px); min-height: 0; }
+    .links { display: flex; flex-direction: column; border: 1px solid var(--mat-sys-outline-variant); border-radius: 8px; max-height: min(62vh, 600px); min-height: 0; }
     .titulo { font-weight: 600; font-size: 0.875rem; padding: 10px 12px; border-bottom: 1px solid var(--mat-sys-outline-variant); }
     .rolagem { overflow-y: auto; min-height: 0; }
     .link { display: flex; align-items: center; gap: 8px; padding: 9px 12px; font-size: 0.8125rem; color: var(--mat-sys-primary); text-decoration: none; border-bottom: 1px solid var(--mat-sys-outline-variant); }

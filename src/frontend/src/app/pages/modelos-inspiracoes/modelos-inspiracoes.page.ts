@@ -11,7 +11,7 @@ import { mensagemDeErro } from '../../core/mensagem-erro';
 import { Inspiracao, NegocioClient } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
-import { DIALOG, DIALOG_LARGO, DIALOG_PEQUENO } from '../../shared/dialog';
+import { DIALOG, DIALOG_EM_MASSA, DIALOG_PEQUENO } from '../../shared/dialog';
 import { InspiracaoEditorDialog } from './inspiracao-editor.dialog';
 import { InspiracaoVisualizarDialog } from './inspiracao-visualizar.dialog';
 
@@ -102,7 +102,7 @@ export class ModelosInspiracoesPage implements OnInit {
 
   protected visualizar(item: Inspiracao): void {
     this.negocio.inspiracao(item.id).subscribe({
-      next: (detalhe) => this.dialog.open(InspiracaoVisualizarDialog, { ...DIALOG_LARGO, data: detalhe }),
+      next: (detalhe) => this.dialog.open(InspiracaoVisualizarDialog, { ...DIALOG_EM_MASSA, data: detalhe }),
       error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
     });
   }
