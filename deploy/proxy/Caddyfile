@@ -19,6 +19,15 @@ staging.aralu.com.br {
 	reverse_proxy 127.0.0.1:8082
 }
 
+# ── Landing pages (repositório landing-pages, container isolado) ──────
+jmreboque.com.br {
+	reverse_proxy 127.0.0.1:8090
+}
+
+www.jmreboque.com.br {
+	redir https://jmreboque.com.br{uri} permanent
+}
+
 # ── Domínio antigo (DNS na Wix aponta para esta VPS) ──────────────────
 voltexstores.com, www.voltexstores.com {
 	redir https://aralu.com.br{uri} permanent
