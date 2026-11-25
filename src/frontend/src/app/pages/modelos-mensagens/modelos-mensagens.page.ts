@@ -7,6 +7,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatTableModule } from '@angular/material/table';
+import { MatSelectModule } from '@angular/material/select';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { MensagemModelo, NegocioClient } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
@@ -14,9 +15,56 @@ import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
+/** Tags das mensagens, com o que cada uma vira no envio. */
+const TAGS_MENSAGEM: { marca: string; rotulo: string }[] = [
+  { marca: '{{nome_da_empresa}}', rotulo: 'Nome da sua empresa' },
+  { marca: '{{nome_evento}}', rotulo: 'Nome do evento' },
+  { marca: '{{tipo_evento}}', rotulo: 'Tipo do evento (casamento, 15 anos…)' },
+  { marca: '{{data_evento}}', rotulo: 'Data do evento' },
+  { marca: '{{hora_evento}}', rotulo: 'Horário do evento' },
+  { marca: '{{local_cerimonia}}', rotulo: 'Nome do local da cerimônia' },
+  { marca: '{{local_recepcao}}', rotulo: 'Nome do local da recepção' },
+  { marca: '{{endereco_cerimonia}}', rotulo: 'Endereço da cerimônia' },
+  { marca: '{{endereco_recepcao}}', rotulo: 'Endereço da recepção' },
+  { marca: '{{convite}}', rotulo: 'Nome do convite' },
+  { marca: '{{link_convite}}', rotulo: 'Link do convite' },
+  { marca: '{{link_unico}}', rotulo: 'Link único de confirmação do convidado' },
+  { marca: '{{nome_convidados}}', rotulo: 'Nomes dos convidados do convite' },
+  { marca: '{{mesa_dos_convidados}}', rotulo: 'Mesa dos convidados' },
+  { marca: '{{site_url}}', rotulo: 'Endereço do site do evento' },
+  { marca: '{{prazo_rsvp}}', rotulo: 'Prazo para confirmar presença' },
+  { marca: '{{qr_code}}', rotulo: 'QR code de entrada na portaria' },
+];
+
+/** Ajuda das tags das mensagens: como usar e a lista completa. */
+@Component({
+  selector: 'app-ajuda-tags-mensagem-dialog',
+  imports: [MatDialogModule, MatButtonModule],
+  template: `
+    <h2 mat-dialog-title>Como usar as tags</h2>
+    <mat-dialog-content>
+      <p class="text-sm mb-3">
+        Tags são trechos entre chaves duplas que o sistema troca pelos dados do evento e do convidado quando a mensagem é enviada.
+        Clique no texto onde o dado deve entrar, abra "Inserir tags no cursor", marque uma ou mais e feche a lista: elas entram na posição do cursor, na ordem da lista.
+      </p>
+      <table class="w-full text-sm">
+        <thead><tr><th class="text-left">Tag</th><th class="text-left">O que representa</th></tr></thead>
+        <tbody>
+          @for (tag of tags; track tag.marca) { <tr><td><code>{{ tag.marca }}</code></td><td>{{ tag.rotulo }}</td></tr> }
+        </tbody>
+      </table>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end"><button mat-flat-button type="button" mat-dialog-close>Entendi</button></mat-dialog-actions>
+  `,
+  styles: `td, th { padding: 6px 8px; border-bottom: 1px solid var(--mat-sys-outline-variant); }`,
+})
+export class AjudaTagsMensagemDialog {
+  protected readonly tags = TAGS_MENSAGEM;
+}
+
 @Component({
   selector: 'app-mensagem-editor-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule],
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, MatTooltipModule],
   template: `
     <h2 mat-dialog-title>{{ dados ? 'Editar mensagem' : 'Novo modelo' }}</h2>
     <mat-dialog-content>
@@ -31,11 +79,17 @@ import { MatTooltipModule } from '@angular/material/tooltip';
           <textarea [attr.aria-label]="'Texto'" matInput rows="6" formControlName="texto" #textoArea></textarea>
         </mat-form-field>
         </div>
-        <div class="params">
-          <span>Inserir parâmetro:</span>
-          @for (param of parametros; track param) {
-            <button mat-stroked-button type="button" (click)="inserir(param, textoArea)">{{ param }}</button>
-          }
+        <div class="seletor-tags">
+          <mat-form-field appearance="outline" class="grow" subscriptSizing="dynamic">
+            <mat-icon matPrefix>sell</mat-icon>
+            <mat-select multiple aria-label="Inserir tags no cursor" placeholder="Inserir tags no cursor" [value]="tagsEscolhidas"
+              (valueChange)="tagsEscolhidas = $event" (openedChange)="!$event && inserir(textoArea)">
+              @for (tag of tags; track tag.marca) {
+                <mat-option [value]="tag.marca"><span class="font-medium">{{ tag.marca }}</span><span class="text-muted text-xs"> · {{ tag.rotulo }}</span></mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <button mat-icon-button type="button" aria-label="Ajuda sobre as tags" matTooltip="Ajuda sobre as tags" (click)="abrirAjuda()"><mat-icon>help_outline</mat-icon></button>
         </div>
       </form>
     </mat-dialog-content>
@@ -45,8 +99,8 @@ import { MatTooltipModule } from '@angular/material/tooltip';
     </mat-dialog-actions>
   `,
   styles: `
-    .params { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 8px; }
-    .params button { font-size: 0.75rem; }
+    .seletor-tags { display: flex; align-items: center; gap: 4px; }
+    .grow { flex: 1; min-width: 0; }
   `,
 })
 export class MensagemEditorDialog {
@@ -55,20 +109,29 @@ export class MensagemEditorDialog {
   private readonly toast = inject(ToastService);
   protected readonly dados = inject<MensagemModelo | null>(MAT_DIALOG_DATA);
   protected readonly ref = inject(MatDialogRef<MensagemEditorDialog, boolean>);
-  protected readonly parametros = this.dados?.parametros?.length
-    ? this.dados.parametros
-    : [
-        '{{nome_da_empresa}}', '{{nome_evento}}', '{{tipo_evento}}', '{{data_evento}}', '{{hora_evento}}',
-        '{{local_cerimonia}}', '{{local_recepcao}}', '{{endereco_cerimonia}}', '{{endereco_recepcao}}',
-        '{{convite}}', '{{link_convite}}', '{{link_unico}}', '{{nome_convidados}}', '{{mesa_dos_convidados}}',
-        '{{site_url}}', '{{prazo_rsvp}}', '{{qr_code}}',
-      ];
+  private readonly dialog = inject(MatDialog);
+  /** Tags da mensagem salva (quando o servidor mandar) ou a lista padrão. */
+  protected readonly tags = this.dados?.parametros?.length
+    ? this.dados.parametros.map((marca) => TAGS_MENSAGEM.find((tag) => tag.marca === marca) ?? { marca, rotulo: '' })
+    : TAGS_MENSAGEM;
+  protected tagsEscolhidas: string[] = [];
   protected readonly form = this.fb.nonNullable.group({
     nome: [this.dados?.nome ?? '', Validators.required],
     texto: [this.dados?.texto ?? '', Validators.required],
   });
 
-  protected inserir(param: string, area: HTMLTextAreaElement): void {
+  protected abrirAjuda(): void {
+    this.dialog.open(AjudaTagsMensagemDialog, DIALOG);
+  }
+
+  /** Ao fechar a lista, coloca as tags marcadas no cursor (na ordem da lista) e limpa a seleção. */
+  protected inserir(area: HTMLTextAreaElement): void {
+    const ordem = this.tags.map((tag) => tag.marca);
+    const param = [...this.tagsEscolhidas].sort((a, b) => ordem.indexOf(a) - ordem.indexOf(b)).join(' ');
+    this.tagsEscolhidas = [];
+    if (!param) {
+      return;
+    }
     const atual = this.form.controls.texto.value;
     const inicio = area.selectionStart ?? atual.length;
     const fim = area.selectionEnd ?? atual.length;

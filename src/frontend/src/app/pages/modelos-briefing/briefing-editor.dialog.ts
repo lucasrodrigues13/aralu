@@ -1,5 +1,5 @@
 import { Component, ElementRef, inject, signal, viewChildren } from '@angular/core';
-import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
+import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList } from '@angular/cdk/drag-drop';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
@@ -11,6 +11,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { Briefing, NegocioClient } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
+import { moverControle } from '../../shared/mestre-detalhe';
 
 /**
  * Editor de modelo de briefing em mestre e detalhe: seções à esquerda, a seção escolhida à direita
@@ -34,11 +35,11 @@ import { ToastService } from '../../core/toast.service';
           <mat-form-field appearance="outline" class="w-full"><input aria-label="Nome" matInput formControlName="nome" [readonly]="somenteLeitura" /></mat-form-field>
         </div>
 
-        <div class="editor" formArrayName="secoes">
-          <nav class="secoes" aria-label="Seções do briefing">
+        <div class="mestre-detalhe" formArrayName="secoes">
+          <nav class="mestre" aria-label="Seções do briefing">
             <div cdkDropList (cdkDropListDropped)="moverSecao($event)" [cdkDropListDisabled]="somenteLeitura">
               @for (secao of secoes.controls; track secao; let i = $index) {
-                <button type="button" cdkDrag class="secao" [class.ativa]="i === selecionada()" [attr.aria-current]="i === selecionada() ? 'true' : null" (click)="selecionada.set(i)">
+                <button type="button" cdkDrag class="opcao" [class.ativa]="i === selecionada()" [attr.aria-current]="i === selecionada() ? 'true' : null" (click)="selecionada.set(i)">
                   <span class="titulo" [class.vazio]="!secao.value.titulo">{{ secao.value.titulo || 'Seção sem título' }}</span>
                   <span class="contagem">{{ perguntasDe(i).length }}</span>
                 </button>
@@ -69,11 +70,11 @@ import { ToastService } from '../../core/toast.service';
                   <textarea aria-label="Descrição da seção" matInput rows="2" formControlName="descricao" placeholder="Descrição (opcional)" [readonly]="somenteLeitura"></textarea>
                 </mat-form-field>
 
-                <div class="perguntas" formArrayName="perguntas">
+                <div class="lista" formArrayName="perguntas">
                   <span class="rotulo">Perguntas</span>
                   <div cdkDropList (cdkDropListDropped)="moverPergunta($event)" [cdkDropListDisabled]="somenteLeitura">
                     @for (pergunta of perguntasDe(selecionada()).controls; track pergunta; let j = $index) {
-                      <div class="pergunta" cdkDrag [formGroupName]="j">
+                      <div class="item" cdkDrag [formGroupName]="j">
                         @if (!somenteLeitura) { <mat-icon class="alca" cdkDragHandle aria-label="Arrastar para reordenar">drag_indicator</mat-icon> }
                         <span class="numero">{{ j + 1 }}</span>
                         <mat-form-field appearance="outline" class="grow" subscriptSizing="dynamic">
@@ -112,33 +113,7 @@ import { ToastService } from '../../core/toast.service';
       }
     </mat-dialog-actions>
   `,
-  styles: `
-    .editor { display: grid; grid-template-columns: 220px minmax(0, 1fr); min-height: 340px; margin-top: 8px; border: 1px solid var(--mat-sys-outline-variant); border-radius: 8px; }
-    .secoes { border-right: 1px solid var(--mat-sys-outline-variant); padding: 8px; display: flex; flex-direction: column; gap: 2px; }
-    .secao { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; border: 0; border-radius: 7px; background: none; color: inherit; font: inherit; font-size: 0.875rem; text-align: left; cursor: pointer; }
-    .secao:hover { background: rgba(128,128,128,.08); }
-    .secao.ativa { background: color-mix(in srgb, var(--mat-sys-primary) 12%, transparent); color: var(--mat-sys-primary); font-weight: 500; }
-    .secao:focus-visible { outline: 2px solid var(--mat-sys-primary); }
-    .titulo { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .titulo.vazio { font-style: italic; opacity: .7; }
-    .contagem { flex: none; font-size: 0.75rem; color: var(--mat-sys-on-surface-variant); }
-    .detalhe { padding: 12px 16px; min-width: 0; }
-    .linha { display: flex; gap: 8px; align-items: center; }
-    .grow { flex: 1; min-width: 0; }
-    .perguntas { margin-top: 16px; }
-    .rotulo { display: block; font-size: 0.8rem; font-weight: 600; color: var(--mat-sys-on-surface-variant); margin-bottom: 4px; }
-    .pergunta { display: flex; align-items: center; gap: 6px; margin-top: 6px; background: var(--mat-sys-surface); }
-    .alca { cursor: grab; color: var(--mat-sys-on-surface-variant); flex: none; }
-    .numero { width: 18px; text-align: right; font-size: 0.8rem; color: var(--mat-sys-on-surface-variant); flex: none; }
-    .adicionar { align-self: flex-start; margin-top: 6px; }
-    .cdk-drag-preview { box-shadow: var(--mat-sys-level2); border-radius: 7px; }
-    .cdk-drag-placeholder { opacity: .3; }
-    @media (max-width: 700px) {
-      .editor { grid-template-columns: 1fr; }
-      .secoes { border-right: 0; border-bottom: 1px solid var(--mat-sys-outline-variant); }
-      .detalhe { padding: 12px; }
-    }
-  `,
+  styleUrl: '../../shared/mestre-detalhe.scss',
 })
 export class BriefingEditorDialog {
   private readonly fb = inject(FormBuilder);
@@ -185,7 +160,7 @@ export class BriefingEditorDialog {
 
   protected moverSecao(evento: CdkDragDrop<unknown>): void {
     const atual = this.secoes.at(this.selecionada());
-    this.mover(this.secoes, evento.previousIndex, evento.currentIndex);
+    moverControle(this.secoes, evento.previousIndex, evento.currentIndex);
     this.selecionada.set(this.secoes.controls.indexOf(atual));
   }
 
@@ -202,7 +177,7 @@ export class BriefingEditorDialog {
   }
 
   protected moverPergunta(evento: CdkDragDrop<unknown>): void {
-    this.mover(this.perguntasDe(this.selecionada()), evento.previousIndex, evento.currentIndex);
+    moverControle(this.perguntasDe(this.selecionada()), evento.previousIndex, evento.currentIndex);
   }
 
   protected salvar(): void {
@@ -245,12 +220,6 @@ export class BriefingEditorDialog {
     });
   }
 
-  private mover(lista: FormArray, de: number, para: number): void {
-    const controles = [...lista.controls];
-    moveItemInArray(controles, de, para);
-    lista.clear();
-    controles.forEach((controle) => lista.push(controle));
-  }
 
   private novaSecao(titulo: string, descricao: string, perguntas: string[]): FormGroup {
     return this.fb.group({

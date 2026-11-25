@@ -1,159 +1,18 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
-import { MatDialog, MatDialogModule, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { MatCardModule } from '@angular/material/card';
+import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatTableModule } from '@angular/material/table';
-import { mensagemDeErro } from '../../core/mensagem-erro';
-import { NegocioClient, Roteiro } from '../../core/negocio.client';
-import { ToastService } from '../../core/toast.service';
-import { CampoHoraComponent } from '../../shared/campo-hora';
-import { ConfirmaDialog } from '../../shared/confirma-dialog';
-import { horaParaApi } from '../../shared/mascaras';
-import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
-
-@Component({
-  selector: 'app-roteiro-editor-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, CampoHoraComponent, MatTooltipModule],
-  template: `
-    <h2 mat-dialog-title>{{ dados ? 'Editar roteiro' : 'Novo roteiro' }}</h2>
-    <mat-dialog-content>
-      <form class="grid grid-cols-1 gap-4" [formGroup]="form">
-        <div class="campo">
-          <mat-label class="font-semibold mb-2 block">Nome</mat-label>
-          <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Nome'" matInput formControlName="nome" /></mat-form-field>
-        </div>
-        <div formArrayName="secoes">
-          @for (secao of secoes.controls; track $index; let i = $index) {
-            <div class="bloco" [formGroupName]="i">
-              <div class="linha">
-                <div class="campo grow">
-                  <mat-label class="font-semibold mb-2 block">Título</mat-label>
-                  <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Título'" matInput formControlName="titulo" /></mat-form-field>
-                </div>
-                <app-campo-hora rotulo="Horário" formControlName="horario" />
-                <button mat-icon-button aria-label="Remover seção" matTooltip="Remover seção" type="button" (click)="removerSecao(i)"><mat-icon>delete</mat-icon></button>
-              </div>
-              <div class="campo grow">
-                <mat-label class="font-semibold mb-2 block">Música</mat-label>
-                <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Música'" matInput formControlName="musica" /></mat-form-field>
-              </div>
-              <div formArrayName="itens">
-                @for (item of itensDe(i).controls; track $index; let j = $index) {
-                  <div class="linha" [formGroupName]="j">
-                    <div class="campo grow">
-                      <mat-label class="font-semibold mb-2 block">Item</mat-label>
-                      <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Item'" matInput formControlName="texto" /></mat-form-field>
-                    </div>
-                    <button mat-icon-button aria-label="Remover item" matTooltip="Remover item" type="button" (click)="removerItem(i, j)"><mat-icon>close</mat-icon></button>
-                  </div>
-                }
-              </div>
-              <button mat-stroked-button type="button" (click)="adicionarItem(i)">Adicionar item</button>
-            </div>
-          }
-        </div>
-        <button mat-stroked-button type="button" (click)="adicionarSecao()">Adicionar seção</button>
-      </form>
-    </mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button mat-stroked-button type="button" (click)="ref.close()">Cancelar</button>
-      <button mat-flat-button type="button" (click)="salvar()">Salvar</button>
-    </mat-dialog-actions>
-  `,
-  styles: `
-    .bloco { border: 1px solid var(--mat-sys-outline-variant); border-radius: 8px; padding: 12px; margin: 8px 0; }
-    .linha { display: flex; gap: 8px; align-items: flex-start; }
-    .grow { flex: 1; }
-  `,
-})
-export class RoteiroEditorDialog {
-  private readonly fb = inject(FormBuilder);
-  private readonly negocio = inject(NegocioClient);
-  private readonly toast = inject(ToastService);
-  protected readonly dados = inject<Roteiro | null>(MAT_DIALOG_DATA);
-  protected readonly ref = inject(MatDialogRef<RoteiroEditorDialog, boolean>);
-  protected readonly form = this.fb.group({
-    nome: [this.dados?.nome ?? '', Validators.required],
-    secoes: this.fb.array([]),
-  });
-
-  protected get secoes(): FormArray {
-    return this.form.get('secoes') as FormArray;
-  }
-
-  constructor() {
-    for (const secao of this.dados?.secoes ?? []) {
-      const grupo = this.novaSecao(secao.titulo ?? '', (secao.horario ?? '').slice(0, 5), secao.musica ?? '');
-      const itens = grupo.get('itens') as FormArray;
-      for (const item of secao.itens) {
-        itens.push(this.fb.nonNullable.group({ texto: item.texto }));
-      }
-      this.secoes.push(grupo);
-    }
-  }
-
-  protected itensDe(i: number): FormArray {
-    return this.secoes.at(i).get('itens') as FormArray;
-  }
-
-  protected adicionarSecao(): void {
-    this.secoes.push(this.novaSecao('', '', ''));
-  }
-
-  protected removerSecao(i: number): void {
-    this.secoes.removeAt(i);
-  }
-
-  protected adicionarItem(i: number): void {
-    this.itensDe(i).push(this.fb.nonNullable.group({ texto: '' }));
-  }
-
-  protected removerItem(i: number, j: number): void {
-    this.itensDe(i).removeAt(j);
-  }
-
-  protected salvar(): void {
-    const valor = this.form.getRawValue() as {
-      nome: string | null;
-      secoes: { titulo: string; horario: string; musica: string; itens: { texto: string }[] }[];
-    };
-    const pedido = {
-      nome: valor.nome,
-      secoes: (valor.secoes ?? []).map((secao) => ({
-        titulo: secao.titulo || null,
-        horario: horaParaApi(secao.horario),
-        musica: secao.musica || null,
-        itens: (secao.itens ?? [])
-          .filter((item) => item.texto?.trim())
-          .map((item) => ({ texto: item.texto })),
-      })),
-    };
-    const req = this.dados
-      ? this.negocio.atualizarRoteiro(this.dados.id, pedido)
-      : this.negocio.criarRoteiro(pedido);
-    req.subscribe({
-      next: () => {
-        this.toast.sucesso('Roteiro salvo.');
-        this.ref.close(true);
-      },
-      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
-    });
-  }
-
-  private novaSecao(titulo: string, horario: string, musica: string) {
-    return this.fb.group({
-      titulo: [titulo],
-      horario: [horario],
-      musica: [musica],
-      itens: this.fb.array([]),
-    });
-  }
-}
+import { mensagemDeErro } from '../../core/mensagem-erro';
+import { Roteiro, NegocioClient } from '../../core/negocio.client';
+import { ToastService } from '../../core/toast.service';
+import { ConfirmaDialog } from '../../shared/confirma-dialog';
+import { DIALOG_LARGO, DIALOG_PEQUENO } from '../../shared/dialog';
+import { RoteiroEditorDialog } from './roteiro-editor.dialog';
 
 @Component({
   selector: 'app-modelos-roteiro',
@@ -228,12 +87,12 @@ export class ModelosRoteiroPage implements OnInit {
   protected abrir(item?: Roteiro): void {
     if (item) {
       this.negocio.roteiro(item.id).subscribe({
-        next: (detalhe) => this.dialog.open(RoteiroEditorDialog, { ...DIALOG, data: detalhe }).afterClosed().subscribe((ok) => ok && this.carregar()),
+        next: (detalhe) => this.dialog.open(RoteiroEditorDialog, { ...DIALOG_LARGO, data: detalhe }).afterClosed().subscribe((ok) => ok && this.carregar()),
         error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
       });
       return;
     }
-    this.dialog.open(RoteiroEditorDialog, { ...DIALOG, data: null }).afterClosed().subscribe((ok) => ok && this.carregar());
+    this.dialog.open(RoteiroEditorDialog, { ...DIALOG_LARGO, data: null }).afterClosed().subscribe((ok) => ok && this.carregar());
   }
 
   protected clonar(item: Roteiro): void {

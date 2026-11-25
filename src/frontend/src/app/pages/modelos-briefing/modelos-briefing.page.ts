@@ -1,20 +1,20 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatTableModule } from '@angular/material/table';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { Briefing, NegocioClient } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { DIALOG, DIALOG_LARGO, DIALOG_PEQUENO } from '../../shared/dialog';
-import { BriefingEditorDialog } from './briefing-editor.dialog';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { ImportarBriefingDialog } from './importar-briefing.dialog';
+import { BriefingEditorDialog } from './briefing-editor.dialog';
 
 @Component({
   selector: 'app-modelos-briefing',
