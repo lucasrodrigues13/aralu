@@ -70,5 +70,5 @@ jobs:
           if [ "$BRANCH" = "main" ]; then
             $ssh_base "$destino" "mkdir -p /opt/proxy"
             rsync -az --delete -e "$ssh_base" ./deploy/proxy/ "${destino}:/opt/proxy/"
-            $ssh_base "$destino" "cd /opt/proxy && docker compose up -d --remove-orphans && docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile"
+            $ssh_base "$destino" "cd /opt/proxy && docker compose up -d --remove-orphans && docker compose exec -T caddy caddy reload --config /etc/caddy/proxy/Caddyfile"
           fi
