@@ -1,0 +1,25 @@
+module.exports = async (p, H) => {
+  const D = 'mat-dialog-container';
+  await H.go(p, '/contratos');
+  await H.click(p, 'Novo modelo', 'main');
+  await H.fill(p, 'Nome', 'Contrato de assessoria de casamento', D);
+  await H.click(p, 'Escrever na plataforma', D);
+  await H.click(p, 'Como funciona', D);
+  await H.dlg(p, '07a-contrato-como-funciona');
+  await H.click(p, 'Usar este exemplo no texto');
+  await H.wait(p, 800);
+  await H.upload(p, 0, 'logo-flordelis.png', D);
+  await H.upload(p, 1, 'fundo-contrato.png', D);
+  await H.dlg(p, '07b-contrato-modelo');
+  await H.click(p, 'Ajuda sobre as tags', D);
+  await H.dlg(p, '07c-contrato-tags');
+  await H.click(p, 'Fechar');
+  await H.click(p, 'Live Preview', D);
+  await H.wait(p, 1000);
+  await H.shot(p, '07d-contrato-preview');
+  await H.dump(p, D);
+  await H.click(p, 'Salvar', D);
+  await H.wait(p, 1200);
+  await H.shot(p, '07e-contratos-lista');
+  console.log(await H.txt(p, 'main'));
+};

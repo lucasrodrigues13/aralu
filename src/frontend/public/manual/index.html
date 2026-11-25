@@ -1,0 +1,852 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Manual de utilização da Aralu</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=Red+Hat+Text:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+@page { size: A4; margin: 18mm 16mm 18mm 16mm; }
+:root { --petroleo:#0F4D5C; --creme:#F7F4ED; --dourado:#A67C2E; --ceu:#DDF1F7; --areia:#ECE4D5; --tinta:#132328; --noite:#00171F; }
+* { box-sizing: border-box; }
+body { font-family: 'Red Hat Text', 'Segoe UI', sans-serif; color: var(--tinta); font-size: 10.5pt; line-height: 1.5; margin: 0; }
+h1, h2, h3 { font-family: 'Playfair Display', Georgia, serif; color: var(--petroleo); font-weight: 600; }
+h1 { font-size: 22pt; margin: 0 0 4mm; page-break-before: always; border-bottom: 2px solid var(--areia); padding-bottom: 3mm; }
+h1 .num { display:block; font-family:'Red Hat Text',sans-serif; font-size:9pt; letter-spacing:2px; color: var(--dourado); text-transform: uppercase; font-weight:700; }
+h2 { font-size: 13.5pt; margin: 6mm 0 2mm; }
+h3 { font-size: 11.5pt; margin: 4mm 0 1.5mm; }
+p { margin: 0 0 2.5mm; }
+@page capa { margin: 0; }
+.capa { page: capa; page-break-after: always; height: 296mm; width: 210mm; background: var(--petroleo); color: var(--creme); display: flex; flex-direction: column; justify-content: space-between; padding: 30mm 22mm; margin: 0; }
+.capa img { height: 22mm; }
+.capa h1 { color: var(--creme); border: 0; font-size: 34pt; page-break-before: avoid; line-height: 1.15; }
+.capa .sub { font-size: 13pt; color: #E2BE6A; }
+.capa .rodape { font-size: 10pt; opacity: .85; }
+.bloco { border-radius: 3mm; padding: 3.5mm 4.5mm; margin: 3mm 0; page-break-inside: avoid; }
+.contexto { background: var(--areia); }
+.contexto b.rot, .objetivo b.rot, .resultado b.rot { display:block; font-size: 8.5pt; letter-spacing: 1.5px; text-transform: uppercase; color: var(--petroleo); margin-bottom: 1mm; }
+.objetivo { background: var(--ceu); }
+.resultado { background: #ECF9EF; }
+.resultado b.rot { color: #03572A !important; }
+.dica { background: #FFF2E9; border-left: 4px solid #A05000; }
+.dica b.rot { color:#823D00; display:block; font-size: 8.5pt; letter-spacing: 1.5px; text-transform: uppercase; }
+ol.passos { padding-left: 6mm; margin: 2mm 0 3mm; }
+ol.passos li { margin-bottom: 1.4mm; }
+.ui { font-weight: 700; color: var(--petroleo); }
+table { width: 100%; border-collapse: collapse; margin: 2mm 0 4mm; font-size: 9.5pt; page-break-inside: avoid; }
+th { background: var(--petroleo); color: #fff; text-align: left; padding: 1.6mm 2.5mm; font-weight: 500; }
+td { border-bottom: 1px solid #DDD8D0; padding: 1.4mm 2.5mm; vertical-align: top; }
+tr:nth-child(even) td { background: #FBFAF6; }
+figure { margin: 3mm 0 4mm; page-break-inside: avoid; text-align: center; }
+figure img { max-width: 100%; max-height: 112mm; border: 1px solid #DDD8D0; border-radius: 2mm; }
+figure.peq img { max-height: 85mm; }
+figcaption { font-size: 8.5pt; color: #515D61; margin-top: 1mm; }
+.check { background: #FBFAF6; border: 1px dashed #C2BDB5; border-radius: 3mm; padding: 3mm 4.5mm; page-break-inside: avoid; margin-top: 4mm; }
+.check b { color: var(--petroleo); }
+.check ul { list-style: none; padding-left: 0; margin: 1.5mm 0 0; }
+.check li::before { content: "☐  "; color: var(--petroleo); }
+.sumario { columns: 2; column-gap: 8mm; font-size: 9.8pt; }
+.sumario div { break-inside: avoid; margin-bottom: 1mm; }
+.persona { display:flex; gap: 4mm; margin-bottom: 2.5mm; }
+.persona b { color: var(--petroleo); min-width: 42mm; }
+.estrela { color: var(--dourado); }
+@media screen { html { background: var(--creme); } body { max-width: 210mm; margin: 0 auto; padding: 8mm 12mm 16mm; background: #fff; } h1 { margin-top: 12mm; } .capa { width: auto; height: auto; min-height: 150mm; margin: -8mm -12mm 0; gap: 20mm; } }
+</style>
+</head>
+<body>
+
+<section class="capa">
+  <img src="../marca/aralu-claro.svg" alt="aralu">
+  <div>
+    <h1>Manual de utilização</h1>
+    <div class="sub">Do primeiro acesso ao “sim”: a rotina de uma assessoria de cerimonial na Aralu, contada por meio de um casamento</div>
+  </div>
+  <div class="rodape">Tudo em dia <span class="estrela">✦</span> · Versão de novembro de 2026</div>
+</section>
+
+<h1 style="page-break-before:avoid"><span class="num">Antes de começar</span>Sumário</h1>
+<div class="sumario">
+<div>Apresentação da Aralu</div>
+<div>Personagens e cenário</div>
+<div>Como usar este manual</div>
+<div><b>Parte 1 · Preparando a casa</b></div>
+<div>1. Primeiro acesso</div>
+<div>2. O perfil da assessoria</div>
+<div>3. O catálogo comercial</div>
+<div>4. Serviços, fornecedores e modelos de trabalho</div>
+<div>5. O modelo de evento</div>
+<div>6. Os estágios do funil</div>
+<div><b>Parte 2 · Do primeiro contato ao contrato</b></div>
+<div>7. Beatriz entra em contato</div>
+<div>8. A primeira conversa</div>
+<div>9. Acompanhando a negociação</div>
+<div>10. Orçamento e proposta por link</div>
+<div>11. Uma negociação que não segue</div>
+<div>12. O contrato</div>
+<div>13. Beatriz vira cliente</div>
+<div>14. Gestão Financeira: recebendo da cliente</div>
+<div><b>Parte 3 · Planejando o casamento</b></div>
+<div>15. Nasce o evento</div>
+<div>16. As tarefas do dia a dia</div>
+<div>17. Fornecedores do evento</div>
+<div>18. Pagando fornecedores</div>
+<div>19. Os contratos do evento</div>
+<div>20. O link do cliente</div>
+<div>21. Convidados e confirmação de presença</div>
+<div><b>Parte 4 · O grande dia e depois</b></div>
+<div>22. A portaria no dia do casamento</div>
+<div>23. Depois da festa</div>
+<div><b>Capítulos complementares</b></div>
+<div>A. Trabalhando com assistentes</div>
+<div>B. Minha conta, senha e aparência</div>
+<div>C. Outras ações úteis</div>
+<div>Checklist final da jornada</div>
+</div>
+
+<h1><span class="num">Antes de começar</span>Apresentação da Aralu</h1>
+<p>A Aralu é um sistema feito para assessorias de cerimonial. Ele reúne, num só lugar, tudo o que acontece desde o primeiro contato de um casal até o dia do evento: o funil de vendas, os orçamentos e contratos, o cadastro de clientes, o planejamento do evento com tarefas, fornecedores, pagamentos, convidados e a portaria no grande dia.</p>
+<p>A promessa da Aralu é simples: <b>tudo em dia</b>. Cada tela mostra o que precisa de atenção, e o que você cadastra uma vez é aproveitado nas etapas seguintes. Um exemplo: o serviço que você vende entra no orçamento, o orçamento aceito alimenta o contrato, o contrato vira parcelas para receber e a oportunidade vira o evento, já com data, local e cliente.</p>
+<h2>Como a tela é organizada</h2>
+<p>À esquerda fica o <b>menu lateral</b>, dividido em grupos que você pode abrir e fechar clicando no nome do grupo:</p>
+<table>
+<tr><th>Grupo</th><th>Itens</th><th>Para que serve</th></tr>
+<tr><td>Principal</td><td>Hoje, Perfil, Assistentes, Gestão Financeira</td><td>O resumo do dia, os dados da empresa, a equipe e o que você tem a receber.</td></tr>
+<tr><td>Gestão de Eventos</td><td>Eventos, Tarefas, Clientes, Serviços e Fornecedores</td><td>O trabalho de produção dos eventos.</td></tr>
+<tr><td>Agenda</td><td>Minha Agenda</td><td>Calendário com eventos, compromissos e tarefas.</td></tr>
+<tr><td>Funil de Vendas</td><td>Oportunidades, Oportunidades de RSVP, Contratos, Orçamentos, Tarefas do Funil, Relatórios</td><td>A parte comercial: dos interessados ao contrato assinado.</td></tr>
+<tr><td>Modelos</td><td>Modelos de Evento, de Contrato, de Briefing, de Roteiro, de Cronograma, de Inspirações, de Mensagens, de Serviços e Modelo de Orçamento</td><td>Textos e estruturas que você prepara uma vez e reaproveita sempre.</td></tr>
+</table>
+<p>No canto superior direito ficam o botão de <b>modo escuro/claro</b> e o <b>menu da conta</b> (Perfil da assessoria, Minha conta e Sair). No celular, uma barra no rodapé dá acesso rápido a Hoje, Eventos, Novo evento (botão <span class="ui">+</span>), Financeiro e Mais.</p>
+
+<h1><span class="num">Antes de começar</span>Personagens e cenário</h1>
+<p>Este manual conta uma história. Você vai acompanhar uma cerimonialista do primeiro dia de uso da Aralu até o casamento de um casal de clientes. Todos os nomes, documentos, endereços e valores são fictícios.</p>
+<h2>A assessoria</h2>
+<div class="persona"><b>Helena Duarte</b><span>Cerimonialista, dona do <b>Ateliê Flor de Lis Cerimonial</b>, em São Paulo. Trabalha há 10 anos com casamentos e acaba de contratar a Aralu para organizar a operação.</span></div>
+<div class="persona"><b>Bianca Souza</b><span>Assistente da Helena. Entra no capítulo complementar A.</span></div>
+<h2>O casal</h2>
+<div class="persona"><b>Beatriz Monteiro</b><span>Noiva, arquiteta, 32 anos. É quem entra em contato e quem assina o contrato.</span></div>
+<div class="persona"><b>Gustavo Ramos</b><span>Noivo. Participa das decisões e, ao longo do planejamento, pede algumas mudanças.</span></div>
+<div class="persona"><b>Larissa Prado</b><span>Outra noiva interessada, que chega pelo Instagram, mas acaba não fechando.</span></div>
+<h2>Os fornecedores</h2>
+<table>
+<tr><th>Fornecedor</th><th>Serviço</th><th>Responsável</th><th>Faixa de preço</th></tr>
+<tr><td>Buffet Sabor &amp; Arte</td><td>Buffet</td><td>Carlos Menezes</td><td>R$ 35.000 a R$ 60.000</td></tr>
+<tr><td>Foto Luz Fotografia</td><td>Fotografia</td><td>Marcos Tavares</td><td>R$ 8.000 a R$ 15.000</td></tr>
+<tr><td>Jardim Secreto Decorações</td><td>Decoração</td><td>Patrícia Lima</td><td>R$ 15.000 a R$ 30.000</td></tr>
+<tr><td>DJ Leo Batista</td><td>Música e DJ</td><td>Leonardo Batista</td><td>R$ 4.000 a R$ 7.000</td></tr>
+</table>
+<h2>Linha do tempo da história</h2>
+<table>
+<tr><th>Quando</th><th>O que acontece</th></tr>
+<tr><td>24/11/2026</td><td>Helena configura a Aralu. Beatriz preenche o formulário de contato.</td></tr>
+<tr><td>25 a 27/11/2026</td><td>Retorno, ligação e reunião de apresentação.</td></tr>
+<tr><td>Fim de novembro</td><td>Proposta enviada, aceita e contrato assinado. Beatriz vira cliente e o evento é criado.</td></tr>
+<tr><td>Dez/2026 a mai/2027</td><td>Planejamento: fornecedores, pagamentos, convidados e confirmações.</td></tr>
+<tr><td>15/05/2027</td><td>O casamento: cerimônia às 16h30 na Capela Santa Clara e recepção no Espaço Villa Jardim.</td></tr>
+</table>
+<div class="bloco dica"><b class="rot">Sobre as datas</b>A história usa datas a partir de novembro de 2026. Se você estiver seguindo o manual em outra época, mantenha a mesma distância entre as datas (por exemplo, o casamento cerca de seis meses depois de hoje). Alguns avisos, como “tarefa atrasada”, dependem da data de hoje.</div>
+
+<h1><span class="num">Antes de começar</span>Como usar este manual</h1>
+<p>Siga os capítulos na ordem: cada etapa usa informações cadastradas nas anteriores. Todo capítulo tem a mesma estrutura:</p>
+<div class="bloco contexto"><b class="rot">Contexto</b>O que está acontecendo na história e por que a funcionalidade é necessária.</div>
+<div class="bloco objetivo"><b class="rot">Objetivo</b>O que você vai fazer no sistema.</div>
+<p><b>Passo a passo</b>, com os nomes reais dos menus, campos e botões em <span class="ui">destaque</span>, e <b>tabelas de dados</b> para você preencher sem precisar inventar nada.</p>
+<div class="bloco resultado"><b class="rot">Resultado esperado</b>O que você deve ver depois de concluir.</div>
+<div class="check"><b>Checklist</b> ao final de cada capítulo, para conferir se tudo deu certo.</div>
+<div class="bloco dica"><b class="rot">Dica</b>Quadros como este trazem atalhos, cuidados e explicações extras.</div>
+
+<!-- ===================== PARTE 1 ===================== -->
+<h1><span class="num">Parte 1 · Capítulo 1</span>Primeiro acesso</h1>
+<div class="bloco contexto"><b class="rot">Contexto</b>Segunda-feira, 24 de novembro de 2026. Helena assinou a Aralu e vai abrir o sistema pela primeira vez. A conta ainda está vazia: nenhum cliente, nenhum evento.</div>
+<div class="bloco objetivo"><b class="rot">Objetivo</b>Criar a conta, entrar no sistema e conhecer a tela <span class="ui">Hoje</span>.</div>
+<h2>Criar a conta</h2>
+<ol class="passos">
+<li>Acesse o endereço da Aralu e clique em <span class="ui">Criar conta</span> (ou acesse a tela de cadastro).</li>
+<li>Preencha <span class="ui">E-mail</span>, <span class="ui">Senha</span> e <span class="ui">Confirme a senha</span> e envie.</li>
+<li>Abra o e-mail de confirmação que a Aralu envia e clique no link. Se não chegou, use <span class="ui">Reenviar confirmação</span> na tela de entrada.</li>
+</ol>
+<table><tr><th>Campo</th><th>Valor</th></tr>
+<tr><td>E-mail</td><td>helena@atelieflordelis.test (use o seu e-mail real)</td></tr>
+<tr><td>Senha</td><td>Uma senha forte, só sua</td></tr></table>
+<h2>Entrar</h2>
+<ol class="passos">
+<li>Na tela <span class="ui">Entrar</span>, informe <span class="ui">E-mail</span> e <span class="ui">Senha</span> e confirme.</li>
+<li>Esqueceu a senha? Use <span class="ui">Esqueci a senha</span>: a Aralu envia um link para criar uma nova.</li>
+</ol>
+<figure class="peq"><img src="shots/01-entrar.png"><figcaption>Tela de entrada.</figcaption></figure>
+<h2>A tela Hoje</h2>
+<p>Depois de entrar, você cai na tela <span class="ui">Hoje</span>. Ela é o seu ponto de partida diário: mostra tarefas para hoje, atrasadas e da semana, cobranças a fazer, respostas de convidados, pagamentos a fornecedores, o próximo evento e os números do funil. Numa conta nova, quase tudo está zerado e aparece o quadro <span class="ui">Configure sua conta</span>.</p>
+<figure><img src="shots/02-hoje-vazio.png"><figcaption>Hoje, numa conta recém-criada, com o quadro “Configure sua conta”.</figcaption></figure>
+<ol class="passos">
+<li>Observe os três itens do quadro: <span class="ui">Preencher o perfil da empresa</span>, <span class="ui">Cadastrar a chave Pix</span> e <span class="ui">Cadastrar um contrato</span>. Cada um leva à tela certa.</li>
+<li>Se quiser deixar algum para depois, clique em <span class="ui">Pular</span> ao lado dele, ou em <span class="ui">Pular tudo</span>. Neste manual, vamos fazer os três nos próximos capítulos.</li>
+</ol>
+<div class="bloco resultado"><b class="rot">Resultado esperado</b>Você está dentro da Aralu, vê o menu lateral completo e a tela Hoje com o quadro de configuração.</div>
+<div class="check"><b>Checklist do capítulo 1</b><ul><li>Conta criada e e-mail confirmado</li><li>Entrei e vi a tela Hoje</li><li>Encontrei os grupos do menu lateral</li></ul></div>
+
+<h1><span class="num">Parte 1 · Capítulo 2</span>O perfil da assessoria</h1>
+<div class="bloco contexto"><b class="rot">Contexto</b>Antes de atender qualquer casal, Helena quer que o nome e a logo do Ateliê apareçam nas propostas, contratos e cobranças. Esses dados ficam no Perfil e são puxados automaticamente pelos documentos (por exemplo, o contrato preenche sozinho o nome, o CNPJ e o endereço da contratada).</div>
+<div class="bloco objetivo"><b class="rot">Objetivo</b>Preencher os dados da empresa, o endereço, a chave Pix e enviar a logo.</div>
+<ol class="passos">
+<li>No menu, abra <span class="ui">Principal › Perfil</span> (ou clique em <span class="ui">Preencher o perfil da empresa</span> na tela Hoje).</li>
+<li>Em <span class="ui">Informações pessoais</span>, preencha os campos da tabela abaixo.</li>
+<li>Em <span class="ui">Endereço</span>, digite o <span class="ui">CEP</span>: a Aralu completa endereço, bairro, cidade e estado. Complete <span class="ui">Número</span> e <span class="ui">Complemento</span>.</li>
+<li>Em <span class="ui">Recebimentos</span>, preencha a <span class="ui">Chave Pix</span>. Ela vai junto na mensagem de “Cobrar” enviada aos clientes.</li>
+<li>Clique em <span class="ui">Enviar foto</span> e escolha a logo do Ateliê.</li>
+<li>Clique em <span class="ui">Salvar</span>.</li>
+</ol>
+<table><tr><th>Campo</th><th>Valor</th></tr>
+<tr><td>Nome da empresa</td><td>Ateliê Flor de Lis Cerimonial</td></tr>
+<tr><td>Responsável</td><td>Helena Duarte</td></tr>
+<tr><td>CPF ou CNPJ</td><td>11.222.333/0001-81 (digite só os números)</td></tr>
+<tr><td>Celular</td><td>(11) 98765-4321</td></tr>
+<tr><td>Nascimento</td><td>12/03/1988</td></tr>
+<tr><td>CEP</td><td>01310-100 → Avenida Paulista, Bela Vista, São Paulo/SP</td></tr>
+<tr><td>Número / Complemento</td><td>1578 / Conjunto 42</td></tr>
+<tr><td>Chave Pix</td><td>contato@atelieflordelis.test</td></tr>
+<tr><td>Foto</td><td>A logo da empresa (imagem)</td></tr>
+</table>
+<figure><img src="shots/04b-perfil-salvo.png"><figcaption>Perfil preenchido: o CEP completou o endereço.</figcaption></figure>
+<div class="bloco dica"><b class="rot">Dica</b>O campo E-mail mostra o e-mail de acesso da conta. O CPF ou CNPJ é um campo único: digite só os números, a formatação é automática.</div>
+<div class="bloco resultado"><b class="rot">Resultado esperado</b>O nome “Helena Duarte” e a logo aparecem no rodapé do menu lateral. Na tela Hoje, os itens de perfil e Pix ficam concluídos.</div>
+<div class="check"><b>Checklist do capítulo 2</b><ul><li>Dados da empresa salvos</li><li>CEP completou o endereço</li><li>Chave Pix cadastrada</li><li>Logo enviada</li></ul></div>
+
+<h1><span class="num">Parte 1 · Capítulo 3</span>O catálogo comercial</h1>
+<div class="bloco contexto"><b class="rot">Contexto</b>Helena vende dois pacotes. Ela quer cadastrá-los para escolher na hora de registrar um interessado, e quer deixar pronto o texto padrão das propostas e o contrato. Assim, quando o primeiro casal aparecer, basta escolher.</div>
+<div class="bloco objetivo"><b class="rot">Objetivo</b>Cadastrar os Modelos de Serviços, o Modelo de Orçamento e o Modelo de Contrato.</div>
+<h2>3.1 Modelos de Serviços</h2>
+<ol class="passos">
+<li>Abra <span class="ui">Modelos › Modelos de Serviços</span>.</li>
+<li>Clique em <span class="ui">Novo Modelo de Serviço/Produto</span>.</li>
+<li>Preencha <span class="ui">Nome</span>, <span class="ui">Descrição</span> (até 200 caracteres) e <span class="ui">Valor</span>, e clique em <span class="ui">Salvar</span>.</li>
+<li>Repita para o segundo serviço.</li>
+</ol>
+<table><tr><th>Nome</th><th>Descrição</th><th>Valor</th></tr>
+<tr><td>Assessoria completa</td><td>Planejamento do casamento do início ao fim: fornecedores, cronograma, convidados e coordenação no dia.</td><td>R$ 18.000,00</td></tr>
+<tr><td>Assessoria do dia</td><td>Coordenação do casamento no dia, com reuniões de alinhamento nos 60 dias anteriores.</td><td>R$ 6.500,00</td></tr></table>
+<figure class="peq"><img src="shots/05-servico-form.png"><figcaption>Cadastro de um serviço.</figcaption></figure>
+<h2>3.2 Modelo de Orçamento</h2>
+<p>É o texto que o casal lê ao abrir a proposta. Ele usa <b>tags</b> entre chaves duplas, como <code>{{data_evento}}</code>, que a Aralu troca pelos dados reais da oportunidade.</p>
+<ol class="passos">
+<li>Abra <span class="ui">Modelos › Modelo de Orçamento</span> e clique em <span class="ui">Novo Modelo de Orçamento</span>.</li>
+<li>Em <span class="ui">Nome</span>, digite “Proposta de casamento”.</li>
+<li>No campo <span class="ui">Texto</span>, escreva a mensagem. Para inserir uma tag, clique no botão com o nome dela logo abaixo do editor (por exemplo, <span class="ui">{{valor}}</span>). O editor permite negrito, itálico, listas e links.</li>
+<li>Se quiser, ajuste <span class="ui">Cor primária</span> e <span class="ui">Cor secundária</span>.</li>
+<li>Em <span class="ui">Tela de aceite (opcional)</span>, escreva uma apresentação da empresa: ela aparece para o cliente na página da proposta.</li>
+<li>Clique em <span class="ui">Salvar</span>.</li>
+</ol>
+<table><tr><th>Campo</th><th>Conteúdo</th></tr>
+<tr><td>Texto</td><td>Olá, {{nome_oportunidade}}! Foi um prazer conhecer vocês. Segue a nossa proposta de assessoria para o {{tipo_evento}} em {{data_evento}}, com {{convidados}} convidados, cerimônia em {{local_cerimonia}} e recepção em {{local_recepcao}}. Investimento: {{valor}}. Proposta válida até {{validade}}. Com carinho, {{nome_assessoria}}.</td></tr>
+<tr><td>Tela de aceite</td><td>Por que a Flor de Lis? Há 10 anos cuidamos de cada detalhe para que o casal só se preocupe em viver o grande dia. “A Helena tirou todo o peso das nossas costas.” (Ana e Pedro, 2025)</td></tr></table>
+<figure><img src="shots/06-orcamento-modelo.png"><figcaption>Modelo de orçamento com tags e texto da tela de aceite.</figcaption></figure>
+<div class="bloco dica"><b class="rot">Dica</b>A tag {{nome_oportunidade}} traz o nome dado à oportunidade (no nosso caso, “Casamento Beatriz e Gustavo”). Escolha o nome da oportunidade pensando em como ele vai aparecer no texto.</div>
+<h2>3.3 Modelo de Contrato</h2>
+<ol class="passos">
+<li>Abra <span class="ui">Modelos › Modelos de Contrato</span> e clique em <span class="ui">Novo modelo</span>.</li>
+<li>Em <span class="ui">Nome</span>, digite “Contrato de assessoria de casamento”.</li>
+<li>Em <span class="ui">Como você quer criar o modelo?</span>, escolha <span class="ui">Escrever na plataforma</span>. (A outra opção, <span class="ui">Enviar meu documento Word</span>, serve para quem já tem o contrato em Word.)</li>
+<li>Clique em <span class="ui">Como funciona</span> para ler as orientações. No fim da janela, clique em <span class="ui">Usar este exemplo no texto</span>: a Aralu preenche o <span class="ui">Texto do contrato</span> com um modelo pronto, com quadro-resumo, cláusulas e espaço para assinatura.</li>
+<li>Em <span class="ui">Logo</span> e <span class="ui">Imagem de fundo</span>, clique em <span class="ui">Escolher imagem</span> (JPG, PNG ou WebP, até 5 MB). A logo fica centralizada no topo; o fundo cobre a folha com transparência.</li>
+<li>Para acrescentar um dado, clique no ponto do texto e use <span class="ui">Inserir tag no cursor</span>: digite parte do nome (por exemplo “cpf” ou “parcelas”) e escolha a tag. O botão <span class="ui">?</span> abre a tabela com todas as tags, de onde cada uma vem e um exemplo.</li>
+<li>Clique em <span class="ui">Live Preview</span> para ver, ao lado, “Como chega ao cliente”. Use <span class="ui">Tela cheia</span> para ler com mais espaço.</li>
+<li>Clique em <span class="ui">Salvar</span>.</li>
+</ol>
+<figure><img src="shots/07d-contrato-preview.png"><figcaption>Modelo de contrato com logo, fundo e Live Preview.</figcaption></figure>
+<figure class="peq"><img src="shots/07c-contrato-tags.png"><figcaption>Ajuda sobre as tags: o que cada uma representa e de onde puxa o valor.</figcaption></figure>
+<div class="bloco resultado"><b class="rot">Resultado esperado</b>Dois serviços, um modelo de orçamento e um modelo de contrato cadastrados. Na tela Hoje, “Cadastrar um contrato” fica concluído. Esses três itens serão usados nos capítulos 7, 10 e 12.</div>
+<div class="check"><b>Checklist do capítulo 3</b><ul><li>“Assessoria completa” e “Assessoria do dia” cadastrados</li><li>“Proposta de casamento” salva, com tags</li><li>Contrato com logo e fundo salvo</li><li>Vi o Live Preview</li></ul></div>
+
+<h1><span class="num">Parte 1 · Capítulo 4</span>Serviços, fornecedores e modelos de trabalho</h1>
+<div class="bloco contexto"><b class="rot">Contexto</b>Em todo casamento a Helena contrata os mesmos tipos de serviço, trabalha com fornecedores de confiança e usa os mesmos questionários, roteiros e mensagens. Cadastrar tudo isso agora vai poupar trabalho em cada novo evento.</div>
+<div class="bloco objetivo"><b class="rot">Objetivo</b>Cadastrar os serviços da conta, os fornecedores e os modelos de briefing, roteiro, cronograma, inspirações e mensagens.</div>
+<h2>4.1 Serviços da conta</h2>
+<p>São os tipos de serviço que um evento contrata (buffet, fotografia etc.). Não confunda com os Modelos de Serviços do capítulo 3, que são os pacotes que a Helena vende.</p>
+<ol class="passos">
+<li>Abra <span class="ui">Gestão de Eventos › Serviços e Fornecedores</span> e clique na aba <span class="ui">Serviços da conta</span>.</li>
+<li>Clique em <span class="ui">Adicionar serviço</span>, marque <span class="ui">Adicionar vários</span> e, em <span class="ui">Nomes</span>, digite os serviços separados por vírgula.</li>
+<li>Clique em <span class="ui">Criar</span>.</li>
+</ol>
+<table><tr><th>Nomes</th></tr><tr><td>Buffet, Fotografia, Decoração, Música e DJ, Bolo e doces, Vestido da noiva</td></tr></table>
+<h2>4.2 Fornecedores</h2>
+<ol class="passos">
+<li>Volte para a aba <span class="ui">Fornecedores</span> e clique em <span class="ui">Novo fornecedor</span>.</li>
+<li>Na aba <span class="ui">Dados</span>, preencha <span class="ui">Nome</span> e, em <span class="ui">Serviços</span>, digite o nome do serviço e escolha na lista. (Se o serviço não existir, a lista oferece <span class="ui">Criar novo serviço</span>.)</li>
+<li>Preencha <span class="ui">Razão social</span>, <span class="ui">Responsável</span>, <span class="ui">Preço de</span> e <span class="ui">Preço até</span>. Use <span class="ui">Adicionar telefone</span> e <span class="ui">Adicionar e-mail</span> para os contatos.</li>
+<li>As outras abas são opcionais: <span class="ui">Redes sociais</span> (site, Instagram…), <span class="ui">Endereço</span>, <span class="ui">Dados bancários</span> (banco, agência, conta, Pix), <span class="ui">Orçamentos</span>, <span class="ui">Diferencial</span>, <span class="ui">Inf. gerais</span> e <span class="ui">Portfólio</span>.</li>
+<li>Clique em <span class="ui">Salvar</span>. Repita para os quatro fornecedores.</li>
+</ol>
+<table><tr><th>Nome</th><th>Serviço</th><th>Responsável</th><th>Preço de / até</th><th>Telefone</th><th>Instagram</th></tr>
+<tr><td>Buffet Sabor &amp; Arte</td><td>Buffet</td><td>Carlos Menezes</td><td>35.000 / 60.000</td><td>(11) 93333-4444</td><td>@saborearte.buffet</td></tr>
+<tr><td>Foto Luz Fotografia</td><td>Fotografia</td><td>Marcos Tavares</td><td>8.000 / 15.000</td><td>(11) 94444-5555</td><td>@fotoluz</td></tr>
+<tr><td>Jardim Secreto Decorações</td><td>Decoração</td><td>Patrícia Lima</td><td>15.000 / 30.000</td><td>(11) 95555-6666</td><td>@jardimsecretodecor</td></tr>
+<tr><td>DJ Leo Batista</td><td>Música e DJ</td><td>Leonardo Batista</td><td>4.000 / 7.000</td><td>(11) 96666-7777</td><td>@djleobatista</td></tr></table>
+<figure class="peq"><img src="shots/12a-fornecedor-form.png"><figcaption>Cadastro de fornecedor, aba Dados.</figcaption></figure>
+<div class="bloco dica"><b class="rot">Dica</b>Fornecedor com cadastro parcial aparece na lista com o selo <b>Incompleto</b>. Você pode completar depois pelo ícone de editar.</div>
+<h2>4.3 Modelo de Briefing</h2>
+<p>O briefing é o questionário da primeira conversa. Será usado com a Beatriz no capítulo 8.</p>
+<ol class="passos">
+<li>Abra <span class="ui">Modelos › Modelos de Briefing</span> e clique em <span class="ui">Novo Modelo de Briefing</span>.</li>
+<li>Preencha <span class="ui">Nome</span> e <span class="ui">Origem</span>.</li>
+<li>Clique em <span class="ui">Adicionar seção</span>, preencha <span class="ui">Seção</span> e <span class="ui">Descrição</span>.</li>
+<li>Clique em <span class="ui">Adicionar pergunta</span> para cada pergunta e clique em <span class="ui">Salvar</span>.</li>
+</ol>
+<table><tr><th>Campo</th><th>Valor</th></tr>
+<tr><td>Nome / Origem</td><td>Primeira conversa / Reunião inicial com o casal</td></tr>
+<tr><td>Seção / Descrição</td><td>Sobre o casamento / Perguntas para conhecer o casal e o sonho deles.</td></tr>
+<tr><td>Perguntas</td><td>Qual a data desejada? · Quantos convidados vocês imaginam? · Qual o estilo da festa? · Qual o orçamento total previsto? · O que não pode faltar de jeito nenhum?</td></tr></table>
+<figure class="peq"><img src="shots/09-briefing-modelo.png"><figcaption>Modelo de briefing com cinco perguntas.</figcaption></figure>
+<h2>4.4 Modelo de Roteiro</h2>
+<ol class="passos">
+<li>Abra <span class="ui">Modelos › Modelos de Roteiro</span> e clique em <span class="ui">Novo Modelo de Roteiro</span>.</li>
+<li>Preencha <span class="ui">Nome</span>. Clique em <span class="ui">Adicionar seção</span> e preencha <span class="ui">Título</span>, <span class="ui">Horário</span> e <span class="ui">Música</span>. Use <span class="ui">Adicionar item</span> para detalhar uma seção.</li>
+<li>Clique em <span class="ui">Salvar</span>.</li>
+</ol>
+<table><tr><th>Nome</th><th>Seção</th><th>Horário</th><th>Música</th></tr>
+<tr><td rowspan="2">Roteiro da cerimônia</td><td>Entrada do cortejo</td><td>16:30</td><td>Canon em Ré - Pachelbel</td></tr>
+<tr><td>Entrada da noiva</td><td>16:40</td><td>A Thousand Years - versão instrumental</td></tr></table>
+<h2>4.5 Modelo de Cronograma</h2>
+<ol class="passos">
+<li>Abra <span class="ui">Modelos › Modelos de Cronograma</span> e clique em <span class="ui">Novo Modelo de Cronograma</span>.</li>
+<li>Preencha <span class="ui">Título</span> e <span class="ui">Descrição</span>. Para cada horário, clique em <span class="ui">Adicionar item</span> e preencha <span class="ui">Rótulo</span>, <span class="ui">Hora</span>, <span class="ui">Responsável</span> e <span class="ui">Recado fornecedores</span> (a <span class="ui">Data</span> é opcional).</li>
+<li>Clique em <span class="ui">Salvar</span>.</li>
+</ol>
+<table><tr><th>Rótulo</th><th>Hora</th><th>Responsável</th><th>Recado fornecedores</th></tr>
+<tr><td>Chegada da decoração</td><td>09:00</td><td>Equipe Flor de Lis</td><td>Montagem liberada a partir das 9h</td></tr>
+<tr><td>Making of da noiva</td><td>13:00</td><td>Foto Luz</td><td>Hotel Jardins, suíte 1203</td></tr>
+<tr><td>Cerimônia</td><td>16:30</td><td>Helena</td><td>Celebrante chega às 16h</td></tr></table>
+<p>Título: <b>Cronograma do grande dia</b>. Descrição: <i>Horários de montagem e do evento para equipe e fornecedores.</i></p>
+<h2>4.6 Modelo de Inspirações</h2>
+<ol class="passos">
+<li>Abra <span class="ui">Modelos › Modelos de Inspirações</span> e clique em <span class="ui">Novo Modelo de Inspirações</span>.</li>
+<li>Preencha <span class="ui">Nome</span> e use <span class="ui">Adicionar URL</span> para cada link de referência. Clique em <span class="ui">Salvar</span>.</li>
+</ol>
+<table><tr><th>Nome</th><th>URLs</th></tr><tr><td>Casamento clássico no jardim</td><td>https://br.pinterest.com/atelieflordelis/casamento-jardim<br>https://www.instagram.com/atelieflordelis</td></tr></table>
+<h2>4.7 Modelo de Mensagens</h2>
+<ol class="passos">
+<li>Abra <span class="ui">Modelos › Modelos de Mensagens</span> e clique em <span class="ui">Novo Modelo de Mensagem</span>.</li>
+<li>Preencha <span class="ui">Nome</span> e <span class="ui">Texto</span>. Use os botões de <span class="ui">Inserir parâmetro</span> para colocar dados como {{nome_convidados}} e {{link_convite}}. Clique em <span class="ui">Salvar</span>.</li>
+</ol>
+<table><tr><th>Nome</th><th>Texto</th></tr><tr><td>Convite para confirmar presença</td><td>Olá, {{nome_convidados}}! Com muita alegria convidamos você para o {{nome_evento}}, em {{data_evento}} às {{hora_evento}}, no {{local_cerimonia}}. Confirme sua presença até {{prazo_rsvp}} pelo link: {{link_convite}}</td></tr></table>
+<figure class="peq"><img src="shots/10d-mensagem-modelo.png"><figcaption>Modelo de mensagem com parâmetros.</figcaption></figure>
+<div class="bloco resultado"><b class="rot">Resultado esperado</b>Seis serviços da conta, quatro fornecedores e um modelo de cada tipo (briefing, roteiro, cronograma, inspirações e mensagens). Todos aparecem nas listas das telas correspondentes, com ícones para editar, clonar e excluir.</div>
+<div class="check"><b>Checklist do capítulo 4</b><ul><li>Serviços da conta criados de uma vez</li><li>Quatro fornecedores cadastrados</li><li>Briefing “Primeira conversa”</li><li>Roteiro, cronograma, inspirações e mensagem criados</li></ul></div>
+
+<h1><span class="num">Parte 1 · Capítulo 5</span>O modelo de evento</h1>
+<div class="bloco contexto"><b class="rot">Contexto</b>Todo casamento da Helena tem as mesmas tarefas (fechar buffet, degustação, enviar convites…) com prazos parecidos, contados a partir da data do casamento. Com um modelo de evento, ela cria tudo isso num clique quando fechar um novo casamento (capítulo 15).</div>
+<div class="bloco objetivo"><b class="rot">Objetivo</b>Criar o modelo “Casamento completo” com serviços, valores estimados, tarefas com prazo e os modelos do capítulo 4 vinculados.</div>
+<ol class="passos">
+<li>Abra <span class="ui">Modelos › Modelos de Evento</span> e clique em <span class="ui">Novo Modelo de Evento</span>.</li>
+<li>Preencha <span class="ui">Nome</span> = “Casamento completo”, <span class="ui">Tipo</span> = Casamento, e clique em <span class="ui">Criar</span>. O editor do modelo abre na aba <span class="ui">Serviços e tarefas</span>.</li>
+<li>Na aba <span class="ui">Serviços e tarefas</span>, clique em <span class="ui">Adicionar serviços</span>, marque os serviços da tabela e confirme. Cada serviço vira um bloco que abre e fecha. No menu do bloco (<span class="ui">⋮</span>), use <span class="ui">Valor estimado</span> para informar quanto o serviço costuma custar.</li>
+<li>Para cada tarefa, clique em <span class="ui">Adicionar tarefa</span> dentro do bloco do serviço (ou em <span class="ui">Nova tarefa</span>, no topo, para uma tarefa sem serviço). O formulário é o mesmo da tarefa do evento: preencha <span class="ui">Título</span>, <span class="ui">Responsáveis</span> e <span class="ui">Prioridade</span>. Em <span class="ui">Prazo</span>, escolha <span class="ui">Relativo ao evento</span> e informe a quantidade, a unidade (dias, semanas, meses ou No dia do evento) e se é <span class="ui">antes</span> ou <span class="ui">depois</span>.</li>
+<li>Clique em <span class="ui">Salvar</span> no cabeçalho. Enquanto não salvar, o cabeçalho avisa “Alterações não salvas”.</li>
+<li>Para incluir várias tarefas de uma vez, clique em <span class="ui">Adicionar em massa</span>. A janela mostra uma grade (Tarefa, Serviço, Prazo, Responsáveis, Prioridade, Descrição) que pode ser preenchida com <span class="ui">+ Linha</span>, com <span class="ui">Colar lista</span> (uma tarefa por linha) ou com <span class="ui">Enviar planilha</span> (.xlsx ou .csv; use <span class="ui">Baixar planilha modelo</span> para ver o formato e o <span class="ui">?</span> para a ajuda). A grade já é a prévia: confira e clique em <span class="ui">Adicionar N tarefas</span>. Serviço que ainda não existe aparece como “Serviço novo, será cadastrado”.</li>
+<li>Nas abas <span class="ui">Briefings</span>, <span class="ui">Roteiros</span>, <span class="ui">Inspirações</span> e <span class="ui">RSVP e Mensagens</span>, clique em <span class="ui">Adicionar…</span>, marque o modelo correspondente e confirme.</li>
+<li>Clique em <span class="ui">Salvar</span>.</li>
+</ol>
+<table><tr><th>Serviço</th><th>Valor estimado</th></tr>
+<tr><td>Buffet</td><td>R$ 45.000,00</td></tr><tr><td>Decoração</td><td>R$ 22.000,00</td></tr><tr><td>Fotografia</td><td>R$ 10.000,00</td></tr><tr><td>Música e DJ</td><td>R$ 5.000,00</td></tr><tr><td>Bolo e doces</td><td>R$ 6.000,00</td></tr></table>
+<table><tr><th>Tarefa</th><th>Serviço</th><th>Prazo (relativo ao evento)</th></tr>
+<tr><td>Fechar buffet</td><td>Buffet</td><td>10 meses antes</td></tr>
+<tr><td>Degustação do buffet</td><td>Buffet</td><td>6 meses antes</td></tr>
+<tr><td>Enviar convites</td><td>Sem serviço</td><td>3 meses antes</td></tr>
+<tr><td>Prova final do vestido</td><td>Sem serviço</td><td>2 semanas antes</td></tr>
+<tr><td>Reunião de alinhamento final</td><td>Sem serviço</td><td>7 dias antes (a Aralu mostra “1 semana antes”)</td></tr>
+<tr><td colspan="3"><b>Adicionar em massa › Colar lista</b> (sem prazo, sem serviço): Confirmar horários com fornecedores · Montar mapa de mesas</td></tr></table>
+<figure><img src="shots/13c-modelo-evento-tarefas.png"><figcaption>Aba Serviços e tarefas do modelo: cada serviço com suas tarefas e prazos relativos à data do evento.</figcaption></figure>
+<figure class="peq"><img src="shots/13d-colar-tarefas.png"><figcaption>Adicionar tarefas em massa: a grade é a prévia do que será incluído.</figcaption></figure>
+<div class="bloco resultado"><b class="rot">Resultado esperado</b>Na lista de Modelos de evento aparece “Casamento completo · 7 tarefas · 5 serviços”.</div>
+<div class="check"><b>Checklist do capítulo 5</b><ul><li>Modelo criado com 5 serviços e valores estimados</li><li>5 tarefas com prazo relativo + 2 em massa</li><li>Briefing, roteiro, inspiração e mensagem vinculados</li></ul></div>
+
+<h1><span class="num">Parte 1 · Capítulo 6</span>Os estágios do funil</h1>
+<div class="bloco contexto"><b class="rot">Contexto</b>O funil de vendas mostra cada interessado como um cartão num quadro, em colunas (estágios). A conta já vem com Contato inicial, Orçamento enviado, Contratado e Descartado. Helena sempre faz uma reunião antes de mandar orçamento, então quer uma coluna para isso.</div>
+<div class="bloco objetivo"><b class="rot">Objetivo</b>Criar o estágio “Reunião marcada” entre Contato inicial e Orçamento enviado.</div>
+<ol class="passos">
+<li>Abra <span class="ui">Funil de Vendas › Oportunidades</span> e clique em <span class="ui">Gerenciar estágios</span>.</li>
+<li>Clique em <span class="ui">Novo estágio</span> e digite “Reunião marcada”. Se quiser, escolha a cor no seletor ao lado.</li>
+<li>Arraste o novo estágio pela alça (<span class="ui">⋮⋮</span>) até ficar entre Contato inicial e Orçamento enviado.</li>
+<li>Clique em <span class="ui">Salvar</span>.</li>
+</ol>
+<figure class="peq"><img src="shots/14c-gerenciar-estagios-ordem.png"><figcaption>Gerenciar estágios: Contratado e Descartado são fixos e ficam sempre no fim.</figcaption></figure>
+<div class="bloco dica"><b class="rot">Regras dos estágios</b>Contratado e Descartado não podem ser renomeados nem excluídos. Não é possível ter dois estágios com o mesmo nome. Para excluir um estágio que tem cartões, a Aralu pede para onde movê-los.</div>
+<div class="bloco resultado"><b class="rot">Resultado esperado</b>O quadro de Oportunidades mostra cinco colunas: Contato inicial, Reunião marcada, Orçamento enviado, Contratado e Descartado. A casa está pronta para receber clientes.</div>
+<div class="check"><b>Checklist do capítulo 6</b><ul><li>“Reunião marcada” criada</li><li>Na ordem certa no quadro</li></ul></div>
+
+<!-- ===================== PARTE 2 ===================== -->
+<h1><span class="num">Parte 2 · Capítulo 7</span>Beatriz entra em contato</h1>
+<div class="bloco contexto"><b class="rot">Contexto</b>Helena coloca o link do formulário de contato na bio do Instagram. No mesmo dia, Beatriz Monteiro preenche: vai casar com Gustavo e espera cerca de 180 convidados. Logo depois, Larissa Prado manda uma mensagem pelo direct e Helena cadastra o contato à mão.</div>
+<div class="bloco objetivo"><b class="rot">Objetivo</b>Receber um lead pelo formulário público e cadastrar outro manualmente.</div>
+<h2>7.1 O formulário público (Link do lead)</h2>
+<ol class="passos">
+<li>Em <span class="ui">Oportunidades</span>, clique em <span class="ui">Link do lead</span>. O endereço do formulário é copiado; cole-o no Instagram, no site ou no WhatsApp.</li>
+<li>Para simular a Beatriz, abra o link numa janela anônima do navegador (sem estar conectada à Aralu).</li>
+<li>Preencha o formulário <span class="ui">Solicitar orçamento</span> e clique em <span class="ui">Enviar</span>.</li>
+</ol>
+<table><tr><th>Campo</th><th>Valor</th></tr>
+<tr><td>Seu nome</td><td>Beatriz Monteiro</td></tr><tr><td>Telefone</td><td>(11) 91234-5678</td></tr><tr><td>E-mail</td><td>beatriz.monteiro@email.test</td></tr><tr><td>Tipo de evento</td><td>Casamento</td></tr><tr><td>Convidados</td><td>180</td></tr><tr><td>Cidade / UF</td><td>São Paulo / SP</td></tr></table>
+<figure class="peq"><img src="shots/15b-lead-publico-preenchido.png"><figcaption>Formulário público preenchido pela Beatriz.</figcaption></figure>
+<p>Ao enviar, a Beatriz vê a mensagem “Recebemos o seu contato. Em breve a assessoria retorna.”</p>
+<h2>7.2 Nova oportunidade manual</h2>
+<ol class="passos">
+<li>Em <span class="ui">Oportunidades</span>, clique em <span class="ui">Nova oportunidade</span>.</li>
+<li>Preencha os dados da tabela e clique em <span class="ui">Salvar</span>. Sem nome ou sem contato, a oportunidade não é gravada.</li>
+</ol>
+<table><tr><th>Campo</th><th>Valor</th></tr>
+<tr><td>Nome da oportunidade</td><td>Casamento Larissa e Felipe</td></tr><tr><td>Contato › Nome / Telefone</td><td>Larissa Prado / (11) 97777-8888</td></tr><tr><td>Evento › Tipo / Convidados</td><td>Casamento / 120</td></tr><tr><td>Comercial › Origem</td><td>Instagram</td></tr></table>
+<figure><img src="shots/16b-quadro-dois-leads.png"><figcaption>Os dois leads em Contato inicial. O da Beatriz traz a origem “Formulário do site”.</figcaption></figure>
+<div class="bloco dica"><b class="rot">Contato repetido</b>Se você cadastrar alguém cujo telefone ou e-mail já está no funil, a Aralu avisa “Esse contato já está no funil”, sem bloquear. Pelo formulário público, o cartão ganha o selo “Contato repetido”.</div>
+<div class="bloco resultado"><b class="rot">Resultado esperado</b>Dois cartões na coluna Contato inicial: “Casamento Beatriz Monteiro” (Formulário do site) e “Casamento Larissa e Felipe” (Instagram).</div>
+<div class="check"><b>Checklist do capítulo 7</b><ul><li>Link do lead copiado e testado</li><li>Lead da Beatriz chegou sozinho</li><li>Lead da Larissa cadastrado à mão</li></ul></div>
+
+<h1><span class="num">Parte 2 · Capítulo 8</span>A primeira conversa</h1>
+<div class="bloco contexto"><b class="rot">Contexto</b>Helena liga para a Beatriz. Descobre a data (15/05/2027), os locais e que o Gustavo também participa das decisões. Ela registra tudo na oportunidade, aplica o briefing durante a conversa e agenda os próximos contatos.</div>
+<div class="bloco objetivo"><b class="rot">Objetivo</b>Completar a oportunidade, aplicar o briefing, marcar o retorno e criar tarefas do funil.</div>
+<h2>8.1 Completar a oportunidade</h2>
+<ol class="passos">
+<li>No cartão da Beatriz, clique no menu <span class="ui">⋮</span> e em <span class="ui">Editar</span>. A janela tem os blocos <b>Contato</b>, <b>Evento</b>, <b>Locais</b>, <b>Comercial</b> e <b>Dados para contrato</b>.</li>
+<li>Troque o <span class="ui">Nome da oportunidade</span> e marque <span class="ui">É o contratante (quem assina o contrato)</span> na Beatriz: nome, e-mail e celular dela passam para “Dados para contrato”. Só um contato pode ser o contratante.</li>
+<li>Clique em <span class="ui">+ Contato</span> e cadastre o Gustavo.</li>
+<li>Preencha Evento, Locais (o CEP completa o endereço) e Comercial conforme a tabela, e clique em <span class="ui">Salvar</span>.</li>
+</ol>
+<table><tr><th>Bloco</th><th>Campo</th><th>Valor</th></tr>
+<tr><td>Contato</td><td>Nome da oportunidade</td><td>Casamento Beatriz e Gustavo</td></tr>
+<tr><td>Contato 2</td><td>Nome / Telefone / E-mail</td><td>Gustavo Ramos / (11) 92345-6789 / gustavo.ramos@email.test</td></tr>
+<tr><td>Evento</td><td>Data prevista</td><td>15/05/2027</td></tr>
+<tr><td>Evento</td><td>Horários: convite / cerimônia / recepção / festa</td><td>16:00 / 16:30 / 18:00 / 19:00</td></tr>
+<tr><td>Locais</td><td>Cerimônia: Nome / CEP / Número</td><td>Capela Santa Clara / 04094-050 / 200</td></tr>
+<tr><td>Locais</td><td>Recepção: Nome / CEP / Número</td><td>Espaço Villa Jardim / 04094-050 / 450</td></tr>
+<tr><td>Comercial</td><td>Serviço/produto</td><td>Assessoria completa</td></tr>
+<tr><td>Comercial</td><td>Valor da proposta</td><td>R$ 18.000,00</td></tr>
+<tr><td>Comercial</td><td>Retornar em / Hora</td><td>25/11/2026 / 10:00</td></tr></table>
+<figure><img src="shots/17b-lead-beatriz-edicao.png"><figcaption>Editando a oportunidade: contatos, evento e horários.</figcaption></figure>
+<div class="bloco dica"><b class="rot">Aviso de agenda</b>Se a data prevista coincidir com um compromisso da Minha Agenda, aparece “Já há compromisso…”. É só um aviso: não impede salvar.</div>
+<h2>8.2 Aplicar o briefing</h2>
+<ol class="passos">
+<li>No cartão, clique em <span class="ui">⋮ › Briefing</span>.</li>
+<li>Em <span class="ui">Modelo de briefing</span>, escolha “Primeira conversa” e clique em <span class="ui">Aplicar</span>.</li>
+<li>Anote as respostas e clique em <span class="ui">Salvar respostas</span>.</li>
+</ol>
+<table><tr><th>Pergunta</th><th>Resposta</th></tr>
+<tr><td>Qual a data desejada?</td><td>15 de maio de 2027, sábado à tarde</td></tr>
+<tr><td>Quantos convidados vocês imaginam?</td><td>Cerca de 180 pessoas</td></tr>
+<tr><td>Qual o estilo da festa?</td><td>Clássico, ao ar livre, tons de verde e branco</td></tr>
+<tr><td>Qual o orçamento total previsto?</td><td>Até R$ 150.000 no total</td></tr>
+<tr><td>O que não pode faltar de jeito nenhum?</td><td>Pista de dança animada e doces finos</td></tr></table>
+<figure class="peq"><img src="shots/18b-briefing-respondido.png"><figcaption>Briefing aplicado à oportunidade.</figcaption></figure>
+<div class="bloco dica"><b class="rot">Dica</b>Editar o modelo depois não muda o briefing já aplicado. Para trocar, use <span class="ui">Trocar o modelo</span>; para apagar, <span class="ui">Remover briefing</span>.</div>
+<h2>8.3 Tarefas do funil</h2>
+<ol class="passos">
+<li>Abra <span class="ui">Funil de Vendas › Tarefas do Funil</span> e clique em <span class="ui">Adicionar tarefa</span>.</li>
+<li>Preencha <span class="ui">Título</span>, <span class="ui">Oportunidade</span>, <span class="ui">Tipo</span> (Reunião, Ligação, E-mail ou Tarefa), <span class="ui">Responsáveis</span>, <span class="ui">Prazo</span> e <span class="ui">Observação</span>, e clique em <span class="ui">Salvar</span>.</li>
+</ol>
+<table><tr><th>Título</th><th>Tipo</th><th>Prazo</th><th>Observação</th></tr>
+<tr><td>Ligar para confirmar a reunião</td><td>Ligação</td><td>26/11/2026</td><td>Confirmar endereço do escritório.</td></tr>
+<tr><td>Reunião de apresentação com Beatriz e Gustavo</td><td>Reunião</td><td>27/11/2026</td><td>Levar portfólio e exemplos de cronograma.</td></tr></table>
+<figure><img src="shots/19b-tarefas-funil-lista.png"><figcaption>Tarefas do funil em Incompletas. O ícone ✓ conclui; concluídas vão para Completas.</figcaption></figure>
+<p>As tarefas aparecem também na <span class="ui">Minha Agenda</span> e, no dia, na tela <span class="ui">Hoje</span>. Os filtros <span class="ui">Tipo</span>, <span class="ui">Responsável</span> e <span class="ui">Prazo de/até</span> ajudam a encontrar o que importa.</p>
+<h2>8.4 O retorno na tela Hoje</h2>
+<p>No dia marcado em <span class="ui">Retornar em</span>, a oportunidade aparece em <b>Retornos do funil</b> na tela Hoje. A data fica vermelha quando atrasada, amarela quando é hoje e neutra quando é futura. Depois de falar com a cliente, clique em <span class="ui">Retornei</span>: a Aralu pede a próxima data de retorno (ou “sem próximo retorno”). O mesmo pode ser feito pelo cartão, em <span class="ui">⋮ › Marcar retorno</span>.</p>
+<div class="bloco resultado"><b class="rot">Resultado esperado</b>O cartão mostra “Casamento Beatriz e Gustavo”, R$ 18.000,00, data do casamento e “retornar qua, 25/11 às 10:00”. O topo do quadro passa a mostrar 18.000,00 em negociação.</div>
+<div class="check"><b>Checklist do capítulo 8</b><ul><li>Gustavo adicionado e Beatriz marcada como contratante</li><li>Data, horários e locais preenchidos</li><li>Briefing respondido</li><li>Duas tarefas do funil criadas</li></ul></div>
+
+<h1><span class="num">Parte 2 · Capítulo 9</span>Acompanhando a negociação</h1>
+<div class="bloco contexto"><b class="rot">Contexto</b>A reunião foi marcada. Helena move o cartão da Beatriz para a coluna certa e aproveita para conhecer as ferramentas de busca do quadro.</div>
+<div class="bloco objetivo"><b class="rot">Objetivo</b>Mover a oportunidade de estágio e usar busca, filtros e exportação.</div>
+<ol class="passos">
+<li>Mova o cartão da Beatriz para <b>Reunião marcada</b> de uma destas três formas: arrastando o cartão; pelo menu <span class="ui">⋮ › Mover para Reunião marcada</span>; ou pela ação rápida no pé do cartão (<span class="ui">Reunião marcada →</span>).</li>
+<li>Observe que o total da coluna e o resumo no topo se atualizam.</li>
+<li>Teste a busca: digite “Beatriz” em <span class="ui">Buscar</span>. Use também os filtros <span class="ui">Tipo de evento</span>, <span class="ui">Evento de</span>/<span class="ui">Evento até</span> e <span class="ui">Responsável</span>, e clique em <span class="ui">Filtrar</span>.</li>
+<li>Clique em <span class="ui">Exportar</span>: a Aralu baixa uma planilha só com as oportunidades filtradas.</li>
+</ol>
+<figure><img src="shots/20-quadro-reuniao.png"><figcaption>Beatriz em “Reunião marcada”.</figcaption></figure>
+<div class="bloco dica"><b class="rot">Menu do cartão</b>O <span class="ui">⋮</span> reúne: Editar, Briefing, Mover para (cada estágio), Marcar retorno, Virar cliente e Excluir.</div>
+<div class="check"><b>Checklist do capítulo 9</b><ul><li>Cartão movido para Reunião marcada</li><li>Busca e filtros testados</li><li>Exportação baixada</li></ul></div>
+
+<h1><span class="num">Parte 2 · Capítulo 10</span>Orçamento e proposta por link</h1>
+<div class="bloco contexto"><b class="rot">Contexto</b>A reunião foi ótima. Beatriz e Gustavo querem a Assessoria completa e pedem para pagar com entrada e o restante parcelado. Helena monta o orçamento e manda o link pelo WhatsApp. O casal abre a proposta no celular e aceita.</div>
+<div class="bloco objetivo"><b class="rot">Objetivo</b>Criar o orçamento, definir as parcelas, enviar a proposta e registrar o aceite com os dados do contrato.</div>
+<h2>10.1 Criar o orçamento</h2>
+<ol class="passos">
+<li>Abra <span class="ui">Funil de Vendas › Orçamentos</span> e clique em <span class="ui">Novo orçamento</span>.</li>
+<li>Em <span class="ui">Oportunidade</span>, escolha “Casamento Beatriz e Gustavo”; em <span class="ui">Modelo</span>, “Proposta de casamento”. O <span class="ui">Conteúdo</span> é preenchido com as tags já trocadas pelos dados da oportunidade.</li>
+<li>Confira o <span class="ui">Valor</span> (R$ 18.000,00) e clique em <span class="ui">Salvar</span>.</li>
+</ol>
+<figure class="peq"><img src="shots/21a-orcamento-novo.png"><figcaption>Novo orçamento a partir do modelo.</figcaption></figure>
+<h2>10.2 Parcelas</h2>
+<ol class="passos">
+<li>Na linha do orçamento, clique no ícone <span class="ui">Parcelas</span>.</li>
+<li>Preencha conforme a tabela, marque <span class="ui">Tem entrada</span> e clique em <span class="ui">Gerar parcelas</span>. A Aralu divide o restante igualmente.</li>
+</ol>
+<table><tr><th>Campo</th><th>Valor</th></tr>
+<tr><td>Número de parcelas</td><td>5</td></tr><tr><td>Vencimento da 1ª parcela</td><td>10/01/2027</td></tr><tr><td>Tem entrada</td><td>Marcado</td></tr><tr><td>Valor da entrada / Data da entrada</td><td>R$ 5.400,00 / 10/12/2026</td></tr>
+<tr><td colspan="2"><b>Resultado:</b> entrada de R$ 5.400,00 + 5 parcelas de R$ 2.520,00 (de jan a mai/2027)</td></tr></table>
+<h2>10.3 Enviar a proposta</h2>
+<ol class="passos">
+<li>Clique no ícone <span class="ui">Enviar proposta</span>. A janela mostra o <span class="ui">Link da proposta</span>, válido por 30 dias.</li>
+<li>Use <span class="ui">Copiar link</span> ou <span class="ui">Enviar pelo WhatsApp</span>.</li>
+</ol>
+<figure class="peq"><img src="shots/23a-enviar-proposta.png"><figcaption>Enviar proposta: link, cópia e WhatsApp.</figcaption></figure>
+<p>A oportunidade vai sozinha para <b>Orçamento enviado</b>, e o cartão diz “Proposta ainda não foi aberta”. Se você mesma abrir o link estando conectada, a página avisa que você está vendo como assessoria, e isso não conta como abertura.</p>
+<h2>10.4 O casal abre e aceita</h2>
+<ol class="passos">
+<li>Abra o link numa janela anônima (simulando a Beatriz). A página mostra a logo e o nome do Ateliê, o texto da proposta, a apresentação da tela de aceite, o valor e a <b>Forma de pagamento</b>.</li>
+<li>Clique em <span class="ui">Aceitar</span>. Aparece “Para fechar, preencha mais dados para gerar o contrato”. Os campos com * são obrigatórios.</li>
+<li>Preencha a tabela abaixo e clique em <span class="ui">Confirmar</span>.</li>
+</ol>
+<figure><img src="shots/24a-proposta-publica.png"><figcaption>A proposta como o casal vê.</figcaption></figure>
+<table><tr><th>Campo</th><th>Valor</th></tr>
+<tr><td>Nome completo / E-mail / Celular</td><td>Já vêm preenchidos da oportunidade</td></tr>
+<tr><td>CPF/CNPJ</td><td>529.982.247-25</td></tr><tr><td>Nascimento</td><td>22/08/1994</td></tr><tr><td>Estado civil</td><td>Solteiro(a)</td></tr><tr><td>Nacionalidade / Profissão</td><td>Brasileira / Arquiteta</td></tr>
+<tr><td>CEP</td><td>05415-030</td></tr><tr><td>Endereço / Número / Complemento</td><td>Rua Fradique Coutinho / 310 / Apto 82</td></tr><tr><td>Bairro / Cidade / Estado</td><td>Pinheiros / São Paulo / SP</td></tr></table>
+<div class="bloco dica"><b class="rot">Atenção</b>Na tela de aceite o CEP não completa o endereço: digite todos os campos. Se faltar algo, a página diz exatamente o que falta (por exemplo, “Falta: endereço, bairro, cidade, estado”).</div>
+<figure class="peq"><img src="shots/24d-aceite-ok.png"><figcaption>“Proposta aceita”: a assessoria já foi avisada.</figcaption></figure>
+<div class="bloco resultado"><b class="rot">Resultado esperado</b>No quadro, o cartão da Beatriz mostra o selo <b>Aceitou</b>. O orçamento passa para a aba <b>Respondidos</b> em Orçamentos. A oportunidade <b>não</b> vai sozinha para Contratado: isso acontece no capítulo 13. Orçamento aceito não pode mais ser editado.</div>
+<div class="bloco dica"><b class="rot">Outros caminhos da proposta</b>
+• <b>Tenho dúvidas</b>: o casal escreve a dúvida; ela aparece no cartão e o retorno da oportunidade vai para hoje.<br>
+• <b>Não vou seguir</b>: a proposta fica como recusada.<br>
+• <b>Registrar resposta</b> (ícone na lista de orçamentos): quando o casal responde por telefone, a Helena registra Aceitou, Tem dúvidas ou Não vai seguir.<br>
+• Se você alterar valor ou parcelas depois de enviar, o link continua o mesmo e a proposta volta a “não foi aberta”. Mudar o valor apaga as parcelas: gere de novo.<br>
+• <b>Cancelar</b> um orçamento faz o link mostrar “Esta proposta não está mais disponível”.</div>
+<div class="check"><b>Checklist do capítulo 10</b><ul><li>Orçamento criado do modelo</li><li>Entrada + 5 parcelas geradas</li><li>Link enviado</li><li>Proposta aceita com dados do contrato</li><li>Selo “Aceitou” no cartão</li></ul></div>
+
+<h1><span class="num">Parte 2 · Capítulo 11</span>Uma negociação que não segue</h1>
+<div class="bloco contexto"><b class="rot">Contexto</b>Larissa responde que achou o valor acima do que pode pagar e decidiu não contratar assessoria.</div>
+<div class="bloco objetivo"><b class="rot">Objetivo</b>Descartar a oportunidade registrando o motivo.</div>
+<ol class="passos">
+<li>No cartão da Larissa, clique em <span class="ui">⋮ › Mover para Descartado</span> (ou arraste para a coluna Descartado).</li>
+<li>A janela <span class="ui">Descartar oportunidade</span> avisa que CPF/CNPJ, nascimento e endereço do contratante serão apagados.</li>
+<li>Em <span class="ui">Motivo do descarte</span>, escolha <b>Preço</b> e clique em <span class="ui">Descartar</span>. Sem motivo, não é possível descartar.</li>
+</ol>
+<figure class="peq"><img src="shots/28a-descartar.png"><figcaption>Descartar oportunidade.</figcaption></figure>
+<div class="bloco resultado"><b class="rot">Resultado esperado</b>Larissa está na coluna Descartado. O motivo entra no relatório de descartes (capítulo 23). Se ela voltar a procurar a Helena, basta mover o cartão para um estágio aberto: o motivo é limpo.</div>
+<div class="check"><b>Checklist do capítulo 11</b><ul><li>Larissa em Descartado com motivo “Preço”</li></ul></div>
+
+<h1><span class="num">Parte 2 · Capítulo 12</span>O contrato</h1>
+<div class="bloco contexto"><b class="rot">Contexto</b>Com a proposta aceita e os dados da Beatriz completos, Helena gera o contrato a partir do modelo do capítulo 3, sem digitar nada.</div>
+<div class="bloco objetivo"><b class="rot">Objetivo</b>Gerar, conferir, registrar o envio e marcar o contrato como assinado.</div>
+<ol class="passos">
+<li>Abra <span class="ui">Funil de Vendas › Contratos</span> e clique em <span class="ui">Novo contrato</span>.</li>
+<li>Escolha a <span class="ui">Oportunidade</span> “Casamento Beatriz e Gustavo” e o <span class="ui">Modelo</span> “Contrato de assessoria de casamento”. O <span class="ui">Conteúdo</span> aparece com as tags. Clique em <span class="ui">Salvar</span>.</li>
+<li>Na lista (aba <b>Em andamento</b>), clique em <span class="ui">Ver contrato</span>: a folha mostra logo, fundo e todos os dados preenchidos (contratada, contratante, evento, valor e parcelas). Use <span class="ui">Imprimir</span> para gerar o papel ou PDF.</li>
+<li>Envie o contrato à Beatriz pelo canal de sua preferência e clique em <span class="ui">Enviar contrato</span> para registrar o envio. A Aralu não envia nada sozinha: ela apenas registra a data.</li>
+<li>Quando o contrato voltar assinado, clique em <span class="ui">Marcar como assinado</span>.</li>
+</ol>
+<figure><img src="shots/27a-ver-contrato.png"><figcaption>Contrato gerado, com os dados reais no lugar das tags.</figcaption></figure>
+<div class="bloco dica"><b class="rot">Quando o contrato não é gerado</b>Sem orçamento aprovado, a Aralu avisa “Esta oportunidade ainda não tem orçamento aprovado…”. Sem dados do contratante (CPF/CNPJ, estado civil etc.), ela lista o que falta. Tag sem dado vira “________” para preencher à mão. Trocar a logo do modelo depois não altera contratos já gerados.</div>
+<div class="bloco resultado"><b class="rot">Resultado esperado</b>O contrato está na aba <b>Assinados</b>. Ele também passa a aparecer na Gestão Financeira (capítulo 14).</div>
+<div class="check"><b>Checklist do capítulo 12</b><ul><li>Contrato gerado com dados completos</li><li>Envio registrado</li><li>Marcado como assinado</li></ul></div>
+
+<h1><span class="num">Parte 2 · Capítulo 13</span>Beatriz vira cliente</h1>
+<div class="bloco contexto"><b class="rot">Contexto</b>Contrato assinado: é hora de transformar a oportunidade em cliente do Ateliê. O cadastro aproveita tudo o que já foi informado.</div>
+<div class="bloco objetivo"><b class="rot">Objetivo</b>Converter a oportunidade em cliente e conhecer a tela Clientes.</div>
+<ol class="passos">
+<li>No cartão da Beatriz, clique em <span class="ui">Virar cliente</span> (pé do cartão ou menu <span class="ui">⋮</span>).</li>
+<li>A janela <span class="ui">Novo cliente</span> abre preenchida com nome, CPF, nascimento, estado civil, nacionalidade, e-mail, celular e, na aba <span class="ui">Endereço</span>, o endereço.</li>
+<li>Em <span class="ui">Papel</span>, escolha <b>Noiva</b>. Confira e clique em <span class="ui">Salvar</span>.</li>
+</ol>
+<figure class="peq"><img src="shots/30a-virar-cliente.png"><figcaption>Cadastro de cliente já preenchido a partir da oportunidade.</figcaption></figure>
+<div class="bloco resultado"><b class="rot">Resultado esperado</b>A Aralu avisa que a Beatriz agora é cliente e que o lead foi para <b>Contratado</b>. No cartão aparecem o selo Cliente e o botão <span class="ui">Criar evento</span>. Em <span class="ui">Gestão de Eventos › Clientes</span>, Beatriz aparece com papel Noiva, e-mail e celular.</div>
+<div class="bloco dica"><b class="rot">Dica</b>Depois de virar cliente, editar a oportunidade não altera o cadastro do cliente. Para mudar dados da Beatriz, use <span class="ui">Clientes › Editar</span>. Os clientes não têm login: eles acompanham o evento pelo Link do cliente (capítulo 20).</div>
+<div class="check"><b>Checklist do capítulo 13</b><ul><li>Beatriz cadastrada como cliente (Noiva)</li><li>Oportunidade em Contratado</li></ul></div>
+
+<h1><span class="num">Parte 2 · Capítulo 14</span>Gestão Financeira: recebendo da cliente</h1>
+<div class="bloco contexto"><b class="rot">Contexto</b>Em 10/12/2026 vence a entrada da Beatriz. Helena manda a cobrança com a chave Pix e, quando o dinheiro cai, registra o recebimento.</div>
+<div class="bloco objetivo"><b class="rot">Objetivo</b>Acompanhar o contrato na Gestão Financeira, cobrar e registrar o recebimento.</div>
+<ol class="passos">
+<li>Abra <span class="ui">Principal › Gestão Financeira</span>. Os cartões do topo mostram <b>A receber no mês</b>, <b>Atrasadas</b>, <b>Contratado</b>, <b>Recebido</b> e <b>A receber</b>. A lista mostra cada contrato com valor, recebido, saldo e parcelas.</li>
+<li>Na linha do contrato, clique em <span class="ui">Parcelas do contrato</span>.</li>
+<li>Na entrada, clique em <span class="ui">Cobrar</span>: o WhatsApp abre com o texto de cobrança e a chave Pix do Perfil.</li>
+<li>Quando o pagamento chegar, clique em <span class="ui">Recebi</span>, preencha e clique em <span class="ui">Registrar</span>.</li>
+</ol>
+<table><tr><th>Campo</th><th>Valor</th></tr><tr><td>Valor recebido</td><td>R$ 5.400,00</td></tr><tr><td>Forma de pagamento</td><td>Pix</td></tr><tr><td>Data do recebimento</td><td>10/12/2026</td></tr></table>
+<figure><img src="shots/29a-gestao-financeira.png"><figcaption>Gestão Financeira com o contrato da Beatriz.</figcaption></figure>
+<div class="bloco dica"><b class="rot">Recursos extras</b>
+• É possível receber uma parcela em partes; receber mais do que o saldo não é permitido.<br>
+• <span class="ui">Desfazer último recebimento</span> corrige um registro errado.<br>
+• <span class="ui">Refazer parcelamento</span> substitui as parcelas, desde que ainda não haja recebimento (1 parcela = à vista).<br>
+• Parcelas vencidas aparecem em <b>Atrasadas</b>, e a tela Hoje mostra em <b>Cobranças a fazer</b> as parcelas atrasadas ou que vencem nos próximos 7 dias.<br>
+• O filtro <span class="ui">Situação</span> e a busca não alteram os cartões do topo.</div>
+<div class="bloco resultado"><b class="rot">Resultado esperado</b>Recebido R$ 5.400,00 e saldo de R$ 12.600,00 no contrato da Beatriz.</div>
+<div class="check"><b>Checklist do capítulo 14</b><ul><li>Contrato visível na Gestão Financeira</li><li>Cobrança aberta no WhatsApp</li><li>Entrada registrada</li></ul></div>
+
+<!-- ===================== PARTE 3 ===================== -->
+<h1><span class="num">Parte 3 · Capítulo 15</span>Nasce o evento</h1>
+<div class="bloco contexto"><b class="rot">Contexto</b>Agora começa o trabalho de produção. Helena cria o evento a partir da oportunidade, para não redigitar data, horário, locais e cliente, e aplica o modelo “Casamento completo”.</div>
+<div class="bloco objetivo"><b class="rot">Objetivo</b>Criar o evento, aplicar o modelo e completar as informações.</div>
+<h2>15.1 Criar o evento</h2>
+<ol class="passos">
+<li>Em <span class="ui">Oportunidades</span>, no cartão da Beatriz (coluna Contratado), clique em <span class="ui">Criar evento</span>.</li>
+<li>A janela <span class="ui">Novo evento</span> vem com “Dados trazidos da oportunidade”: tipo Casamento, nome, data, horário, convidados, locais e a cliente vinculada. Confira e clique em <span class="ui">Criar evento</span>.</li>
+</ol>
+<figure class="peq"><img src="shots/31b-novo-evento-da-oportunidade.png"><figcaption>Novo evento com os dados da oportunidade.</figcaption></figure>
+<div class="bloco dica"><b class="rot">Outra forma</b>Também é possível criar em <span class="ui">Eventos › Novo evento</span> (ou no <span class="ui">+</span> da barra do celular). Só o tipo e o nome são obrigatórios; o campo <span class="ui">Cliente</span> permite escolher um cliente já cadastrado ou cadastrar um novo ali mesmo.</div>
+<h2>15.2 Aplicar o modelo</h2>
+<ol class="passos">
+<li>O evento abre na aba <span class="ui">Resumo</span>. Em <b>Tarefas do evento</b>, clique em <span class="ui">Aplicar modelo</span> (ou use <span class="ui">Mais › Aplicar modelo</span>).</li>
+<li>Escolha “Casamento completo”. A janela mostra quantos serviços e tarefas são novos e quantos já existem no evento (esses são ignorados). Clique em <span class="ui">Aplicar</span>.</li>
+</ol>
+<p>As tarefas chegam ligadas aos seus serviços, com prazo relativo: se a data do casamento mudar, os prazos acompanham sozinhos. Aplicar de novo acrescenta só o que ainda não existe no evento.</p>
+<h2>15.3 Editar informações (e um pedido do casal)</h2>
+<p>Na reunião de alinhamento, Gustavo pede para registrar o nome dele, o orçamento total que o casal definiu (R$ 150.000) e os padrinhos.</p>
+<ol class="passos">
+<li>No Resumo, clique em <span class="ui">Editar</span>. A janela tem as abas <span class="ui">Informações gerais</span>, <span class="ui">Detalhes</span>, <span class="ui">Cerimônia</span> e <span class="ui">Recepção</span>.</li>
+<li>Preencha conforme a tabela e clique em <span class="ui">Salvar evento</span>.</li>
+</ol>
+<table><tr><th>Aba</th><th>Campo</th><th>Valor</th></tr>
+<tr><td>Informações gerais</td><td>Nome do noivo</td><td>Gustavo Ramos</td></tr>
+<tr><td>Informações gerais</td><td>Orçamento</td><td>R$ 150.000,00</td></tr>
+<tr><td>Informações gerais</td><td>URL do site</td><td>https://beatrizegustavo.casar.test</td></tr>
+<tr><td>Informações gerais</td><td>Tags</td><td>jardim</td></tr>
+<tr><td>Informações gerais</td><td>Salvar na agenda</td><td>Marcado</td></tr>
+<tr><td>Detalhes</td><td>Padrinhos</td><td>Ana Monteiro, Pedro Ramos, Júlia Costa, Rafael Lima</td></tr>
+<tr><td>Detalhes</td><td>Damas e pajens</td><td>Sofia (5 anos) e Miguel (6 anos)</td></tr></table>
+<p>Ainda nessa janela você pode trocar a foto do evento, alterar a data, o horário e os <span class="ui">Convidados estimados</span>, e revisar os locais nas abas Cerimônia e Recepção. Ao trocar a data, a Aralu só pergunta se deve mover as tarefas com data exata; as de prazo relativo já acompanham a nova data.</p>
+<figure><img src="shots/32b-evento-resumo-final.png"><figcaption>Resumo do evento: cabeçalho, alertas, cartões de acompanhamento e tarefas agrupadas por prazo.</figcaption></figure>
+<div class="bloco resultado"><b class="rot">Resultado esperado</b>O cabeçalho mostra “Beatriz Monteiro &amp; Gustavo Ramos · Casamento · 15/05/2027” e quantos dias faltam. Os cartões indicam tarefas, convidados, serviços contratados, orçamento contratado (estimado R$ 150.000,00) e a cliente. As abas do evento são: Resumo, Convidados, Fornecedores, Financeiro e Contratos. Na oportunidade, o botão “Criar evento” vira um atalho “Evento”.</div>
+<div class="check"><b>Checklist do capítulo 15</b><ul><li>Evento criado da oportunidade</li><li>Modelo aplicado (7 tarefas, 5 serviços)</li><li>Noivo, orçamento e padrinhos registrados</li></ul></div>
+
+<h1><span class="num">Parte 3 · Capítulo 16</span>As tarefas do dia a dia</h1>
+<div class="bloco contexto"><b class="rot">Contexto</b>Beatriz conta que ainda não escolheu o vestido. Helena cria uma tarefa com checklist dos ateliês a visitar. Como o casamento foi fechado com seis meses de antecedência, duas tarefas do modelo já nascem atrasadas e aparecem em destaque.</div>
+<div class="bloco objetivo"><b class="rot">Objetivo</b>Criar e acompanhar tarefas do evento e conhecer a visão geral de Tarefas e a Minha Agenda.</div>
+<h2>16.1 Nova tarefa com checklist</h2>
+<ol class="passos">
+<li>No <span class="ui">Resumo</span>, clique em <span class="ui">Nova tarefa</span>.</li>
+<li>Preencha os campos da tabela. Em <span class="ui">Checklist</span>, clique em <span class="ui">Adicionar item</span> para cada ateliê (cada item pode ter data e responsável próprios).</li>
+<li>Clique em <span class="ui">Salvar</span>.</li>
+</ol>
+<table><tr><th>Campo</th><th>Valor</th></tr>
+<tr><td>Título</td><td>Escolher vestido da noiva</td></tr><tr><td>Descrição</td><td>Visitar 3 ateliês com a Beatriz e a mãe dela.</td></tr><tr><td>Prazo</td><td>Data exata · 20/11/2026 (de propósito no passado, para ver o alerta)</td></tr><tr><td>Responsáveis / Prioridade</td><td>Organizador / Alta</td></tr><tr><td>Checklist</td><td>Ateliê Maria Bonita · Ateliê Seda Pura · Ateliê Véu de Noiva</td></tr></table>
+<figure class="peq"><img src="shots/35a-nova-tarefa-checklist.png"><figcaption>Nova tarefa com checklist.</figcaption></figure>
+<p>A janela também tem <span class="ui">Situação</span>, <span class="ui">Visibilidade</span> e <span class="ui">Serviço</span> (com busca e “+ Adicionar serviço”; liga a tarefa a um serviço do evento: quando o fornecedor do serviço é contratado, as tarefas dele são concluídas).</p>
+<h2>16.2 Acompanhar</h2>
+<ol class="passos">
+<li>No Resumo aparece o alerta “N tarefas atrasadas”. Clique em <span class="ui">Ver tarefas</span> para filtrar só as atrasadas (“Ver todas” volta).</li>
+<li>Expanda a checklist de uma tarefa e marque os itens à medida que forem feitos: os cartões do topo se atualizam sozinhos.</li>
+<li>Use <span class="ui">Buscar</span>, <span class="ui">Situação</span>, <span class="ui">Responsável</span> e <span class="ui">Só com checklist</span> para filtrar. Os ícones da linha editam ou excluem a tarefa. Para incluir várias de uma vez, use <span class="ui">Adicionar em massa</span>, a mesma janela do modelo (no evento, o prazo aceita também data exata).</li>
+</ol>
+<h2>16.3 Tarefas de todos os eventos e a agenda</h2>
+<ol class="passos">
+<li>Abra <span class="ui">Gestão de Eventos › Tarefas</span>: estão ali as tarefas de todos os eventos, com filtros e três visões: <span class="ui">Lista</span>, <span class="ui">Quadro por situação</span> e <span class="ui">Quadro por dia</span>. O nome do evento leva ao Resumo.</li>
+<li>Abra <span class="ui">Agenda › Minha Agenda</span>: veja o mês com eventos, compromissos e tarefas. Alterne entre <span class="ui">Mês</span>, <span class="ui">Semana</span>, <span class="ui">Dia</span> e <span class="ui">Lista</span>.</li>
+<li>Clique em <span class="ui">Novo compromisso</span> (ou no <span class="ui">+</span> de um dia) e cadastre a visita técnica abaixo.</li>
+</ol>
+<table><tr><th>Descrição</th><th>Data</th><th>Hora</th></tr><tr><td>Visita técnica ao Espaço Villa Jardim</td><td>03/12/2026</td><td>14:30</td></tr></table>
+<figure><img src="shots/47a-tarefas-geral.png"><figcaption>Tarefas de todos os eventos, em lista.</figcaption></figure>
+<div class="bloco resultado"><b class="rot">Resultado esperado</b>8 tarefas no evento, com alerta de atrasadas. A tela Hoje passa a mostrar quantas tarefas pedem você hoje e quantas estão atrasadas. A agenda mostra a visita técnica em 03/12.</div>
+<div class="check"><b>Checklist do capítulo 16</b><ul><li>Tarefa com checklist criada</li><li>Filtro de atrasadas testado</li><li>Visões de Tarefas e Minha Agenda conhecidas</li><li>Compromisso cadastrado</li></ul></div>
+
+<h1><span class="num">Parte 3 · Capítulo 17</span>Fornecedores do evento</h1>
+<div class="bloco contexto"><b class="rot">Contexto</b>Degustação aprovada! Helena fecha o Buffet Sabor &amp; Arte por R$ 42.000 (abaixo do estimado) e a Foto Luz por R$ 9.800. Ela acompanha quanto do orçamento de R$ 150.000 já foi comprometido.</div>
+<div class="bloco objetivo"><b class="rot">Objetivo</b>Acompanhar o orçamento, vincular fornecedores aos serviços e marcá-los como contratados com o contrato assinado.</div>
+<ol class="passos">
+<li>Abra a aba <span class="ui">Fornecedores</span> do evento. No topo, os indicadores <b>Orçamento</b>, <b>Estimado</b>, <b>Contratado</b>, <b>Prova real</b> e <b>Por convidado</b>, e os gráficos “Contratado e estimado frente ao orçamento” e “Por serviço”.</li>
+<li>Abaixo, cada serviço é uma linha que abre e fecha. No serviço <b>Buffet</b>, clique em <span class="ui">+ Fornecedor</span>, digite “Sabor”, escolha “Buffet Sabor &amp; Arte” e clique em <span class="ui">Adicionar</span>. (A lista também oferece <span class="ui">Criar novo fornecedor</span>.)</li>
+<li>Abra o serviço Buffet: na linha do fornecedor, clique em <span class="ui">Contratado</span>.</li>
+<li>Na janela <span class="ui">Contratar fornecedor</span>, preencha <span class="ui">Valor</span> e, em <span class="ui">Contrato assinado (opcional)</span>, anexe o arquivo (JPG, PNG ou PDF até 5 MB). Clique em <span class="ui">Contratar</span>.</li>
+<li>Repita para a Fotografia, sem anexo (o contrato chega depois).</li>
+</ol>
+<table><tr><th>Serviço</th><th>Fornecedor</th><th>Valor</th><th>Contrato assinado</th></tr>
+<tr><td>Buffet</td><td>Buffet Sabor &amp; Arte</td><td>R$ 42.000,00</td><td>Arquivo PDF do contrato</td></tr>
+<tr><td>Fotografia</td><td>Foto Luz Fotografia</td><td>R$ 9.800,00</td><td>Anexar depois</td></tr></table>
+<figure class="peq"><img src="shots/37a-contratar-buffet.png"><figcaption>Contratar fornecedor: valor e contrato assinado.</figcaption></figure>
+<figure><img src="shots/37b-fornecedores-contratados.png"><figcaption>Serviços com fornecedores contratados.</figcaption></figure>
+<div class="bloco dica"><b class="rot">Mais ações</b>
+• <span class="ui">Adicionar serviço</span> (topo da lista) inclui serviços do catálogo que o modelo não trouxe.<br>
+• O menu <span class="ui">⋮</span> do serviço tem <span class="ui">Valor estimado e subitens</span> (por exemplo, dividir o buffet em comida, bebida e garçons: a soma vira o estimado) e <span class="ui">Excluir serviço</span>.<br>
+• Um serviço pode ter vários fornecedores (por exemplo, dois orçamentos de decoração); o contratado do serviço é a soma dos contratados.<br>
+• Na linha do fornecedor: <span class="ui">Contrato</span> (anexar, substituir, abrir ou excluir), <span class="ui">Pagamento</span> (vai para a aba Financeiro), <span class="ui">Voltar para orçamento</span> e excluir. Com pagamento registrado, voltar e excluir ficam bloqueados.<br>
+• Se o estimado passar do orçamento, a barra fica em alerta com “Acima do orçamento em R$ X”.<br>
+• Os filtros <span class="ui">Buscar</span> e <span class="ui">Etapa</span> ajudam em eventos com muitos serviços.</div>
+<div class="bloco resultado"><b class="rot">Resultado esperado</b>Contratado R$ 51.800,00; o gráfico “Por serviço” mostra estimado e contratado lado a lado. Buffet e Fotografia aparecem como “1 de 1 contratado”.</div>
+<div class="check"><b>Checklist do capítulo 17</b><ul><li>Indicadores e gráficos conferidos</li><li>Buffet contratado com contrato anexado</li><li>Fotografia contratada</li></ul></div>
+
+<h1><span class="num">Parte 3 · Capítulo 18</span>Pagando fornecedores</h1>
+<div class="bloco contexto"><b class="rot">Contexto</b>O buffet aceitou entrada de 30% e o restante em quatro parcelas. Helena paga a entrada em 10/12/2026 e guarda o comprovante no sistema.</div>
+<div class="bloco objetivo"><b class="rot">Objetivo</b>Parcelar o pagamento do buffet, marcar a entrada como paga e anexar o comprovante.</div>
+<ol class="passos">
+<li>Abra a aba <span class="ui">Financeiro</span> do evento. Cada fornecedor contratado é um pagamento, com totais de contratado, pago e a pagar.</li>
+<li>No Buffet, clique em <span class="ui">Parcelar</span> e preencha conforme a tabela. Clique em <span class="ui">Salvar parcelamento</span>.</li>
+<li>Abra as parcelas (<span class="ui">Expandir parcelas</span>) e marque a caixa da <b>Entrada</b>: ela passa a <b>Paga</b>.</li>
+<li>Clique em <span class="ui">Comprovante</span> ao lado da entrada e envie o arquivo. Um novo arquivo substitui o anterior.</li>
+<li>Para a Fotografia, que será paga à vista, use <span class="ui">Marcar pago</span> quando pagar e anexe o comprovante.</li>
+</ol>
+<table><tr><th>Campo</th><th>Valor</th></tr><tr><td>Número de parcelas</td><td>4</td></tr><tr><td>Vencimento da 1ª parcela</td><td>10/01/2027</td></tr><tr><td>Entrada</td><td>Com entrada</td></tr><tr><td>Valor da entrada / Data</td><td>R$ 12.600,00 / 10/12/2026</td></tr>
+<tr><td colspan="2"><b>Resultado:</b> entrada de R$ 12.600,00 + 4 parcelas de R$ 7.350,00</td></tr></table>
+<figure><img src="shots/38d-entrada-paga.png"><figcaption>Buffet parcelado, com a entrada paga.</figcaption></figure>
+<div class="bloco dica"><b class="rot">Mais ações</b>
+• <span class="ui">Refazer parcelas</span>: se já houver parcela paga, o botão e o aviso ficam em vermelho, e as parcelas novas nascem todas pendentes e sem comprovante.<br>
+• <span class="ui">Sem parcelas</span> volta ao pagamento único. <span class="ui">Desfazer</span> volta um pagamento a pendente.<br>
+• <span class="ui">Exportar orçamento</span> baixa uma planilha do orçamento do evento.<br>
+• A tela Hoje mostra em <b>Pagar a fornecedores</b> o que vence na semana.</div>
+<div class="bloco resultado"><b class="rot">Resultado esperado</b>No cabeçalho: contratado 51.800,00 · pago 12.600,00 · a pagar 39.200,00.</div>
+<div class="check"><b>Checklist do capítulo 18</b><ul><li>Buffet parcelado</li><li>Entrada paga com comprovante</li></ul></div>
+
+<h1><span class="num">Parte 3 · Capítulo 19</span>Os contratos do evento</h1>
+<div class="bloco contexto"><b class="rot">Contexto</b>A Foto Luz mandou o contrato assinado. Helena quer ver, num só lugar, todos os contratos de fornecedores deste casamento.</div>
+<div class="bloco objetivo"><b class="rot">Objetivo</b>Consultar e enviar contratos de fornecedores na aba Contratos.</div>
+<ol class="passos">
+<li>Abra a aba <span class="ui">Contratos</span> do evento. Cada serviço mostra quantos contratos já foram enviados.</li>
+<li>No Buffet, veja o arquivo com <b>Enviado por</b> (Organizadora ou Cliente) e <b>Data</b>, e use <span class="ui">Abrir</span> ou <span class="ui">Baixar</span>.</li>
+<li>Na Fotografia (“Nenhum contrato enviado”), clique em <span class="ui">Enviar contrato</span> e escolha o PDF.</li>
+<li>Se o fornecedor mandar uma versão corrigida, use <span class="ui">Nova versão</span>: fica só a atual.</li>
+</ol>
+<figure><img src="shots/39a-contratos-aba.png"><figcaption>Aba Contratos do evento.</figcaption></figure>
+<div class="check"><b>Checklist do capítulo 19</b><ul><li>Contrato do buffet aberto</li><li>Contrato da fotografia enviado</li></ul></div>
+
+<h1><span class="num">Parte 3 · Capítulo 20</span>O link do cliente</h1>
+<div class="bloco contexto"><b class="rot">Contexto</b>Beatriz quer acompanhar os pagamentos aos fornecedores (parte deles ela mesma paga) e cadastrar os convidados da família do Gustavo. Helena gera um link exclusivo do evento, sem senha.</div>
+<div class="bloco objetivo"><b class="rot">Objetivo</b>Gerar o link do cliente, liberar financeiro e convidados e ver como a cliente usa.</div>
+<ol class="passos">
+<li>No Resumo, clique em <span class="ui">Mais › Link do cliente</span> e em <span class="ui">Gerar link</span>.</li>
+<li>Use <span class="ui">Copiar</span> e envie à Beatriz.</li>
+<li>Ligue <span class="ui">O cliente acessa o financeiro do evento</span> e <span class="ui">O cliente cadastra os convidados</span>. As duas opções nascem desligadas.</li>
+</ol>
+<figure class="peq"><img src="shots/41b-link-cliente-liberado.png"><figcaption>Link do cliente com financeiro e convidados liberados.</figcaption></figure>
+<h2>Como a cliente vê</h2>
+<ol class="passos">
+<li>Abra o link numa janela anônima. A página mostra o nome do casal e a data, com as abas <span class="ui">Financeiro</span> e <span class="ui">Convidados</span>.</li>
+<li>No Financeiro, a cliente vê contratado, pago, a pagar e os pagamentos por mês. Ela pode marcar parcelas como pagas, enviar comprovantes, enviar o contrato assinado de um fornecedor e definir parcelas.</li>
+<li>Em Convidados, clique em <span class="ui">Novo convite</span> e cadastre o convite abaixo, marcando Paulo como convidado principal. Clique em <span class="ui">Salvar convite</span>.</li>
+</ol>
+<table><tr><th>Nome do convite</th><th>E-mail</th><th>Convidados</th></tr><tr><td>Tios do Gustavo</td><td>tios.ramos@email.test</td><td>Paulo Ramos (principal, (11) 95555-2222) e Sandra Ramos</td></tr></table>
+<figure><img src="shots/42a-area-cliente.png"><figcaption>A área do cliente, aberta pelo link.</figcaption></figure>
+<div class="bloco dica"><b class="rot">O que a cliente não vê</b>A Gestão Financeira da Helena, o contrato da Beatriz com o Ateliê, as tarefas e os valores estimados ficam só com a assessoria. O que a cliente envia aparece para a Helena na aba Financeiro e na aba Contratos (com “Enviado por: Cliente”). <span class="ui">Trocar link</span> desliga o endereço antigo; <span class="ui">Desativar link</span> encerra o acesso.</div>
+<div class="check"><b>Checklist do capítulo 20</b><ul><li>Link gerado e liberado</li><li>Cliente viu o financeiro</li><li>Cliente cadastrou “Tios do Gustavo”</li></ul></div>
+
+<h1><span class="num">Parte 3 · Capítulo 21</span>Convidados e confirmação de presença</h1>
+<div class="bloco contexto"><b class="rot">Contexto</b>Faltando três meses, é hora de enviar convites e controlar as confirmações (RSVP). A família da Beatriz recebe o convite com link e QR code, confirma pelo celular e um primo diz que pretende casar nos próximos dois anos: um novo cliente em potencial para a Helena.</div>
+<div class="bloco objetivo"><b class="rot">Objetivo</b>Cadastrar convites, definir prazo e data de envio, receber confirmações e transformar um convidado em oportunidade.</div>
+<h2>21.1 Cadastrar convites</h2>
+<ol class="passos">
+<li>Abra a aba <span class="ui">Convidados</span> do evento. Observe os cartões <b>Pendentes</b>, <b>Confirmados</b> e <b>Não confirmados</b>.</li>
+<li>Clique em <span class="ui">Novo convite</span>. Um convite reúne quem recebe junto, como uma família.</li>
+<li>Preencha <span class="ui">Nome do convite</span> e <span class="ui">E-mail</span>. Para cada pessoa, preencha o nome e use <span class="ui">Adicionar convidado</span>. Marque o <b>Convidado principal</b>: ele recebe as comunicações e precisa de telefone.</li>
+<li>Clique em <span class="ui">Salvar convite</span>.</li>
+</ol>
+<table><tr><th>Nome do convite</th><th>E-mail</th><th>Convidados</th></tr><tr><td>Família Monteiro</td><td>familia.monteiro@email.test</td><td>Ricardo Monteiro (principal, (11) 95555-1111), Cláudia Monteiro, Lucas Monteiro</td></tr></table>
+<figure class="peq"><img src="shots/40b-novo-convite.png"><figcaption>Novo convite com convidado principal.</figcaption></figure>
+<div class="bloco dica"><b class="rot">Importar planilha</b>Para listas grandes, clique em <span class="ui">Planilha padrão</span>, preencha a planilha e use <span class="ui">Importar</span>. Antes de gravar, a Aralu mostra as linhas inválidas que serão ignoradas.</div>
+<h2>21.2 Prazo e data de envio</h2>
+<ol class="passos">
+<li>Clique em <span class="ui">Prazo de confirmação</span>, preencha <span class="ui">Data limite</span> = 15/04/2027 e clique em <span class="ui">Salvar</span>. Depois dessa data, o link do convite mostra que expirou.</li>
+<li>Clique em <span class="ui">Data de envio</span>, preencha 10/02/2027 e clique em <span class="ui">Salvar</span>.</li>
+</ol>
+<h2>21.3 Enviar o convite</h2>
+<p>Na linha do convite há <span class="ui">Copiar link de RSVP</span>, <span class="ui">Baixar QR Code</span> e <span class="ui">Enviar pelo WhatsApp</span>, além de editar e excluir. A seta à esquerda expande os convidados.</p>
+<figure><img src="shots/40c-convidados-lista.png"><figcaption>Lista de convites com as ações de envio.</figcaption></figure>
+<h2>21.4 O convidado confirma</h2>
+<ol class="passos">
+<li>Abra o link de RSVP da Família Monteiro numa janela anônima (de preferência no celular).</li>
+<li>Marque <b>Confirmado</b> para Ricardo e Cláudia e <b>Não comparecerá</b> para Lucas.</li>
+<li>Marque <span class="ui">Pretendo realizar um evento nos próximos dois anos</span> e clique em <span class="ui">Enviar</span>.</li>
+</ol>
+<figure class="peq"><img src="shots/43b-rsvp-confirmado.png"><figcaption>Depois de confirmar, a página mostra o QR code de entrada.</figcaption></figure>
+<p>A página passa a mostrar <b>Seu QR code de entrada</b>, que vale para os confirmados do convite no dia do evento.</p>
+<h2>21.5 Oportunidades de RSVP</h2>
+<ol class="passos">
+<li>Abra <span class="ui">Funil de Vendas › Oportunidades de RSVP</span>. A Família Monteiro aparece porque marcou a intenção de fazer um evento.</li>
+<li>Use <span class="ui">Gerar oportunidade</span> para criar um lead no funil (e recomeçar o ciclo do capítulo 7), <span class="ui">Contatar</span> para registrar o contato ou <span class="ui">Descartar</span>.</li>
+</ol>
+<div class="bloco dica"><b class="rot">Depois do prazo</b>Se um convidado pedir para confirmar depois da data limite, edite o convite e marque <span class="ui">Aceitar confirmação pelo link após o prazo</span>: o link volta a funcionar só para esse convite.</div>
+<div class="bloco resultado"><b class="rot">Resultado esperado</b>Dois convites no evento (um da Helena e um da cliente). Família Monteiro com 2 confirmados e 1 que não comparecerá. A aba mostra o prazo de confirmação e a data de envio.</div>
+<div class="check"><b>Checklist do capítulo 21</b><ul><li>Convite criado com convidado principal</li><li>Prazo e data de envio definidos</li><li>RSVP respondido e QR de entrada exibido</li><li>Convidado apareceu em Oportunidades de RSVP</li></ul></div>
+
+<!-- ===================== PARTE 4 ===================== -->
+<h1><span class="num">Parte 4 · Capítulo 22</span>A portaria no dia do casamento</h1>
+<div class="bloco contexto"><b class="rot">Contexto</b>Sábado, 15 de maio de 2027. Pedro Ramos, padrinho e primo do Gustavo, vai ficar na entrada do Espaço Villa Jardim com o celular conferindo quem chega. Ele não tem acesso à Aralu: recebe só o link da portaria.</div>
+<div class="bloco objetivo"><b class="rot">Objetivo</b>Gerar o link da portaria, registrar entradas e conferir a lista de presença.</div>
+<ol class="passos">
+<li>No Resumo, clique em <span class="ui">Mais › Link da portaria</span>, em <span class="ui">Gerar link</span>, e copie o endereço para o Pedro.</li>
+<li>No celular, o link mostra o evento e os totais <b>Confirmados</b>, <b>Já entraram</b> e <b>Faltam</b>, com a lista e a busca <span class="ui">Buscar convite ou convidado</span>.</li>
+<li>Quando a família chega, toque em <span class="ui">Escanear QR code</span> e aponte para o QR do convidado, ou encontre o convite na lista e toque em <span class="ui">Abrir</span>.</li>
+<li>Os confirmados aparecem marcados (quem não confirmou não pode entrar). Desmarque quem não veio e toque em <span class="ui">Confirmar presença</span>.</li>
+</ol>
+<figure class="peq"><img src="shots/44c-portaria-convite.png"><figcaption>Portaria: marcando quem está entrando.</figcaption></figure>
+<figure class="peq"><img src="shots/44d-portaria-entrou.png"><figcaption>Depois da confirmação: “Entrou às HH:mm” e totais atualizados.</figcaption></figure>
+<ol class="passos" start="5">
+<li>Helena confere em tempo real: aba <span class="ui">Convidados › Lista de presença</span>, com a coluna <b>Compareceu</b> (hora da entrada ou “Não”).</li>
+</ol>
+<figure class="peq"><img src="shots/45-lista-presenca.png"><figcaption>Lista de presença com confirmações e horários de entrada.</figcaption></figure>
+<div class="bloco dica"><b class="rot">Dica</b>Se a câmera for negada no celular, a portaria avisa, e dá para achar o convite pela lista. Ao fim do evento, use <span class="ui">Trocar</span> o link da portaria para desligar o endereço antigo.</div>
+<div class="check"><b>Checklist do capítulo 22</b><ul><li>Link da portaria gerado</li><li>Entrada da Família Monteiro registrada</li><li>Lista de presença conferida</li></ul></div>
+
+<h1><span class="num">Parte 4 · Capítulo 23</span>Depois da festa</h1>
+<div class="bloco contexto"><b class="rot">Contexto</b>O casamento foi um sucesso. Na semana seguinte, Helena fecha as contas, salva o que aprendeu num modelo melhorado, conclui o evento e olha os números do Ateliê.</div>
+<div class="bloco objetivo"><b class="rot">Objetivo</b>Quitar recebimentos e pagamentos, salvar como modelo, concluir o evento e consultar relatórios e estatísticas.</div>
+<h2>23.1 Fechar as contas</h2>
+<ol class="passos">
+<li>Em <span class="ui">Gestão Financeira › Parcelas do contrato</span>, registre com <span class="ui">Recebi</span> as parcelas restantes da Beatriz. Com tudo recebido, o contrato mostra o selo <b>Quitado</b>.</li>
+<li>Na aba <span class="ui">Financeiro</span> do evento, marque como pagas as parcelas restantes do buffet e o pagamento da fotografia.</li>
+</ol>
+<h2>23.2 Salvar como modelo</h2>
+<ol class="passos">
+<li>No Resumo, clique em <span class="ui">Mais › Salvar como modelo</span>. A janela sugere o nome “Modelo — nome do evento” e informa quantas tarefas e serviços vão para o modelo.</li>
+<li>Em <span class="ui">Nome</span>, digite “Casamento completo v2” e clique em <span class="ui">Salvar</span> (ou <span class="ui">Salvar e abrir</span>, para revisar o modelo na hora).</li>
+</ol>
+<figure class="peq"><img src="shots/51a-salvar-como-modelo.png"><figcaption>Salvar o evento como modelo.</figcaption></figure>
+<h2>23.3 Concluir o evento</h2>
+<ol class="passos">
+<li>Clique em <span class="ui">Mais › Concluir evento</span> e confirme em <span class="ui">Concluir</span>.</li>
+<li>Em <span class="ui">Eventos</span>, o casamento sai de <b>Em andamento</b> e vai para a aba <b>Concluído</b>.</li>
+</ol>
+<h2>23.4 Relatórios e estatísticas</h2>
+<ol class="passos">
+<li>Abra <span class="ui">Funil de Vendas › Relatórios</span>, informe <span class="ui">Início</span> e <span class="ui">Fim</span> do período e clique em <span class="ui">Atualizar</span>.</li>
+<li>Navegue pelos 9 relatórios: Negócios fechados x perdidos, Por fonte, Por serviço/produto, Por estágio, Por região, Por responsável, Por data prevista, Por motivos de descarte e Oportunidades de RSVP. Use <span class="ui">Exportar</span> para baixar.</li>
+<li>Em <span class="ui">Eventos</span>, clique em <span class="ui">Estatísticas</span> para ver os números dos eventos da assessoria.</li>
+<li>Volte à tela <span class="ui">Hoje</span>: os números do funil e da carteira estão atualizados.</li>
+</ol>
+<figure><img src="shots/50-relatorios.png"><figcaption>Relatórios do funil: 1 negócio fechado (Beatriz, R$ 18.000) e 1 perdido (Larissa).</figcaption></figure>
+<div class="bloco resultado"><b class="rot">Resultado esperado</b>Contrato da Beatriz quitado, fornecedores pagos, “Casamento completo v2” na lista de Modelos de evento e o casamento na aba Concluído. A jornada está completa: o lead que entrou pelo formulário no capítulo 7 virou cliente, contrato, evento e um casamento realizado.</div>
+<div class="check"><b>Checklist do capítulo 23</b><ul><li>Recebimentos e pagamentos quitados</li><li>Modelo v2 salvo</li><li>Evento concluído</li><li>Relatórios consultados</li></ul></div>
+
+<!-- ===================== COMPLEMENTARES ===================== -->
+<h1><span class="num">Capítulo complementar A</span>Trabalhando com assistentes</h1>
+<div class="bloco contexto"><b class="rot">Contexto</b>Com mais casamentos fechados, Helena contrata a assistente Bianca Souza. Ela quer que a Bianca veja só os eventos em que trabalha e não veja o financeiro.</div>
+<div class="bloco objetivo"><b class="rot">Objetivo</b>Convidar uma assistente, definir permissões e vinculá-la a um evento.</div>
+<ol class="passos">
+<li>Abra <span class="ui">Principal › Assistentes</span> e clique em <span class="ui">Convidar assistente</span>.</li>
+<li>Preencha os campos da tabela e clique em <span class="ui">Convidar</span>. A Bianca recebe um e-mail com o convite, cria a senha e passa a entrar com o próprio e-mail.</li>
+<li>Para que ela veja o casamento da Beatriz, abra o evento, clique em <span class="ui">Editar</span> e escolha-a no campo <span class="ui">Assistentes do evento</span>. Depois, atribua tarefas a ela no campo <span class="ui">Responsáveis</span>.</li>
+</ol>
+<table><tr><th>Campo</th><th>Valor</th></tr><tr><td>Nome</td><td>Bianca Souza</td></tr><tr><td>E-mail</td><td>bianca@atelieflordelis.test (use um e-mail real)</td></tr><tr><td>Celular / Nascimento</td><td>Opcionais</td></tr><tr><td>Pode ver o financeiro</td><td>Não</td></tr><tr><td>Eventos que ela vê</td><td>Só os eventos em que ela for marcada (a outra opção é Todos os eventos)</td></tr></table>
+<figure class="peq"><img src="shots/54-convidar-assistente.png"><figcaption>Convidar assistente.</figcaption></figure>
+<div class="bloco dica"><b class="rot">O que muda para a assistente</b>A assistente não vê Perfil, Assistentes e Modelos de Contrato. Sem permissão de financeiro, também não vê Gestão Financeira nem a aba Financeiro dos eventos; se tentar abrir, aparece “Você não tem acesso a esta área”. As mudanças de permissão valem no próximo clique. A assistente só exclui o que ela mesma criou. Ao remover o acesso, o que ela criou continua na conta.</div>
+
+<h1><span class="num">Capítulo complementar B</span>Minha conta, senha e aparência</h1>
+<ol class="passos">
+<li>No menu da conta (canto superior direito), clique em <span class="ui">Minha conta</span> para ver com qual e-mail você entrou e trocar a senha.</li>
+<li>O botão de lua/sol, ao lado, alterna entre <b>modo escuro</b> e <b>modo claro</b>.</li>
+<li>Para sair, use <span class="ui">Sair</span> no menu da conta ou o ícone ao lado do seu nome no rodapé do menu lateral.</li>
+<li>No menu lateral, clique no nome de um grupo para recolhê-lo ou abri-lo; a Aralu lembra a sua escolha neste navegador.</li>
+<li>No celular, o menu lateral abre pelo ícone ☰, e a barra inferior dá acesso a Hoje, Eventos, Novo evento, Financeiro e Mais.</li>
+</ol>
+
+<h1><span class="num">Capítulo complementar C</span>Outras ações úteis</h1>
+<table>
+<tr><th>Situação</th><th>Onde e como</th></tr>
+<tr><td>Reaproveitar um modelo com pequenas mudanças</td><td>Em qualquer lista de modelos, use o ícone <span class="ui">Clonar</span>. No editor do modelo de evento também há <span class="ui">Clonar</span> e <span class="ui">Excluir</span>.</td></tr>
+<tr><td>Trazer um modelo de evento pronto de um arquivo</td><td><span class="ui">Modelos de Evento › Importar modelo</span>.</td></tr>
+<tr><td>Um evento foi cancelado pelo cliente</td><td>No Resumo, <span class="ui">Mais › Cancelar evento</span>. Ele vai para a aba Cancelado de Eventos.</td></tr>
+<tr><td>Encontrar eventos</td><td>Em <span class="ui">Eventos</span>, use Nome, Tipo, De/Até e Tag e clique em <span class="ui">Filtrar</span> (<span class="ui">Limpar</span> desfaz).</td></tr>
+<tr><td>Cliente sem evento cadastrado por engano</td><td><span class="ui">Clientes</span>, ícone <span class="ui">Excluir</span>. A oportunidade continua em Contratado, sem o selo de cliente.</td></tr>
+<tr><td>Cadastrar cliente sem passar pelo funil</td><td><span class="ui">Clientes › Novo cliente</span>, com as abas Dados pessoais, Redes e Endereço.</td></tr>
+<tr><td>Contrato com o cliente cancelado</td><td><span class="ui">Contratos</span> do funil, ícone <span class="ui">Cancelar contrato</span>; fica na aba Cancelados.</td></tr>
+<tr><td>Tarefa do funil concluída por engano</td><td>Aba Completas, reabrir a tarefa.</td></tr>
+<tr><td>Copiar o link da tela de aceite de uma oportunidade</td><td>Na oportunidade, bloco Dados para contrato, <span class="ui">Copiar link da tela de aceite</span> (só depois de enviar o orçamento por link).</td></tr>
+<tr><td>Itens “em breve”</td><td>Os atalhos Anexos, Equipe escalada e Lembretes de aniversários, no topo de Eventos, ainda estão em desenvolvimento.</td></tr>
+</table>
+
+<h1><span class="num">Fechamento</span>Checklist final da jornada</h1>
+<table>
+<tr><th>Etapa</th><th>Funcionalidades usadas</th><th>✓</th></tr>
+<tr><td>Preparação</td><td>Cadastro, Hoje, Perfil, Modelos de Serviços, Modelo de Orçamento, Modelos de Contrato, Serviços da conta, Fornecedores, Modelos de Briefing, Roteiro, Cronograma, Inspirações, Mensagens e Evento, Gerenciar estágios</td><td>☐</td></tr>
+<tr><td>Comercial</td><td>Link do lead, Nova oportunidade, Editar oportunidade, Briefing, Retorno, Tarefas do Funil, Mover/Filtrar/Exportar, Orçamentos com parcelas, Proposta por link, Aceite, Descartar, Contratos, Virar cliente, Clientes</td><td>☐</td></tr>
+<tr><td>Financeiro da assessoria</td><td>Gestão Financeira, Cobrar, Recebi</td><td>☐</td></tr>
+<tr><td>Planejamento</td><td>Criar evento, Aplicar modelo, Editar evento, Tarefas com checklist, Tarefas (geral), Minha Agenda, Fornecedores, Contratar, Financeiro do evento, Contratos do evento, Link do cliente, Convites, Prazo e Data de envio, RSVP, Oportunidades de RSVP</td><td>☐</td></tr>
+<tr><td>Grande dia</td><td>Link da portaria, Escanear QR/Confirmar presença, Lista de presença</td><td>☐</td></tr>
+<tr><td>Pós-evento</td><td>Quitação, Salvar como modelo, Concluir evento, Relatórios, Estatísticas</td><td>☐</td></tr>
+<tr><td>Complementares</td><td>Assistentes, Minha conta, Modo escuro, Clonar, Importar, Cancelar evento</td><td>☐</td></tr>
+</table>
+<p style="margin-top:8mm;text-align:center;font-family:'Playfair Display',serif;color:#0F4D5C;font-size:14pt">Tudo em dia <span class="estrela">✦</span></p>
+</body>
+</html>

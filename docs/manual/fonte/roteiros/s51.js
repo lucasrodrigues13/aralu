@@ -1,0 +1,28 @@
+module.exports = async (p, H) => {
+  const D = 'mat-dialog-container';
+  const ctx = await p.browser().createBrowserContext();
+  const a = await ctx.newPage();
+  await a.setViewport({ width: 1366, height: 850 });
+  await a.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: 'light' }]);
+  await H.go(a, '/cliente/1mf33jTjFRn1AQUFeZbI8ZkGgMh6FTaXxveWC_oN1AE');
+  await H.click(a, 'Convidados');
+  await H.wait(a, 800);
+  await H.dump(a, 'body');
+  await H.click(a, 'Novo convite');
+  await a.waitForSelector(D, { timeout: 8000 }).catch(() => {});
+  await H.wait(a, 800);
+  await H.fill(a, 'Nome do convite', 'Tios do Gustavo', D);
+  await H.fill(a, 'E-mail', 'tios.ramos@email.test', D);
+  const n = await a.$(D + ' input[aria-label="Nome completo do convidado 1"]'); await n.click(); await a.keyboard.type('Paulo Ramos');
+  const t = await a.$(D + ' input[aria-label="Telefone do convidado 1"]'); await t.click(); await a.keyboard.type('11955552222');
+  await H.click(a, 'Adicionar convidado', D);
+  const n2 = await a.$(D + ' input[aria-label="Nome completo do convidado 2"]'); await n2.click(); await a.keyboard.type('Sandra Ramos');
+  const radios = await a.$$(D + ' mat-radio-button input'); await radios[0].click();
+  await H.dlg(a, '42b-cliente-novo-convite');
+  await H.click(a, 'Salvar convite', D);
+  await H.wait(a, 1500);
+  console.log('dlg', !!(await a.$(D)));
+  await H.shot(a, '42c-cliente-convidados', true);
+  console.log(await H.txt(a));
+  await ctx.close();
+};

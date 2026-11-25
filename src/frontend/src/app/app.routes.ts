@@ -58,6 +58,7 @@ export const routes: Routes = [
       { path: 'convidados', redirectTo: 'eventos', pathMatch: 'full' },
       { path: 'gestao-financeira', canActivate: [financeiroGuard], loadComponent: () => import('./pages/gestao-financeira/gestao-financeira.page').then((m) => m.GestaoFinanceiraPage) },
       { path: 'assistentes', canActivate: [donaGuard], loadComponent: () => import('./pages/assistentes/assistentes.page').then((m) => m.AssistentesPage) },
+      { path: 'ajuda', loadComponent: () => import('./pages/ajuda/manual.page').then((m) => m.ManualPage) },
       { path: 'sem-acesso', loadComponent: () => import('./pages/atalhos/sem-acesso.page').then((m) => m.SemAcessoPage) },
       { path: 'anexos', loadComponent: () => import('./pages/atalhos/em-breve.page').then((m) => m.EmBrevePage) },
       { path: 'equipe', loadComponent: () => import('./pages/atalhos/em-breve.page').then((m) => m.EmBrevePage) },

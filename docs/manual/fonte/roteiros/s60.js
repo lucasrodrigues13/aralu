@@ -1,0 +1,20 @@
+module.exports = async (p, H) => {
+  const D = 'mat-dialog-container';
+  await H.go(p, '/assistentes');
+  await H.click(p, 'Convidar assistente', 'main');
+  await H.wd(p);
+  await H.fill(p, 'Nome', 'Bianca Souza', D);
+  await H.fill(p, 'E-mail', 'bianca@atelieflordelis.test', D);
+  await H.dlg(p, '54-convidar-assistente');
+  await H.esc(p);
+  await H.go(p, '/conta');
+  await H.shot(p, '55-minha-conta');
+  console.log((await H.txt(p, 'main')).replace(/\n+/g, ' | ').slice(0, 800));
+  await H.go(p, '/eventos');
+  await H.click(p, 'Estatísticas', 'main');
+  await H.wait(p, 2500);
+  await H.shot(p, '53-estatisticas', true);
+  console.log((await H.txt(p, 'main')).replace(/\n+/g, ' | ').slice(0, 800));
+  await H.go(p, '/modelos-evento');
+  await H.shot(p, '51b-modelos-evento-v2');
+};

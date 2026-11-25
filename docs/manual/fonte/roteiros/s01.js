@@ -1,0 +1,1 @@
+module.exports=async(p,H)=>{ await H.go(p,'/entrar'); await H.shot(p,'01-entrar'); await H.fill(p,'E-mail','julia@atelieflordelis.test'); await H.fill(p,'Senha','Manual@2026'); await p.keyboard.press('Enter'); await H.wait(p,2500); await H.shot(p,'02-hoje-vazio'); console.log(p.url()); console.log(await H.txt(p)); };

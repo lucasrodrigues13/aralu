@@ -1,0 +1,1 @@
+const H=require('./h2'); (async()=>{setTimeout(()=>{console.log('TIMEOUT');process.exit(1)},100000);const {b,p}=await H.get(); try{ await require(process.argv[2])(p,H);}catch(e){console.log('ERRO',e.message); await p.screenshot({path:'shots/_erro.png'});} b.disconnect(); process.exit(0);})();

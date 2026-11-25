@@ -1,0 +1,21 @@
+module.exports = async (p, H) => {
+  const D = 'mat-dialog-container';
+  await H.go(p, '/contratos-funil');
+  await H.click(p, 'Assinados', 'main');
+  await H.wait(p, 1200);
+  await H.shot(p, '27b-contratos-assinados');
+  await H.go(p, '/gestao-financeira');
+  await H.shot(p, '29a-gestao-financeira');
+  await H.dump(p, 'main');
+  await H.go(p, '/oportunidades');
+  await H.click(p, 'Virar cliente', 'main');
+  await H.wd(p);
+  await H.dlg(p, '30a-virar-cliente');
+  await H.dump(p, D);
+  await H.click(p, 'Salvar', D);
+  await H.wait(p, 1500);
+  await H.shot(p, '30b-quadro-contratado');
+  await H.go(p, '/clientes');
+  await H.shot(p, '30c-clientes');
+  await H.dump(p, 'main');
+};

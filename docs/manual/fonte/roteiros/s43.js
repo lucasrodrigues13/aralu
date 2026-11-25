@@ -1,0 +1,20 @@
+const EV = '/eventos/9da95638-fbfc-44c8-8db4-9ab2995d2ab3';
+module.exports = async (p, H) => {
+  const D = 'mat-dialog-container';
+  await H.go(p, EV + '/dinheiro');
+  await H.click(p, 'Parcelar', 'main', 1);
+  await H.wd(p);
+  await H.dump(p, D);
+  await H.fill(p, 'Número de parcelas', '4', D);
+  await H.fill(p, 'Vencimento da 1ª parcela', '10/01/2027', D);
+  await H.click(p, 'Tem entrada', D);
+  await H.wait(p, 500);
+  await H.fill(p, 'Valor da entrada', '1260000', D);
+  await H.fill(p, 'Data da entrada', '10/12/2026', D);
+  await H.dlg(p, '38b-parcelar-buffet');
+  await H.click(p, 'Gerar parcelas', D);
+  await H.wait(p, 1800);
+  if (await p.$(D)) await H.esc(p);
+  await H.shot(p, '38c-buffet-parcelado', true);
+  await H.dump(p, 'main');
+};

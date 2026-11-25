@@ -246,6 +246,7 @@ export class CascaComponent implements OnDestroy {
         { rotulo: 'Perfil', icone: 'apartment', rota: '/perfil', soDona: true },
         { rotulo: 'Assistentes', icone: 'support_agent', rota: '/assistentes', soDona: true },
         { rotulo: 'Gestão Financeira', icone: 'account_balance_wallet', rota: '/gestao-financeira', financeiro: true },
+        { rotulo: 'Manual de uso', icone: 'menu_book', rota: '/ajuda' },
       ],
     },
     {

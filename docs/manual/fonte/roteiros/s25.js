@@ -1,0 +1,22 @@
+module.exports = async (p, H) => {
+  const D = 'mat-dialog-container';
+  await H.go(p, '/oportunidades');
+  await H.click(p, 'more_vert', 'main', 0);
+  await H.opt(p, 'Mover para Descartado');
+  await H.wd(p);
+  const i = await p.$(D + ' input');
+  await i.click();
+  await H.wait(p, 600);
+  console.log('OPC', await p.evaluate(() => [...document.querySelectorAll('mat-option')].map((o) => o.innerText).join(' | ')));
+  await H.opt(p, 'Preço').catch(async () => { await i.type('Preço'); });
+  await H.dlg(p, '28a-descartar');
+  await H.click(p, 'Descartar', D);
+  await H.wait(p, 1200);
+  await H.go(p, '/contratos-funil');
+  await H.dump(p, 'main');
+  console.log('SEND');
+  await H.click(p, 'Enviar contrato', 'main');
+  await H.wait(p, 1200);
+  console.log(await H.txt(p, '.cdk-overlay-container'), !!(await p.$(D)));
+  await H.dump(p, 'main');
+};
