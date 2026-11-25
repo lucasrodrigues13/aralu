@@ -1,0 +1,25 @@
+# ── Produção ─────────────────────────────────────────────────────────
+aralu.com.br {
+	encode zstd gzip
+	header -Server
+	reverse_proxy 127.0.0.1:8081
+}
+
+www.aralu.com.br {
+	redir https://aralu.com.br{uri} permanent
+}
+
+# ── Staging ──────────────────────────────────────────────────────────
+staging.aralu.com.br {
+	encode zstd gzip
+	header {
+		-Server
+		X-Robots-Tag "noindex, nofollow"
+	}
+	reverse_proxy 127.0.0.1:8082
+}
+
+# ── Domínio antigo (DNS na Wix aponta para esta VPS) ──────────────────
+voltexstores.com, www.voltexstores.com {
+	redir https://aralu.com.br{uri} permanent
+}

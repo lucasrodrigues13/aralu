@@ -66,3 +66,9 @@ jobs:
             ./ "${destino}:${dir}/"
           $ssh_base "$destino" "if [ ! -f ${dir}/.env ]; then cp ${dir}/.env.example ${dir}/.env; chmod 600 ${dir}/.env; echo 'Preencha ${dir}/.env e rode este workflow de novo.'; exit 1; fi"
           $ssh_base "$destino" "cd ${dir} && docker compose -p ${projeto} -f compose.production.yaml up -d --build --remove-orphans --wait"
+          # O proxy (80/443) atende os dois ambientes e só é atualizado pela main.
+          if [ "$BRANCH" = "main" ]; then
+            $ssh_base "$destino" "mkdir -p /opt/proxy"
+            rsync -az --delete -e "$ssh_base" ./deploy/proxy/ "${destino}:/opt/proxy/"
+            $ssh_base "$destino" "cd /opt/proxy && docker compose up -d --remove-orphans && docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile"
+          fi

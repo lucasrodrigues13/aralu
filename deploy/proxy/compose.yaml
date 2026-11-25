@@ -1,0 +1,21 @@
+# Proxy da VPS: dono das portas 80/443, com HTTPS automático (Let's Encrypt).
+# O workflow de deploy (branch main) publica esta pasta em /opt/proxy e roda:
+#   docker compose up -d && docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile
+# O nome do projeto "proxy" mantém o volume caddy_data, onde ficam os certificados.
+
+name: proxy
+
+services:
+  caddy:
+    image: caddy:2.8-alpine
+    # Rede do host: escuta 80/443 direto e alcança produção (127.0.0.1:8081) e staging (127.0.0.1:8082).
+    network_mode: host
+    restart: unless-stopped
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:
