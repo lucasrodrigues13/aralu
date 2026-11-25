@@ -23,6 +23,12 @@ public static partial class HtmlSeguro
         "figure", "figcaption", "caption",
     };
 
+    /// <summary>Estrutura extra liberada só na página de aceite (SPEC-061).</summary>
+    private static readonly HashSet<string> TagsDaPagina = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "section", "header", "footer", "main", "article", "aside", "nav",
+    };
+
     private static readonly HashSet<string> TagsVazias = new(StringComparer.OrdinalIgnoreCase) { "br", "hr", "img" };
 
     /// <summary>Tags cujo conteúdo inteiro é descartado (não só a tag).</summary>
@@ -58,7 +64,16 @@ public static partial class HtmlSeguro
     public static bool TemTexto(string? texto) =>
         !string.IsNullOrWhiteSpace(texto) && !string.IsNullOrWhiteSpace(WebUtility.HtmlDecode(Regex.Replace(texto, "<[^>]*>", "")));
 
-    public static string Sanitizar(string? html, int limite = LimiteEntrada)
+    /// <summary>
+    /// Página de aceite (SPEC-061): além da lista da SPEC-057, aceita <c>&lt;style&gt;</c>, <c>class</c>, <c>id</c> e
+    /// <c>style</c> (CSS filtrado por <see cref="CssSeguro"/>), seções estruturais e Google Fonts. Continua sem
+    /// scripts, eventos, iframes e formulários. É exibida num iframe isolado, sem scripts.
+    /// </summary>
+    public static string SanitizarPagina(string? html) => Sanitizar(html, LimiteEntrada, pagina: true);
+
+    public static string Sanitizar(string? html, int limite = LimiteEntrada) => Sanitizar(html, limite, pagina: false);
+
+    private static string Sanitizar(string? html, int limite, bool pagina)
     {
         if (string.IsNullOrWhiteSpace(html))
         {
@@ -163,7 +178,43 @@ public static partial class HtmlSeguro
                 continue;
             }
 
-            if (TagsComConteudoDescartado.Contains(nome))
+            if (pagina && nome == "style")
+            {
+                var achou = entrada.IndexOf("</style", i, StringComparison.OrdinalIgnoreCase);
+                var css = CssSeguro(achou < 0 ? entrada[i..] : entrada[i..achou]);
+                if (achou < 0)
+                {
+                    i = entrada.Length;
+                }
+                else
+                {
+                    var fecha = entrada.IndexOf('>', achou);
+                    i = fecha < 0 ? entrada.Length : fecha + 1;
+                }
+
+                if (css.Length > 0)
+                {
+                    saida.Append("<style>").Append(css).Append("</style>");
+                }
+
+                continue;
+            }
+
+            if (pagina && nome == "link")
+            {
+                // Google Fonts por <link> vira @import (a única folha externa aceita).
+                var href = AtributoBruto().Matches(atributosBrutos)
+                    .FirstOrDefault(m => m.Groups["n"].Value.Equals("href", StringComparison.OrdinalIgnoreCase));
+                var url = href is null ? null : WebUtility.HtmlDecode(href.Groups["d"].Success ? href.Groups["d"].Value : href.Groups["s"].Value);
+                if (url is not null && FonteGoogle(url))
+                {
+                    saida.Append("<style>").Append(CssSeguro($"@import url(\"{url}\");")).Append("</style>");
+                }
+
+                continue;
+            }
+
+            if (TagsComConteudoDescartado.Contains(nome) && !(pagina && nome == "head"))
             {
                 if (!atributosBrutos.TrimEnd().EndsWith('/'))
                 {
@@ -187,7 +238,7 @@ public static partial class HtmlSeguro
             {
                 if (nome == "img")
                 {
-                    var atributos = Atributos(nome, atributosBrutos);
+                    var atributos = Atributos(nome, atributosBrutos, pagina);
                     if (atributos.Contains(" src=\"", StringComparison.Ordinal))
                     {
                         saida.Append("<img").Append(atributos).Append('>');
@@ -195,15 +246,15 @@ public static partial class HtmlSeguro
                 }
                 else
                 {
-                    saida.Append('<').Append(nome).Append('>');
+                    saida.Append('<').Append(nome).Append(pagina ? Atributos(nome, atributosBrutos, pagina) : "").Append('>');
                 }
 
                 continue;
             }
 
-            if (TagsComContainer.Contains(nome) && abertas.Count < ProfundidadeMaxima)
+            if ((TagsComContainer.Contains(nome) || (pagina && TagsDaPagina.Contains(nome))) && abertas.Count < ProfundidadeMaxima)
             {
-                saida.Append('<').Append(nome).Append(Atributos(nome, atributosBrutos)).Append('>');
+                saida.Append('<').Append(nome).Append(Atributos(nome, atributosBrutos, pagina)).Append('>');
                 abertas.Add(nome);
             }
 
@@ -245,7 +296,7 @@ public static partial class HtmlSeguro
         return -1;
     }
 
-    private static string Atributos(string tag, string brutos)
+    private static string Atributos(string tag, string brutos, bool pagina = false)
     {
         var resultado = new StringBuilder();
         var vistos = new HashSet<string>();
@@ -262,6 +313,28 @@ public static partial class HtmlSeguro
             }
 
             string? seguro = null;
+            if (pagina && nome is "class" or "id" or "style")
+            {
+                seguro = nome switch
+                {
+                    "style" => CssSeguro(valor) is { Length: > 0 } css ? css : null,
+                    "id" => NomeCss().IsMatch(valor) ? valor : null,
+                    _ => string.Join(' ', valor.Split(' ', StringSplitOptions.RemoveEmptyEntries).Where(c => NomeCss().IsMatch(c))) is { Length: > 0 } lista ? lista : null,
+                };
+                if (seguro is not null)
+                {
+                    resultado.Append(' ').Append(nome).Append("=\"").Append(WebUtility.HtmlEncode(seguro)).Append('"');
+                }
+
+                continue;
+            }
+
+            if (pagina && (tag, nome) is ("a", "href") && TagDeLink().IsMatch(valor))
+            {
+                resultado.Append(" href=\"{{link_whatsapp}}\"");
+                continue;
+            }
+
             switch (tag, nome)
             {
                 case ("a", "href"):
@@ -304,6 +377,40 @@ public static partial class HtmlSeguro
         return resultado.ToString();
     }
 
+    /// <summary>
+    /// CSS da página de aceite (SPEC-061 §8.2). Tira comentários, barras invertidas (escapes usados para disfarçar
+    /// palavras) e "&lt;" (assim não fecha o &lt;style&gt;); só aceita @import do Google Fonts e url() https; remove
+    /// expression(), behavior, -moz-binding e esquemas javascript:/vbscript:. Idempotente.
+    /// </summary>
+    public static string CssSeguro(string? css)
+    {
+        if (string.IsNullOrWhiteSpace(css))
+        {
+            return "";
+        }
+
+        var s = css.Length > LimiteEntrada ? css[..LimiteEntrada] : css;
+        s = Regex.Replace(s, @"/\*.*?(\*/|$)", "", RegexOptions.Singleline);
+        s = new string(s.Where(c => c is not ('\\' or '<') && (!char.IsControl(c) || c is '\n' or '\r' or '\t')).ToArray());
+        s = Regex.Replace(s, @"@import\s*(?:url\(\s*)?[""']?([^""'\)\s;]*)[""']?\s*\)?[^;{]*;?", m =>
+            FonteGoogle(m.Groups[1].Value) ? $"@import url(\"{m.Groups[1].Value}\");" : "", RegexOptions.IgnoreCase);
+        s = Regex.Replace(s, @"url\(\s*([""']?)(.*?)\1\s*\)", m =>
+            UrlSegura(m.Groups[2].Value, ["https"]) is { } u && !u.Contains('"') && !u.Contains('\'') && !u.Contains(')') ? $"url(\"{u}\")" : "none",
+            RegexOptions.IgnoreCase | RegexOptions.Singleline);
+        string anterior;
+        do
+        {
+            anterior = s;
+            s = Regex.Replace(s, @"expression\s*\(|behavior\s*:|-moz-binding|javascript\s*:|vbscript\s*:|@charset|@namespace", "", RegexOptions.IgnoreCase);
+        }
+        while (s != anterior);
+
+        return s.Trim();
+    }
+
+    private static bool FonteGoogle(string url) =>
+        url.StartsWith("https://fonts.googleapis.com/", StringComparison.OrdinalIgnoreCase) && !url.Contains('"') && !url.Contains('\'') && !url.Contains(')');
+
     /// <summary>Devolve a URL se o esquema é permitido. Remove espaços e controles antes de olhar o esquema.</summary>
     internal static string? UrlSegura(string valor, string[] esquemas)
     {
@@ -322,6 +429,13 @@ public static partial class HtmlSeguro
         var esquema = limpo[..dois].ToLowerInvariant();
         return esquemas.Contains(esquema) ? limpo : null;
     }
+
+    [GeneratedRegex("^[A-Za-z_-][A-Za-z0-9_-]{0,60}$")]
+    private static partial Regex NomeCss();
+
+    /// <summary>Na página, o link do WhatsApp pode vir da tag (trocada depois por wa.me).</summary>
+    [GeneratedRegex(@"^\s*\{\{\s*link_whatsapp\s*\}\}\s*$")]
+    private static partial Regex TagDeLink();
 
     [GeneratedRegex(@"&(?:[a-zA-Z][a-zA-Z0-9]{1,31}|#[0-9]{1,7}|#[xX][0-9a-fA-F]{1,6});")]
     private static partial Regex EntidadeValida();

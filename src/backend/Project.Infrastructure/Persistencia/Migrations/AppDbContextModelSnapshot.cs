@@ -1756,6 +1756,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<string>("CorSecundaria")
                         .HasColumnType("text");
 
+                    b.Property<string>("ExtrasAceite")
+                        .HasColumnType("text");
+
                     b.Property<string>("HtmlAceite")
                         .HasColumnType("text");
 
@@ -2031,6 +2034,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
                     b.Property<DateTimeOffset?>("EnviadoEm")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ExtrasAceite")
+                        .HasColumnType("text");
 
                     b.Property<string>("HtmlAceite")
                         .HasColumnType("text");

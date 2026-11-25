@@ -58,7 +58,7 @@ public sealed record PropostaPublica(
     bool DaPropriaConta = false,
     IReadOnlyList<ParcelaOrcamentoLeitura>? Parcelas = null,
     ContratanteDados? Contratante = null,
-    string? HtmlAceite = null);
+    string? PaginaAceite = null);
 
 /// <summary>Resposta à proposta. <c>Contratante</c> só vale no aceite pelo link (SPEC-049).</summary>
 public sealed record ResponderProposta(string? Tipo, string? Mensagem, ContratanteDados? Contratante = null);
@@ -110,7 +110,7 @@ public sealed class OrcamentoFunilServico(IDados dados)
         }
 
         var perfil = await dados.ObterPerfilAsync(contaId, ct);
-        return Resultado<string>.Sucesso(ParametrosOrcamento.Aplicar(modelo.Texto, oportunidade, valor, DateOnly.FromDateTime(DateTime.UtcNow), perfil?.NomeEmpresa));
+        return Resultado<string>.Sucesso(ParametrosOrcamento.Aplicar(modelo.Texto, oportunidade, valor, DateOnly.FromDateTime(DateTime.UtcNow), perfil));
     }
 
     public async Task<Resultado<OrcamentoFunilLeitura>> CriarAsync(string contaId, SalvarOrcamentoFunil pedido, CancellationToken ct, string? criadoPor = null)
@@ -129,6 +129,7 @@ public sealed class OrcamentoFunilServico(IDados dados)
         var conteudo = HtmlSeguro.LimparRico(pedido.Conteudo);
         Guid? modeloId = pedido.ModeloId;
         string? htmlAceite = null;
+        string? extrasAceite = null;
         if (conteudo is null && modeloId is Guid mid)
         {
             var modelo = await dados.ObterModeloOrcamentoFunilAsync(contaId, mid, ct);
@@ -138,8 +139,9 @@ public sealed class OrcamentoFunilServico(IDados dados)
             }
 
             htmlAceite = modelo.HtmlAceite;
+            extrasAceite = modelo.ExtrasAceite;
             var perfil = await dados.ObterPerfilAsync(contaId, ct);
-            conteudo = ParametrosOrcamento.Aplicar(modelo.Texto, oportunidade, pedido.Valor, DateOnly.FromDateTime(DateTime.UtcNow), perfil?.NomeEmpresa);
+            conteudo = ParametrosOrcamento.Aplicar(modelo.Texto, oportunidade, pedido.Valor, DateOnly.FromDateTime(DateTime.UtcNow), perfil);
         }
         else if (modeloId is Guid mid2)
         {
@@ -150,6 +152,7 @@ public sealed class OrcamentoFunilServico(IDados dados)
             }
 
             htmlAceite = modelo.HtmlAceite;
+            extrasAceite = modelo.ExtrasAceite;
         }
 
         if (conteudo is null)
@@ -168,6 +171,7 @@ public sealed class OrcamentoFunilServico(IDados dados)
             CriadoEm = DateTimeOffset.UtcNow,
             ModeloId = modeloId,
             HtmlAceite = htmlAceite,
+            ExtrasAceite = extrasAceite,
             CriadoPor = criadoPor,
         };
         await dados.InserirOrcamentoFunilAsync(item, ct);
@@ -602,6 +606,28 @@ public sealed class OrcamentoFunilServico(IDados dados)
 
         var nomes = await dados.NomesOportunidadesAsync(item.ContaId, [item.OportunidadeId], ct);
         var oportunidade = await dados.ObterOportunidadeAsync(item.ContaId, item.OportunidadeId, ct);
+        var parcelas = item.Parcelas
+            .OrderBy(parcela => parcela.Numero)
+            .Select(parcela => new ParcelaOrcamentoLeitura(parcela.Numero, parcela.Vencimento, parcela.Valor, parcela.Entrada))
+            .ToArray();
+        string? pagina = null;
+        if (HtmlSeguro.SanitizarPagina(item.HtmlAceite) is { Length: > 0 } htmlPagina && oportunidade is not null)
+        {
+            var modelo = item.ModeloId is Guid modeloId ? await dados.ObterModeloOrcamentoFunilAsync(item.ContaId, modeloId, ct) : null;
+            var validade = DateOnly.FromDateTime((item.ValidoAte ?? agora).UtcDateTime);
+            pagina = PaginaAceite.Montar(new DadosPaginaAceite(
+                htmlPagina,
+                ParametrosOrcamento.Valores(oportunidade, item.Valor, validade, perfil, parcelas, validadeJaCalculada: true),
+                ExtrasAceite.Ler(item.ExtrasAceite),
+                perfil?.FotoId,
+                item.Conteudo,
+                item.Valor,
+                parcelas,
+                modelo?.CorPrimaria,
+                modelo?.CorSecundaria,
+                Previa: false));
+        }
+
         return new PropostaPublica(
             "Disponivel",
             empresa,
@@ -613,12 +639,27 @@ public sealed class OrcamentoFunilServico(IDados dados)
             item.Resposta?.ToString(),
             item.RespostaMensagem,
             item.RespostaEm,
-            Parcelas: item.Parcelas
-                .OrderBy(parcela => parcela.Numero)
-                .Select(parcela => new ParcelaOrcamentoLeitura(parcela.Numero, parcela.Vencimento, parcela.Valor, parcela.Entrada))
-                .ToArray(),
+            Parcelas: parcelas,
             Contratante: oportunidade is null ? null : ContratanteRegras.Ler(oportunidade),
-            HtmlAceite: HtmlSeguro.Sanitizar(item.HtmlAceite) is { Length: > 0 } html ? html : null);
+            PaginaAceite: pagina);
+    }
+
+    /// <summary>Foto da página de aceite pelo link da proposta: só as do orçamento (e o logo do perfil). SPEC-061 §8.5.</summary>
+    public async Task<(string ContaId, Guid ArquivoId)?> MidiaPublicaAsync(string token, Guid arquivoId, CancellationToken ct)
+    {
+        var item = await PorTokenAsync(token, ct);
+        if (item is null || item.Situacao == SituacaoOrcamentoFunil.Cancelado || !item.LinkValido(DateTimeOffset.UtcNow))
+        {
+            return null;
+        }
+
+        if (ExtrasAceite.Ler(item.ExtrasAceite).Midias.Any(m => m.ArquivoId == arquivoId))
+        {
+            return (item.ContaId, arquivoId);
+        }
+
+        var perfil = await dados.ObterPerfilAsync(item.ContaId, ct);
+        return perfil?.FotoId == arquivoId ? (item.ContaId, arquivoId) : null;
     }
 
     private async Task<Resultado<OrcamentoFunilLeitura>> MudarAsync(

@@ -14,14 +14,27 @@ public sealed record ModeloOrcamentoFunilLeitura(
     string? CorPrimaria,
     string? CorSecundaria,
     IReadOnlyList<string> Parametros,
-    string? HtmlAceite = null);
+    string? HtmlAceite = null,
+    IReadOnlyList<MidiaAceite>? Midias = null,
+    IReadOnlyList<DepoimentoAceite>? Depoimentos = null);
 
 public sealed record SalvarModeloOrcamentoFunil(
     string? Nome,
     string? Texto,
     string? CorPrimaria,
     string? CorSecundaria,
-    string? HtmlAceite = null);
+    string? HtmlAceite = null,
+    IReadOnlyList<MidiaAceite>? Midias = null,
+    IReadOnlyList<DepoimentoAceite>? Depoimentos = null);
+
+/// <summary>Live Preview da página de aceite (SPEC-061): o modal manda o que está na tela, ainda sem salvar.</summary>
+public sealed record PreviaPaginaAceite(
+    string? Texto,
+    string? HtmlAceite,
+    string? CorPrimaria,
+    string? CorSecundaria,
+    IReadOnlyList<MidiaAceite>? Midias,
+    IReadOnlyList<DepoimentoAceite>? Depoimentos);
 
 public static class TokensFunil
 {
@@ -192,6 +205,7 @@ public sealed class ModeloOrcamentoFunilServico(IDados dados)
         item.CorPrimaria = montado.Valor.CorPrimaria;
         item.CorSecundaria = montado.Valor.CorSecundaria;
         item.HtmlAceite = montado.Valor.HtmlAceite;
+        item.ExtrasAceite = montado.Valor.ExtrasAceite;
         await dados.SalvarNegocioAsync(ct);
         return Resultado<ModeloOrcamentoFunilLeitura>.Sucesso(Ler(item));
     }
@@ -229,6 +243,12 @@ public sealed class ModeloOrcamentoFunilServico(IDados dados)
             return Resultado<ModeloOrcamentoFunil>.Erro(Codigos.Validacao, "Informe cores válidas.");
         }
 
+        var extras = ExtrasAceite.Montar(pedido.Midias, pedido.Depoimentos);
+        if (!extras.Ok)
+        {
+            return Resultado<ModeloOrcamentoFunil>.Erro(extras.Falha!.Codigo, extras.Falha.Mensagem);
+        }
+
         return Resultado<ModeloOrcamentoFunil>.Sucesso(new ModeloOrcamentoFunil
         {
             Id = id,
@@ -237,13 +257,49 @@ public sealed class ModeloOrcamentoFunilServico(IDados dados)
             Texto = texto,
             CorPrimaria = cor1,
             CorSecundaria = cor2,
-            HtmlAceite = HtmlSeguro.Sanitizar(pedido.HtmlAceite) is { Length: > 0 } html ? html : null,
+            HtmlAceite = HtmlSeguro.SanitizarPagina(pedido.HtmlAceite) is { Length: > 0 } html ? html : null,
+            ExtrasAceite = extras.Valor!.Gravar(),
         });
+    }
+
+    /// <summary>Documento da página de aceite com exemplos no lugar das tags (SPEC-061, Live Preview).</summary>
+    public async Task<string> PreviaAsync(string contaId, PreviaPaginaAceite pedido, CancellationToken ct)
+    {
+        var perfil = await dados.ObterPerfilAsync(contaId, ct);
+        var valores = new Dictionary<string, string>(ParametrosOrcamento.Exemplos, StringComparer.OrdinalIgnoreCase);
+        if (perfil?.NomeEmpresa is { Length: > 0 } empresa)
+        {
+            valores["nome_assessoria"] = empresa;
+        }
+
+        if (perfil?.Celular is { Length: > 0 } celular)
+        {
+            valores["telefone_assessoria"] = celular;
+            valores["link_whatsapp"] = ParametrosOrcamento.LinkWhatsApp(celular) ?? valores["link_whatsapp"];
+        }
+
+        var extras = ExtrasAceite.Montar(pedido.Midias, pedido.Depoimentos) is { Ok: true } ok ? ok.Valor! : ExtrasAceite.Vazio;
+        var texto = HtmlSeguro.LimparRico(pedido.Texto) ?? "";
+        var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
+        return PaginaAceite.Montar(new DadosPaginaAceite(
+            pedido.HtmlAceite ?? "",
+            valores,
+            extras,
+            perfil?.FotoId,
+            ParametrosOrcamento.Trocar(texto, valores, HtmlSeguro.EhHtml(texto)),
+            8500m,
+            [new(1, hoje.AddDays(15), 2500m, true), new(2, hoje.AddMonths(1), 3000m, false), new(3, hoje.AddMonths(2), 3000m, false)],
+            Domain.Comum.Texto.Limpo(pedido.CorPrimaria),
+            Domain.Comum.Texto.Limpo(pedido.CorSecundaria),
+            Previa: true));
     }
 
     private static bool CorValida(string cor) =>
         cor.Length is 4 or 7 && cor.StartsWith('#') && cor[1..].All(c => Uri.IsHexDigit(c));
 
-    private static ModeloOrcamentoFunilLeitura Ler(ModeloOrcamentoFunil item) =>
-        new(item.Id, item.Nome, item.Texto, item.CorPrimaria, item.CorSecundaria, TokensFunil.Todos, item.HtmlAceite);
+    private static ModeloOrcamentoFunilLeitura Ler(ModeloOrcamentoFunil item)
+    {
+        var extras = ExtrasAceite.Ler(item.ExtrasAceite);
+        return new(item.Id, item.Nome, item.Texto, item.CorPrimaria, item.CorSecundaria, ParametrosOrcamento.Lista, item.HtmlAceite, extras.Midias, extras.Depoimentos);
+    }
 }

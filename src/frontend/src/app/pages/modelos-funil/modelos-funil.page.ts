@@ -16,12 +16,21 @@ import { CampoDinheiroComponent } from '../../shared/campo-dinheiro';
 import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { EditorRico } from '../../shared/editor-rico';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { DepoimentoAceite, MidiaAceite } from '../../core/negocio.client';
+import {
+  abrirAjudaAceite, abrirGerarComIa, abrirPreviaAceite, AssistenteMidiaAceite, AssuntoAjuda, espacosDoHtml, GrupoTags, SeletorTagsAceite,
+  TAGS_BLOCOS, TAGS_COMPONENTES, TAGS_DADOS,
+} from './pagina-aceite';
 
 type TipoModelo = 'servico' | 'orcamento';
 
 @Component({
   selector: 'app-modelo-funil-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, CampoDinheiroComponent, EditorRico],
+  imports: [
+    ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTooltipModule,
+    CampoDinheiroComponent, EditorRico, SeletorTagsAceite, AssistenteMidiaAceite,
+  ],
   template: `
     <h2 mat-dialog-title>{{ dados.item ? 'Editar' : 'Novo' }} modelo</h2>
     <mat-dialog-content>
@@ -39,14 +48,10 @@ type TipoModelo = 'servico' | 'orcamento';
         } @else {
           <div class="campo">
             <mat-label class="font-semibold mb-2 block">Texto</mat-label>
-            <app-editor-rico #editorTexto formControlName="texto" rotulo="Texto" altura="260px" />
+            <app-editor-rico #editorTexto formControlName="texto" rotulo="Texto" altura="180px" />
+            <app-seletor-tags-aceite class="mt-2 block" [grupos]="gruposTexto" (escolhida)="editorTexto.inserirTag($event)" (ajuda)="ajuda('tags-texto')" />
           </div>
-          <div class="params">
-            @for (p of parametros; track p) {
-              <button mat-stroked-button type="button" (click)="inserir(p, editorTexto)">{{ p }}</button>
-            }
-          </div>
-          @if (dados.tipo === 'orcamento') {
+          <div class="cores">
             <div class="campo">
               <mat-label class="font-semibold mb-2 block">Cor primária</mat-label>
               <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Cor primária'" matInput formControlName="corPrimaria" placeholder="#112233" /></mat-form-field>
@@ -55,12 +60,21 @@ type TipoModelo = 'servico' | 'orcamento';
               <mat-label class="font-semibold mb-2 block">Cor secundária</mat-label>
               <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Cor secundária'" matInput formControlName="corSecundaria" placeholder="#aabbcc" /></mat-form-field>
             </div>
-            <div class="campo">
-              <span class="font-semibold mb-2 block">Tela de aceite (opcional)</span>
-              <app-editor-rico formControlName="htmlAceite" rotulo="Tela de aceite" altura="200px" placeholder="Ex.: Por que nos escolher" />
-              <p class="text-xs text-muted mt-1 mb-0">Aparece para o cliente na tela de aceite, com a formatação que você aplicar aqui.</p>
+          </div>
+          <div class="campo">
+            <div class="cabeca-aceite">
+              <span class="font-semibold">Tela de aceite (HTML, opcional)</span>
+              <button mat-icon-button type="button" aria-label="Ajuda sobre a tela de aceite" matTooltip="Ajuda sobre a tela de aceite" (click)="ajuda('pagina')"><mat-icon>help_outline</mat-icon></button>
+              <span class="flex-1"></span>
+              <button mat-stroked-button type="button" (click)="gerarComIa()"><mat-icon>auto_awesome</mat-icon> Gerar com IA</button>
+              <button mat-stroked-button type="button" (click)="previa()"><mat-icon>visibility</mat-icon> Live Preview</button>
             </div>
-          }
+            <textarea #codigo class="codigo" formControlName="htmlAceite" aria-label="HTML da tela de aceite" spellcheck="false"
+              placeholder="Cole aqui o HTML da sua página de aceite (ou use Gerar com IA)."></textarea>
+            <app-seletor-tags-aceite class="mt-2 block" rotulo="Inserir tags no HTML" [grupos]="gruposHtml" (escolhida)="inserirNoHtml(codigo, $event)" (ajuda)="ajuda('tags-html')" />
+            <app-assistente-midia-aceite class="mt-3 block" [html]="htmlAceite()" [midias]="midias()" [depoimentos]="depoimentos()"
+              (midiasMudaram)="midias.set($event)" (depoimentosMudaram)="depoimentos.set($event)" />
+          </div>
         }
       </form>
     </mat-dialog-content>
@@ -69,16 +83,31 @@ type TipoModelo = 'servico' | 'orcamento';
       <button mat-flat-button type="button" (click)="salvar()">Salvar</button>
     </mat-dialog-actions>
   `,
-  styles: `.params { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; } .previa { border: 1px solid var(--mat-sys-outline-variant); border-radius: 8px; padding: 12px; overflow-wrap: anywhere; } .previa img { max-width: 100%; height: auto; }`,
+  styles: `
+    .cores { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .cabeca-aceite { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .codigo { display: block; width: 100%; height: 360px; resize: vertical; padding: 12px; border-radius: 8px; font: 13px/1.5 ui-monospace, SFMono-Regular, Consolas, monospace;
+      border: 1px solid var(--mat-sys-outline); background: var(--mat-sys-surface); color: var(--mat-sys-on-surface); tab-size: 2; }
+    .codigo:focus { outline: 2px solid var(--mat-sys-primary); outline-offset: -1px; }
+  `,
 })
 export class ModeloFunilDialog {
   private readonly fb = inject(FormBuilder);
   private readonly negocio = inject(NegocioClient);
   private readonly toast = inject(ToastService);
+  private readonly dialog = inject(MatDialog);
   protected readonly dados = inject<{ tipo: TipoModelo; item: ModeloServicoFunil | ModeloOrcamentoFunil | null }>(MAT_DIALOG_DATA);
   protected readonly ref = inject(MatDialogRef<ModeloFunilDialog, boolean>);
-  /** Orçamento: lista fechada (SPEC-031 §17, ponto 12). */
-  protected readonly parametros = ['{{nome_oportunidade}}', '{{tipo_evento}}', '{{data_evento}}', '{{convidados}}', '{{local_cerimonia}}', '{{local_recepcao}}', '{{valor}}', '{{validade}}', '{{nome_assessoria}}'];
+  /** Texto: as 17 tags de dados; HTML: dados, componentes e blocos (SPEC-061). */
+  protected readonly gruposTexto: GrupoTags[] = [{ titulo: 'Dados', tags: TAGS_DADOS }];
+  protected readonly gruposHtml: GrupoTags[] = [
+    { titulo: 'Dados', tags: TAGS_DADOS },
+    { titulo: 'Componentes', tags: TAGS_COMPONENTES },
+    { titulo: 'Blocos do sistema', tags: TAGS_BLOCOS },
+  ];
+  private readonly orcamento = this.dados.item as ModeloOrcamentoFunil | null;
+  protected readonly midias = signal<MidiaAceite[]>(this.orcamento?.midias ?? []);
+  protected readonly depoimentos = signal<DepoimentoAceite[]>(this.orcamento?.depoimentos ?? []);
   protected readonly form = this.fb.nonNullable.group({
     nome: [(this.dados.item as { nome?: string } | null)?.nome ?? '', Validators.required],
     descricao: [(this.dados.item as ModeloServicoFunil | null)?.descricao ?? ''],
@@ -89,8 +118,49 @@ export class ModeloFunilDialog {
     htmlAceite: [(this.dados.item as ModeloOrcamentoFunil | null)?.htmlAceite ?? ''],
   });
 
-  protected inserir(param: string, editor: EditorRico): void {
-    editor.inserirTag(param.replace(/^\{\{|\}\}$/g, ''));
+  protected readonly htmlAceite = toSignal(this.form.controls.htmlAceite.valueChanges, { initialValue: this.form.controls.htmlAceite.value });
+
+  /** Põe {{marca}} onde está o cursor do código (ou no fim) e devolve o foco logo depois dela. */
+  protected inserirNoHtml(campo: HTMLTextAreaElement, marca: string): void {
+    const trecho = `{{${marca}}}`;
+    const valor = this.form.controls.htmlAceite.value;
+    const inicio = campo.selectionStart ?? valor.length;
+    const fim = campo.selectionEnd ?? inicio;
+    this.form.controls.htmlAceite.setValue(valor.slice(0, inicio) + trecho + valor.slice(fim));
+    queueMicrotask(() => {
+      campo.focus();
+      campo.setSelectionRange(inicio + trecho.length, inicio + trecho.length);
+    });
+  }
+
+  protected ajuda(assunto: AssuntoAjuda): void {
+    abrirAjudaAceite(this.dialog, assunto);
+  }
+
+  protected gerarComIa(): void {
+    abrirGerarComIa(this.dialog);
+  }
+
+  protected previa(): void {
+    const v = this.form.getRawValue();
+    abrirPreviaAceite(this.dialog, {
+      texto: v.texto || null,
+      htmlAceite: v.htmlAceite || null,
+      corPrimaria: v.corPrimaria || null,
+      corSecundaria: v.corSecundaria || null,
+      midias: this.midiasUsadas(),
+      depoimentos: this.depoimentosPreenchidos(),
+    });
+  }
+
+  /** Só as fotos dos espaços que o HTML ainda usa. */
+  private midiasUsadas(): MidiaAceite[] {
+    const usados = new Set(espacosDoHtml(this.form.controls.htmlAceite.value).map((e) => e.espaco));
+    return this.midias().filter((m) => usados.has(m.espaco));
+  }
+
+  private depoimentosPreenchidos(): DepoimentoAceite[] {
+    return this.depoimentos().filter((d) => d.texto.trim());
   }
 
   protected salvar(): void {
@@ -106,7 +176,15 @@ export class ModeloFunilDialog {
       const pedido = { nome: v.nome, descricao: v.descricao || null, valor: v.valor };
       req = id ? this.negocio.atualizarModeloServicoFunil(id, pedido) : this.negocio.criarModeloServicoFunil(pedido);
     } else {
-      const pedido = { nome: v.nome, texto: v.texto, corPrimaria: v.corPrimaria || null, corSecundaria: v.corSecundaria || null, htmlAceite: v.htmlAceite || null };
+      const pedido = {
+        nome: v.nome,
+        texto: v.texto,
+        corPrimaria: v.corPrimaria || null,
+        corSecundaria: v.corSecundaria || null,
+        htmlAceite: v.htmlAceite || null,
+        midias: this.midiasUsadas(),
+        depoimentos: this.depoimentosPreenchidos(),
+      };
       req = id ? this.negocio.atualizarModeloOrcamentoFunil(id, pedido) : this.negocio.criarModeloOrcamentoFunil(pedido);
     }
     req.subscribe({
@@ -214,7 +292,11 @@ export class ModelosFunilPage implements OnInit {
 
   protected abrir(item?: ModeloServicoFunil | ModeloOrcamentoFunil): void {
     this.dialog
-      .open(ModeloFunilDialog, { ...DIALOG, data: { tipo: this.tipo, item: item ?? null } })
+      .open(ModeloFunilDialog, {
+        ...DIALOG,
+        ...(this.tipo === 'orcamento' ? { width: 'min(960px, calc(100vw - 32px))' } : {}),
+        data: { tipo: this.tipo, item: item ?? null },
+      })
       .afterClosed()
       .subscribe((ok) => ok && this.carregar());
   }

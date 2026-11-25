@@ -191,7 +191,9 @@ public static class NegocioEndpoints
         api.MapGet("/relatorios-funil/exportar", ExportarRelatoriosFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
 
         MapearBibliotecaSimples(api, "/modelos-servicos-funil", ModelosServicoFunil, CriarModeloServicoFunil, ModeloServicoFunil, AtualizarModeloServicoFunil, ExcluirModeloServicoFunil);
-        MapearBibliotecaSimples(api, "/modelos-orcamento-funil", ModelosOrcamentoFunil, CriarModeloOrcamentoFunil, ModeloOrcamentoFunil, AtualizarModeloOrcamentoFunil, ExcluirModeloOrcamentoFunil);
+        api.MapPost("/modelos-orcamento-funil/midias", EnviarMidiaAceite).DisableAntiforgery().RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/modelos-orcamento-funil/pagina-aceite/previa", PreviaPaginaAceite).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        MapearBibliotecaSimples(api, "/modelos-orcamento-funil",ModelosOrcamentoFunil, CriarModeloOrcamentoFunil, ModeloOrcamentoFunil, AtualizarModeloOrcamentoFunil, ExcluirModeloOrcamentoFunil);
 
         app.MapGet("/api/v1/rsvp/{token}", AbrirRsvp);
         app.MapGet("/api/v1/rsvp/{token}/qr-entrada", QrEntradaDoRsvp);
@@ -199,6 +201,7 @@ public static class NegocioEndpoints
         app.MapPost("/api/v1/public/leads/{contaId}", LeadPublico);
         app.MapGet("/api/v1/publico/propostas/{token}", PropostaPublica);
         app.MapPost("/api/v1/publico/propostas/{token}/resposta", ResponderPropostaPublica);
+        app.MapGet("/api/v1/publico/propostas/{token}/midias/{arquivoId:guid}", MidiaPropostaPublica);
     }
 
     private static Task<IResult> Perfil(ClaimsPrincipal usuario, PerfilServico servico, CancellationToken ct) =>
@@ -1389,6 +1392,45 @@ public static class NegocioEndpoints
         OrcamentoFunilServico servico,
         CancellationToken ct) =>
         De(servico.PublicaAsync(token, Conta(usuario) ?? visitante, ct));
+
+    /// <summary>Foto da página de aceite pelo link (SPEC-061 §8.5): só as do orçamento do token.</summary>
+    private static async Task<IResult> MidiaPropostaPublica(
+        string token,
+        Guid arquivoId,
+        HttpContext http,
+        OrcamentoFunilServico servico,
+        IArmazenamentoArquivo armazenamento,
+        CancellationToken ct)
+    {
+        if (await servico.MidiaPublicaAsync(token, arquivoId, ct) is not { } midia ||
+            await armazenamento.AbrirAsync(midia.ArquivoId, midia.ContaId, ct) is not { } aberto)
+        {
+            return Indisponivel();
+        }
+
+        http.Response.Headers.XContentTypeOptions = "nosniff";
+        http.Response.Headers.CacheControl = "private, max-age=3600";
+        return Results.File(aberto.Conteudo, aberto.TipoConteudo);
+    }
+
+    /// <summary>Foto da página de aceite: JPG ou PNG até 5 MB, reduzida no servidor (SPEC-061).</summary>
+    private static Task<IResult> EnviarMidiaAceite(IFormFile? arquivo, ClaimsPrincipal usuario, IArmazenamentoArquivo armazenamento, CancellationToken ct) =>
+        ComConta(usuario, async conta =>
+        {
+            if (arquivo is null || arquivo.Length == 0)
+            {
+                return Results.Json(new ErroResposta(Codigos.Validacao, "A foto não foi aceita. Use JPG ou PNG de até 5 MB."), statusCode: StatusCodes.Status400BadRequest);
+            }
+
+            await using var fluxo = arquivo.OpenReadStream();
+            var guardado = await armazenamento.GuardarImagemAsync(fluxo, arquivo.FileName, conta, ct);
+            return guardado.Ok && guardado.Valor is not null
+                ? Results.Ok(new { arquivoId = guardado.Valor.Id, nome = guardado.Valor.NomeOriginal, tipoConteudo = guardado.Valor.TipoConteudo })
+                : Results.Json(new ErroResposta(guardado.Falha!.Codigo, guardado.Falha.Mensagem), statusCode: StatusCodes.Status400BadRequest);
+        });
+
+    private static Task<IResult> PreviaPaginaAceite(PreviaPaginaAceite pedido, ClaimsPrincipal usuario, ModeloOrcamentoFunilServico servico, CancellationToken ct) =>
+        ComConta(usuario, async conta => Results.Ok(new { html = await servico.PreviaAsync(conta, pedido, ct) }));
 
     private static Task<IResult> ResponderPropostaPublica(
         string token,

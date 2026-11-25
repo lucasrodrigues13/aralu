@@ -1483,6 +1483,23 @@ export class NegocioClient {
     return this.http.put<ModeloOrcamentoFunil>(`${this.base}/api/v1/modelos-orcamento-funil/${id}`, pedido);
   }
 
+  /** Foto da página de aceite (SPEC-061): JPG ou PNG até 5 MB. */
+  enviarMidiaAceite(arquivo: File) {
+    const dados = new FormData();
+    dados.append('arquivo', arquivo);
+    return this.http.post<{ arquivoId: string; nome: string; tipoConteudo: string }>(`${this.base}/api/v1/modelos-orcamento-funil/midias`, dados);
+  }
+
+  /** Live Preview da página de aceite: documento com exemplos; fotos como aralu-midia:{id} (SPEC-061). */
+  previaPaginaAceite(pedido: PreviaPaginaAceite) {
+    return this.http.post<{ html: string }>(`${this.base}/api/v1/modelos-orcamento-funil/pagina-aceite/previa`, pedido);
+  }
+
+  /** Endereço público de uma foto da página de aceite, pelo token da proposta. */
+  midiaPropostaPublica(token: string, arquivoId: string) {
+    return `${this.base}/api/v1/publico/propostas/${encodeURIComponent(token)}/midias/${arquivoId}`;
+  }
+
   excluirModeloOrcamentoFunil(id: string) {
     return this.http.delete(`${this.base}/api/v1/modelos-orcamento-funil/${id}`);
   }
@@ -1617,8 +1634,11 @@ export interface PropostaPublica {
   contato: string | null;
   titulo: string | null;
   conteudo: string | null;
-  /** HTML sanitizado no servidor (SPEC-057); o Angular filtra de novo ao exibir. */
-  htmlAceite?: string | null;
+  /**
+   * Documento completo da página de aceite (SPEC-061), montado e sanitizado no servidor. Vai para um iframe isolado
+   * (sem scripts); fotos vêm como aralu-midia:{id} e os botões como aralu-resposta:{tipo}.
+   */
+  paginaAceite?: string | null;
   valor: number | null;
   validoAte: string | null;
   resposta: RespostaProposta | null;
@@ -1748,8 +1768,31 @@ export interface ModeloOrcamentoFunil {
   corPrimaria: string | null;
   corSecundaria: string | null;
   parametros: string[];
-  /** HTML já sanitizado pelo servidor, mostrado na tela de aceite (SPEC-057). */
+  /** HTML já sanitizado pelo servidor: a página de aceite inteira (SPEC-061). */
   htmlAceite?: string | null;
+  midias?: MidiaAceite[];
+  depoimentos?: DepoimentoAceite[];
+}
+
+/** Foto de um espaço da página de aceite: logo, imagem:capa, galeria:bastidores, carrossel:dia_do_evento. */
+export interface MidiaAceite {
+  espaco: string;
+  arquivoId: string;
+  ordem: number;
+}
+
+export interface DepoimentoAceite {
+  texto: string;
+  autor: string | null;
+}
+
+export interface PreviaPaginaAceite {
+  texto: string | null;
+  htmlAceite: string | null;
+  corPrimaria: string | null;
+  corSecundaria: string | null;
+  midias: MidiaAceite[];
+  depoimentos: DepoimentoAceite[];
 }
 
 export interface ModeloParaContratoFunil {

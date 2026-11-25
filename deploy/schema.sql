@@ -4388,3 +4388,28 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261125221155_MidiasDaPaginaDeAceite') THEN
+    ALTER TABLE "OrcamentosFunil" ADD "ExtrasAceite" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261125221155_MidiasDaPaginaDeAceite') THEN
+    ALTER TABLE "ModelosOrcamentoFunil" ADD "ExtrasAceite" text;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261125221155_MidiasDaPaginaDeAceite') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261125221155_MidiasDaPaginaDeAceite', '10.0.4');
+    END IF;
+END $EF$;
+COMMIT;
+

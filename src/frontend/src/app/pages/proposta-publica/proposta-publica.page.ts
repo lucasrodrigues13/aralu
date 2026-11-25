@@ -1,4 +1,5 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import { Component, computed, effect, ElementRef, inject, OnInit, signal, viewChild } from '@angular/core';
 import { FormBuilder, FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -24,8 +25,24 @@ const RESPONDIDO: Record<RespostaProposta, { titulo: string; texto: string; icon
 /** Proposta aberta pelo lead, sem login (SPEC-031 §6.6). Pensada para o celular. */
 @Component({
   selector: 'app-proposta-publica',
-  imports: [ReactiveFormsModule, ContratanteCamposComponent, MatCardModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule, GdDataPipe, GdDinheiroPipe],
+  imports: [NgTemplateOutlet, ReactiveFormsModule, ContratanteCamposComponent, MatCardModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule, GdDataPipe, GdDinheiroPipe],
   template: `
+    @if (paginaPropria(); as p) {
+      <!-- Página da assessoria (SPEC-061): HTML montado e sanitizado no servidor, num iframe sem scripts. -->
+      <iframe #quadro class="pagina-propria" [title]="'Proposta' + (p.empresa ? ' de ' + p.empresa : '')"
+        sandbox="allow-top-navigation-by-user-activation allow-popups allow-popups-to-escape-sandbox"></iframe>
+      @if (p.daPropriaConta) {
+        <div class="faixa-assessoria" role="status">
+          <mat-icon>visibility_off</mat-icon> Você está vendo como assessoria: esta abertura não conta. Para testar a resposta, use uma janela anônima.
+        </div>
+      }
+      @if (escolha() || (p.resposta && !fechouAviso())) {
+        <div class="fundo-resposta" (click)="fecharPainel()"></div>
+        <section class="painel-resposta" role="dialog" aria-modal="true" aria-label="Resposta à proposta">
+          <ng-container [ngTemplateOutlet]="cartaoResposta" />
+        </section>
+      }
+    } @else {
     <main class="pagina">
       @if (carregando()) {
         <p class="block text-xs text-muted">Carregando…</p>
@@ -41,9 +58,6 @@ const RESPONDIDO: Record<RespostaProposta, { titulo: string; texto: string; icon
               <div class="texto rico" [innerHTML]="p.conteudo"></div>
             } @else {
               <div class="texto">{{ p.conteudo }}</div>
-            }
-            @if (p.htmlAceite) {
-              <section class="apresentacao" aria-label="Apresentação da proposta" [innerHTML]="p.htmlAceite"></section>
             }
             @if (p.valor != null) {
               <div class="valor">
@@ -76,6 +90,33 @@ const RESPONDIDO: Record<RespostaProposta, { titulo: string; texto: string; icon
           }
 
           <mat-card class="cardWithShadow mt-4"><mat-card-content>
+            <ng-container [ngTemplateOutlet]="cartaoResposta" />
+          </mat-card-content></mat-card>
+        } @else {
+          <mat-card class="cardWithShadow aviso"><mat-card-content>
+            <mat-icon>link_off</mat-icon>
+            @if (p.estado === 'Vencida') {
+              <h1>Esta proposta venceu</h1>
+              <p>Fale com {{ p.empresa || 'a assessoria' }} para receber uma nova.</p>
+            } @else {
+              <h1>Esta proposta não está mais disponível</h1>
+              <p>Fale com {{ p.empresa || 'a assessoria' }} se tiver alguma dúvida.</p>
+            }
+            @if (p.contato) { <p class="text-sm text-muted">Contato: {{ p.contato }}</p> }
+          </mat-card-content></mat-card>
+        }
+      } @else {
+        <mat-card class="cardWithShadow aviso"><mat-card-content>
+          <mat-icon>link_off</mat-icon>
+          <h1>Link inválido</h1>
+          <p>Confira o link recebido ou fale com a assessoria.</p>
+        </mat-card-content></mat-card>
+      }
+    </main>
+    }
+
+    <ng-template #cartaoResposta>
+          @if (proposta(); as p) {
             @if (p.resposta && !escolha()) {
               <div class="respondido">
                 <mat-icon>{{ respondido[p.resposta].icone }}</mat-icon>
@@ -115,28 +156,11 @@ const RESPONDIDO: Record<RespostaProposta, { titulo: string; texto: string; icon
                 <button mat-button type="button" [disabled]="p.daPropriaConta" (click)="escolher('Recusar')">Não vou seguir</button>
               </div>
             }
-          </mat-card-content></mat-card>
-        } @else {
-          <mat-card class="cardWithShadow aviso"><mat-card-content>
-            <mat-icon>link_off</mat-icon>
-            @if (p.estado === 'Vencida') {
-              <h1>Esta proposta venceu</h1>
-              <p>Fale com {{ p.empresa || 'a assessoria' }} para receber uma nova.</p>
-            } @else {
-              <h1>Esta proposta não está mais disponível</h1>
-              <p>Fale com {{ p.empresa || 'a assessoria' }} se tiver alguma dúvida.</p>
+            @if (paginaPropria()) {
+              <div class="fechar-painel"><button mat-button type="button" (click)="fecharPainel()">Voltar à proposta</button></div>
             }
-            @if (p.contato) { <p class="text-sm text-muted">Contato: {{ p.contato }}</p> }
-          </mat-card-content></mat-card>
-        }
-      } @else {
-        <mat-card class="cardWithShadow aviso"><mat-card-content>
-          <mat-icon>link_off</mat-icon>
-          <h1>Link inválido</h1>
-          <p>Confira o link recebido ou fale com a assessoria.</p>
-        </mat-card-content></mat-card>
-      }
-    </main>
+          }
+    </ng-template>
   `,
   styles: `
     :host { display: block; min-height: 100vh; background: var(--mat-sys-background); }
@@ -169,6 +193,14 @@ const RESPONDIDO: Record<RespostaProposta, { titulo: string; texto: string; icon
     .citacao { font-style: italic; overflow-wrap: anywhere; }
     .aviso { text-align: center; padding: 40px 16px; }
     .aviso mat-icon { font-size: 40px; width: 40px; height: 40px; color: var(--mat-sys-outline); }
+    .pagina-propria { display: block; width: 100%; height: 100vh; height: 100dvh; border: 0; background: #fff; }
+    .faixa-assessoria { position: fixed; top: 0; left: 0; right: 0; z-index: 2; display: flex; align-items: center; gap: 8px; padding: 8px 16px;
+      font-size: 13px; background: var(--color-light-warning, #faeeda); color: #633806; }
+    .fundo-resposta { position: fixed; inset: 0; z-index: 3; background: rgb(0 0 0 / .45); }
+    .painel-resposta { position: fixed; z-index: 4; left: 50%; bottom: 0; transform: translateX(-50%); width: min(640px, 100vw); max-height: 92dvh; overflow: auto;
+      padding: 24px 20px; border-radius: 16px 16px 0 0; background: var(--mat-sys-surface); box-shadow: 0 -8px 32px rgb(0 0 0 / .2); }
+    @media (min-width: 720px) { .painel-resposta { bottom: auto; top: 50%; transform: translate(-50%, -50%); border-radius: 16px; } }
+    .fechar-painel { display: flex; justify-content: center; margin-top: 12px; }
   `,
 })
 export class PropostaPublicaPage implements OnInit {
@@ -185,17 +217,60 @@ export class PropostaPublicaPage implements OnInit {
   protected readonly mensagem = new FormControl('', { nonNullable: true });
   protected readonly contratante = grupoContratante(inject(FormBuilder));
   private token = '';
+  private readonly quadro = viewChild<ElementRef<HTMLIFrameElement>>('quadro');
+  /** O aviso "Proposta aceita" sobre a página da assessoria pode ser fechado. */
+  protected readonly fechouAviso = signal(false);
+  /** Proposta disponível com página própria da assessoria (SPEC-061). */
+  protected readonly paginaPropria = computed(() => {
+    const p = this.proposta();
+    return p?.estado === 'Disponivel' && p.paginaAceite ? p : null;
+  });
+
+  constructor() {
+    effect(() => {
+      const p = this.paginaPropria();
+      const quadro = this.quadro();
+      if (p?.paginaAceite && quadro) {
+        // Documento já sanitizado no servidor; o iframe não roda scripts nem acessa esta página (sandbox).
+        quadro.nativeElement.srcdoc = this.resolverEnderecos(p.paginaAceite);
+      }
+    });
+  }
 
   ngOnInit(): void {
     this.token = this.rota.snapshot.paramMap.get('token') ?? '';
+    const pedida = this.rota.snapshot.queryParamMap.get('resposta');
     this.negocio.propostaPublica(this.token).subscribe({
       next: (p) => {
         this.proposta.set(p);
         preencherContratante(this.contratante, p.contratante);
         this.carregando.set(false);
+        // Botão clicado dentro da página da assessoria: volta com ?resposta= e abre o formulário.
+        if (p.paginaAceite && !p.daPropriaConta && (pedida === 'Aceitar' || pedida === 'Duvidas' || pedida === 'Recusar')) {
+          this.escolher(pedida, !!p.resposta);
+        }
+        if (pedida) {
+          history.replaceState(history.state, '', location.pathname);
+        }
       },
       error: () => this.carregando.set(false),
     });
+  }
+
+  protected fecharPainel(): void {
+    if (this.enviando()) {
+      return;
+    }
+    this.escolha.set(null);
+    this.fechouAviso.set(true);
+  }
+
+  /** Fotos pelo endereço público do token; botões voltam para esta página com ?resposta=. */
+  private resolverEnderecos(html: string): string {
+    const base = `${location.origin}/proposta/${encodeURIComponent(this.token)}?resposta=`;
+    return html
+      .replace(/aralu-midia:([0-9a-f-]{36})/g, (_, id: string) => new URL(this.negocio.midiaPropostaPublica(this.token, id), location.origin).href)
+      .replace(/aralu-resposta:(Aceitar|Duvidas|Recusar)/g, (_, tipo: string) => base + tipo);
   }
 
   protected escolher(tipo: RespostaProposta | null, mudar = false): void {

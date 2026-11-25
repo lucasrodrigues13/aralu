@@ -29,4 +29,7 @@ public sealed class ModeloOrcamentoFunil
 
     /// <summary>HTML (já sanitizado) mostrado ao cliente na tela de aceite da proposta (SPEC-057).</summary>
     public string? HtmlAceite { get; set; }
+
+    /// <summary>Mídias e depoimentos da página de aceite, em JSON (SPEC-061). Ver <c>ExtrasAceite</c>.</summary>
+    public string? ExtrasAceite { get; set; }
 }
