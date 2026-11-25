@@ -11,7 +11,7 @@ import { mensagemDeErro } from '../../core/mensagem-erro';
 import { Cronograma, NegocioClient } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
-import { DIALOG, DIALOG_LARGO, DIALOG_PEQUENO } from '../../shared/dialog';
+import { DIALOG, DIALOG_EM_MASSA, DIALOG_PEQUENO } from '../../shared/dialog';
 import { CronogramaEditorDialog } from './cronograma-editor.dialog';
 import { ImportarCronogramaDialog } from './importar-cronograma.dialog';
 
@@ -96,12 +96,12 @@ export class ModelosCronogramaPage implements OnInit {
   protected abrir(item?: Cronograma): void {
     if (item) {
       this.negocio.cronograma(item.id).subscribe({
-        next: (detalhe) => this.dialog.open(CronogramaEditorDialog, { ...DIALOG_LARGO, data: detalhe }).afterClosed().subscribe((ok) => ok && this.carregar()),
+        next: (detalhe) => this.dialog.open(CronogramaEditorDialog, { ...DIALOG_EM_MASSA, data: detalhe }).afterClosed().subscribe((ok) => ok && this.carregar()),
         error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
       });
       return;
     }
-    this.dialog.open(CronogramaEditorDialog, { ...DIALOG_LARGO, data: null }).afterClosed().subscribe((ok) => ok && this.carregar());
+    this.dialog.open(CronogramaEditorDialog, { ...DIALOG_EM_MASSA, data: null }).afterClosed().subscribe((ok) => ok && this.carregar());
   }
 
   protected clonar(item: Cronograma): void {

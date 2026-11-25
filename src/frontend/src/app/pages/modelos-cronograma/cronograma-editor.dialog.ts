@@ -76,8 +76,7 @@ import { moverControle } from '../../shared/mestre-detalhe';
                 <div class="linha mt-3">
                   <app-campo-data rotulo="Data" formControlName="data" />
                   <app-campo-hora rotulo="Hora" formControlName="hora" />
-                </div>
-                <div class="campo mt-2">
+                  <div class="campo grow">
                   <mat-label class="font-semibold mb-2 block">Responsável</mat-label>
                   <mat-form-field appearance="outline" class="w-full">
                     <mat-select aria-label="Responsável" formControlName="responsavel" placeholder="Sem responsável">
@@ -85,6 +84,7 @@ import { moverControle } from '../../shared/mestre-detalhe';
                       @for (papel of papeis; track papel.valor) { <mat-option [value]="papel.valor">{{ papel.rotulo }}</mat-option> }
                     </mat-select>
                   </mat-form-field>
+                </div>
                 </div>
                 <div class="campo">
                   <mat-label class="font-semibold mb-2 block">Recado aos fornecedores</mat-label>

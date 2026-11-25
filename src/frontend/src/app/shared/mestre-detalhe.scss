@@ -1,6 +1,8 @@
 // Editores de modelo em mestre e detalhe (briefing, roteiro, cronograma): lista à esquerda, item escolhido à direita.
 .mestre-detalhe { display: grid; grid-template-columns: 220px minmax(0, 1fr); min-height: 340px; margin-top: 8px; border: 1px solid var(--mat-sys-outline-variant); border-radius: 8px; }
 .mestre { border-right: 1px solid var(--mat-sys-outline-variant); padding: 8px; display: flex; flex-direction: column; gap: 2px; }
+// A lista cresce até caber na altura do modal; passou disso, rola só ela.
+.mestre > .cdk-drop-list { max-height: calc(90vh - 300px); min-height: 120px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
 .opcao { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; border: 0; border-radius: 7px; background: none; color: inherit; font: inherit; font-size: 0.875rem; text-align: left; cursor: pointer; }
 .opcao:hover { background: rgba(128, 128, 128, .08); }
 .opcao.ativa { background: color-mix(in srgb, var(--mat-sys-primary) 12%, transparent); color: var(--mat-sys-primary); font-weight: 500; }
@@ -22,6 +24,7 @@
 .cdk-drag-preview { box-shadow: var(--mat-sys-level2); border-radius: 7px; }
 .cdk-drag-placeholder { opacity: .3; }
 @media (max-width: 700px) {
+  .mestre > .cdk-drop-list { max-height: 240px; }
   .mestre-detalhe { grid-template-columns: 1fr; }
   .mestre { border-right: 0; border-bottom: 1px solid var(--mat-sys-outline-variant); }
   .detalhe { padding: 12px; }
