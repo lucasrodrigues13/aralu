@@ -30,7 +30,7 @@ public sealed record CatalogoRelatoriosFunil(
 public sealed class RelatorioFunilServico(IDados dados)
 {
     public async Task<Resultado<CatalogoRelatoriosFunil>> ObterAsync(
-        string contaId,
+        Guid contaId,
         DateOnly? inicio,
         DateOnly? fim,
         CancellationToken ct)
@@ -86,7 +86,7 @@ public sealed class RelatorioFunilServico(IDados dados)
     }
 
     private async Task<RelatorioRsvpFunil> MontarRsvpAsync(
-        string contaId,
+        Guid contaId,
         DateTimeOffset inicio,
         DateTimeOffset fim,
         CancellationToken ct)

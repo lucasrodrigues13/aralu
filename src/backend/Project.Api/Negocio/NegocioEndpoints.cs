@@ -1152,7 +1152,7 @@ public static class NegocioEndpoints
             return NaoAutenticado();
         }
 
-        var aberto = await armazenamento.AbrirAsync(id, conta, ct);
+        var aberto = await armazenamento.AbrirAsync(id, conta.Value, ct);
         if (aberto is null)
         {
             return Indisponivel();
@@ -1297,7 +1297,7 @@ public static class NegocioEndpoints
             return Results.Text(csv, "text/csv");
         });
 
-    private static Task<IResult> LeadPublico(string contaId, LeadPublicoPedido pedido, OportunidadeServico servico, CancellationToken ct) =>
+    private static Task<IResult> LeadPublico(Guid contaId, LeadPublicoPedido pedido, OportunidadeServico servico, CancellationToken ct) =>
         De(servico.CriarLeadPublicoAsync(contaId, pedido, ct));
 
     private static Task<IResult> LeadsRsvp(ClaimsPrincipal usuario, LeadRsvpServico servico, string? busca, CancellationToken ct) =>
@@ -1391,7 +1391,7 @@ public static class NegocioEndpoints
         [FromHeader(Name = "X-Aralu-Visitante")] string? visitante,
         OrcamentoFunilServico servico,
         CancellationToken ct) =>
-        De(servico.PublicaAsync(token, Conta(usuario) ?? visitante, ct));
+        De(servico.PublicaAsync(token, Conta(usuario)?.ToString() ?? visitante, ct));
 
     /// <summary>Foto da página de aceite pelo link (SPEC-061 §8.5): só as do orçamento do token.</summary>
     private static async Task<IResult> MidiaPropostaPublica(
@@ -1439,7 +1439,7 @@ public static class NegocioEndpoints
         [FromHeader(Name = "X-Aralu-Visitante")] string? visitante,
         OrcamentoFunilServico servico,
         CancellationToken ct) =>
-        De(servico.ResponderPublicaAsync(token, Conta(usuario) ?? visitante, pedido, DateOnly.FromDateTime(DateTime.UtcNow), ct));
+        De(servico.ResponderPublicaAsync(token, Conta(usuario)?.ToString() ?? visitante, pedido, DateOnly.FromDateTime(DateTime.UtcNow), ct));
 
     private static Task<IResult> ResponderOrcamentoFunil(
         Guid id,
@@ -1581,7 +1581,7 @@ public static class NegocioEndpoints
         "\"" + (valor ?? "").Replace("\"", "\"\"", StringComparison.Ordinal) + "\"";
 
     private static async Task<IResult> Imagem(
-        string conta,
+        Guid conta,
         IFormFile? arquivo,
         IArmazenamentoArquivo armazenamento,
         Func<Guid, CancellationToken, Task<(bool Ok, Falha? Falha, Guid? Anterior)>> ligar,
@@ -1623,16 +1623,16 @@ public static class NegocioEndpoints
         }
     }
 
-    private static async Task<bool> EventoDaConta(string conta, Guid id, CancellationToken ct, ConviteServico servico)
+    private static async Task<bool> EventoDaConta(Guid conta, Guid id, CancellationToken ct, ConviteServico servico)
     {
         var lista = await servico.ListarAsync(conta, id, new FiltroConvites(null, null, null, null, false), Hoje(), ct);
         return lista.Ok;
     }
 
-    private static Task<IResult> ComConta(ClaimsPrincipal usuario, Func<string, Task<IResult>> acao)
+    private static Task<IResult> ComConta(ClaimsPrincipal usuario, Func<Guid, Task<IResult>> acao)
     {
         var conta = Conta(usuario);
-        return conta is null ? Task.FromResult(NaoAutenticado()) : acao(conta);
+        return conta is null ? Task.FromResult(NaoAutenticado()) : acao(conta.Value);
     }
 
     private static async Task<IResult> De<T>(Task<Resultado<T>> tarefa)
@@ -1666,7 +1666,7 @@ public static class NegocioEndpoints
     private static string? SoDoUsuario(ClaimsPrincipal usuario) =>
         usuario.IsInRole(Papeis.Assistant) ? UsuarioId(usuario) ?? "-" : null;
 
-    private static string? Conta(ClaimsPrincipal usuario) => ContaAtual.De(usuario);
+    private static Guid? Conta(ClaimsPrincipal usuario) => ContaAtual.De(usuario);
 
     private static string Email(ClaimsPrincipal usuario) =>
         usuario.FindFirstValue(ClaimTypes.Email) ?? usuario.FindFirstValue("email") ?? "";

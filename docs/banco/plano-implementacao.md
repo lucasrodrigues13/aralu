@@ -73,6 +73,19 @@ Tudo o que mexe em schema entra junto, para gerar a migration inicial uma vez s�
 
 **Migration**: apagar as antigas, gerar a inicial (com tabelas de assinatura e planos) e regerar o `deploy/schema.sql`.
 
+**Execução em lotes (definido em 26/11/2026, ao retomar no Claude Code).** A fase fica em vários commits, cada um com build e testes verdes, para não deixar a branch quebrada entre uma sessão e outra:
+
+| Lote | Conteúdo |
+|---|---|
+| 2.1 | Migrations do zero (uma `Inicial` regerada a cada lote) + `ContaId` `string` → `Guid` em entidades, serviços e endpoints. Mesma semântica: o id da conta continua sendo o id do usuário dono, agora como uuid. |
+| 2.2 | Tabela `Contas` + FK `RESTRICT` de todo `ContaId`. O cadastro e o bootstrap criam a conta com o mesmo id do usuário. |
+| 2.3 | `ContaId` nas 37 tabelas filhas, preenchido automaticamente no `SaveChanges` a partir da conta do pedido; índices por conta. |
+| 2.4 | Filtro global por conta. Endpoints públicos definem a conta a partir do token antes de ler. Saem os `Where(ContaId == …)` manuais. |
+| 2.5 | As 34 FKs, o rename `Vinculos` → `ClienteEventos`, a remoção de `FornecedorContaId` e a divisão das colunas polimórficas de responsável. |
+| 2.6 | Schema das tabelas novas sem fluxo ainda: `Planos`, `RecursosPlano`, `Assinaturas`, `CobrancasAssinatura`, `EventosWebhookAsaas`, `DocumentosTrial`, `AlteracoesAssinatura`. |
+
+**Mudança de ordem em relação ao texto acima:** a troca de `Assistentes` por `MembrosConta`/`GruposAcesso`/`PermissoesGrupo` (e `ResponsavelMembroId`/`AutorMembroId`) vai para a **Fase 3**, junto com os fluxos de convite e login. Fazer a troca de schema sem os fluxos quebraria as telas e os testes de assistente entre as duas fases.
+
 ### Fase 3: fluxos de conta, equipe e grupos
 
 - **Cadastro**: cria usuário, conta, membro Dono, trial de 14 dias e os dois grupos padrão numa transação só (T1).
@@ -171,3 +184,17 @@ Tudo o que mexe em schema entra junto, para gerar a migration inicial uma vez s�
 - Fase 2: modelo novo (Contas, MembrosConta Dono/Membro, GruposAcesso, PermissoesGrupo, Planos, Assinaturas…), ContaId Guid, FKs, filtro global, apagar migrations antigas, migration inicial limpa, regerar `deploy/schema.sql`.
 - Não iniciar schema antes de revalidar que `IsolamentoContasTests` segue verde após cada lote da Fase 2.
 - Pendências de produto da spec (§17) que não bloqueiam a Fase 2 de schema: textos de e-mail, termos, SMS, NF, itens extras de Configurações.
+
+### Fase 2 — lotes 2.1 e 2.2 concluídos (Claude Code)
+
+**Feito**
+- Migrations antigas apagadas; uma migration `Inicial` limpa, regerada a cada lote. `deploy/schema.sql` regerado (sem dados padrão perdidos: os `INSERT`/`UPDATE` antigos eram só correções de dados velhos).
+- `ContaId` `string` → `Guid` em entidades, serviços, endpoints e testes. `ContaAtual.De`/`IContaAtual.Id` devolvem `Guid?`. Campos que guardam id de usuário (`Responsavel`, `ResponsavelContaId`, `AutorContaId`, `ReferenciaId`) seguem `string`, preenchidos com `contaId.ToString()` (mesmo formato do id do Identity).
+- Tabela `Contas` (entidade `ContaAssessoria`, em `Domain/Equipe`), com FK `RESTRICT` de todo `ContaId` (laço genérico em `Mapa.LigarContas`) e `DonoUsuarioId` → `AspNetUsers`.
+- `CadastroDeConta`: o cadastro público cria login, role Organizer e conta numa transação só; a conta usa o mesmo Id do usuário.
+- Testes: `CadastroCriaContaTests` (conta criada, sem duplicar) e `ContaAtualTests` atualizado. Suíte: 314 unitários + 86 integração, verdes.
+
+**Atenção para deploy**
+- O banco de staging precisa ser **recriado** antes de subir esta branch: o `schema.sql` novo tem uma única migration `Inicial`, e um banco com o histórico antigo falharia ao criar tabelas que já existem.
+
+**Próximo:** lote 2.3 (`ContaId` nas tabelas filhas, preenchido no `SaveChanges` a partir do pai). A tabela implícita `EventoTagConta` e `EventosAssistentes` ficam sem `ContaId` por ora (a primeira é junção sem entidade; a segunda sai na Fase 3).

@@ -8,7 +8,7 @@ public sealed class BriefingOportunidade
 {
     public Guid Id { get; set; }
 
-    public string ContaId { get; set; } = "";
+    public Guid ContaId { get; set; }
 
     public Guid OportunidadeId { get; set; }
 

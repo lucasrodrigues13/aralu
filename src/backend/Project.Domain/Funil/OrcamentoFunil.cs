@@ -22,7 +22,7 @@ public sealed class OrcamentoFunil
 
     public Guid Id { get; set; }
 
-    public string ContaId { get; set; } = "";
+    public Guid ContaId { get; set; }
 
     public Guid OportunidadeId { get; set; }
 
@@ -76,7 +76,7 @@ public sealed class RespostaPropostaFunil
 {
     public Guid Id { get; set; }
 
-    public string ContaId { get; set; } = "";
+    public Guid ContaId { get; set; }
 
     public Guid OrcamentoFunilId { get; set; }
 

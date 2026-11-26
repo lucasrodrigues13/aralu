@@ -21,7 +21,7 @@ public sealed record ComparecimentoPedido(IReadOnlyList<Guid>? Compareceram);
 
 public interface IDadosPortaria
 {
-    Task<EventoDoLink?> ObterEventoAsync(string contaId, Guid eventoId, CancellationToken ct);
+    Task<EventoDoLink?> ObterEventoAsync(Guid contaId, Guid eventoId, CancellationToken ct);
 
     Task<LinkPortaria?> ObterPorEventoAsync(Guid eventoId, CancellationToken ct);
 
@@ -57,7 +57,7 @@ public sealed class PortariaServico(IDadosPortaria dados, IGeradorQr qr)
 
     // ---- Organizadora ----
 
-    public async Task<Resultado<LinkPortariaLeitura>> ObterAsync(string contaId, Guid eventoId, CancellationToken ct)
+    public async Task<Resultado<LinkPortariaLeitura>> ObterAsync(Guid contaId, Guid eventoId, CancellationToken ct)
     {
         if (await dados.ObterEventoAsync(contaId, eventoId, ct) is null)
         {
@@ -68,7 +68,7 @@ public sealed class PortariaServico(IDadosPortaria dados, IGeradorQr qr)
     }
 
     /// <summary>Gera o link da portaria ou, se já existe, troca o código (o endereço antigo deixa de valer).</summary>
-    public async Task<Resultado<LinkPortariaLeitura>> GerarAsync(string contaId, Guid eventoId, DateTimeOffset agora, CancellationToken ct)
+    public async Task<Resultado<LinkPortariaLeitura>> GerarAsync(Guid contaId, Guid eventoId, DateTimeOffset agora, CancellationToken ct)
     {
         if (await dados.ObterEventoAsync(contaId, eventoId, ct) is null)
         {
@@ -90,7 +90,7 @@ public sealed class PortariaServico(IDadosPortaria dados, IGeradorQr qr)
         return Resultado<LinkPortariaLeitura>.Sucesso(Ler(link));
     }
 
-    public async Task<Resultado<LinkPortariaLeitura>> DesativarAsync(string contaId, Guid eventoId, CancellationToken ct)
+    public async Task<Resultado<LinkPortariaLeitura>> DesativarAsync(Guid contaId, Guid eventoId, CancellationToken ct)
     {
         if (await dados.ObterEventoAsync(contaId, eventoId, ct) is null)
         {

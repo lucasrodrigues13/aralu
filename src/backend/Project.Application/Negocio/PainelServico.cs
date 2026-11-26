@@ -20,7 +20,7 @@ public sealed record PainelLeitura(
 
 public sealed class PainelServico(IDados dados)
 {
-    public async Task<PainelLeitura> ObterAsync(string contaId, CancellationToken ct)
+    public async Task<PainelLeitura> ObterAsync(Guid contaId, CancellationToken ct)
     {
         var contagens = await dados.ContarEventosAsync(contaId, ct);
         var andamento = await dados.ListarEmAndamentoAsync(contaId, ct);

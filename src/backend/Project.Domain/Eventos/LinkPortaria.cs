@@ -10,7 +10,7 @@ public sealed class LinkPortaria
 
     public Guid EventoId { get; set; }
 
-    public string ContaId { get; set; } = "";
+    public Guid ContaId { get; set; }
 
     public string Token { get; set; } = "";
 

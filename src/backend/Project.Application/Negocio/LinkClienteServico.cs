@@ -13,7 +13,7 @@ public sealed record SalvarLinkCliente(bool FinanceiroLiberado, bool? Convidados
 
 public sealed record EventoDoLink(
     Guid Id,
-    string ContaId,
+    Guid ContaId,
     string Nome,
     DateOnly? Data,
     bool EmAndamento = true,
@@ -64,7 +64,7 @@ public interface IDadosLinkCliente
     /// <summary>Marca um convidado novo de um convite já existente para inclusão (SPEC-059).</summary>
     Task IncluirConvidadoAsync(Domain.Convidados.Convidado convidado, CancellationToken ct);
 
-    Task<EventoDoLink?> ObterEventoAsync(string contaId, Guid eventoId, CancellationToken ct);
+    Task<EventoDoLink?> ObterEventoAsync(Guid contaId, Guid eventoId, CancellationToken ct);
 
     Task<LinkCliente?> ObterPorEventoAsync(Guid eventoId, CancellationToken ct);
 
@@ -95,7 +95,7 @@ public sealed class LinkClienteServico(
 
     // ---- Organizadora ----
 
-    public async Task<Resultado<LinkClienteLeitura>> ObterAsync(string contaId, Guid eventoId, CancellationToken ct)
+    public async Task<Resultado<LinkClienteLeitura>> ObterAsync(Guid contaId, Guid eventoId, CancellationToken ct)
     {
         if (await dados.ObterEventoAsync(contaId, eventoId, ct) is null)
         {
@@ -107,7 +107,7 @@ public sealed class LinkClienteServico(
     }
 
     /// <summary>Gera o link do evento ou, se já existe, troca o código (o endereço antigo deixa de valer).</summary>
-    public async Task<Resultado<LinkClienteLeitura>> GerarAsync(string contaId, Guid eventoId, DateTimeOffset agora, CancellationToken ct)
+    public async Task<Resultado<LinkClienteLeitura>> GerarAsync(Guid contaId, Guid eventoId, DateTimeOffset agora, CancellationToken ct)
     {
         if (await dados.ObterEventoAsync(contaId, eventoId, ct) is null)
         {
@@ -129,7 +129,7 @@ public sealed class LinkClienteServico(
         return Resultado<LinkClienteLeitura>.Sucesso(Ler(link));
     }
 
-    public async Task<Resultado<LinkClienteLeitura>> SalvarAsync(string contaId, Guid eventoId, SalvarLinkCliente pedido, CancellationToken ct)
+    public async Task<Resultado<LinkClienteLeitura>> SalvarAsync(Guid contaId, Guid eventoId, SalvarLinkCliente pedido, CancellationToken ct)
     {
         var link = await ObterDaContaAsync(contaId, eventoId, ct);
         if (link is null)
@@ -143,7 +143,7 @@ public sealed class LinkClienteServico(
         return Resultado<LinkClienteLeitura>.Sucesso(Ler(link));
     }
 
-    public async Task<Resultado<LinkClienteLeitura>> DesativarAsync(string contaId, Guid eventoId, CancellationToken ct)
+    public async Task<Resultado<LinkClienteLeitura>> DesativarAsync(Guid contaId, Guid eventoId, CancellationToken ct)
     {
         if (await dados.ObterEventoAsync(contaId, eventoId, ct) is null)
         {
@@ -240,7 +240,7 @@ public sealed class LinkClienteServico(
     private async Task<Resultado<PaginaClienteLeitura>> AgirAsync(
         string token,
         CancellationToken ct,
-        Func<string, Guid, Task<Resultado<DinheiroEventoLeitura>>> acao)
+        Func<Guid, Guid, Task<Resultado<DinheiroEventoLeitura>>> acao)
     {
         var contexto = await ResolverAsync(token, exigirFinanceiro: true, ct);
         if (contexto.Falha is not null)
@@ -257,7 +257,7 @@ public sealed class LinkClienteServico(
     private async Task<Resultado<PaginaClienteLeitura>> AgirComContratoAsync(
         string token,
         CancellationToken ct,
-        Func<string, Guid, Task<Resultado<EventoDetalhe>>> acao)
+        Func<Guid, Guid, Task<Resultado<EventoDetalhe>>> acao)
     {
         var contexto = await ResolverAsync(token, exigirFinanceiro: true, ct);
         if (contexto.Falha is not null)
@@ -375,7 +375,7 @@ public sealed class LinkClienteServico(
             : Resultado<byte[]>.Sucesso(conviteServico.ModeloPlanilha());
     }
 
-    private async Task<Resultado<PaginaClienteLeitura>> AgirNosConvitesAsync(string token, CancellationToken ct, Func<string, Guid, Task<Falha?>> acao)
+    private async Task<Resultado<PaginaClienteLeitura>> AgirNosConvitesAsync(string token, CancellationToken ct, Func<Guid, Guid, Task<Falha?>> acao)
     {
         var contexto = await ResolverAsync(token, Area.Convidados, ct);
         if (contexto.Falha is not null)
@@ -501,7 +501,7 @@ public sealed class LinkClienteServico(
             : new Contexto(link, evento, null);
     }
 
-    private async Task<LinkCliente?> ObterDaContaAsync(string contaId, Guid eventoId, CancellationToken ct) =>
+    private async Task<LinkCliente?> ObterDaContaAsync(Guid contaId, Guid eventoId, CancellationToken ct) =>
         await dados.ObterEventoAsync(contaId, eventoId, ct) is null ? null : await dados.ObterPorEventoAsync(eventoId, ct);
 
     private static LinkClienteLeitura Ler(LinkCliente? link) =>

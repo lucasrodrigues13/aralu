@@ -6,7 +6,7 @@ public sealed class Evento
 {
     public Guid Id { get; set; }
 
-    public string ContaId { get; set; } = "";
+    public Guid ContaId { get; set; }
 
     /// <summary>Dia de referência de "Para conferir" (SPEC-003 §6.2). Nulo em eventos anteriores a este campo.</summary>
     public DateTimeOffset? CriadoEm { get; set; }
@@ -88,7 +88,7 @@ public sealed class TagConta
 {
     public Guid Id { get; set; }
 
-    public string ContaId { get; set; } = "";
+    public Guid ContaId { get; set; }
 
     public string Nome { get; set; } = "";
 
@@ -165,7 +165,7 @@ public sealed class CompromissoAgenda
 {
     public Guid Id { get; set; }
 
-    public string ContaId { get; set; } = "";
+    public Guid ContaId { get; set; }
 
     public Guid? EventoId { get; set; }
 

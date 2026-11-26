@@ -31,7 +31,7 @@ public sealed record FiltroTarefaFunil(DateOnly? PrazoDe, DateOnly? PrazoAte, st
 
 public sealed class TarefaFunilServico(IDados dados)
 {
-    public async Task<IReadOnlyList<TarefaFunilLeitura>> ListarAsync(string contaId, FiltroTarefaFunil filtro, CancellationToken ct)
+    public async Task<IReadOnlyList<TarefaFunilLeitura>> ListarAsync(Guid contaId, FiltroTarefaFunil filtro, CancellationToken ct)
     {
         TipoTarefaFunil? tipo = null;
         if (!string.IsNullOrWhiteSpace(filtro.Tipo) &&
@@ -53,7 +53,7 @@ public sealed class TarefaFunilServico(IDados dados)
         return itens.Select(item => Ler(item, nomes.GetValueOrDefault(item.OportunidadeId, ""))).ToArray();
     }
 
-    public async Task<Resultado<TarefaFunilLeitura>> CriarAsync(string contaId, SalvarTarefaFunil pedido, CancellationToken ct, string? criadoPor = null)
+    public async Task<Resultado<TarefaFunilLeitura>> CriarAsync(Guid contaId, SalvarTarefaFunil pedido, CancellationToken ct, string? criadoPor = null)
     {
         var montado = await MontarAsync(contaId, Guid.NewGuid(), pedido, ct);
         if (!montado.Ok)
@@ -69,7 +69,7 @@ public sealed class TarefaFunilServico(IDados dados)
     }
 
     public async Task<Resultado<TarefaFunilLeitura>> AtualizarAsync(
-        string contaId,
+        Guid contaId,
         Guid id,
         SalvarTarefaFunil pedido,
         CancellationToken ct)
@@ -102,7 +102,7 @@ public sealed class TarefaFunilServico(IDados dados)
             : leitura with { Responsaveis = montado.Valor.Responsaveis.Select(r => new ResponsavelLeitura(r.Papel, r.ReferenciaId)).ToArray() });
     }
 
-    public async Task<Resultado<TarefaFunilLeitura>> ConcluirAsync(string contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<TarefaFunilLeitura>> ConcluirAsync(Guid contaId, Guid id, CancellationToken ct)
     {
         var item = await dados.ObterTarefaFunilAsync(contaId, id, ct);
         if (item is null)
@@ -116,7 +116,7 @@ public sealed class TarefaFunilServico(IDados dados)
         return Resultado<TarefaFunilLeitura>.Sucesso(Ler(item, nomes.GetValueOrDefault(item.OportunidadeId, "")));
     }
 
-    public async Task<Resultado<TarefaFunilLeitura>> ReabrirAsync(string contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<TarefaFunilLeitura>> ReabrirAsync(Guid contaId, Guid id, CancellationToken ct)
     {
         var item = await dados.ObterTarefaFunilAsync(contaId, id, ct);
         if (item is null)
@@ -131,7 +131,7 @@ public sealed class TarefaFunilServico(IDados dados)
     }
 
     /// <param name="soCriadoPor">Quando informado (assistente), só exclui o que ele mesmo criou (SPEC-032 §18, passo 1).</param>
-    public async Task<Resultado<bool>> ExcluirAsync(string contaId, Guid id, CancellationToken ct, string? soCriadoPor = null)
+    public async Task<Resultado<bool>> ExcluirAsync(Guid contaId, Guid id, CancellationToken ct, string? soCriadoPor = null)
     {
         var item = await dados.ObterTarefaFunilAsync(contaId, id, ct);
         if (item is null)
@@ -148,7 +148,7 @@ public sealed class TarefaFunilServico(IDados dados)
         return Resultado<bool>.Sucesso(true);
     }
 
-    private async Task<Resultado<TarefaFunil>> MontarAsync(string contaId, Guid id, SalvarTarefaFunil pedido, CancellationToken ct)
+    private async Task<Resultado<TarefaFunil>> MontarAsync(Guid contaId, Guid id, SalvarTarefaFunil pedido, CancellationToken ct)
     {
         var titulo = Domain.Comum.Texto.Limpo(pedido.Titulo);
         if (titulo is null)
@@ -175,7 +175,7 @@ public sealed class TarefaFunilServico(IDados dados)
             var ativas = (await dados.IdsAssistentesAtivasAsync(contaId, ct)).Select(a => a.ToString()).ToHashSet();
             foreach (var item in pedido.Responsaveis)
             {
-                var chave = item.Papel == Domain.Tarefas.PapelResponsavel.Organizer ? contaId : item.ReferenciaId;
+                var chave = item.Papel == Domain.Tarefas.PapelResponsavel.Organizer ? contaId.ToString() : item.ReferenciaId;
                 if (item.Papel is not (Domain.Tarefas.PapelResponsavel.Organizer or Domain.Tarefas.PapelResponsavel.Assistente)
                     || chave is null
                     || (item.Papel == Domain.Tarefas.PapelResponsavel.Assistente && !ativas.Contains(chave)))

@@ -130,13 +130,13 @@ public sealed record BudgetEvento(
 
 public sealed class FornecedorServico(IDados dados, Arquivos.IArmazenamentoArquivo armazenamento)
 {
-    public async Task<IReadOnlyList<ServicoContaLeitura>> ListarServicosAsync(string contaId, string? nome, CancellationToken ct)
+    public async Task<IReadOnlyList<ServicoContaLeitura>> ListarServicosAsync(Guid contaId, string? nome, CancellationToken ct)
     {
         var servicos = await dados.ListarServicosContaAsync(contaId, nome, ct);
         return servicos.Select(servico => new ServicoContaLeitura(servico.Id, servico.Nome, servico.Padrao)).ToArray();
     }
 
-    public async Task<Resultado<ServicoContaLeitura>> CriarServicoAsync(string contaId, NovoServicoConta pedido, CancellationToken ct)
+    public async Task<Resultado<ServicoContaLeitura>> CriarServicoAsync(Guid contaId, NovoServicoConta pedido, CancellationToken ct)
     {
         var nome = Domain.Comum.Texto.Limpo(pedido.Nome);
         if (nome is null)
@@ -166,7 +166,7 @@ public sealed class FornecedorServico(IDados dados, Arquivos.IArmazenamentoArqui
         return Resultado<ServicoContaLeitura>.Sucesso(new ServicoContaLeitura(servico.Id, servico.Nome, servico.Padrao));
     }
 
-    public async Task<Resultado<IReadOnlyList<ServicoContaLeitura>>> CriarServicosAsync(string contaId, NovosServicosConta pedido, CancellationToken ct)
+    public async Task<Resultado<IReadOnlyList<ServicoContaLeitura>>> CriarServicosAsync(Guid contaId, NovosServicosConta pedido, CancellationToken ct)
     {
         var nomes = (pedido.Nomes ?? "")
             .Split(',')
@@ -196,7 +196,7 @@ public sealed class FornecedorServico(IDados dados, Arquivos.IArmazenamentoArqui
         return Resultado<IReadOnlyList<ServicoContaLeitura>>.Sucesso(criados);
     }
 
-    public async Task<Resultado<bool>> ExcluirServicoAsync(string contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<bool>> ExcluirServicoAsync(Guid contaId, Guid id, CancellationToken ct)
     {
         var servico = await dados.ObterServicoContaAsync(contaId, id, ct);
         if (servico is null)
@@ -208,7 +208,7 @@ public sealed class FornecedorServico(IDados dados, Arquivos.IArmazenamentoArqui
         return Resultado<bool>.Sucesso(true);
     }
 
-    public async Task<IReadOnlyList<FornecedorResumo>> ListarAsync(string contaId, string? nome, CancellationToken ct)
+    public async Task<IReadOnlyList<FornecedorResumo>> ListarAsync(Guid contaId, string? nome, CancellationToken ct)
     {
         var fornecedores = await dados.ListarFornecedoresAsync(contaId, nome, ct);
         var nomes = await dados.NomesServicosContaAsync(
@@ -225,7 +225,7 @@ public sealed class FornecedorServico(IDados dados, Arquivos.IArmazenamentoArqui
             fornecedor.CadastroCompleto)).ToArray();
     }
 
-    public async Task<Resultado<FornecedorLeitura>> ObterAsync(string contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<FornecedorLeitura>> ObterAsync(Guid contaId, Guid id, CancellationToken ct)
     {
         var fornecedor = await dados.ObterFornecedorAsync(contaId, id, ct);
         if (fornecedor is null)
@@ -236,7 +236,7 @@ public sealed class FornecedorServico(IDados dados, Arquivos.IArmazenamentoArqui
         return Resultado<FornecedorLeitura>.Sucesso(await LerAsync(contaId, fornecedor, ct));
     }
 
-    public async Task<Resultado<FornecedorLeitura>> CriarAsync(string contaId, SalvarFornecedor pedido, CancellationToken ct)
+    public async Task<Resultado<FornecedorLeitura>> CriarAsync(Guid contaId, SalvarFornecedor pedido, CancellationToken ct)
     {
         var montado = await MontarAsync(contaId, Guid.NewGuid(), pedido, ct);
         if (!montado.Ok)
@@ -248,7 +248,7 @@ public sealed class FornecedorServico(IDados dados, Arquivos.IArmazenamentoArqui
         return Resultado<FornecedorLeitura>.Sucesso(await LerAsync(contaId, montado.Valor!, ct));
     }
 
-    public async Task<Resultado<FornecedorLeitura>> AtualizarAsync(string contaId, Guid id, SalvarFornecedor pedido, CancellationToken ct)
+    public async Task<Resultado<FornecedorLeitura>> AtualizarAsync(Guid contaId, Guid id, SalvarFornecedor pedido, CancellationToken ct)
     {
         var fornecedor = await dados.ObterFornecedorAsync(contaId, id, ct);
         if (fornecedor is null)
@@ -267,7 +267,7 @@ public sealed class FornecedorServico(IDados dados, Arquivos.IArmazenamentoArqui
         return Resultado<FornecedorLeitura>.Sucesso(await LerAsync(contaId, fornecedor, ct));
     }
 
-    public async Task<Resultado<bool>> ExcluirAsync(string contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<bool>> ExcluirAsync(Guid contaId, Guid id, CancellationToken ct)
     {
         var fornecedor = await dados.ObterFornecedorAsync(contaId, id, ct);
         if (fornecedor is null)
@@ -280,7 +280,7 @@ public sealed class FornecedorServico(IDados dados, Arquivos.IArmazenamentoArqui
     }
 
     public async Task<Resultado<EventoDetalhe>> AdicionarServicoNoEventoAsync(
-        string contaId,
+        Guid contaId,
         Guid eventoId,
         AdicionarServicoEvento pedido,
         DateOnly hoje,
@@ -322,7 +322,7 @@ public sealed class FornecedorServico(IDados dados, Arquivos.IArmazenamentoArqui
     }
 
     public async Task<Resultado<EventoDetalhe>> AtualizarEstimadoAsync(
-        string contaId,
+        Guid contaId,
         Guid eventoId,
         Guid servicoId,
         AtualizarEstimadoServico pedido,
@@ -373,7 +373,7 @@ public sealed class FornecedorServico(IDados dados, Arquivos.IArmazenamentoArqui
     }
 
     public async Task<Resultado<EventoDetalhe>> AdicionarFornecedorNoServicoAsync(
-        string contaId,
+        Guid contaId,
         Guid eventoId,
         Guid servicoId,
         AdicionarFornecedorServico pedido,
@@ -428,7 +428,7 @@ public sealed class FornecedorServico(IDados dados, Arquivos.IArmazenamentoArqui
     }
 
     public async Task<Resultado<EventoDetalhe>> AvancarEtapaAsync(
-        string contaId,
+        Guid contaId,
         Guid eventoId,
         Guid servicoId,
         Guid vinculoId,
@@ -437,7 +437,7 @@ public sealed class FornecedorServico(IDados dados, Arquivos.IArmazenamentoArqui
         await MoverEtapaAsync(contaId, eventoId, servicoId, vinculoId, avancar: true, hoje, ct);
 
     public async Task<Resultado<EventoDetalhe>> VoltarEtapaAsync(
-        string contaId,
+        Guid contaId,
         Guid eventoId,
         Guid servicoId,
         Guid vinculoId,
@@ -446,7 +446,7 @@ public sealed class FornecedorServico(IDados dados, Arquivos.IArmazenamentoArqui
         await MoverEtapaAsync(contaId, eventoId, servicoId, vinculoId, avancar: false, hoje, ct);
 
     public async Task<Resultado<EventoDetalhe>> ContratarAsync(
-        string contaId,
+        Guid contaId,
         Guid eventoId,
         Guid servicoId,
         Guid vinculoId,
@@ -484,7 +484,7 @@ public sealed class FornecedorServico(IDados dados, Arquivos.IArmazenamentoArqui
 
     /// <summary>Tira o fornecedor do serviço. Com pagamento ou comprovante no Dinheiro, fica bloqueado.</summary>
     public async Task<Resultado<EventoDetalhe>> RemoverFornecedorDoServicoAsync(
-        string contaId,
+        Guid contaId,
         Guid eventoId,
         Guid servicoId,
         Guid vinculoId,
@@ -516,7 +516,7 @@ public sealed class FornecedorServico(IDados dados, Arquivos.IArmazenamentoArqui
 
     /// <summary>Tira o serviço do evento. Com pagamento de algum fornecedor no Dinheiro, fica bloqueado.</summary>
     public async Task<Resultado<EventoDetalhe>> RemoverServicoAsync(
-        string contaId,
+        Guid contaId,
         Guid eventoId,
         Guid servicoId,
         DateOnly hoje,
@@ -544,7 +544,7 @@ public sealed class FornecedorServico(IDados dados, Arquivos.IArmazenamentoArqui
 
     /// <summary>Guarda o contrato assinado do fornecedor (vínculo) e apaga o anterior (SPEC-045 §6.4). Vale antes de contratar.</summary>
     public async Task<Resultado<EventoDetalhe>> EnviarContratoAssinadoAsync(
-        string contaId,
+        Guid contaId,
         Guid eventoId,
         Guid vinculoId,
         Stream conteudo,
@@ -578,7 +578,7 @@ public sealed class FornecedorServico(IDados dados, Arquivos.IArmazenamentoArqui
     }
 
     public async Task<Resultado<EventoDetalhe>> ExcluirContratoAssinadoAsync(
-        string contaId,
+        Guid contaId,
         Guid eventoId,
         Guid vinculoId,
         DateOnly hoje,
@@ -596,7 +596,7 @@ public sealed class FornecedorServico(IDados dados, Arquivos.IArmazenamentoArqui
     }
 
     private async Task<(ServicoEvento? Servico, Domain.Dinheiro.ContratoFornecedor? Contrato)> ServicoDoVinculoAsync(
-        string contaId,
+        Guid contaId,
         Guid eventoId,
         Guid vinculoId,
         CancellationToken ct)
@@ -606,7 +606,7 @@ public sealed class FornecedorServico(IDados dados, Arquivos.IArmazenamentoArqui
         return (servico, servico?.Contratos.FirstOrDefault(item => item.VinculoId == vinculoId));
     }
 
-    public async Task<Resultado<BudgetEvento>> BudgetAsync(string contaId, Guid eventoId, CancellationToken ct)
+    public async Task<Resultado<BudgetEvento>> BudgetAsync(Guid contaId, Guid eventoId, CancellationToken ct)
     {
         var evento = await dados.ObterEventoAsync(contaId, eventoId, ct);
         if (evento is null)
@@ -632,7 +632,7 @@ public sealed class FornecedorServico(IDados dados, Arquivos.IArmazenamentoArqui
     }
 
     private async Task<Resultado<EventoDetalhe>> MoverEtapaAsync(
-        string contaId,
+        Guid contaId,
         Guid eventoId,
         Guid servicoId,
         Guid vinculoId,
@@ -674,7 +674,7 @@ public sealed class FornecedorServico(IDados dados, Arquivos.IArmazenamentoArqui
         return await DetalheEventoAsync(contaId, eventoId, hoje, ct);
     }
 
-    private async Task<Resultado<EventoDetalhe>> DetalheEventoAsync(string contaId, Guid eventoId, DateOnly hoje, CancellationToken ct)
+    private async Task<Resultado<EventoDetalhe>> DetalheEventoAsync(Guid contaId, Guid eventoId, DateOnly hoje, CancellationToken ct)
     {
         var evento = await dados.ObterEventoAsync(contaId, eventoId, ct);
         if (evento is null)
@@ -686,14 +686,14 @@ public sealed class FornecedorServico(IDados dados, Arquivos.IArmazenamentoArqui
     }
 
     /// <summary>Confere o pedido sem gravar; os serviços ficam de fora (a importação ainda vai criá-los).</summary>
-    public async Task<Resultado<bool>> ValidarSemServicosAsync(string contaId, SalvarFornecedor pedido, CancellationToken ct)
+    public async Task<Resultado<bool>> ValidarSemServicosAsync(Guid contaId, SalvarFornecedor pedido, CancellationToken ct)
     {
         var montado = await MontarAsync(contaId, Guid.NewGuid(), pedido, ct, conferirServicos: false);
         return montado.Ok ? Resultado<bool>.Sucesso(true) : Resultado<bool>.Erro(montado.Falha!.Codigo, montado.Falha.Mensagem);
     }
 
     private async Task<Resultado<Fornecedor>> MontarAsync(
-        string contaId, Guid id, SalvarFornecedor pedido, CancellationToken ct, bool conferirServicos = true)
+        Guid contaId, Guid id, SalvarFornecedor pedido, CancellationToken ct, bool conferirServicos = true)
     {
         var nome = Domain.Comum.Texto.Limpo(pedido.Nome);
         if (nome is null)
@@ -907,7 +907,7 @@ public sealed class FornecedorServico(IDados dados, Arquivos.IArmazenamentoArqui
         }
     }
 
-    private async Task<FornecedorLeitura> LerAsync(string contaId, Fornecedor fornecedor, CancellationToken ct)
+    private async Task<FornecedorLeitura> LerAsync(Guid contaId, Fornecedor fornecedor, CancellationToken ct)
     {
         var nomes = await dados.NomesServicosContaAsync(
             contaId,

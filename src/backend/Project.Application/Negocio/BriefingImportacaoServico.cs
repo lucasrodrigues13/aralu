@@ -20,7 +20,7 @@ public sealed class BriefingImportacaoServico(BriefingServico briefings, IPlanil
     public byte[] Modelo() => planilha.Modelo();
 
     public async Task<Resultado<ResultadoImportacaoBriefing>> ImportarAsync(
-        string contaId, string? nome, Stream arquivo, string? nomeArquivo, CancellationToken ct)
+        Guid contaId, string? nome, Stream arquivo, string? nomeArquivo, CancellationToken ct)
     {
         var nomeModelo = Domain.Comum.Texto.Limpo(nome) ?? Domain.Comum.Texto.Limpo(Path.GetFileNameWithoutExtension(nomeArquivo ?? ""));
         if (nomeModelo is null)

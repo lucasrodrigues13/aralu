@@ -80,7 +80,7 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
 {
     /// <summary>Anexa um arquivo à tarefa (SPEC-003 §6.6): JPG, JPEG, PNG ou PDF até 5 MB, fotos reduzidas.</summary>
     public async Task<Resultado<TarefaLeitura>> AnexarAsync(
-        string contaId,
+        Guid contaId,
         Guid id,
         Stream conteudo,
         string? nomeArquivo,
@@ -116,7 +116,7 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
         return Resultado<TarefaLeitura>.Sucesso(await RelerAsync(contaId, tarefa, hoje, ct));
     }
 
-    public async Task<Resultado<TarefaLeitura>> RemoverAnexoAsync(string contaId, Guid id, Guid anexoId, DateOnly hoje, CancellationToken ct)
+    public async Task<Resultado<TarefaLeitura>> RemoverAnexoAsync(Guid contaId, Guid id, Guid anexoId, DateOnly hoje, CancellationToken ct)
     {
         var tarefa = await dados.ObterTarefaAsync(contaId, id, ct);
         if (tarefa is null)
@@ -139,13 +139,13 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
         return Resultado<TarefaLeitura>.Sucesso(await RelerAsync(contaId, tarefa, hoje, ct));
     }
 
-    private async Task<TarefaLeitura> RelerAsync(string contaId, Tarefa tarefa, DateOnly hoje, CancellationToken ct)
+    private async Task<TarefaLeitura> RelerAsync(Guid contaId, Tarefa tarefa, DateOnly hoje, CancellationToken ct)
     {
         var atual = (await dados.ListarTarefasAsync(contaId, tarefa.EventoId, ct)).Single(item => item.Id == tarefa.Id);
         return await LerUmaAsync(contaId, atual, hoje, ct);
     }
 
-    public async Task<Resultado<IReadOnlyList<TarefaLeitura>>> DoEventoAsync(string contaId, Guid eventoId, DateOnly hoje, CancellationToken ct)
+    public async Task<Resultado<IReadOnlyList<TarefaLeitura>>> DoEventoAsync(Guid contaId, Guid eventoId, DateOnly hoje, CancellationToken ct)
     {
         if (!await dados.EventoDaContaAsync(contaId, eventoId, ct))
         {
@@ -156,13 +156,13 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
         return Resultado<IReadOnlyList<TarefaLeitura>>.Sucesso(await LerListaAsync(contaId, tarefas, hoje, ct));
     }
 
-    public async Task<IReadOnlyList<TarefaLeitura>> DaContaAsync(string contaId, DateOnly hoje, CancellationToken ct)
+    public async Task<IReadOnlyList<TarefaLeitura>> DaContaAsync(Guid contaId, DateOnly hoje, CancellationToken ct)
     {
         var tarefas = await dados.ListarTarefasAsync(contaId, null, ct);
         return await LerListaAsync(contaId, tarefas, hoje, ct);
     }
 
-    public async Task<Resultado<TarefaLeitura>> CriarAsync(string contaId, Guid eventoId, SalvarTarefa pedido, DateOnly hoje, CancellationToken ct)
+    public async Task<Resultado<TarefaLeitura>> CriarAsync(Guid contaId, Guid eventoId, SalvarTarefa pedido, DateOnly hoje, CancellationToken ct)
     {
         var situacaoEvento = await dados.SituacaoDoEventoAsync(contaId, eventoId, ct);
         if (situacaoEvento is null)
@@ -223,7 +223,7 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
             Descricao = Domain.Comum.Texto.Limpo(pedido.Descricao),
             PrazoRelativo = pedido.PrazoRelativo,
             Situacao = SituacaoTarefa.Pendente,
-            ResponsavelContaId = contaId,
+            ResponsavelContaId = contaId.ToString(),
             Prioridade = pedido.Prioridade ?? PrioridadeTarefa.Media,
             Visibilidade = pedido.Visibilidade ?? VisibilidadeTarefa.SoEu,
             ServicoEventoId = pedido.AtualizarServico ? pedido.ServicoEventoId : null,
@@ -237,7 +237,7 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
         return Resultado<TarefaLeitura>.Sucesso(await LerUmaAsync(contaId, tarefa, hoje, ct));
     }
 
-    public async Task<Resultado<TarefaLeitura>> AtualizarAsync(string contaId, Guid id, SalvarTarefa pedido, DateOnly hoje, CancellationToken ct)
+    public async Task<Resultado<TarefaLeitura>> AtualizarAsync(Guid contaId, Guid id, SalvarTarefa pedido, DateOnly hoje, CancellationToken ct)
     {
         var tarefa = await dados.ObterTarefaAsync(contaId, id, ct);
         if (tarefa is null)
@@ -336,7 +336,7 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
         return Resultado<TarefaLeitura>.Sucesso(await LerUmaAsync(contaId, tarefa, hoje, ct));
     }
 
-    public async Task<Resultado<TarefaLeitura>> ComentarAsync(string contaId, Guid id, ComentarioPedido pedido, DateOnly hoje, CancellationToken ct)
+    public async Task<Resultado<TarefaLeitura>> ComentarAsync(Guid contaId, Guid id, ComentarioPedido pedido, DateOnly hoje, CancellationToken ct)
     {
         var tarefa = await dados.ObterTarefaAsync(contaId, id, ct);
         if (tarefa is null)
@@ -360,7 +360,7 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
         {
             Id = Guid.NewGuid(),
             TarefaId = tarefa.Id,
-            AutorContaId = contaId,
+            AutorContaId = contaId.ToString(),
             Texto = texto,
             CriadoEm = DateTimeOffset.UtcNow,
         }, ct);
@@ -369,7 +369,7 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
 
     /// <summary>Marca um item da checklist como feito, cancelado (riscado) ou pendente, sem regravar a tarefa.</summary>
     public async Task<Resultado<TarefaLeitura>> MarcarItemChecklistAsync(
-        string contaId,
+        Guid contaId,
         Guid id,
         Guid itemId,
         MarcarItemChecklist pedido,
@@ -410,7 +410,7 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
     }
 
     /// <summary>Marca a tarefa como concluída ou a reabre (volta para pendente), sem regravar o resto.</summary>
-    public async Task<Resultado<TarefaLeitura>> ConcluirAsync(string contaId, Guid id, bool concluida, DateOnly hoje, CancellationToken ct)
+    public async Task<Resultado<TarefaLeitura>> ConcluirAsync(Guid contaId, Guid id, bool concluida, DateOnly hoje, CancellationToken ct)
     {
         var tarefa = await dados.ObterTarefaAsync(contaId, id, ct);
         if (tarefa is null)
@@ -453,7 +453,7 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
         return !completa && atual == SituacaoTarefa.Concluida ? SituacaoTarefa.Pendente : null;
     }
 
-    private async Task<IReadOnlyList<TarefaLeitura>> LerListaAsync(string contaId, IReadOnlyList<Tarefa> tarefas, DateOnly hoje, CancellationToken ct)
+    private async Task<IReadOnlyList<TarefaLeitura>> LerListaAsync(Guid contaId, IReadOnlyList<Tarefa> tarefas, DateOnly hoje, CancellationToken ct)
     {
         var ids = tarefas.Select(tarefa => tarefa.EventoId).Distinct().ToArray();
         var contextos = await dados.ContextosEventoAsync(contaId, ids, ct);
@@ -464,7 +464,7 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
         return tarefas.Select(tarefa => Ler(tarefa, contextos, servicos, hoje)).ToArray();
     }
 
-    private async Task<TarefaLeitura> LerUmaAsync(string contaId, Tarefa tarefa, DateOnly hoje, CancellationToken ct)
+    private async Task<TarefaLeitura> LerUmaAsync(Guid contaId, Tarefa tarefa, DateOnly hoje, CancellationToken ct)
     {
         var lista = await LerListaAsync(contaId, [tarefa], hoje, ct);
         return lista[0];
@@ -531,12 +531,12 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
             contexto?.Tags ?? []);
     }
 
-    private static void AplicarResponsaveis(Tarefa tarefa, string contaId, IReadOnlyList<ResponsavelPedido>? pedidos)
+    private static void AplicarResponsaveis(Tarefa tarefa, Guid contaId, IReadOnlyList<ResponsavelPedido>? pedidos)
     {
         tarefa.Responsaveis.AddRange(MontarResponsaveis(tarefa, contaId, pedidos));
     }
 
-    private static List<ResponsavelTarefa> MontarResponsaveis(Tarefa tarefa, string contaId, IReadOnlyList<ResponsavelPedido>? pedidos)
+    private static List<ResponsavelTarefa> MontarResponsaveis(Tarefa tarefa, Guid contaId, IReadOnlyList<ResponsavelPedido>? pedidos)
     {
         var lista = pedidos is { Count: > 0 }
             ? pedidos
@@ -548,7 +548,7 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
             Papel = pedido.Papel,
             ReferenciaId = pedido.Papel switch
             {
-                PapelResponsavel.Organizer => contaId,
+                PapelResponsavel.Organizer => contaId.ToString(),
                 PapelResponsavel.Assistente => pedido.ReferenciaId,
                 _ => null,
             },
@@ -556,7 +556,7 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
     }
 
     /// <summary>Assistentes que podem ser marcadas: as ativas da conta e as que já estão na tarefa (SPEC-032 §6.6).</summary>
-    private async Task<HashSet<string>> ReferenciasPermitidasAsync(string contaId, Tarefa? atual, CancellationToken ct)
+    private async Task<HashSet<string>> ReferenciasPermitidasAsync(Guid contaId, Tarefa? atual, CancellationToken ct)
     {
         var ativas = (await dados.IdsAssistentesAtivasAsync(contaId, ct)).Select(id => id.ToString()).ToHashSet();
         if (atual is not null)
@@ -570,7 +570,7 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
         return ativas;
     }
 
-    private static void AplicarChecklist(Tarefa tarefa, string contaId, IReadOnlyList<ItemChecklistPedido>? pedidos)
+    private static void AplicarChecklist(Tarefa tarefa, Guid contaId, IReadOnlyList<ItemChecklistPedido>? pedidos)
     {
         if (pedidos is null)
         {
@@ -580,7 +580,7 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
         tarefa.Checklist.AddRange(MontarChecklist(tarefa, contaId, pedidos));
     }
 
-    private static List<ItemChecklistTarefa> MontarChecklist(Tarefa tarefa, string contaId, IReadOnlyList<ItemChecklistPedido> pedidos)
+    private static List<ItemChecklistTarefa> MontarChecklist(Tarefa tarefa, Guid contaId, IReadOnlyList<ItemChecklistPedido> pedidos)
     {
         var ordem = 0;
         return pedidos.Select(pedido => new ItemChecklistTarefa
@@ -596,7 +596,7 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
             ResponsavelPapel = pedido.Responsavel?.Papel,
             ResponsavelReferenciaId = pedido.Responsavel?.Papel switch
             {
-                PapelResponsavel.Organizer => contaId,
+                PapelResponsavel.Organizer => contaId.ToString(),
                 PapelResponsavel.Assistente => pedido.Responsavel.ReferenciaId,
                 _ => null,
             },
@@ -679,7 +679,7 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
     }
 
     /// <summary>Assistentes permitidas nos itens: as da tarefa mais as que já estão em algum item dela (SPEC-003 §6.8).</summary>
-    private async Task<HashSet<string>> ReferenciasDosItensPermitidasAsync(string contaId, Tarefa tarefa, CancellationToken ct)
+    private async Task<HashSet<string>> ReferenciasDosItensPermitidasAsync(Guid contaId, Tarefa tarefa, CancellationToken ct)
     {
         var permitidas = await ReferenciasPermitidasAsync(contaId, tarefa, ct);
         permitidas.UnionWith(await dados.ReferenciasDosItensAsync(tarefa.Id, ct));

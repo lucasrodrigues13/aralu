@@ -27,28 +27,28 @@ public sealed class ArmazenamentoArquivo(
     public Task<Resultado<ArquivoGuardado>> GuardarImagemAsync(
         Stream conteudo,
         string? nomeOriginal,
-        string contaId,
+        Guid contaId,
         CancellationToken ct) =>
         GuardarAsync(conteudo, nomeOriginal, contaId, documento: false, ct);
 
     public Task<Resultado<ArquivoGuardado>> GuardarDocumentoAsync(
         Stream conteudo,
         string? nomeOriginal,
-        string contaId,
+        Guid contaId,
         CancellationToken ct) =>
         GuardarAsync(conteudo, nomeOriginal, contaId, documento: true, ct);
 
     public Task<Resultado<ArquivoGuardado>> GuardarWordAsync(
         Stream conteudo,
         string? nomeOriginal,
-        string contaId,
+        Guid contaId,
         CancellationToken ct) =>
         GuardarAsync(conteudo, nomeOriginal, contaId, documento: true, ct, word: true);
 
     private async Task<Resultado<ArquivoGuardado>> GuardarAsync(
         Stream conteudo,
         string? nomeOriginal,
-        string contaId,
+        Guid contaId,
         bool documento,
         CancellationToken ct,
         bool word = false)
@@ -143,7 +143,7 @@ public sealed class ArmazenamentoArquivo(
         }
     }
 
-    public async Task<ArquivoAberto?> AbrirAsync(Guid id, string contaId, CancellationToken ct)
+    public async Task<ArquivoAberto?> AbrirAsync(Guid id, Guid contaId, CancellationToken ct)
     {
         var registro = await banco.Arquivos.AsNoTracking().FirstOrDefaultAsync(arquivo => arquivo.Id == id && arquivo.ContaId == contaId, ct);
         if (registro is null || registro.CaminhoRelativo.Contains("..", StringComparison.Ordinal))

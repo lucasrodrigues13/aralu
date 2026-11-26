@@ -11,7 +11,7 @@ public sealed class LeadRsvp
 {
     public Guid Id { get; set; }
 
-    public string ContaId { get; set; } = "";
+    public Guid ContaId { get; set; }
 
     public Guid ConviteId { get; set; }
 
@@ -36,7 +36,7 @@ public sealed class MetricasRsvpFunil
 {
     public Guid Id { get; set; }
 
-    public string ContaId { get; set; } = "";
+    public Guid ContaId { get; set; }
 
     public int Visualizacoes { get; set; }
 

@@ -30,7 +30,7 @@ public sealed record AssistenteLeitura(
     DateTimeOffset? PrimeiroAcessoEm,
     bool? ConviteEnviado);
 
-public sealed record ContaComAssistentes(string ContaId, string EmailDaConta, IReadOnlyList<AssistenteLeitura> Assistentes);
+public sealed record ContaComAssistentes(Guid ContaId, string EmailDaConta, IReadOnlyList<AssistenteLeitura> Assistentes);
 
 public sealed record NomeAssistente(Guid Id, string Nome, bool Removida);
 
@@ -47,7 +47,7 @@ public sealed class AssistenteServico(
 {
     private const string Finalidade = "convite-assistente";
 
-    public async Task<IReadOnlyList<AssistenteLeitura>> ListarAsync(string contaId, CancellationToken ct)
+    public async Task<IReadOnlyList<AssistenteLeitura>> ListarAsync(Guid contaId, CancellationToken ct)
     {
         var itens = await banco.Assistentes.AsNoTracking()
             .Where(item => item.ContaId == contaId && item.Situacao != SituacaoAssistente.Removida)
@@ -62,7 +62,7 @@ public sealed class AssistenteServico(
         var itens = await banco.Assistentes.AsNoTracking()
             .OrderBy(item => item.Nome)
             .ToListAsync(ct);
-        var contas = itens.Select(item => item.ContaId).Distinct().ToList();
+        var contas = itens.Select(item => item.ContaId.ToString()).Distinct().ToList();
         var emails = await banco.Users.AsNoTracking()
             .Where(usuario => contas.Contains(usuario.Id))
             .Select(usuario => new { usuario.Id, usuario.Email })
@@ -71,14 +71,14 @@ public sealed class AssistenteServico(
             .GroupBy(item => item.ContaId)
             .Select(grupo => new ContaComAssistentes(
                 grupo.Key,
-                emails.GetValueOrDefault(grupo.Key, ""),
+                emails.GetValueOrDefault(grupo.Key.ToString(), ""),
                 grupo.Select(item => Ler(item, null)).ToList()))
             .OrderBy(conta => conta.EmailDaConta)
             .ToList();
     }
 
     /// <summary>Assistentes ativas da conta: base dos seletores de responsável (§6.6).</summary>
-    public async Task<IReadOnlyList<AssistenteLeitura>> AtivasAsync(string contaId, CancellationToken ct)
+    public async Task<IReadOnlyList<AssistenteLeitura>> AtivasAsync(Guid contaId, CancellationToken ct)
     {
         var itens = await banco.Assistentes.AsNoTracking()
             .Where(item => item.ContaId == contaId && item.Situacao == SituacaoAssistente.Ativa)
@@ -88,7 +88,7 @@ public sealed class AssistenteServico(
     }
 
     /// <summary>Nome de todas as assistentes da conta, inclusive removidas: rotula responsáveis de tarefas antigas.</summary>
-    public async Task<IReadOnlyList<NomeAssistente>> NomesAsync(string contaId, CancellationToken ct) =>
+    public async Task<IReadOnlyList<NomeAssistente>> NomesAsync(Guid contaId, CancellationToken ct) =>
         await banco.Assistentes.AsNoTracking()
             .Where(item => item.ContaId == contaId)
             .OrderBy(item => item.Nome)
@@ -98,7 +98,7 @@ public sealed class AssistenteServico(
     public Task<Assistente?> PorUsuarioAsync(string usuarioId, CancellationToken ct) =>
         banco.Assistentes.AsNoTracking().FirstOrDefaultAsync(item => item.UsuarioId == usuarioId, ct);
 
-    public async Task<Resultado<AssistenteLeitura>> ConvidarAsync(string contaId, ConvidarAssistentePedido pedido, CancellationToken ct)
+    public async Task<Resultado<AssistenteLeitura>> ConvidarAsync(Guid contaId, ConvidarAssistentePedido pedido, CancellationToken ct)
     {
         var validacao = Validar(pedido.Nome, pedido.Email, pedido.Celular, pedido.Nascimento, exigirEmail: true);
         if (validacao.Falha is not null)
@@ -118,7 +118,7 @@ public sealed class AssistenteServico(
         }
 
         var usuario = new ApplicationUser { UserName = endereco, Email = endereco, EmailConfirmed = true };
-        usuario.VincularAoOrganizer(contaId);
+        usuario.VincularAoOrganizer(contaId.ToString());
         var criado = await usuarios.CreateAsync(usuario);
         if (!criado.Succeeded)
         {
@@ -153,7 +153,7 @@ public sealed class AssistenteServico(
         return Resultado<AssistenteLeitura>.Sucesso(Ler(assistente, enviado));
     }
 
-    public async Task<Resultado<AssistenteLeitura>> AtualizarAsync(string contaId, Guid id, ConvidarAssistentePedido pedido, CancellationToken ct)
+    public async Task<Resultado<AssistenteLeitura>> AtualizarAsync(Guid contaId, Guid id, ConvidarAssistentePedido pedido, CancellationToken ct)
     {
         var assistente = await DaContaAsync(contaId, id, ct);
         if (assistente is null)
@@ -210,7 +210,7 @@ public sealed class AssistenteServico(
         return Resultado<AssistenteLeitura>.Sucesso(Ler(assistente, enviado));
     }
 
-    public async Task<Resultado<AssistenteLeitura>> ReenviarAsync(string contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<AssistenteLeitura>> ReenviarAsync(Guid contaId, Guid id, CancellationToken ct)
     {
         var assistente = await DaContaAsync(contaId, id, ct);
         if (assistente is null)
@@ -241,7 +241,7 @@ public sealed class AssistenteServico(
     /// Desativa o acesso sem apagar cadastro nem login: o acesso cai no próximo pedido (§6.5)
     /// e a dona pode reativar depois (ex.: freela que volta).
     /// </summary>
-    public async Task<Resultado<bool>> DesativarAsync(string contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<bool>> DesativarAsync(Guid contaId, Guid id, CancellationToken ct)
     {
         var assistente = await DaContaAsync(contaId, id, ct);
         if (assistente is null)
@@ -269,7 +269,7 @@ public sealed class AssistenteServico(
     }
 
     /// <summary>Devolve o acesso: quem já criou a senha volta ativa; quem não criou recebe convite novo.</summary>
-    public async Task<Resultado<AssistenteLeitura>> ReativarAsync(string contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<AssistenteLeitura>> ReativarAsync(Guid contaId, Guid id, CancellationToken ct)
     {
         var assistente = await DaContaAsync(contaId, id, ct);
         if (assistente is null)
@@ -407,7 +407,7 @@ public sealed class AssistenteServico(
             : Resultado<bool>.Erro(Codigos.Validacao, "A senha atual não confere ou a nova não atende às regras.");
     }
 
-    private Task<Assistente?> DaContaAsync(string contaId, Guid id, CancellationToken ct) =>
+    private Task<Assistente?> DaContaAsync(Guid contaId, Guid id, CancellationToken ct) =>
         banco.Assistentes.FirstOrDefaultAsync(
             item => item.Id == id && item.ContaId == contaId && item.Situacao != SituacaoAssistente.Removida, ct);
 

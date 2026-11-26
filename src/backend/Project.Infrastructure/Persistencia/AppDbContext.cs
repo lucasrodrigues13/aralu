@@ -20,6 +20,8 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser>
     {
     }
 
+    public DbSet<ContaAssessoria> Contas => Set<ContaAssessoria>();
+
     public DbSet<PerfilAssessoria> Perfis => Set<PerfilAssessoria>();
 
     public DbSet<ModeloEvento> Modelos => Set<ModeloEvento>();
@@ -167,5 +169,6 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser>
     {
         base.OnModelCreating(modelBuilder);
         Mapa.Aplicar(modelBuilder);
+        Mapa.LigarContas(modelBuilder);
     }
 }

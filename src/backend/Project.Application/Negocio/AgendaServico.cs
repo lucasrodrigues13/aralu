@@ -31,7 +31,7 @@ public sealed class AgendaServico(IDados dados)
 {
     /// <summary>Compromissos e todas as tarefas com prazo no período (tarefas entram como itens só de leitura).</summary>
     public async Task<IReadOnlyList<CompromissoLeitura>> ListarAsync(
-        string contaId,
+        Guid contaId,
         DateOnly? de,
         DateOnly? ate,
         CancellationToken ct)
@@ -54,7 +54,7 @@ public sealed class AgendaServico(IDados dados)
             .ToArray();
     }
 
-    public async Task<Resultado<CompromissoLeitura>> CriarAsync(string contaId, SalvarCompromisso pedido, CancellationToken ct)
+    public async Task<Resultado<CompromissoLeitura>> CriarAsync(Guid contaId, SalvarCompromisso pedido, CancellationToken ct)
     {
         var montado = Montar(contaId, Guid.NewGuid(), pedido, null);
         if (!montado.Ok)
@@ -67,7 +67,7 @@ public sealed class AgendaServico(IDados dados)
     }
 
     public async Task<Resultado<CompromissoLeitura>> AtualizarAsync(
-        string contaId,
+        Guid contaId,
         Guid id,
         SalvarCompromisso pedido,
         CancellationToken ct)
@@ -96,7 +96,7 @@ public sealed class AgendaServico(IDados dados)
         return Resultado<CompromissoLeitura>.Sucesso(Ler(item));
     }
 
-    public async Task<Resultado<bool>> ExcluirAsync(string contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<bool>> ExcluirAsync(Guid contaId, Guid id, CancellationToken ct)
     {
         var item = await dados.ObterCompromissoAsync(contaId, id, ct);
         if (item is null)
@@ -113,11 +113,11 @@ public sealed class AgendaServico(IDados dados)
         return Resultado<bool>.Sucesso(true);
     }
 
-    public Task<bool> TemCompromissoNaDataAsync(string contaId, DateOnly data, CancellationToken ct) =>
+    public Task<bool> TemCompromissoNaDataAsync(Guid contaId, DateOnly data, CancellationToken ct) =>
         dados.TemCompromissoNaDataAsync(contaId, data, ct);
 
     private static Resultado<CompromissoAgenda> Montar(
-        string contaId,
+        Guid contaId,
         Guid id,
         SalvarCompromisso pedido,
         Guid? eventoId)

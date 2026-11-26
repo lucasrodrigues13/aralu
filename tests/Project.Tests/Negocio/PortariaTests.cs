@@ -10,7 +10,8 @@ namespace Project.Tests.Negocio;
 public class PortariaTests
 {
     private static readonly Guid EventoId = Guid.NewGuid();
-    private const string Conta = "conta-1";
+    private static readonly Guid Conta = Guid.Parse("11111111-1111-1111-1111-111111111111");
+    private static readonly Guid OutraConta = Guid.Parse("99999999-9999-9999-9999-999999999999");
     private static readonly DateTimeOffset Agora = new(2026, 11, 21, 20, 0, 0, TimeSpan.Zero);
 
     private static async Task<(PortariaServico Servico, DadosFalsos Dados, string Token)> CriarAsync()
@@ -61,9 +62,9 @@ public class PortariaTests
     {
         var (servico, _, _) = await CriarAsync();
 
-        Assert.Equal(Codigos.Indisponivel, (await servico.GerarAsync("outra", EventoId, Agora, default)).Falha!.Codigo);
-        Assert.Equal(Codigos.Indisponivel, (await servico.ObterAsync("outra", EventoId, default)).Falha!.Codigo);
-        Assert.Equal(Codigos.Indisponivel, (await servico.DesativarAsync("outra", EventoId, default)).Falha!.Codigo);
+        Assert.Equal(Codigos.Indisponivel, (await servico.GerarAsync(OutraConta, EventoId, Agora, default)).Falha!.Codigo);
+        Assert.Equal(Codigos.Indisponivel, (await servico.ObterAsync(OutraConta, EventoId, default)).Falha!.Codigo);
+        Assert.Equal(Codigos.Indisponivel, (await servico.DesativarAsync(OutraConta, EventoId, default)).Falha!.Codigo);
     }
 
     [Fact]
@@ -212,7 +213,7 @@ public class PortariaTests
 
         public bool EmAndamento { get; set; } = true;
 
-        public Task<EventoDoLink?> ObterEventoAsync(string contaId, Guid eventoId, CancellationToken ct) =>
+        public Task<EventoDoLink?> ObterEventoAsync(Guid contaId, Guid eventoId, CancellationToken ct) =>
             Task.FromResult<EventoDoLink?>(contaId == Conta && eventoId == EventoId ? new EventoDoLink(EventoId, Conta, "Casamento", null, EmAndamento) : null);
 
         public Task<LinkPortaria?> ObterPorEventoAsync(Guid eventoId, CancellationToken ct) =>

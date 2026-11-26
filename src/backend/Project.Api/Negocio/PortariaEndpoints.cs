@@ -45,12 +45,12 @@ public static class PortariaEndpoints
     private static Task<IResult> Marcar(string token, Guid conviteId, ComparecimentoPedido pedido, PortariaServico servico, CancellationToken ct) =>
         De(servico.MarcarComparecimentoAsync(token, conviteId, pedido, DateTimeOffset.UtcNow, ct));
 
-    private static Task<IResult> ComConta(ClaimsPrincipal usuario, Func<string, Task<IResult>> acao)
+    private static Task<IResult> ComConta(ClaimsPrincipal usuario, Func<Guid, Task<IResult>> acao)
     {
         var conta = ContaAtual.De(usuario);
-        return string.IsNullOrWhiteSpace(conta)
+        return conta is null
             ? Task.FromResult(Results.Json(new ErroResposta("autenticacao", "É preciso entrar para continuar."), statusCode: StatusCodes.Status401Unauthorized))
-            : acao(conta);
+            : acao(conta.Value);
     }
 
     private static async Task<IResult> De<T>(Task<Resultado<T>> tarefa)

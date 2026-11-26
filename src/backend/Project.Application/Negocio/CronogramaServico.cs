@@ -31,13 +31,13 @@ public sealed record SalvarCronograma(string? Titulo, string? Descricao, IReadOn
 
 public sealed class CronogramaServico(IDados dados)
 {
-    public async Task<IReadOnlyList<CronogramaLeitura>> ListarAsync(string contaId, string? nome, CancellationToken ct)
+    public async Task<IReadOnlyList<CronogramaLeitura>> ListarAsync(Guid contaId, string? nome, CancellationToken ct)
     {
         var modelos = await dados.ListarCronogramasAsync(contaId, nome, ct);
         return modelos.Select(Ler).ToArray();
     }
 
-    public async Task<Resultado<CronogramaLeitura>> ObterAsync(string contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<CronogramaLeitura>> ObterAsync(Guid contaId, Guid id, CancellationToken ct)
     {
         var modelo = await dados.ObterCronogramaAsync(contaId, id, ct);
         return modelo is null
@@ -45,7 +45,7 @@ public sealed class CronogramaServico(IDados dados)
             : Resultado<CronogramaLeitura>.Sucesso(Ler(modelo));
     }
 
-    public async Task<Resultado<CronogramaLeitura>> CriarAsync(string contaId, SalvarCronograma pedido, CancellationToken ct)
+    public async Task<Resultado<CronogramaLeitura>> CriarAsync(Guid contaId, SalvarCronograma pedido, CancellationToken ct)
     {
         var montado = Montar(contaId, Guid.NewGuid(), pedido);
         if (!montado.Ok)
@@ -57,7 +57,7 @@ public sealed class CronogramaServico(IDados dados)
         return Resultado<CronogramaLeitura>.Sucesso(Ler(montado.Valor!));
     }
 
-    public async Task<Resultado<CronogramaLeitura>> AtualizarAsync(string contaId, Guid id, SalvarCronograma pedido, CancellationToken ct)
+    public async Task<Resultado<CronogramaLeitura>> AtualizarAsync(Guid contaId, Guid id, SalvarCronograma pedido, CancellationToken ct)
     {
         var modelo = await dados.ObterCronogramaAsync(contaId, id, ct);
         if (modelo is null)
@@ -83,7 +83,7 @@ public sealed class CronogramaServico(IDados dados)
         return Resultado<CronogramaLeitura>.Sucesso(Ler(modelo));
     }
 
-    public async Task<Resultado<CronogramaLeitura>> ClonarAsync(string contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<CronogramaLeitura>> ClonarAsync(Guid contaId, Guid id, CancellationToken ct)
     {
         var origem = await dados.ObterCronogramaAsync(contaId, id, ct);
         if (origem is null)
@@ -118,7 +118,7 @@ public sealed class CronogramaServico(IDados dados)
         return Resultado<CronogramaLeitura>.Sucesso(Ler(copia));
     }
 
-    public async Task<Resultado<bool>> ExcluirAsync(string contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<bool>> ExcluirAsync(Guid contaId, Guid id, CancellationToken ct)
     {
         var modelo = await dados.ObterCronogramaAsync(contaId, id, ct);
         if (modelo is null)
@@ -130,7 +130,7 @@ public sealed class CronogramaServico(IDados dados)
         return Resultado<bool>.Sucesso(true);
     }
 
-    private static Resultado<ModeloCronograma> Montar(string contaId, Guid id, SalvarCronograma pedido)
+    private static Resultado<ModeloCronograma> Montar(Guid contaId, Guid id, SalvarCronograma pedido)
     {
         var titulo = Domain.Comum.Texto.Limpo(pedido.Titulo);
         if (titulo is null)

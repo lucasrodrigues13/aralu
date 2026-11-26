@@ -12,7 +12,7 @@ public sealed class TarefaFunil
 {
     public Guid Id { get; set; }
 
-    public string ContaId { get; set; } = "";
+    public Guid ContaId { get; set; }
 
     public Guid OportunidadeId { get; set; }
 

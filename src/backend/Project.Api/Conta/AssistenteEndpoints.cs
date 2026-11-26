@@ -77,7 +77,7 @@ public static class AssistenteEndpoints
         usuario.IsInRole(Papeis.Organizer)
         || (usuario.IsInRole(Papeis.Assistant) && usuario.FindFirstValue(ClaimFinanceiro) == "true");
 
-    private static string? Conta(ClaimsPrincipal usuario) => ContaAtual.De(usuario);
+    private static Guid? Conta(ClaimsPrincipal usuario) => ContaAtual.De(usuario);
 
     private static async Task<IResult> AceitarConvite(AceitarConvitePedido pedido, AssistenteServico servico, CancellationToken ct)
     {

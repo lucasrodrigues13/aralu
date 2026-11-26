@@ -23,13 +23,13 @@ public sealed record SalvarRoteiro(string? Nome, IReadOnlyList<SecaoRoteiroPedid
 
 public sealed class RoteiroServico(IDados dados)
 {
-    public async Task<IReadOnlyList<RoteiroLeitura>> ListarAsync(string contaId, string? nome, CancellationToken ct)
+    public async Task<IReadOnlyList<RoteiroLeitura>> ListarAsync(Guid contaId, string? nome, CancellationToken ct)
     {
         var modelos = await dados.ListarRoteirosAsync(contaId, nome, ct);
         return modelos.Select(Ler).ToArray();
     }
 
-    public async Task<Resultado<RoteiroLeitura>> ObterAsync(string contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<RoteiroLeitura>> ObterAsync(Guid contaId, Guid id, CancellationToken ct)
     {
         var modelo = await dados.ObterRoteiroAsync(contaId, id, ct);
         return modelo is null
@@ -37,7 +37,7 @@ public sealed class RoteiroServico(IDados dados)
             : Resultado<RoteiroLeitura>.Sucesso(Ler(modelo));
     }
 
-    public async Task<Resultado<RoteiroLeitura>> CriarAsync(string contaId, SalvarRoteiro pedido, CancellationToken ct)
+    public async Task<Resultado<RoteiroLeitura>> CriarAsync(Guid contaId, SalvarRoteiro pedido, CancellationToken ct)
     {
         var montado = Montar(contaId, Guid.NewGuid(), pedido);
         if (!montado.Ok)
@@ -49,7 +49,7 @@ public sealed class RoteiroServico(IDados dados)
         return Resultado<RoteiroLeitura>.Sucesso(Ler(montado.Valor!));
     }
 
-    public async Task<Resultado<RoteiroLeitura>> AtualizarAsync(string contaId, Guid id, SalvarRoteiro pedido, CancellationToken ct)
+    public async Task<Resultado<RoteiroLeitura>> AtualizarAsync(Guid contaId, Guid id, SalvarRoteiro pedido, CancellationToken ct)
     {
         var modelo = await dados.ObterRoteiroAsync(contaId, id, ct);
         if (modelo is null)
@@ -74,7 +74,7 @@ public sealed class RoteiroServico(IDados dados)
         return Resultado<RoteiroLeitura>.Sucesso(Ler(modelo));
     }
 
-    public async Task<Resultado<RoteiroLeitura>> ClonarAsync(string contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<RoteiroLeitura>> ClonarAsync(Guid contaId, Guid id, CancellationToken ct)
     {
         var origem = await dados.ObterRoteiroAsync(contaId, id, ct);
         if (origem is null)
@@ -118,7 +118,7 @@ public sealed class RoteiroServico(IDados dados)
         return Resultado<RoteiroLeitura>.Sucesso(Ler(copia));
     }
 
-    public async Task<Resultado<bool>> ExcluirAsync(string contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<bool>> ExcluirAsync(Guid contaId, Guid id, CancellationToken ct)
     {
         var modelo = await dados.ObterRoteiroAsync(contaId, id, ct);
         if (modelo is null)
@@ -130,7 +130,7 @@ public sealed class RoteiroServico(IDados dados)
         return Resultado<bool>.Sucesso(true);
     }
 
-    private static Resultado<ModeloRoteiro> Montar(string contaId, Guid id, SalvarRoteiro pedido)
+    private static Resultado<ModeloRoteiro> Montar(Guid contaId, Guid id, SalvarRoteiro pedido)
     {
         var nome = Domain.Comum.Texto.Limpo(pedido.Nome);
         if (nome is null)

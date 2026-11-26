@@ -16,7 +16,7 @@ public sealed class Assistente
 {
     public Guid Id { get; set; }
 
-    public string ContaId { get; set; } = "";
+    public Guid ContaId { get; set; }
 
     public string UsuarioId { get; set; } = "";
 

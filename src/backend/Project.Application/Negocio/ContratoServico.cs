@@ -27,9 +27,9 @@ public sealed record CamposContratoLeitura(IReadOnlyList<CampoMesclagem> Campos)
 
 public interface IDadosContrato
 {
-    Task<IReadOnlyList<ContratoConta>> ListarAsync(string contaId, CancellationToken ct);
+    Task<IReadOnlyList<ContratoConta>> ListarAsync(Guid contaId, CancellationToken ct);
 
-    Task<ContratoConta?> ObterAsync(string contaId, Guid id, CancellationToken ct);
+    Task<ContratoConta?> ObterAsync(Guid contaId, Guid id, CancellationToken ct);
 
     Task InserirAsync(ContratoConta contrato, CancellationToken ct);
 
@@ -43,13 +43,13 @@ public sealed class ContratoServico(IDadosContrato dados, IArmazenamentoArquivo?
 {
     public CamposContratoLeitura Campos() => new(Mesclagem.Campos);
 
-    public async Task<IReadOnlyList<ContratoResumo>> ListarAsync(string contaId, CancellationToken ct) =>
+    public async Task<IReadOnlyList<ContratoResumo>> ListarAsync(Guid contaId, CancellationToken ct) =>
         (await dados.ListarAsync(contaId, ct))
             .OrderBy(item => item.Nome, StringComparer.CurrentCultureIgnoreCase)
             .Select(item => new ContratoResumo(item.Id, item.Nome, item.AtualizadoEm, item.Formato))
             .ToArray();
 
-    public async Task<Resultado<ContratoLeitura>> ObterAsync(string contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<ContratoLeitura>> ObterAsync(Guid contaId, Guid id, CancellationToken ct)
     {
         var contrato = await dados.ObterAsync(contaId, id, ct);
         return contrato is null
@@ -57,7 +57,7 @@ public sealed class ContratoServico(IDadosContrato dados, IArmazenamentoArquivo?
             : Resultado<ContratoLeitura>.Sucesso(Ler(contrato));
     }
 
-    public async Task<Resultado<ContratoLeitura>> SalvarAsync(string contaId, Guid? id, SalvarContrato pedido, CancellationToken ct)
+    public async Task<Resultado<ContratoLeitura>> SalvarAsync(Guid contaId, Guid? id, SalvarContrato pedido, CancellationToken ct)
     {
         var nome = Domain.Comum.Texto.Limpo(pedido.Nome);
         if (nome is null || nome.Length > 120)
@@ -129,7 +129,7 @@ public sealed class ContratoServico(IDadosContrato dados, IArmazenamentoArquivo?
         return Resultado<ContratoLeitura>.Sucesso(Ler(contrato));
     }
 
-    public async Task<Resultado<bool>> ExcluirAsync(string contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<bool>> ExcluirAsync(Guid contaId, Guid id, CancellationToken ct)
     {
         var contrato = await dados.ObterAsync(contaId, id, ct);
         if (contrato is null)
@@ -143,7 +143,7 @@ public sealed class ContratoServico(IDadosContrato dados, IArmazenamentoArquivo?
     }
 
     /// <summary>Liga (ou, com arquivo nulo, desliga) a logo ou o fundo (SPEC-056). Devolve o arquivo ligado antes.</summary>
-    public async Task<Resultado<Guid?>> DefinirImagemAsync(string contaId, Guid id, bool logo, Guid? arquivoId, CancellationToken ct)
+    public async Task<Resultado<Guid?>> DefinirImagemAsync(Guid contaId, Guid id, bool logo, Guid? arquivoId, CancellationToken ct)
     {
         var contrato = await dados.ObterAsync(contaId, id, ct);
         if (contrato is null)
@@ -167,7 +167,7 @@ public sealed class ContratoServico(IDadosContrato dados, IArmazenamentoArquivo?
     }
 
     /// <summary>Live Preview do Word: o documento com os exemplos destacados no lugar das tags.</summary>
-    public async Task<Resultado<PreviaWord>> PreviaWordAsync(string contaId, Guid arquivoId, CancellationToken ct)
+    public async Task<Resultado<PreviaWord>> PreviaWordAsync(Guid contaId, Guid arquivoId, CancellationToken ct)
     {
         var lido = await LerWordAsync(contaId, arquivoId, ct);
         if (lido is null)
@@ -185,7 +185,7 @@ public sealed class ContratoServico(IDadosContrato dados, IArmazenamentoArquivo?
             tags.Where(tag => !conhecidas.Contains(tag)).ToArray()));
     }
 
-    private async Task<(byte[] Bytes, string Nome)?> LerWordAsync(string contaId, Guid arquivoId, CancellationToken ct)
+    private async Task<(byte[] Bytes, string Nome)?> LerWordAsync(Guid contaId, Guid arquivoId, CancellationToken ct)
     {
         if (arquivos is null)
         {

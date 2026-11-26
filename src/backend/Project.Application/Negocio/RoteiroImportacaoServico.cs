@@ -20,7 +20,7 @@ public sealed class RoteiroImportacaoServico(RoteiroServico roteiros, IPlanilhaR
     public byte[] Modelo() => planilha.Modelo();
 
     public async Task<Resultado<ResultadoImportacaoRoteiro>> ImportarAsync(
-        string contaId, string? nome, Stream arquivo, string? nomeArquivo, CancellationToken ct)
+        Guid contaId, string? nome, Stream arquivo, string? nomeArquivo, CancellationToken ct)
     {
         var nomeModelo = Domain.Comum.Texto.Limpo(nome) ?? Domain.Comum.Texto.Limpo(Path.GetFileNameWithoutExtension(nomeArquivo ?? ""));
         if (nomeModelo is null)

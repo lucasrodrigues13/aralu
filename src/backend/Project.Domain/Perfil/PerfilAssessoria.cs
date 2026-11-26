@@ -4,7 +4,7 @@ public sealed class PerfilAssessoria
 {
     public Guid Id { get; set; }
 
-    public string ContaId { get; set; } = "";
+    public Guid ContaId { get; set; }
 
     public string? NomeEmpresa { get; set; }
 

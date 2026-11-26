@@ -6,7 +6,7 @@ public sealed class ModeloEvento
 {
     public Guid Id { get; set; }
 
-    public string ContaId { get; set; } = "";
+    public Guid ContaId { get; set; }
 
     public string Nome { get; set; } = "";
 

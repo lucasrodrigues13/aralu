@@ -50,7 +50,7 @@ public static class EstatisticasCalculo
 
 public sealed class EstatisticasServico(IDados dados)
 {
-    public async Task<EstatisticasEventos> ObterAsync(string contaId, DateTimeOffset agoraUtc, CancellationToken ct, IReadOnlySet<Guid>? liberados = null)
+    public async Task<EstatisticasEventos> ObterAsync(Guid contaId, DateTimeOffset agoraUtc, CancellationToken ct, IReadOnlySet<Guid>? liberados = null)
     {
         var contagens = await dados.ContarEventosAsync(contaId, ct, liberados);
         var mapa = contagens.ToDictionary(item => item.Situacao, item => item.Quantidade);

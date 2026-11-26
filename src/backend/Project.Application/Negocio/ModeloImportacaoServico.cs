@@ -57,7 +57,7 @@ public sealed class ModeloImportacaoServico(IDados dados, IPlanilhaTarefasModelo
     public byte[] PlanilhaPadrao() => planilha.Modelo();
 
     public async Task<Resultado<PreviaAplicarModelo>> PreviaAplicarAsync(
-        string contaId, Guid eventoId, Guid modeloId, CancellationToken ct)
+        Guid contaId, Guid eventoId, Guid modeloId, CancellationToken ct)
     {
         var montado = await MontarAplicacaoAsync(contaId, eventoId, modeloId, gravarCadastro: false, ct);
         return montado.Ok
@@ -66,7 +66,7 @@ public sealed class ModeloImportacaoServico(IDados dados, IPlanilhaTarefasModelo
     }
 
     public async Task<Resultado<PreviaAplicarModelo>> AplicarAsync(
-        string contaId, Guid eventoId, Guid modeloId, CancellationToken ct)
+        Guid contaId, Guid eventoId, Guid modeloId, CancellationToken ct)
     {
         var montado = await MontarAplicacaoAsync(contaId, eventoId, modeloId, gravarCadastro: true, ct);
         if (!montado.Ok)
@@ -80,7 +80,7 @@ public sealed class ModeloImportacaoServico(IDados dados, IPlanilhaTarefasModelo
     }
 
     public async Task<Resultado<PreviaSalvarComoModelo>> PreviaSalvarComoModeloAsync(
-        string contaId, Guid eventoId, string? nome, CancellationToken ct)
+        Guid contaId, Guid eventoId, string? nome, CancellationToken ct)
     {
         var montado = await MontarSalvarComoModeloAsync(contaId, eventoId, nome, gravarCadastro: false, ct);
         return montado.Ok
@@ -89,7 +89,7 @@ public sealed class ModeloImportacaoServico(IDados dados, IPlanilhaTarefasModelo
     }
 
     public async Task<Resultado<ModeloLeitura>> SalvarComoModeloAsync(
-        string contaId, Guid eventoId, string? nome, CancellationToken ct)
+        Guid contaId, Guid eventoId, string? nome, CancellationToken ct)
     {
         var montado = await MontarSalvarComoModeloAsync(contaId, eventoId, nome, gravarCadastro: true, ct);
         if (!montado.Ok)
@@ -103,7 +103,7 @@ public sealed class ModeloImportacaoServico(IDados dados, IPlanilhaTarefasModelo
 
     /// <summary>Adicionar tarefas em massa no evento (SPEC-012 v3 §6.4 e SPEC-003 v5): tudo grava junto.</summary>
     public async Task<Resultado<ResultadoEmMassa>> AdicionarEmMassaNoEventoAsync(
-        string contaId, Guid eventoId, TarefasEmMassaEvento pedido, CancellationToken ct)
+        Guid contaId, Guid eventoId, TarefasEmMassaEvento pedido, CancellationToken ct)
     {
         var evento = await dados.ObterEventoAsync(contaId, eventoId, ct);
         if (evento is null)
@@ -197,7 +197,7 @@ public sealed class ModeloImportacaoServico(IDados dados, IPlanilhaTarefasModelo
                 PrazoRelativo = linha.PrazoRelativo,
                 Prazo = linha.PrazoRelativo is null ? linha.Prazo : null,
                 Situacao = SituacaoTarefa.Pendente,
-                ResponsavelContaId = contaId,
+                ResponsavelContaId = contaId.ToString(),
                 Prioridade = linha.Prioridade ?? PrioridadeTarefa.Media,
                 Visibilidade = VisibilidadeTarefa.SoEu,
                 ServicoEventoId = servicoEventoId,
@@ -218,7 +218,7 @@ public sealed class ModeloImportacaoServico(IDados dados, IPlanilhaTarefasModelo
     }
 
     private async Task<Resultado<(List<Tarefa> Tarefas, List<ServicoEvento> Servicos, PreviaAplicarModelo Previa)>> MontarAplicacaoAsync(
-        string contaId, Guid eventoId, Guid modeloId, bool gravarCadastro, CancellationToken ct)
+        Guid contaId, Guid eventoId, Guid modeloId, bool gravarCadastro, CancellationToken ct)
     {
         var evento = await dados.ObterEventoAsync(contaId, eventoId, ct);
         if (evento is null || evento.Situacao != SituacaoEvento.EmAndamento)
@@ -295,7 +295,7 @@ public sealed class ModeloImportacaoServico(IDados dados, IPlanilhaTarefasModelo
     }
 
     /// <summary>Tarefa do evento a partir da tarefa do modelo (SPEC-012 v3 §8.8): pendente, papéis, prazo relativo.</summary>
-    private static Tarefa TarefaDoModelo(TarefaModelo origem, Evento evento, string contaId, Guid? servicoEventoId)
+    private static Tarefa TarefaDoModelo(TarefaModelo origem, Evento evento, Guid contaId, Guid? servicoEventoId)
     {
         var tarefaId = Guid.NewGuid();
         var tarefa = new Tarefa
@@ -307,7 +307,7 @@ public sealed class ModeloImportacaoServico(IDados dados, IPlanilhaTarefasModelo
             Descricao = origem.Descricao,
             PrazoRelativo = origem.PrazoRelativo,
             Situacao = SituacaoTarefa.Pendente,
-            ResponsavelContaId = contaId,
+            ResponsavelContaId = contaId.ToString(),
             Prioridade = origem.Prioridade,
             Visibilidade = origem.Visibilidade,
             ServicoEventoId = servicoEventoId,
@@ -327,7 +327,7 @@ public sealed class ModeloImportacaoServico(IDados dados, IPlanilhaTarefasModelo
                 Ordem = item.Ordem,
                 PrazoRelativo = item.PrazoRelativo,
                 ResponsavelPapel = item.ResponsavelPapel,
-                ResponsavelReferenciaId = item.ResponsavelPapel == PapelResponsavel.Organizer ? contaId : null,
+                ResponsavelReferenciaId = item.ResponsavelPapel == PapelResponsavel.Organizer ? contaId.ToString() : null,
             });
         }
 
@@ -336,7 +336,7 @@ public sealed class ModeloImportacaoServico(IDados dados, IPlanilhaTarefasModelo
     }
 
     private async Task<Resultado<(ModeloEvento Modelo, PreviaSalvarComoModelo Previa)>> MontarSalvarComoModeloAsync(
-        string contaId, Guid eventoId, string? nome, bool gravarCadastro, CancellationToken ct)
+        Guid contaId, Guid eventoId, string? nome, bool gravarCadastro, CancellationToken ct)
     {
         var evento = await dados.ObterEventoAsync(contaId, eventoId, ct);
         if (evento is null || evento.Situacao != SituacaoEvento.EmAndamento)
@@ -426,14 +426,14 @@ public sealed class ModeloImportacaoServico(IDados dados, IPlanilhaTarefasModelo
         return Resultado<(ModeloEvento, PreviaSalvarComoModelo)>.Sucesso((modelo, previa));
     }
 
-    private static ResponsavelTarefa Responsavel(Guid tarefaId, string contaId, PapelResponsavel papel, string? referenciaId) => new()
+    private static ResponsavelTarefa Responsavel(Guid tarefaId, Guid contaId, PapelResponsavel papel, string? referenciaId) => new()
     {
         Id = Guid.NewGuid(),
         TarefaId = tarefaId,
         Papel = papel,
         ReferenciaId = papel switch
         {
-            PapelResponsavel.Organizer => contaId,
+            PapelResponsavel.Organizer => contaId.ToString(),
             PapelResponsavel.Assistente => referenciaId,
             _ => null,
         },

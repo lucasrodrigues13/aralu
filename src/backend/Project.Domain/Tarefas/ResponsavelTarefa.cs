@@ -10,11 +10,11 @@ public sealed class ResponsavelTarefa
 
     public string? ReferenciaId { get; set; }
 
-    public static ResponsavelTarefa Organizer(Guid tarefaId, string contaId) => new()
+    public static ResponsavelTarefa Organizer(Guid tarefaId, Guid contaId) => new()
     {
         Id = Guid.NewGuid(),
         TarefaId = tarefaId,
         Papel = PapelResponsavel.Organizer,
-        ReferenciaId = contaId,
+        ReferenciaId = contaId.ToString(),
     };
 }

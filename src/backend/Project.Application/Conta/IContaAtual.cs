@@ -7,5 +7,5 @@ namespace Project.Application.Conta;
 public interface IContaAtual
 {
     /// <summary>Id da conta do usuário autenticado, ou null se não houver.</summary>
-    string? Id { get; }
+    Guid? Id { get; }
 }

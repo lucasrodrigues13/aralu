@@ -20,7 +20,7 @@ public sealed class FornecedorImportacaoServico(FornecedorServico fornecedores, 
     public byte[] Modelo() => planilha.Modelo();
 
     public async Task<Resultado<ResultadoImportacaoFornecedores>> ImportarAsync(
-        string contaId, Stream arquivo, string? nomeArquivo, CancellationToken ct)
+        Guid contaId, Stream arquivo, string? nomeArquivo, CancellationToken ct)
     {
         var lido = planilha.Ler(arquivo, nomeArquivo);
         if (!lido.Ok)

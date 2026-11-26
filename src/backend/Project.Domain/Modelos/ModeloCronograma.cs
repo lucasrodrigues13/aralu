@@ -4,7 +4,7 @@ public sealed class ModeloCronograma
 {
     public Guid Id { get; set; }
 
-    public string ContaId { get; set; } = "";
+    public Guid ContaId { get; set; }
 
     public string Titulo { get; set; } = "";
 

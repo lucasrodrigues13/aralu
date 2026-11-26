@@ -14,6 +14,31 @@ namespace Project.Infrastructure.Persistencia;
 
 public static class Mapa
 {
+    /// <summary>
+    /// Toda entidade com ContaId (Guid) ganha FK RESTRICT para Contas (SPEC-062, RF-110).
+    /// Roda depois do Aplicar, para pegar todas as entidades já mapeadas.
+    /// </summary>
+    public static void LigarContas(ModelBuilder modelBuilder)
+    {
+        var conta = modelBuilder.Entity<ContaAssessoria>();
+        conta.ToTable("Contas");
+        conta.HasOne<ApplicationUser>().WithMany().HasForeignKey(item => item.DonoUsuarioId).OnDelete(DeleteBehavior.Restrict);
+
+        var comConta = modelBuilder.Model.GetEntityTypes()
+            .Where(tipo => !tipo.IsOwned() && tipo.ClrType != typeof(ContaAssessoria))
+            .Where(tipo => tipo.FindProperty("ContaId")?.ClrType == typeof(Guid))
+            .Select(tipo => tipo.ClrType)
+            .ToList();
+        foreach (var tipo in comConta)
+        {
+            modelBuilder.Entity(tipo)
+                .HasOne(typeof(ContaAssessoria))
+                .WithMany()
+                .HasForeignKey("ContaId")
+                .OnDelete(DeleteBehavior.Restrict);
+        }
+    }
+
     public static void Aplicar(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<ApplicationUser>()
@@ -97,7 +122,6 @@ public static class Mapa
 
         var linkCliente = modelBuilder.Entity<LinkCliente>();
         linkCliente.ToTable("LinksCliente");
-        linkCliente.Property(item => item.ContaId).HasMaxLength(450);
         linkCliente.Property(item => item.Token).HasMaxLength(64);
         linkCliente.HasIndex(item => item.Token).IsUnique();
         linkCliente.HasIndex(item => item.EventoId).IsUnique();
@@ -105,7 +129,6 @@ public static class Mapa
 
         var linkPortaria = modelBuilder.Entity<LinkPortaria>();
         linkPortaria.ToTable("LinksPortaria");
-        linkPortaria.Property(item => item.ContaId).HasMaxLength(450);
         linkPortaria.Property(item => item.Token).HasMaxLength(64);
         linkPortaria.HasIndex(item => item.Token).IsUnique();
         linkPortaria.HasIndex(item => item.EventoId).IsUnique();
@@ -113,7 +136,6 @@ public static class Mapa
 
         var importacao = modelBuilder.Entity<ImportacaoConvidados>();
         importacao.ToTable("ImportacoesConvidados");
-        importacao.Property(item => item.ContaId).HasMaxLength(450);
         importacao.Property(item => item.NomeArquivo).HasMaxLength(260);
         importacao.Property(item => item.ObservacaoFixa).HasMaxLength(200);
         importacao.Property(item => item.Situacao).HasConversion<string>().HasMaxLength(20);

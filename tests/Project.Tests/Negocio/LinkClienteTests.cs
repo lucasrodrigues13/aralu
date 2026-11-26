@@ -10,7 +10,8 @@ namespace Project.Tests.Negocio;
 public class LinkClienteTests
 {
     private static readonly Guid EventoId = Guid.NewGuid();
-    private const string Conta = "conta-1";
+    private static readonly Guid Conta = Guid.Parse("11111111-1111-1111-1111-111111111111");
+    private static readonly Guid OutraConta = Guid.Parse("99999999-9999-9999-9999-999999999999");
 
     private static (LinkClienteServico Servico, DadosFalsos Dados) Criar()
     {
@@ -64,9 +65,9 @@ public class LinkClienteTests
     {
         var (servico, _) = Criar();
 
-        Assert.Equal(Codigos.Indisponivel, (await servico.GerarAsync("outra", EventoId, DateTimeOffset.UtcNow, default)).Falha!.Codigo);
-        Assert.Equal(Codigos.Indisponivel, (await servico.ObterAsync("outra", EventoId, default)).Falha!.Codigo);
-        Assert.Equal(Codigos.Indisponivel, (await servico.SalvarAsync("outra", EventoId, new SalvarLinkCliente(true), default)).Falha!.Codigo);
+        Assert.Equal(Codigos.Indisponivel, (await servico.GerarAsync(OutraConta, EventoId, DateTimeOffset.UtcNow, default)).Falha!.Codigo);
+        Assert.Equal(Codigos.Indisponivel, (await servico.ObterAsync(OutraConta, EventoId, default)).Falha!.Codigo);
+        Assert.Equal(Codigos.Indisponivel, (await servico.SalvarAsync(OutraConta, EventoId, new SalvarLinkCliente(true), default)).Falha!.Codigo);
     }
 
     [Fact]
@@ -376,7 +377,7 @@ public class LinkClienteTests
             return Task.CompletedTask;
         }
 
-        public Task<EventoDoLink?> ObterEventoAsync(string contaId, Guid eventoId, CancellationToken ct) =>
+        public Task<EventoDoLink?> ObterEventoAsync(Guid contaId, Guid eventoId, CancellationToken ct) =>
             Task.FromResult<EventoDoLink?>(contaId == Conta && eventoId == EventoId ? new EventoDoLink(EventoId, Conta, "Casamento", null, EmAndamento) : null);
 
         public Task<LinkCliente?> ObterPorEventoAsync(Guid eventoId, CancellationToken ct) =>

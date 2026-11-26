@@ -36,14 +36,14 @@ public sealed record ModeloParaContratoFunil(Guid Id, string Nome, string Texto,
 public sealed class ContratoFunilServico(IDados dados, IDadosContrato modelos, IArmazenamentoArquivo? arquivos = null)
 {
     /// <summary>Modelos da conta para escolher ao criar o contrato (a assistente também escolhe, sem abrir a tela de modelos).</summary>
-    public async Task<IReadOnlyList<ModeloParaContratoFunil>> ModelosAsync(string contaId, CancellationToken ct) =>
+    public async Task<IReadOnlyList<ModeloParaContratoFunil>> ModelosAsync(Guid contaId, CancellationToken ct) =>
         (await modelos.ListarAsync(contaId, ct))
             .OrderBy(item => item.Nome, StringComparer.CurrentCultureIgnoreCase)
             .Select(item => new ModeloParaContratoFunil(item.Id, item.Nome, item.Texto, item.Formato))
             .ToArray();
 
     public async Task<IReadOnlyList<ContratoFunilLeitura>> ListarAsync(
-        string contaId,
+        Guid contaId,
         string? situacao,
         string? busca,
         DateOnly? criadoDe,
@@ -63,7 +63,7 @@ public sealed class ContratoFunilServico(IDados dados, IDadosContrato modelos, I
         return itens.Select(item => Ler(item, nomes.GetValueOrDefault(item.OportunidadeId, ""))).ToArray();
     }
 
-    public async Task<Resultado<ContratoFunilLeitura>> ObterAsync(string contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<ContratoFunilLeitura>> ObterAsync(Guid contaId, Guid id, CancellationToken ct)
     {
         var item = await dados.ObterContratoFunilAsync(contaId, id, ct);
         if (item is null)
@@ -75,7 +75,7 @@ public sealed class ContratoFunilServico(IDados dados, IDadosContrato modelos, I
         return Resultado<ContratoFunilLeitura>.Sucesso(await LerComDetalheAsync(contaId, item, nomes.GetValueOrDefault(item.OportunidadeId, ""), ct));
     }
 
-    public async Task<Resultado<ContratoFunilLeitura>> CriarAsync(string contaId, SalvarContratoFunil pedido, CancellationToken ct, string? criadoPor = null)
+    public async Task<Resultado<ContratoFunilLeitura>> CriarAsync(Guid contaId, SalvarContratoFunil pedido, CancellationToken ct, string? criadoPor = null)
     {
         if (pedido.OportunidadeId is not Guid oportunidadeId ||
             await dados.ObterOportunidadeAsync(contaId, oportunidadeId, ct) is not { } oportunidade)
@@ -181,7 +181,7 @@ public sealed class ContratoFunilServico(IDados dados, IDadosContrato modelos, I
     }
 
     public async Task<Resultado<ContratoFunilLeitura>> AtualizarAsync(
-        string contaId,
+        Guid contaId,
         Guid id,
         SalvarContratoFunil pedido,
         CancellationToken ct)
@@ -214,7 +214,7 @@ public sealed class ContratoFunilServico(IDados dados, IDadosContrato modelos, I
         return Resultado<ContratoFunilLeitura>.Sucesso(Ler(item, nomes.GetValueOrDefault(item.OportunidadeId, "")));
     }
 
-    public Task<Resultado<ContratoFunilLeitura>> EnviarAsync(string contaId, Guid id, CancellationToken ct) =>
+    public Task<Resultado<ContratoFunilLeitura>> EnviarAsync(Guid contaId, Guid id, CancellationToken ct) =>
         MudarAsync(contaId, id, item =>
         {
             if (item.Situacao != SituacaoContratoFunil.EmAndamento)
@@ -226,7 +226,7 @@ public sealed class ContratoFunilServico(IDados dados, IDadosContrato modelos, I
             return null;
         }, ct);
 
-    public Task<Resultado<ContratoFunilLeitura>> AssinarAsync(string contaId, Guid id, CancellationToken ct) =>
+    public Task<Resultado<ContratoFunilLeitura>> AssinarAsync(Guid contaId, Guid id, CancellationToken ct) =>
         MudarAsync(contaId, id, item =>
         {
             if (item.Situacao != SituacaoContratoFunil.EmAndamento)
@@ -239,7 +239,7 @@ public sealed class ContratoFunilServico(IDados dados, IDadosContrato modelos, I
             return null;
         }, ct);
 
-    public Task<Resultado<ContratoFunilLeitura>> CancelarAsync(string contaId, Guid id, CancellationToken ct) =>
+    public Task<Resultado<ContratoFunilLeitura>> CancelarAsync(Guid contaId, Guid id, CancellationToken ct) =>
         MudarAsync(contaId, id, item =>
         {
             if (item.Situacao == SituacaoContratoFunil.Cancelado)
@@ -252,7 +252,7 @@ public sealed class ContratoFunilServico(IDados dados, IDadosContrato modelos, I
         }, ct);
 
     /// <param name="soCriadoPor">Quando informado (assistente), só exclui o que ele mesmo criou (SPEC-032 §18, passo 1).</param>
-    public async Task<Resultado<bool>> ExcluirAsync(string contaId, Guid id, CancellationToken ct, string? soCriadoPor = null)
+    public async Task<Resultado<bool>> ExcluirAsync(Guid contaId, Guid id, CancellationToken ct, string? soCriadoPor = null)
     {
         var item = await dados.ObterContratoFunilAsync(contaId, id, ct);
         if (item is null)
@@ -275,7 +275,7 @@ public sealed class ContratoFunilServico(IDados dados, IDadosContrato modelos, I
     }
 
     private async Task<Resultado<ContratoFunilLeitura>> MudarAsync(
-        string contaId,
+        Guid contaId,
         Guid id,
         Func<ContratoFunil, string?> aplicar,
         CancellationToken ct)
@@ -300,7 +300,7 @@ public sealed class ContratoFunilServico(IDados dados, IDadosContrato modelos, I
 
     /// <summary>Registra o que o cliente pagou de uma parcela do contrato (SPEC-040; antigo "Recebi").</summary>
     public async Task<Resultado<ContratoFunilLeitura>> ReceberAsync(
-        string contaId,
+        Guid contaId,
         Guid contratoId,
         Guid parcelaId,
         ReceberParcela pedido,
@@ -361,7 +361,7 @@ public sealed class ContratoFunilServico(IDados dados, IDadosContrato modelos, I
     /// Define (ou refaz) o parcelamento do contrato na Gestão Financeira (SPEC-041). O total é o valor do orçamento
     /// aprovado da oportunidade; "à vista" é uma parcela só. Só vale enquanto não há recebimento registrado.
     /// </summary>
-    public async Task<Resultado<ContratoFunilLeitura>> DefinirParcelasAsync(string contaId, Guid id, PedidoParcelas pedido, CancellationToken ct)
+    public async Task<Resultado<ContratoFunilLeitura>> DefinirParcelasAsync(Guid contaId, Guid id, PedidoParcelas pedido, CancellationToken ct)
     {
         var item = await dados.ObterContratoFunilAsync(contaId, id, ct);
         if (item is null)
@@ -410,7 +410,7 @@ public sealed class ContratoFunilServico(IDados dados, IDadosContrato modelos, I
 
     /// <summary>Desfaz o último recebimento da parcela.</summary>
     public async Task<Resultado<ContratoFunilLeitura>> DesfazerRecebimentoAsync(
-        string contaId,
+        Guid contaId,
         Guid contratoId,
         Guid parcelaId,
         CancellationToken ct)
@@ -434,7 +434,7 @@ public sealed class ContratoFunilServico(IDados dados, IDadosContrato modelos, I
         return await LerAposMudancaAsync(contaId, item, ct);
     }
 
-    private async Task<Resultado<ContratoFunilLeitura>> LerAposMudancaAsync(string contaId, ContratoFunil item, CancellationToken ct)
+    private async Task<Resultado<ContratoFunilLeitura>> LerAposMudancaAsync(Guid contaId, ContratoFunil item, CancellationToken ct)
     {
         var nomes = await dados.NomesOportunidadesAsync(contaId, [item.OportunidadeId], ct);
         return Resultado<ContratoFunilLeitura>.Sucesso(
@@ -442,7 +442,7 @@ public sealed class ContratoFunilServico(IDados dados, IDadosContrato modelos, I
     }
 
     /// <summary>Leitura de um contrato só: traz também o telefone do contato e a chave Pix, que o "Cobrar" usa.</summary>
-    private async Task<ContratoFunilLeitura> LerComDetalheAsync(string contaId, ContratoFunil item, string oportunidadeNome, CancellationToken ct)
+    private async Task<ContratoFunilLeitura> LerComDetalheAsync(Guid contaId, ContratoFunil item, string oportunidadeNome, CancellationToken ct)
     {
         var oportunidade = await dados.ObterOportunidadeAsync(contaId, item.OportunidadeId, ct);
         var perfil = await dados.ObterPerfilAsync(contaId, ct);
@@ -474,7 +474,7 @@ public sealed class ContratoFunilServico(IDados dados, IDadosContrato modelos, I
 
     /// <summary>Preenche o .docx do modelo com os dados reais e guarda o resultado; devolve o arquivo e o texto simples.</summary>
     private async Task<Resultado<(Guid Id, string Texto)>> GerarWordAsync(
-        string contaId,
+        Guid contaId,
         ContratoConta modelo,
         IReadOnlyDictionary<string, string?> valores,
         string oportunidadeNome,

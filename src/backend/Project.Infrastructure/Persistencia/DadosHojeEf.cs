@@ -13,7 +13,7 @@ namespace Project.Infrastructure.Persistencia;
 
 public sealed class DadosHojeEf(AppDbContext banco) : IDadosHoje
 {
-    public async Task<IReadOnlyList<TarefaSemResponsavelAtivo>> TarefasSemResponsavelAtivoAsync(string contaId, CancellationToken ct)
+    public async Task<IReadOnlyList<TarefaSemResponsavelAtivo>> TarefasSemResponsavelAtivoAsync(Guid contaId, CancellationToken ct)
     {
         var removidas = await banco.Assistentes.AsNoTracking()
             .Where(item => item.ContaId == contaId && (item.Situacao == SituacaoAssistente.Removida || item.Situacao == SituacaoAssistente.Inativa))
@@ -69,7 +69,7 @@ public sealed class DadosHojeEf(AppDbContext banco) : IDadosHoje
         return resultado.OrderBy(item => item.Prazo ?? DateOnly.MaxValue).ThenBy(item => item.Titulo).ToArray();
     }
 
-    public async Task<IReadOnlyList<RetornoFunilHoje>> RetornosFunilAsync(string contaId, DateOnly ate, CancellationToken ct) =>
+    public async Task<IReadOnlyList<RetornoFunilHoje>> RetornosFunilAsync(Guid contaId, DateOnly ate, CancellationToken ct) =>
         await banco.Oportunidades.AsNoTracking()
             .Where(item => item.ContaId == contaId
                 && item.RetornarEm != null
@@ -78,19 +78,19 @@ public sealed class DadosHojeEf(AppDbContext banco) : IDadosHoje
             .Select(item => new RetornoFunilHoje(item.Id, item.Nome, item.EstagioFunil!.Nome, item.RetornarEm!.Value, item.RetornarHora, false))
             .ToListAsync(ct);
 
-    public async Task<IReadOnlyList<EventoHojeDado>> EventosEmAndamentoAsync(string contaId, CancellationToken ct) =>
+    public async Task<IReadOnlyList<EventoHojeDado>> EventosEmAndamentoAsync(Guid contaId, CancellationToken ct) =>
         await banco.Eventos.AsNoTracking()
             .Where(evento => evento.ContaId == contaId && evento.Situacao == SituacaoEvento.EmAndamento)
             .Select(evento => new EventoHojeDado(evento.Id, evento.Nome, evento.Data))
             .ToListAsync(ct);
 
-    public async Task<IReadOnlyList<TarefaHojeDado>> TarefasAsync(string contaId, IReadOnlyCollection<Guid> eventoIds, CancellationToken ct) =>
+    public async Task<IReadOnlyList<TarefaHojeDado>> TarefasAsync(Guid contaId, IReadOnlyCollection<Guid> eventoIds, CancellationToken ct) =>
         await banco.Tarefas.AsNoTracking()
             .Where(tarefa => tarefa.ContaId == contaId && eventoIds.Contains(tarefa.EventoId))
             .Select(tarefa => new TarefaHojeDado(tarefa.EventoId, tarefa.Prazo, tarefa.Situacao))
             .ToListAsync(ct);
 
-    public async Task<IReadOnlyList<ConvidadosEventoDado>> ConvidadosAsync(string contaId, IReadOnlyCollection<Guid> eventoIds, CancellationToken ct) =>
+    public async Task<IReadOnlyList<ConvidadosEventoDado>> ConvidadosAsync(Guid contaId, IReadOnlyCollection<Guid> eventoIds, CancellationToken ct) =>
         await banco.Convidados.AsNoTracking()
             .Join(
                 banco.Convites.AsNoTracking().Where(convite => convite.ContaId == contaId && eventoIds.Contains(convite.EventoId)),
@@ -106,7 +106,7 @@ public sealed class DadosHojeEf(AppDbContext banco) : IDadosHoje
                 grupo.Count(item => item.Situacao == SituacaoConvidado.NaoComparecera)))
             .ToListAsync(ct);
 
-    public async Task<IReadOnlyList<ParcelaHojeDado>> CobrancasAsync(string contaId, DateOnly ate, CancellationToken ct)
+    public async Task<IReadOnlyList<ParcelaHojeDado>> CobrancasAsync(Guid contaId, DateOnly ate, CancellationToken ct)
     {
         var contratos = await banco.ContratosFunil.AsNoTracking()
             .Include(contrato => contrato.Parcelas).ThenInclude(parcela => parcela.Recebimentos)
@@ -131,7 +131,7 @@ public sealed class DadosHojeEf(AppDbContext banco) : IDadosHoje
     }
 
     public async Task<IReadOnlyList<PagamentoSemanaDado>> PagamentosPendentesAsync(
-        string contaId,
+        Guid contaId,
         IReadOnlyCollection<Guid> eventoIds,
         DateOnly de,
         DateOnly ate,
@@ -146,7 +146,7 @@ public sealed class DadosHojeEf(AppDbContext banco) : IDadosHoje
             .Select(parcela => new PagamentoSemanaDado(parcela.Vencimento, parcela.Valor))
             .ToListAsync(ct);
 
-    public async Task<ConfiguracaoContaDado> ConfiguracaoAsync(string contaId, CancellationToken ct)
+    public async Task<ConfiguracaoContaDado> ConfiguracaoAsync(Guid contaId, CancellationToken ct)
     {
         var perfil = await banco.Perfis.AsNoTracking().FirstOrDefaultAsync(item => item.ContaId == contaId, ct);
         var temContrato = await banco.Set<ContratoConta>().AnyAsync(item => item.ContaId == contaId, ct);

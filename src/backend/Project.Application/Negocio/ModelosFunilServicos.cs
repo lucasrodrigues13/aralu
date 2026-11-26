@@ -52,13 +52,13 @@ public static class TokensFunil
 
 public sealed class ModeloServicoFunilServico(IDados dados)
 {
-    public async Task<IReadOnlyList<ModeloServicoFunilLeitura>> ListarAsync(string contaId, string? nome, CancellationToken ct)
+    public async Task<IReadOnlyList<ModeloServicoFunilLeitura>> ListarAsync(Guid contaId, string? nome, CancellationToken ct)
     {
         var itens = await dados.ListarModelosServicoFunilAsync(contaId, nome, ct);
         return itens.Select(Ler).ToArray();
     }
 
-    public async Task<Resultado<ModeloServicoFunilLeitura>> ObterAsync(string contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<ModeloServicoFunilLeitura>> ObterAsync(Guid contaId, Guid id, CancellationToken ct)
     {
         var item = await dados.ObterModeloServicoFunilAsync(contaId, id, ct);
         return item is null
@@ -67,7 +67,7 @@ public sealed class ModeloServicoFunilServico(IDados dados)
     }
 
     public async Task<Resultado<ModeloServicoFunilLeitura>> CriarAsync(
-        string contaId,
+        Guid contaId,
         SalvarModeloServicoFunil pedido,
         CancellationToken ct)
     {
@@ -82,7 +82,7 @@ public sealed class ModeloServicoFunilServico(IDados dados)
     }
 
     public async Task<Resultado<ModeloServicoFunilLeitura>> AtualizarAsync(
-        string contaId,
+        Guid contaId,
         Guid id,
         SalvarModeloServicoFunil pedido,
         CancellationToken ct)
@@ -106,7 +106,7 @@ public sealed class ModeloServicoFunilServico(IDados dados)
         return Resultado<ModeloServicoFunilLeitura>.Sucesso(Ler(item));
     }
 
-    public async Task<Resultado<bool>> ExcluirAsync(string contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<bool>> ExcluirAsync(Guid contaId, Guid id, CancellationToken ct)
     {
         var item = await dados.ObterModeloServicoFunilAsync(contaId, id, ct);
         if (item is null)
@@ -118,7 +118,7 @@ public sealed class ModeloServicoFunilServico(IDados dados)
         return Resultado<bool>.Sucesso(true);
     }
 
-    private static Resultado<ModeloServicoFunil> Montar(string contaId, Guid id, SalvarModeloServicoFunil pedido)
+    private static Resultado<ModeloServicoFunil> Montar(Guid contaId, Guid id, SalvarModeloServicoFunil pedido)
     {
         var nome = Domain.Comum.Texto.Limpo(pedido.Nome);
         if (nome is null)
@@ -153,13 +153,13 @@ public sealed class ModeloServicoFunilServico(IDados dados)
 
 public sealed class ModeloOrcamentoFunilServico(IDados dados)
 {
-    public async Task<IReadOnlyList<ModeloOrcamentoFunilLeitura>> ListarAsync(string contaId, string? nome, CancellationToken ct)
+    public async Task<IReadOnlyList<ModeloOrcamentoFunilLeitura>> ListarAsync(Guid contaId, string? nome, CancellationToken ct)
     {
         var itens = await dados.ListarModelosOrcamentoFunilAsync(contaId, nome, ct);
         return itens.Select(Ler).ToArray();
     }
 
-    public async Task<Resultado<ModeloOrcamentoFunilLeitura>> ObterAsync(string contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<ModeloOrcamentoFunilLeitura>> ObterAsync(Guid contaId, Guid id, CancellationToken ct)
     {
         var item = await dados.ObterModeloOrcamentoFunilAsync(contaId, id, ct);
         return item is null
@@ -168,7 +168,7 @@ public sealed class ModeloOrcamentoFunilServico(IDados dados)
     }
 
     public async Task<Resultado<ModeloOrcamentoFunilLeitura>> CriarAsync(
-        string contaId,
+        Guid contaId,
         SalvarModeloOrcamentoFunil pedido,
         CancellationToken ct)
     {
@@ -183,7 +183,7 @@ public sealed class ModeloOrcamentoFunilServico(IDados dados)
     }
 
     public async Task<Resultado<ModeloOrcamentoFunilLeitura>> AtualizarAsync(
-        string contaId,
+        Guid contaId,
         Guid id,
         SalvarModeloOrcamentoFunil pedido,
         CancellationToken ct)
@@ -210,7 +210,7 @@ public sealed class ModeloOrcamentoFunilServico(IDados dados)
         return Resultado<ModeloOrcamentoFunilLeitura>.Sucesso(Ler(item));
     }
 
-    public async Task<Resultado<bool>> ExcluirAsync(string contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<bool>> ExcluirAsync(Guid contaId, Guid id, CancellationToken ct)
     {
         var item = await dados.ObterModeloOrcamentoFunilAsync(contaId, id, ct);
         if (item is null)
@@ -222,7 +222,7 @@ public sealed class ModeloOrcamentoFunilServico(IDados dados)
         return Resultado<bool>.Sucesso(true);
     }
 
-    private static Resultado<ModeloOrcamentoFunil> Montar(string contaId, Guid id, SalvarModeloOrcamentoFunil pedido)
+    private static Resultado<ModeloOrcamentoFunil> Montar(Guid contaId, Guid id, SalvarModeloOrcamentoFunil pedido)
     {
         var nome = Domain.Comum.Texto.Limpo(pedido.Nome);
         var texto = HtmlSeguro.LimparRico(pedido.Texto);
@@ -263,7 +263,7 @@ public sealed class ModeloOrcamentoFunilServico(IDados dados)
     }
 
     /// <summary>Documento da página de aceite com exemplos no lugar das tags (SPEC-061, Live Preview).</summary>
-    public async Task<string> PreviaAsync(string contaId, PreviaPaginaAceite pedido, CancellationToken ct)
+    public async Task<string> PreviaAsync(Guid contaId, PreviaPaginaAceite pedido, CancellationToken ct)
     {
         var perfil = await dados.ObterPerfilAsync(contaId, ct);
         var valores = new Dictionary<string, string>(ParametrosOrcamento.Exemplos, StringComparer.OrdinalIgnoreCase);

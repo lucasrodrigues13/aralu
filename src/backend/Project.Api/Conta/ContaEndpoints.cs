@@ -27,6 +27,7 @@ public static class ContaEndpoints
     private static async Task<IResult> Cadastrar(
         CadastroPedido pedido,
         UserManager<ApplicationUser> usuarios,
+        CadastroDeConta cadastro,
         IEmailSender<ApplicationUser> email,
         IConfiguration configuracao,
         IHostEnvironment ambiente,
@@ -55,21 +56,15 @@ public static class ContaEndpoints
             UserName = endereco,
             Email = endereco,
         };
-        var criado = await usuarios.CreateAsync(usuario, senha);
-        if (!criado.Succeeded)
+        var resultado = await cadastro.CriarDonoAsync(usuario, senha, ct);
+        switch (resultado)
         {
-            if (criado.Errors.Any(erro => erro.Code is "DuplicateUserName" or "DuplicateEmail"))
-            {
+            case ResultadoCadastro.Duplicado:
                 return Erro(StatusCodes.Status409Conflict, "duplicado", "Já existe conta para este e-mail.");
-            }
-
-            return Erro(StatusCodes.Status400BadRequest, "validacao", "A senha não atende às regras.");
-        }
-
-        var papel = await usuarios.AddToRoleAsync(usuario, Papeis.Organizer);
-        if (!papel.Succeeded)
-        {
-            return Erro(StatusCodes.Status500InternalServerError, "erro", "Não foi possível concluir a ação.");
+            case ResultadoCadastro.SenhaInvalida:
+                return Erro(StatusCodes.Status400BadRequest, "validacao", "A senha não atende às regras.");
+            case ResultadoCadastro.Falhou:
+                return Erro(StatusCodes.Status500InternalServerError, "erro", "Não foi possível concluir a ação.");
         }
 
         var enviado = await EnviarConfirmacaoAsync(usuarios, email, usuario, configuracao, ambiente, logs, ct);

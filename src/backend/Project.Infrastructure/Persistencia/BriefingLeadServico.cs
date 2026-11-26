@@ -19,7 +19,7 @@ public sealed class BriefingLeadServico(AppDbContext banco)
 {
     public const int LimiteResposta = 2000;
 
-    public async Task<Resultado<BriefingLeadLeitura?>> ObterAsync(string contaId, Guid oportunidadeId, CancellationToken ct)
+    public async Task<Resultado<BriefingLeadLeitura?>> ObterAsync(Guid contaId, Guid oportunidadeId, CancellationToken ct)
     {
         if (!await LeadDaContaAsync(contaId, oportunidadeId, ct))
         {
@@ -33,7 +33,7 @@ public sealed class BriefingLeadServico(AppDbContext banco)
     }
 
     /// <summary>Aplica um modelo ao lead. Se já havia briefing, ele é substituído (as respostas anteriores se perdem).</summary>
-    public async Task<Resultado<BriefingLeadLeitura?>> AplicarAsync(string contaId, Guid oportunidadeId, AplicarBriefingLead pedido, CancellationToken ct)
+    public async Task<Resultado<BriefingLeadLeitura?>> AplicarAsync(Guid contaId, Guid oportunidadeId, AplicarBriefingLead pedido, CancellationToken ct)
     {
         if (!await LeadDaContaAsync(contaId, oportunidadeId, ct))
         {
@@ -88,7 +88,7 @@ public sealed class BriefingLeadServico(AppDbContext banco)
     }
 
     public async Task<Resultado<BriefingLeadLeitura?>> SalvarRespostasAsync(
-        string contaId,
+        Guid contaId,
         Guid oportunidadeId,
         SalvarRespostasBriefingLead pedido,
         CancellationToken ct)
@@ -120,7 +120,7 @@ public sealed class BriefingLeadServico(AppDbContext banco)
         return Resultado<BriefingLeadLeitura?>.Sucesso(Ler(briefing));
     }
 
-    public async Task<Resultado<bool>> RemoverAsync(string contaId, Guid oportunidadeId, CancellationToken ct)
+    public async Task<Resultado<bool>> RemoverAsync(Guid contaId, Guid oportunidadeId, CancellationToken ct)
     {
         var removidos = await banco.BriefingsOportunidade
             .Where(item => item.ContaId == contaId && item.OportunidadeId == oportunidadeId)
@@ -130,7 +130,7 @@ public sealed class BriefingLeadServico(AppDbContext banco)
             : Resultado<bool>.Sucesso(true);
     }
 
-    private Task<bool> LeadDaContaAsync(string contaId, Guid oportunidadeId, CancellationToken ct) =>
+    private Task<bool> LeadDaContaAsync(Guid contaId, Guid oportunidadeId, CancellationToken ct) =>
         banco.Oportunidades.AnyAsync(item => item.ContaId == contaId && item.Id == oportunidadeId, ct);
 
     private static BriefingLeadLeitura Ler(BriefingOportunidade briefing) => new(

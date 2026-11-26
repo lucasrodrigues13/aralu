@@ -9,13 +9,13 @@ public sealed record SalvarMensagem(string? Nome, string? Texto);
 
 public sealed class MensagemServico(IDados dados)
 {
-    public async Task<IReadOnlyList<MensagemLeitura>> ListarAsync(string contaId, string? nome, CancellationToken ct)
+    public async Task<IReadOnlyList<MensagemLeitura>> ListarAsync(Guid contaId, string? nome, CancellationToken ct)
     {
         var modelos = await dados.ListarMensagensAsync(contaId, nome, ct);
         return modelos.Select(Ler).ToArray();
     }
 
-    public async Task<Resultado<MensagemLeitura>> ObterAsync(string contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<MensagemLeitura>> ObterAsync(Guid contaId, Guid id, CancellationToken ct)
     {
         var modelo = await dados.ObterMensagemAsync(contaId, id, ct);
         return modelo is null
@@ -23,7 +23,7 @@ public sealed class MensagemServico(IDados dados)
             : Resultado<MensagemLeitura>.Sucesso(Ler(modelo));
     }
 
-    public async Task<Resultado<MensagemLeitura>> CriarAsync(string contaId, SalvarMensagem pedido, CancellationToken ct)
+    public async Task<Resultado<MensagemLeitura>> CriarAsync(Guid contaId, SalvarMensagem pedido, CancellationToken ct)
     {
         var montado = Montar(contaId, Guid.NewGuid(), pedido);
         if (!montado.Ok)
@@ -35,7 +35,7 @@ public sealed class MensagemServico(IDados dados)
         return Resultado<MensagemLeitura>.Sucesso(Ler(montado.Valor!));
     }
 
-    public async Task<Resultado<MensagemLeitura>> AtualizarAsync(string contaId, Guid id, SalvarMensagem pedido, CancellationToken ct)
+    public async Task<Resultado<MensagemLeitura>> AtualizarAsync(Guid contaId, Guid id, SalvarMensagem pedido, CancellationToken ct)
     {
         var modelo = await dados.ObterMensagemAsync(contaId, id, ct);
         if (modelo is null)
@@ -55,7 +55,7 @@ public sealed class MensagemServico(IDados dados)
         return Resultado<MensagemLeitura>.Sucesso(Ler(modelo));
     }
 
-    public async Task<Resultado<MensagemLeitura>> ClonarAsync(string contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<MensagemLeitura>> ClonarAsync(Guid contaId, Guid id, CancellationToken ct)
     {
         var origem = await dados.ObterMensagemAsync(contaId, id, ct);
         if (origem is null)
@@ -74,7 +74,7 @@ public sealed class MensagemServico(IDados dados)
         return Resultado<MensagemLeitura>.Sucesso(Ler(copia));
     }
 
-    public async Task<Resultado<bool>> ExcluirAsync(string contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<bool>> ExcluirAsync(Guid contaId, Guid id, CancellationToken ct)
     {
         var modelo = await dados.ObterMensagemAsync(contaId, id, ct);
         if (modelo is null)
@@ -86,7 +86,7 @@ public sealed class MensagemServico(IDados dados)
         return Resultado<bool>.Sucesso(true);
     }
 
-    private static Resultado<ModeloMensagem> Montar(string contaId, Guid id, SalvarMensagem pedido)
+    private static Resultado<ModeloMensagem> Montar(Guid contaId, Guid id, SalvarMensagem pedido)
     {
         var nome = Domain.Comum.Texto.Limpo(pedido.Nome);
         var texto = Domain.Comum.Texto.Limpo(pedido.Texto);

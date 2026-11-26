@@ -40,14 +40,14 @@ public sealed record SalvarPerfil(
 
 public sealed class PerfilServico(IDados dados, IConsultaCep consultaCep)
 {
-    public async Task<PerfilLeitura> ObterAsync(string contaId, string email, CancellationToken ct)
+    public async Task<PerfilLeitura> ObterAsync(Guid contaId, string email, CancellationToken ct)
     {
         var perfil = await dados.ObterPerfilAsync(contaId, ct);
         return Ler(email, perfil);
     }
 
     public async Task<Resultado<PerfilLeitura>> SalvarAsync(
-        string contaId,
+        Guid contaId,
         string email,
         SalvarPerfil pedido,
         DateOnly hoje,
@@ -98,7 +98,7 @@ public sealed class PerfilServico(IDados dados, IConsultaCep consultaCep)
         return Resultado<PerfilLeitura>.Sucesso(Ler(email, perfil));
     }
 
-    public async Task<Resultado<Guid?>> GuardarFotoAsync(string contaId, Guid fotoId, CancellationToken ct)
+    public async Task<Resultado<Guid?>> GuardarFotoAsync(Guid contaId, Guid fotoId, CancellationToken ct)
     {
         var perfil = await ObterOuCriarAsync(contaId, ct);
         var anterior = perfil.FotoId;
@@ -107,7 +107,7 @@ public sealed class PerfilServico(IDados dados, IConsultaCep consultaCep)
         return Resultado<Guid?>.Sucesso(anterior);
     }
 
-    public async Task<Resultado<Guid?>> RemoverFotoAsync(string contaId, CancellationToken ct)
+    public async Task<Resultado<Guid?>> RemoverFotoAsync(Guid contaId, CancellationToken ct)
     {
         var perfil = await dados.ObterPerfilAsync(contaId, ct);
         if (perfil?.FotoId is not Guid anterior)
@@ -120,7 +120,7 @@ public sealed class PerfilServico(IDados dados, IConsultaCep consultaCep)
         return Resultado<Guid?>.Sucesso(anterior);
     }
 
-    private async Task<PerfilAssessoria> ObterOuCriarAsync(string contaId, CancellationToken ct)
+    private async Task<PerfilAssessoria> ObterOuCriarAsync(Guid contaId, CancellationToken ct)
     {
         return await dados.ObterPerfilAsync(contaId, ct) ?? new PerfilAssessoria
         {

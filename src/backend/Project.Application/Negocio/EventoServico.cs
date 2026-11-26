@@ -138,7 +138,7 @@ public sealed record EventoResumo(
 public sealed class EventoServico(IDados dados, IConsultaCep cep)
 {
     public async Task<IReadOnlyList<EventoResumo>> ListarAsync(
-        string contaId,
+        Guid contaId,
         FiltroEventos filtro,
         DateOnly hoje,
         CancellationToken ct)
@@ -158,7 +158,7 @@ public sealed class EventoServico(IDados dados, IConsultaCep cep)
             linha.Convidados)).ToArray();
     }
 
-    public async Task<Resultado<EventoDetalhe>> ObterAsync(string contaId, Guid id, DateOnly hoje, CancellationToken ct)
+    public async Task<Resultado<EventoDetalhe>> ObterAsync(Guid contaId, Guid id, DateOnly hoje, CancellationToken ct)
     {
         var evento = await dados.ObterEventoAsync(contaId, id, ct);
         if (evento is null)
@@ -169,7 +169,7 @@ public sealed class EventoServico(IDados dados, IConsultaCep cep)
         return Resultado<EventoDetalhe>.Sucesso(await DetalheAsync(contaId, evento, hoje, ct));
     }
 
-    public async Task<Resultado<EventoDetalhe>> CriarAsync(string contaId, SalvarEvento pedido, DateOnly hoje, CancellationToken ct)
+    public async Task<Resultado<EventoDetalhe>> CriarAsync(Guid contaId, SalvarEvento pedido, DateOnly hoje, CancellationToken ct)
     {
         var tipo = pedido.Tipo;
         if (tipo is not TipoEvento tipoEvento || !Enum.IsDefined(tipoEvento))
@@ -311,7 +311,7 @@ public sealed class EventoServico(IDados dados, IConsultaCep cep)
     }
 
     public async Task<Resultado<EventoDetalhe>> AtualizarAsync(
-        string contaId,
+        Guid contaId,
         Guid id,
         SalvarEvento pedido,
         DateOnly hoje,
@@ -411,7 +411,7 @@ public sealed class EventoServico(IDados dados, IConsultaCep cep)
     }
 
     public async Task<Resultado<EventoDetalhe>> EncerrarAsync(
-        string contaId,
+        Guid contaId,
         Guid id,
         SituacaoEvento destino,
         DateOnly hoje,
@@ -433,7 +433,7 @@ public sealed class EventoServico(IDados dados, IConsultaCep cep)
         return Resultado<EventoDetalhe>.Sucesso(await DetalheAsync(contaId, evento, hoje, ct));
     }
 
-    public async Task<Resultado<Guid?>> GuardarImagemAsync(string contaId, Guid id, Guid imagemId, CancellationToken ct)
+    public async Task<Resultado<Guid?>> GuardarImagemAsync(Guid contaId, Guid id, Guid imagemId, CancellationToken ct)
     {
         var evento = await dados.ObterEventoAsync(contaId, id, ct);
         if (evento is null)
@@ -447,7 +447,7 @@ public sealed class EventoServico(IDados dados, IConsultaCep cep)
         return Resultado<Guid?>.Sucesso(anterior);
     }
 
-    public async Task<Resultado<Guid?>> RemoverImagemAsync(string contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<Guid?>> RemoverImagemAsync(Guid contaId, Guid id, CancellationToken ct)
     {
         var evento = await dados.ObterEventoAsync(contaId, id, ct);
         if (evento is null)
@@ -499,7 +499,7 @@ public sealed class EventoServico(IDados dados, IConsultaCep cep)
     }
 
     /// <summary>Resumo do evento em cartões e alertas (SPEC-008 v2, 6.2).</summary>
-    public async Task<Resultado<ResumoEvento>> ResumoAsync(string contaId, Guid id, DateOnly hoje, CancellationToken ct)
+    public async Task<Resultado<ResumoEvento>> ResumoAsync(Guid contaId, Guid id, DateOnly hoje, CancellationToken ct)
     {
         var evento = await dados.ObterEventoAsync(contaId, id, ct);
         if (evento is null)
@@ -519,7 +519,7 @@ public sealed class EventoServico(IDados dados, IConsultaCep cep)
     }
 
     /// <summary>Valida e monta o cliente da criação curta: nome e WhatsApp com DDD.</summary>
-    public static Resultado<Cliente> MontarClienteRapido(string contaId, ClienteRapido pedido)
+    public static Resultado<Cliente> MontarClienteRapido(Guid contaId, ClienteRapido pedido)
     {
         var nome = Domain.Comum.Texto.Limpo(pedido.Nome);
         if (nome is null)
@@ -544,7 +544,7 @@ public sealed class EventoServico(IDados dados, IConsultaCep cep)
         });
     }
 
-    private Task<EventoDetalhe> DetalheAsync(string contaId, Evento evento, DateOnly hoje, CancellationToken ct) =>
+    private Task<EventoDetalhe> DetalheAsync(Guid contaId, Evento evento, DateOnly hoje, CancellationToken ct) =>
         EventoMapeamento.DetalheAsync(dados, contaId, evento, hoje, ct);
 
     private static void CopiarLocal(LocalEvento destino, LocalEvento origem)

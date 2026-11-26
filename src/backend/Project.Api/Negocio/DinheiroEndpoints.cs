@@ -66,7 +66,7 @@ public static class DinheiroEndpoints
     private static Task<IResult> Comprovante(
         HttpRequest request,
         ClaimsPrincipal usuario,
-        Func<string, Stream, string, Task<Resultado<DinheiroEventoLeitura>>> enviar,
+        Func<Guid, Stream, string, Task<Resultado<DinheiroEventoLeitura>>> enviar,
         CancellationToken ct) =>
         ComConta(usuario, async conta =>
         {
@@ -100,12 +100,12 @@ public static class DinheiroEndpoints
             return Results.File(conteudo, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", nome);
         });
 
-    private static Task<IResult> ComConta(ClaimsPrincipal usuario, Func<string, Task<IResult>> acao)
+    private static Task<IResult> ComConta(ClaimsPrincipal usuario, Func<Guid, Task<IResult>> acao)
     {
         var conta = ContaAtual.De(usuario);
-        return string.IsNullOrWhiteSpace(conta)
+        return conta is null
             ? Task.FromResult(Results.Json(new ErroResposta("autenticacao", "É preciso entrar para continuar."), statusCode: StatusCodes.Status401Unauthorized))
-            : acao(conta);
+            : acao(conta.Value);
     }
 
     private static async Task<IResult> De<T>(Task<Resultado<T>> tarefa)

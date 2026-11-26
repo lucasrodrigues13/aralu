@@ -7,7 +7,7 @@ public sealed class LinkCliente
 
     public Guid EventoId { get; set; }
 
-    public string ContaId { get; set; } = "";
+    public Guid ContaId { get; set; }
 
     public string Token { get; set; } = "";
 

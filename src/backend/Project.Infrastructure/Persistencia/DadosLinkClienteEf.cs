@@ -35,7 +35,7 @@ public sealed class DadosLinkClienteEf(AppDbContext banco) : IDadosLinkCliente
         return Task.CompletedTask;
     }
 
-    public Task<EventoDoLink?> ObterEventoAsync(string contaId, Guid eventoId, CancellationToken ct) =>
+    public Task<EventoDoLink?> ObterEventoAsync(Guid contaId, Guid eventoId, CancellationToken ct) =>
         banco.Eventos.AsNoTracking()
             .Where(evento => evento.Id == eventoId && evento.ContaId == contaId)
             .Select(evento => new EventoDoLink(

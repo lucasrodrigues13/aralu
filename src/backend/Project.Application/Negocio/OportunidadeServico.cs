@@ -136,7 +136,7 @@ public sealed record ChecagemDataLeitura(bool TemCompromisso);
 public sealed class OportunidadeServico(IDados dados)
 {
     public async Task<IReadOnlyList<OportunidadeLeitura>> ListarAsync(
-        string contaId,
+        Guid contaId,
         FiltroOportunidades filtro,
         CancellationToken ct)
     {
@@ -145,7 +145,7 @@ public sealed class OportunidadeServico(IDados dados)
         return itens.Select(item => Ler(item, OrcamentoFunilServico.Resumo(propostas.GetValueOrDefault(item.Id)))).ToArray();
     }
 
-    public async Task<Resultado<OportunidadeLeitura>> ObterAsync(string contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<OportunidadeLeitura>> ObterAsync(Guid contaId, Guid id, CancellationToken ct)
     {
         var item = await dados.ObterOportunidadeAsync(contaId, id, ct);
         if (item is null)
@@ -157,7 +157,7 @@ public sealed class OportunidadeServico(IDados dados)
         return Resultado<OportunidadeLeitura>.Sucesso(Ler(item, OrcamentoFunilServico.Resumo(propostas.GetValueOrDefault(item.Id))));
     }
 
-    public async Task<Resultado<OportunidadeLeitura>> CriarAsync(string contaId, SalvarOportunidade pedido, CancellationToken ct, string? criadoPor = null)
+    public async Task<Resultado<OportunidadeLeitura>> CriarAsync(Guid contaId, SalvarOportunidade pedido, CancellationToken ct, string? criadoPor = null)
     {
         var montado = await MontarAsync(contaId, Guid.NewGuid(), pedido, null, ct);
         if (!montado.Ok)
@@ -174,7 +174,7 @@ public sealed class OportunidadeServico(IDados dados)
     }
 
     public async Task<Resultado<OportunidadeLeitura>> AtualizarAsync(
-        string contaId,
+        Guid contaId,
         Guid id,
         SalvarOportunidade pedido,
         CancellationToken ct)
@@ -258,7 +258,7 @@ public sealed class OportunidadeServico(IDados dados)
     }
 
     public async Task<Resultado<OportunidadeLeitura>> MoverAsync(
-        string contaId,
+        Guid contaId,
         Guid id,
         MoverOportunidade pedido,
         CancellationToken ct)
@@ -305,7 +305,7 @@ public sealed class OportunidadeServico(IDados dados)
     /// Fecha o negócio: liga o lead a um cliente da conta e o coloca em Contratado.
     /// </summary>
     public async Task<Resultado<OportunidadeLeitura>> VincularClienteAsync(
-        string contaId,
+        Guid contaId,
         Guid id,
         VincularClienteOportunidade pedido,
         CancellationToken ct)
@@ -337,7 +337,7 @@ public sealed class OportunidadeServico(IDados dados)
 
     /// <summary>Marca ou limpa a data de retorno do lead (SPEC-031 §6.3).</summary>
     public async Task<Resultado<OportunidadeLeitura>> MarcarRetornoAsync(
-        string contaId,
+        Guid contaId,
         Guid id,
         RetornoOportunidade pedido,
         CancellationToken ct)
@@ -364,7 +364,7 @@ public sealed class OportunidadeServico(IDados dados)
     /// Só avisa: quem decide gravar é a dona.
     /// </summary>
     public async Task<IReadOnlyList<ContatoRepetidoLeitura>> ContatoRepetidoAsync(
-        string contaId,
+        Guid contaId,
         IEnumerable<string?> telefones,
         IEnumerable<string?> emails,
         Guid? ignorar,
@@ -391,7 +391,7 @@ public sealed class OportunidadeServico(IDados dados)
     }
 
     /// <param name="soCriadoPor">Quando informado (assistente), só exclui o que ele mesmo criou (SPEC-032 §18, passo 1).</param>
-    public async Task<Resultado<bool>> ExcluirAsync(string contaId, Guid id, CancellationToken ct, string? soCriadoPor = null)
+    public async Task<Resultado<bool>> ExcluirAsync(Guid contaId, Guid id, CancellationToken ct, string? soCriadoPor = null)
     {
         var item = await dados.ObterOportunidadeAsync(contaId, id, ct);
         if (item is null)
@@ -409,7 +409,7 @@ public sealed class OportunidadeServico(IDados dados)
     }
 
     public async Task<Resultado<OportunidadeLeitura>> CriarLeadPublicoAsync(
-        string contaId,
+        Guid contaId,
         LeadPublicoPedido pedido,
         CancellationToken ct)
     {
@@ -454,7 +454,7 @@ public sealed class OportunidadeServico(IDados dados)
             QuantidadeConvidados = pedido.QuantidadeConvidados,
             Cidade = Domain.Comum.Texto.Limpo(pedido.Cidade),
             Uf = Domain.Comum.Texto.Limpo(pedido.Uf)?.ToUpperInvariant(),
-            Responsavel = contaId,
+            Responsavel = contaId.ToString(),
             CriadoEm = agora,
             EntradaNoEstagioEm = agora,
             Contatos =
@@ -474,17 +474,17 @@ public sealed class OportunidadeServico(IDados dados)
         return Resultado<OportunidadeLeitura>.Sucesso(Ler(item));
     }
 
-    public Task<IReadOnlyDictionary<string, string>> NomesResponsaveisAsync(string contaId, CancellationToken ct) =>
+    public Task<IReadOnlyDictionary<string, string>> NomesResponsaveisAsync(Guid contaId, CancellationToken ct) =>
         dados.NomesResponsaveisAsync(contaId, ct);
 
     /// <summary>Nome do responsável; valores que não são id (texto digitado antes) saem como estão.</summary>
     public static string NomeResponsavel(IReadOnlyDictionary<string, string> nomes, string? valor) =>
         valor is not null && nomes.TryGetValue(valor, out var nome) ? nome : valor ?? "";
 
-    public async Task<ChecagemDataLeitura> ChecarDataAsync(string contaId, DateOnly data, CancellationToken ct) =>
+    public async Task<ChecagemDataLeitura> ChecarDataAsync(Guid contaId, DateOnly data, CancellationToken ct) =>
         new(await dados.TemCompromissoNaDataAsync(contaId, data, ct));
 
-    public async Task<IReadOnlyList<FunilEstagio>> ContarPorEstagioAsync(string contaId, CancellationToken ct)
+    public async Task<IReadOnlyList<FunilEstagio>> ContarPorEstagioAsync(Guid contaId, CancellationToken ct)
     {
         var estagios = EstagiosFunil.Ordenar(await dados.ListarEstagiosFunilAsync(contaId, ct));
         var contagens = await dados.ContarOportunidadesPorEstagioAsync(contaId, ct);
@@ -554,7 +554,7 @@ public sealed class OportunidadeServico(IDados dados)
     }
 
     private async Task<Resultado<Oportunidade>> MontarAsync(
-        string contaId,
+        Guid contaId,
         Guid id,
         SalvarOportunidade pedido,
         Oportunidade? existente,
@@ -681,7 +681,7 @@ public sealed class OportunidadeServico(IDados dados)
             RetornarEm = pedido.RetornarEm,
             RetornarHora = pedido.RetornarEm is null ? null : pedido.RetornarHora,
             ValorProposta = pedido.ValorProposta,
-            Responsavel = Domain.Comum.Texto.Limpo(pedido.Responsavel) ?? contaId,
+            Responsavel = Domain.Comum.Texto.Limpo(pedido.Responsavel) ?? contaId.ToString(),
             ServicoProduto = servicoProduto,
             ModeloServicoFunilId = modeloServicoId,
             TipoEvento = tipo,

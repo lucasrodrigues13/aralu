@@ -8,7 +8,7 @@ public sealed class ImportacaoConvidados
 {
     public Guid Id { get; set; }
 
-    public string ContaId { get; set; } = "";
+    public Guid ContaId { get; set; }
 
     public Guid EventoId { get; set; }
 

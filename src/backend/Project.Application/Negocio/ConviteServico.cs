@@ -100,7 +100,7 @@ public sealed record ResultadoImportacao(int Convites, IReadOnlyList<string> Err
 public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGeradorQr qr)
 {
     public async Task<Resultado<ListaConvites>> ListarAsync(
-        string contaId,
+        Guid contaId,
         Guid eventoId,
         FiltroConvites filtro,
         DateOnly hoje,
@@ -133,7 +133,7 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
     }
 
     /// <summary>Define ou remove a data de envio dos convites, uma só para o evento (SPEC-059).</summary>
-    public async Task<Resultado<EnvioConvitesLeitura>> DefinirEnvioAsync(string contaId, Guid eventoId, DateOnly? data, CancellationToken ct)
+    public async Task<Resultado<EnvioConvitesLeitura>> DefinirEnvioAsync(Guid contaId, Guid eventoId, DateOnly? data, CancellationToken ct)
     {
         var evento = await dados.ObterEventoAsync(contaId, eventoId, ct);
         if (evento is null)
@@ -152,7 +152,7 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
     }
 
     /// <summary>Define ou remove a data limite de confirmação do evento (SPEC-054).</summary>
-    public async Task<Resultado<PrazoRsvpLeitura>> DefinirPrazoAsync(string contaId, Guid eventoId, DateOnly? prazo, DateOnly hoje, CancellationToken ct)
+    public async Task<Resultado<PrazoRsvpLeitura>> DefinirPrazoAsync(Guid contaId, Guid eventoId, DateOnly? prazo, DateOnly hoje, CancellationToken ct)
     {
         var evento = await dados.ObterEventoAsync(contaId, eventoId, ct);
         if (evento is null)
@@ -171,7 +171,7 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
     }
 
     /// <summary>Abre ou fecha a exceção do prazo para o link de um convite (SPEC-054).</summary>
-    public async Task<Resultado<ConviteLeitura>> DefinirExcecaoAsync(string contaId, Guid conviteId, bool liberada, CancellationToken ct)
+    public async Task<Resultado<ConviteLeitura>> DefinirExcecaoAsync(Guid contaId, Guid conviteId, bool liberada, CancellationToken ct)
     {
         var convite = await dados.ObterConviteAsync(contaId, conviteId, ct);
         if (convite is null)
@@ -185,7 +185,7 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
     }
 
     /// <summary>Lista de presença do evento: uma entrada por convidado confirmado (SPEC-054).</summary>
-    public async Task<Resultado<IReadOnlyList<PresencaLeitura>>> ListarPresencasAsync(string contaId, Guid eventoId, CancellationToken ct)
+    public async Task<Resultado<IReadOnlyList<PresencaLeitura>>> ListarPresencasAsync(Guid contaId, Guid eventoId, CancellationToken ct)
     {
         if (!await dados.EventoDaContaAsync(contaId, eventoId, ct))
         {
@@ -196,7 +196,7 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
     }
 
     /// <summary>Cria o convite pelo formulário único (SPEC-059); a observação é livre para a organizadora.</summary>
-    public async Task<Resultado<ConviteLeitura>> CriarAsync(string contaId, Guid eventoId, FormularioConvitePedido pedido, CancellationToken ct)
+    public async Task<Resultado<ConviteLeitura>> CriarAsync(Guid contaId, Guid eventoId, FormularioConvitePedido pedido, CancellationToken ct)
     {
         var evento = await dados.ObterEventoAsync(contaId, eventoId, ct);
         if (evento is null)
@@ -229,7 +229,7 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
     }
 
     /// <summary>Edita pelo mesmo formulário da criação (SPEC-059): convidados mantêm situação, mesa e demais dados.</summary>
-    public async Task<Resultado<ConviteLeitura>> AtualizarAsync(string contaId, Guid id, FormularioConvitePedido pedido, CancellationToken ct)
+    public async Task<Resultado<ConviteLeitura>> AtualizarAsync(Guid contaId, Guid id, FormularioConvitePedido pedido, CancellationToken ct)
     {
         var convite = await dados.ObterConviteAsync(contaId, id, ct);
         if (convite is null)
@@ -271,7 +271,7 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
     }
 
     public async Task<Resultado<ConvidadoLeitura>> SalvarConvidadoAsync(
-        string contaId,
+        Guid contaId,
         Guid conviteId,
         Guid? convidadoId,
         ConvidadoPedido pedido,
@@ -321,7 +321,7 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
         return Resultado<ConvidadoLeitura>.Sucesso(LerConvidado(convidado, convite.PrincipalId));
     }
 
-    public async Task<Resultado<ConviteLeitura>> DefinirPrincipalAsync(string contaId, Guid conviteId, Guid convidadoId, CancellationToken ct)
+    public async Task<Resultado<ConviteLeitura>> DefinirPrincipalAsync(Guid contaId, Guid conviteId, Guid convidadoId, CancellationToken ct)
     {
         var convite = await dados.ObterConviteAsync(contaId, conviteId, ct);
         if (convite is null)
@@ -340,7 +340,7 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
         return Resultado<ConviteLeitura>.Sucesso(Ler(convite));
     }
 
-    public async Task<Resultado<bool>> RemoverConvidadoAsync(string contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<bool>> RemoverConvidadoAsync(Guid contaId, Guid id, CancellationToken ct)
     {
         var convidado = await dados.ObterConvidadoAsync(contaId, id, ct);
         if (convidado is null)
@@ -370,7 +370,7 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
     /// Usado pelo processamento da fila de importações (<see cref="ImportacaoServico"/>).
     /// </summary>
     public async Task<ResultadoImportacao> ProcessarPlanilhaAsync(
-        string contaId,
+        Guid contaId,
         Guid eventoId,
         Stream arquivo,
         string? nomeArquivo,
@@ -504,7 +504,7 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
 
     public byte[] ModeloPlanilha() => planilha.Modelo();
 
-    public async Task<Resultado<byte[]>> QrAsync(string contaId, Guid id, string basePublica, CancellationToken ct)
+    public async Task<Resultado<byte[]>> QrAsync(Guid contaId, Guid id, string basePublica, CancellationToken ct)
     {
         var convite = await dados.ObterConviteAsync(contaId, id, ct);
         if (convite is null)
@@ -516,7 +516,7 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
     }
 
     /// <summary>QR de entrada do convite (SPEC-058): só existe com ao menos um convidado confirmado.</summary>
-    public async Task<Resultado<byte[]>> QrEntradaAsync(string contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<byte[]>> QrEntradaAsync(Guid contaId, Guid id, CancellationToken ct)
     {
         var convite = await dados.ObterConviteAsync(contaId, id, ct);
         if (convite is null || !convite.Convidados.Any(item => item.Situacao == SituacaoConvidado.Confirmado))
@@ -527,7 +527,7 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
         return Resultado<byte[]>.Sucesso(qr.Png(PortariaServico.PrefixoQr + convite.Token));
     }
 
-    public async Task<Resultado<WhatsAppLeitura>> WhatsAppAsync(string contaId, Guid id, string basePublica, CancellationToken ct)
+    public async Task<Resultado<WhatsAppLeitura>> WhatsAppAsync(Guid contaId, Guid id, string basePublica, CancellationToken ct)
     {
         var convite = await dados.ObterConviteAsync(contaId, id, ct);
         if (convite is null)

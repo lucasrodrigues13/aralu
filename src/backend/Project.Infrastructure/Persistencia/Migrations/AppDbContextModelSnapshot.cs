@@ -195,9 +195,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<string>("Complemento")
                         .HasColumnType("text");
 
-                    b.Property<string>("ContaId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Cpf")
                         .HasColumnType("text");
@@ -264,6 +263,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ContaId");
+
                     b.ToTable("Clientes");
                 });
 
@@ -291,9 +292,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<DateTimeOffset>("AtualizadoEm")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("ContaId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("CriadoEm")
                         .HasColumnType("timestamp with time zone");
@@ -387,9 +387,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<DateTimeOffset?>("AcessadoEm")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("ContaId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Email")
                         .HasColumnType("text");
@@ -419,6 +418,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ContaId");
+
                     b.HasIndex("EventoId");
 
                     b.HasIndex("Token")
@@ -440,10 +441,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<DateTimeOffset?>("ConcluidaEm")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("ContaId")
-                        .IsRequired()
-                        .HasMaxLength(450)
-                        .HasColumnType("character varying(450)");
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid");
 
                     b.Property<int>("Convites")
                         .HasColumnType("integer");
@@ -473,6 +472,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .HasColumnType("character varying(20)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ContaId");
 
                     b.HasIndex("Situacao");
 
@@ -713,9 +714,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<string>("Celular")
                         .HasColumnType("text");
 
-                    b.Property<string>("ContaId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("ConvidadaEm")
                         .HasColumnType("timestamp with time zone");
@@ -761,6 +761,26 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.ToTable("Assistentes", (string)null);
                 });
 
+            modelBuilder.Entity("Project.Domain.Equipe.ContaAssessoria", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CriadaEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DonoUsuarioId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DonoUsuarioId");
+
+                    b.ToTable("Contas", (string)null);
+                });
+
             modelBuilder.Entity("Project.Domain.Equipe.EventoAssistente", b =>
                 {
                     b.Property<Guid>("EventoId")
@@ -782,9 +802,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("ContaId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateOnly?>("Data")
                         .HasColumnType("date");
@@ -802,6 +821,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ContaId");
+
                     b.HasIndex("EventoId")
                         .IsUnique()
                         .HasFilter("\"EventoId\" IS NOT NULL");
@@ -815,9 +836,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("ContaId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid");
 
                     b.Property<int?>("ConvidadosEstimados")
                         .HasColumnType("integer");
@@ -891,6 +911,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ContaId");
+
                     b.ToTable("Eventos");
                 });
 
@@ -959,10 +981,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("ContaId")
-                        .IsRequired()
-                        .HasMaxLength(450)
-                        .HasColumnType("character varying(450)");
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid");
 
                     b.Property<bool>("ConvidadosLiberado")
                         .HasColumnType("boolean");
@@ -983,6 +1003,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ContaId");
+
                     b.HasIndex("EventoId")
                         .IsUnique();
 
@@ -998,10 +1020,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("ContaId")
-                        .IsRequired()
-                        .HasMaxLength(450)
-                        .HasColumnType("character varying(450)");
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("CriadoEm")
                         .HasColumnType("timestamp with time zone");
@@ -1015,6 +1035,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .HasColumnType("character varying(64)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ContaId");
 
                     b.HasIndex("EventoId")
                         .IsUnique();
@@ -1031,9 +1053,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("ContaId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Nome")
                         .IsRequired()
@@ -1059,6 +1080,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ContaId");
 
                     b.ToTable("Modelos");
                 });
@@ -1168,9 +1191,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("ContaId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Nome")
                         .IsRequired()
@@ -1300,9 +1322,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<string>("ContaBancaria")
                         .HasColumnType("text");
 
-                    b.Property<string>("ContaId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Cpf")
                         .HasColumnType("text");
@@ -1439,9 +1460,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("ContaId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Nome")
                         .IsRequired()
@@ -1497,9 +1517,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<DateTimeOffset>("AplicadoEm")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("ContaId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid");
 
                     b.Property<Guid?>("ModeloBriefingId")
                         .HasColumnType("uuid");
@@ -1513,6 +1532,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ContaId");
 
                     b.HasIndex("OportunidadeId")
                         .IsUnique();
@@ -1558,9 +1579,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<DateTimeOffset?>("AssinadoEm")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("ContaId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Conteudo")
                         .IsRequired()
@@ -1607,9 +1627,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("ContaId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Cor")
                         .IsRequired()
@@ -1675,9 +1694,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("ContaId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset?>("ContatadoEm")
                         .HasColumnType("timestamp with time zone");
@@ -1725,9 +1743,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<int>("CliquesBotao")
                         .HasColumnType("integer");
 
-                    b.Property<string>("ContaId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid");
 
                     b.Property<int>("Visualizacoes")
                         .HasColumnType("integer");
@@ -1746,9 +1763,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("ContaId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("CorPrimaria")
                         .HasColumnType("text");
@@ -1783,9 +1799,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("ContaId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Descricao")
                         .HasMaxLength(200)
@@ -1833,9 +1848,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<Guid?>("ClienteId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("ContaId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid");
 
                     b.Property<bool>("ContatoRepetido")
                         .HasColumnType("boolean");
@@ -2018,9 +2032,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<DateTimeOffset?>("AbertoEm")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("ContaId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Conteudo")
                         .IsRequired()
@@ -2116,9 +2129,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("ContaId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("Em")
                         .HasColumnType("timestamp with time zone");
@@ -2137,6 +2149,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ContaId");
+
                     b.HasIndex("OrcamentoFunilId");
 
                     b.ToTable("RespostasPropostaFunil");
@@ -2154,9 +2168,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<bool>("Completa")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("ContaId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("CriadoPor")
                         .HasColumnType("text");
@@ -2280,9 +2293,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("ContaId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("CriadoEm")
                         .HasColumnType("timestamp with time zone");
@@ -2311,9 +2323,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("ContaId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Descricao")
                         .HasColumnType("text");
@@ -2335,9 +2346,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("ContaId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Nome")
                         .IsRequired()
@@ -2356,9 +2366,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("ContaId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Nome")
                         .IsRequired()
@@ -2381,9 +2390,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("ContaId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Nome")
                         .IsRequired()
@@ -2504,9 +2512,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<string>("Complemento")
                         .HasColumnType("text");
 
-                    b.Property<string>("ContaId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Documento")
                         .HasColumnType("text");
@@ -2670,9 +2677,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("ContaId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Descricao")
                         .HasColumnType("text");
@@ -2710,6 +2716,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ContaId");
 
                     b.HasIndex("EventoId");
 
@@ -2797,9 +2805,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("ContaId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("NomeOriginal")
                         .IsRequired()
@@ -2813,6 +2820,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ContaId");
 
                     b.ToTable("Arquivos");
                 });
@@ -2883,6 +2892,15 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Project.Domain.Clientes.Cliente", b =>
+                {
+                    b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
+                        .WithMany()
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Project.Domain.Clientes.VinculoCliente", b =>
                 {
                     b.HasOne("Project.Domain.Clientes.Cliente", null)
@@ -2898,6 +2916,15 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Project.Domain.Contratos.ContratoConta", b =>
+                {
+                    b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
+                        .WithMany()
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Project.Domain.Convidados.Convidado", b =>
                 {
                     b.HasOne("Project.Domain.Convidados.Convite", null)
@@ -2909,6 +2936,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
             modelBuilder.Entity("Project.Domain.Convidados.Convite", b =>
                 {
+                    b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
+                        .WithMany()
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Project.Domain.Eventos.Evento", null)
                         .WithMany()
                         .HasForeignKey("EventoId")
@@ -2918,6 +2951,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
             modelBuilder.Entity("Project.Domain.Convidados.ImportacaoConvidados", b =>
                 {
+                    b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
+                        .WithMany()
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Project.Domain.Eventos.Evento", null)
                         .WithMany()
                         .HasForeignKey("EventoId")
@@ -2985,6 +3024,24 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Project.Domain.Equipe.Assistente", b =>
+                {
+                    b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
+                        .WithMany()
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Project.Domain.Equipe.ContaAssessoria", b =>
+                {
+                    b.HasOne("Project.Infrastructure.Conta.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("DonoUsuarioId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Project.Domain.Equipe.EventoAssistente", b =>
                 {
                     b.HasOne("Project.Domain.Equipe.Assistente", null)
@@ -3002,6 +3059,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
             modelBuilder.Entity("Project.Domain.Eventos.CompromissoAgenda", b =>
                 {
+                    b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
+                        .WithMany()
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Project.Domain.Eventos.Evento", null)
                         .WithMany()
                         .HasForeignKey("EventoId")
@@ -3010,6 +3073,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
             modelBuilder.Entity("Project.Domain.Eventos.Evento", b =>
                 {
+                    b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
+                        .WithMany()
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.OwnsOne("Project.Domain.Eventos.LocalEvento", "Cerimonia", b1 =>
                         {
                             b1.Property<Guid>("EventoId")
@@ -3121,6 +3190,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
             modelBuilder.Entity("Project.Domain.Eventos.LinkCliente", b =>
                 {
+                    b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
+                        .WithMany()
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Project.Domain.Eventos.Evento", null)
                         .WithMany()
                         .HasForeignKey("EventoId")
@@ -3130,10 +3205,25 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
             modelBuilder.Entity("Project.Domain.Eventos.LinkPortaria", b =>
                 {
+                    b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
+                        .WithMany()
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Project.Domain.Eventos.Evento", null)
                         .WithMany()
                         .HasForeignKey("EventoId")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Project.Domain.Eventos.ModeloEvento", b =>
+                {
+                    b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
+                        .WithMany()
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
@@ -3161,6 +3251,15 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .WithMany("Subitens")
                         .HasForeignKey("ServicoId")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Project.Domain.Eventos.TagConta", b =>
+                {
+                    b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
+                        .WithMany()
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
@@ -3196,6 +3295,15 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Project.Domain.Fornecedores.Fornecedor", b =>
+                {
+                    b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
+                        .WithMany()
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Project.Domain.Fornecedores.FornecedorServico", b =>
                 {
                     b.HasOne("Project.Domain.Fornecedores.Fornecedor", null)
@@ -3220,6 +3328,15 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Project.Domain.Fornecedores.ServicoConta", b =>
+                {
+                    b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
+                        .WithMany()
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Project.Domain.Fornecedores.TelefoneFornecedor", b =>
                 {
                     b.HasOne("Project.Domain.Fornecedores.Fornecedor", null)
@@ -3231,6 +3348,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
             modelBuilder.Entity("Project.Domain.Funil.BriefingOportunidade", b =>
                 {
+                    b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
+                        .WithMany()
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Project.Domain.Funil.Oportunidade", null)
                         .WithMany()
                         .HasForeignKey("OportunidadeId")
@@ -3247,6 +3370,24 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Project.Domain.Funil.ContratoFunil", b =>
+                {
+                    b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
+                        .WithMany()
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Project.Domain.Funil.EstagioFunil", b =>
+                {
+                    b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
+                        .WithMany()
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Project.Domain.Funil.ItemBriefingOportunidade", b =>
                 {
                     b.HasOne("Project.Domain.Funil.BriefingOportunidade", null)
@@ -3256,8 +3397,50 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Project.Domain.Funil.LeadRsvp", b =>
+                {
+                    b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
+                        .WithMany()
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Project.Domain.Funil.MetricasRsvpFunil", b =>
+                {
+                    b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
+                        .WithMany()
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Project.Domain.Funil.ModeloOrcamentoFunil", b =>
+                {
+                    b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
+                        .WithMany()
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Project.Domain.Funil.ModeloServicoFunil", b =>
+                {
+                    b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
+                        .WithMany()
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Project.Domain.Funil.Oportunidade", b =>
                 {
+                    b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
+                        .WithMany()
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Project.Domain.Funil.EstagioFunil", "EstagioFunil")
                         .WithMany()
                         .HasForeignKey("EstagioFunilId")
@@ -3272,6 +3455,15 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Navigation("EstagioFunil");
                 });
 
+            modelBuilder.Entity("Project.Domain.Funil.OrcamentoFunil", b =>
+                {
+                    b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
+                        .WithMany()
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Project.Domain.Funil.ResponsavelTarefaFunil", b =>
                 {
                     b.HasOne("Project.Domain.Funil.TarefaFunil", null)
@@ -3283,10 +3475,25 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
             modelBuilder.Entity("Project.Domain.Funil.RespostaPropostaFunil", b =>
                 {
+                    b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
+                        .WithMany()
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Project.Domain.Funil.OrcamentoFunil", null)
                         .WithMany()
                         .HasForeignKey("OrcamentoFunilId")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Project.Domain.Funil.TarefaFunil", b =>
+                {
+                    b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
+                        .WithMany()
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
@@ -3317,6 +3524,51 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Project.Domain.Modelos.ModeloBriefing", b =>
+                {
+                    b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
+                        .WithMany()
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Project.Domain.Modelos.ModeloCronograma", b =>
+                {
+                    b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
+                        .WithMany()
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Project.Domain.Modelos.ModeloInspiracao", b =>
+                {
+                    b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
+                        .WithMany()
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Project.Domain.Modelos.ModeloMensagem", b =>
+                {
+                    b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
+                        .WithMany()
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Project.Domain.Modelos.ModeloRoteiro", b =>
+                {
+                    b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
+                        .WithMany()
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Project.Domain.Modelos.PerguntaBriefing", b =>
                 {
                     b.HasOne("Project.Domain.Modelos.SecaoBriefing", null)
@@ -3341,6 +3593,15 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .WithMany("Secoes")
                         .HasForeignKey("ModeloId")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Project.Domain.Perfil.PerfilAssessoria", b =>
+                {
+                    b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
+                        .WithMany()
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
@@ -3382,6 +3643,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
             modelBuilder.Entity("Project.Domain.Tarefas.Tarefa", b =>
                 {
+                    b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
+                        .WithMany()
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Project.Domain.Eventos.Evento", null)
                         .WithMany()
                         .HasForeignKey("EventoId")
@@ -3392,6 +3659,15 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .WithMany()
                         .HasForeignKey("ServicoEventoId")
                         .OnDelete(DeleteBehavior.SetNull);
+                });
+
+            modelBuilder.Entity("Project.Infrastructure.Persistencia.ArquivoRegistro", b =>
+                {
+                    b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
+                        .WithMany()
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Project.Domain.Clientes.Cliente", b =>

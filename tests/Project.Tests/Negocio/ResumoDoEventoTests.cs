@@ -10,7 +10,7 @@ namespace Project.Tests.Negocio;
 
 public class ResumoDoEventoTests
 {
-    private const string Conta = "conta-1";
+    private static readonly Guid Conta = Guid.Parse("11111111-1111-1111-1111-111111111111");
     private static readonly DateOnly Hoje = new(2026, 11, 18);
 
     [Fact]

@@ -6,7 +6,7 @@ public sealed class Tarefa
 
     public Guid EventoId { get; set; }
 
-    public string ContaId { get; set; } = "";
+    public Guid ContaId { get; set; }
 
     public string Titulo { get; set; } = "";
 

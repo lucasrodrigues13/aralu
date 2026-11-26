@@ -13,13 +13,13 @@ public sealed record SalvarInspiracao(string? Nome, IReadOnlyList<ItemInspiracao
 
 public sealed class InspiracaoServico(IDados dados)
 {
-    public async Task<IReadOnlyList<InspiracaoLeitura>> ListarAsync(string contaId, string? nome, CancellationToken ct)
+    public async Task<IReadOnlyList<InspiracaoLeitura>> ListarAsync(Guid contaId, string? nome, CancellationToken ct)
     {
         var modelos = await dados.ListarInspiracoesAsync(contaId, nome, ct);
         return modelos.Select(Ler).ToArray();
     }
 
-    public async Task<Resultado<InspiracaoLeitura>> ObterAsync(string contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<InspiracaoLeitura>> ObterAsync(Guid contaId, Guid id, CancellationToken ct)
     {
         var modelo = await dados.ObterInspiracaoAsync(contaId, id, ct);
         return modelo is null
@@ -27,7 +27,7 @@ public sealed class InspiracaoServico(IDados dados)
             : Resultado<InspiracaoLeitura>.Sucesso(Ler(modelo));
     }
 
-    public async Task<Resultado<InspiracaoLeitura>> CriarAsync(string contaId, SalvarInspiracao pedido, CancellationToken ct)
+    public async Task<Resultado<InspiracaoLeitura>> CriarAsync(Guid contaId, SalvarInspiracao pedido, CancellationToken ct)
     {
         var montado = Montar(contaId, Guid.NewGuid(), pedido);
         if (!montado.Ok)
@@ -39,7 +39,7 @@ public sealed class InspiracaoServico(IDados dados)
         return Resultado<InspiracaoLeitura>.Sucesso(Ler(montado.Valor!));
     }
 
-    public async Task<Resultado<InspiracaoLeitura>> AtualizarAsync(string contaId, Guid id, SalvarInspiracao pedido, CancellationToken ct)
+    public async Task<Resultado<InspiracaoLeitura>> AtualizarAsync(Guid contaId, Guid id, SalvarInspiracao pedido, CancellationToken ct)
     {
         var modelo = await dados.ObterInspiracaoAsync(contaId, id, ct);
         if (modelo is null)
@@ -67,7 +67,7 @@ public sealed class InspiracaoServico(IDados dados)
         return Resultado<InspiracaoLeitura>.Sucesso(Ler(modelo));
     }
 
-    public async Task<Resultado<InspiracaoLeitura>> ClonarAsync(string contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<InspiracaoLeitura>> ClonarAsync(Guid contaId, Guid id, CancellationToken ct)
     {
         var origem = await dados.ObterInspiracaoAsync(contaId, id, ct);
         if (origem is null)
@@ -97,7 +97,7 @@ public sealed class InspiracaoServico(IDados dados)
         return Resultado<InspiracaoLeitura>.Sucesso(Ler(copia));
     }
 
-    public async Task<Resultado<bool>> ExcluirAsync(string contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<bool>> ExcluirAsync(Guid contaId, Guid id, CancellationToken ct)
     {
         var modelo = await dados.ObterInspiracaoAsync(contaId, id, ct);
         if (modelo is null)
@@ -109,7 +109,7 @@ public sealed class InspiracaoServico(IDados dados)
         return Resultado<bool>.Sucesso(true);
     }
 
-    private static Resultado<ModeloInspiracao> Montar(string contaId, Guid id, SalvarInspiracao pedido)
+    private static Resultado<ModeloInspiracao> Montar(Guid contaId, Guid id, SalvarInspiracao pedido)
     {
         var nome = Domain.Comum.Texto.Limpo(pedido.Nome);
         if (nome is null)

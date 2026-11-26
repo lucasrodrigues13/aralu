@@ -8,7 +8,7 @@ namespace Project.Infrastructure.Persistencia;
 
 public sealed class DadosDinheiroEf(AppDbContext banco) : IDadosDinheiro
 {
-    public Task<Evento?> ObterEventoAsync(string contaId, Guid eventoId, CancellationToken ct) =>
+    public Task<Evento?> ObterEventoAsync(Guid contaId, Guid eventoId, CancellationToken ct) =>
         banco.Eventos
             .Include(evento => evento.Servicos).ThenInclude(servico => servico.Contratos).ThenInclude(contrato => contrato.Parcelas)
             .Include(evento => evento.Servicos).ThenInclude(servico => servico.Subitens)
@@ -16,7 +16,7 @@ public sealed class DadosDinheiroEf(AppDbContext banco) : IDadosDinheiro
             .AsSplitQuery()
             .FirstOrDefaultAsync(evento => evento.Id == eventoId && evento.ContaId == contaId, ct);
 
-    public async Task<IReadOnlyList<PagamentoFornecedorLeitura>> PagamentosFornecedoresAsync(string contaId, Guid eventoId, CancellationToken ct)
+    public async Task<IReadOnlyList<PagamentoFornecedorLeitura>> PagamentosFornecedoresAsync(Guid contaId, Guid eventoId, CancellationToken ct)
     {
         var evento = await banco.Eventos.AsNoTracking()
             .Include(item => item.Servicos).ThenInclude(servico => servico.Contratos).ThenInclude(contrato => contrato.Parcelas)
