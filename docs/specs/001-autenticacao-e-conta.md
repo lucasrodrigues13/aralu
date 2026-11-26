@@ -1,6 +1,6 @@
 # 001. Autenticação e conta
 
-**Status: aprovada.** O código segue esta spec. **Revisão (22/11/2026, [SPEC-060](060-cliente-sem-login-e-link-do-cliente.md)):** a role `Client` saiu; só `Admin`, `Organizer` e `Assistant` entram na plataforma. O cliente acessa apenas o link público com token gerado pelo organizador.
+**Status: aprovada.** O código segue esta spec. **Revisão (22/11/2026, [SPEC-060](060-cliente-sem-login-e-link-do-cliente.md)):** a role `Client` saiu; só `Admin`, `Organizer` e `Assistant` entram na plataforma. O cliente acessa apenas o link público com token gerado pelo organizador. **Revisão (26/11/2026, [SPEC-062](062-conta-assinatura-e-equipe.md)):** o cadastro público passa a criar também a conta, o visitante como Dono, o trial de 14 dias e os grupos padrão; fora o `Admin`, o acesso vem do tipo na conta e do grupo.
 
 ## 1. Identificador e nome
 
