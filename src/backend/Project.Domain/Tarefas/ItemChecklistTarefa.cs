@@ -30,6 +30,9 @@ public sealed class ItemChecklistTarefa : ITemConta
     /// <summary>Conta da dona ou id da assistente; nulo para o cliente.</summary>
     public string? ResponsavelReferenciaId { get; set; }
 
+    /// <summary>Pessoa da equipe responsável pelo item (FK para MembrosConta). Preenchido pelo banco.</summary>
+    public Guid? ResponsavelMembroId { get; set; }
+
     /// <summary>Item com data exata que ainda pode andar com a data do evento: aberto e com prazo. O relativo anda sozinho.</summary>
     public bool PrazoMovivel => Prazo is not null && PrazoRelativo is null && !Feito && !Cancelado;
 

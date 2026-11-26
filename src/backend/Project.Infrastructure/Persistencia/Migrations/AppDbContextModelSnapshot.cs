@@ -2340,6 +2340,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<Guid>("ContaId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("MembroId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Papel")
                         .IsRequired()
                         .HasColumnType("text");
@@ -2354,6 +2357,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ContaId");
+
+                    b.HasIndex("MembroId");
 
                     b.HasIndex("TarefaFunilId");
 
@@ -2872,6 +2877,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<Guid?>("AutorMembroId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("ContaId")
                         .HasColumnType("uuid");
 
@@ -2886,6 +2894,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AutorMembroId");
 
                     b.HasIndex("ContaId");
 
@@ -2918,6 +2928,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<int?>("PrazoRelativo")
                         .HasColumnType("integer");
 
+                    b.Property<Guid?>("ResponsavelMembroId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("ResponsavelPapel")
                         .HasColumnType("text");
 
@@ -2935,6 +2948,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
                     b.HasIndex("ContaId");
 
+                    b.HasIndex("ResponsavelMembroId");
+
                     b.HasIndex("TarefaId");
 
                     b.ToTable("ItensChecklistTarefa", (string)null);
@@ -2947,6 +2962,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("MembroId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("Papel")
@@ -2963,9 +2981,14 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
                     b.HasIndex("ContaId");
 
+                    b.HasIndex("MembroId");
+
                     b.HasIndex("TarefaId");
 
-                    b.ToTable("ResponsaveisTarefa", (string)null);
+                    b.ToTable("ResponsaveisTarefa", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ResponsavelTarefa_Membro", "\"MembroId\" IS NULL OR \"Papel\" = 'Assistente'");
+                        });
                 });
 
             modelBuilder.Entity("Project.Domain.Tarefas.Tarefa", b =>
@@ -4076,6 +4099,11 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Project.Domain.Equipe.MembroConta", null)
+                        .WithMany()
+                        .HasForeignKey("MembroId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Project.Domain.Funil.TarefaFunil", null)
                         .WithMany("Responsaveis")
                         .HasForeignKey("TarefaFunilId")
@@ -4295,6 +4323,11 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
             modelBuilder.Entity("Project.Domain.Tarefas.ComentarioTarefa", b =>
                 {
+                    b.HasOne("Project.Domain.Equipe.MembroConta", null)
+                        .WithMany()
+                        .HasForeignKey("AutorMembroId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
                         .WithMany()
                         .HasForeignKey("ContaId")
@@ -4316,6 +4349,11 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Project.Domain.Equipe.MembroConta", null)
+                        .WithMany()
+                        .HasForeignKey("ResponsavelMembroId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Project.Domain.Tarefas.Tarefa", null)
                         .WithMany("Checklist")
                         .HasForeignKey("TarefaId")
@@ -4330,6 +4368,11 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .HasForeignKey("ContaId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("Project.Domain.Equipe.MembroConta", null)
+                        .WithMany()
+                        .HasForeignKey("MembroId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("Project.Domain.Tarefas.Tarefa", null)
                         .WithMany("Responsaveis")

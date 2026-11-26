@@ -51,4 +51,7 @@ public sealed class ResponsavelTarefaFunil : ITemConta
 
     /// <summary>Id da conta (dona) ou da assistente.</summary>
     public string ReferenciaId { get; set; } = "";
+
+    /// <summary>Pessoa da equipe responsável (FK para MembrosConta). Preenchido pelo banco a partir de Papel + ReferenciaId.</summary>
+    public Guid? MembroId { get; set; }
 }

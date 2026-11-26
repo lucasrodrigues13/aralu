@@ -164,6 +164,13 @@ public static class Mapa
         eventoMembro.HasOne<MembroConta>().WithMany().HasForeignKey(item => item.MembroId).OnDelete(DeleteBehavior.Cascade);
         eventoMembro.HasIndex(item => new { item.ContaId, item.MembroId });
 
+        // Responsáveis e autor que são pessoas da equipe (SPEC-062 Fase 3). RESTRICT: membro nunca é apagado, só desativado.
+        modelBuilder.Entity<ResponsavelTarefa>().HasOne<MembroConta>().WithMany().HasForeignKey(item => item.MembroId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<ResponsavelTarefa>().ToTable(tabela => tabela.HasCheckConstraint("CK_ResponsavelTarefa_Membro", "\"MembroId\" IS NULL OR \"Papel\" = 'Assistente'"));
+        modelBuilder.Entity<ResponsavelTarefaFunil>().HasOne<MembroConta>().WithMany().HasForeignKey(item => item.MembroId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<ItemChecklistTarefa>().HasOne<MembroConta>().WithMany().HasForeignKey(item => item.ResponsavelMembroId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<ComentarioTarefa>().HasOne<MembroConta>().WithMany().HasForeignKey(item => item.AutorMembroId).OnDelete(DeleteBehavior.SetNull);
+
         var grupo = modelBuilder.Entity<GrupoAcesso>();
         grupo.ToTable("GruposAcesso");
         grupo.Property(item => item.Nome).HasMaxLength(GrupoAcesso.NomeMaximo);

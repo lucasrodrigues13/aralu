@@ -173,7 +173,18 @@ public sealed class ArmazenamentoArquivo(
         var raiz = Raiz();
         var completo = Path.GetFullPath(Path.Combine(raiz, registro.CaminhoRelativo.Replace('/', Path.DirectorySeparatorChar)));
         banco.Arquivos.Remove(registro);
-        await banco.SaveChangesAsync(ct);
+        try
+        {
+            await banco.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateException)
+        {
+            // Outro registro ainda usa o arquivo (FK RESTRICT, ex.: logo copiado do modelo para o contrato):
+            // fica guardado e só sai quando ninguém mais usar (SPEC-062 Fase 3).
+            banco.Entry(registro).State = EntityState.Unchanged;
+            return;
+        }
+
         if (completo.StartsWith(raiz, StringComparison.OrdinalIgnoreCase))
         {
             ApagarSilencioso(completo);

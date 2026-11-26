@@ -874,7 +874,7 @@ public static class NegocioEndpoints
         ComConta(usuario, async conta =>
         {
 
-            return await De(servico.ComentarAsync(conta, id, pedido, Hoje(), ct));
+            return await De(servico.ComentarAsync(conta, id, pedido, Hoje(), ct, EscopoAssistente.MembroId(usuario)));
         });
 
     private static Task<IResult> AnexarTarefa(Guid id, HttpRequest request, ClaimsPrincipal usuario, TarefaServico servico, CancellationToken ct) =>

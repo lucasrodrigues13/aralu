@@ -2155,7 +2155,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     ContaId = table.Column<Guid>(type: "uuid", nullable: false),
                     TarefaFunilId = table.Column<Guid>(type: "uuid", nullable: false),
                     Papel = table.Column<string>(type: "text", nullable: false),
-                    ReferenciaId = table.Column<string>(type: "text", nullable: false)
+                    ReferenciaId = table.Column<string>(type: "text", nullable: false),
+                    MembroId = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -2164,6 +2165,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         name: "FK_ResponsaveisTarefaFunil_Contas_ContaId",
                         column: x => x.ContaId,
                         principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_ResponsaveisTarefaFunil_MembrosConta_MembroId",
+                        column: x => x.MembroId,
+                        principalTable: "MembrosConta",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
@@ -2271,6 +2278,7 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     ContaId = table.Column<Guid>(type: "uuid", nullable: false),
                     TarefaId = table.Column<Guid>(type: "uuid", nullable: false),
                     AutorContaId = table.Column<string>(type: "text", nullable: false),
+                    AutorMembroId = table.Column<Guid>(type: "uuid", nullable: true),
                     Texto = table.Column<string>(type: "text", nullable: false),
                     CriadoEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
@@ -2283,6 +2291,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         principalTable: "Contas",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_ComentariosTarefa_MembrosConta_AutorMembroId",
+                        column: x => x.AutorMembroId,
+                        principalTable: "MembrosConta",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
                     table.ForeignKey(
                         name: "FK_ComentariosTarefa_Tarefas_TarefaId",
                         column: x => x.TarefaId,
@@ -2305,7 +2319,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     Prazo = table.Column<DateOnly>(type: "date", nullable: true),
                     PrazoRelativo = table.Column<int>(type: "integer", nullable: true),
                     ResponsavelPapel = table.Column<string>(type: "text", nullable: true),
-                    ResponsavelReferenciaId = table.Column<string>(type: "text", nullable: true)
+                    ResponsavelReferenciaId = table.Column<string>(type: "text", nullable: true),
+                    ResponsavelMembroId = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -2314,6 +2329,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         name: "FK_ItensChecklistTarefa_Contas_ContaId",
                         column: x => x.ContaId,
                         principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_ItensChecklistTarefa_MembrosConta_ResponsavelMembroId",
+                        column: x => x.ResponsavelMembroId,
+                        principalTable: "MembrosConta",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
@@ -2332,15 +2353,23 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     ContaId = table.Column<Guid>(type: "uuid", nullable: false),
                     TarefaId = table.Column<Guid>(type: "uuid", nullable: false),
                     Papel = table.Column<string>(type: "text", nullable: false),
-                    ReferenciaId = table.Column<string>(type: "text", nullable: true)
+                    ReferenciaId = table.Column<string>(type: "text", nullable: true),
+                    MembroId = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ResponsaveisTarefa", x => x.Id);
+                    table.CheckConstraint("CK_ResponsavelTarefa_Membro", "\"MembroId\" IS NULL OR \"Papel\" = 'Assistente'");
                     table.ForeignKey(
                         name: "FK_ResponsaveisTarefa_Contas_ContaId",
                         column: x => x.ContaId,
                         principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_ResponsaveisTarefa_MembrosConta_MembroId",
+                        column: x => x.MembroId,
+                        principalTable: "MembrosConta",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
@@ -2512,6 +2541,11 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 name: "IX_Clientes_FotoId",
                 table: "Clientes",
                 column: "FotoId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ComentariosTarefa_AutorMembroId",
+                table: "ComentariosTarefa",
+                column: "AutorMembroId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ComentariosTarefa_ContaId",
@@ -2804,6 +2838,11 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 name: "IX_ItensChecklistTarefa_ContaId",
                 table: "ItensChecklistTarefa",
                 column: "ContaId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ItensChecklistTarefa_ResponsavelMembroId",
+                table: "ItensChecklistTarefa",
+                column: "ResponsavelMembroId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ItensChecklistTarefa_TarefaId",
@@ -3103,6 +3142,11 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 column: "ContaId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ResponsaveisTarefa_MembroId",
+                table: "ResponsaveisTarefa",
+                column: "MembroId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ResponsaveisTarefa_TarefaId",
                 table: "ResponsaveisTarefa",
                 column: "TarefaId");
@@ -3111,6 +3155,11 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 name: "IX_ResponsaveisTarefaFunil_ContaId",
                 table: "ResponsaveisTarefaFunil",
                 column: "ContaId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ResponsaveisTarefaFunil_MembroId",
+                table: "ResponsaveisTarefaFunil",
+                column: "MembroId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ResponsaveisTarefaFunil_TarefaFunilId",
@@ -3392,9 +3441,6 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
-                name: "MembrosConta");
-
-            migrationBuilder.DropTable(
                 name: "Tags");
 
             migrationBuilder.DropTable(
@@ -3428,13 +3474,13 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 name: "Tarefas");
 
             migrationBuilder.DropTable(
+                name: "MembrosConta");
+
+            migrationBuilder.DropTable(
                 name: "TarefasFunil");
 
             migrationBuilder.DropTable(
                 name: "OrcamentosFunil");
-
-            migrationBuilder.DropTable(
-                name: "GruposAcesso");
 
             migrationBuilder.DropTable(
                 name: "ModelosRoteiro");
@@ -3453,6 +3499,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
             migrationBuilder.DropTable(
                 name: "ContratosFunil");
+
+            migrationBuilder.DropTable(
+                name: "GruposAcesso");
 
             migrationBuilder.DropTable(
                 name: "ModelosOrcamentoFunil");

@@ -868,6 +868,8 @@ public sealed class DadosEf(AppDbContext banco) : IDados
 
     public async Task RemoverBriefingAsync(ModeloBriefing modelo, CancellationToken ct)
     {
+        // O vínculo com o modelo de evento não tem FK (BibliotecaId aponta para quatro tabelas): sai junto (SPEC-062 Fase 3).
+        await banco.Set<VinculoModeloEvento>().Where(vinculo => vinculo.Tipo == TipoVinculoModelo.Briefing && vinculo.BibliotecaId == modelo.Id).ExecuteDeleteAsync(ct);
         banco.ModelosBriefing.Remove(modelo);
         await banco.SaveChangesAsync(ct);
     }
@@ -897,6 +899,8 @@ public sealed class DadosEf(AppDbContext banco) : IDados
 
     public async Task RemoverRoteiroAsync(ModeloRoteiro modelo, CancellationToken ct)
     {
+        // O vínculo com o modelo de evento não tem FK (BibliotecaId aponta para quatro tabelas): sai junto (SPEC-062 Fase 3).
+        await banco.Set<VinculoModeloEvento>().Where(vinculo => vinculo.Tipo == TipoVinculoModelo.Roteiro && vinculo.BibliotecaId == modelo.Id).ExecuteDeleteAsync(ct);
         banco.ModelosRoteiro.Remove(modelo);
         await banco.SaveChangesAsync(ct);
     }
@@ -955,6 +959,8 @@ public sealed class DadosEf(AppDbContext banco) : IDados
 
     public async Task RemoverInspiracaoAsync(ModeloInspiracao modelo, CancellationToken ct)
     {
+        // O vínculo com o modelo de evento não tem FK (BibliotecaId aponta para quatro tabelas): sai junto (SPEC-062 Fase 3).
+        await banco.Set<VinculoModeloEvento>().Where(vinculo => vinculo.Tipo == TipoVinculoModelo.Inspiracao && vinculo.BibliotecaId == modelo.Id).ExecuteDeleteAsync(ct);
         banco.ModelosInspiracao.Remove(modelo);
         await banco.SaveChangesAsync(ct);
     }
@@ -984,6 +990,8 @@ public sealed class DadosEf(AppDbContext banco) : IDados
 
     public async Task RemoverMensagemAsync(ModeloMensagem modelo, CancellationToken ct)
     {
+        // O vínculo com o modelo de evento não tem FK (BibliotecaId aponta para quatro tabelas): sai junto (SPEC-062 Fase 3).
+        await banco.Set<VinculoModeloEvento>().Where(vinculo => vinculo.Tipo == TipoVinculoModelo.Mensagem && vinculo.BibliotecaId == modelo.Id).ExecuteDeleteAsync(ct);
         banco.ModelosMensagem.Remove(modelo);
         await banco.SaveChangesAsync(ct);
     }

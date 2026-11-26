@@ -150,6 +150,13 @@ app.UseExceptionHandler(handler =>
     handler.Run(async contexto =>
     {
         var falha = contexto.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>();
+        if (Project.Api.Comum.RegistroEmUso.Mensagem(falha?.Error) is { } emUso)
+        {
+            contexto.Response.StatusCode = StatusCodes.Status409Conflict;
+            await contexto.Response.WriteAsJsonAsync(new ErroResposta(Project.Api.Comum.RegistroEmUso.Codigo, emUso));
+            return;
+        }
+
         var logger = contexto.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("aralu");
         logger.LogError(
             "Falha interna {Tipo} ao processar {Metodo} {Caminho}.",

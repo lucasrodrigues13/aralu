@@ -272,3 +272,19 @@ Tudo o que mexe em schema entra junto, para gerar a migration inicial uma vez s�
 **Não verificado no navegador:** o stack local precisa da API nova e do banco recriado.
 
 **Próximo: lote 3.3** — colunas novas de responsável, 409 nas exclusões com FK `RESTRICT`, troca segura de arquivo e apagar `VinculoModeloEvento` com o modelo.
+
+### Fase 3 — lote 3.3 concluído (Claude Code)
+
+**Feito**
+- **409 nas exclusões barradas por FK `RESTRICT`**: o tratador de erros da API reconhece a violação de FK do Postgres e responde 409 com mensagem pela tabela referenciada (arquivo em uso, fornecedor em serviço de evento, serviço ligado a fornecedor, estágio com oportunidades, grupo com membros). Antes era 500.
+- **Troca de arquivo**: os fluxos já gravavam o novo, trocavam a referência e só depois apagavam o antigo. Agora `DescartarAsync` mantém o arquivo quando outro registro ainda o usa (ex.: logo do modelo copiado para o contrato do funil), no lugar de estourar 500.
+- **Vínculos de modelo**: apagar um modelo de briefing, roteiro, inspiração ou mensagem apaga os `VinculoModeloEvento` que apontavam para ele (a ligação sem FK). Apagar o modelo de evento já levava os vínculos em cascata.
+- **Responsáveis ligados ao membro**: `ResponsaveisTarefa.MembroId`, `ResponsaveisTarefaFunil.MembroId` e `ItensChecklistTarefa.ResponsavelMembroId`, com FK `RESTRICT` para `MembrosConta`, preenchidos no `SaveChanges` quando o responsável é uma pessoa da equipe. `ComentariosTarefa.AutorMembroId` (FK, `SET NULL`) grava quem escreveu; antes só ficava o id da conta.
+- Testes `IntegridadeFase3Tests`. Migration `Inicial` e `deploy/schema.sql` regerados. Suíte: 313 + 104, verdes.
+
+**Diferenças do plano/explorador**
+- Não houve a divisão em `MembroId`/`FornecedorId`/`ClienteId` com `CHECK` de "exatamente um": os responsáveis de hoje são, na maior parte, papéis sem pessoa (Organizer, Equipe, "todas as assistentes", Cliente), e não existe responsável fornecedor. Ficou `MembroId` opcional, com `CHECK` de que só o papel Assistente tem membro. `ReferenciaId` segue como está para não mudar a API.
+- `Tarefa.ResponsavelContaId` ficou: guarda sempre o id da conta (legado), não uma pessoa; não há membro para pôr ali.
+- Apagar oportunidade com contrato segue em cascata (pendência 9).
+
+**Fase 3 concluída no backend e nas telas.** Falta verificar no navegador com o banco local recriado.

@@ -117,6 +117,7 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser>
     {
         await SincronizarPresencasAsync(cancellationToken);
         await PreencherContaAsync(cancellationToken);
+        PreencherMembros();
         return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
     }
 
@@ -125,6 +126,32 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser>
     /// Os registros raiz já chegam com ContaId; as filhas (itens, parcelas, seções...) herdam aqui.
     /// Roda em passadas até não mudar mais, para cobrir neto criado junto com o filho.
     /// </summary>
+    /// <summary>
+    /// Responsável que é uma pessoa da equipe (papel Assistente com id) ganha a FK para MembrosConta (SPEC-062 Fase 3).
+    /// Responsável por papel (Organizer, Equipe, todas as assistentes, Cliente) fica sem membro.
+    /// </summary>
+    private void PreencherMembros()
+    {
+        static Guid? Membro(PapelResponsavel? papel, string? referencia) =>
+            papel == PapelResponsavel.Assistente && Guid.TryParse(referencia, out var id) ? id : null;
+
+        foreach (var entrada in ChangeTracker.Entries().Where(item => item.State is EntityState.Added or EntityState.Modified))
+        {
+            switch (entrada.Entity)
+            {
+                case ResponsavelTarefa item:
+                    item.MembroId = Membro(item.Papel, item.ReferenciaId);
+                    break;
+                case ResponsavelTarefaFunil item:
+                    item.MembroId = Membro(item.Papel, item.ReferenciaId);
+                    break;
+                case ItemChecklistTarefa item:
+                    item.ResponsavelMembroId = Membro(item.ResponsavelPapel, item.ResponsavelReferenciaId);
+                    break;
+            }
+        }
+    }
+
     private async Task PreencherContaAsync(CancellationToken ct)
     {
         bool mudou;

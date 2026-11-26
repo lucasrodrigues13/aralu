@@ -13,6 +13,9 @@ public sealed class ResponsavelTarefa : ITemConta
 
     public string? ReferenciaId { get; set; }
 
+    /// <summary>Pessoa da equipe responsável (FK para MembrosConta). Preenchido pelo banco a partir de Papel + ReferenciaId.</summary>
+    public Guid? MembroId { get; set; }
+
     public static ResponsavelTarefa Organizer(Guid tarefaId, Guid contaId) => new()
     {
         Id = Guid.NewGuid(),

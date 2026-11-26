@@ -336,7 +336,7 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
         return Resultado<TarefaLeitura>.Sucesso(await LerUmaAsync(contaId, tarefa, hoje, ct));
     }
 
-    public async Task<Resultado<TarefaLeitura>> ComentarAsync(Guid contaId, Guid id, ComentarioPedido pedido, DateOnly hoje, CancellationToken ct)
+    public async Task<Resultado<TarefaLeitura>> ComentarAsync(Guid contaId, Guid id, ComentarioPedido pedido, DateOnly hoje, CancellationToken ct, Guid? autorMembroId = null)
     {
         var tarefa = await dados.ObterTarefaAsync(contaId, id, ct);
         if (tarefa is null)
@@ -361,6 +361,7 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
             Id = Guid.NewGuid(),
             TarefaId = tarefa.Id,
             AutorContaId = contaId.ToString(),
+            AutorMembroId = autorMembroId,
             Texto = texto,
             CriadoEm = DateTimeOffset.UtcNow,
         }, ct);
