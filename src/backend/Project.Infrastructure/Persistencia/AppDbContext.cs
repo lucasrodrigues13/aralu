@@ -46,6 +46,8 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<Project.Domain.Assinaturas.AlteracaoAssinatura> AlteracoesAssinatura => Set<Project.Domain.Assinaturas.AlteracaoAssinatura>();
 
+    public DbSet<Project.Domain.Assinaturas.AvisoAssinatura> AvisosAssinatura => Set<Project.Domain.Assinaturas.AvisoAssinatura>();
+
     public DbSet<PerfilAssessoria> Perfis => Set<PerfilAssessoria>();
 
     public DbSet<ModeloEvento> Modelos => Set<ModeloEvento>();

@@ -4,6 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatInputModule } from '@angular/material/input';
 import { ContaClient } from '../../core/conta.client';
 import { mensagemDeErro } from '../../core/mensagem-erro';
@@ -12,7 +13,7 @@ import { Marca } from '../../shared/marca';
 
 @Component({
   selector: 'app-cadastro',
-  imports: [ReactiveFormsModule, RouterLink, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule, Marca],
+  imports: [ReactiveFormsModule, RouterLink, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatCheckboxModule, Marca],
   template: `
     <section class="flex min-h-screen w-full items-center justify-center p-4 bg-light">
       <mat-card class="cardWithShadow w-full max-w-[440px] mb-0!">
@@ -38,6 +39,8 @@ import { Marca } from '../../shared/marca';
               <input [attr.aria-label]="'Confirme a senha'" matInput type="password" formControlName="confirmacao" autocomplete="new-password" />
             </mat-form-field>
             </div>
+            <mat-checkbox formControlName="aceiteTermos">Li e aceito os termos de uso e a política de privacidade da Aralu.</mat-checkbox>
+            <p class="text-muted text-sm -mt-2">O cadastro abre um teste grátis de 14 dias, sem cartão.</p>
             <button mat-flat-button class="w-full" type="submit" [disabled]="formulario.invalid || enviando()">Cadastrar</button>
           </form>
           <p class="text-center mt-6"><a class="text-primary font-semibold no-underline" routerLink="/entrar">Já tenho conta</a></p>
@@ -57,6 +60,7 @@ export class CadastroPage {
     email: ['', [Validators.required, Validators.email]],
     senha: ['', [Validators.required, Validators.minLength(8)]],
     confirmacao: ['', Validators.required],
+    aceiteTermos: [false, Validators.requiredTrue],
   });
 
   protected enviar(): void {
@@ -73,7 +77,7 @@ export class CadastroPage {
     }
 
     this.enviando.set(true);
-    this.conta.cadastrar(email, senha, confirmacao).subscribe({
+    this.conta.cadastrar(email, senha, confirmacao, true).subscribe({
       next: (resposta) => {
         this.toast.sucesso(resposta.mensagem);
         void this.router.navigateByUrl('/entrar');

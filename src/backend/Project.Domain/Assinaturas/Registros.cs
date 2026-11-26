@@ -90,3 +90,22 @@ public sealed class AlteracaoAssinatura : ITemConta
 
     public DateTimeOffset FeitoEm { get; set; }
 }
+
+/// <summary>
+/// E-mail de assinatura já enviado (trial acabando, atraso, fim do desconto, pagamento confirmado).
+/// Tipo + Referência são únicos por conta: o controle diário pode rodar várias vezes sem repetir o aviso.
+/// </summary>
+public sealed class AvisoAssinatura : ITemConta
+{
+    public Guid Id { get; set; }
+
+    public Guid ContaId { get; set; }
+
+    /// <summary>Ex.: Trial11, Trial13, Trial14, Atraso1, Atraso4, DescontoAcabando, PagamentoConfirmado.</summary>
+    public string Tipo { get; set; } = "";
+
+    /// <summary>Data de referência do aviso (fim do trial, vencimento, fim do desconto), para repetir só num ciclo novo.</summary>
+    public DateOnly Referencia { get; set; }
+
+    public DateTimeOffset EnviadoEm { get; set; }
+}

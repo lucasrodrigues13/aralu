@@ -21,6 +21,9 @@ public enum ResultadoCadastro
 /// </summary>
 public sealed class CadastroDeConta(AppDbContext banco, UserManager<ApplicationUser> usuarios)
 {
+    /// <summary>Versão dos termos de uso e da política de privacidade em vigor. Trocar ao publicar o texto final.</summary>
+    public const string VersaoTermos = "2026-11-provisoria";
+
     public async Task<ResultadoCadastro> CriarDonoAsync(ApplicationUser usuario, string senha, CancellationToken ct)
     {
         await using var transacao = await banco.Database.BeginTransactionAsync(ct);
@@ -40,7 +43,7 @@ public sealed class CadastroDeConta(AppDbContext banco, UserManager<ApplicationU
 
         var contaId = Guid.Parse(usuario.Id);
         var agora = DateTimeOffset.UtcNow;
-        banco.Contas.Add(new ContaAssessoria { Id = contaId, DonoUsuarioId = usuario.Id, CriadaEm = agora });
+        banco.Contas.Add(new ContaAssessoria { Id = contaId, DonoUsuarioId = usuario.Id, CriadaEm = agora, AceiteTermosEm = agora, VersaoTermos = VersaoTermos });
         banco.Grupos.AddRange(GruposPadrao.Criar(contaId));
         // Trial de 14 dias no plano padrão (R1, RF-115).
         var plano = await banco.Planos.AsNoTracking().SingleAsync(item => item.Padrao, ct);

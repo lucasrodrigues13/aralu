@@ -75,6 +75,7 @@ public sealed class FabricaApi : WebApplicationFactory<Program>
         builder.UseSetting("Swagger:Enabled", "false");
         builder.UseSetting("Asaas:WebhookToken", AsaasDeTeste.TokenWebhook);
         builder.UseSetting("Asaas:DiagnosticoNoNavegador", "true");
+        builder.UseSetting("Assinaturas:ControleDiario", "false");
         builder.UseSetting("Storage:Root", Path.Combine(Path.GetTempPath(), "aralu-arquivos-teste", Guid.NewGuid().ToString("N")));
         builder.UseSetting("Storage:MaxImageBytes", "5242880");
         builder.ConfigureLogging(logging => logging.AddProvider(Logs));

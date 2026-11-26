@@ -35,7 +35,7 @@ public sealed record FaturaLeitura(DateOnly Vencimento, decimal Valor, string St
 public sealed record EventoDiagnostico(string Tipo, DateTimeOffset RecebidoEm, DateTimeOffset? ProcessadoEm, string? Erro, JsonNode? Payload);
 
 /// <summary>Assinatura da conta (SPEC-062 parte B): liberação (R7), assinatura no Asaas e avisos do Asaas.</summary>
-public sealed class AssinaturaServico(AppDbContext banco, IAsaas asaas, IOptions<AsaasOpcoes> opcoes, ILogger<AssinaturaServico> logs, PlanosAdminServico planos)
+public sealed class AssinaturaServico(AppDbContext banco, IAsaas asaas, IOptions<AsaasOpcoes> opcoes, ILogger<AssinaturaServico> logs, PlanosAdminServico planos, AvisosAssinaturaServico avisos)
 {
     public const string ErroAsaasCodigo = "asaas";
 
@@ -347,6 +347,8 @@ public sealed class AssinaturaServico(AppDbContext banco, IAsaas asaas, IOptions
                 {
                     assinatura.Situacao = SituacaoAssinatura.Ativa;
                 }
+
+                await avisos.PagamentoConfirmadoAsync(assinatura, cobranca.Vencimento, cobranca.Valor, agora, ct);
 
                 break;
             case "PAYMENT_OVERDUE":

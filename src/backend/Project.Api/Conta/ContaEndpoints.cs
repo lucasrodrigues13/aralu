@@ -48,6 +48,12 @@ public static class ContaEndpoints
             return Erro(StatusCodes.Status400BadRequest, "validacao", "Informe uma senha.");
         }
 
+        // §6 A1: o visitante aceita os termos de uso para começar o teste.
+        if (pedido.AceiteTermos != true)
+        {
+            return Erro(StatusCodes.Status400BadRequest, "validacao", "Aceite os termos de uso e a política de privacidade para continuar.");
+        }
+
         var senha = pedido.Senha!;
         if (pedido.Confirmacao is not null && pedido.Confirmacao != senha)
         {
@@ -368,7 +374,7 @@ public static class ContaEndpoints
         => Results.Json(new ErroResposta(code, message), statusCode: status);
 }
 
-public sealed record CadastroPedido(string? Email, string? Senha, string? Confirmacao);
+public sealed record CadastroPedido(string? Email, string? Senha, string? Confirmacao, bool? AceiteTermos = null);
 public sealed record LoginPedido(string? Email, string? Senha);
 public sealed record EmailPedido(string? Email);
 public sealed record TokenPedido(string? UsuarioId, string? Token);

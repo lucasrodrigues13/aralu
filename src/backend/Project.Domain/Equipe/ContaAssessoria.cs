@@ -13,4 +13,10 @@ public sealed class ContaAssessoria
     public string DonoUsuarioId { get; set; } = "";
 
     public DateTimeOffset CriadaEm { get; set; }
+
+    /// <summary>Quando o Dono aceitou os termos de uso no cadastro (§6 A3).</summary>
+    public DateTimeOffset? AceiteTermosEm { get; set; }
+
+    /// <summary>Versão dos termos aceita. O conteúdo dos termos é a pendência 4 da SPEC-062.</summary>
+    public string? VersaoTermos { get; set; }
 }

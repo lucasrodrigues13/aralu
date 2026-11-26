@@ -29,7 +29,7 @@ public class ContaFluxoTests
         var email = Unico();
         var cliente = _banco.Fabrica.CreateClient();
 
-        var resposta = await cliente.PostAsJsonAsync("/api/v1/conta/cadastro", new { email, senha = Senha, confirmacao = Senha });
+        var resposta = await cliente.PostAsJsonAsync("/api/v1/conta/cadastro", new { email, senha = Senha, confirmacao = Senha, aceiteTermos = true });
         var corpo = await resposta.Content.ReadAsStringAsync();
 
         Assert.Equal(HttpStatusCode.Created, resposta.StatusCode);
@@ -56,7 +56,7 @@ public class ContaFluxoTests
         var cliente = _banco.Fabrica.CreateClient();
         await Cadastrar(cliente, email);
 
-        var resposta = await cliente.PostAsJsonAsync("/api/v1/conta/cadastro", new { email = email.ToUpperInvariant(), senha = Senha, confirmacao = Senha });
+        var resposta = await cliente.PostAsJsonAsync("/api/v1/conta/cadastro", new { email = email.ToUpperInvariant(), senha = Senha, confirmacao = Senha, aceiteTermos = true });
         var corpo = await resposta.Content.ReadAsStringAsync();
 
         Assert.Equal(HttpStatusCode.Conflict, resposta.StatusCode);
@@ -69,8 +69,8 @@ public class ContaFluxoTests
     {
         var cliente = _banco.Fabrica.CreateClient();
 
-        var fraca = await cliente.PostAsJsonAsync("/api/v1/conta/cadastro", new { email = Unico(), senha = "12345678", confirmacao = "12345678" });
-        var divergente = await cliente.PostAsJsonAsync("/api/v1/conta/cadastro", new { email = Unico(), senha = Senha, confirmacao = "outra-senha" });
+        var fraca = await cliente.PostAsJsonAsync("/api/v1/conta/cadastro", new { email = Unico(), senha = "12345678", confirmacao = "12345678", aceiteTermos = true });
+        var divergente = await cliente.PostAsJsonAsync("/api/v1/conta/cadastro", new { email = Unico(), senha = Senha, confirmacao = "outra-senha", aceiteTermos = true });
 
         Assert.Equal(HttpStatusCode.BadRequest, fraca.StatusCode);
         Assert.Equal(HttpStatusCode.BadRequest, divergente.StatusCode);
@@ -211,7 +211,7 @@ public class ContaFluxoTests
         _banco.Fabrica.Email.Falhar = true;
         try
         {
-            var resposta = await cliente.PostAsJsonAsync("/api/v1/conta/cadastro", new { email, senha = Senha, confirmacao = Senha });
+            var resposta = await cliente.PostAsJsonAsync("/api/v1/conta/cadastro", new { email, senha = Senha, confirmacao = Senha, aceiteTermos = true });
             var corpo = await resposta.Content.ReadAsStringAsync();
 
             Assert.Equal(HttpStatusCode.Created, resposta.StatusCode);
@@ -280,11 +280,11 @@ public class ContaFluxoTests
 
         for (var vez = 0; vez < 5; vez++)
         {
-            var cadastro = await cliente.PostAsJsonAsync("/api/v1/conta/cadastro", new { email = Unico(), senha = Senha, confirmacao = Senha });
+            var cadastro = await cliente.PostAsJsonAsync("/api/v1/conta/cadastro", new { email = Unico(), senha = Senha, confirmacao = Senha, aceiteTermos = true });
             Assert.Equal(HttpStatusCode.Created, cadastro.StatusCode);
         }
 
-        var sexto = await cliente.PostAsJsonAsync("/api/v1/conta/cadastro", new { email = Unico(), senha = Senha, confirmacao = Senha });
+        var sexto = await cliente.PostAsJsonAsync("/api/v1/conta/cadastro", new { email = Unico(), senha = Senha, confirmacao = Senha, aceiteTermos = true });
         Assert.Equal(HttpStatusCode.TooManyRequests, sexto.StatusCode);
         Assert.True(sexto.Headers.Contains("Retry-After"));
 
@@ -399,7 +399,7 @@ public class ContaFluxoTests
         var email = Unico();
         const string senha = "segredo-da-conta";
         var cliente = _banco.Fabrica.CreateClient();
-        var cadastro = await cliente.PostAsJsonAsync("/api/v1/conta/cadastro", new { email, senha, confirmacao = senha });
+        var cadastro = await cliente.PostAsJsonAsync("/api/v1/conta/cadastro", new { email, senha, confirmacao = senha, aceiteTermos = true });
         var corpoCadastro = await cadastro.Content.ReadAsStringAsync();
         await Confirmar(cliente, email);
         var entrada = await cliente.PostAsJsonAsync("/api/v1/conta/entrar", new { email, senha });
@@ -421,7 +421,7 @@ public class ContaFluxoTests
 
     private async Task Cadastrar(HttpClient cliente, string email)
     {
-        var resposta = await cliente.PostAsJsonAsync("/api/v1/conta/cadastro", new { email, senha = Senha, confirmacao = Senha });
+        var resposta = await cliente.PostAsJsonAsync("/api/v1/conta/cadastro", new { email, senha = Senha, confirmacao = Senha, aceiteTermos = true });
         Assert.Equal(HttpStatusCode.Created, resposta.StatusCode);
     }
 

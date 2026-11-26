@@ -84,7 +84,7 @@ public class ContratosFluxoTests
     {
         var email = $"pessoa-{Guid.NewGuid():N}@aralu.test";
         var cliente = _banco.Fabrica.CreateClient();
-        var cadastro = await cliente.PostAsJsonAsync("/api/v1/conta/cadastro", new { email, senha = Senha, confirmacao = Senha });
+        var cadastro = await cliente.PostAsJsonAsync("/api/v1/conta/cadastro", new { email, senha = Senha, confirmacao = Senha, aceiteTermos = true });
         Assert.Equal(HttpStatusCode.Created, cadastro.StatusCode);
         var mensagem = _banco.Fabrica.Email.Mensagens.Last(item => item.Email == email && item.Tipo == "confirmacao");
         var query = QueryHelpers.ParseQuery(new Uri(mensagem.Corpo).Query);

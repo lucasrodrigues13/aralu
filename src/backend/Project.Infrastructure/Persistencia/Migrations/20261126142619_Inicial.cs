@@ -203,7 +203,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     DonoUsuarioId = table.Column<string>(type: "text", nullable: false),
-                    CriadaEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                    CriadaEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    AceiteTermosEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    VersaoTermos = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -293,6 +295,27 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         name: "FK_Assinaturas_Planos_PlanoId",
                         column: x => x.PlanoId,
                         principalTable: "Planos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AvisosAssinatura",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Tipo = table.Column<string>(type: "character varying(40)", maxLength: 40, nullable: false),
+                    Referencia = table.Column<DateOnly>(type: "date", nullable: false),
+                    EnviadoEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AvisosAssinatura", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_AvisosAssinatura_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -2757,6 +2780,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 column: "PlanoId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_AvisosAssinatura_ContaId_Tipo_Referencia",
+                table: "AvisosAssinatura",
+                columns: new[] { "ContaId", "Tipo", "Referencia" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_BriefingsOportunidade_ContaId",
                 table: "BriefingsOportunidade",
                 column: "ContaId");
@@ -3633,6 +3662,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetUserTokens");
+
+            migrationBuilder.DropTable(
+                name: "AvisosAssinatura");
 
             migrationBuilder.DropTable(
                 name: "ClienteEventos");

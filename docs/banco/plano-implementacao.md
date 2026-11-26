@@ -345,3 +345,26 @@ Fase 4 em lotes: **4.1** schema, trial e bloqueio; **4.2** checkout e webhook do
 **Fica para o lote 4.4**
 - Desconto com data de fim: o controle diário precisa mandar ao Asaas o valor cheio antes da primeira cobrança depois da data, e avisar o Dono 7 dias antes.
 - Nenhuma rota usa `.ExigirRecurso` ainda: os recursos (IA, integrações) terão spec própria (pendência 8).
+
+### Fase 4 — lote 4.4 concluído (Claude Code)
+
+**Feito**
+- **Controle diário** (`ControleDiarioAssinaturas`, roda de hora em hora; desliga com `Assinaturas__ControleDiario=false`), com a lógica em `AvisosAssinaturaServico.RodarAsync`:
+  - grava a situação que já venceu: trial no fim → Expirada; atraso acima de 5 dias → Bloqueada; cancelada depois do período pago → Bloqueada (o bloqueio em si já valia na hora, pela regra R7);
+  - e-mails do trial nos dias 11, 13 e 14 (só para quem não assinou), de atraso no 1º e no 4º dia, e do fim do desconto 7 dias antes;
+  - fim do desconto: antes da primeira cobrança depois da data, o valor cheio vai ao Asaas (T18).
+- Nova tabela `AvisosAssinatura` (conta + tipo + data de referência, únicos): a rodada pode repetir sem mandar o mesmo e-mail duas vezes. Estender o trial muda a referência, e os avisos voltam a valer para o novo fim.
+- **E-mail de pagamento confirmado** (§6 B6), um por vencimento: confirmado e recebido do mesmo pagamento mandam um só.
+- Os e-mails vão para todos os Donos ativos da conta, com botão para Configurações → Assinatura.
+- **Aceite dos termos no cadastro** (§6 A1 e A3): sem aceitar, o cadastro devolve 400; a conta grava `AceiteTermosEm` e `VersaoTermos` ("2026-11-provisoria"). A tela de cadastro tem a caixa de aceite.
+- Testes `ControleDiarioTests`. Suíte: 321 + 120, verdes. Build do frontend ok; `ng test` segue barrado só pelo erro antigo de `checklist-tarefa.spec.ts` (o spec do cadastro foi ajustado para marcar o aceite).
+
+**Diferenças da spec/plano**
+- Os termos foram para `Contas` (`AceiteTermosEm`, `VersaoTermos`), não para `Perfis`: no cadastro ainda não existe perfil.
+- Textos dos e-mails e dos termos são provisórios (pendências 3 e 4). A caixa de aceite não tem link porque o texto dos termos não existe ainda.
+
+**Fica fora desta fase**
+- Trocar a forma de pagamento pela tela (§6 B8): hoje o Dono troca na própria fatura do Asaas. Precisa de decisão sobre o fluxo (cancelar e assinar de novo, ou `PUT` do `billingType`).
+- Aviso de 80% e 100% do limite mensal de recurso (§7): depende dos recursos, que ainda não existem.
+
+**Fase 4 concluída.** Próximo: Fase 5 (código de acesso do cliente) e o teste ponta a ponta no staging com o sandbox do Asaas.

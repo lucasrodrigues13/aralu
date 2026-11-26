@@ -27,8 +27,8 @@ export class ContaClient {
   private readonly http = inject(HttpClient);
   private readonly base = inject(API_BASE_URL);
 
-  cadastrar(email: string, senha: string, confirmacao: string) {
-    return this.http.post<MensagemResposta>(`${this.base}/api/v1/conta/cadastro`, { email, senha, confirmacao });
+  cadastrar(email: string, senha: string, confirmacao: string, aceiteTermos = false) {
+    return this.http.post<MensagemResposta>(`${this.base}/api/v1/conta/cadastro`, { email, senha, confirmacao, aceiteTermos });
   }
 
   entrar(email: string, senha: string) {

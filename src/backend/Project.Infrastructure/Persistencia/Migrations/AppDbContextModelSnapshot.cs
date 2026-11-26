@@ -305,6 +305,34 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.ToTable("Assinaturas", (string)null);
                 });
 
+            modelBuilder.Entity("Project.Domain.Assinaturas.AvisoAssinatura", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("EnviadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly>("Referencia")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContaId", "Tipo", "Referencia")
+                        .IsUnique();
+
+                    b.ToTable("AvisosAssinatura", (string)null);
+                });
+
             modelBuilder.Entity("Project.Domain.Assinaturas.CobrancaAssinatura", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1104,11 +1132,17 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<DateTimeOffset?>("AceiteTermosEm")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTimeOffset>("CriadaEm")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("DonoUsuarioId")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("VersaoTermos")
                         .HasColumnType("text");
 
                     b.HasKey("Id");
@@ -3586,6 +3620,15 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.HasOne("Project.Domain.Assinaturas.Plano", null)
                         .WithMany()
                         .HasForeignKey("PlanoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Project.Domain.Assinaturas.AvisoAssinatura", b =>
+                {
+                    b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
+                        .WithMany()
+                        .HasForeignKey("ContaId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

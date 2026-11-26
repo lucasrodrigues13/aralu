@@ -4,7 +4,7 @@ using Project.Infrastructure.Conta;
 
 namespace Project.IntegrationTests.Suporte;
 
-public sealed record MensagemDeEmail(string Email, string Tipo, string Corpo);
+public sealed record MensagemDeEmail(string Email, string Tipo, string Corpo, string? Assunto = null);
 
 public sealed class EmailCapturado : IEmailSender<ApplicationUser>, IEnvioEmail
 {
@@ -44,11 +44,11 @@ public sealed class EmailCapturado : IEmailSender<ApplicationUser>, IEnvioEmail
     public Task EnviarAsync(string email, EmailConteudo conteudo, CancellationToken ct)
     {
         // Corpo = link do botão, como nos e-mails da conta.
-        Registrar(email, "texto", conteudo.Botao?.Url ?? string.Join('\n', conteudo.Paragrafos));
+        Registrar(email, "texto", conteudo.Botao?.Url ?? string.Join('\n', conteudo.Paragrafos), conteudo.Assunto);
         return Task.CompletedTask;
     }
 
-    private void Registrar(string email, string tipo, string corpo)
+    private void Registrar(string email, string tipo, string corpo, string? assunto = null)
     {
         if (Falhar)
         {
@@ -57,7 +57,7 @@ public sealed class EmailCapturado : IEmailSender<ApplicationUser>, IEnvioEmail
 
         lock (_mensagens)
         {
-            _mensagens.Add(new MensagemDeEmail(email, tipo, corpo));
+            _mensagens.Add(new MensagemDeEmail(email, tipo, corpo, assunto));
         }
     }
 }

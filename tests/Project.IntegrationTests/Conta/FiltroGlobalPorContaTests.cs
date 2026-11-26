@@ -69,7 +69,7 @@ public class FiltroGlobalPorContaTests
     {
         var email = $"filtro-{Guid.NewGuid():N}@exemplo.com";
         var cliente = _banco.Fabrica.CreateClient();
-        (await cliente.PostAsJsonAsync("/api/v1/conta/cadastro", new { email, senha = Senha, confirmacao = Senha })).EnsureSuccessStatusCode();
+        (await cliente.PostAsJsonAsync("/api/v1/conta/cadastro", new { email, senha = Senha, confirmacao = Senha, aceiteTermos = true })).EnsureSuccessStatusCode();
         await using var banco = Banco(null);
         var usuario = await banco.Users.SingleAsync(item => item.Email == email);
         return Guid.Parse(usuario.Id);

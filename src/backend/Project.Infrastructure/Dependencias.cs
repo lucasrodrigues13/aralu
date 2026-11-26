@@ -93,6 +93,8 @@ public static class Dependencias
         services.AddScoped<GrupoServico>();
         services.AddScoped<Project.Infrastructure.Assinaturas.AssinaturaServico>();
         services.AddScoped<Project.Infrastructure.Assinaturas.PlanosAdminServico>();
+        services.AddScoped<Project.Infrastructure.Assinaturas.AvisosAssinaturaServico>();
+        services.AddHostedService<Project.Infrastructure.Assinaturas.ControleDiarioAssinaturas>();
         services.AddScoped<CadastroDeConta>();
         services.AddScoped<BriefingLeadServico>();
         services.AddScoped<IArmazenamentoArquivo, ArmazenamentoArquivo>();

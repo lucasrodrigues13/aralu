@@ -24,7 +24,7 @@ public class CadastroCriaContaTests
         var email = $"conta-{Guid.NewGuid():N}@exemplo.com";
         var cliente = _banco.Fabrica.CreateClient();
 
-        var resposta = await cliente.PostAsJsonAsync("/api/v1/conta/cadastro", new { email, senha = Senha, confirmacao = Senha });
+        var resposta = await cliente.PostAsJsonAsync("/api/v1/conta/cadastro", new { email, senha = Senha, confirmacao = Senha, aceiteTermos = true });
 
         Assert.Equal(HttpStatusCode.Created, resposta.StatusCode);
         await using var banco = Banco();
@@ -50,9 +50,9 @@ public class CadastroCriaContaTests
     {
         var email = $"conta-{Guid.NewGuid():N}@exemplo.com";
         var cliente = _banco.Fabrica.CreateClient();
-        await cliente.PostAsJsonAsync("/api/v1/conta/cadastro", new { email, senha = Senha, confirmacao = Senha });
+        await cliente.PostAsJsonAsync("/api/v1/conta/cadastro", new { email, senha = Senha, confirmacao = Senha, aceiteTermos = true });
 
-        var segunda = await cliente.PostAsJsonAsync("/api/v1/conta/cadastro", new { email, senha = Senha, confirmacao = Senha });
+        var segunda = await cliente.PostAsJsonAsync("/api/v1/conta/cadastro", new { email, senha = Senha, confirmacao = Senha, aceiteTermos = true });
 
         Assert.Equal(HttpStatusCode.Conflict, segunda.StatusCode);
         await using var banco = Banco();

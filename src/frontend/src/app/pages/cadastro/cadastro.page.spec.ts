@@ -16,6 +16,8 @@ describe('CadastroPage', () => {
     senhas[0].dispatchEvent(new Event('input'));
     (senhas[1] as HTMLInputElement).value = confirmacao;
     senhas[1].dispatchEvent(new Event('input'));
+    // Aceite dos termos (SPEC-062 §6 A1).
+    (raiz.querySelector('input[type="checkbox"]') as HTMLInputElement).click();
   }
 
   beforeEach(async () => {

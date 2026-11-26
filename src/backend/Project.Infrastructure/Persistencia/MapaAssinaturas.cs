@@ -66,6 +66,11 @@ public static class MapaAssinaturas
         documento.ToTable("DocumentosTrial");
         documento.HasIndex(item => item.DocumentoHash).IsUnique();
 
+        var aviso = modelBuilder.Entity<AvisoAssinatura>();
+        aviso.ToTable("AvisosAssinatura");
+        aviso.Property(item => item.Tipo).HasMaxLength(40);
+        aviso.HasIndex(item => new { item.ContaId, item.Tipo, item.Referencia }).IsUnique();
+
         var alteracao = modelBuilder.Entity<AlteracaoAssinatura>();
         alteracao.ToTable("AlteracoesAssinatura");
         alteracao.Property(item => item.ValorAnterior).HasPrecision(12, 2);
