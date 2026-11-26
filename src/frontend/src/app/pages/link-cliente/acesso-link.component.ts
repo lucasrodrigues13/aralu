@@ -1,5 +1,5 @@
 import { Component, DestroyRef, inject, input, OnInit, output, signal } from '@angular/core';
-import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -14,7 +14,7 @@ import { mensagemDeErro } from '../../core/mensagem-erro';
  */
 @Component({
   selector: 'app-acesso-link',
-  imports: [ReactiveFormsModule, MatButtonModule, MatCardModule, MatFormFieldModule, MatIconModule, MatInputModule],
+  imports: [FormsModule, ReactiveFormsModule, MatButtonModule, MatCardModule, MatFormFieldModule, MatIconModule, MatInputModule],
   template: `
     <mat-card class="cardWithShadow"><mat-card-content class="acesso">
       @if (acesso(); as a) {
