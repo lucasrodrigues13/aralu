@@ -147,4 +147,27 @@ Tudo o que mexe em schema entra junto, para gerar a migration inicial uma vez s�
 
 ## Progresso
 
-_Nenhuma fase concluída ainda. Próximo passo: Fase 1._
+### Fase 1 — concluída
+
+- **Commit:** `354e9c4` (`feat(spec-062): Fase 1 — IContaAtual e teste de isolamento entre contas`)
+- **Branch:** `feat/spec-062` (a partir de `staging`). Sem push.
+
+**Feito**
+- Plano atualizado com as correções da SPEC-062 aprovada: tipo Dono/Membro + grupos; Planos/RecursosPlano/AlteracoesAssinatura; migration inicial limpa; um login = uma conta; mapeamento T1–T22 → fases.
+- `IContaAtual` em `Project.Application/Conta`, resolução compartilhada em `ContaAtual.De` (claim `organizer_id` ou `NameIdentifier`), implementação `ContaAtualHttp` na Api, registrada no `Program.cs`.
+- Os 6 arquivos de endpoints (`Negocio`, `Contrato`, `Dinheiro`, `LinkCliente`, `Portaria`, `Assistente`) passam a usar `ContaAtual.De` / `Conta(...)`.
+- Teste de integração `IsolamentoContasTests` (matriz entre duas contas) e unitários `ContaAtualTests`.
+- Build da solution e testes da fase: ok.
+
+**Diferenças em relação ao plano**
+- Os handlers ainda recebem `ClaimsPrincipal` e chamam `ComConta`/`Conta` local; a lógica está centralizada, mas a assinatura dos helpers não foi trocada para injetar `IContaAtual` em cada um dos ~229 call sites (evita churn sem mudança de comportamento). `IContaAtual` fica pronto para o filtro global da Fase 2.
+- ContaId continua `string` (Guid é Fase 2), como previsto.
+
+**Testes da spec cobertos**
+- T15 (isolamento entre contas).
+- Demais (T1–T14, T16–T22): não cobertos nesta fase.
+
+**Pendências / próximos passos**
+- Fase 2: modelo novo (Contas, MembrosConta Dono/Membro, GruposAcesso, PermissoesGrupo, Planos, Assinaturas…), ContaId Guid, FKs, filtro global, apagar migrations antigas, migration inicial limpa, regerar `deploy/schema.sql`.
+- Não iniciar schema antes de revalidar que `IsolamentoContasTests` segue verde após cada lote da Fase 2.
+- Pendências de produto da spec (§17) que não bloqueiam a Fase 2 de schema: textos de e-mail, termos, SMS, NF, itens extras de Configurações.
