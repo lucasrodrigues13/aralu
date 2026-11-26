@@ -49,6 +49,9 @@ public interface IAsaas
     Task<IReadOnlyList<CobrancaAsaas>> CobrancasDaAssinaturaAsync(string assinaturaId, List<PassoAsaas> passos, CancellationToken ct);
 
     Task CancelarAssinaturaAsync(string assinaturaId, List<PassoAsaas> passos, CancellationToken ct);
+
+    /// <summary>Novo valor a partir da próxima cobrança; a cobrança já gerada não muda (§6 D6).</summary>
+    Task AtualizarValorAsync(string assinaturaId, decimal valor, List<PassoAsaas> passos, CancellationToken ct);
 }
 
 /// <summary>API v3 do Asaas (https://docs.asaas.com). Autenticação pelo header access_token.</summary>
@@ -98,6 +101,13 @@ public sealed class AsaasHttp(HttpClient http, IOptions<AsaasOpcoes> opcoes, ILo
 
     public Task CancelarAssinaturaAsync(string assinaturaId, List<PassoAsaas> passos, CancellationToken ct) =>
         EnviarAsync("Cancelar assinatura", HttpMethod.Delete, $"/v3/subscriptions/{Uri.EscapeDataString(assinaturaId)}", null, passos, ct);
+
+    public Task AtualizarValorAsync(string assinaturaId, decimal valor, List<PassoAsaas> passos, CancellationToken ct) =>
+        EnviarAsync("Atualizar valor da assinatura", HttpMethod.Put, $"/v3/subscriptions/{Uri.EscapeDataString(assinaturaId)}", new JsonObject
+        {
+            ["value"] = valor,
+            ["updatePendingPayments"] = false,
+        }, passos, ct);
 
     public static CobrancaAsaas LerCobranca(JsonNode item) => new(
         item["id"]?.GetValue<string>() ?? "",

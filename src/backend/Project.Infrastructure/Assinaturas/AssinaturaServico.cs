@@ -25,7 +25,7 @@ public sealed record SituacaoLeitura(
     bool Assinada = false,
     bool DiagnosticoNoNavegador = false);
 
-public sealed record AssinarPedido(string? Documento, string? NomeCobranca, string? FormaPagamento);
+public sealed record AssinarPedido(string? Documento, string? NomeCobranca, string? FormaPagamento, Guid? PlanoId = null);
 
 /// <summary>Resposta do "Assinar": link de pagamento do Asaas e, no staging, o passo a passo das chamadas.</summary>
 public sealed record AssinarResposta(string? LinkPagamento, DateOnly Vencimento, decimal Valor, IReadOnlyList<PassoAsaas>? Diagnostico);
@@ -35,7 +35,7 @@ public sealed record FaturaLeitura(DateOnly Vencimento, decimal Valor, string St
 public sealed record EventoDiagnostico(string Tipo, DateTimeOffset RecebidoEm, DateTimeOffset? ProcessadoEm, string? Erro, JsonNode? Payload);
 
 /// <summary>Assinatura da conta (SPEC-062 parte B): liberação (R7), assinatura no Asaas e avisos do Asaas.</summary>
-public sealed class AssinaturaServico(AppDbContext banco, IAsaas asaas, IOptions<AsaasOpcoes> opcoes, ILogger<AssinaturaServico> logs)
+public sealed class AssinaturaServico(AppDbContext banco, IAsaas asaas, IOptions<AsaasOpcoes> opcoes, ILogger<AssinaturaServico> logs, PlanosAdminServico planos)
 {
     public const string ErroAsaasCodigo = "asaas";
 
@@ -122,6 +122,18 @@ public sealed class AssinaturaServico(AppDbContext banco, IAsaas asaas, IOptions
                 var abertas = await asaas.CobrancasDaAssinaturaAsync(existente, passos, ct);
                 var aberta = abertas.FirstOrDefault(item => item.Status is "PENDING" or "OVERDUE") ?? abertas.LastOrDefault();
                 return Resultado<AssinarResposta>.Sucesso(new AssinarResposta(aberta?.Link, aberta?.Vencimento ?? assinatura.ProximoVencimento ?? DateOnly.FromDateTime(agora.UtcDateTime), assinatura.Valor, Diagnostico(passos)));
+            }
+
+            // Escolha do plano (§6 B1): só entre os que a conta pode assinar.
+            if (pedido.PlanoId is Guid escolhido && escolhido != assinatura.PlanoId)
+            {
+                var permitidos = await planos.ParaAssinarAsync(contaId, ct);
+                if (permitidos.All(item => item.Id != escolhido))
+                {
+                    return Resultado<AssinarResposta>.Erro(Codigos.Validacao, "Este plano não está disponível para a conta.");
+                }
+
+                assinatura.PlanoId = escolhido;
             }
 
             var hash = Hash(documento);
@@ -216,6 +228,27 @@ public sealed class AssinaturaServico(AppDbContext banco, IAsaas asaas, IOptions
             .OrderByDescending(item => item.Vencimento)
             .Select(item => new FaturaLeitura(item.Vencimento, item.Valor, item.Status, item.FormaPagamento == null ? null : item.FormaPagamento.ToString(), item.PagaEm, item.LinkFatura))
             .ToListAsync(ct);
+
+    /// <summary>
+    /// Recursos que o plano da conta libera (RF-119). No trial, os do plano em que a conta está (o padrão, ou o atribuído pelo Admin).
+    /// </summary>
+    public async Task<IReadOnlyDictionary<RecursoPlano, int?>> RecursosAsync(Guid contaId, CancellationToken ct)
+    {
+        var planoId = await banco.Assinaturas.AsNoTracking().IgnoreQueryFilters()
+            .Where(item => item.ContaId == contaId).Select(item => (Guid?)item.PlanoId).FirstOrDefaultAsync(ct)
+            ?? await banco.Planos.AsNoTracking().Where(item => item.Padrao).Select(item => (Guid?)item.Id).FirstOrDefaultAsync(ct);
+        return await banco.Set<RecursoDoPlano>().AsNoTracking()
+            .Where(item => item.PlanoId == planoId)
+            .ToDictionaryAsync(item => item.Recurso, item => item.Limite, ct);
+    }
+
+    /// <summary>Nome do plano mais barato, ativo, que libera o recurso: o selo "Disponível no plano X" (§7, T20).</summary>
+    public Task<string?> PlanoQueLiberaAsync(RecursoPlano recurso, CancellationToken ct) =>
+        banco.Planos.AsNoTracking()
+            .Where(plano => plano.Ativo && plano.Recursos.Any(item => item.Recurso == recurso))
+            .OrderBy(plano => plano.ValorMensal)
+            .Select(plano => plano.Nome)
+            .FirstOrDefaultAsync(ct);
 
     /// <summary>Staging: os avisos do Asaas que chegaram para a conta, para acompanhar no DevTools.</summary>
     public async Task<IReadOnlyList<EventoDiagnostico>?> EventosParaDiagnosticoAsync(Guid contaId, CancellationToken ct)

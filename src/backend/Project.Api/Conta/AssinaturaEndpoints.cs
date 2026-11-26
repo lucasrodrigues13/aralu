@@ -37,6 +37,37 @@ public static class AssinaturaEndpoints
         dono.MapGet("/diagnostico", (ClaimsPrincipal u, AssinaturaServico s, CancellationToken ct) =>
             ComConta(u, async conta => await s.EventosParaDiagnosticoAsync(conta, ct) is { } eventos ? Results.Ok(eventos) : Results.NotFound()));
 
+        // Planos que o Dono pode escolher (§6 B1) e recursos que o plano da conta libera (RF-119).
+        dono.MapGet("/planos", (ClaimsPrincipal u, PlanosAdminServico s, CancellationToken ct) =>
+            ComConta(u, async conta => Results.Ok(await s.ParaAssinarAsync(conta, ct))));
+        app.MapGet("/api/v1/assinatura/recursos", (ClaimsPrincipal u, AssinaturaServico s, CancellationToken ct) =>
+            ComConta(u, async conta => Results.Ok((await s.RecursosAsync(conta, ct)).Select(item => new { recurso = item.Key.ToString(), limite = item.Value }))))
+            .RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+
+        // Admin da plataforma (parte D): catálogo de planos e enquadramento de contas. RF-118, RF-120.
+        var admin = app.MapGroup("/api/v1/admin").RequireAuthorization(policy => policy.RequireRole(Papeis.Admin));
+        admin.MapGet("/planos", async (PlanosAdminServico s, CancellationToken ct) => Results.Ok(await s.ListarAsync(ct)));
+        admin.MapPost("/planos", async (PlanoPedido pedido, PlanosAdminServico s, CancellationToken ct) =>
+            Resposta(await s.SalvarAsync(null, pedido, DateTimeOffset.UtcNow, ct), StatusCodes.Status201Created));
+        admin.MapPut("/planos/{id:guid}", async (Guid id, PlanoPedido pedido, PlanosAdminServico s, CancellationToken ct) =>
+            Resposta(await s.SalvarAsync(id, pedido, DateTimeOffset.UtcNow, ct)));
+        admin.MapGet("/contas/{contaId:guid}/assinatura", async (Guid contaId, PlanosAdminServico s, CancellationToken ct) =>
+            await s.ContaAsync(contaId, ct) is { } conta ? Results.Ok(conta) : Results.NotFound());
+        admin.MapPost("/contas/{contaId:guid}/assinatura/{tipo}", async (Guid contaId, string tipo, AjustePedido pedido, ClaimsPrincipal u, PlanosAdminServico s, CancellationToken ct) =>
+        {
+            var nome = tipo.ToLowerInvariant() switch
+            {
+                "plano" => "Plano",
+                "valor" => "Valor",
+                "desconto" => "Desconto",
+                "trial" => "Trial",
+                _ => null,
+            };
+            return nome is null
+                ? Results.NotFound()
+                : Resposta(await s.AjustarAsync(contaId, nome, pedido, u.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", DateTimeOffset.UtcNow, ct));
+        });
+
         // Aviso do Asaas: público, autenticado pelo token do webhook. Responde 200 rápido; repetido não muda nada (T16).
         app.MapPost("/api/v1/webhooks/asaas", ReceberAviso);
     }
@@ -72,6 +103,40 @@ public static class AssinaturaEndpoints
             return Results.BadRequest(new ErroResposta(Codigos.Validacao, "Aviso inválido."));
         }
     }
+
+    /// <summary>
+    /// RF-121: a ação exige que o plano da conta libere o recurso E que o grupo da pessoa permita o módulo.
+    /// Uso: <c>app.MapPost(...).ExigirRecurso(RecursoPlano.LigacoesIa, Modulo.Funil, AcaoModulo.Editar)</c>.
+    /// </summary>
+    public static RouteHandlerBuilder ExigirRecurso(this RouteHandlerBuilder rota, Project.Domain.Assinaturas.RecursoPlano recurso, Project.Domain.Equipe.Modulo modulo, Project.Domain.Equipe.AcaoModulo acao) =>
+        rota.AddEndpointFilter(async (contexto, proximo) =>
+        {
+            var http = contexto.HttpContext;
+            var falta = await FaltaRecursoAsync(http.User, http.RequestServices.GetRequiredService<AssinaturaServico>(), recurso, modulo, acao, http.RequestAborted);
+            return falta is null ? await proximo(contexto) : Results.Json(new ErroResposta("recurso_fora_do_plano", falta), statusCode: StatusCodes.Status403Forbidden);
+        });
+
+    /// <summary>Nulo quando pode; senão, a mensagem do que falta (§14).</summary>
+    public static async Task<string?> FaltaRecursoAsync(ClaimsPrincipal usuario, AssinaturaServico servico, Project.Domain.Assinaturas.RecursoPlano recurso, Project.Domain.Equipe.Modulo modulo, Project.Domain.Equipe.AcaoModulo acao, CancellationToken ct)
+    {
+        if (ContaAtual.De(usuario) is not { } conta)
+        {
+            return "Entre na conta para usar este recurso.";
+        }
+
+        if (!(await servico.RecursosAsync(conta, ct)).ContainsKey(recurso))
+        {
+            var plano = await servico.PlanoQueLiberaAsync(recurso, ct);
+            return plano is null ? "Este recurso ainda não está disponível em nenhum plano." : $"Este recurso está disponível no plano {plano}.";
+        }
+
+        return EquipeEndpoints.Pode(usuario, modulo, acao)
+            ? null
+            : $"Você não tem permissão para {PermissaoPorRota.Verbo(acao)} em {PermissaoPorRota.Nome(modulo)}. Fale com o responsável pela conta.";
+    }
+
+    private static IResult Resposta<T>(Resultado<T> r, int status = StatusCodes.Status200OK) =>
+        r.Ok ? Results.Json(r.Valor, statusCode: status) : Erro(r.Falha!, null);
 
     private static async Task<IResult> ComConta(ClaimsPrincipal usuario, Func<Guid, Task<IResult>> acao) =>
         ContaAtual.De(usuario) is { } conta ? await acao(conta) : Results.Unauthorized();

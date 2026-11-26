@@ -12,6 +12,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { interval } from 'rxjs';
 import { AssinaturaClient, EventoAsaas, Fatura, registrarNoConsole, SituacaoAssinatura } from '../../core/assinatura.client';
 import { mensagemDeErro } from '../../core/mensagem-erro';
+import { Plano, PlanosClient } from '../../core/planos.client';
 import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { DIALOG_PEQUENO } from '../../shared/dialog';
@@ -56,6 +57,27 @@ const SITUACOES: Record<string, string> = {
 
           @if (!s.assinada) {
             <form class="grid gap-4 max-w-md" (ngSubmit)="assinar()">
+              <div class="grid gap-3 sm:grid-cols-2">
+                @for (p of planos(); track p.id) {
+                  <button
+                    type="button"
+                    class="text-left rounded border p-4"
+                    [class.border-primary]="planoId === p.id"
+                    [class.border-border]="planoId !== p.id"
+                    [attr.aria-pressed]="planoId === p.id"
+                    (click)="planoId = p.id"
+                  >
+                    <span class="font-semibold block">{{ p.nome }}</span>
+                    <span class="block">{{ p.valorMensal | currency: 'BRL' }}/mês</span>
+                    @if (p.descricao) {
+                      <span class="block text-muted text-sm">{{ p.descricao }}</span>
+                    }
+                    @for (r of p.recursos; track r.recurso) {
+                      <span class="block text-sm">✓ {{ r.recurso }}{{ r.limite !== null ? ' (' + r.limite + '/mês)' : '' }}</span>
+                    }
+                  </button>
+                }
+              </div>
               <div class="campo">
                 <mat-label class="font-semibold mb-2 block">CPF ou CNPJ</mat-label>
                 <mat-form-field appearance="outline" class="w-full">
@@ -137,10 +159,20 @@ export class AssinaturaPage implements OnInit {
   protected documento = '';
   protected nome = '';
   protected forma: 'pix' | 'cartao' = 'pix';
+  protected planoId: string | null = null;
+  protected readonly planos = signal<Plano[]>([]);
+  private readonly planosCliente = inject(PlanosClient);
   private eventosVistos = new Set<string>();
 
   ngOnInit(): void {
     this.carregar(true);
+    this.planosCliente.paraAssinar().subscribe({
+      next: (planos) => {
+        this.planos.set(planos);
+        this.planoId = planos[0]?.id ?? null;
+      },
+      error: () => undefined,
+    });
   }
 
   protected rotulo(situacao: string): string {
@@ -156,7 +188,7 @@ export class AssinaturaPage implements OnInit {
   protected assinar(): void {
     this.enviando.set(true);
     console.info('[Asaas] Enviando pedido de assinatura para a API...', { formaPagamento: this.forma });
-    this.cliente.assinar({ documento: this.documento, nomeCobranca: this.nome, formaPagamento: this.forma }).subscribe({
+    this.cliente.assinar({ documento: this.documento, nomeCobranca: this.nome, formaPagamento: this.forma, planoId: this.planoId }).subscribe({
       next: (resposta) => {
         this.enviando.set(false);
         registrarNoConsole('Assinar', resposta.diagnostico);

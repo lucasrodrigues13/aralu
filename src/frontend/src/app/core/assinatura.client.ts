@@ -76,7 +76,7 @@ export class AssinaturaClient {
     return this.http.get<SituacaoAssinatura | null>(`${this.base}/api/v1/assinatura`);
   }
 
-  assinar(pedido: { documento: string; nomeCobranca: string; formaPagamento: 'pix' | 'cartao' }) {
+  assinar(pedido: { documento: string; nomeCobranca: string; formaPagamento: 'pix' | 'cartao'; planoId?: string | null }) {
     return this.http.post<AssinarResposta>(`${this.base}/api/v1/assinatura/assinar`, pedido);
   }
 

@@ -316,7 +316,10 @@ export class CascaComponent implements OnDestroy {
     const admin = this.auth.ehAdmin();
     const grupoAdmin: GrupoMenu = {
       rotulo: 'Administração',
-      itens: [{ rotulo: 'Início Admin', icone: 'admin_panel_settings', rota: '/admin' }],
+      itens: [
+        { rotulo: 'Início Admin', icone: 'admin_panel_settings', rota: '/admin' },
+        { rotulo: 'Planos', icone: 'sell', rota: '/admin/planos' },
+      ],
     };
     // Admin sem conta escolhida só tem o Início Admin; com conta escolhida vê o menu inteiro dela.
     if (admin && !this.auth.contaSelecionada()) {

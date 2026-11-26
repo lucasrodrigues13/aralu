@@ -330,3 +330,18 @@ Fase 4 em lotes: **4.1** schema, trial e bloqueio; **4.2** checkout e webhook do
 **Fica para depois**
 - Trocar forma de pagamento (§6 B8) e e-mail de confirmação de pagamento: lote 4.4.
 - Escolha entre planos públicos (§6 B1): lote 4.3, junto com Admin → Planos. Por ora o Dono assina o plano da conta (Pro).
+
+### Fase 4 — lote 4.3 concluído (Claude Code)
+
+**Feito**
+- **Admin → Planos** (`/api/v1/admin/planos`, tela `/admin/planos`): criar e editar plano com código único, nome, descrição, valor mensal, público, ativo, padrão e recursos com limite mensal. Sempre um padrão, público e ativo; desativar ou tirar o público do padrão dá "Escolha outro plano padrão antes." Marcar outro como padrão tira a marca do anterior.
+- **Admin → Conta** (`/api/v1/admin/contas/{conta}/assinatura`, tela `/admin/contas/:contaId`, botão "Assinatura" no Início Admin): trocar plano (inclusive não público), valor personalizado, desconto de 1% a 100% com ou sem data de fim, estender trial. Motivo obrigatório; cada mudança vai para `AlteracoesAssinatura` com quem, quando, plano e valor de antes e depois (T22). Se a conta já assina, o novo valor vai ao Asaas (`PUT /v3/subscriptions/{id}` com `updatePendingPayments=false`): vale na próxima cobrança, a já gerada não muda.
+- **Mudança de preço do plano** vale para assinaturas novas; quem já assina guarda o próprio valor (T19).
+- **Escolha de plano pelo Dono** (`GET /api/v1/assinatura/planos`): os planos públicos e ativos; se o Admin enquadrou a conta (plano não padrão, valor ou desconto), só esse (T17). A tela de assinatura mostra os cartões dos planos com preço e recursos.
+- **Plano + grupo (RF-121)**: `RecursosAsync` dá os recursos do plano da conta; `.ExigirRecurso(recurso, modulo, acao)` para usar nas rotas de recursos futuros (IA, integrações) recusa com "Este recurso está disponível no plano X." ou com a mensagem de permissão do grupo (T20, T21). `GET /api/v1/assinatura/recursos` serve os selos na tela.
+- **Início Admin** passa a listar contas (id da conta e e-mail de quem criou), não logins com papel Organizer: sócio convidado como Dono não aparece como conta própria.
+- Testes: `PlanosAdminTests` (T17–T22) e regras de valor e vencimento em `AssinaturaRegraTests`. Suíte: 321 + 115, verdes. Build do frontend ok.
+
+**Fica para o lote 4.4**
+- Desconto com data de fim: o controle diário precisa mandar ao Asaas o valor cheio antes da primeira cobrança depois da data, e avisar o Dono 7 dias antes.
+- Nenhuma rota usa `.ExigirRecurso` ainda: os recursos (IA, integrações) terão spec própria (pendência 8).

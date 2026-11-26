@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { AssistentesClient, ContaComAssistentes } from '../../core/assistentes.client';
@@ -10,7 +10,7 @@ import { ToastService } from '../../core/toast.service';
 
 @Component({
   selector: 'app-area-admin',
-  imports: [MatCardModule, MatButtonModule],
+  imports: [MatCardModule, MatButtonModule, RouterLink],
   template: `
     <mat-card>
       <mat-card-header>
@@ -38,6 +38,7 @@ import { ToastService } from '../../core/toast.service';
         @for (usuario of usuarios(); track usuario.id) {
           <div class="flex items-center justify-between gap-3 py-2">
             <span class="min-w-0 truncate">{{ usuario.email }} <small class="text-muted">({{ usuario.papel }})</small></span>
+            <a mat-stroked-button [routerLink]="['/admin/contas', usuario.id]">Assinatura</a>
             <button mat-flat-button type="button" (click)="assumir(usuario)" [disabled]="auth.contaSelecionada()?.id === usuario.id">
               {{ auth.contaSelecionada()?.id === usuario.id ? 'Conta atual' : 'Acessar conta' }}
             </button>

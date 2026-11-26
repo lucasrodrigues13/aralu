@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using Project.Application.Conta;
@@ -46,11 +47,15 @@ public static class AdminEndpoints
         await proximo();
     }
 
-    private static async Task<IResult> ListarUsuarios(UserManager<ApplicationUser> usuarios, CancellationToken ct)
+    /// <summary>
+    /// Contas da plataforma, pelo e-mail de quem a criou (SPEC-062). O id é o da conta: sócios convidados como Dono
+    /// não aparecem como conta própria.
+    /// </summary>
+    private static async Task<IResult> ListarUsuarios(Project.Infrastructure.Persistencia.AppDbContext banco, CancellationToken ct)
     {
-        var donas = await usuarios.GetUsersInRoleAsync(Papeis.Organizer);
-        return Results.Ok(donas
-            .OrderBy(u => u.Email, StringComparer.OrdinalIgnoreCase)
-            .Select(u => new { id = u.Id, email = u.Email, papel = Papeis.Organizer }));
+        var contas = await banco.Contas.AsNoTracking()
+            .Join(banco.Users, conta => conta.DonoUsuarioId, usuario => usuario.Id, (conta, usuario) => new { id = conta.Id.ToString(), email = usuario.Email, papel = Papeis.Organizer })
+            .ToListAsync(ct);
+        return Results.Ok(contas.OrderBy(item => item.email, StringComparer.OrdinalIgnoreCase));
     }
 }

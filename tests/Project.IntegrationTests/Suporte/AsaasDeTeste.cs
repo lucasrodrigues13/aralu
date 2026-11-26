@@ -42,5 +42,13 @@ public sealed class AsaasDeTeste : IAsaas
         return Task.CompletedTask;
     }
 
+    public ConcurrentDictionary<string, decimal> ValoresAtualizados { get; } = new();
+
+    public Task AtualizarValorAsync(string assinaturaId, decimal valor, List<PassoAsaas> passos, CancellationToken ct)
+    {
+        ValoresAtualizados[assinaturaId] = valor;
+        return Task.CompletedTask;
+    }
+
     public static string PagamentoDe(string assinaturaId) => "pay_" + assinaturaId[4..];
 }

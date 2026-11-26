@@ -144,6 +144,8 @@ export const routes: Routes = [
         canActivate: [adminGuard],
         loadComponent: () => import('./pages/admin/area-admin.page').then((m) => m.AreaAdminPage),
       },
+      { path: 'admin/planos', canActivate: [adminGuard], loadComponent: () => import('./pages/admin/planos-admin.page').then((m) => m.PlanosAdminPage) },
+      { path: 'admin/contas/:contaId', canActivate: [adminGuard], loadComponent: () => import('./pages/admin/conta-admin.page').then((m) => m.ContaAdminPage) },
     ],
   },
 ];
