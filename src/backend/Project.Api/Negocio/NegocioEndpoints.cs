@@ -1666,16 +1666,7 @@ public static class NegocioEndpoints
     private static string? SoDoUsuario(ClaimsPrincipal usuario) =>
         usuario.IsInRole(Papeis.Assistant) ? UsuarioId(usuario) ?? "-" : null;
 
-    private static string? Conta(ClaimsPrincipal usuario)
-    {
-        var organizerId = usuario.FindFirstValue(ContaClaims.OrganizerId);
-        if (!string.IsNullOrWhiteSpace(organizerId))
-        {
-            return organizerId;
-        }
-
-        return usuario.FindFirstValue(ClaimTypes.NameIdentifier);
-    }
+    private static string? Conta(ClaimsPrincipal usuario) => ContaAtual.De(usuario);
 
     private static string Email(ClaimsPrincipal usuario) =>
         usuario.FindFirstValue(ClaimTypes.Email) ?? usuario.FindFirstValue("email") ?? "";

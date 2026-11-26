@@ -8,6 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text.Json.Serialization;
 using Project.Api.Conta;
 using Project.Api.Negocio;
+using Project.Application.Conta;
 using Project.Infrastructure;
 using Project.Infrastructure.Conta;
 
@@ -27,6 +28,8 @@ if (string.IsNullOrWhiteSpace(chaves))
 
 Directory.CreateDirectory(chaves);
 builder.Services.AddDataProtection().PersistKeysToFileSystem(new DirectoryInfo(chaves));
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IContaAtual, ContaAtualHttp>();
 builder.Services.AddInfraestrutura(builder.Configuration);
 builder.Services.ConfigureHttpJsonOptions(opcoes =>
 {

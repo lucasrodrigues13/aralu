@@ -166,12 +166,7 @@ public static class LinkClienteEndpoints
 
     private static Task<IResult> ComConta(ClaimsPrincipal usuario, Func<string, Task<IResult>> acao)
     {
-        var conta = usuario.FindFirstValue(ContaClaims.OrganizerId);
-        if (string.IsNullOrWhiteSpace(conta))
-        {
-            conta = usuario.FindFirstValue(ClaimTypes.NameIdentifier);
-        }
-
+        var conta = ContaAtual.De(usuario);
         return string.IsNullOrWhiteSpace(conta)
             ? Task.FromResult(Results.Json(new ErroResposta("autenticacao", "É preciso entrar para continuar."), statusCode: StatusCodes.Status401Unauthorized))
             : acao(conta);
