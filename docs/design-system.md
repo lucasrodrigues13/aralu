@@ -82,6 +82,8 @@ Seções secundárias da mesma tela usam o mesmo formato. Blocos dentro de um ca
 
 `form.flex.flex-wrap.items-end.gap-4.mb-6`. Todo campo tem rótulo acima. Larguras: busca `sm:w-64` (com lupa `matIconPrefix`), seleção e texto `sm:w-48` (ou menores quando o conteúdo é curto), data `sm:w-40`. Botões no fim: **Filtrar** (`mat-flat-button`) e **Limpar** (`mat-stroked-button`). Como tudo tem 37px e `items-end`, as caixas e os botões ficam alinhados pela base.
 
+Filtro de seleção com lista longa (por exemplo, o serviço prestado em Serviços e Fornecedores) usa campo com busca, em vez de `mat-select`: `input[matInput]` com lupa (`matIconPrefix`) e `mat-autocomplete`, primeira opção **Todos**, "Nenhum … encontrado" quando a busca não acha nada e botão de fechar (`matIconSuffix`) para limpar. A busca ignora maiúsculas e acentos (`servicoCombina` / `normalizarBusca`).
+
 ### 5.4. Abas
 
 - **Filtro dentro da tela** (situação, visão): `mat-button-toggle-group` com o override do template (raio 7px), sem o visto (`hideSingleSelectionIndicator` em `app.config.ts`), opção escolhida em fundo primário.
@@ -93,6 +95,30 @@ Seções secundárias da mesma tela usam o mesmo formato. Blocos dentro de um ca
 - Listas montadas à mão usam `table.tabela`, com o mesmo desenho do `mat-table`.
 - Texto de apoio na célula: `span.block.text-xs.text-muted`. Valores: `.valor` alinhado à direita (`text-end!`).
 - Ações na última coluna (`text-end! whitespace-nowrap`): `mat-icon-button` Editar e Excluir (com `aria-label` e `matTooltip`, ver seção 7), ou `mat-stroked-button` para a ação da linha e `mat-menu` (`class="cardWithShadow"`) para o resto.
+- Lista que pode passar de 50 linhas usa a **paginação padrão** (5.5.1).
+
+#### 5.5.1. Paginação
+
+Padrão único para todo o sistema, igual ao exemplo [Apps › Employee](https://angular.tailwind-admin.com/apps/employee) do Tailwind Admin: `mat-paginator` logo abaixo da tabela, com botões de primeira e última página (`showFirstLastButtons`) e **50, 100 ou 150 itens por página** (começa em 50). Os textos ficam em português ("Itens por página:", "1 – 50 de 1.961") pelo `PaginadorPtBr`, registrado em `app.config.ts`. Não crie outro paginador nem outros tamanhos de página.
+
+Tudo fica em `shared/paginacao.ts` (`TAMANHOS_PAGINA`, `PaginadorPtBr`, `Paginacao`). Para uma lista que já chega inteira da API:
+
+```ts
+protected readonly filtrados = computed(() => /* lista depois dos filtros da tela */);
+protected readonly pagina = new Paginacao(this.filtrados);
+```
+
+```html
+<table mat-table class="min-w-full" [dataSource]="pagina.itens()">…</table>
+<mat-paginator showFirstLastButtons aria-label="Páginas de …"
+  [length]="pagina.total()" [pageIndex]="pagina.indice()" [pageSize]="pagina.tamanho()"
+  [pageSizeOptions]="pagina.tamanhos" (page)="pagina.mudar($event)" />
+```
+
+- Ao mudar busca ou filtro, chame `pagina.inicio()` para voltar à primeira página.
+- Com a lista vazia, mostre o estado vazio (5.8) no lugar da tabela e do paginador.
+- Se uma lista ficar grande demais para vir inteira, a paginação passa para a API. Na tela, o componente e os tamanhos continuam os mesmos.
+- Primeira tela com o padrão: Serviços e Fornecedores (abas Fornecedores e Serviços da conta).
 
 ### 5.6. Etiqueta de situação (exemplo Tables / Badges)
 
