@@ -68,6 +68,9 @@ export const routes: Routes = [
       { path: 'assistentes', redirectTo: 'configuracoes/equipe', pathMatch: 'full' },
       { path: 'ajuda', loadComponent: () => import('./pages/ajuda/manual.page').then((m) => m.ManualPage) },
       { path: 'sem-acesso', loadComponent: () => import('./pages/atalhos/sem-acesso.page').then((m) => m.SemAcessoPage) },
+      { path: 'conta-bloqueada', loadComponent: () => import('./pages/conta-bloqueada/conta-bloqueada.page').then((m) => m.ContaBloqueadaPage) },
+      // Configurações → Assinatura chega no lote 4.2 (checkout pelo Asaas).
+      { path: 'configuracoes/assinatura', canActivate: [donaGuard], loadComponent: () => import('./pages/atalhos/em-breve.page').then((m) => m.EmBrevePage) },
       { path: 'anexos', loadComponent: () => import('./pages/atalhos/em-breve.page').then((m) => m.EmBrevePage) },
       { path: 'equipe', loadComponent: () => import('./pages/atalhos/em-breve.page').then((m) => m.EmBrevePage) },
       { path: 'aniversarios', loadComponent: () => import('./pages/atalhos/em-breve.page').then((m) => m.EmBrevePage) },

@@ -53,6 +53,45 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "EventosWebhookAsaas",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    AsaasEventId = table.Column<string>(type: "text", nullable: false),
+                    Tipo = table.Column<string>(type: "text", nullable: false),
+                    Payload = table.Column<string>(type: "jsonb", nullable: false),
+                    RecebidoEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    ProcessadoEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    Tentativas = table.Column<int>(type: "integer", nullable: false),
+                    Erro = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_EventosWebhookAsaas", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Planos",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Codigo = table.Column<string>(type: "character varying(40)", maxLength: 40, nullable: false),
+                    Nome = table.Column<string>(type: "character varying(80)", maxLength: 80, nullable: false),
+                    Descricao = table.Column<string>(type: "text", nullable: true),
+                    ValorMensal = table.Column<decimal>(type: "numeric(12,2)", precision: 12, scale: 2, nullable: false),
+                    Publico = table.Column<bool>(type: "boolean", nullable: false),
+                    Padrao = table.Column<bool>(type: "boolean", nullable: false),
+                    Ativo = table.Column<bool>(type: "boolean", nullable: false),
+                    Ordem = table.Column<int>(type: "integer", nullable: false),
+                    CriadoEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    AtualizadoEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Planos", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "AspNetRoleClaims",
                 columns: table => new
                 {
@@ -178,6 +217,25 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "RecursosPlano",
+                columns: table => new
+                {
+                    PlanoId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Recurso = table.Column<string>(type: "character varying(40)", maxLength: 40, nullable: false),
+                    Limite = table.Column<int>(type: "integer", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RecursosPlano", x => new { x.PlanoId, x.Recurso });
+                    table.ForeignKey(
+                        name: "FK_RecursosPlano_Planos_PlanoId",
+                        column: x => x.PlanoId,
+                        principalTable: "Planos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Arquivos",
                 columns: table => new
                 {
@@ -193,6 +251,66 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     table.PrimaryKey("PK_Arquivos", x => x.Id);
                     table.ForeignKey(
                         name: "FK_Arquivos_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Assinaturas",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Situacao = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    TrialIniciaEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    TrialTerminaEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    PlanoId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ValorPersonalizado = table.Column<decimal>(type: "numeric(12,2)", precision: 12, scale: 2, nullable: true),
+                    DescontoPercentual = table.Column<decimal>(type: "numeric(5,2)", precision: 5, scale: 2, nullable: true),
+                    DescontoAte = table.Column<DateOnly>(type: "date", nullable: true),
+                    Valor = table.Column<decimal>(type: "numeric(12,2)", precision: 12, scale: 2, nullable: false),
+                    AsaasCustomerId = table.Column<string>(type: "text", nullable: true),
+                    AsaasSubscriptionId = table.Column<string>(type: "text", nullable: true),
+                    FormaPagamento = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: true),
+                    ProximoVencimento = table.Column<DateOnly>(type: "date", nullable: true),
+                    PagoAte = table.Column<DateOnly>(type: "date", nullable: true),
+                    CanceladaEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    CriadaEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    AtualizadaEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Assinaturas", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Assinaturas_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Assinaturas_Planos_PlanoId",
+                        column: x => x.PlanoId,
+                        principalTable: "Planos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "DocumentosTrial",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
+                    DocumentoHash = table.Column<string>(type: "text", nullable: false),
+                    UsadoEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DocumentosTrial", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_DocumentosTrial_Contas_ContaId",
                         column: x => x.ContaId,
                         principalTable: "Contas",
                         principalColumn: "Id",
@@ -721,6 +839,91 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         onDelete: ReferentialAction.SetNull);
                     table.ForeignKey(
                         name: "FK_Perfis_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AlteracoesAssinatura",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
+                    AssinaturaId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Tipo = table.Column<string>(type: "text", nullable: false),
+                    PlanoAnteriorId = table.Column<Guid>(type: "uuid", nullable: true),
+                    PlanoNovoId = table.Column<Guid>(type: "uuid", nullable: true),
+                    ValorAnterior = table.Column<decimal>(type: "numeric(12,2)", precision: 12, scale: 2, nullable: true),
+                    ValorNovo = table.Column<decimal>(type: "numeric(12,2)", precision: 12, scale: 2, nullable: true),
+                    Detalhe = table.Column<string>(type: "text", nullable: true),
+                    Motivo = table.Column<string>(type: "text", nullable: false),
+                    FeitoPorUsuarioId = table.Column<string>(type: "text", nullable: false),
+                    FeitoEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AlteracoesAssinatura", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_AlteracoesAssinatura_AspNetUsers_FeitoPorUsuarioId",
+                        column: x => x.FeitoPorUsuarioId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_AlteracoesAssinatura_Assinaturas_AssinaturaId",
+                        column: x => x.AssinaturaId,
+                        principalTable: "Assinaturas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_AlteracoesAssinatura_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_AlteracoesAssinatura_Planos_PlanoAnteriorId",
+                        column: x => x.PlanoAnteriorId,
+                        principalTable: "Planos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_AlteracoesAssinatura_Planos_PlanoNovoId",
+                        column: x => x.PlanoNovoId,
+                        principalTable: "Planos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "CobrancasAssinatura",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
+                    AssinaturaId = table.Column<Guid>(type: "uuid", nullable: false),
+                    AsaasPaymentId = table.Column<string>(type: "text", nullable: false),
+                    Valor = table.Column<decimal>(type: "numeric(12,2)", precision: 12, scale: 2, nullable: false),
+                    Vencimento = table.Column<DateOnly>(type: "date", nullable: false),
+                    Status = table.Column<string>(type: "text", nullable: false),
+                    FormaPagamento = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: true),
+                    PagaEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    LinkFatura = table.Column<string>(type: "text", nullable: true),
+                    CriadaEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CobrancasAssinatura", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_CobrancasAssinatura_Assinaturas_AssinaturaId",
+                        column: x => x.AssinaturaId,
+                        principalTable: "Assinaturas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_CobrancasAssinatura_Contas_ContaId",
                         column: x => x.ContaId,
                         principalTable: "Contas",
                         principalColumn: "Id",
@@ -2449,6 +2652,36 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.InsertData(
+                table: "Planos",
+                columns: new[] { "Id", "Ativo", "AtualizadoEm", "Codigo", "CriadoEm", "Descricao", "Nome", "Ordem", "Padrao", "Publico", "ValorMensal" },
+                values: new object[] { new Guid("6f1d3c2a-0b6e-4d8e-9a51-62a0c3f0a179"), true, new DateTimeOffset(new DateTime(2026, 11, 26, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)), "pro", new DateTimeOffset(new DateTime(2026, 11, 26, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)), "Todos os módulos da plataforma, sem limite de eventos.", "Pro", 1, true, true, 179m });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AlteracoesAssinatura_AssinaturaId",
+                table: "AlteracoesAssinatura",
+                column: "AssinaturaId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AlteracoesAssinatura_ContaId",
+                table: "AlteracoesAssinatura",
+                column: "ContaId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AlteracoesAssinatura_FeitoPorUsuarioId",
+                table: "AlteracoesAssinatura",
+                column: "FeitoPorUsuarioId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AlteracoesAssinatura_PlanoAnteriorId",
+                table: "AlteracoesAssinatura",
+                column: "PlanoAnteriorId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AlteracoesAssinatura_PlanoNovoId",
+                table: "AlteracoesAssinatura",
+                column: "PlanoNovoId");
+
             migrationBuilder.CreateIndex(
                 name: "IX_AnexosTarefa_ArquivoId",
                 table: "AnexosTarefa",
@@ -2507,6 +2740,23 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_Assinaturas_AsaasSubscriptionId",
+                table: "Assinaturas",
+                column: "AsaasSubscriptionId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Assinaturas_ContaId",
+                table: "Assinaturas",
+                column: "ContaId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Assinaturas_PlanoId",
+                table: "Assinaturas",
+                column: "PlanoId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_BriefingsOportunidade_ContaId",
                 table: "BriefingsOportunidade",
                 column: "ContaId");
@@ -2541,6 +2791,22 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 name: "IX_Clientes_FotoId",
                 table: "Clientes",
                 column: "FotoId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CobrancasAssinatura_AsaasPaymentId",
+                table: "CobrancasAssinatura",
+                column: "AsaasPaymentId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CobrancasAssinatura_AssinaturaId",
+                table: "CobrancasAssinatura",
+                column: "AssinaturaId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CobrancasAssinatura_ContaId_Vencimento",
+                table: "CobrancasAssinatura",
+                columns: new[] { "ContaId", "Vencimento" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_ComentariosTarefa_AutorMembroId",
@@ -2687,6 +2953,17 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_DocumentosTrial_ContaId",
+                table: "DocumentosTrial",
+                column: "ContaId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DocumentosTrial_DocumentoHash",
+                table: "DocumentosTrial",
+                column: "DocumentoHash",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_EmailFornecedor_ContaId",
                 table: "EmailFornecedor",
                 column: "ContaId");
@@ -2727,6 +3004,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 name: "IX_EventosMembros_MembroId",
                 table: "EventosMembros",
                 column: "MembroId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EventosWebhookAsaas_AsaasEventId",
+                table: "EventosWebhookAsaas",
+                column: "AsaasEventId",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_EventoTagConta_TagsId",
@@ -3106,6 +3389,19 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_Planos_Codigo",
+                table: "Planos",
+                column: "Codigo",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Planos_Padrao",
+                table: "Planos",
+                column: "Padrao",
+                unique: true,
+                filter: "\"Padrao\"");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_PresencasEvento_ContaId",
                 table: "PresencasEvento",
                 column: "ContaId");
@@ -3318,6 +3614,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
+                name: "AlteracoesAssinatura");
+
+            migrationBuilder.DropTable(
                 name: "AnexosTarefa");
 
             migrationBuilder.DropTable(
@@ -3339,6 +3638,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 name: "ClienteEventos");
 
             migrationBuilder.DropTable(
+                name: "CobrancasAssinatura");
+
+            migrationBuilder.DropTable(
                 name: "ComentariosTarefa");
 
             migrationBuilder.DropTable(
@@ -3348,10 +3650,16 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 name: "ContatoOportunidade");
 
             migrationBuilder.DropTable(
+                name: "DocumentosTrial");
+
+            migrationBuilder.DropTable(
                 name: "EmailFornecedor");
 
             migrationBuilder.DropTable(
                 name: "EventosMembros");
+
+            migrationBuilder.DropTable(
+                name: "EventosWebhookAsaas");
 
             migrationBuilder.DropTable(
                 name: "EventoTagConta");
@@ -3420,6 +3728,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 name: "RecebimentosParcela");
 
             migrationBuilder.DropTable(
+                name: "RecursosPlano");
+
+            migrationBuilder.DropTable(
                 name: "ResponsaveisTarefa");
 
             migrationBuilder.DropTable(
@@ -3439,6 +3750,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
+
+            migrationBuilder.DropTable(
+                name: "Assinaturas");
 
             migrationBuilder.DropTable(
                 name: "Tags");
@@ -3481,6 +3795,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
             migrationBuilder.DropTable(
                 name: "OrcamentosFunil");
+
+            migrationBuilder.DropTable(
+                name: "Planos");
 
             migrationBuilder.DropTable(
                 name: "ModelosRoteiro");

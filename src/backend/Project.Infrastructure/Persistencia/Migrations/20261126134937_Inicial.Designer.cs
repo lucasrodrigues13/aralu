@@ -13,7 +13,7 @@ using Project.Infrastructure.Persistencia;
 namespace Project.Infrastructure.Persistencia.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261126134255_Inicial")]
+    [Migration("20261126134937_Inicial")]
     partial class Inicial
     {
         /// <inheritdoc />
@@ -171,6 +171,343 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", (string)null);
+                });
+
+            modelBuilder.Entity("Project.Domain.Assinaturas.AlteracaoAssinatura", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AssinaturaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Detalhe")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("FeitoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("FeitoPorUsuarioId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Motivo")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("PlanoAnteriorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("PlanoNovoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal?>("ValorAnterior")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<decimal?>("ValorNovo")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssinaturaId");
+
+                    b.HasIndex("ContaId");
+
+                    b.HasIndex("FeitoPorUsuarioId");
+
+                    b.HasIndex("PlanoAnteriorId");
+
+                    b.HasIndex("PlanoNovoId");
+
+                    b.ToTable("AlteracoesAssinatura", (string)null);
+                });
+
+            modelBuilder.Entity("Project.Domain.Assinaturas.Assinatura", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AsaasCustomerId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AsaasSubscriptionId")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("AtualizadaEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("CanceladaEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CriadaEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly?>("DescontoAte")
+                        .HasColumnType("date");
+
+                    b.Property<decimal?>("DescontoPercentual")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("numeric(5,2)");
+
+                    b.Property<string>("FormaPagamento")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<DateOnly?>("PagoAte")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("PlanoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly?>("ProximoVencimento")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Situacao")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTimeOffset>("TrialIniciaEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("TrialTerminaEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("Valor")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<decimal?>("ValorPersonalizado")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AsaasSubscriptionId")
+                        .IsUnique();
+
+                    b.HasIndex("ContaId")
+                        .IsUnique();
+
+                    b.HasIndex("PlanoId");
+
+                    b.ToTable("Assinaturas", (string)null);
+                });
+
+            modelBuilder.Entity("Project.Domain.Assinaturas.CobrancaAssinatura", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AsaasPaymentId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("AssinaturaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CriadaEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("FormaPagamento")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("LinkFatura")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("PagaEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("Valor")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<DateOnly>("Vencimento")
+                        .HasColumnType("date");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AsaasPaymentId")
+                        .IsUnique();
+
+                    b.HasIndex("AssinaturaId");
+
+                    b.HasIndex("ContaId", "Vencimento");
+
+                    b.ToTable("CobrancasAssinatura", (string)null);
+                });
+
+            modelBuilder.Entity("Project.Domain.Assinaturas.DocumentoTrial", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("DocumentoHash")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("UsadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContaId");
+
+                    b.HasIndex("DocumentoHash")
+                        .IsUnique();
+
+                    b.ToTable("DocumentosTrial", (string)null);
+                });
+
+            modelBuilder.Entity("Project.Domain.Assinaturas.EventoWebhookAsaas", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AsaasEventId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Erro")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Payload")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTimeOffset?>("ProcessadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("RecebidoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Tentativas")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AsaasEventId")
+                        .IsUnique();
+
+                    b.ToTable("EventosWebhookAsaas", (string)null);
+                });
+
+            modelBuilder.Entity("Project.Domain.Assinaturas.Plano", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Ativo")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Codigo")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<DateTimeOffset>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Descricao")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<int>("Ordem")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("Padrao")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("Publico")
+                        .HasColumnType("boolean");
+
+                    b.Property<decimal>("ValorMensal")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Codigo")
+                        .IsUnique();
+
+                    b.HasIndex("Padrao")
+                        .IsUnique()
+                        .HasFilter("\"Padrao\"");
+
+                    b.ToTable("Planos", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("6f1d3c2a-0b6e-4d8e-9a51-62a0c3f0a179"),
+                            Ativo = true,
+                            AtualizadoEm = new DateTimeOffset(new DateTime(2026, 11, 26, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Codigo = "pro",
+                            CriadoEm = new DateTimeOffset(new DateTime(2026, 11, 26, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Descricao = "Todos os módulos da plataforma, sem limite de eventos.",
+                            Nome = "Pro",
+                            Ordem = 1,
+                            Padrao = true,
+                            Publico = true,
+                            ValorMensal = 179m
+                        });
+                });
+
+            modelBuilder.Entity("Project.Domain.Assinaturas.RecursoDoPlano", b =>
+                {
+                    b.Property<Guid>("PlanoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Recurso")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<int?>("Limite")
+                        .HasColumnType("integer");
+
+                    b.HasKey("PlanoId", "Recurso");
+
+                    b.ToTable("RecursosPlano", (string)null);
                 });
 
             modelBuilder.Entity("Project.Domain.Clientes.Cliente", b =>
@@ -3210,6 +3547,85 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Project.Domain.Assinaturas.AlteracaoAssinatura", b =>
+                {
+                    b.HasOne("Project.Domain.Assinaturas.Assinatura", null)
+                        .WithMany()
+                        .HasForeignKey("AssinaturaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
+                        .WithMany()
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Project.Infrastructure.Conta.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("FeitoPorUsuarioId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Project.Domain.Assinaturas.Plano", null)
+                        .WithMany()
+                        .HasForeignKey("PlanoAnteriorId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Project.Domain.Assinaturas.Plano", null)
+                        .WithMany()
+                        .HasForeignKey("PlanoNovoId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("Project.Domain.Assinaturas.Assinatura", b =>
+                {
+                    b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
+                        .WithMany()
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Project.Domain.Assinaturas.Plano", null)
+                        .WithMany()
+                        .HasForeignKey("PlanoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Project.Domain.Assinaturas.CobrancaAssinatura", b =>
+                {
+                    b.HasOne("Project.Domain.Assinaturas.Assinatura", null)
+                        .WithMany()
+                        .HasForeignKey("AssinaturaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
+                        .WithMany()
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Project.Domain.Assinaturas.DocumentoTrial", b =>
+                {
+                    b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
+                        .WithMany()
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Project.Domain.Assinaturas.RecursoDoPlano", b =>
+                {
+                    b.HasOne("Project.Domain.Assinaturas.Plano", null)
+                        .WithMany("Recursos")
+                        .HasForeignKey("PlanoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Project.Domain.Clientes.Cliente", b =>
                 {
                     b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
@@ -4411,6 +4827,11 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .HasForeignKey("ContaId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Project.Domain.Assinaturas.Plano", b =>
+                {
+                    b.Navigation("Recursos");
                 });
 
             modelBuilder.Entity("Project.Domain.Clientes.Cliente", b =>

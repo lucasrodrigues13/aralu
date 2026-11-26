@@ -12,6 +12,7 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { AuthService, Modulo, permissoesDaArea } from '../core/auth.service';
 import { AssistentesClient } from '../core/assistentes.client';
 import { ContaClient } from '../core/conta.client';
+import { AssinaturaClient, SituacaoAssinatura } from '../core/assinatura.client';
 import { NegocioClient } from '../core/negocio.client';
 import { TemaService } from '../core/tema.service';
 import { NovoEventoDialog } from '../pages/eventos/novo-evento.dialog';
@@ -186,6 +187,14 @@ function telaEstreita(): boolean {
           </mat-menu>
         </mat-toolbar>
 
+        @if (trial(); as t) {
+          <div class="flex items-center justify-center gap-3 px-4 py-2 bg-light-warning text-warning text-sm" role="status">
+            <span>Faltam {{ t.diasRestantesTrial }} {{ t.diasRestantesTrial === 1 ? 'dia' : 'dias' }} do seu teste</span>
+            @if (!auth.ehAssistente()) {
+              <a mat-flat-button routerLink="/configuracoes/assinatura">Assinar</a>
+            }
+          </div>
+        }
         <main class="pageWrapper">
           <router-outlet />
         </main>
@@ -216,6 +225,9 @@ export class CascaComponent implements OnDestroy {
   protected readonly menuAberto = signal(false);
 
   protected readonly empresa = signal('');
+  /** Barra de trial (SPEC-062 §13): só durante o teste, com os dias que faltam. */
+  protected readonly trial = signal<SituacaoAssinatura | null>(null);
+  private readonly assinatura = inject(AssinaturaClient);
   protected readonly nomeDisplay = signal('');
   protected readonly fotoUrl = signal<string | null>(null);
   private fotoLocal: string | null = null;
@@ -327,6 +339,13 @@ export class CascaComponent implements OnDestroy {
   });
 
   constructor() {
+    if (!this.auth.ehAdmin() || !!this.auth.contaSelecionada()) {
+      this.assinatura.situacao().subscribe({
+        next: (situacao) => this.trial.set(situacao?.situacao === 'Trial' && situacao.liberada ? situacao : null),
+        error: () => undefined,
+      });
+    }
+
     const destroyRef = inject(DestroyRef);
 
     if (this.auth.ehAssistente()) {

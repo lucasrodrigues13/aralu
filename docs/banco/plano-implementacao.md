@@ -288,3 +288,21 @@ Tudo o que mexe em schema entra junto, para gerar a migration inicial uma vez s�
 - Apagar oportunidade com contrato segue em cascata (pendência 9).
 
 **Fase 3 concluída no backend e nas telas.** Falta verificar no navegador com o banco local recriado.
+
+### Fase 4 — lote 4.1 concluído (Claude Code)
+
+Fase 4 em lotes: **4.1** schema, trial e bloqueio; **4.2** checkout e webhook do Asaas, Configurações → Assinatura; **4.3** Admin → Planos e Admin → Conta, checagem plano + grupo; **4.4** controle diário, e-mails e aceite de termos.
+
+**Feito**
+- Schema do lote 2.6: `Planos` (com o Pro de R$ 179, público e padrão, vindo da migration; índice garante um padrão só), `RecursosPlano`, `Assinaturas` (uma por conta), `CobrancasAssinatura`, `EventosWebhookAsaas` (id do evento único), `DocumentosTrial` (hash do documento único) e `AlteracoesAssinatura`. Recursos do plano no código (`RecursoPlano`).
+- **Cadastro** abre o trial de 14 dias no plano padrão, na mesma transação (R1).
+- **Regra de liberação** (R7) em `Assinatura.Liberada`, calculada na hora: trial no prazo, ativa, em atraso até 5 dias depois do vencimento, cancelada até o fim do período pago. O bloqueio não depende do controle diário.
+- **Bloqueio no servidor**: `AplicarAcesso` devolve 402 `conta_bloqueada` para Dono e Membro, com mensagem diferente para cada um (T2). Ficam abertos a sessão (`/api/v1/conta/*`) e `/api/v1/assinatura`. Os links públicos não passam pelo bloqueio (T8). Nada é apagado; voltar a Ativa devolve tudo (T6).
+- `GET /api/v1/assinatura`: situação efetiva, dias de trial, plano e valor.
+- **Frontend**: barra "Faltam N dias do seu teste · Assinar" (botão só para o Dono); 402 leva à tela **Seu teste acabou / Sua conta está bloqueada**, com mensagem para Dono e Membro. "Assinar" aponta para `/configuracoes/assinatura`, que por ora mostra "em breve" (lote 4.2).
+- Testes: `AssinaturaRegraTests` (R7) e `BloqueioContaTests` (T2, T5, T6, T7, T8, trial no cadastro). Suíte: 319 + 107, verdes. Build do frontend ok.
+
+**Diferenças do explorador**
+- `ContaId` de `Assinaturas` e `DocumentosTrial` aponta para `Contas` (como no `build.js`), não para `AspNetUsers`.
+- `AlteracoesAssinatura` ganhou `Tipo` (Plano, Valor, Desconto, Trial) e `Detalhe`, para o histórico mostrar desconto e datas do trial, que não cabem em plano/valor.
+- O aceite de termos (`Perfis.AceiteTermosEm`) fica para o lote 4.4: o conteúdo dos termos é pendência.

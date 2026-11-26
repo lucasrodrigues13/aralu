@@ -16,7 +16,7 @@ public enum ResultadoCadastro
 }
 
 /// <summary>
-/// Cria, numa transação só, o login, a conta, o Dono e os grupos padrão (SPEC-062, RF-110, T1).
+/// Cria, numa transação só, o login, a conta, o Dono, os grupos padrão e o trial de 14 dias (SPEC-062, RF-110, T1).
 /// A conta usa o mesmo Id do usuário: o ContaId gravado nos dados continua igual ao id do dono.
 /// </summary>
 public sealed class CadastroDeConta(AppDbContext banco, UserManager<ApplicationUser> usuarios)
@@ -42,6 +42,9 @@ public sealed class CadastroDeConta(AppDbContext banco, UserManager<ApplicationU
         var agora = DateTimeOffset.UtcNow;
         banco.Contas.Add(new ContaAssessoria { Id = contaId, DonoUsuarioId = usuario.Id, CriadaEm = agora });
         banco.Grupos.AddRange(GruposPadrao.Criar(contaId));
+        // Trial de 14 dias no plano padrão (R1, RF-115).
+        var plano = await banco.Planos.AsNoTracking().SingleAsync(item => item.Padrao, ct);
+        banco.Assinaturas.Add(Project.Domain.Assinaturas.Assinatura.NovoTrial(contaId, plano, agora));
         banco.Membros.Add(new MembroConta
         {
             Id = Guid.NewGuid(),

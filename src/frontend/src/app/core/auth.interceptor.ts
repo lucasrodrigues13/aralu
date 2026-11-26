@@ -29,6 +29,11 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         void router.navigate(['/entrar'], { queryParams: { aviso } });
       }
 
+      // SPEC-062 §7: conta fora do prazo vai para a tela de bloqueio, em qualquer página.
+      if (token && erro instanceof HttpErrorResponse && erro.status === 402 && erro.error?.code === 'conta_bloqueada') {
+        void router.navigate(['/conta-bloqueada']);
+      }
+
       return throwError(() => erro);
     }),
   );

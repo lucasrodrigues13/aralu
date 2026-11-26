@@ -34,6 +34,18 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<ContaAssessoria> Contas => Set<ContaAssessoria>();
 
+    public DbSet<Project.Domain.Assinaturas.Plano> Planos => Set<Project.Domain.Assinaturas.Plano>();
+
+    public DbSet<Project.Domain.Assinaturas.Assinatura> Assinaturas => Set<Project.Domain.Assinaturas.Assinatura>();
+
+    public DbSet<Project.Domain.Assinaturas.CobrancaAssinatura> CobrancasAssinatura => Set<Project.Domain.Assinaturas.CobrancaAssinatura>();
+
+    public DbSet<Project.Domain.Assinaturas.EventoWebhookAsaas> EventosWebhookAsaas => Set<Project.Domain.Assinaturas.EventoWebhookAsaas>();
+
+    public DbSet<Project.Domain.Assinaturas.DocumentoTrial> DocumentosTrial => Set<Project.Domain.Assinaturas.DocumentoTrial>();
+
+    public DbSet<Project.Domain.Assinaturas.AlteracaoAssinatura> AlteracoesAssinatura => Set<Project.Domain.Assinaturas.AlteracaoAssinatura>();
+
     public DbSet<PerfilAssessoria> Perfis => Set<PerfilAssessoria>();
 
     public DbSet<ModeloEvento> Modelos => Set<ModeloEvento>();
@@ -294,6 +306,7 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser>
     {
         base.OnModelCreating(modelBuilder);
         Mapa.Aplicar(modelBuilder);
+        MapaAssinaturas.Aplicar(modelBuilder);
         Mapa.LigarContas(modelBuilder);
         Mapa.LigarReferencias(modelBuilder);
         FiltrarPorConta(modelBuilder);

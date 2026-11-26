@@ -52,6 +52,11 @@ public static class EquipeEndpoints
         app.MapGet("/api/v1/assistentes/nomes", (ClaimsPrincipal u, EquipeServico s, CancellationToken ct) =>
             ComConta(u, async conta => Results.Ok(await s.NomesAsync(conta, ct)))).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
 
+        // Situação da assinatura: barra de trial e tela de bloqueio (SPEC-062 §13). Toda a equipe lê; só o Dono assina.
+        app.MapGet("/api/v1/assinatura", (ClaimsPrincipal u, Project.Infrastructure.Assinaturas.AssinaturaServico s, CancellationToken ct) =>
+            ComConta(u, async conta => await s.SituacaoAsync(conta, DateTimeOffset.UtcNow, ct) is { } situacao ? Results.Ok(situacao) : Results.NoContent()))
+            .RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+
         var propria = app.MapGroup("/api/v1/minha-conta").RequireAuthorization(policy => policy.RequireRole(SoMembro));
         propria.MapGet("", MinhaConta);
         propria.MapPut("", AtualizarMinhaConta);
@@ -104,6 +109,22 @@ public static class EquipeEndpoints
 
         http.User = new ClaimsPrincipal(new ClaimsIdentity(claims, identidade.AuthenticationType, identidade.NameClaimType, ClaimTypes.Role));
 
+        // Conta fora do prazo (R7): bloqueada para todos, menos a sessão e a própria assinatura.
+        // Links públicos do cliente não passam aqui, porque não têm login (R9, T8).
+        var caminho = http.Request.Path.Value ?? "";
+        if (!RotaLiberadaNoBloqueio(caminho)
+            && !await http.RequestServices.GetRequiredService<Project.Infrastructure.Assinaturas.AssinaturaServico>()
+                .LiberadaAsync(membro.ContaId, DateTimeOffset.UtcNow, http.RequestAborted))
+        {
+            http.Response.StatusCode = StatusCodes.Status402PaymentRequired;
+            await http.Response.WriteAsJsonAsync(new ErroResposta(
+                ContaBloqueada,
+                membro.Tipo == TipoMembro.Dono
+                    ? "Sua conta está bloqueada. Assine para continuar."
+                    : "A conta está bloqueada. Fale com o responsável pela conta."));
+            return;
+        }
+
         if (membro.Tipo == TipoMembro.Membro
             && PermissaoPorRota.De(http.Request.Method, http.Request.Path.Value ?? "") is { } exigida
             && !Pode(http.User, exigida.Modulo, exigida.Acao))
@@ -117,6 +138,13 @@ public static class EquipeEndpoints
 
         await proximo();
     }
+
+    public const string ContaBloqueada = "conta_bloqueada";
+
+    private static bool RotaLiberadaNoBloqueio(string caminho) =>
+        !caminho.StartsWith("/api/", StringComparison.OrdinalIgnoreCase)
+        || caminho.StartsWith("/api/v1/conta/", StringComparison.OrdinalIgnoreCase)
+        || caminho.StartsWith("/api/v1/assinatura", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>Dono (e Admin operando a conta) pode tudo; Membro, o que o grupo libera.</summary>
     public static bool Pode(ClaimsPrincipal usuario, Modulo modulo, AcaoModulo acao) =>
