@@ -55,7 +55,14 @@ const SITUACOES: Record<string, string> = {
             }
           </div>
 
-          @if (!s.assinada) {
+          @if (s.situacao === 'Cancelada' && s.liberada) {
+            <div class="grid gap-3 max-w-md mb-6">
+              <p>Sua assinatura foi cancelada, mas o período pago vai até {{ s.pagoAte | date: 'dd/MM/yyyy' }}.</p>
+              <p class="text-muted text-sm">Reativar volta a cobrança mensal com a mesma forma de pagamento. Nada é cobrado agora: a próxima fatura vence no dia seguinte ao fim do período pago.</p>
+              <div><button mat-flat-button type="button" [disabled]="enviando()" (click)="reativar()">Reativar assinatura</button></div>
+            </div>
+          } @else if (!s.assinada) {
+
             <form class="grid gap-4 max-w-md" (ngSubmit)="assinar()">
               <div class="grid gap-3 sm:grid-cols-2">
                 @for (p of planos(); track p.id) {
@@ -211,7 +218,25 @@ export class AssinaturaPage implements OnInit {
     });
   }
 
+  protected reativar(): void {
+    this.enviando.set(true);
+    this.cliente.reativar().subscribe({
+      next: (resposta) => {
+        this.enviando.set(false);
+        registrarNoConsole('Reativar', resposta.diagnostico);
+        this.toast.sucesso('Assinatura reativada.');
+        this.carregar(false);
+      },
+      error: (erro: unknown) => {
+        this.enviando.set(false);
+        if (erro instanceof HttpErrorResponse) registrarNoConsole('Reativar (falhou)', erro.error?.diagnostico);
+        this.toast.erro(mensagemDeErro(erro));
+      },
+    });
+  }
+
   protected cancelar(): void {
+
     this.dialog
       .open(ConfirmaDialog, {
         ...DIALOG_PEQUENO,

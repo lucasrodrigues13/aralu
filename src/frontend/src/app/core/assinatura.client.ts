@@ -80,6 +80,11 @@ export class AssinaturaClient {
     return this.http.post<AssinarResposta>(`${this.base}/api/v1/assinatura/assinar`, pedido);
   }
 
+  /** Cancelou e ainda está no período pago: volta a recorrência sem cobrar agora. */
+  reativar() {
+    return this.http.post<AssinarResposta>(`${this.base}/api/v1/assinatura/reativar`, null);
+  }
+
   cancelar() {
     return this.http.post<{ mensagem: string; diagnostico: PassoAsaas[] | null }>(`${this.base}/api/v1/assinatura/cancelar`, null);
   }

@@ -117,7 +117,8 @@ public sealed class AssinaturaServico(AppDbContext banco, IAsaas asaas, IOptions
         try
         {
             // Já assinou e não cancelou: devolve a fatura em aberto, sem criar outra assinatura.
-            if (assinatura.AsaasSubscriptionId is { } existente && assinatura.Situacao != SituacaoAssinatura.Cancelada)
+            // CanceladaEm nulo com situação Cancelada = assinatura ainda viva no Asaas: não cria uma segunda.
+            if (assinatura.AsaasSubscriptionId is { } existente && (assinatura.Situacao != SituacaoAssinatura.Cancelada || assinatura.CanceladaEm is null))
             {
                 var abertas = await asaas.CobrancasDaAssinaturaAsync(existente, passos, ct);
                 var aberta = abertas.FirstOrDefault(item => item.Status is "PENDING" or "OVERDUE") ?? abertas.LastOrDefault();
@@ -166,6 +167,14 @@ public sealed class AssinaturaServico(AppDbContext banco, IAsaas asaas, IOptions
             assinatura.ProximoVencimento = vencimento;
             assinatura.CanceladaEm = null;
             assinatura.AtualizadaEm = agora;
+            if (assinatura.Situacao == SituacaoAssinatura.Cancelada)
+            {
+                // Assinou de novo depois de cancelar: dentro do período pago volta a Ativa (nada é cobrado agora);
+                // depois dele, espera o pagamento, que ativa pelo aviso do Asaas.
+                var hoje = DateOnly.FromDateTime(agora.UtcDateTime);
+                assinatura.Situacao = assinatura.PagoAte is DateOnly pago && pago >= hoje ? SituacaoAssinatura.Ativa : SituacaoAssinatura.Bloqueada;
+            }
+
             foreach (var cobranca in cobrancas)
             {
                 await GuardarCobrancaAsync(assinatura, cobranca, agora, ct);
@@ -220,6 +229,77 @@ public sealed class AssinaturaServico(AppDbContext banco, IAsaas asaas, IOptions
         assinatura.AtualizadaEm = agora;
         await banco.SaveChangesAsync(ct);
         return Resultado<IReadOnlyList<PassoAsaas>?>.Sucesso(Diagnostico(passos));
+    }
+
+    /// <summary>
+    /// Reativar (cancelou e ainda está no período pago): volta a recorrência sem cobrar agora. A primeira cobrança nova
+    /// vence no dia seguinte ao fim do período pago, com a mesma forma de pagamento e o mesmo cliente no Asaas.
+    /// </summary>
+    public async Task<Resultado<AssinarResposta>> ReativarAsync(Guid contaId, DateTimeOffset agora, CancellationToken ct)
+    {
+        var assinatura = await DaContaAsync(contaId, ct, rastrear: true);
+        var hoje = DateOnly.FromDateTime(agora.UtcDateTime);
+        if (assinatura is null || assinatura.Situacao != SituacaoAssinatura.Cancelada)
+        {
+            return Resultado<AssinarResposta>.Erro(Codigos.Validacao, "Só uma assinatura cancelada pode ser reativada.");
+        }
+
+        if (assinatura.PagoAte is not DateOnly pago || pago < hoje)
+        {
+            return Resultado<AssinarResposta>.Erro(Codigos.Validacao, "O período pago já acabou. Assine de novo.");
+        }
+
+        // A assinatura no Asaas não chegou a ser cancelada (estado deixado pela versão anterior): só volta a Ativa.
+        if (assinatura.AsaasSubscriptionId is not null && assinatura.CanceladaEm is null)
+        {
+            assinatura.Situacao = SituacaoAssinatura.Ativa;
+            assinatura.AtualizadaEm = agora;
+            await banco.SaveChangesAsync(ct);
+            return Resultado<AssinarResposta>.Sucesso(new AssinarResposta(null, assinatura.ProximoVencimento ?? pago.AddDays(1), assinatura.Valor, null));
+        }
+
+        if (assinatura.AsaasCustomerId is null || assinatura.FormaPagamento is not FormaPagamento forma)
+        {
+            return Resultado<AssinarResposta>.Erro(Codigos.Validacao, "Não achamos os dados da assinatura anterior. Assine de novo.");
+        }
+
+        var passos = new List<PassoAsaas>();
+        try
+        {
+            var vencimento = pago.AddDays(1);
+            var plano = await banco.Planos.AsNoTracking().FirstAsync(item => item.Id == assinatura.PlanoId, ct);
+            var valor = Assinatura.ValorCobrado(plano.ValorMensal, assinatura.ValorPersonalizado, assinatura.DescontoPercentual, assinatura.DescontoAte, vencimento);
+            var criada = await asaas.CriarAssinaturaAsync(
+                assinatura.AsaasCustomerId,
+                forma == FormaPagamento.Cartao ? "CREDIT_CARD" : "PIX",
+                valor,
+                vencimento,
+                $"Aralu {plano.Nome}",
+                contaId.ToString(),
+                passos,
+                ct);
+            var cobrancas = await asaas.CobrancasDaAssinaturaAsync(criada.Id, passos, ct);
+
+            assinatura.AsaasSubscriptionId = criada.Id;
+            assinatura.Valor = valor;
+            assinatura.ProximoVencimento = vencimento;
+            assinatura.Situacao = SituacaoAssinatura.Ativa;
+            assinatura.CanceladaEm = null;
+            assinatura.AtualizadaEm = agora;
+            foreach (var cobranca in cobrancas)
+            {
+                await GuardarCobrancaAsync(assinatura, cobranca, agora, ct);
+            }
+
+            await banco.SaveChangesAsync(ct);
+            return Resultado<AssinarResposta>.Sucesso(new AssinarResposta(null, vencimento, valor, Diagnostico(passos)));
+        }
+        catch (ErroAsaas erro)
+        {
+            logs.LogWarning("Reativação da conta {Conta} recusada pelo Asaas: {Erro}", contaId, erro.Message);
+            UltimoDiagnostico = Diagnostico(passos);
+            return Resultado<AssinarResposta>.Erro(ErroAsaasCodigo, erro.Message);
+        }
     }
 
     public async Task<IReadOnlyList<FaturaLeitura>> FaturasAsync(Guid contaId, CancellationToken ct) =>

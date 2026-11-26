@@ -117,6 +117,13 @@ public sealed class Assinatura : ITemConta
     public DateOnly PrimeiroVencimento(DateTimeOffset agora, bool documentoJaUsado)
     {
         var hoje = DateOnly.FromDateTime(agora.UtcDateTime);
+
+        // Cancelou e volta dentro do período pago: a próxima cobrança é só no dia seguinte ao fim dele.
+        if (Situacao == SituacaoAssinatura.Cancelada && PagoAte is DateOnly pago && pago >= hoje)
+        {
+            return pago.AddDays(1);
+        }
+
         if (documentoJaUsado || Situacao != SituacaoAssinatura.Trial || agora >= TrialTerminaEm)
         {
             return hoje;

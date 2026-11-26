@@ -24,6 +24,13 @@ public static class AssinaturaEndpoints
 
         var dono = app.MapGroup("/api/v1/assinatura").RequireAuthorization(policy => policy.RequireRole(SoDono));
         dono.MapPost("/assinar", Assinar);
+        // Cancelou e ainda está no período pago: volta a recorrência sem cobrar agora.
+        dono.MapPost("/reativar", (ClaimsPrincipal u, AssinaturaServico s, CancellationToken ct) =>
+            ComConta(u, async conta =>
+            {
+                var r = await s.ReativarAsync(conta, DateTimeOffset.UtcNow, ct);
+                return r.Ok ? Results.Ok(r.Valor) : Erro(r.Falha!, s.UltimoDiagnostico);
+            }));
         dono.MapPost("/cancelar", (ClaimsPrincipal u, AssinaturaServico s, CancellationToken ct) =>
             ComConta(u, async conta =>
             {

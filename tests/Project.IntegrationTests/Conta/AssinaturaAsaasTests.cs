@@ -111,6 +111,69 @@ public class AssinaturaAsaasTests
         Assert.Equal(HttpStatusCode.PaymentRequired, (await dona.GetAsync("/api/v1/eventos")).StatusCode);
     }
 
+    [Fact]
+    public async Task Reativar_no_periodo_pago_volta_a_ativa_sem_cobrar_agora()
+    {
+        var (dona, contaId) = await EntrarDono();
+        var resposta = await Ler(await dona.PostAsJsonAsync("/api/v1/assinatura/assinar", new { documento = CpfNovo(), nomeCobranca = "Assessoria", formaPagamento = "cartao" }));
+        var vencimento = DateOnly.Parse(resposta.GetProperty("vencimento").GetString()!);
+        var primeira = (await Assinatura(contaId)).AsaasSubscriptionId!;
+        await Ler(await Avisar(Aviso("PAYMENT_CONFIRMED", primeira, vencimento)));
+        Assert.Equal(HttpStatusCode.OK, (await dona.PostAsync("/api/v1/assinatura/cancelar", null)).StatusCode);
+        var pagoAte = (await Assinatura(contaId)).PagoAte!.Value;
+
+        var reativada = await Ler(await dona.PostAsync("/api/v1/assinatura/reativar", null));
+
+        var depois = await Assinatura(contaId);
+        Assert.Equal(SituacaoAssinatura.Ativa, depois.Situacao);
+        Assert.NotEqual(primeira, depois.AsaasSubscriptionId);
+        Assert.Null(depois.CanceladaEm);
+        Assert.Equal(pagoAte.AddDays(1), DateOnly.Parse(reativada.GetProperty("vencimento").GetString()!));
+        Assert.Equal(pagoAte.AddDays(1), _banco.Fabrica.Asaas.Assinaturas[depois.AsaasSubscriptionId!].Vencimento);
+
+        // Já ativa: reativar de novo é recusado e assinar não cria uma segunda assinatura.
+        Assert.Equal(HttpStatusCode.BadRequest, (await dona.PostAsync("/api/v1/assinatura/reativar", null)).StatusCode);
+        await Ler(await dona.PostAsJsonAsync("/api/v1/assinatura/assinar", new { documento = CpfNovo(), nomeCobranca = "Assessoria", formaPagamento = "pix" }));
+        Assert.Equal(depois.AsaasSubscriptionId, (await Assinatura(contaId)).AsaasSubscriptionId);
+    }
+
+    [Fact]
+    public async Task Assinar_de_novo_no_periodo_pago_nao_cobra_agora_e_fica_ativa()
+    {
+        var (dona, contaId) = await EntrarDono();
+        var documento = CpfNovo();
+        var resposta = await Ler(await dona.PostAsJsonAsync("/api/v1/assinatura/assinar", new { documento, nomeCobranca = "Assessoria", formaPagamento = "cartao" }));
+        var vencimento = DateOnly.Parse(resposta.GetProperty("vencimento").GetString()!);
+        await Ler(await Avisar(Aviso("PAYMENT_CONFIRMED", (await Assinatura(contaId)).AsaasSubscriptionId!, vencimento)));
+        Assert.Equal(HttpStatusCode.OK, (await dona.PostAsync("/api/v1/assinatura/cancelar", null)).StatusCode);
+        var pagoAte = (await Assinatura(contaId)).PagoAte!.Value;
+
+        var novamente = await Ler(await dona.PostAsJsonAsync("/api/v1/assinatura/assinar", new { documento, nomeCobranca = "Assessoria", formaPagamento = "pix" }));
+
+        Assert.Equal(pagoAte.AddDays(1), DateOnly.Parse(novamente.GetProperty("vencimento").GetString()!));
+        Assert.Equal(SituacaoAssinatura.Ativa, (await Assinatura(contaId)).Situacao);
+    }
+
+    [Fact]
+    public async Task Pagamento_de_assinatura_nova_depois_do_periodo_ativa_a_conta()
+    {
+        var (dona, contaId) = await EntrarDono();
+        var documento = CpfNovo();
+        var resposta = await Ler(await dona.PostAsJsonAsync("/api/v1/assinatura/assinar", new { documento, nomeCobranca = "Assessoria", formaPagamento = "cartao" }));
+        var vencimento = DateOnly.Parse(resposta.GetProperty("vencimento").GetString()!);
+        await Ler(await Avisar(Aviso("PAYMENT_CONFIRMED", (await Assinatura(contaId)).AsaasSubscriptionId!, vencimento)));
+        Assert.Equal(HttpStatusCode.OK, (await dona.PostAsync("/api/v1/assinatura/cancelar", null)).StatusCode);
+        await Mudar(contaId, item => item.PagoAte = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(-1));
+        Assert.Equal(HttpStatusCode.BadRequest, (await dona.PostAsync("/api/v1/assinatura/reativar", null)).StatusCode);
+
+        var nova = await Ler(await dona.PostAsJsonAsync("/api/v1/assinatura/assinar", new { documento, nomeCobranca = "Assessoria", formaPagamento = "pix" }));
+        var novoVencimento = DateOnly.Parse(nova.GetProperty("vencimento").GetString()!);
+        Assert.Equal(SituacaoAssinatura.Bloqueada, (await Assinatura(contaId)).Situacao);
+
+        await Ler(await Avisar(Aviso("PAYMENT_RECEIVED", (await Assinatura(contaId)).AsaasSubscriptionId!, novoVencimento)));
+        Assert.Equal(SituacaoAssinatura.Ativa, (await Assinatura(contaId)).Situacao);
+    }
+
     private Task<HttpResponseMessage> Avisar(string corpo)
     {
         var http = _banco.Fabrica.CreateClient();
