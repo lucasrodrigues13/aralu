@@ -116,6 +116,8 @@ Tudo o que mexe em schema entra junto, para gerar a migration inicial uma vez s�
 
 ### Fase 5: código de acesso do cliente
 
+> **Substituída pela [SPEC-063](../specs/063-codigo-de-acesso-do-cliente.md)** (concluída, ver Progresso). O código vale para todos os links: a coluna `LinksCliente.ExigeCodigo` não entrou. Texto original abaixo.
+
 - Tabelas `CodigosAcessoCliente`, `SessoesLinkCliente` e a coluna `LinksCliente.ExigeCodigo` (se ainda não entraram na migration da Fase 2).
 - Fluxo: abrir o link → pedir código → receber por e-mail (SMTP atual) ou SMS → validar → sessão curta.
 - Limite de tentativas e expiração em minutos.
@@ -367,4 +369,36 @@ Fase 4 em lotes: **4.1** schema, trial e bloqueio; **4.2** checkout e webhook do
 - Trocar a forma de pagamento pela tela (§6 B8): hoje o Dono troca na própria fatura do Asaas. Precisa de decisão sobre o fluxo (cancelar e assinar de novo, ou `PUT` do `billingType`).
 - Aviso de 80% e 100% do limite mensal de recurso (§7): depende dos recursos, que ainda não existem.
 
-**Fase 4 concluída.** Próximo: Fase 5 (código de acesso do cliente) e o teste ponta a ponta no staging com o sandbox do Asaas.
+**Fase 4 concluída.**
+
+### Fase 5 concluída (Claude Code) — SPEC-063, com a SPEC-064 no mesmo commit
+
+- **Commit:** `ef8b16d`, publicado em `staging`.
+
+**Feito (SPEC-063)**
+- Todas as rotas de `/api/v1/publico/cliente/{token}` passam por um filtro de sessão: sem sessão válida, 401 e nenhum dado. Ficam abertas só `GET /acesso`, `POST /acesso/codigo` e `POST /acesso/confirmar`.
+- Código de 6 dígitos por e-mail (SMTP atual), só para e-mail de cliente vinculado ao evento, mostrado mascarado. Vale 10 minutos e aceita 5 tentativas; pedir outro invalida o anterior. Limite de 1 pedido a cada 2 minutos e espera de 15 minutos depois de 3 pedidos.
+- Sessão de 7 dias em cookie HttpOnly com o caminho do link, renovada a cada uso. Código e sessão guardados só como hash (tabelas `CodigosAcessoCliente` e `SessoesLinkCliente`). Gerar link novo apaga as sessões e os códigos do anterior.
+- Funciona com a conta bloqueada (C9). Portaria, RSVP e proposta não pedem código.
+- Telas: pedido de código na página do link, com contagem no "Reenviar código"; frase fixa e aviso de cliente sem e-mail na janela "Link do cliente".
+- Fora da spec: o interceptor do frontend não desloga a organizadora num 401 do link, e o CORS passou a aceitar credenciais (o cookie precisa disso em desenvolvimento, com origens diferentes).
+
+**Feito (SPEC-064)**
+- Validade padrão da proposta em Configurações → Propostas (1 a 180 dias, padrão 30; só o Dono muda). Campo "Válida por N dias" no envio e no reenvio, com os dias do envio anterior. A proposta vale até o fim do último dia, no horário de Brasília.
+
+**Testes:** `CodigoAcessoLinkTests`, `AcessoLinkClienteRegrasTests`; os testes antigos do link abrem sessão pelo código (`LinkClienteDeTeste`). Suíte: 332 + 123, verdes. Migration `Inicial` e `deploy/schema.sql` regerados: **o banco do staging precisa ser recriado** antes do deploy.
+
+**Fica fora:** SMS (pendência 5) e o Membro gerenciar o link.
+
+## O que falta para fechar
+
+O código de todas as fases está feito. Falta:
+
+1. **Verificação no staging** (bloqueia o lançamento): recriar o banco; teste ponta a ponta com o sandbox do Asaas (passo a passo no lote 4.2); Fase 3 (equipe e grupos) e SPEC-063/064 no navegador, inclusive o e-mail do código pelo SMTP e o cookie atrás do Caddy em HTTPS.
+2. **Termos de uso e política de privacidade** (pendência 3, bloqueia o lançamento): hoje o aceite grava "2026-11-provisoria", sem link para o texto.
+3. **Nota fiscal da assinatura** (pendência 4): decisão com o contador.
+4. **Textos dos e-mails** (pendência 2): os atuais são provisórios.
+5. **Trocar a forma de pagamento pela tela** (§6 B8): decidir o fluxo.
+6. **`ng test` completo**: barrado pelo erro antigo de tipo em `checklist-tarefa.spec.ts`.
+
+Não bloqueiam: SMS, um login em mais de uma conta, upgrade/downgrade pelo Dono, planos anuais, recursos de IA e integrações (com o aviso de 80% e 100% do limite) e a pendência 9 (apagar oportunidade com contrato).
