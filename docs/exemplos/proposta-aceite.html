@@ -1,0 +1,277 @@
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&family=Poppins:wght@300;400;600&display=swap');
+:root{--papel:#f2ebe5;--papel2:#e9dfd7;--tinta:#4f4441;--suave:#7d6f6a;--rose:#bd8b7f;--ouro:#c9a45a;--aralu-primaria:#bd8b7f}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--papel);color:var(--tinta);font:300 16px/1.7 Poppins,sans-serif}
+.wrap{max-width:1000px;margin:0 auto;padding:0 22px}
+section{padding:80px 0}
+h1,h2{font-family:"Playfair Display",Georgia,serif;font-style:italic;font-weight:400;line-height:1.05}
+h2{font-size:clamp(2.4rem,6vw,3.6rem);text-align:center;margin-bottom:40px}
+.caps{font-size:.78rem;letter-spacing:.35em;text-transform:uppercase;text-align:center;color:var(--suave)}
+.fase{font-size:clamp(1.4rem,4vw,2.2rem);font-weight:300;letter-spacing:.06em;text-align:center;margin:8px 0 36px}
+.moldura{border:1px solid var(--ouro);padding:56px 40px;background:rgba(255,255,255,.3);box-shadow:0 20px 40px rgba(79,68,65,.08)}
+.capa{text-align:center;padding:72px 0 40px}
+.capa h1{font-size:clamp(3rem,10vw,6rem)}
+.capa .evento{font-family:"Playfair Display",serif;font-size:1.3rem;margin-top:28px}
+.citacao{font-size:1.2rem;text-align:center;max-width:560px;margin:40px auto 0;font-style:italic;font-family:"Playfair Display",serif}
+.dados{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px;margin-top:40px}
+.dados div{background:#fff;padding:18px;border-top:2px solid var(--ouro);text-align:center}
+.dados b{display:block;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--rose);font-weight:600}
+.sobre{display:grid;grid-template-columns:1.2fr 1fr;gap:48px;align-items:center}
+.sobre h2{text-align:left;margin-bottom:24px}
+.sobre p+p{margin-top:14px}
+b,strong{font-weight:600}
+.lista{list-style:none;columns:2;column-gap:48px}
+.lista li{break-inside:avoid;position:relative;padding:0 0 18px 30px}
+.lista li:before{content:"";position:absolute;left:4px;top:.6em;width:9px;height:9px;border-radius:50%;background:var(--rose)}
+.lista li:after{content:"";position:absolute;left:8px;top:1.2em;bottom:-.2em;width:1px;background:var(--rose);opacity:.6}
+.lista li:last-child:after{display:none}
+.lista.uma{columns:1;max-width:560px;margin:0 auto}
+.app{background:linear-gradient(160deg,#d4b0a6,#bd8b7f);color:#fff}
+.app h2{color:#fff}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px}
+.cards div{background:rgba(255,255,255,.18);padding:26px;text-align:center}
+.cards span{display:block;font-family:"Playfair Display",serif;font-size:2rem;font-style:italic}
+.nao h2{font-style:normal;font-weight:300;letter-spacing:.04em;font-size:clamp(1.6rem,4.5vw,2.6rem);text-transform:uppercase}
+.nao h2 em{color:var(--rose);font-style:normal}
+.adic li{margin-bottom:18px;list-style:none}
+.adic .preco{color:var(--rose);font-weight:600;white-space:nowrap}
+.aralu-logo{text-align:center;margin-bottom:12px}
+.aralu-imagem,.aralu-galeria,.aralu-carrossel{border:1px solid var(--ouro);padding:6px;background:#fff}
+.aralu-proposta,.aralu-valor{margin-top:24px}
+.aralu-valor{text-align:center;font-family:"Playfair Display",serif;font-size:1.4rem}
+.aralu-botoes{margin-top:32px;text-align:center}
+.aralu-botao{font:500 .85rem Poppins,sans-serif;letter-spacing:.2em;text-transform:uppercase;border-radius:2px}
+.aralu-aceitar{background:linear-gradient(135deg,var(--ouro),#a9853b);color:#fff;border:0}
+.validade{text-align:center;color:var(--suave);font-size:.85rem;margin-top:18px}
+footer{text-align:center;padding:40px 22px;color:var(--suave);font-size:.85rem}
+@media(max-width:760px){
+  section{padding:56px 0}
+  .moldura{padding:40px 20px}
+  .sobre{grid-template-columns:1fr}
+  .lista{columns:1}
+}
+</style>
+
+<header class="capa wrap">
+{{logo}}
+<h1>{{nome_assessoria}}</h1>
+<p class="caps">Cerimonialista</p>
+<p class="evento">Proposta para {{nome_contratante}}</p>
+<p class="caps">{{tipo_evento}} · {{data_evento}}</p>
+</header>
+
+<section style="padding-top:0">
+<div class="wrap">
+{{imagem:capa}}
+</div>
+</section>
+
+<section style="padding-top:0">
+<div class="wrap moldura">
+{{galeria:abertura}}
+<p class="citacao">“O casamento é o grande dia... mas a tranquilidade é construída nos bastidores.”</p>
+</div>
+</section>
+
+<section>
+<div class="wrap">
+<p class="caps">Seu evento</p>
+<h2>{{nome_oportunidade}}</h2>
+<div class="dados">
+<div><b>Data</b>{{data_evento}} às {{hora_evento}}</div>
+<div><b>Convidados</b>{{convidados}}</div>
+<div><b>Cerimônia</b>{{local_cerimonia}}<br>{{endereco_cerimonia}}</div>
+<div><b>Recepção</b>{{local_recepcao}}<br>{{endereco_recepcao}}</div>
+</div>
+</div>
+</section>
+
+<section style="padding-top:0">
+<div class="wrap sobre">
+<div>
+<h2>Conte comigo</h2>
+<p>Meu nome é <b>Samya Martins.</b> Comecei na área da saúde, cuidando de pessoas em momentos delicados, e foi ali que descobri meu maior talento: acolher, escutar e trazer segurança.</p>
+<p>Quando entrei no universo dos eventos, percebi que <b>o casamento também exige esse mesmo cuidado</b> — só muda o cenário.</p>
+<p><b>Me apaixonei pelos bastidores dos sonhos:</b> acalmar ansiedades, alinhar detalhes e transformar sentimentos em experiência.</p>
+<p>Hoje, sou <b>dedicada ao cerimonial,</b> acreditando que um casamento leve e inesquecível começa muito antes do grande dia.</p>
+</div>
+{{imagem:retrato}}
+</div>
+</section>
+
+<section style="padding-top:0">
+<div class="wrap">
+{{carrossel:bastidores}}
+</div>
+</section>
+
+<section style="background:var(--papel2)">
+<div class="wrap">
+<p class="caps">Etapas do planejamento</p>
+<p class="fase">Fase I • Projeção</p>
+<ul class="lista uma">
+<li>Sessão para revelar visão e essência.</li>
+<li>Painel de referências visuais inspiradoras.</li>
+<li>Definição das prioridades do evento.</li>
+<li>Estimativa de convidados.</li>
+<li>Orçamento disponível para o evento.</li>
+<li>Condições e limites de pagamento.</li>
+</ul>
+
+<p class="fase" style="margin-top:64px">Fase II • Produção</p>
+<ul class="lista">
+<li>Cronograma personalizado do planejamento.</li>
+<li>Acesso ao app exclusivo de gestão e acompanhamento.</li>
+<li>Curadoria de profissionais compatíveis à projeção.</li>
+<li>Coordenação integral com fornecedores.</li>
+<li>Avaliação cuidadosa das propostas para sua escolha segura.</li>
+<li>Mediação nas negociações.</li>
+<li>Formalização das reservas e acompanhamento dos contratos assinados.</li>
+</ul>
+
+<p class="fase" style="margin-top:64px">Fase III • Gestão</p>
+<ul class="lista">
+<li>Alinhamento individual com cada profissional contratado.</li>
+<li>Vistoria técnica no local do evento.</li>
+<li>Definição do cronograma de montagem.</li>
+<li>Elaboração do roteiro da cerimônia.</li>
+<li>Elaboração do roteiro da recepção.</li>
+<li>Ensaios dirigidos: cerimônia, entrada na recepção, brinde e dança.</li>
+<li>Reunião final de alinhamento com o casal.</li>
+<li>Acompanhamento presencial da montagem na semana do evento.</li>
+</ul>
+
+<p class="fase" style="margin-top:64px">Fase IV • Realização</p>
+<ul class="lista">
+<li>Coordenação geral de todas as equipes envolvidas.</li>
+<li>Organização das pausas para alimentação do staff.</li>
+<li>Recepção e acomodação cuidadosa dos convidados.</li>
+<li>Condução da cerimônia conforme o roteiro.</li>
+<li>Condução da recepção e ativações programadas.</li>
+<li>Vistoria final ao completar 8h de evento, com possibilidade de extensão contratada.</li>
+<li>Elaboração de relatório pós-evento.</li>
+</ul>
+</div>
+</section>
+
+<section class="app">
+<div class="wrap">
+<h2>Nosso App</h2>
+<div class="cards">
+<div><span>1</span><b>Visão geral do casamento em tempo real</b> (cronograma do casamento)</div>
+<div><span>2</span><b>Gestão de fornecedores</b> (contratos, pagamentos, prazos, documentos)</div>
+<div><span>3</span><b>Checklist inteligente</b> com alertas e progresso em tempo real</div>
+<div><span>4</span><b>Painel financeiro e controle de gastos</b> (planejamento realista + visão geral)</div>
+</div>
+</div>
+</section>
+
+<section>
+<div class="wrap">
+{{galeria:cerimonia}}
+</div>
+</section>
+
+<section style="padding-top:0">
+<div class="wrap moldura">
+<h2>Assessoria completa</h2>
+<ul class="lista">
+<li>Alinhamento inicial de expectativas.</li>
+<li>Estudo do evento e projeção do investimento desejado.</li>
+<li>Criação do cronograma de planejamento personalizado.</li>
+<li>Pesquisa e solicitação de propostas.</li>
+<li>Análise e negociação com fornecedores.</li>
+<li>Plataforma exclusiva para gestão do evento.</li>
+<li>Formalização direta com fornecedores e acompanhamento dos contratos.</li>
+<li>Revisão de todos os detalhes.</li>
+<li>Vistoria técnica e planejamento da montagem.</li>
+<li>Elaboração dos roteiros e integrações.</li>
+<li>Ensaio da cerimônia no pré-evento.</li>
+<li>Supervisão da montagem.</li>
+<li>Gestão e execução no dia do evento.</li>
+<li>Vistoria final e encerramento.</li>
+<li>Relatório pós-evento.</li>
+</ul>
+</div>
+</section>
+
+<section style="padding-top:0">
+<div class="wrap moldura">
+<h2>Assessoria parcial</h2>
+<ul class="lista">
+<li>Alinhamento inicial de expectativas.</li>
+<li>Estudo do evento e projeção do investimento desejado.</li>
+<li>Criação do cronograma de planejamento personalizado.</li>
+<li>Plataforma exclusiva para gestão do evento.</li>
+<li>Revisão de todos os detalhes.</li>
+<li>Vistoria técnica e planejamento da montagem.</li>
+<li>Elaboração dos roteiros e integrações.</li>
+<li>Ensaio da cerimônia no pré-evento.</li>
+<li>Supervisão da montagem.</li>
+<li>Gestão e execução no dia do evento.</li>
+<li>Vistoria final e encerramento.</li>
+<li>Relatório pós-evento.</li>
+</ul>
+</div>
+</section>
+
+<section class="nao" style="background:var(--papel2)">
+<div class="wrap">
+<h2>O que <em>não</em> faz parte da nossa assessoria</h2>
+<ul class="lista">
+<li><b>Fluxo de pagamentos:</b> disponibilizamos o app exclusivo com todo o fluxo de pagamentos organizado, mas o monitoramento dos prazos e vencimentos é de responsabilidade do casal.</li>
+<li><b>Organização de eventos complementares não contratados:</b> como casamento civil, chá de panela, despedida de solteiro, after party, entre outros.</li>
+<li>Acompanhamento em ensaios fotográficos.</li>
+<li>Presença em teste de cabelo e maquiagem.</li>
+<li>Reservas de hospedagem para convidados.</li>
+<li>Coordenação de transporte de vans.</li>
+<li>Organização de horários de madrinhas em salões de beleza e afins.</li>
+</ul>
+</div>
+</section>
+
+<section>
+<div class="wrap moldura">
+<h2>Serviços adicionais</h2>
+<ul class="adic">
+<li><b>R.S.V.P. personalizado:</b> confirmação de presença com QR Code exclusivo para cada convidado — <span class="preco">R$ 900,00</span></li>
+<li><b>Mapeamento de mesas e acomodação setorizada:</b> organização impecável da recepção — <span class="preco">R$ 450,00</span></li>
+<li><b>Produção e acompanhamento pré-wedding:</b> assistência completa no ensaio — <span class="preco">R$ 1.200,00</span></li>
+<li><b>Assistente pessoal da noiva e do noivo no grande dia:</b> atenção dedicada e suporte integral — <span class="preco">R$ 350,00 (cada)</span></li>
+<li><b>Hora extra:</b> a cada hora extra — <span class="preco">R$ 400,00</span></li>
+</ul>
+</div>
+</section>
+
+<section style="padding-top:0">
+<div class="wrap">
+{{galeria:votos}}
+</div>
+</section>
+
+<section style="background:var(--papel2)">
+<div class="wrap">
+<h2>Depoimentos</h2>
+{{depoimentos}}
+</div>
+</section>
+
+<section>
+<div class="wrap moldura">
+<h2>Sua proposta</h2>
+<p class="caps">Serviços contratados</p>
+<p style="text-align:center;margin:8px 0 0">{{servicos_contratados}}</p>
+{{bloco_proposta}}
+<p class="caps" style="margin-top:40px">Investimento</p>
+{{bloco_valor}}
+<p style="text-align:center">{{forma_pagamento}}</p>
+{{botoes_resposta}}
+<p class="validade">Proposta válida até {{validade}}</p>
+</div>
+</section>
+
+<footer>
+{{botao_whatsapp}}
+<p style="margin-top:16px">{{nome_assessoria}} · {{telefone_assessoria}}</p>
+</footer>
