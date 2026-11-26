@@ -184,6 +184,7 @@ app.UseAuthorization();
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));
 ContaEndpoints.Mapear(app);
 Project.Api.Conta.EquipeEndpoints.Mapear(app);
+Project.Api.Conta.AssinaturaEndpoints.Mapear(app);
 Project.Api.Conta.AdminEndpoints.Mapear(app);
 NegocioEndpoints.Mapear(app);
 DinheiroEndpoints.Mapear(app);

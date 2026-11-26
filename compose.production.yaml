@@ -67,6 +67,11 @@ services:
       Email__ClientSecret: ${EMAIL_CLIENT_SECRET:-}
       Email__From: ${EMAIL_FROM:?defina EMAIL_FROM no .env}
       Email__StartTls: ${EMAIL_STARTTLS:-true}
+      # Asaas (SPEC-062 parte B). Staging: sandbox e diagnóstico no navegador ligado. Produção: https://api.asaas.com e diagnóstico desligado.
+      Asaas__BaseUrl: ${ASAAS_BASE_URL:-https://api-sandbox.asaas.com}
+      Asaas__ApiKey: ${ASAAS_API_KEY:-}
+      Asaas__WebhookToken: ${ASAAS_WEBHOOK_TOKEN:-}
+      Asaas__DiagnosticoNoNavegador: ${ASAAS_DIAGNOSTICO:-false}
       Bootstrap__Enabled: ${BOOTSTRAP_ENABLED:-false}
       Bootstrap__AdminEmail: ${BOOTSTRAP_ADMIN_EMAIL:-}
       Bootstrap__AdminPassword: ${BOOTSTRAP_ADMIN_PASSWORD:-}

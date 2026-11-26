@@ -306,3 +306,27 @@ Fase 4 em lotes: **4.1** schema, trial e bloqueio; **4.2** checkout e webhook do
 - `ContaId` de `Assinaturas` e `DocumentosTrial` aponta para `Contas` (como no `build.js`), não para `AspNetUsers`.
 - `AlteracoesAssinatura` ganhou `Tipo` (Plano, Valor, Desconto, Trial) e `Detalhe`, para o histórico mostrar desconto e datas do trial, que não cabem em plano/valor.
 - O aceite de termos (`Perfis.AceiteTermosEm`) fica para o lote 4.4: o conteúdo dos termos é pendência.
+
+### Fase 4 — lote 4.2 concluído (Claude Code)
+
+**Feito**
+- **Cliente do Asaas** (`AsaasHttp`, API v3, header `access_token`): criar cliente, criar assinatura mensal (Pix ou cartão), listar cobranças da assinatura, cancelar. Configuração na seção `Asaas` (`BaseUrl`, `ApiKey`, `WebhookToken`, `DiagnosticoNoNavegador`), vinda do `.env` do servidor (`ASAAS_*` no `compose.production.yaml` e no `.env.example`). Sandbox é o padrão.
+- **Assinar** (`POST /api/v1/assinatura/assinar`, só Dono): valida CPF/CNPJ, cria cliente e assinatura no Asaas e devolve o link da primeira fatura. No trial, vence no último dia do teste (T3); com documento que já assinou em outra conta, no dia (T4). O hash do documento vai para `DocumentosTrial`. A conta só fica ativa quando o Asaas avisa o pagamento.
+- **Avisos do Asaas** (`POST /api/v1/webhooks/asaas`): token conferido no header `asaas-access-token`; o aviso é gravado em `EventosWebhookAsaas` antes de processar e o id único impede processar duas vezes (T16). Confirmado/recebido → Ativa e paga o mês (desbloqueia, T6); vencido → Em atraso; estorno/contestação → Bloqueada.
+- **Cancelar** (`POST /api/v1/assinatura/cancelar`): cancela no Asaas; paga, fica Cancelada e liberada até o fim do período (T7); ainda no trial, o trial segue sem cobrança.
+- **Faturas** (`GET /api/v1/assinatura/faturas`).
+- **Diagnóstico no navegador** (só com `ASAAS_DIAGNOSTICO=true`): a resposta de assinar/cancelar traz o passo a passo das chamadas ao Asaas (método, rota, status, enviado e resposta; a chave nunca vem), e `GET /api/v1/assinatura/diagnostico` traz os avisos recebidos. A tela escreve tudo no console do DevTools.
+- **Tela Configurações → Assinatura**: situação, plano e valor, formulário (CPF/CNPJ, nome de cobrança, Pix ou cartão), link da fatura em aberto, faturas e cancelar.
+- Testes com Asaas simulado (`AsaasDeTeste`): `AssinaturaAsaasTests` (T3, T4, T6, T7, T16, documento inválido, Membro não assina, aviso sem token). Suíte: 319 + 111, verdes. Build do frontend ok.
+
+**Como testar do zero no staging**
+1. No sandbox do Asaas (sandbox.asaas.com): criar a chave de API em Integrações.
+2. No `.env` de `/opt/aralu-staging`: `ASAAS_API_KEY=<chave do sandbox>`, `ASAAS_WEBHOOK_TOKEN=<texto de 32 a 255 caracteres, sem espaços>`, `ASAAS_DIAGNOSTICO=true`.
+3. No sandbox, criar o webhook: URL `https://staging.aralu.com.br/api/v1/webhooks/asaas`, mesmo token no campo de autenticação, eventos de cobrança (`PAYMENT_*`).
+4. Recriar o banco do staging (a migration `Inicial` mudou) e publicar a branch no staging.
+5. Abrir o DevTools (Console), cadastrar uma conta nova, ir em Configurações → Assinatura e assinar. O console mostra cada chamada ao Asaas; o link da fatura abre em outra aba.
+6. Pagar no sandbox (Pix: confirmar pelo painel do sandbox; cartão: números de teste do Asaas). Em até 10 segundos o console mostra o aviso recebido e a tela passa para Ativa.
+
+**Fica para depois**
+- Trocar forma de pagamento (§6 B8) e e-mail de confirmação de pagamento: lote 4.4.
+- Escolha entre planos públicos (§6 B1): lote 4.3, junto com Admin → Planos. Por ora o Dono assina o plano da conta (Pro).

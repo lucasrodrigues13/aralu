@@ -39,6 +39,8 @@ public static class Dependencias
         services.Configure<EmailOpcoes>(configuration.GetSection("Email"));
         services.Configure<BootstrapOpcoes>(configuration.GetSection("Bootstrap"));
         services.Configure<ArmazenamentoOpcoes>(configuration.GetSection("Storage"));
+        services.Configure<Project.Infrastructure.Assinaturas.AsaasOpcoes>(configuration.GetSection("Asaas"));
+        services.AddHttpClient<Project.Infrastructure.Assinaturas.IAsaas, Project.Infrastructure.Assinaturas.AsaasHttp>(cliente => cliente.Timeout = TimeSpan.FromSeconds(20));
         services.AddSingleton<IEmissorJwt, EmissorJwt>();
         services.AddScoped<IDados, DadosEf>();
         services.AddScoped<PerfilServico>();

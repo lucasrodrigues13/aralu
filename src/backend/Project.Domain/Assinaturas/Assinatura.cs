@@ -93,6 +93,39 @@ public sealed class Assinatura : ITemConta
         _ => false,
     };
 
+    /// <summary>
+    /// Valor da conta (R10): o personalizado, se houver; senão o do plano, com o desconto enquanto valer.
+    /// Arredondado em centavos (ex.: 30% de 179 = 125,30).
+    /// </summary>
+    public static decimal ValorCobrado(decimal valorPlano, decimal? personalizado, decimal? descontoPercentual, DateOnly? descontoAte, DateOnly vencimento)
+    {
+        if (personalizado is decimal fixo)
+        {
+            return fixo;
+        }
+
+        var descontoVale = descontoPercentual is > 0 && (descontoAte is null || vencimento <= descontoAte);
+        return descontoVale
+            ? Math.Round(valorPlano * (1 - descontoPercentual!.Value / 100m), 2, MidpointRounding.AwayFromZero)
+            : valorPlano;
+    }
+
+    /// <summary>
+    /// Vencimento da primeira cobrança: assinando no trial, o último dia do trial (não perde os dias restantes, T3);
+    /// depois do trial, ou com documento que já assinou (R2, T4), no dia.
+    /// </summary>
+    public DateOnly PrimeiroVencimento(DateTimeOffset agora, bool documentoJaUsado)
+    {
+        var hoje = DateOnly.FromDateTime(agora.UtcDateTime);
+        if (documentoJaUsado || Situacao != SituacaoAssinatura.Trial || agora >= TrialTerminaEm)
+        {
+            return hoje;
+        }
+
+        var ultimoDia = DateOnly.FromDateTime(TrialTerminaEm.UtcDateTime).AddDays(-1);
+        return ultimoDia > hoje ? ultimoDia : hoje;
+    }
+
     /// <summary>Dias de trial que faltam (0 fora do trial). O dia do cadastro conta como o 1º.</summary>
     public int DiasRestantesDeTrial(DateTimeOffset agora) =>
         Situacao == SituacaoAssinatura.Trial && agora < TrialTerminaEm

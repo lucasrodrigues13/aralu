@@ -52,11 +52,6 @@ public static class EquipeEndpoints
         app.MapGet("/api/v1/assistentes/nomes", (ClaimsPrincipal u, EquipeServico s, CancellationToken ct) =>
             ComConta(u, async conta => Results.Ok(await s.NomesAsync(conta, ct)))).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
 
-        // Situação da assinatura: barra de trial e tela de bloqueio (SPEC-062 §13). Toda a equipe lê; só o Dono assina.
-        app.MapGet("/api/v1/assinatura", (ClaimsPrincipal u, Project.Infrastructure.Assinaturas.AssinaturaServico s, CancellationToken ct) =>
-            ComConta(u, async conta => await s.SituacaoAsync(conta, DateTimeOffset.UtcNow, ct) is { } situacao ? Results.Ok(situacao) : Results.NoContent()))
-            .RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
-
         var propria = app.MapGroup("/api/v1/minha-conta").RequireAuthorization(policy => policy.RequireRole(SoMembro));
         propria.MapGet("", MinhaConta);
         propria.MapPut("", AtualizarMinhaConta);
