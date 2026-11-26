@@ -210,3 +210,14 @@ Tudo o que mexe em schema entra junto, para gerar a migration inicial uma vez s�
 **Diferença do explorador:** os índices compostos com o segundo campo foram feitos só nas 5 listagens mais usadas; o resto fica com o índice simples por ContaId até aparecer consulta que justifique.
 
 **Próximo:** lote 2.4 (filtro global por conta).
+
+### Fase 2 — lote 2.4 concluído (Claude Code)
+
+**Feito**
+- Filtro global no `AppDbContext`: toda entidade `ITemConta` tem `HasQueryFilter(ContaId == conta do pedido)`. O `AppDbContext` recebe `IContaAtual` (opcional; sem ele o filtro fica desligado).
+- `ContaAtualHttp` decide quando há conta: só em endpoint que exige login. Endpoint público (link do cliente, portaria, proposta, RSVP, login, cadastro) não filtra, mesmo com login de outra conta no navegador. Admin sem impersonação não filtra (vê todas, RF-040); Admin impersonando filtra pela conta impersonada.
+- Testes: `ContaAtualHttpTests` (6 casos de quando filtra), `FiltroGlobalPorContaTests` (consulta sem `Where` só vê a conta ativa, inclusive filhas; sem conta, filtro desligado) e, no isolamento, "logado na conta B abre o link público da conta A". Suíte: 314 + 98, verdes.
+
+**Diferença do plano:** os `Where(ContaId == …)` escritos em cada consulta **ficaram**. O filtro global é a segunda camada; tirar os filtros manuais seria troca grande sem ganho de segurança. Se um dia saírem, o teste de isolamento e o `FiltroGlobalPorContaTests` cobrem.
+
+**Próximo:** lote 2.5 (34 FKs, rename `Vinculos` → `ClienteEventos`, remoção de `FornecedorContaId`, divisão das colunas polimórficas de responsável).

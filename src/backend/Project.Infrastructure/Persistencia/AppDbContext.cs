@@ -10,16 +10,27 @@ using Project.Domain.Funil;
 using Project.Domain.Modelos;
 using Project.Domain.Perfil;
 using Project.Domain.Tarefas;
+using Project.Application.Conta;
 using Project.Infrastructure.Conta;
 
 namespace Project.Infrastructure.Persistencia;
 
 public sealed class AppDbContext : IdentityDbContext<ApplicationUser>
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options)
+    private readonly IContaAtual? _contaAtual;
+
+    /// <summary>
+    /// contaAtual vem da API (pedido HTTP). Sem ele (testes, ferramentas de migration, endpoints públicos)
+    /// o filtro global por conta fica desligado e valem só os filtros escritos em cada consulta.
+    /// </summary>
+    public AppDbContext(DbContextOptions<AppDbContext> options, IContaAtual? contaAtual = null)
         : base(options)
     {
+        _contaAtual = contaAtual;
     }
+
+    /// <summary>Conta usada pelo filtro global (SPEC-062). Nulo desliga o filtro.</summary>
+    private Guid? ContaFiltro => _contaAtual?.Id;
 
     public DbSet<ContaAssessoria> Contas => Set<ContaAssessoria>();
 
@@ -227,10 +238,32 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser>
         }
     }
 
+    /// <summary>
+    /// Filtro global (SPEC-062, RF-110): em pedido autenticado, toda consulta a tabela de negócio
+    /// só enxerga a conta do usuário. É a segunda camada; os filtros escritos em cada consulta continuam.
+    /// </summary>
+    private void FiltrarPorConta(ModelBuilder modelBuilder)
+    {
+        var metodo = typeof(AppDbContext).GetMethod(nameof(FiltrarEntidade), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
+        var tipos = modelBuilder.Model.GetEntityTypes()
+            .Where(tipo => !tipo.IsOwned() && typeof(ITemConta).IsAssignableFrom(tipo.ClrType))
+            .Select(tipo => tipo.ClrType)
+            .ToList();
+        foreach (var tipo in tipos)
+        {
+            metodo.MakeGenericMethod(tipo).Invoke(this, [modelBuilder]);
+        }
+    }
+
+    private void FiltrarEntidade<T>(ModelBuilder modelBuilder)
+        where T : class, ITemConta =>
+        modelBuilder.Entity<T>().HasQueryFilter(item => ContaFiltro == null || item.ContaId == ContaFiltro);
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
         Mapa.Aplicar(modelBuilder);
         Mapa.LigarContas(modelBuilder);
+        FiltrarPorConta(modelBuilder);
     }
 }

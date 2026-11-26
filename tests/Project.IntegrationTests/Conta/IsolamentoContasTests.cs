@@ -130,6 +130,33 @@ public class IsolamentoContasTests
             item => item.GetProperty("id").GetGuid() == eventoId);
     }
 
+    /// <summary>
+    /// SPEC-062, lote 2.4: o filtro global por conta não pode quebrar link público.
+    /// Quem está logado em outra conta e abre o link do cliente da conta A continua vendo a página.
+    /// </summary>
+    [Fact]
+    public async Task Logado_na_conta_B_abre_o_link_publico_do_cliente_da_conta_A()
+    {
+        var a = await Entrar();
+        var b = await Entrar();
+        var evento = await Ler(await a.PostAsJsonAsync("/api/v1/eventos", new
+        {
+            tipo = "Casamento",
+            primeiroNome = "Carla",
+            segundoNome = "Diego",
+            data = "2027-08-15",
+        }));
+        var eventoId = evento.GetProperty("id").GetGuid();
+        var link = await Ler(await a.PostAsync($"/api/v1/eventos/{eventoId}/link-cliente", null));
+        var token = link.GetProperty("token").GetString();
+
+        var comLoginDeOutraConta = await b.GetAsync($"/api/v1/publico/cliente/{token}");
+        var semLogin = await _banco.Fabrica.CreateClient().GetAsync($"/api/v1/publico/cliente/{token}");
+
+        Assert.Equal(HttpStatusCode.OK, comLoginDeOutraConta.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, semLogin.StatusCode);
+    }
+
     private async Task<HttpClient> Entrar()
     {
         var email = $"pessoa-{Guid.NewGuid():N}@aralu.test";
