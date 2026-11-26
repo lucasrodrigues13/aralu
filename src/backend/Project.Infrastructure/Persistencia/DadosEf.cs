@@ -1052,6 +1052,12 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         await banco.SaveChangesAsync(ct);
     }
 
+    public async Task InserirFornecedoresAsync(IReadOnlyList<Fornecedor> fornecedores, CancellationToken ct)
+    {
+        banco.Fornecedores.AddRange(fornecedores);
+        await banco.SaveChangesAsync(ct);
+    }
+
     public Task SalvarFornecedorAsync(CancellationToken ct) => banco.SaveChangesAsync(ct);
 
     public async Task RemoverFornecedorAsync(Fornecedor fornecedor, CancellationToken ct)

@@ -87,14 +87,14 @@ public sealed class FornecedorImportacaoServico(FornecedorServico fornecedores, 
             }
         }
 
-        foreach (var item in leitura.Fornecedores)
+        // Grava todos de uma vez: uma linha por vez levava mais de um minuto em planilhas com milhares de linhas.
+        var pedidos = leitura.Fornecedores
+            .Select(item => (item.Linha, Pedido(item, item.Servicos.Select(nome => catalogo[PlanilhaFornecedores.Normalizar(nome)]).Distinct().ToList())))
+            .ToList();
+        var gravados = await fornecedores.CriarVariosAsync(contaId, pedidos, ct);
+        if (!gravados.Ok)
         {
-            var ids = item.Servicos.Select(nome => catalogo[PlanilhaFornecedores.Normalizar(nome)]).Distinct().ToList();
-            var criado = await fornecedores.CriarAsync(contaId, Pedido(item, ids), ct);
-            if (!criado.Ok)
-            {
-                return Resultado<ResultadoImportacaoFornecedores>.Erro(criado.Falha!.Codigo, $"Linha {item.Linha}: {criado.Falha.Mensagem}");
-            }
+            return Resultado<ResultadoImportacaoFornecedores>.Erro(gravados.Falha!.Codigo, gravados.Falha.Mensagem);
         }
 
         return Resultado<ResultadoImportacaoFornecedores>.Sucesso(new(leitura.Fornecedores.Count, faltando.Count, []));

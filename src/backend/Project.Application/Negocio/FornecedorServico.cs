@@ -248,6 +248,29 @@ public sealed class FornecedorServico(IDados dados, Arquivos.IArmazenamentoArqui
         return Resultado<FornecedorLeitura>.Sucesso(await LerAsync(contaId, montado.Valor!, ct));
     }
 
+    /// <summary>
+    /// Cria vários de uma vez (importação por planilha): monta todos e grava numa só transação; se um falhar, nenhum
+    /// entra. Os serviços já vêm do catálogo da conta, então não são conferidos de novo um a um.
+    /// </summary>
+    public async Task<Resultado<int>> CriarVariosAsync(
+        Guid contaId, IReadOnlyList<(int Linha, SalvarFornecedor Pedido)> pedidos, CancellationToken ct)
+    {
+        var montados = new List<Fornecedor>(pedidos.Count);
+        foreach (var (linha, pedido) in pedidos)
+        {
+            var montado = await MontarAsync(contaId, Guid.NewGuid(), pedido, ct, conferirServicos: false);
+            if (!montado.Ok)
+            {
+                return Resultado<int>.Erro(montado.Falha!.Codigo, $"Linha {linha}: {montado.Falha.Mensagem}");
+            }
+
+            montados.Add(montado.Valor!);
+        }
+
+        await dados.InserirFornecedoresAsync(montados, ct);
+        return Resultado<int>.Sucesso(montados.Count);
+    }
+
     public async Task<Resultado<FornecedorLeitura>> AtualizarAsync(Guid contaId, Guid id, SalvarFornecedor pedido, CancellationToken ct)
     {
         var fornecedor = await dados.ObterFornecedorAsync(contaId, id, ct);

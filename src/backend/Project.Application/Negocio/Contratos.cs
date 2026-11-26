@@ -293,6 +293,9 @@ public interface IDados
 
     Task InserirFornecedorAsync(Fornecedor fornecedor, CancellationToken ct);
 
+    /// <summary>Grava vários de uma vez, numa só transação (importação por planilha).</summary>
+    Task InserirFornecedoresAsync(IReadOnlyList<Fornecedor> fornecedores, CancellationToken ct);
+
     Task SalvarFornecedorAsync(CancellationToken ct);
 
     Task RemoverFornecedorAsync(Fornecedor fornecedor, CancellationToken ct);
