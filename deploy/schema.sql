@@ -3078,3 +3078,56 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261126195823_TrocaDePlano') THEN
+    ALTER TABLE "Assinaturas" ADD "DowngradeEm" date;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261126195823_TrocaDePlano') THEN
+    ALTER TABLE "Assinaturas" ADD "DowngradePlanoId" uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261126195823_TrocaDePlano') THEN
+    ALTER TABLE "Assinaturas" ADD "UpgradeCobrancaId" character varying(100);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261126195823_TrocaDePlano') THEN
+    ALTER TABLE "Assinaturas" ADD "UpgradePedidoEm" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261126195823_TrocaDePlano') THEN
+    ALTER TABLE "Assinaturas" ADD "UpgradePlanoId" uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261126195823_TrocaDePlano') THEN
+    ALTER TABLE "Assinaturas" ADD "UpgradeValor" numeric(12,2);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261126195823_TrocaDePlano') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261126195823_TrocaDePlano', '10.0.4');
+    END IF;
+END $EF$;
+COMMIT;
+
