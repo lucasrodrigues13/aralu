@@ -38,9 +38,13 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<ModeloEvento> Modelos => Set<ModeloEvento>();
 
-    public DbSet<Assistente> Assistentes => Set<Assistente>();
+    public DbSet<MembroConta> Membros => Set<MembroConta>();
 
-    public DbSet<EventoAssistente> EventosAssistentes => Set<EventoAssistente>();
+    public DbSet<EventoMembro> EventosMembros => Set<EventoMembro>();
+
+    public DbSet<GrupoAcesso> Grupos => Set<GrupoAcesso>();
+
+    public DbSet<PermissaoGrupo> PermissoesGrupo => Set<PermissaoGrupo>();
 
     public DbSet<Evento> Eventos => Set<Evento>();
 

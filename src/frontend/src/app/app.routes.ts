@@ -26,6 +26,11 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/esqueci-senha/esqueci-senha.page').then((m) => m.EsqueciSenhaPage),
   },
   {
+    path: 'convite',
+    loadComponent: () => import('./pages/assistentes/convite-assistente.page').then((m) => m.ConviteAssistentePage),
+  },
+  {
+    // Links de convite enviados antes da SPEC-062.
     path: 'convite-assistente',
     loadComponent: () => import('./pages/assistentes/convite-assistente.page').then((m) => m.ConviteAssistentePage),
   },

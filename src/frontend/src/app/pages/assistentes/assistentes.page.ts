@@ -54,8 +54,8 @@ import { MatTooltipModule } from '@angular/material/tooltip';
                   <th class="py-3 pr-4 font-semibold">Nome</th>
                   <th class="py-3 pr-4 font-semibold">E-mail</th>
                   <th class="py-3 pr-4 font-semibold">Situação</th>
-                  <th class="py-3 pr-4 font-semibold">Financeiro</th>
-                  <th class="py-3 pr-4 font-semibold">Eventos</th>
+                  <th class="py-3 pr-4 font-semibold">Tipo</th>
+                  <th class="py-3 pr-4 font-semibold">Grupo</th>
                   <th class="py-3 font-semibold"><span class="sr-only">Ações</span></th>
                 </tr>
               </thead>
@@ -71,8 +71,8 @@ import { MatTooltipModule } from '@angular/material/tooltip';
                         @default { <span [class]="selo('warning')">Convite enviado</span> }
                       }
                     </td>
-                    <td class="py-3 pr-4">{{ item.podeVerFinanceiro ? 'Sim' : 'Não' }}</td>
-                    <td class="py-3 pr-4">{{ item.somenteDela ? 'Só os dela' : 'Todos' }}</td>
+                    <td class="py-3 pr-4">{{ item.tipo }}</td>
+                    <td class="py-3 pr-4">{{ item.grupo ?? "—" }}</td>
                     <td class="py-3 whitespace-nowrap text-right">
                       <button mat-icon-button type="button" [attr.aria-label]="'Editar ' + item.nome" [matTooltip]="'Editar ' + item.nome" (click)="editar(item)"><mat-icon>edit</mat-icon></button>
                       @if (item.situacao === 'Convidada') {

@@ -32,7 +32,6 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "text", nullable: false),
-                    OrganizerId = table.Column<string>(type: "text", nullable: true),
                     UserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
@@ -201,35 +200,6 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Assistentes",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
-                    UsuarioId = table.Column<string>(type: "text", nullable: false),
-                    Nome = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    Email = table.Column<string>(type: "text", nullable: false),
-                    Celular = table.Column<string>(type: "text", nullable: true),
-                    Nascimento = table.Column<DateOnly>(type: "date", nullable: true),
-                    PodeVerFinanceiro = table.Column<bool>(type: "boolean", nullable: false),
-                    SomenteDela = table.Column<bool>(type: "boolean", nullable: false),
-                    Situacao = table.Column<string>(type: "text", nullable: false),
-                    ConvidadaEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    PrimeiroAcessoEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    RemovidaEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Assistentes", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Assistentes_Contas_ContaId",
-                        column: x => x.ContaId,
-                        principalTable: "Contas",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "EstagiosFunil",
                 columns: table => new
                 {
@@ -245,6 +215,27 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     table.PrimaryKey("PK_EstagiosFunil", x => x.Id);
                     table.ForeignKey(
                         name: "FK_EstagiosFunil_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "GruposAcesso",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Nome = table.Column<string>(type: "character varying(60)", maxLength: 60, nullable: false),
+                    VeTodosEventos = table.Column<bool>(type: "boolean", nullable: false),
+                    Padrao = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_GruposAcesso", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_GruposAcesso_Contas_ContaId",
                         column: x => x.ContaId,
                         principalTable: "Contas",
                         principalColumn: "Id",
@@ -737,6 +728,77 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "MembrosConta",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
+                    UsuarioId = table.Column<string>(type: "text", nullable: false),
+                    Tipo = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
+                    GrupoId = table.Column<Guid>(type: "uuid", nullable: true),
+                    Nome = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Email = table.Column<string>(type: "text", nullable: false),
+                    Celular = table.Column<string>(type: "text", nullable: true),
+                    Nascimento = table.Column<DateOnly>(type: "date", nullable: true),
+                    Situacao = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    ConvidadaEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    PrimeiroAcessoEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    RemovidaEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_MembrosConta", x => x.Id);
+                    table.CheckConstraint("CK_MembrosConta_Grupo", "(\"Tipo\" = 'Dono' AND \"GrupoId\" IS NULL) OR (\"Tipo\" = 'Membro' AND \"GrupoId\" IS NOT NULL)");
+                    table.ForeignKey(
+                        name: "FK_MembrosConta_AspNetUsers_UsuarioId",
+                        column: x => x.UsuarioId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_MembrosConta_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_MembrosConta_GruposAcesso_GrupoId",
+                        column: x => x.GrupoId,
+                        principalTable: "GruposAcesso",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "PermissoesGrupo",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
+                    GrupoId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Modulo = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: false),
+                    Ver = table.Column<bool>(type: "boolean", nullable: false),
+                    Editar = table.Column<bool>(type: "boolean", nullable: false),
+                    Excluir = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PermissoesGrupo", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_PermissoesGrupo_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_PermissoesGrupo_GruposAcesso_GrupoId",
+                        column: x => x.GrupoId,
+                        principalTable: "GruposAcesso",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "VinculoModeloEvento",
                 columns: table => new
                 {
@@ -1006,30 +1068,6 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Convites_Eventos_EventoId",
-                        column: x => x.EventoId,
-                        principalTable: "Eventos",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "EventosAssistentes",
-                columns: table => new
-                {
-                    EventoId = table.Column<Guid>(type: "uuid", nullable: false),
-                    AssistenteId = table.Column<Guid>(type: "uuid", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_EventosAssistentes", x => new { x.EventoId, x.AssistenteId });
-                    table.ForeignKey(
-                        name: "FK_EventosAssistentes_Assistentes_AssistenteId",
-                        column: x => x.AssistenteId,
-                        principalTable: "Assistentes",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_EventosAssistentes_Eventos_EventoId",
                         column: x => x.EventoId,
                         principalTable: "Eventos",
                         principalColumn: "Id",
@@ -1405,6 +1443,37 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         name: "FK_TelefoneFornecedor_Fornecedores_FornecedorId",
                         column: x => x.FornecedorId,
                         principalTable: "Fornecedores",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "EventosMembros",
+                columns: table => new
+                {
+                    EventoId = table.Column<Guid>(type: "uuid", nullable: false),
+                    MembroId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_EventosMembros", x => new { x.EventoId, x.MembroId });
+                    table.ForeignKey(
+                        name: "FK_EventosMembros_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_EventosMembros_Eventos_EventoId",
+                        column: x => x.EventoId,
+                        principalTable: "Eventos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_EventosMembros_MembrosConta_MembroId",
+                        column: x => x.MembroId,
+                        principalTable: "MembrosConta",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -2403,25 +2472,10 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 column: "NormalizedEmail");
 
             migrationBuilder.CreateIndex(
-                name: "IX_AspNetUsers_OrganizerId",
-                table: "AspNetUsers",
-                column: "OrganizerId");
-
-            migrationBuilder.CreateIndex(
                 name: "UserNameIndex",
                 table: "AspNetUsers",
                 column: "NormalizedUserName",
                 unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Assistentes_ContaId",
-                table: "Assistentes",
-                column: "ContaId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Assistentes_UsuarioId",
-                table: "Assistentes",
-                column: "UsuarioId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_BriefingsOportunidade_ContaId",
@@ -2631,9 +2685,14 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 column: "ImagemId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_EventosAssistentes_AssistenteId",
-                table: "EventosAssistentes",
-                column: "AssistenteId");
+                name: "IX_EventosMembros_ContaId_MembroId",
+                table: "EventosMembros",
+                columns: new[] { "ContaId", "MembroId" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EventosMembros_MembroId",
+                table: "EventosMembros",
+                column: "MembroId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_EventoTagConta_TagsId",
@@ -2674,6 +2733,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 name: "IX_FornecedorServico_ServicoContaId",
                 table: "FornecedorServico",
                 column: "ServicoContaId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_GruposAcesso_ContaId_Nome",
+                table: "GruposAcesso",
+                columns: new[] { "ContaId", "Nome" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_ImportacoesConvidados_ContaId",
@@ -2807,6 +2872,22 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 name: "IX_LinksPortaria_Token",
                 table: "LinksPortaria",
                 column: "Token",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MembrosConta_ContaId",
+                table: "MembrosConta",
+                column: "ContaId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MembrosConta_GrupoId",
+                table: "MembrosConta",
+                column: "GrupoId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MembrosConta_UsuarioId",
+                table: "MembrosConta",
+                column: "UsuarioId",
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -2973,6 +3054,17 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 name: "IX_PerguntaBriefing_SecaoId",
                 table: "PerguntaBriefing",
                 column: "SecaoId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PermissoesGrupo_ContaId",
+                table: "PermissoesGrupo",
+                column: "ContaId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PermissoesGrupo_GrupoId_Modulo",
+                table: "PermissoesGrupo",
+                columns: new[] { "GrupoId", "Modulo" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_PresencasEvento_ContaId",
@@ -3210,7 +3302,7 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 name: "EmailFornecedor");
 
             migrationBuilder.DropTable(
-                name: "EventosAssistentes");
+                name: "EventosMembros");
 
             migrationBuilder.DropTable(
                 name: "EventoTagConta");
@@ -3270,6 +3362,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 name: "PerguntaBriefing");
 
             migrationBuilder.DropTable(
+                name: "PermissoesGrupo");
+
+            migrationBuilder.DropTable(
                 name: "PresencasEvento");
 
             migrationBuilder.DropTable(
@@ -3297,7 +3392,7 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
-                name: "Assistentes");
+                name: "MembrosConta");
 
             migrationBuilder.DropTable(
                 name: "Tags");
@@ -3337,6 +3432,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
             migrationBuilder.DropTable(
                 name: "OrcamentosFunil");
+
+            migrationBuilder.DropTable(
+                name: "GruposAcesso");
 
             migrationBuilder.DropTable(
                 name: "ModelosRoteiro");

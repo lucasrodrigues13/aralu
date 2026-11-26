@@ -107,9 +107,6 @@ public static class Mapa
 
     public static void Aplicar(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<ApplicationUser>()
-            .HasIndex(usuario => usuario.OrganizerId);
-
         modelBuilder.Entity<PerfilAssessoria>().HasIndex(perfil => perfil.ContaId).IsUnique();
 
         var modelo = modelBuilder.Entity<ModeloEvento>();
@@ -151,15 +148,31 @@ public static class Mapa
         modelBuilder.Entity<FornecedorNoServico>().Property(item => item.Etapa).HasConversion<string>();
         modelBuilder.Entity<FornecedorNoServico>().Property(item => item.ValorOrcamento).HasPrecision(12, 2);
 
-        var assistente = modelBuilder.Entity<Assistente>();
-        assistente.ToTable("Assistentes");
-        assistente.Property(item => item.Situacao).HasConversion<string>();
-        assistente.Property(item => item.Nome).HasMaxLength(100);
-        assistente.HasIndex(item => item.ContaId);
-        assistente.HasIndex(item => item.UsuarioId);
-        modelBuilder.Entity<EventoAssistente>().ToTable("EventosAssistentes").HasKey(item => new { item.EventoId, item.AssistenteId });
-        modelBuilder.Entity<EventoAssistente>().HasOne<Evento>().WithMany().HasForeignKey(item => item.EventoId).OnDelete(DeleteBehavior.Cascade);
-        modelBuilder.Entity<EventoAssistente>().HasOne<Assistente>().WithMany().HasForeignKey(item => item.AssistenteId).OnDelete(DeleteBehavior.Cascade);
+        var membro = modelBuilder.Entity<MembroConta>();
+        membro.ToTable("MembrosConta", tabela => tabela.HasCheckConstraint(
+            "CK_MembrosConta_Grupo",
+            "(\"Tipo\" = 'Dono' AND \"GrupoId\" IS NULL) OR (\"Tipo\" = 'Membro' AND \"GrupoId\" IS NOT NULL)"));
+        membro.Property(item => item.Situacao).HasConversion<string>().HasMaxLength(20);
+        membro.Property(item => item.Tipo).HasConversion<string>().HasMaxLength(10);
+        membro.Property(item => item.Nome).HasMaxLength(100);
+        membro.HasIndex(item => item.UsuarioId).IsUnique();
+        membro.HasOne<ApplicationUser>().WithMany().HasForeignKey(item => item.UsuarioId).OnDelete(DeleteBehavior.Restrict);
+        membro.HasOne<GrupoAcesso>().WithMany().HasForeignKey(item => item.GrupoId).OnDelete(DeleteBehavior.Restrict);
+        var eventoMembro = modelBuilder.Entity<EventoMembro>();
+        eventoMembro.ToTable("EventosMembros").HasKey(item => new { item.EventoId, item.MembroId });
+        eventoMembro.HasOne<Evento>().WithMany().HasForeignKey(item => item.EventoId).OnDelete(DeleteBehavior.Cascade);
+        eventoMembro.HasOne<MembroConta>().WithMany().HasForeignKey(item => item.MembroId).OnDelete(DeleteBehavior.Cascade);
+        eventoMembro.HasIndex(item => new { item.ContaId, item.MembroId });
+
+        var grupo = modelBuilder.Entity<GrupoAcesso>();
+        grupo.ToTable("GruposAcesso");
+        grupo.Property(item => item.Nome).HasMaxLength(GrupoAcesso.NomeMaximo);
+        grupo.HasIndex(item => new { item.ContaId, item.Nome }).IsUnique();
+        grupo.HasMany(item => item.Permissoes).WithOne().HasForeignKey(item => item.GrupoId).OnDelete(DeleteBehavior.Cascade);
+        var permissao = modelBuilder.Entity<PermissaoGrupo>();
+        permissao.ToTable("PermissoesGrupo");
+        permissao.Property(item => item.Modulo).HasConversion<string>().HasMaxLength(30);
+        permissao.HasIndex(item => new { item.GrupoId, item.Modulo }).IsUnique();
 
         modelBuilder.Entity<TagConta>().HasIndex(tag => new { tag.ContaId, tag.Nome }).IsUnique();
 

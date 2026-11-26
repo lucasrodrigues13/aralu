@@ -2,7 +2,10 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Project.Application.Conta;
+using Microsoft.EntityFrameworkCore;
+using Project.Domain.Equipe;
 using Project.Infrastructure.Conta;
+using Project.Infrastructure.Persistencia;
 
 namespace Project.Api.Conta;
 
@@ -84,7 +87,9 @@ public static class ContaEndpoints
         LoginPedido pedido,
         UserManager<ApplicationUser> usuarios,
         SignInManager<ApplicationUser> acesso,
-        IEmissorJwt emissor)
+        IEmissorJwt emissor,
+        AppDbContext banco,
+        CancellationToken ct)
     {
         var email = EmailNormalizado(pedido.Email);
         if (email is null || string.IsNullOrWhiteSpace(pedido.Senha))
@@ -109,15 +114,23 @@ public static class ContaEndpoints
             return CredencialInvalida();
         }
 
-        var papeis = await usuarios.GetRolesAsync(usuario);
-        // Só a equipe e o admin entram na plataforma; o cliente usa apenas o link público com token.
-        if (!papeis.Any(papel => Papeis.ComAcesso.Contains(papel)))
+        // Conta e tipo vêm de MembrosConta (SPEC-062): um login, uma conta. Só o Admin entra sem ser membro;
+        // o cliente usa apenas o link público com token.
+        var papeis = (await usuarios.GetRolesAsync(usuario)).Where(papel => papel == Papeis.Admin).ToList();
+        var membro = await banco.Membros.AsNoTracking().IgnoreQueryFilters()
+            .FirstOrDefaultAsync(item => item.UsuarioId == usuario.Id, ct);
+        if (membro is { Situacao: SituacaoMembro.Ativa })
+        {
+            papeis.Add(EquipeServico.PapelDo(membro.Tipo));
+        }
+
+        if (papeis.Count == 0)
         {
             return CredencialInvalida();
         }
 
         var emailConfirmado = usuario.Email ?? email;
-        var token = emissor.Emitir(usuario.Id, emailConfirmado, papeis.ToArray(), usuario.OrganizerId);
+        var token = emissor.Emitir(usuario.Id, emailConfirmado, papeis, membro?.ContaId.ToString());
         return Results.Ok(new { token, email = emailConfirmado, papeis });
     }
 
@@ -238,8 +251,10 @@ public static class ContaEndpoints
             email,
             usuarioId = usuario.FindFirstValue(ClaimTypes.NameIdentifier),
             papeis,
-            podeVerFinanceiro = AssistenteEndpoints.PodeVerFinanceiro(usuario),
-            somenteDela = assistente && usuario.FindFirstValue(AssistenteEndpoints.ClaimSomenteDela) == "true",
+            podeVerFinanceiro = EquipeEndpoints.PodeVerFinanceiro(usuario),
+            somenteDela = EscopoAssistente.Restrito(usuario),
+            tipo = usuario.IsInRole(Papeis.Organizer) ? "Dono" : assistente ? "Membro" : null,
+            permissoes = usuario.FindAll(EquipeEndpoints.ClaimPermissao).Select(claim => claim.Value).ToArray(),
         });
     }
 

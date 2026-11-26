@@ -57,11 +57,10 @@ import { ToastService } from '../../core/toast.service';
         @for (conta of contas(); track conta.contaId) {
           <h3>{{ conta.emailDaConta }}</h3>
           <ul>
-            @for (assistente of conta.assistentes; track assistente.id) {
+            @for (assistente of conta.membros; track assistente.id) {
               <li>
                 {{ assistente.nome }} ({{ assistente.email }}) — {{ assistente.situacao }};
-                financeiro: {{ assistente.podeVerFinanceiro ? 'sim' : 'não' }};
-                {{ assistente.somenteDela ? 'só os dela' : 'todos os eventos' }}
+                grupo: {{ assistente.grupo ?? '—' }}
               </li>
             }
           </ul>

@@ -29,7 +29,7 @@ public sealed class ContaAtualHttp(IHttpContextAccessor http) : IContaAtual
         }
 
         var usuario = contexto.User;
-        if (usuario.IsInRole(Papeis.Admin) && usuario.FindFirst(ContaClaims.OrganizerId) is null)
+        if (usuario.IsInRole(Papeis.Admin) && usuario.FindFirst(ContaClaims.ContaId) is null)
         {
             return null;
         }

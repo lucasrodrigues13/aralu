@@ -240,3 +240,21 @@ Tudo o que mexe em schema entra junto, para gerar a migration inicial uma vez s�
 - `npx ng test` não compila: `src/app/pages/tarefas/checklist-tarefa.spec.ts` (tipo `number | null | undefined`). O erro já existia na `staging`; esta branch só mudou o tipo `LeadRsvp` no frontend.
 
 **Fase 2 de schema concluída**, exceto o lote 2.6 (tabelas de planos e assinatura, sem fluxo).
+
+### Fase 3 — lote 3.1 concluído (Claude Code)
+
+**Feito**
+- `Assistentes`/`EventosAssistentes` viram `MembrosConta` (tipo **Dono** | **Membro**, `GrupoId` só para Membro, com `CHECK`) e `EventosMembros`. Novas `GruposAcesso` e `PermissoesGrupo` (módulo × ver/editar/excluir; editar/excluir exigem ver). Lista de módulos no código (`Modulo`). Sai `ApplicationUser.OrganizerId`.
+- **Cadastro** cria login, conta, membro Dono e os grupos Organizadores e Assistentes numa transação (T1). O trial fica para a Fase 4, junto com as tabelas de assinatura (lote 2.6).
+- **Login** resolve conta e tipo em `MembrosConta`; o JWT leva `conta_id` (no lugar de `organizer_id`). Membro inativo não entra.
+- **Autorização por pedido** (`EquipeEndpoints.AplicarAcesso`): lê membro e grupo no banco a cada pedido e troca os papéis do token pelo tipo atual (Dono → Organizer, Membro → Assistant), então mudar tipo, grupo ou permissão vale na próxima ação (RF-117, T11). `PermissaoPorRota` dá o módulo e a ação de cada rota (GET ver, DELETE excluir, resto editar); rota sem permissão devolve 403 com a mensagem da spec (T9). Alcance "só os atribuídos" vem do grupo (T10).
+- **Equipe** em `/api/v1/equipe` (convidar Dono ou Membro com grupo, editar tipo/grupo, reenviar, desativar, reativar). Último Dono não sai nem vira Membro: 409 (T12). Sócio convidado como Dono acessa Configurações (T13). Membro recebe 403 em equipe e grupos (T14).
+- **Grupos** em `/api/v1/grupos-acesso` (só Dono): CRUD; grupo com membros não é apagado (409). A rota não é `/api/v1/grupos` porque um teste garante que a antiga rota de grupos de convite segue inexistente.
+- **Frontend mínimo**: a tela de assistentes usa `/api/v1/equipe`, mostra tipo e grupo, e o formulário escolhe Tipo e Grupo no lugar de "financeiro" e "só os dela". O link do convite passa a `/convite` (o antigo continua abrindo).
+- Migration `Inicial` e `deploy/schema.sql` regerados. Suíte: 313 + 101, verdes. Build do frontend ok.
+
+**Diferenças da spec/plano**
+- O grupo padrão Assistentes segue a spec (sem excluir); antes a assistente podia excluir no funil o que criou. Quem precisar disso usa um grupo com "excluir".
+- Convite sem grupo cai no grupo Assistentes (compatível com a tela antiga).
+
+**Próximo: lote 3.2** — telas Configurações → Equipe e Grupos (grade módulo × ver/editar/excluir e alcance), menu Configurações só para Dono e menu escondendo módulos sem "ver"; renomear `convite-assistente.page`. **Lote 3.3** — colunas novas de responsável (`ResponsavelMembroId`/`AutorMembroId` e divisão `MembroId`/`FornecedorId`/`ClienteId` com `CHECK`), 409 nas exclusões com FK `RESTRICT`, troca segura de arquivo e apagar `VinculoModeloEvento` junto com o modelo.

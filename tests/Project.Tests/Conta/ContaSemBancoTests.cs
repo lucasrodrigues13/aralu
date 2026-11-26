@@ -52,12 +52,12 @@ public class ContaSemBancoTests
         Assert.Equal("aralu-test", jwt.Issuer);
         Assert.Contains(jwt.Claims, claim => claim.Type is "email" or ClaimTypes.Email && claim.Value == "pessoa@aralu.test");
         Assert.Contains(jwt.Claims, claim => claim.Type == ClaimTypes.Role && claim.Value == Papeis.Organizer);
-        Assert.DoesNotContain(jwt.Claims, claim => claim.Type == ContaClaims.OrganizerId);
+        Assert.DoesNotContain(jwt.Claims, claim => claim.Type == ContaClaims.ContaId);
         Assert.InRange((jwt.ValidTo - DateTime.UtcNow).TotalHours, 7.5, 8.1);
     }
 
     [Fact]
-    public void Jwt_de_assistente_inclui_organizer_id()
+    public void Jwt_de_membro_inclui_conta_id()
     {
         var emissor = new EmissorJwt(Options.Create(new JwtOpcoes
         {
@@ -71,7 +71,7 @@ public class ContaSemBancoTests
         var jwt = new JwtSecurityTokenHandler().ReadJwtToken(token);
 
         Assert.Contains(jwt.Claims, claim => claim.Type == ClaimTypes.Role && claim.Value == Papeis.Assistant);
-        Assert.Contains(jwt.Claims, claim => claim.Type == ContaClaims.OrganizerId && claim.Value == "organizer-9");
+        Assert.Contains(jwt.Claims, claim => claim.Type == ContaClaims.ContaId && claim.Value == "organizer-9");
     }
 
     [Fact]
@@ -82,16 +82,5 @@ public class ContaSemBancoTests
         var erro = Assert.Throws<InvalidOperationException>(() => emissor.Emitir("usuario-1", "pessoa@aralu.test", [Papeis.Organizer]));
 
         Assert.DoesNotContain("curto", erro.Message, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public void Assistente_exige_vinculo_com_organizer()
-    {
-        var assistente = new ApplicationUser { Id = "assistente-1" };
-        Assert.Throws<InvalidOperationException>(() => assistente.VincularAoOrganizer(""));
-        Assert.Throws<InvalidOperationException>(() => assistente.VincularAoOrganizer("assistente-1"));
-
-        assistente.VincularAoOrganizer("organizer-1");
-        Assert.Equal("organizer-1", assistente.OrganizerId);
     }
 }

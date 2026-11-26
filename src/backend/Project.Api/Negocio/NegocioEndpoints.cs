@@ -78,7 +78,7 @@ public static class NegocioEndpoints
         api.MapDelete("/eventos/{id:guid}/servicos/{servicoId:guid}/fornecedores/{vinculoId:guid}", RemoverFornecedorServico).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/eventos/{id:guid}/servicos/{servicoId:guid}/fornecedores/{vinculoId:guid}/contrato-assinado", EnviarContratoAssinado).DisableAntiforgery().RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapDelete("/eventos/{id:guid}/servicos/{servicoId:guid}/fornecedores/{vinculoId:guid}/contrato-assinado", ExcluirContratoAssinado).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
-        api.MapGet("/eventos/{id:guid}/budget", Budget).RequireAuthorization(AssistenteEndpoints.PoliticaFinanceiro);
+        api.MapGet("/eventos/{id:guid}/budget", Budget).RequireAuthorization(EquipeEndpoints.PoliticaFinanceiro);
         api.MapGet("/eventos/{id:guid}/resumo", ResumoEvento).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapGet("/eventos/{id:guid}/assistentes", AssistentesDoEvento).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPut("/eventos/{id:guid}/assistentes", DefinirAssistentesDoEvento).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
@@ -163,9 +163,9 @@ public static class NegocioEndpoints
         api.MapPost("/contratos-funil/{id:guid}/enviar", EnviarContratoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/contratos-funil/{id:guid}/assinar", AssinarContratoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/contratos-funil/{id:guid}/cancelar", CancelarContratoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
-        api.MapPost("/contratos-funil/{id:guid}/parcelas/{parcelaId:guid}/recebimentos", ReceberParcelaContratoFunil).RequireAuthorization(AssistenteEndpoints.PoliticaFinanceiro);
-        api.MapDelete("/contratos-funil/{id:guid}/parcelas/{parcelaId:guid}/recebimentos/ultimo", DesfazerRecebimentoContratoFunil).RequireAuthorization(AssistenteEndpoints.PoliticaFinanceiro);
-        api.MapPut("/contratos-funil/{id:guid}/parcelas", DefinirParcelasContratoFunil).RequireAuthorization(AssistenteEndpoints.PoliticaFinanceiro);
+        api.MapPost("/contratos-funil/{id:guid}/parcelas/{parcelaId:guid}/recebimentos", ReceberParcelaContratoFunil).RequireAuthorization(EquipeEndpoints.PoliticaFinanceiro);
+        api.MapDelete("/contratos-funil/{id:guid}/parcelas/{parcelaId:guid}/recebimentos/ultimo", DesfazerRecebimentoContratoFunil).RequireAuthorization(EquipeEndpoints.PoliticaFinanceiro);
+        api.MapPut("/contratos-funil/{id:guid}/parcelas", DefinirParcelasContratoFunil).RequireAuthorization(EquipeEndpoints.PoliticaFinanceiro);
         api.MapDelete("/contratos-funil/{id:guid}", ExcluirContratoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
 
         api.MapGet("/orcamentos-funil/parametros", () => Results.Ok(ParametrosOrcamento.Lista)).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
@@ -536,7 +536,7 @@ public static class NegocioEndpoints
                 return Falha(fornecedor.Falha!);
             }
 
-            return Results.Ok(AssistenteEndpoints.PodeVerFinanceiro(usuario)
+            return Results.Ok(EquipeEndpoints.PodeVerFinanceiro(usuario)
                 ? fornecedor.Valor
                 : fornecedor.Valor! with { PrecoDe = null, PrecoAte = null });
         });
@@ -689,7 +689,7 @@ public static class NegocioEndpoints
         ComConta(usuario, async conta =>
         {
             var detalhe = await servico.ObterAsync(conta, id, Hoje(), ct);
-            if (detalhe.Ok && !AssistenteEndpoints.PodeVerFinanceiro(usuario))
+            if (detalhe.Ok && !EquipeEndpoints.PodeVerFinanceiro(usuario))
             {
                 return Results.Ok(detalhe.Valor! with { OrcamentoEstimado = null });
             }
@@ -707,9 +707,9 @@ public static class NegocioEndpoints
         {
             var resultado = await servico.CriarAsync(conta, pedido, Hoje(), ct);
             // SPEC-032 §17, ponto 1: o evento criado por uma assistente "só os dela" já nasce com ela marcada.
-            if (resultado.Ok && EscopoAssistente.AssistenteId(usuario) is Guid criadora)
+            if (resultado.Ok && EscopoAssistente.MembroQueCria(usuario) is Guid criadora)
             {
-                banco.EventosAssistentes.Add(new Project.Domain.Equipe.EventoAssistente { EventoId = resultado.Valor!.Id, AssistenteId = criadora });
+                banco.EventosMembros.Add(new Project.Domain.Equipe.EventoMembro { EventoId = resultado.Valor!.Id, MembroId = criadora, ContaId = conta });
                 await banco.SaveChangesAsync(ct);
             }
 
@@ -734,7 +734,7 @@ public static class NegocioEndpoints
                 return Falha(resumo.Falha!);
             }
 
-            return Results.Ok(AssistenteEndpoints.PodeVerFinanceiro(usuario)
+            return Results.Ok(EquipeEndpoints.PodeVerFinanceiro(usuario)
                 ? resumo.Valor
                 : resumo.Valor! with { OrcamentoEstimado = null, ValorContratado = 0, ValorPago = 0 });
         });
@@ -818,9 +818,9 @@ public static class NegocioEndpoints
     private static Task<IResult> AssistentesDoEvento(Guid id, ClaimsPrincipal usuario, AppDbContext banco, CancellationToken ct) =>
         ComConta(usuario, async conta =>
         {
-            var ids = await banco.EventosAssistentes.AsNoTracking()
+            var ids = await banco.EventosMembros.AsNoTracking()
                 .Where(item => item.EventoId == id)
-                .Join(banco.Assistentes, item => item.AssistenteId, assistente => assistente.Id, (item, assistente) => assistente)
+                .Join(banco.Membros, item => item.MembroId, assistente => assistente.Id, (item, assistente) => assistente)
                 .Where(assistente => assistente.ContaId == conta)
                 .Select(assistente => assistente.Id)
                 .ToListAsync(ct);
@@ -836,8 +836,8 @@ public static class NegocioEndpoints
             }
 
             var pedidos = (pedido.Assistentes ?? []).Distinct().ToList();
-            var validas = await banco.Assistentes
-                .Where(assistente => assistente.ContaId == conta && assistente.Situacao == Project.Domain.Equipe.SituacaoAssistente.Ativa && pedidos.Contains(assistente.Id))
+            var validas = await banco.Membros
+                .Where(assistente => assistente.ContaId == conta && assistente.Tipo == Project.Domain.Equipe.TipoMembro.Membro && assistente.Situacao == Project.Domain.Equipe.SituacaoMembro.Ativa && pedidos.Contains(assistente.Id))
                 .Select(assistente => assistente.Id)
                 .ToListAsync(ct);
             if (validas.Count != pedidos.Count)
@@ -845,8 +845,8 @@ public static class NegocioEndpoints
                 return Validacao("Escolha só assistentes ativas da conta.");
             }
 
-            await banco.EventosAssistentes.Where(item => item.EventoId == id).ExecuteDeleteAsync(ct);
-            banco.EventosAssistentes.AddRange(validas.Select(assistente => new Project.Domain.Equipe.EventoAssistente { EventoId = id, AssistenteId = assistente }));
+            await banco.EventosMembros.Where(item => item.EventoId == id).ExecuteDeleteAsync(ct);
+            banco.EventosMembros.AddRange(validas.Select(assistente => new Project.Domain.Equipe.EventoMembro { EventoId = id, MembroId = assistente, ContaId = conta }));
             await banco.SaveChangesAsync(ct);
             return Results.Ok(new { assistentes = validas });
         });

@@ -761,62 +761,6 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.ToTable("RecebimentosParcela", (string)null);
                 });
 
-            modelBuilder.Entity("Project.Domain.Equipe.Assistente", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Celular")
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("ContaId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("ConvidadaEm")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateOnly?>("Nascimento")
-                        .HasColumnType("date");
-
-                    b.Property<string>("Nome")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<bool>("PodeVerFinanceiro")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTimeOffset?>("PrimeiroAcessoEm")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTimeOffset?>("RemovidaEm")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Situacao")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<bool>("SomenteDela")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("UsuarioId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ContaId");
-
-                    b.HasIndex("UsuarioId");
-
-                    b.ToTable("Assistentes", (string)null);
-                });
-
             modelBuilder.Entity("Project.Domain.Equipe.ContaAssessoria", b =>
                 {
                     b.Property<Guid>("Id")
@@ -837,19 +781,153 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.ToTable("Contas", (string)null);
                 });
 
-            modelBuilder.Entity("Project.Domain.Equipe.EventoAssistente", b =>
+            modelBuilder.Entity("Project.Domain.Equipe.EventoMembro", b =>
                 {
                     b.Property<Guid>("EventoId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("AssistenteId")
+                    b.Property<Guid>("MembroId")
                         .HasColumnType("uuid");
 
-                    b.HasKey("EventoId", "AssistenteId");
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid");
 
-                    b.HasIndex("AssistenteId");
+                    b.HasKey("EventoId", "MembroId");
 
-                    b.ToTable("EventosAssistentes", (string)null);
+                    b.HasIndex("MembroId");
+
+                    b.HasIndex("ContaId", "MembroId");
+
+                    b.ToTable("EventosMembros", (string)null);
+                });
+
+            modelBuilder.Entity("Project.Domain.Equipe.GrupoAcesso", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<bool>("Padrao")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("VeTodosEventos")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContaId", "Nome")
+                        .IsUnique();
+
+                    b.ToTable("GruposAcesso", (string)null);
+                });
+
+            modelBuilder.Entity("Project.Domain.Equipe.MembroConta", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Celular")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("ConvidadaEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("GrupoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly?>("Nascimento")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTimeOffset?>("PrimeiroAcessoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("RemovidaEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Situacao")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("UsuarioId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContaId");
+
+                    b.HasIndex("GrupoId");
+
+                    b.HasIndex("UsuarioId")
+                        .IsUnique();
+
+                    b.ToTable("MembrosConta", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_MembrosConta_Grupo", "(\"Tipo\" = 'Dono' AND \"GrupoId\" IS NULL) OR (\"Tipo\" = 'Membro' AND \"GrupoId\" IS NOT NULL)");
+                        });
+                });
+
+            modelBuilder.Entity("Project.Domain.Equipe.PermissaoGrupo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Editar")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("Excluir")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("GrupoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Modulo")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<bool>("Ver")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContaId");
+
+                    b.HasIndex("GrupoId", "Modulo")
+                        .IsUnique();
+
+                    b.ToTable("PermissoesGrupo", (string)null);
                 });
 
             modelBuilder.Entity("Project.Domain.Eventos.CompromissoAgenda", b =>
@@ -2978,9 +3056,6 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
-                    b.Property<string>("OrganizerId")
-                        .HasColumnType("text");
-
                     b.Property<string>("PasswordHash")
                         .HasColumnType("text");
 
@@ -3008,8 +3083,6 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.HasIndex("NormalizedUserName")
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex");
-
-                    b.HasIndex("OrganizerId");
 
                     b.ToTable("AspNetUsers", (string)null);
                 });
@@ -3338,15 +3411,6 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Project.Domain.Equipe.Assistente", b =>
-                {
-                    b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
-                        .WithMany()
-                        .HasForeignKey("ContaId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("Project.Domain.Equipe.ContaAssessoria", b =>
                 {
                     b.HasOne("Project.Infrastructure.Conta.ApplicationUser", null)
@@ -3356,17 +3420,67 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Project.Domain.Equipe.EventoAssistente", b =>
+            modelBuilder.Entity("Project.Domain.Equipe.EventoMembro", b =>
                 {
-                    b.HasOne("Project.Domain.Equipe.Assistente", null)
+                    b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
                         .WithMany()
-                        .HasForeignKey("AssistenteId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Project.Domain.Eventos.Evento", null)
                         .WithMany()
                         .HasForeignKey("EventoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Project.Domain.Equipe.MembroConta", null)
+                        .WithMany()
+                        .HasForeignKey("MembroId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Project.Domain.Equipe.GrupoAcesso", b =>
+                {
+                    b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
+                        .WithMany()
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Project.Domain.Equipe.MembroConta", b =>
+                {
+                    b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
+                        .WithMany()
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Project.Domain.Equipe.GrupoAcesso", null)
+                        .WithMany()
+                        .HasForeignKey("GrupoId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Project.Infrastructure.Conta.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Project.Domain.Equipe.PermissaoGrupo", b =>
+                {
+                    b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
+                        .WithMany()
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Project.Domain.Equipe.GrupoAcesso", null)
+                        .WithMany("Permissoes")
+                        .HasForeignKey("GrupoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -4271,6 +4385,11 @@ namespace Project.Infrastructure.Persistencia.Migrations
             modelBuilder.Entity("Project.Domain.Dinheiro.ParcelaContrato", b =>
                 {
                     b.Navigation("Recebimentos");
+                });
+
+            modelBuilder.Entity("Project.Domain.Equipe.GrupoAcesso", b =>
+                {
+                    b.Navigation("Permissoes");
                 });
 
             modelBuilder.Entity("Project.Domain.Eventos.Evento", b =>

@@ -46,14 +46,14 @@ public static class EmailMensagens
         Motivo: "Você recebeu este e-mail porque alguém pediu para redefinir a senha desta conta na Aralu.");
 
     /// <param name="assessoria">Nome da empresa da conta; sem nome, "uma assessoria".</param>
-    public static EmailConteudo ConviteDeAssistente(string nome, string assessoria, string link) => new(
+    public static EmailConteudo ConviteParaEquipe(string nome, string assessoria, string link) => new(
         Assunto: $"Convite de {assessoria} para a equipe na Aralu",
         Previa: $"Crie sua senha para acompanhar os eventos de {assessoria}. O link vale por 7 dias.",
         Titulo: $"Convite para a equipe de {assessoria}",
         Paragrafos:
         [
             $"Olá, {nome}.",
-            $"{assessoria} adicionou você como assistente na Aralu, onde ficam as tarefas, os fornecedores e os pagamentos dos eventos.",
+            $"{assessoria} adicionou você à equipe na Aralu, onde ficam as tarefas, os fornecedores e os pagamentos dos eventos.",
             "Para entrar, crie sua senha.",
         ],
         Botao: new EmailBotao("Criar senha", link),

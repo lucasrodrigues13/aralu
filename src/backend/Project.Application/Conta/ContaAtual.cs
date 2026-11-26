@@ -4,8 +4,7 @@ namespace Project.Application.Conta;
 
 /// <summary>
 /// Resolve o id da conta a partir dos claims (SPEC-062).
-/// Assistente / impersonação Admin: claim organizer_id. Organizer: NameIdentifier.
-/// O id da conta é um Guid (o mesmo valor do id do usuário dono, gerado pelo Identity).
+/// Claim conta_id (membro da conta ou Admin impersonando); sem ele, o próprio id do usuário (o Dono que criou a conta).
 /// </summary>
 public static class ContaAtual
 {
@@ -16,10 +15,10 @@ public static class ContaAtual
             return null;
         }
 
-        var organizerId = usuario.FindFirst(ContaClaims.OrganizerId)?.Value;
-        if (!string.IsNullOrWhiteSpace(organizerId))
+        var contaId = usuario.FindAll(ContaClaims.ContaId).LastOrDefault()?.Value;
+        if (!string.IsNullOrWhiteSpace(contaId))
         {
-            return Guid.TryParse(organizerId, out var daDona) ? daDona : null;
+            return Guid.TryParse(contaId, out var conta) ? conta : null;
         }
 
         var id = usuario.FindFirst(ClaimTypes.NameIdentifier)?.Value;

@@ -26,7 +26,7 @@ public class ContaAtualTests
         var usuario = new ClaimsPrincipal(new ClaimsIdentity(
         [
             new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()),
-            new Claim(ContaClaims.OrganizerId, OutraDona.ToString()),
+            new Claim(ContaClaims.ContaId, OutraDona.ToString()),
             new Claim(ClaimTypes.Role, Papeis.Assistant),
         ], "teste"));
 

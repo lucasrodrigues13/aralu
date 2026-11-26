@@ -47,7 +47,6 @@ public class ContaFluxoTests
         Assert.False(usuario.EmailConfirmed);
         Assert.True(await usuarios.IsInRoleAsync(usuario, Papeis.Organizer));
         Assert.False(await usuarios.IsInRoleAsync(usuario, Papeis.Admin));
-        Assert.Null(usuario.OrganizerId);
     }
 
     [Fact]

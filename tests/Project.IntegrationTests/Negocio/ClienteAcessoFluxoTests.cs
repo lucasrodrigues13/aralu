@@ -69,7 +69,6 @@ public class ClienteAcessoFluxoTests
             Assert.True((await usuarios.AddToRoleAsync(organizer, Papeis.Organizer)).Succeeded);
 
             var usuario = new ApplicationUser { UserName = email, Email = email, EmailConfirmed = true };
-            usuario.VincularAoOrganizer(organizer.Id);
             Assert.True((await usuarios.CreateAsync(usuario, Senha)).Succeeded);
             Assert.True((await usuarios.AddToRoleAsync(usuario, PapelLegado)).Succeeded);
         }
@@ -90,9 +89,10 @@ public class ClienteAcessoFluxoTests
             http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
         }
 
-        Assert.Equal(HttpStatusCode.Forbidden, (await http.GetAsync("/api/v1/eventos")).StatusCode);
-        Assert.Equal(HttpStatusCode.Forbidden, (await http.GetAsync("/api/v1/clientes")).StatusCode);
-        Assert.Equal(HttpStatusCode.Forbidden, (await http.GetAsync("/api/v1/conta/area")).StatusCode);
+        // Sem membro na conta (SPEC-062), o token não vale: 401 antes mesmo da checagem de papel.
+        Assert.Equal(HttpStatusCode.Unauthorized, (await http.GetAsync("/api/v1/eventos")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await http.GetAsync("/api/v1/clientes")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await http.GetAsync("/api/v1/conta/area")).StatusCode);
     }
 
     [Fact]

@@ -31,6 +31,18 @@ public class CadastroCriaContaTests
         var usuario = await banco.Users.SingleAsync(item => item.Email == email);
         var conta = await banco.Contas.SingleAsync(item => item.DonoUsuarioId == usuario.Id);
         Assert.Equal(Guid.Parse(usuario.Id), conta.Id);
+
+        // T1: o visitante é Dono e a conta nasce com Organizadores e Assistentes.
+        var membro = await banco.Membros.IgnoreQueryFilters().SingleAsync(item => item.UsuarioId == usuario.Id);
+        Assert.Equal(Project.Domain.Equipe.TipoMembro.Dono, membro.Tipo);
+        Assert.Equal(conta.Id, membro.ContaId);
+        Assert.Null(membro.GrupoId);
+        var grupos = await banco.Grupos.IgnoreQueryFilters().Include(item => item.Permissoes)
+            .Where(item => item.ContaId == conta.Id).OrderBy(item => item.Nome).ToListAsync();
+        Assert.Equal(["Assistentes", "Organizadores"], grupos.Select(item => item.Nome));
+        Assert.False(grupos[0].VeTodosEventos);
+        Assert.False(grupos[0].Permite(Project.Domain.Equipe.Modulo.Financeiro, Project.Domain.Equipe.AcaoModulo.Ver));
+        Assert.True(grupos[1].Permite(Project.Domain.Equipe.Modulo.Financeiro, Project.Domain.Equipe.AcaoModulo.Excluir));
     }
 
     [Fact]

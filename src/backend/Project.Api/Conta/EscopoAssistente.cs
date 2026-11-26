@@ -2,36 +2,44 @@ using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using Project.Application.Comum;
 using Project.Application.Conta;
-using Project.Domain.Equipe;
 using Project.Infrastructure.Persistencia;
 
 namespace Project.Api.Conta;
 
-/// <summary>"Só os dela" (SPEC-032 §6.4): a assistente restrita só enxerga os eventos em que a dona a marcou.</summary>
+/// <summary>Alcance de eventos do grupo (SPEC-062 §9): "só os eventos em que estou atribuído".</summary>
 public static class EscopoAssistente
 {
     public static bool Restrito(ClaimsPrincipal usuario) =>
-        usuario.IsInRole(Papeis.Assistant) && usuario.FindFirstValue(AssistenteEndpoints.ClaimSomenteDela) == "true";
+        usuario.IsInRole(Papeis.Assistant) && usuario.FindFirstValue(EquipeEndpoints.ClaimVeTodos) != "true";
 
-    public static Guid? AssistenteId(ClaimsPrincipal usuario) =>
-        Guid.TryParse(usuario.FindFirstValue(ContaClaims.AssistenteId), out var id) ? id : null;
+    public static Guid? MembroId(ClaimsPrincipal usuario) =>
+        Guid.TryParse(usuario.FindFirstValue(ContaClaims.MembroId), out var id) ? id : null;
+
+    /// <summary>Membro (não Dono) do pedido: quem cria um evento fica atribuído a ele.</summary>
+    public static Guid? MembroQueCria(ClaimsPrincipal usuario) =>
+        usuario.IsInRole(Papeis.Assistant) ? MembroId(usuario) : null;
 
     /// <summary>Eventos liberados; nulo quando a pessoa vê todos.</summary>
     public static async Task<HashSet<Guid>?> LiberadosAsync(ClaimsPrincipal usuario, AppDbContext banco, CancellationToken ct)
     {
-        if (!Restrito(usuario) || AssistenteId(usuario) is not Guid assistente)
+        if (!Restrito(usuario))
         {
             return null;
         }
 
-        var ids = await banco.EventosAssistentes.AsNoTracking()
-            .Where(item => item.AssistenteId == assistente)
+        if (MembroId(usuario) is not Guid membro)
+        {
+            return [];
+        }
+
+        var ids = await banco.EventosMembros.AsNoTracking()
+            .Where(item => item.MembroId == membro)
             .Select(item => item.EventoId)
             .ToListAsync(ct);
         return ids.ToHashSet();
     }
 
-    /// <summary>Filtro de grupo: devolve 404 quando a rota aponta para um evento que não é dela.</summary>
+    /// <summary>Filtro de grupo: devolve 404 quando a rota aponta para um evento fora do alcance.</summary>
     public static async ValueTask<object?> Filtro(EndpointFilterInvocationContext contexto, EndpointFilterDelegate proximo)
     {
         var http = contexto.HttpContext;

@@ -116,9 +116,9 @@ builder.Services.AddAuthentication(Microsoft.AspNetCore.Authentication.JwtBearer
     });
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy(Project.Api.Conta.AssistenteEndpoints.PoliticaFinanceiro, policy => policy
+    options.AddPolicy(Project.Api.Conta.EquipeEndpoints.PoliticaFinanceiro, policy => policy
         .RequireAuthenticatedUser()
-        .RequireAssertion(contexto => Project.Api.Conta.AssistenteEndpoints.PodeVerFinanceiro(contexto.User)));
+        .RequireAssertion(contexto => Project.Api.Conta.EquipeEndpoints.PodeVerFinanceiro(contexto.User)));
 });
 
 var swagger = builder.Configuration.GetValue("Swagger:Enabled", false);
@@ -170,13 +170,13 @@ if (swagger)
 app.UseCors();
 app.UseRateLimiter();
 app.UseAuthentication();
-app.Use(Project.Api.Conta.AssistenteEndpoints.AplicarPermissoes);
+app.Use(Project.Api.Conta.EquipeEndpoints.AplicarAcesso);
 app.Use(Project.Api.Conta.AdminEndpoints.AplicarContaDoAdmin);
 app.UseAuthorization();
 
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));
 ContaEndpoints.Mapear(app);
-Project.Api.Conta.AssistenteEndpoints.Mapear(app);
+Project.Api.Conta.EquipeEndpoints.Mapear(app);
 Project.Api.Conta.AdminEndpoints.Mapear(app);
 NegocioEndpoints.Mapear(app);
 DinheiroEndpoints.Mapear(app);

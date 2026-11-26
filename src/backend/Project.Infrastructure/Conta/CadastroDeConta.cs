@@ -16,7 +16,7 @@ public enum ResultadoCadastro
 }
 
 /// <summary>
-/// Cria, numa transação só, o login Organizer e a conta (SPEC-062, RF-110).
+/// Cria, numa transação só, o login, a conta, o Dono e os grupos padrão (SPEC-062, RF-110, T1).
 /// A conta usa o mesmo Id do usuário: o ContaId gravado nos dados continua igual ao id do dono.
 /// </summary>
 public sealed class CadastroDeConta(AppDbContext banco, UserManager<ApplicationUser> usuarios)
@@ -38,11 +38,21 @@ public sealed class CadastroDeConta(AppDbContext banco, UserManager<ApplicationU
             return ResultadoCadastro.Falhou;
         }
 
-        banco.Contas.Add(new ContaAssessoria
+        var contaId = Guid.Parse(usuario.Id);
+        var agora = DateTimeOffset.UtcNow;
+        banco.Contas.Add(new ContaAssessoria { Id = contaId, DonoUsuarioId = usuario.Id, CriadaEm = agora });
+        banco.Grupos.AddRange(GruposPadrao.Criar(contaId));
+        banco.Membros.Add(new MembroConta
         {
-            Id = Guid.Parse(usuario.Id),
-            DonoUsuarioId = usuario.Id,
-            CriadaEm = DateTimeOffset.UtcNow,
+            Id = Guid.NewGuid(),
+            ContaId = contaId,
+            UsuarioId = usuario.Id,
+            Tipo = TipoMembro.Dono,
+            Nome = usuario.Email ?? "",
+            Email = usuario.Email ?? "",
+            Situacao = SituacaoMembro.Ativa,
+            ConvidadaEm = agora,
+            PrimeiroAcessoEm = agora,
         });
         await banco.SaveChangesAsync(ct);
         await transacao.CommitAsync(ct);

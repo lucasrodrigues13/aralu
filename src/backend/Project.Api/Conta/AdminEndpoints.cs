@@ -39,7 +39,7 @@ public static class AdminEndpoints
 
             var extra = new ClaimsIdentity();
             extra.AddClaim(new Claim(ClaimTypes.Role, Papeis.Organizer));
-            extra.AddClaim(new Claim(ContaClaims.OrganizerId, dona.Id));
+            extra.AddClaim(new Claim(ContaClaims.ContaId, dona.Id));
             usuario.AddIdentity(extra);
         }
 

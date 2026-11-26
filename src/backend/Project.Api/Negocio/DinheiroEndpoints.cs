@@ -13,7 +13,7 @@ public static class DinheiroEndpoints
 
     public static void Mapear(WebApplication app)
     {
-        var api = app.MapGroup("/api/v1").RequireAuthorization(AssistenteEndpoints.PoliticaFinanceiro);
+        var api = app.MapGroup("/api/v1").RequireAuthorization(EquipeEndpoints.PoliticaFinanceiro);
         api.AddEndpointFilter(EscopoAssistente.Filtro);
         api.MapGet("/eventos/{id:guid}/dinheiro", Obter);
         api.MapGet("/eventos/{id:guid}/budget/planilha", PlanilhaBudget);
@@ -32,7 +32,7 @@ public static class DinheiroEndpoints
                 Hoje(),
                 ct,
                 await EscopoAssistente.LiberadosAsync(usuario, banco, ct),
-                AssistenteEndpoints.PodeVerFinanceiro(usuario),
+                EquipeEndpoints.PodeVerFinanceiro(usuario),
                 usuario.IsInRole(Papeis.Organizer))))).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
     }
 

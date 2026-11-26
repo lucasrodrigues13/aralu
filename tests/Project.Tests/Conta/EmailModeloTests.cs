@@ -26,7 +26,7 @@ public class EmailModeloTests
     [Fact]
     public void Html_escapa_o_texto_vindo_do_cadastro()
     {
-        var conteudo = EmailMensagens.ConviteDeAssistente("<b>Bia</b>", "Cerimonial \"A&B\"", "https://x/convite");
+        var conteudo = EmailMensagens.ConviteParaEquipe("<b>Bia</b>", "Cerimonial \"A&B\"", "https://x/convite");
 
         var html = EmailModelo.Html(conteudo, Publico);
 
@@ -47,7 +47,7 @@ public class EmailModeloTests
     [Fact]
     public void Texto_puro_tem_a_mesma_mensagem_e_o_link_completo()
     {
-        var texto = EmailModelo.Texto(EmailMensagens.ConviteDeAssistente("Bia", "Cerimonial Luz", "https://x/convite?token=1"));
+        var texto = EmailModelo.Texto(EmailMensagens.ConviteParaEquipe("Bia", "Cerimonial Luz", "https://x/convite?token=1"));
 
         Assert.StartsWith("Convite para a equipe de Cerimonial Luz\n", texto, StringComparison.Ordinal);
         Assert.Contains("Olá, Bia.", texto, StringComparison.Ordinal);
@@ -73,7 +73,7 @@ public class EmailModeloTests
             EmailMensagens.ConfirmacaoDeEmail("a@b.c", "https://x"),
             EmailMensagens.RedefinicaoDeSenha("a@b.c", "https://x"),
             EmailMensagens.CodigoDeRedefinicao("a@b.c", "1"),
-            EmailMensagens.ConviteDeAssistente("Bia", "Cerimonial Luz", "https://x"),
+            EmailMensagens.ConviteParaEquipe("Bia", "Cerimonial Luz", "https://x"),
         ];
 
         foreach (var conteudo in todas)
@@ -109,7 +109,7 @@ public class EmailModeloTests
             ["confirmacao"] = EmailMensagens.ConfirmacaoDeEmail("ana@exemplo.com", link),
             ["redefinicao"] = EmailMensagens.RedefinicaoDeSenha("ana@exemplo.com", link),
             ["codigo"] = EmailMensagens.CodigoDeRedefinicao("ana@exemplo.com", "482913"),
-            ["convite-assistente"] = EmailMensagens.ConviteDeAssistente("Beatriz", "Cerimonial Luz do Dia", link),
+            ["convite-assistente"] = EmailMensagens.ConviteParaEquipe("Beatriz", "Cerimonial Luz do Dia", link),
         };
         foreach (var (nome, conteudo) in previas)
         {

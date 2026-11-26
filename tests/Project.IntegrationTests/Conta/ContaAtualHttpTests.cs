@@ -47,7 +47,7 @@ public class ContaAtualHttpTests
     public void Admin_impersonando_filtra_pela_conta_impersonada()
     {
         var admin = Usuario(Papeis.Admin, Guid.NewGuid().ToString());
-        ((ClaimsIdentity)admin.Identity!).AddClaim(new Claim(ContaClaims.OrganizerId, Dona.ToString()));
+        ((ClaimsIdentity)admin.Identity!).AddClaim(new Claim(ContaClaims.ContaId, Dona.ToString()));
         var contexto = Contexto(exigeLogin: true, admin);
 
         Assert.Equal(Dona, ContaAtualHttp.De(contexto));

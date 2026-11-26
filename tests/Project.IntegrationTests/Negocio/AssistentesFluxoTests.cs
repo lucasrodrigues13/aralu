@@ -25,7 +25,7 @@ public class AssistentesFluxoTests
 
         // Área da dona: perfil, assistentes e contratos da conta ficam fechados.
         Assert.Equal(HttpStatusCode.Forbidden, (await assistente.GetAsync("/api/v1/perfil")).StatusCode);
-        Assert.Equal(HttpStatusCode.Forbidden, (await assistente.GetAsync("/api/v1/assistentes")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await assistente.GetAsync("/api/v1/equipe")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await assistente.GetAsync("/api/v1/contratos")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await assistente.GetAsync("/api/v1/eventos")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await assistente.GetAsync("/api/v1/hoje")).StatusCode);
@@ -38,15 +38,10 @@ public class AssistentesFluxoTests
         Assert.Equal(0m, resumo.GetProperty("valorContratado").GetDecimal());
 
         // Com a permissão, o financeiro abre no próximo pedido, sem entrar de novo.
-        var lista = await Ler(await dona.GetAsync("/api/v1/assistentes"));
-        var email = lista.EnumerateArray().First(item => item.GetProperty("id").GetGuid() == assistenteId).GetProperty("email").GetString();
-        Assert.Equal(HttpStatusCode.OK, (await dona.PutAsJsonAsync($"/api/v1/assistentes/{assistenteId}", new
-        {
-            nome = "Ana Assistente",
-            email,
-            podeVerFinanceiro = true,
-            somenteDela = false,
-        })).StatusCode);
+        // T11: o Dono libera "ver Financeiro" no grupo dela.
+        var grupoId = (await Ler(await dona.GetAsync("/api/v1/equipe"))).EnumerateArray()
+            .First(item => item.GetProperty("id").GetGuid() == assistenteId).GetProperty("grupoId").GetGuid();
+        Assert.Equal(HttpStatusCode.OK, (await dona.PutAsJsonAsync($"/api/v1/grupos-acesso/{grupoId}", PedidoGrupo("Grupo de teste", financeiro: true, todos: true))).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await assistente.GetAsync($"/api/v1/eventos/{id}/dinheiro")).StatusCode);
     }
 
@@ -85,7 +80,7 @@ public class AssistentesFluxoTests
         Assert.Equal(2, tarefa.GetProperty("responsaveis").GetArrayLength());
         Assert.Equal(JsonValueKind.Array, tarefas.ValueKind);
 
-        Assert.Equal(HttpStatusCode.NoContent, (await dona.DeleteAsync($"/api/v1/assistentes/{assistenteId}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, (await dona.DeleteAsync($"/api/v1/equipe/{assistenteId}")).StatusCode);
         var depois = await assistente.GetAsync("/api/v1/eventos");
         Assert.Equal(HttpStatusCode.Unauthorized, depois.StatusCode);
         Assert.Contains("Seu acesso foi removido", await depois.Content.ReadAsStringAsync());
@@ -94,13 +89,13 @@ public class AssistentesFluxoTests
         Assert.True(nomes.EnumerateArray().First(item => item.GetProperty("id").GetGuid() == assistenteId).GetProperty("removida").GetBoolean());
 
         // O cadastro continua na lista, desativado, e o e-mail segue preso a ele.
-        var lista = await Ler(await dona.GetAsync("/api/v1/assistentes"));
+        var lista = await Ler(await dona.GetAsync("/api/v1/equipe"));
         Assert.Equal("Inativa", lista.EnumerateArray().First(item => item.GetProperty("id").GetGuid() == assistenteId).GetProperty("situacao").GetString());
-        var novo = await dona.PostAsJsonAsync("/api/v1/assistentes", new { nome = "Ana de novo", email, podeVerFinanceiro = false, somenteDela = false });
+        var novo = await dona.PostAsJsonAsync("/api/v1/equipe", new { nome = "Ana de novo", email });
         Assert.Equal(HttpStatusCode.Conflict, novo.StatusCode);
 
         // Reativar devolve o acesso com a mesma senha e os mesmos eventos marcados.
-        var reativada = await Ler(await dona.PostAsync($"/api/v1/assistentes/{assistenteId}/reativar", null));
+        var reativada = await Ler(await dona.PostAsync($"/api/v1/equipe/{assistenteId}/reativar", null));
         Assert.Equal("Ativa", reativada.GetProperty("situacao").GetString());
         Assert.Equal(HttpStatusCode.OK, (await assistente.GetAsync($"/api/v1/eventos/{marcado}")).StatusCode);
     }
@@ -139,7 +134,7 @@ public class AssistentesFluxoTests
         // Com a assistente ativa, nada aparece no card.
         Assert.Equal(0, (await Ler(await dona.GetAsync("/api/v1/hoje"))).GetProperty("tarefasSemResponsavelAtivo").GetArrayLength());
 
-        Assert.Equal(HttpStatusCode.NoContent, (await dona.DeleteAsync($"/api/v1/assistentes/{removidaId}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, (await dona.DeleteAsync($"/api/v1/equipe/{removidaId}")).StatusCode);
 
         var pendencias = (await Ler(await dona.GetAsync("/api/v1/hoje"))).GetProperty("tarefasSemResponsavelAtivo").EnumerateArray().ToArray();
         Assert.Equal(2, pendencias.Length);
@@ -176,19 +171,19 @@ public class AssistentesFluxoTests
         var dona = await EntrarOrganizer();
         var outraDona = await EntrarOrganizer();
         var emailOutraDona = (await Ler(await outraDona.GetAsync("/api/v1/conta/area"))).GetProperty("email").GetString();
-        var recusado = await dona.PostAsJsonAsync("/api/v1/assistentes", new { nome = "X", email = emailOutraDona });
+        var recusado = await dona.PostAsJsonAsync("/api/v1/equipe", new { nome = "X", email = emailOutraDona });
         Assert.Equal(HttpStatusCode.BadRequest, recusado.StatusCode);
         Assert.Contains("outra conta", await recusado.Content.ReadAsStringAsync());
 
         var email = $"ass-{Guid.NewGuid():N}@aralu.test";
-        var convite = await Ler(await dona.PostAsJsonAsync("/api/v1/assistentes", new { nome = "Bia", email }));
+        var convite = await Ler(await dona.PostAsJsonAsync("/api/v1/equipe", new { nome = "Bia", email }));
         Assert.True(convite.GetProperty("conviteEnviado").GetBoolean());
         Assert.Equal("Convidada", convite.GetProperty("situacao").GetString());
-        var repetido = await dona.PostAsJsonAsync("/api/v1/assistentes", new { nome = "Bia", email });
+        var repetido = await dona.PostAsJsonAsync("/api/v1/equipe", new { nome = "Bia", email });
         Assert.Equal(HttpStatusCode.Conflict, repetido.StatusCode);
 
         var primeiro = LinkDoConvite(email);
-        Assert.Equal(HttpStatusCode.OK, (await dona.PostAsync($"/api/v1/assistentes/{convite.GetProperty("id").GetGuid()}/reenviar", null)).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await dona.PostAsync($"/api/v1/equipe/{convite.GetProperty("id").GetGuid()}/reenviar", null)).StatusCode);
         var segundo = LinkDoConvite(email);
         Assert.NotEqual(primeiro.Token, segundo.Token);
 
@@ -387,22 +382,124 @@ public class AssistentesFluxoTests
 
         var contas = await Ler(await admin.GetAsync("/api/v1/admin/assistentes"));
         var lida = contas.EnumerateArray()
-            .SelectMany(conta => conta.GetProperty("assistentes").EnumerateArray())
+            .SelectMany(conta => conta.GetProperty("membros").EnumerateArray())
             .First(item => item.GetProperty("id").GetGuid() == assistenteId);
         Assert.Equal(email, lida.GetProperty("email").GetString());
         Assert.Equal("Ativa", lida.GetProperty("situacao").GetString());
-        Assert.True(lida.GetProperty("podeVerFinanceiro").GetBoolean());
-        Assert.True(lida.GetProperty("somenteDela").GetBoolean());
+        Assert.Equal("Membro", lida.GetProperty("tipo").GetString());
+        Assert.Equal(JsonValueKind.String, lida.GetProperty("grupo").ValueKind);
         Assert.Contains(contas.EnumerateArray(), conta => conta.GetProperty("emailDaConta").GetString()!.StartsWith("org-", StringComparison.Ordinal));
 
         Assert.Equal(HttpStatusCode.Forbidden, (await dona.GetAsync("/api/v1/admin/assistentes")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await assistente.GetAsync("/api/v1/admin/assistentes")).StatusCode);
     }
 
+    [Fact]
+    public async Task Membro_do_grupo_Assistentes_nao_abre_financeiro_nem_configuracoes()
+    {
+        var dona = await EntrarOrganizer();
+        var (membro, membroId, _) = await ConvidarNoGrupoPadrao(dona);
+        var evento = (await CriarEvento(dona, "Festa")).GetProperty("id").GetGuid();
+        Assert.Equal(HttpStatusCode.OK, (await dona.PutAsJsonAsync($"/api/v1/eventos/{evento}/assistentes", new { assistentes = new[] { membroId } })).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await membro.GetAsync($"/api/v1/eventos/{evento}")).StatusCode);
+
+        // T9: o acesso direto ao Financeiro é recusado com a mensagem do que falta.
+        var dinheiro = await membro.GetAsync($"/api/v1/eventos/{evento}/dinheiro");
+        Assert.Equal(HttpStatusCode.Forbidden, dinheiro.StatusCode);
+        Assert.Contains("ver em Financeiro", await dinheiro.Content.ReadAsStringAsync());
+        var area = await Ler(await membro.GetAsync("/api/v1/conta/area"));
+        Assert.False(area.GetProperty("podeVerFinanceiro").GetBoolean());
+        Assert.Equal("Membro", area.GetProperty("tipo").GetString());
+
+        // O grupo Assistentes não exclui e não vê o Funil.
+        Assert.Equal(HttpStatusCode.Forbidden, (await membro.GetAsync("/api/v1/oportunidades")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await membro.DeleteAsync($"/api/v1/eventos/{evento}/imagem")).StatusCode);
+
+        // T14: Configurações (equipe e grupos) só para o Dono.
+        Assert.Equal(HttpStatusCode.Forbidden, (await membro.GetAsync("/api/v1/equipe")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await membro.GetAsync("/api/v1/grupos-acesso")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Ultimo_dono_nao_sai_e_socio_convidado_como_dono_acessa_configuracoes()
+    {
+        var dona = await EntrarOrganizer();
+        var equipe = await Ler(await dona.GetAsync("/api/v1/equipe"));
+        var euId = equipe.EnumerateArray().Single().GetProperty("id").GetGuid();
+        var eu = equipe.EnumerateArray().Single();
+
+        // T12: o último Dono não sai nem vira Membro.
+        var sair = await dona.DeleteAsync($"/api/v1/equipe/{euId}");
+        Assert.Equal(HttpStatusCode.Conflict, sair.StatusCode);
+        Assert.Contains("pelo menos um dono", await sair.Content.ReadAsStringAsync());
+        var rebaixar = await dona.PutAsJsonAsync($"/api/v1/equipe/{euId}", new { nome = "Dona", email = eu.GetProperty("email").GetString(), tipo = "Membro" });
+        Assert.Equal(HttpStatusCode.Conflict, rebaixar.StatusCode);
+
+        // T13: o sócio convidado como Dono entra e acessa Configurações.
+        var email = $"socio-{Guid.NewGuid():N}@aralu.test";
+        Assert.Equal(HttpStatusCode.Created, (await dona.PostAsJsonAsync("/api/v1/equipe", new { nome = "Sócio", email, tipo = "Dono" })).StatusCode);
+        var socio = await AceitarEEntrar(email, "Organizer");
+        Assert.Equal(2, (await Ler(await socio.GetAsync("/api/v1/equipe"))).GetArrayLength());
+        Assert.Equal(HttpStatusCode.OK, (await socio.GetAsync("/api/v1/perfil")).StatusCode);
+
+        // Com dois Donos, o primeiro já pode virar Membro.
+        Assert.Equal(HttpStatusCode.OK, (await dona.PutAsJsonAsync($"/api/v1/equipe/{euId}", new { nome = "Dona", email = eu.GetProperty("email").GetString(), tipo = "Membro" })).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await dona.GetAsync("/api/v1/equipe")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Grupo_com_membros_nao_e_apagado()
+    {
+        var dona = await EntrarOrganizer();
+        await ConvidarNoGrupoPadrao(dona);
+        var grupos = await Ler(await dona.GetAsync("/api/v1/grupos-acesso"));
+        var assistentes = grupos.EnumerateArray().Single(item => item.GetProperty("nome").GetString() == "Assistentes");
+        Assert.Equal(1, assistentes.GetProperty("membros").GetInt32());
+
+        var apagar = await dona.DeleteAsync($"/api/v1/grupos-acesso/{assistentes.GetProperty("id").GetGuid()}");
+        Assert.Equal(HttpStatusCode.Conflict, apagar.StatusCode);
+        Assert.Contains("Mova o membro", await apagar.Content.ReadAsStringAsync());
+
+        var organizadores = grupos.EnumerateArray().Single(item => item.GetProperty("nome").GetString() == "Organizadores");
+        Assert.Equal(HttpStatusCode.NoContent, (await dona.DeleteAsync($"/api/v1/grupos-acesso/{organizadores.GetProperty("id").GetGuid()}")).StatusCode);
+
+        var invalido = await dona.PostAsJsonAsync("/api/v1/grupos-acesso", new { nome = "X", permissoes = new[] { new { modulo = "Financeiro", ver = false, editar = true, excluir = false } } });
+        Assert.Equal(HttpStatusCode.BadRequest, invalido.StatusCode);
+    }
+
+    private static object PedidoGrupo(string nome, bool financeiro, bool todos) => new
+    {
+        nome,
+        veTodosEventos = todos,
+        permissoes = new[] { "Clientes", "Eventos", "Convidados", "Tarefas", "Agenda", "Funil", "OrcamentosContratos", "Financeiro", "Fornecedores", "Modelos" }
+            .Select(modulo => new { modulo, ver = modulo != "Financeiro" || financeiro, editar = modulo != "Financeiro" || financeiro, excluir = modulo != "Financeiro" || financeiro })
+            .ToArray(),
+    };
+
+    private async Task<(HttpClient Cliente, Guid Id, string Email)> ConvidarNoGrupoPadrao(HttpClient dona)
+    {
+        var email = $"ass-{Guid.NewGuid():N}@aralu.test";
+        var convite = await Ler(await dona.PostAsJsonAsync("/api/v1/equipe", new { nome = "Ana Assistente", email }));
+        Assert.Equal("Assistentes", convite.GetProperty("grupo").GetString());
+        return (await AceitarEEntrar(email, "Assistant"), convite.GetProperty("id").GetGuid(), email);
+    }
+
+    private async Task<HttpClient> AceitarEEntrar(string email, string papel)
+    {
+        var (usuarioId, token) = LinkDoConvite(email);
+        var cliente = _banco.Fabrica.CreateClient();
+        Assert.Equal(HttpStatusCode.OK, (await cliente.PostAsJsonAsync("/api/v1/conta/aceitar-convite", new { usuarioId, token, senha = Senha, confirmacao = Senha })).StatusCode);
+        var entrada = await cliente.PostAsJsonAsync("/api/v1/conta/entrar", new { email, senha = Senha });
+        var sessao = await entrada.Content.ReadFromJsonAsync<Sessao>();
+        Assert.Contains(papel, sessao!.Papeis);
+        cliente.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", sessao.Token);
+        return cliente;
+    }
+
     private async Task<(HttpClient Cliente, Guid Id, string Email)> ConvidarSemAtivar(HttpClient dona)
     {
         var email = $"pend-{Guid.NewGuid():N}@aralu.test";
-        var convite = await Ler(await dona.PostAsJsonAsync("/api/v1/assistentes", new { nome = "Pendente", email }));
+        var convite = await Ler(await dona.PostAsJsonAsync("/api/v1/equipe", new { nome = "Pendente", email }));
         return (_banco.Fabrica.CreateClient(), convite.GetProperty("id").GetGuid(), email);
     }
 
@@ -417,12 +514,13 @@ public class AssistentesFluxoTests
     private async Task<(HttpClient Cliente, Guid Id, string Email)> ConvidarEAtivar(HttpClient dona, bool financeiro, bool somenteDela)
     {
         var email = $"ass-{Guid.NewGuid():N}@aralu.test";
-        var convite = await Ler(await dona.PostAsJsonAsync("/api/v1/assistentes", new
+        var grupo = await Ler(await dona.PostAsJsonAsync("/api/v1/grupos-acesso", PedidoGrupo($"Grupo {Guid.NewGuid():N}"[..20], financeiro, todos: !somenteDela)));
+        var convite = await Ler(await dona.PostAsJsonAsync("/api/v1/equipe", new
         {
             nome = "Ana Assistente",
             email,
-            podeVerFinanceiro = financeiro,
-            somenteDela,
+            tipo = "Membro",
+            grupoId = grupo.GetProperty("id").GetGuid(),
         }));
         var (usuarioId, token) = LinkDoConvite(email);
         var cliente = _banco.Fabrica.CreateClient();

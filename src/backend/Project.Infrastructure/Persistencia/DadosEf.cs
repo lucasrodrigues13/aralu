@@ -413,8 +413,8 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         banco.Tarefas.FirstOrDefaultAsync(tarefa => tarefa.Id == id && tarefa.ContaId == contaId, ct);
 
     public async Task<IReadOnlyList<Guid>> IdsAssistentesAtivasAsync(Guid contaId, CancellationToken ct) =>
-        await banco.Assistentes.AsNoTracking()
-            .Where(item => item.ContaId == contaId && item.Situacao == Project.Domain.Equipe.SituacaoAssistente.Ativa)
+        await banco.Membros.AsNoTracking()
+            .Where(item => item.ContaId == contaId && item.Tipo == Project.Domain.Equipe.TipoMembro.Membro && item.Situacao == Project.Domain.Equipe.SituacaoMembro.Ativa)
             .Select(item => item.Id)
             .ToListAsync(ct);
 
@@ -1266,7 +1266,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
 
     public async Task<IReadOnlyDictionary<string, string>> NomesResponsaveisAsync(Guid contaId, CancellationToken ct)
     {
-        var nomes = await banco.Assistentes.AsNoTracking()
+        var nomes = await banco.Membros.AsNoTracking()
             .Where(item => item.ContaId == contaId)
             .ToDictionaryAsync(item => item.Id.ToString(), item => item.Nome, ct);
         var dona = await banco.Perfis.AsNoTracking()

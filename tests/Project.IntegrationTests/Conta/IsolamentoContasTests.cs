@@ -105,7 +105,9 @@ public class IsolamentoContasTests
         Assert.Empty((await Ler(await b.GetAsync("/api/v1/contratos"))).EnumerateArray());
         Assert.Empty((await Ler(await b.GetAsync("/api/v1/oportunidades"))).EnumerateArray());
         Assert.Empty((await Ler(await b.GetAsync("/api/v1/agenda?de=2031-05-01&ate=2031-05-31"))).EnumerateArray());
-        Assert.Empty((await Ler(await b.GetAsync("/api/v1/assistentes"))).EnumerateArray());
+        // Equipe de B: só o próprio Dono.
+        Assert.Single((await Ler(await b.GetAsync("/api/v1/equipe"))).EnumerateArray());
+        Assert.Equal(2, (await Ler(await b.GetAsync("/api/v1/grupos-acesso"))).GetArrayLength());
         Assert.DoesNotContain(
             (await Ler(await b.GetAsync("/api/v1/modelos"))).EnumerateArray(),
             item => item.GetProperty("id").GetGuid() == modeloId);
