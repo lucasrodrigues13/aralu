@@ -235,11 +235,6 @@ export class RemoverServicoModeloDialog {
                   </div>
                 </div>
                 <div class="barra-lista-acoes">
-                  @if (blocos().length > 0) {
-                    <button mat-stroked-button type="button" (click)="alternarTodos()">
-                      <mat-icon>{{ todosAbertos() ? 'unfold_less' : 'unfold_more' }}</mat-icon> {{ todosAbertos() ? 'Recolher todos' : 'Expandir todos' }}
-                    </button>
-                  }
                   <button mat-stroked-button type="button" (click)="emMassa()"><mat-icon>library_add</mat-icon> Adicionar em massa</button>
                   <button mat-stroked-button type="button" (click)="adicionarServicos()"><mat-icon>playlist_add</mat-icon> Adicionar serviços</button>
                   <button mat-flat-button type="button" (click)="novaTarefa(null)"><mat-icon>add_task</mat-icon> Nova tarefa</button>
@@ -248,8 +243,8 @@ export class RemoverServicoModeloDialog {
 
               <div class="modo-agrupamento" role="radiogroup" aria-label="Agrupar tarefas por" [class.prazo]="modo() === 'prazo'">
                 <span class="marcador" aria-hidden="true"></span>
-                <button type="button" role="radio" [attr.aria-checked]="modo() === 'servico'" (click)="modo.set('servico')"><mat-icon>category</mat-icon> Por serviço</button>
-                <button type="button" role="radio" [attr.aria-checked]="modo() === 'prazo'" (click)="modo.set('prazo')"><mat-icon>schedule</mat-icon> Por tempo faltante</button>
+                <button type="button" role="radio" [attr.aria-checked]="modo() === 'servico'" (click)="trocarModo('servico')"><mat-icon>category</mat-icon> Por serviço</button>
+                <button type="button" role="radio" [attr.aria-checked]="modo() === 'prazo'" (click)="trocarModo('prazo')"><mat-icon>schedule</mat-icon> Por tempo faltante</button>
               </div>
 
               @if (servicos().length === 0 && tarefas().length === 0) {
@@ -263,7 +258,16 @@ export class RemoverServicoModeloDialog {
               } @else if (blocosVisiveis().length === 0) {
                 <p class="text-center text-muted py-10">Nada encontrado com esses filtros.</p>
               } @else {
-                <ul class="servicos-lista" aria-label="Serviços e tarefas do modelo">
+                <div class="servicos-lista-cabecalho">
+                  <button type="button" class="alternar-todos" data-teste="alternar-todos" (click)="alternarTodos()">
+                    <mat-icon>{{ todosAbertos() ? 'unfold_less' : 'unfold_more' }}</mat-icon> {{ todosAbertos() ? 'Recolher todos' : 'Expandir todos' }}
+                  </button>
+                  <span class="text-sm text-muted">
+                    {{ blocosVisiveis().length }} {{ modo() === 'prazo' ? (blocosVisiveis().length === 1 ? 'faixa' : 'faixas') : (blocosVisiveis().length === 1 ? 'serviço' : 'serviços') }} ·
+                    {{ tarefasVisiveis() }} {{ tarefasVisiveis() === 1 ? 'tarefa' : 'tarefas' }}
+                  </span>
+                </div>
+                <ul class="servicos-lista com-cabecalho" aria-label="Serviços e tarefas do modelo">
                   @for (bloco of blocosVisiveis(); track bloco.chave) {
                     <li class="servico" [class.aberto]="estaAberto(bloco.chave)">
                       <div class="servico-cabecalho">
@@ -360,6 +364,12 @@ export class RemoverServicoModeloDialog {
   styles: `
     .nome { display: block; font-weight: 500; }
     .servicos-lista { list-style: none; padding: 0; margin: 0; border: 1px solid rgba(128,128,128,.25); border-radius: 8px; overflow: hidden; }
+    .servicos-lista-cabecalho { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 12px 4px 4px; border: 1px solid rgba(128,128,128,.25); border-bottom: 0; border-radius: 8px 8px 0 0; background: rgba(128,128,128,.08); }
+    .servicos-lista.com-cabecalho { border-radius: 0 0 8px 8px; }
+    .alternar-todos { display: flex; align-items: center; gap: 6px; padding: 6px 8px; border: 0; background: none; color: inherit; font: inherit; font-size: .875rem; cursor: pointer; border-radius: 6px; }
+    .alternar-todos mat-icon { font-size: 20px; width: 20px; height: 20px; }
+    .alternar-todos:hover { background: rgba(128,128,128,.12); }
+    .alternar-todos:focus-visible { outline: 2px solid var(--mat-sys-primary); }
     .servico + .servico { border-top: 1px solid rgba(128,128,128,.25); }
     .servico-cabecalho { display: flex; align-items: center; gap: 8px; padding: 8px 12px 8px 4px; }
     .servico-cabecalho:hover, .tarefa:hover { background: rgba(128,128,128,.08); }
@@ -517,6 +527,15 @@ export class ModeloEventoEditorPage implements OnInit {
   protected todosAbertos(): boolean {
     const blocos = this.blocosVisiveis();
     return blocos.length > 0 && blocos.every((bloco) => this.estaAberto(bloco.chave));
+  }
+
+  protected readonly tarefasVisiveis = computed(() => this.blocosVisiveis().reduce((soma, bloco) => soma + bloco.tarefas.length, 0));
+
+  /** Cada visão começa com todos os blocos recolhidos. */
+  protected trocarModo(modo: ModoAgrupamento): void {
+    if (this.modo() === modo) return;
+    this.modo.set(modo);
+    this.abertos.set(new Set());
   }
 
   protected alternarTodos(): void {
