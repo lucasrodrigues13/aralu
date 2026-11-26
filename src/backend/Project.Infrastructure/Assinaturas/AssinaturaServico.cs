@@ -116,6 +116,14 @@ public sealed class AssinaturaServico(AppDbContext banco, IAsaas asaas, IOptions
         var passos = new List<PassoAsaas>();
         try
         {
+            // Cancelou e ainda está no período pago: assinar de novo é reativar a mesma recorrência no Asaas.
+            var hojeAssinar = DateOnly.FromDateTime(agora.UtcDateTime);
+            if (assinatura.Situacao == SituacaoAssinatura.Cancelada && assinatura.AsaasSubscriptionId is not null
+                && assinatura.PagoAte is DateOnly pagoAteAssinar && pagoAteAssinar >= hojeAssinar)
+            {
+                return await ReativarAsync(contaId, agora, ct);
+            }
+
             // Já assinou e não cancelou: devolve a fatura em aberto, sem criar outra assinatura.
             // CanceladaEm nulo com situação Cancelada = assinatura ainda viva no Asaas: não cria uma segunda.
             if (assinatura.AsaasSubscriptionId is { } existente && (assinatura.Situacao != SituacaoAssinatura.Cancelada || assinatura.CanceladaEm is null))
@@ -209,7 +217,24 @@ public sealed class AssinaturaServico(AppDbContext banco, IAsaas asaas, IOptions
         var passos = new List<PassoAsaas>();
         try
         {
+            // Só desativa a recorrência; a cobrança futura já gerada é removida para não ficar "aguardando pagamento".
             await asaas.CancelarAssinaturaAsync(id, passos, ct);
+            var cobrancas = await asaas.CobrancasDaAssinaturaAsync(id, passos, ct);
+            foreach (var cobranca in cobrancas.Where(item => item.Status == "PENDING"))
+            {
+                await asaas.RemoverCobrancaAsync(cobranca.Id, passos, ct);
+                await GuardarCobrancaAsync(assinatura, cobranca, agora, ct);
+            }
+
+            // Inclui as que ficaram pendentes aqui de assinaturas antigas, já removidas no Asaas.
+            var pendentes = banco.CobrancasAssinatura.Local.Where(item => item.ContaId == contaId && item.Status == "PENDING")
+                .Concat(await banco.CobrancasAssinatura.IgnoreQueryFilters().Where(item => item.ContaId == contaId && item.Status == "PENDING").ToListAsync(ct))
+                .Distinct()
+                .ToList();
+            foreach (var pendente in pendentes)
+            {
+                pendente.Status = "DELETED";
+            }
         }
         catch (ErroAsaas erro)
         {
@@ -269,18 +294,31 @@ public sealed class AssinaturaServico(AppDbContext banco, IAsaas asaas, IOptions
             var vencimento = pago.AddDays(1);
             var plano = await banco.Planos.AsNoTracking().FirstAsync(item => item.Id == assinatura.PlanoId, ct);
             var valor = Assinatura.ValorCobrado(plano.ValorMensal, assinatura.ValorPersonalizado, assinatura.DescontoPercentual, assinatura.DescontoAte, vencimento);
-            var criada = await asaas.CriarAssinaturaAsync(
-                assinatura.AsaasCustomerId,
-                forma == FormaPagamento.Cartao ? "CREDIT_CARD" : "PIX",
-                valor,
-                vencimento,
-                $"Aralu {plano.Nome}",
-                contaId.ToString(),
-                passos,
-                ct);
-            var cobrancas = await asaas.CobrancasDaAssinaturaAsync(criada.Id, passos, ct);
 
-            assinatura.AsaasSubscriptionId = criada.Id;
+            // Volta a recorrência da mesma assinatura no Asaas; só cria outra se a antiga foi removida lá (versão anterior).
+            string assinaturaId;
+            try
+            {
+                assinaturaId = assinatura.AsaasSubscriptionId ?? throw new ErroAsaas("Sem assinatura no Asaas.");
+                await asaas.ReativarAssinaturaAsync(assinaturaId, vencimento, passos, ct);
+            }
+            catch (ErroAsaas)
+            {
+                var criada = await asaas.CriarAssinaturaAsync(
+                    assinatura.AsaasCustomerId,
+                    forma == FormaPagamento.Cartao ? "CREDIT_CARD" : "PIX",
+                    valor,
+                    vencimento,
+                    $"Aralu {plano.Nome}",
+                    contaId.ToString(),
+                    passos,
+                    ct);
+                assinaturaId = criada.Id;
+            }
+
+            var cobrancas = await asaas.CobrancasDaAssinaturaAsync(assinaturaId, passos, ct);
+
+            assinatura.AsaasSubscriptionId = assinaturaId;
             assinatura.Valor = valor;
             assinatura.ProximoVencimento = vencimento;
             assinatura.Situacao = SituacaoAssinatura.Ativa;

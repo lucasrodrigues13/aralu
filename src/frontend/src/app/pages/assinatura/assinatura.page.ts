@@ -1,6 +1,6 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -161,7 +161,18 @@ export class AssinaturaPage implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   protected readonly situacao = signal<SituacaoAssinatura | null>(null);
   protected readonly faturas = signal<Fatura[]>([]);
-  protected readonly linkAberto = signal<string | null>(null);
+  /**
+   * Fatura para pagar agora: a vencida, ou a pendente que não é do mês seguinte a um período já pago
+   * (depois de reativar, a próxima cobrança fica no Asaas, mas não está "em aberto").
+   */
+  protected readonly linkAberto = computed(() => {
+    const pagoAte = this.situacao()?.pagoAte ?? null;
+    const hoje = new Date().toISOString().slice(0, 10);
+    const coberta = (vencimento: string) => pagoAte !== null && vencimento > pagoAte && vencimento > hoje;
+    return (
+      this.faturas().find((f) => f.status === 'OVERDUE' || (f.status === 'PENDING' && !coberta(f.vencimento)))?.link ?? null
+    );
+  });
   protected readonly enviando = signal(false);
   protected documento = '';
   protected nome = '';
@@ -188,7 +199,7 @@ export class AssinaturaPage implements OnInit {
 
   protected statusFatura(status: string): string {
     return (
-      { PENDING: 'Aguardando pagamento', CONFIRMED: 'Paga', RECEIVED: 'Paga', OVERDUE: 'Vencida', REFUNDED: 'Estornada' } as Record<string, string>
+      { PENDING: 'Aguardando pagamento', CONFIRMED: 'Paga', RECEIVED: 'Paga', OVERDUE: 'Vencida', REFUNDED: 'Estornada', DELETED: 'Cancelada' } as Record<string, string>
     )[status] ?? status;
   }
 
@@ -277,7 +288,6 @@ export class AssinaturaPage implements OnInit {
     this.cliente.faturas().subscribe({
       next: (faturas) => {
         this.faturas.set(faturas);
-        this.linkAberto.set(faturas.find((f) => f.status === 'PENDING' || f.status === 'OVERDUE')?.link ?? null);
       },
       error: () => undefined,
     });

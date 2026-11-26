@@ -48,7 +48,14 @@ public interface IAsaas
 
     Task<IReadOnlyList<CobrancaAsaas>> CobrancasDaAssinaturaAsync(string assinaturaId, List<PassoAsaas> passos, CancellationToken ct);
 
+    /// <summary>Cancelar: só desativa a recorrência (status INACTIVE); a assinatura continua no Asaas para ser reativada.</summary>
     Task CancelarAssinaturaAsync(string assinaturaId, List<PassoAsaas> passos, CancellationToken ct);
+
+    /// <summary>Reativar: volta a recorrência da mesma assinatura (status ACTIVE) com o próximo vencimento informado.</summary>
+    Task ReativarAssinaturaAsync(string assinaturaId, DateOnly proximoVencimento, List<PassoAsaas> passos, CancellationToken ct);
+
+    /// <summary>Remove uma cobrança pendente (a da recorrência desativada não deve ficar para pagar).</summary>
+    Task RemoverCobrancaAsync(string cobrancaId, List<PassoAsaas> passos, CancellationToken ct);
 
     /// <summary>Novo valor a partir da próxima cobrança; a cobrança já gerada não muda (§6 D6).</summary>
     Task AtualizarValorAsync(string assinaturaId, decimal valor, List<PassoAsaas> passos, CancellationToken ct);
@@ -100,7 +107,20 @@ public sealed class AsaasHttp(HttpClient http, IOptions<AsaasOpcoes> opcoes, ILo
     }
 
     public Task CancelarAssinaturaAsync(string assinaturaId, List<PassoAsaas> passos, CancellationToken ct) =>
-        EnviarAsync("Cancelar assinatura", HttpMethod.Delete, $"/v3/subscriptions/{Uri.EscapeDataString(assinaturaId)}", null, passos, ct);
+        EnviarAsync("Desativar assinatura", HttpMethod.Put, $"/v3/subscriptions/{Uri.EscapeDataString(assinaturaId)}", new JsonObject
+        {
+            ["status"] = "INACTIVE",
+        }, passos, ct);
+
+    public Task ReativarAssinaturaAsync(string assinaturaId, DateOnly proximoVencimento, List<PassoAsaas> passos, CancellationToken ct) =>
+        EnviarAsync("Reativar assinatura", HttpMethod.Put, $"/v3/subscriptions/{Uri.EscapeDataString(assinaturaId)}", new JsonObject
+        {
+            ["status"] = "ACTIVE",
+            ["nextDueDate"] = proximoVencimento.ToString("yyyy-MM-dd"),
+        }, passos, ct);
+
+    public Task RemoverCobrancaAsync(string cobrancaId, List<PassoAsaas> passos, CancellationToken ct) =>
+        EnviarAsync("Remover cobrança pendente", HttpMethod.Delete, $"/v3/payments/{Uri.EscapeDataString(cobrancaId)}", null, passos, ct);
 
     public Task AtualizarValorAsync(string assinaturaId, decimal valor, List<PassoAsaas> passos, CancellationToken ct) =>
         EnviarAsync("Atualizar valor da assinatura", HttpMethod.Put, $"/v3/subscriptions/{Uri.EscapeDataString(assinaturaId)}", new JsonObject

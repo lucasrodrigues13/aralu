@@ -32,8 +32,25 @@ public sealed class AsaasDeTeste : IAsaas
     {
         var (_, valor, vencimento, forma) = Assinaturas[assinaturaId];
         passos.Add(new PassoAsaas("Listar cobranças da assinatura", "GET", $"/v3/subscriptions/{assinaturaId}/payments", 200, null, null));
-        IReadOnlyList<CobrancaAsaas> cobrancas = [new(PagamentoDe(assinaturaId), valor, vencimento, "PENDING", $"https://sandbox.asaas.com/i/{assinaturaId}", forma)];
+        IReadOnlyList<CobrancaAsaas> cobrancas = [new(Reativadas.Contains(assinaturaId) ? $"{PagamentoDe(assinaturaId)}_{vencimento:yyyyMMdd}" : PagamentoDe(assinaturaId), valor, vencimento, "PENDING", $"https://sandbox.asaas.com/i/{assinaturaId}", forma)];
         return Task.FromResult(cobrancas);
+    }
+
+    public ConcurrentBag<string> Reativadas { get; } = [];
+
+    public ConcurrentBag<string> CobrancasRemovidas { get; } = [];
+
+    public Task ReativarAssinaturaAsync(string assinaturaId, DateOnly proximoVencimento, List<PassoAsaas> passos, CancellationToken ct)
+    {
+        Assinaturas[assinaturaId] = Assinaturas[assinaturaId] with { Vencimento = proximoVencimento };
+        Reativadas.Add(assinaturaId);
+        return Task.CompletedTask;
+    }
+
+    public Task RemoverCobrancaAsync(string cobrancaId, List<PassoAsaas> passos, CancellationToken ct)
+    {
+        CobrancasRemovidas.Add(cobrancaId);
+        return Task.CompletedTask;
     }
 
     public Task CancelarAssinaturaAsync(string assinaturaId, List<PassoAsaas> passos, CancellationToken ct)

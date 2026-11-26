@@ -126,10 +126,23 @@ public class AssinaturaAsaasTests
 
         var depois = await Assinatura(contaId);
         Assert.Equal(SituacaoAssinatura.Ativa, depois.Situacao);
-        Assert.NotEqual(primeira, depois.AsaasSubscriptionId);
+        // Reativa a mesma recorrência no Asaas, sem criar outra assinatura.
+        Assert.Equal(primeira, depois.AsaasSubscriptionId);
+        Assert.Contains(primeira, _banco.Fabrica.Asaas.Reativadas);
         Assert.Null(depois.CanceladaEm);
         Assert.Equal(pagoAte.AddDays(1), DateOnly.Parse(reativada.GetProperty("vencimento").GetString()!));
         Assert.Equal(pagoAte.AddDays(1), _banco.Fabrica.Asaas.Assinaturas[depois.AsaasSubscriptionId!].Vencimento);
+
+        // Cancelar de novo: a cobrança gerada pela reativação é removida e nada fica "aguardando pagamento".
+        Assert.Equal(HttpStatusCode.OK, (await dona.PostAsync("/api/v1/assinatura/cancelar", null)).StatusCode);
+        var faturas = await Ler(await dona.GetAsync("/api/v1/assinatura/faturas"));
+        Assert.DoesNotContain(faturas.EnumerateArray(), item => item.GetProperty("status").GetString() == "PENDING");
+        Assert.NotEmpty(_banco.Fabrica.Asaas.CobrancasRemovidas);
+
+        // Reativar outra vez segue na mesma assinatura.
+        await Ler(await dona.PostAsync("/api/v1/assinatura/reativar", null));
+        Assert.Equal(primeira, (await Assinatura(contaId)).AsaasSubscriptionId);
+        Assert.Equal(SituacaoAssinatura.Ativa, (await Assinatura(contaId)).Situacao);
 
         // Já ativa: reativar de novo é recusado e assinar não cria uma segunda assinatura.
         Assert.Equal(HttpStatusCode.BadRequest, (await dona.PostAsync("/api/v1/assinatura/reativar", null)).StatusCode);
