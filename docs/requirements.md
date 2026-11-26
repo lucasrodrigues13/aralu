@@ -95,6 +95,9 @@ Nos requisitos de conta, o status **Definido** significa **Confirmado** para est
 | RF-119 | Cada plano libera um conjunto de recursos, com limite mensal opcional. A conta só usa os recursos do seu plano; no trial, os do plano padrão ou do plano atribuído. SPEC-062. | Definido |
 | RF-120 | O `Admin` atribui a uma conta qualquer plano (inclusive não público), valor personalizado ou desconto percentual com data de fim opcional. Cada alteração tem motivo e fica no histórico. Mudar o preço de um plano não altera quem já assina. SPEC-062. | Definido |
 | RF-121 | A permissão do grupo não libera recurso fora do plano da conta. As duas checagens são feitas no servidor. SPEC-062. | Definido |
+| RF-122 | Todo link do cliente exige um código enviado ao e-mail de um cliente do evento antes de abrir. O servidor só entrega os dados do link com sessão válida. SPEC-063. | Definido |
+| RF-123 | O código tem 6 dígitos, vale 10 minutos e aceita 5 tentativas. Cada link aceita 1 pedido a cada 2 minutos e, depois de 3 pedidos, espera 15 minutos. A sessão vale 7 dias no mesmo navegador, renova a cada uso e cai quando o link é gerado de novo. Código e sessão são guardados só como hash. SPEC-063. | Definido |
+| RF-125 | O `Organizer` (Dono) define a validade padrão das propostas da conta, em dias (1 a 180, padrão 30). Ao enviar ou reenviar, o organizador pode mudar a validade daquela proposta. A proposta vale até o fim do último dia. SPEC-064. | Definido |
 
 ### 2.5. Bootstrap do administrador inicial
 
