@@ -9,7 +9,7 @@ import { MatListModule } from '@angular/material/list';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { AuthService } from '../core/auth.service';
+import { AuthService, Modulo, permissoesDaArea } from '../core/auth.service';
 import { AssistentesClient } from '../core/assistentes.client';
 import { ContaClient } from '../core/conta.client';
 import { NegocioClient } from '../core/negocio.client';
@@ -26,8 +26,8 @@ interface ItemMenu {
   emBreve?: boolean;
   /** Só a dona vê (Perfil, Contratos da conta, Assistentes). */
   soDona?: boolean;
-  /** Só quem pode ver o financeiro. */
-  financeiro?: boolean;
+  /** Módulo do grupo (SPEC-062 §9): some do menu sem a permissão de ver. */
+  modulo?: Modulo;
 }
 
 interface GrupoMenu {
@@ -245,48 +245,54 @@ export class CascaComponent implements OnDestroy {
       rotulo: 'Principal',
       itens: [
         { rotulo: 'Hoje', icone: 'today', rota: '/hoje' },
-        { rotulo: 'Perfil', icone: 'apartment', rota: '/perfil', soDona: true },
-        { rotulo: 'Assistentes', icone: 'support_agent', rota: '/assistentes', soDona: true },
-        { rotulo: 'Gestão Financeira', icone: 'account_balance_wallet', rota: '/gestao-financeira', financeiro: true },
+        { rotulo: 'Gestão Financeira', icone: 'account_balance_wallet', rota: '/gestao-financeira', modulo: 'Financeiro' },
         { rotulo: 'Manual de uso', icone: 'menu_book', rota: '/ajuda' },
       ],
     },
     {
       rotulo: 'Gestão de Eventos',
       itens: [
-        { rotulo: 'Eventos', icone: 'celebration', rota: '/eventos' },
-        { rotulo: 'Tarefas', icone: 'task_alt', rota: '/tarefas' },
-        { rotulo: 'Clientes', icone: 'group', rota: '/clientes' },
-        { rotulo: 'Serviços e Fornecedores', icone: 'storefront', rota: '/fornecedores' },
+        { rotulo: 'Eventos', icone: 'celebration', rota: '/eventos', modulo: 'Eventos' },
+        { rotulo: 'Tarefas', icone: 'task_alt', rota: '/tarefas', modulo: 'Tarefas' },
+        { rotulo: 'Clientes', icone: 'group', rota: '/clientes', modulo: 'Clientes' },
+        { rotulo: 'Serviços e Fornecedores', icone: 'storefront', rota: '/fornecedores', modulo: 'Fornecedores' },
       ],
     },
     {
       rotulo: 'Agenda',
-      itens: [{ rotulo: 'Minha Agenda', icone: 'calendar_month', rota: '/agenda' }],
+      itens: [{ rotulo: 'Minha Agenda', icone: 'calendar_month', rota: '/agenda', modulo: 'Agenda' }],
     },
     {
       rotulo: 'Funil de Vendas',
       itens: [
-        { rotulo: 'Oportunidades', icone: 'trending_up', rota: '/oportunidades' },
-        { rotulo: 'Oportunidades de RSVP', icone: 'rsvp', rota: '/leads-rsvp' },
-        { rotulo: 'Contratos', icone: 'description', rota: '/contratos-funil' },
-        { rotulo: 'Orçamentos', icone: 'request_quote', rota: '/orcamentos-funil' },
-        { rotulo: 'Tarefas do Funil', icone: 'checklist', rota: '/tarefas-funil' },
-        { rotulo: 'Relatórios', icone: 'analytics', rota: '/relatorios-funil' },
+        { rotulo: 'Oportunidades', icone: 'trending_up', rota: '/oportunidades', modulo: 'Funil' },
+        { rotulo: 'Oportunidades de RSVP', icone: 'rsvp', rota: '/leads-rsvp', modulo: 'Funil' },
+        { rotulo: 'Contratos', icone: 'description', rota: '/contratos-funil', modulo: 'OrcamentosContratos' },
+        { rotulo: 'Orçamentos', icone: 'request_quote', rota: '/orcamentos-funil', modulo: 'OrcamentosContratos' },
+        { rotulo: 'Tarefas do Funil', icone: 'checklist', rota: '/tarefas-funil', modulo: 'Funil' },
+        { rotulo: 'Relatórios', icone: 'analytics', rota: '/relatorios-funil', modulo: 'Funil' },
       ],
     },
     {
       rotulo: 'Modelos',
       itens: [
-        { rotulo: 'Modelos de Evento', icone: 'content_copy', rota: '/modelos-evento' },
+        { rotulo: 'Modelos de Evento', icone: 'content_copy', rota: '/modelos-evento', modulo: 'Modelos' },
         { rotulo: 'Modelos de Contrato', icone: 'gavel', rota: '/contratos', soDona: true },
-        { rotulo: 'Modelos de Briefing', icone: 'quiz', rota: '/modelos-briefing' },
-        { rotulo: 'Modelos de Roteiro', icone: 'schedule', rota: '/modelos-roteiro' },
-        { rotulo: 'Modelos de Cronograma', icone: 'view_timeline', rota: '/modelos-cronograma' },
-        { rotulo: 'Modelos de Inspirações', icone: 'photo_library', rota: '/modelos-inspiracoes' },
-        { rotulo: 'Modelos de Mensagens', icone: 'sms', rota: '/modelos-mensagens' },
-        { rotulo: 'Modelos de Serviços', icone: 'category', rota: '/modelos-servicos-funil' },
-        { rotulo: 'Modelo de Orçamento', icone: 'receipt_long', rota: '/modelos-orcamento-funil' },
+        { rotulo: 'Modelos de Briefing', icone: 'quiz', rota: '/modelos-briefing', modulo: 'Modelos' },
+        { rotulo: 'Modelos de Roteiro', icone: 'schedule', rota: '/modelos-roteiro', modulo: 'Modelos' },
+        { rotulo: 'Modelos de Cronograma', icone: 'view_timeline', rota: '/modelos-cronograma', modulo: 'Modelos' },
+        { rotulo: 'Modelos de Inspirações', icone: 'photo_library', rota: '/modelos-inspiracoes', modulo: 'Modelos' },
+        { rotulo: 'Modelos de Mensagens', icone: 'sms', rota: '/modelos-mensagens', modulo: 'Modelos' },
+        { rotulo: 'Modelos de Serviços', icone: 'category', rota: '/modelos-servicos-funil', modulo: 'Funil' },
+        { rotulo: 'Modelo de Orçamento', icone: 'receipt_long', rota: '/modelos-orcamento-funil', modulo: 'OrcamentosContratos' },
+      ],
+    },
+    {
+      rotulo: 'Configurações',
+      itens: [
+        { rotulo: 'Perfil', icone: 'apartment', rota: '/perfil', soDona: true },
+        { rotulo: 'Equipe', icone: 'support_agent', rota: '/configuracoes/equipe', soDona: true },
+        { rotulo: 'Grupos de acesso', icone: 'admin_panel_settings', rota: '/configuracoes/grupos', soDona: true },
       ],
     },
   ];
@@ -308,7 +314,7 @@ export class CascaComponent implements OnDestroy {
       .map((grupo) => ({
         ...grupo,
         itens: grupo.itens.filter(
-          (item) => !(item.soDona && this.auth.ehAssistente()) && !(item.financeiro && !this.auth.podeVerFinanceiro()),
+          (item) => !(item.soDona && this.auth.ehAssistente()) && !(item.modulo && !this.auth.pode(item.modulo)),
         ),
       }))
       .filter((grupo) => grupo.itens.length > 0);
@@ -325,7 +331,7 @@ export class CascaComponent implements OnDestroy {
 
     if (this.auth.ehAssistente()) {
       this.conta.areaUsuario().subscribe({
-        next: (area) => this.auth.permissoes.set({ podeVerFinanceiro: !!area.podeVerFinanceiro, somenteDela: !!area.somenteDela, usuarioId: area.usuarioId }),
+        next: (area) => this.auth.permissoes.set(permissoesDaArea(area)),
         error: () => undefined,
       });
       this.assistentes.minhaConta().subscribe({

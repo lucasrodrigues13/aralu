@@ -10,7 +10,7 @@ import { mensagemDeErro } from '../../core/mensagem-erro';
 import { ToastService } from '../../core/toast.service';
 import { Marca } from '../../shared/marca';
 
-/** Primeiro acesso da assistente: cria a senha pelo link do convite (SPEC-032 §6.2). */
+/** Aceite do convite para a equipe (SPEC-062 §13): cria a senha pelo link do convite. */
 @Component({
   selector: 'app-convite-assistente',
   imports: [ReactiveFormsModule, RouterLink, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule, Marca],
@@ -62,7 +62,7 @@ export class ConviteAssistentePage {
     const token = this.rota.snapshot.queryParamMap.get('token');
     const { senha, confirmacao } = this.formulario.getRawValue();
     if (!usuarioId || !token) {
-      this.toast.erro('Este convite venceu. Peça um novo à dona da conta.');
+      this.toast.erro('Este convite expirou. Peça um novo ao responsável pela conta.');
       return;
     }
 

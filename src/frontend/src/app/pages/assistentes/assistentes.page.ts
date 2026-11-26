@@ -13,15 +13,15 @@ import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { AssistenteFormDialog } from './assistente-form.dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
-/** Tela Assistentes (só para a dona): convidar, editar permissões, reenviar, desativar e reativar (SPEC-032 §12). */
+/** Configurações → Equipe (só o Dono, SPEC-062 §13): convidar Dono ou Membro, mudar tipo e grupo, reenviar, desativar e reativar. */
 @Component({
   selector: 'app-assistentes',
   imports: [MatCardModule, MatButtonModule, MatIconModule, MatTooltipModule, MatFormFieldModule, MatSelectModule],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6">
-        <mat-card-title class="mb-0">Assistentes</mat-card-title>
-        <mat-card-subtitle>Quem trabalha com você, com login próprio.</mat-card-subtitle>
+        <mat-card-title class="mb-0">Equipe</mat-card-title>
+        <mat-card-subtitle>Donos e membros da conta, cada um com login próprio. O membro acessa o que o grupo dele permite.</mat-card-subtitle>
       </div>
       <mat-card-content class="border-t border-border">
         <div class="barra-lista">
@@ -30,22 +30,22 @@ import { MatTooltipModule } from '@angular/material/tooltip';
               <mat-label class="font-semibold mb-2 block">Situação</mat-label>
               <mat-form-field appearance="outline" class="w-full">
                 <mat-select aria-label="Situação" [value]="filtro()" (valueChange)="filtro.set($event)">
-                  <mat-option value="ativas">Ativas</mat-option>
-                  <mat-option value="inativas">Inativas</mat-option>
+                  <mat-option value="ativas">Ativos</mat-option>
+                  <mat-option value="inativas">Inativos</mat-option>
                 </mat-select>
               </mat-form-field>
             </div>
           </div>
           <div class="barra-lista-acoes">
-            <button mat-flat-button type="button" (click)="convidar()"><mat-icon>person_add</mat-icon> Convidar assistente</button>
+            <button mat-flat-button type="button" (click)="convidar()"><mat-icon>person_add</mat-icon> Convidar pessoa</button>
           </div>
         </div>
         @if (carregando()) {
           <p class="text-center text-muted py-10">Carregando...</p>
         } @else if (itens().length === 0) {
-          <p class="text-center text-muted py-10">Nenhuma assistente ainda. Convide a primeira.</p>
+          <p class="text-center text-muted py-10">Ninguém na equipe ainda. Convide a primeira pessoa.</p>
         } @else if (visiveis().length === 0) {
-          <p class="text-center text-muted py-10">{{ filtro() === 'inativas' ? 'Nenhuma assistente com acesso desativado.' : 'Nenhuma assistente ativa.' }}</p>
+          <p class="text-center text-muted py-10">{{ filtro() === 'inativas' ? 'Ninguém com acesso desativado.' : 'Ninguém ativo.' }}</p>
         } @else {
           <div>
             <table class="w-full text-left">

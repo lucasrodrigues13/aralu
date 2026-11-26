@@ -16,12 +16,12 @@ export interface AssistenteFormDados {
   assistente?: Assistente;
 }
 
-/** Convidar ou editar assistente (SPEC-032 §6.1 e §6.3). */
+/** Convidar ou editar pessoa da equipe: tipo Dono ou Membro e, para Membro, o grupo (SPEC-062 parte C). */
 @Component({
   selector: 'app-assistente-form',
   imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MascaraDirective, CampoDataComponent],
   template: `
-    <h2 mat-dialog-title>{{ dados.assistente ? 'Editar assistente' : 'Convidar assistente' }}</h2>
+    <h2 mat-dialog-title>{{ dados.assistente ? 'Editar pessoa da equipe' : 'Convidar para a equipe' }}</h2>
     <p class="text-muted text-sm px-6 -mt-2 mb-4">
       {{ dados.assistente ? 'A mudança vale no próximo pedido dela.' : 'Ela recebe um e-mail com o link para criar a senha.' }}
     </p>

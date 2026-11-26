@@ -45,6 +45,26 @@ export interface PermissaoGrupo {
   excluir: boolean;
 }
 
+export interface SalvarGrupo {
+  nome: string;
+  veTodosEventos: boolean;
+  permissoes: PermissaoGrupo[];
+}
+
+/** Módulos da grade de permissões, na ordem da SPEC-062 §9. */
+export const MODULOS_GRUPO: { modulo: string; rotulo: string; cobre: string }[] = [
+  { modulo: 'Clientes', rotulo: 'Clientes', cobre: 'Cadastro de clientes.' },
+  { modulo: 'Eventos', rotulo: 'Eventos', cobre: 'Dados do evento, roteiro, cronograma, inspirações, observações.' },
+  { modulo: 'Convidados', rotulo: 'Convidados', cobre: 'Convites, convidados, RSVP, portaria.' },
+  { modulo: 'Tarefas', rotulo: 'Tarefas', cobre: 'Tarefas e checklists do evento.' },
+  { modulo: 'Agenda', rotulo: 'Agenda', cobre: 'Minha agenda e compromissos.' },
+  { modulo: 'Funil', rotulo: 'Funil', cobre: 'Oportunidades, briefings, tarefas do funil.' },
+  { modulo: 'OrcamentosContratos', rotulo: 'Orçamentos e contratos', cobre: 'Propostas, contratos e parcelas com o cliente.' },
+  { modulo: 'Financeiro', rotulo: 'Financeiro', cobre: 'Valores, parcelas, recebimentos, pagamentos e relatórios financeiros.' },
+  { modulo: 'Fornecedores', rotulo: 'Fornecedores', cobre: 'Cadastro e contratação de fornecedores.' },
+  { modulo: 'Modelos', rotulo: 'Modelos', cobre: 'Biblioteca de modelos.' },
+];
+
 export interface GrupoAcesso {
   id: string;
   nome: string;
@@ -75,6 +95,18 @@ export class AssistentesClient {
   /** Grupos de acesso da conta (SPEC-062 §9). */
   grupos() {
     return this.http.get<GrupoAcesso[]>(`${this.base}/api/v1/grupos-acesso`);
+  }
+
+  criarGrupo(pedido: SalvarGrupo) {
+    return this.http.post<GrupoAcesso>(`${this.base}/api/v1/grupos-acesso`, pedido);
+  }
+
+  atualizarGrupo(id: string, pedido: SalvarGrupo) {
+    return this.http.put<GrupoAcesso>(`${this.base}/api/v1/grupos-acesso/${id}`, pedido);
+  }
+
+  excluirGrupo(id: string) {
+    return this.http.delete<void>(`${this.base}/api/v1/grupos-acesso/${id}`);
   }
 
   /** Consulta do Admin: assistentes de todas as contas (só leitura). */

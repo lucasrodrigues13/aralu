@@ -258,3 +258,17 @@ Tudo o que mexe em schema entra junto, para gerar a migration inicial uma vez s�
 - Convite sem grupo cai no grupo Assistentes (compatível com a tela antiga).
 
 **Próximo: lote 3.2** — telas Configurações → Equipe e Grupos (grade módulo × ver/editar/excluir e alcance), menu Configurações só para Dono e menu escondendo módulos sem "ver"; renomear `convite-assistente.page`. **Lote 3.3** — colunas novas de responsável (`ResponsavelMembroId`/`AutorMembroId` e divisão `MembroId`/`FornecedorId`/`ClienteId` com `CHECK`), 409 nas exclusões com FK `RESTRICT`, troca segura de arquivo e apagar `VinculoModeloEvento` junto com o modelo.
+
+### Fase 3 — lote 3.2 concluído (Claude Code)
+
+**Feito**
+- Menu **Configurações** (só Dono): Perfil, Equipe (`/configuracoes/equipe`) e Grupos de acesso (`/configuracoes/grupos`). `/assistentes` redireciona para Equipe.
+- Tela **Grupos**: lista com membros, alcance e módulos que vê; editor com a grade módulo × ver/editar/excluir (marcar editar/excluir liga ver; tirar ver tira os dois) e o alcance de eventos. Grupo com membros não é apagado.
+- Tela **Equipe**: textos de Dono/Membro; o formulário escolhe tipo e grupo.
+- Menu e rotas por módulo: cada item e rota tem o módulo do grupo; sem "ver", some do menu e a rota leva a "sem acesso" (`moduloGuard`). `AuthService.pode(modulo, acao)` lê as permissões de `/conta/area`.
+- Aceite de convite com a mensagem da spec para convite expirado.
+- Build do frontend ok. `ng test` segue sem compilar só pelo erro antigo de `checklist-tarefa.spec.ts`.
+
+**Não verificado no navegador:** o stack local precisa da API nova e do banco recriado.
+
+**Próximo: lote 3.3** — colunas novas de responsável, 409 nas exclusões com FK `RESTRICT`, troca segura de arquivo e apagar `VinculoModeloEvento` com o modelo.
