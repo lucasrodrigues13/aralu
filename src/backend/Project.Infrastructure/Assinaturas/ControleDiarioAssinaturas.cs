@@ -32,6 +32,7 @@ public sealed class AvisosAssinaturaServico(AppDbContext banco, IEnvioEmail emai
             try
             {
                 mudancas += AtualizarSituacao(assinatura, agora, hoje) ? 1 : 0;
+                mudancas += await AplicarDowngradeAsync(assinatura, planos, agora, hoje, ct) ? 1 : 0;
                 avisos += await AvisarAsync(assinatura, planos[assinatura.PlanoId], agora, hoje, ct);
                 valores += await SincronizarValorAsync(assinatura, planos[assinatura.PlanoId], hoje, ct) ? 1 : 0;
                 await banco.SaveChangesAsync(ct);
@@ -52,6 +53,38 @@ public sealed class AvisosAssinaturaServico(AppDbContext banco, IEnvioEmail emai
         {
             await EnviarAosDonosAsync(assinatura.ContaId, EmailsAssinatura.PagamentoConfirmado(valor, assinatura.ProximoVencimento, Link()), ct);
         }
+    }
+
+    /// <summary>E-mail do upgrade pago (SPEC-065 §6.1 passo 6).</summary>
+    public Task UpgradeConfirmadoAsync(Assinatura assinatura, string plano, decimal valorPago, CancellationToken ct) =>
+        EnviarAosDonosAsync(assinatura.ContaId, EmailsAssinatura.UpgradeConfirmado(plano, valorPago, assinatura.Valor, assinatura.ProximoVencimento, Link()), ct);
+
+    /// <summary>E-mail do downgrade agendado (SPEC-065 §6.2 passo 6).</summary>
+    public Task DowngradeAgendadoAsync(Assinatura assinatura, string plano, DateOnly aplicaEm, decimal mensalidade, CancellationToken ct) =>
+        EnviarAosDonosAsync(assinatura.ContaId, EmailsAssinatura.DowngradeAgendado(plano, aplicaEm, mensalidade, Link()), ct);
+
+    /// <summary>
+    /// SPEC-065 regra 17: no dia do vencimento o plano menor passa a valer, mesmo antes do pagamento da nova mensalidade.
+    /// O valor no Asaas já foi trocado ao agendar.
+    /// </summary>
+    private async Task<bool> AplicarDowngradeAsync(Assinatura assinatura, IReadOnlyDictionary<Guid, Plano> planos, DateTimeOffset agora, DateOnly hoje, CancellationToken ct)
+    {
+        if (assinatura.DowngradePlanoId is not Guid destino || assinatura.DowngradeEm is not DateOnly aplicaEm || hoje < aplicaEm)
+        {
+            return false;
+        }
+
+        var plano = planos[destino];
+        assinatura.PlanoId = destino;
+        assinatura.Valor = Assinatura.ValorCobrado(plano.ValorMensal, assinatura.ValorPersonalizado, assinatura.DescontoPercentual, assinatura.DescontoAte, aplicaEm);
+        assinatura.DescartarTroca();
+        assinatura.AtualizadaEm = agora;
+        if (await RegistrarAsync(assinatura.ContaId, "DowngradeAplicado", aplicaEm, agora, ct))
+        {
+            await EnviarAosDonosAsync(assinatura.ContaId, EmailsAssinatura.DowngradeAplicado(plano.Nome, assinatura.Valor, Link()), ct);
+        }
+
+        return true;
     }
 
     /// <summary>Grava a situação que já venceu (§11): a tela e o Admin passam a ver o estado certo.</summary>
@@ -126,7 +159,7 @@ public sealed class AvisosAssinaturaServico(AppDbContext banco, IEnvioEmail emai
     {
         var vencimento = assinatura.ProximoVencimento ?? hoje;
         var devido = Assinatura.ValorCobrado(plano.ValorMensal, assinatura.ValorPersonalizado, assinatura.DescontoPercentual, assinatura.DescontoAte, vencimento);
-        if (devido == assinatura.Valor || assinatura.DescontoAte is not DateOnly fim || vencimento <= fim)
+        if (devido == assinatura.Valor || assinatura.DescontoAte is not DateOnly fim || vencimento <= fim || assinatura.DowngradePlanoId is not null)
         {
             return false;
         }

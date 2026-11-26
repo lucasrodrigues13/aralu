@@ -260,6 +260,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .HasPrecision(5, 2)
                         .HasColumnType("numeric(5,2)");
 
+                    b.Property<DateOnly?>("DowngradeEm")
+                        .HasColumnType("date");
+
+                    b.Property<Guid?>("DowngradePlanoId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("FormaPagamento")
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
@@ -283,6 +289,20 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
                     b.Property<DateTimeOffset>("TrialTerminaEm")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpgradeCobrancaId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTimeOffset?>("UpgradePedidoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UpgradePlanoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("UpgradeValor")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
 
                     b.Property<decimal>("Valor")
                         .HasPrecision(12, 2)

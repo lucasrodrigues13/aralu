@@ -98,6 +98,9 @@ Nos requisitos de conta, o status **Definido** significa **Confirmado** para est
 | RF-122 | Todo link do cliente exige um código enviado ao e-mail de um cliente do evento antes de abrir. O servidor só entrega os dados do link com sessão válida. SPEC-063. | Definido |
 | RF-123 | O código tem 6 dígitos, vale 10 minutos e aceita 5 tentativas. Cada link aceita 1 pedido a cada 2 minutos e, depois de 3 pedidos, espera 15 minutos. A sessão vale 7 dias no mesmo navegador, renova a cada uso e cai quando o link é gerado de novo. Código e sessão são guardados só como hash. SPEC-063. | Definido |
 | RF-125 | O `Organizer` (Dono) define a validade padrão das propostas da conta, em dias (1 a 180, padrão 30). Ao enviar ou reenviar, o organizador pode mudar a validade daquela proposta. A proposta vale até o fim do último dia. SPEC-064. | Definido |
+| RF-126 | O Dono faz upgrade para um plano público de valor maior em Assinatura. Paga agora a diferença proporcional aos dias restantes do período pago (dias reais do ciclo, hoje incluído), numa cobrança avulsa do Asaas. O ciclo e o vencimento não mudam. SPEC-065. | Rascunho |
+| RF-127 | O plano novo e seus recursos valem a partir da confirmação do pagamento do upgrade. Esse pagamento não estende o período pago. Sem pagamento, a conta continua no plano atual com a recorrência ativa. No trial, a troca é sem cobrança. SPEC-065. | Rascunho |
+| RF-128 | O Dono agenda downgrade para um plano público de valor menor. O plano atual vale até o fim do período pago, sem estorno; o menor vale a partir do próximo vencimento, que já é cobrado com o valor menor. O Dono pode desfazer até lá. Dados de recursos que o plano menor não tem ficam guardados, mas o uso é recusado. SPEC-065. | Rascunho |
 
 ### 2.5. Bootstrap do administrador inicial
 

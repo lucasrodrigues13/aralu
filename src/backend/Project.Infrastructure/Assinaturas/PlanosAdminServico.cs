@@ -218,6 +218,7 @@ public sealed class PlanosAdminServico(AppDbContext banco, IAsaas asaas, ILogger
         };
 
         var planoNovo = planoAtual;
+        var tinhaDowngrade = false;
         switch (tipo)
         {
             case "Plano":
@@ -226,6 +227,22 @@ public sealed class PlanosAdminServico(AppDbContext banco, IAsaas asaas, ILogger
                 {
                     return Resultado<ContaAssinaturaLeitura>.Erro(Codigos.Validacao, "Escolha o plano.");
                 }
+
+                // SPEC-065: a troca pelo Admin descarta upgrade pendente (remove a cobrança avulsa) e downgrade agendado.
+                if (assinatura.UpgradeCobrancaId is { } upgrade)
+                {
+                    try
+                    {
+                        await asaas.RemoverCobrancaAsync(upgrade, [], ct);
+                    }
+                    catch (ErroAsaas erro)
+                    {
+                        logs.LogWarning("Cobrança de upgrade {Cobranca} não removida no Asaas: {Erro}", upgrade, erro.Message);
+                    }
+                }
+
+                tinhaDowngrade = assinatura.DowngradePlanoId is not null;
+                assinatura.DescartarTroca();
 
                 // Inclusive não público (ex.: "Fundadores", T17).
                 assinatura.PlanoId = planoNovo.Id;
@@ -296,7 +313,7 @@ public sealed class PlanosAdminServico(AppDbContext banco, IAsaas asaas, ILogger
         banco.AlteracoesAssinatura.Add(registro);
         await banco.SaveChangesAsync(ct);
 
-        if (assinatura.AsaasSubscriptionId is { } asaasId && valorDepois != valorAntes)
+        if (assinatura.AsaasSubscriptionId is { } asaasId && (valorDepois != valorAntes || tinhaDowngrade))
         {
             try
             {

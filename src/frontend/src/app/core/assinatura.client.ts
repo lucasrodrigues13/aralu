@@ -16,6 +16,44 @@ export interface SituacaoAssinatura {
   assinada: boolean;
   /** Staging: a API devolve o passo a passo das chamadas ao Asaas para o console do navegador. */
   diagnosticoNoNavegador: boolean;
+  /** SPEC-065: upgrade esperando pagamento ou downgrade agendado. */
+  trocaPendente: TrocaPendente | null;
+}
+
+export interface TrocaPendente {
+  tipo: 'Upgrade' | 'Downgrade';
+  plano: string;
+  valor: number | null;
+  aplicaEm: string | null;
+  linkPagamento: string | null;
+}
+
+/** Um plano para o qual a conta pode trocar, com o valor calculado pela API (SPEC-065). */
+export interface TrocaPrevia {
+  planoId: string;
+  plano: string;
+  descricao: string | null;
+  valorMensal: number;
+  tipo: 'Upgrade' | 'Downgrade';
+  valorAgora: number;
+  credito: number;
+  diasRestantes: number;
+  diasDoCiclo: number;
+  pagoAte: string | null;
+  aplicaEm: string | null;
+  novaMensalidade: number;
+  recursosQueSaem: string[];
+  permitida: boolean;
+  motivo: string | null;
+}
+
+export interface TrocaResposta {
+  tipo: 'Upgrade' | 'Downgrade';
+  plano: string;
+  valorAgora: number;
+  linkPagamento: string | null;
+  aplicaEm: string | null;
+  diagnostico: PassoAsaas[] | null;
 }
 
 /** Um passo da conversa da API com o Asaas (só no staging). A chave da API nunca vem. */
@@ -87,6 +125,20 @@ export class AssinaturaClient {
 
   cancelar() {
     return this.http.post<{ mensagem: string; diagnostico: PassoAsaas[] | null }>(`${this.base}/api/v1/assinatura/cancelar`, null);
+  }
+
+  /** SPEC-065: planos para trocar, com o valor do upgrade ou a data do downgrade. */
+  trocas() {
+    return this.http.get<TrocaPrevia[]>(`${this.base}/api/v1/assinatura/trocas`);
+  }
+
+  trocarPlano(planoId: string) {
+    return this.http.post<TrocaResposta>(`${this.base}/api/v1/assinatura/trocar-plano`, { planoId });
+  }
+
+  /** Desiste do upgrade pendente ou mantém o plano atual no downgrade agendado. */
+  desistirTroca() {
+    return this.http.post<{ diagnostico: PassoAsaas[] | null }>(`${this.base}/api/v1/assinatura/desistir-troca`, null);
   }
 
   faturas() {

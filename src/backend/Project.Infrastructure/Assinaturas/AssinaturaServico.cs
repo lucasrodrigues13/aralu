@@ -23,7 +23,8 @@ public sealed record SituacaoLeitura(
     decimal Valor,
     string? FormaPagamento = null,
     bool Assinada = false,
-    bool DiagnosticoNoNavegador = false);
+    bool DiagnosticoNoNavegador = false,
+    TrocaPendenteLeitura? TrocaPendente = null);
 
 public sealed record AssinarPedido(string? Documento, string? NomeCobranca, string? FormaPagamento, Guid? PlanoId = null);
 
@@ -35,7 +36,7 @@ public sealed record FaturaLeitura(DateOnly Vencimento, decimal Valor, string St
 public sealed record EventoDiagnostico(string Tipo, DateTimeOffset RecebidoEm, DateTimeOffset? ProcessadoEm, string? Erro, JsonNode? Payload);
 
 /// <summary>Assinatura da conta (SPEC-062 parte B): liberação (R7), assinatura no Asaas e avisos do Asaas.</summary>
-public sealed class AssinaturaServico(AppDbContext banco, IAsaas asaas, IOptions<AsaasOpcoes> opcoes, ILogger<AssinaturaServico> logs, PlanosAdminServico planos, AvisosAssinaturaServico avisos)
+public sealed partial class AssinaturaServico(AppDbContext banco, IAsaas asaas, IOptions<AsaasOpcoes> opcoes, ILogger<AssinaturaServico> logs, PlanosAdminServico planos, AvisosAssinaturaServico avisos)
 {
     public const string ErroAsaasCodigo = "asaas";
 
@@ -74,7 +75,8 @@ public sealed class AssinaturaServico(AppDbContext banco, IAsaas asaas, IOptions
             assinatura.Valor,
             assinatura.FormaPagamento?.ToString(),
             assinatura.AsaasSubscriptionId is not null && assinatura.Situacao != SituacaoAssinatura.Cancelada,
-            opcoes.Value.DiagnosticoNoNavegador);
+            opcoes.Value.DiagnosticoNoNavegador,
+            await TrocaPendenteAsync(assinatura, ct));
     }
 
     /// <summary>
@@ -217,6 +219,14 @@ public sealed class AssinaturaServico(AppDbContext banco, IAsaas asaas, IOptions
         var passos = new List<PassoAsaas>();
         try
         {
+            // SPEC-065 §7: upgrade pendente sai (a cobrança avulsa é removida) e downgrade agendado é descartado.
+            if (assinatura.UpgradeCobrancaId is { } upgrade)
+            {
+                await asaas.RemoverCobrancaAsync(upgrade, passos, ct);
+            }
+
+            assinatura.DescartarTroca();
+
             // Só desativa a recorrência; a cobrança futura já gerada é removida para não ficar "aguardando pagamento".
             await asaas.CancelarAssinaturaAsync(id, passos, ct);
             var cobrancas = await asaas.CobrancasDaAssinaturaAsync(id, passos, ct);
@@ -434,6 +444,14 @@ public sealed class AssinaturaServico(AppDbContext banco, IAsaas asaas, IOptions
 
     private async Task ProcessarAsync(string tipo, JsonNode aviso, DateTimeOffset agora, CancellationToken ct)
     {
+        // Cobrança avulsa do upgrade (SPEC-065): não tem "subscription" e não paga mês.
+        if (aviso["payment"] is { } avulsa && avulsa["externalReference"]?.GetValue<string>() is { } referencia
+            && referencia.StartsWith(PrefixoUpgrade, StringComparison.Ordinal))
+        {
+            await ProcessarUpgradeAsync(tipo, referencia, avulsa, agora, ct);
+            return;
+        }
+
         if (aviso["payment"] is not { } pagamento || pagamento["subscription"]?.GetValue<string>() is not { } assinaturaId)
         {
             return;

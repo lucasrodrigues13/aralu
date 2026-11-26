@@ -61,6 +61,32 @@ public sealed class Assinatura : ITemConta
 
     public DateTimeOffset? CanceladaEm { get; set; }
 
+    /// <summary>Upgrade esperando pagamento (SPEC-065 §6.1): plano de destino e a cobrança avulsa no Asaas.</summary>
+    public Guid? UpgradePlanoId { get; set; }
+
+    public string? UpgradeCobrancaId { get; set; }
+
+    public decimal? UpgradeValor { get; set; }
+
+    public DateTimeOffset? UpgradePedidoEm { get; set; }
+
+    /// <summary>Downgrade agendado (SPEC-065 §6.2): o plano menor vale a partir desta data (o próximo vencimento).</summary>
+    public Guid? DowngradePlanoId { get; set; }
+
+    public DateOnly? DowngradeEm { get; set; }
+
+    public bool TemTrocaPendente => UpgradePlanoId is not null || DowngradePlanoId is not null;
+
+    public void DescartarTroca()
+    {
+        UpgradePlanoId = null;
+        UpgradeCobrancaId = null;
+        UpgradeValor = null;
+        UpgradePedidoEm = null;
+        DowngradePlanoId = null;
+        DowngradeEm = null;
+    }
+
     public DateTimeOffset CriadaEm { get; set; }
 
     public DateTimeOffset AtualizadaEm { get; set; }
@@ -133,9 +159,26 @@ public sealed class Assinatura : ITemConta
         return ultimoDia > hoje ? ultimoDia : hoje;
     }
 
+    /// <summary>
+    /// Pró-rata do upgrade (SPEC-065 regras 1 a 5): o período atual vai de (PagoAte + 1 dia) − 1 mês até PagoAte,
+    /// com os dias reais do ciclo; hoje conta como dia restante. Valor = (novo − atual) × restantes / ciclo, em centavos.
+    /// </summary>
+    public static ProRata CalcularProRata(decimal valorAtual, decimal valorNovo, DateOnly pagoAte, DateOnly hoje)
+    {
+        var inicio = pagoAte.AddDays(1).AddMonths(-1);
+        var diasDoCiclo = pagoAte.DayNumber - inicio.DayNumber + 1;
+        var restantes = Math.Clamp(pagoAte.DayNumber - hoje.DayNumber + 1, 0, diasDoCiclo);
+        var credito = Math.Round(valorAtual * restantes / diasDoCiclo, 2, MidpointRounding.AwayFromZero);
+        var valor = Math.Round(valorNovo * restantes / diasDoCiclo - valorAtual * restantes / diasDoCiclo, 2, MidpointRounding.AwayFromZero);
+        return new ProRata(restantes, diasDoCiclo, credito, Math.Max(valor, 0m));
+    }
+
     /// <summary>Dias de trial que faltam (0 fora do trial). O dia do cadastro conta como o 1º.</summary>
     public int DiasRestantesDeTrial(DateTimeOffset agora) =>
         Situacao == SituacaoAssinatura.Trial && agora < TrialTerminaEm
             ? (int)Math.Ceiling((TrialTerminaEm - agora).TotalDays)
             : 0;
 }
+
+/// <summary>Resultado do pró-rata: dias restantes, dias do ciclo, crédito do plano atual e valor a pagar agora.</summary>
+public sealed record ProRata(int DiasRestantes, int DiasDoCiclo, decimal Credito, decimal Valor);

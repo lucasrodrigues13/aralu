@@ -39,6 +39,21 @@ public static class AssinaturaEndpoints
                     ? Results.Ok(new { mensagem = "Assinatura cancelada. A conta segue liberada até o fim do período pago.", diagnostico = r.Valor })
                     : Erro(r.Falha!, null);
             }));
+        // SPEC-065: troca de plano pelo Dono. Prévia calculada aqui; upgrade cobra a diferença, downgrade agenda.
+        dono.MapGet("/trocas", (ClaimsPrincipal u, AssinaturaServico s, CancellationToken ct) =>
+            ComConta(u, async conta => Results.Ok(await s.TrocasAsync(conta, DateTimeOffset.UtcNow, ct))));
+        dono.MapPost("/trocar-plano", (TrocaPedido pedido, ClaimsPrincipal u, AssinaturaServico s, CancellationToken ct) =>
+            ComConta(u, async conta =>
+            {
+                var r = await s.TrocarPlanoAsync(conta, pedido, DateTimeOffset.UtcNow, ct);
+                return r.Ok ? Results.Ok(r.Valor) : Erro(r.Falha!, s.UltimoDiagnostico);
+            }));
+        dono.MapPost("/desistir-troca", (ClaimsPrincipal u, AssinaturaServico s, CancellationToken ct) =>
+            ComConta(u, async conta =>
+            {
+                var r = await s.DesistirDaTrocaAsync(conta, DateTimeOffset.UtcNow, ct);
+                return r.Ok ? Results.Ok(new { diagnostico = r.Valor }) : Erro(r.Falha!, null);
+            }));
         dono.MapGet("/faturas", (ClaimsPrincipal u, AssinaturaServico s, CancellationToken ct) =>
             ComConta(u, async conta => Results.Ok(await s.FaturasAsync(conta, ct))));
         dono.MapGet("/diagnostico", (ClaimsPrincipal u, AssinaturaServico s, CancellationToken ct) =>

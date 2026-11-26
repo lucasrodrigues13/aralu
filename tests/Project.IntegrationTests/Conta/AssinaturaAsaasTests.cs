@@ -13,7 +13,7 @@ namespace Project.IntegrationTests.Conta;
 
 /// <summary>SPEC-062 parte B com o Asaas simulado: vencimento da primeira cobrança, avisos idempotentes, cancelamento.</summary>
 [Collection(ColecaoApi.Nome)]
-public class AssinaturaAsaasTests
+public partial class AssinaturaAsaasTests
 {
     private const string Senha = "abcdefgh";
     private readonly BancoFixture _banco;

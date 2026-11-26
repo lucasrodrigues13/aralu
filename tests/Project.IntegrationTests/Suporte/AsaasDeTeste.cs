@@ -61,10 +61,24 @@ public sealed class AsaasDeTeste : IAsaas
 
     public ConcurrentDictionary<string, decimal> ValoresAtualizados { get; } = new();
 
-    public Task AtualizarValorAsync(string assinaturaId, decimal valor, List<PassoAsaas> passos, CancellationToken ct)
+    public ConcurrentDictionary<string, bool> PendentesAtualizados { get; } = new();
+
+    public Task AtualizarValorAsync(string assinaturaId, decimal valor, List<PassoAsaas> passos, CancellationToken ct, bool atualizarPendentes = false)
     {
         ValoresAtualizados[assinaturaId] = valor;
+        PendentesAtualizados[assinaturaId] = atualizarPendentes;
         return Task.CompletedTask;
+    }
+
+    /// <summary>Cobranças avulsas (upgrade): id → (valor, vencimento, externalReference).</summary>
+    public ConcurrentDictionary<string, (decimal Valor, DateOnly Vencimento, string Referencia)> Avulsas { get; } = new();
+
+    public Task<CobrancaAsaas> CriarCobrancaAsync(string clienteId, string formaPagamento, decimal valor, DateOnly vencimento, string descricao, string referencia, List<PassoAsaas> passos, CancellationToken ct)
+    {
+        var id = $"pay_avulsa_{Guid.NewGuid():N}";
+        Avulsas[id] = (valor, vencimento, referencia);
+        passos.Add(new PassoAsaas("Criar cobrança avulsa", "POST", "/v3/payments", 200, null, null));
+        return Task.FromResult(new CobrancaAsaas(id, valor, vencimento, "PENDING", $"https://sandbox.asaas.com/i/{id}", formaPagamento));
     }
 
     public static string PagamentoDe(string assinaturaId) => "pay_" + assinaturaId[4..];

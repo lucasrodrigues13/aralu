@@ -58,7 +58,11 @@ public interface IAsaas
     Task RemoverCobrancaAsync(string cobrancaId, List<PassoAsaas> passos, CancellationToken ct);
 
     /// <summary>Novo valor a partir da próxima cobrança; a cobrança já gerada não muda (§6 D6).</summary>
-    Task AtualizarValorAsync(string assinaturaId, decimal valor, List<PassoAsaas> passos, CancellationToken ct);
+    /// <remarks>Com <paramref name="atualizarPendentes"/>, a cobrança do próximo ciclo já gerada e pendente também muda (SPEC-065 regras 11 e 16).</remarks>
+    Task AtualizarValorAsync(string assinaturaId, decimal valor, List<PassoAsaas> passos, CancellationToken ct, bool atualizarPendentes = false);
+
+    /// <summary>Cobrança avulsa (upgrade, SPEC-065): fora da recorrência, identificada pelo externalReference.</summary>
+    Task<CobrancaAsaas> CriarCobrancaAsync(string clienteId, string formaPagamento, decimal valor, DateOnly vencimento, string descricao, string referencia, List<PassoAsaas> passos, CancellationToken ct);
 }
 
 /// <summary>API v3 do Asaas (https://docs.asaas.com). Autenticação pelo header access_token.</summary>
@@ -122,12 +126,26 @@ public sealed class AsaasHttp(HttpClient http, IOptions<AsaasOpcoes> opcoes, ILo
     public Task RemoverCobrancaAsync(string cobrancaId, List<PassoAsaas> passos, CancellationToken ct) =>
         EnviarAsync("Remover cobrança pendente", HttpMethod.Delete, $"/v3/payments/{Uri.EscapeDataString(cobrancaId)}", null, passos, ct);
 
-    public Task AtualizarValorAsync(string assinaturaId, decimal valor, List<PassoAsaas> passos, CancellationToken ct) =>
+    public Task AtualizarValorAsync(string assinaturaId, decimal valor, List<PassoAsaas> passos, CancellationToken ct, bool atualizarPendentes = false) =>
         EnviarAsync("Atualizar valor da assinatura", HttpMethod.Put, $"/v3/subscriptions/{Uri.EscapeDataString(assinaturaId)}", new JsonObject
         {
             ["value"] = valor,
-            ["updatePendingPayments"] = false,
+            ["updatePendingPayments"] = atualizarPendentes,
         }, passos, ct);
+
+    public async Task<CobrancaAsaas> CriarCobrancaAsync(string clienteId, string formaPagamento, decimal valor, DateOnly vencimento, string descricao, string referencia, List<PassoAsaas> passos, CancellationToken ct)
+    {
+        var resposta = await EnviarAsync("Criar cobrança avulsa", HttpMethod.Post, "/v3/payments", new JsonObject
+        {
+            ["customer"] = clienteId,
+            ["billingType"] = formaPagamento,
+            ["value"] = valor,
+            ["dueDate"] = vencimento.ToString("yyyy-MM-dd"),
+            ["description"] = descricao,
+            ["externalReference"] = referencia,
+        }, passos, ct);
+        return LerCobranca(resposta ?? throw new ErroAsaas("Resposta do Asaas vazia."));
+    }
 
     public static CobrancaAsaas LerCobranca(JsonNode item) => new(
         item["id"]?.GetValue<string>() ?? "",

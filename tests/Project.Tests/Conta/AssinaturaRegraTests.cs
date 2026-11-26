@@ -70,4 +70,23 @@ public class AssinaturaRegraTests
     {
         Assert.Equal(liberada, new Assinatura { Situacao = situacao }.Liberada(Cadastro));
     }
+
+    [Fact]
+    public void ProRata_do_upgrade_usa_os_dias_reais_do_ciclo_e_conta_hoje()
+    {
+        // SPEC-065 regra 6: 10 de 30 dias restantes, de 179 para 299 = 40,00.
+        var pagoAte = new DateOnly(2026, 4, 30);
+        var conta = Assinatura.CalcularProRata(179m, 299m, pagoAte, new DateOnly(2026, 4, 21));
+        Assert.Equal(new ProRata(10, 30, 59.67m, 40m), conta);
+
+        // Ciclo de 31 dias (01/03 a 31/03), último dia: só a diferença de um dia.
+        var ultimoDia = Assinatura.CalcularProRata(179m, 299m, new DateOnly(2026, 3, 31), new DateOnly(2026, 3, 31));
+        Assert.Equal(1, ultimoDia.DiasRestantes);
+        Assert.Equal(31, ultimoDia.DiasDoCiclo);
+        Assert.Equal(3.87m, ultimoDia.Valor);
+
+        // Fevereiro: ciclo de 28 dias (01/02 a 28/02), hoje no primeiro dia paga o ciclo inteiro de diferença.
+        var inteiro = Assinatura.CalcularProRata(179m, 299m, new DateOnly(2026, 2, 28), new DateOnly(2026, 2, 1));
+        Assert.Equal(new ProRata(28, 28, 179m, 120m), inteiro);
+    }
 }

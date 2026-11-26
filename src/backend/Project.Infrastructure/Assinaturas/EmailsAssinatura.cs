@@ -62,6 +62,44 @@ public static class EmailsAssinatura
         Botao: new EmailBotao("Ver assinatura", link),
         Motivo: Motivo);
 
+    public static EmailConteudo UpgradeConfirmado(string plano, decimal valorPago, decimal mensalidade, DateOnly? proximoVencimento, string link) => new(
+        Assunto: $"Sua conta agora está no plano {plano}",
+        Previa: $"Recebemos {Dinheiro(valorPago)} do upgrade. Os recursos do plano {plano} já estão liberados.",
+        Titulo: $"Bem-vindo ao plano {plano}",
+        Paragrafos:
+        [
+            $"Recebemos o pagamento de {Dinheiro(valorPago)}, a diferença proporcional aos dias que faltavam do período pago.",
+            proximoVencimento is DateOnly proximo
+                ? $"A próxima mensalidade vence em {Data(proximo)}, no valor de {Dinheiro(mensalidade)}."
+                : $"As próximas mensalidades serão de {Dinheiro(mensalidade)}.",
+        ],
+        Botao: new EmailBotao("Ver assinatura", link),
+        Motivo: Motivo);
+
+    public static EmailConteudo DowngradeAgendado(string plano, DateOnly aplicaEm, decimal mensalidade, string link) => new(
+        Assunto: $"Mudança para o plano {plano} agendada",
+        Previa: $"Seu plano atual continua até {Data(aplicaEm.AddDays(-1))}. O plano {plano} começa em {Data(aplicaEm)}.",
+        Titulo: "Mudança de plano agendada",
+        Paragrafos:
+        [
+            $"Seu plano atual continua até {Data(aplicaEm.AddDays(-1))}. A partir de {Data(aplicaEm)}, a conta passa ao plano {plano}, com mensalidade de {Dinheiro(mensalidade)}.",
+            "Mudou de ideia? Em Configurações → Assinatura, clique em \"Manter plano atual\" antes dessa data.",
+        ],
+        Botao: new EmailBotao("Ver assinatura", link),
+        Motivo: Motivo);
+
+    public static EmailConteudo DowngradeAplicado(string plano, decimal mensalidade, string link) => new(
+        Assunto: $"Sua conta agora está no plano {plano}",
+        Previa: $"A mudança de plano agendada foi aplicada. Mensalidade de {Dinheiro(mensalidade)}.",
+        Titulo: $"Plano {plano} ativo",
+        Paragrafos:
+        [
+            $"A mudança agendada foi aplicada: sua conta está no plano {plano}, com mensalidade de {Dinheiro(mensalidade)}.",
+            "Os dados dos recursos que o plano não inclui continuam guardados. Para voltar a usá-los, faça upgrade em Configurações → Assinatura.",
+        ],
+        Botao: new EmailBotao("Ver assinatura", link),
+        Motivo: Motivo);
+
     private static string Data(DateOnly data) => data.ToString("dd/MM/yyyy", Br);
 
     private static string Dinheiro(decimal valor) => valor.ToString("C", Br);

@@ -47,6 +47,8 @@ public static class MapaAssinaturas
         assinatura.Property(item => item.Valor).HasPrecision(12, 2);
         assinatura.Property(item => item.ValorPersonalizado).HasPrecision(12, 2);
         assinatura.Property(item => item.DescontoPercentual).HasPrecision(5, 2);
+        assinatura.Property(item => item.UpgradeValor).HasPrecision(12, 2);
+        assinatura.Property(item => item.UpgradeCobrancaId).HasMaxLength(100);
         assinatura.HasOne<Plano>().WithMany().HasForeignKey(item => item.PlanoId).OnDelete(DeleteBehavior.Restrict);
 
         var cobranca = modelBuilder.Entity<CobrancaAssinatura>();

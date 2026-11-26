@@ -10,7 +10,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { interval } from 'rxjs';
-import { AssinaturaClient, EventoAsaas, Fatura, registrarNoConsole, SituacaoAssinatura } from '../../core/assinatura.client';
+import { AssinaturaClient, EventoAsaas, Fatura, registrarNoConsole, SituacaoAssinatura, TrocaPrevia } from '../../core/assinatura.client';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { Plano, PlanosClient } from '../../core/planos.client';
 import { ToastService } from '../../core/toast.service';
@@ -121,6 +121,49 @@ const SITUACOES: Record<string, string> = {
               }
             </div>
           }
+
+          @if (s.trocaPendente; as t) {
+            <div class="grid gap-3 max-w-xl mt-8 rounded border border-border p-4">
+              @if (t.tipo === 'Upgrade') {
+                <p class="font-semibold">Upgrade para o plano {{ t.plano }} esperando pagamento</p>
+                <p class="text-sm">
+                  Pague {{ t.valor | currency: 'BRL' }} para liberar o plano {{ t.plano }}. Até lá, a conta continua no plano atual, com a cobrança mensal normal.
+                </p>
+                <div class="flex gap-3 flex-wrap">
+                  @if (t.linkPagamento) {
+                    <a mat-flat-button [href]="t.linkPagamento" target="_blank" rel="noopener">Pagar upgrade</a>
+                  }
+                  <button mat-stroked-button type="button" [disabled]="enviando()" (click)="desistirTroca(t.tipo)">Desistir do upgrade</button>
+                </div>
+              } @else {
+                <p class="font-semibold">Muda para o plano {{ t.plano }} em {{ t.aplicaEm | date: 'dd/MM/yyyy' }}</p>
+                <p class="text-sm">Até lá, a conta segue no plano atual. A partir dessa data, a mensalidade passa a {{ t.valor | currency: 'BRL' }}.</p>
+                <div><button mat-stroked-button type="button" [disabled]="enviando()" (click)="desistirTroca(t.tipo)">Manter plano atual</button></div>
+              }
+            </div>
+          } @else if (trocas().length > 0 && podeTrocar(s)) {
+            <h3 class="font-semibold mt-8 mb-2">Trocar de plano</h3>
+            <div class="grid gap-3 sm:grid-cols-2 max-w-3xl">
+              @for (p of trocas(); track p.planoId) {
+                <div class="rounded border border-border p-4 grid gap-2 content-start">
+                  <span class="font-semibold">{{ p.plano }}</span>
+                  <span>{{ p.novaMensalidade | currency: 'BRL' }}/mês</span>
+                  @if (p.descricao) {
+                    <span class="text-muted text-sm">{{ p.descricao }}</span>
+                  }
+                  @if (!p.permitida) {
+                    <span class="text-muted text-sm">{{ p.motivo }}</span>
+                  } @else {
+                    <div>
+                      <button mat-flat-button type="button" [disabled]="enviando()" (click)="trocar(p, s)">
+                        {{ p.tipo === 'Upgrade' ? 'Fazer upgrade' : 'Mudar para este plano' }}
+                      </button>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
         }
 
         @if (faturas().length > 0) {
@@ -161,6 +204,7 @@ export class AssinaturaPage implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   protected readonly situacao = signal<SituacaoAssinatura | null>(null);
   protected readonly faturas = signal<Fatura[]>([]);
+  protected readonly trocas = signal<TrocaPrevia[]>([]);
   /**
    * Fatura para pagar agora: a vencida, ou a pendente que não é do mês seguinte a um período já pago
    * (depois de reativar, a próxima cobrança fica no Asaas, mas não está "em aberto").
@@ -271,7 +315,77 @@ export class AssinaturaPage implements OnInit {
       });
   }
 
+  /** SPEC-065 §5: troca na assinatura ativa, ou no teste depois de assinar (antes disso, o plano é escolhido no Assinar). */
+  protected podeTrocar(s: SituacaoAssinatura): boolean {
+    return s.situacao === 'Ativa' || (s.situacao === 'Trial' && s.liberada && s.assinada);
+  }
+
+  protected trocar(p: TrocaPrevia, s: SituacaoAssinatura): void {
+    const brl = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    const data = (d: string | null) => (d ? new Date(d + 'T12:00:00').toLocaleDateString('pt-BR') : '');
+    let texto: string;
+    if (s.situacao === 'Trial') {
+      texto = `A conta passa agora ao plano ${p.plano}, sem cobrança. A primeira mensalidade será de ${brl(p.novaMensalidade)}.`;
+    } else if (p.tipo === 'Upgrade') {
+      texto =
+        `Faltam ${p.diasRestantes} de ${p.diasDoCiclo} dias do período pago (até ${data(p.pagoAte)}). ` +
+        `Você paga agora ${brl(p.valorAgora)}: a diferença entre os planos nesses dias, já descontado o crédito de ${brl(p.credito)} do plano atual. ` +
+        `O plano ${p.plano} é liberado quando o pagamento for confirmado. As próximas mensalidades serão de ${brl(p.novaMensalidade)}, no mesmo vencimento.`;
+    } else {
+      const saem = p.recursosQueSaem.length ? ` Deixam de valer: ${p.recursosQueSaem.join(', ')}. Os dados ficam guardados.` : '';
+      texto =
+        `Seu plano atual continua até ${data(p.pagoAte)}, sem estorno. A partir de ${data(p.aplicaEm)}, a conta passa ao plano ${p.plano}, ` +
+        `com mensalidade de ${brl(p.novaMensalidade)}.${saem}`;
+    }
+
+    this.dialog
+      .open(ConfirmaDialog, {
+        ...DIALOG_PEQUENO,
+        data: { titulo: p.tipo === 'Upgrade' ? `Upgrade para o plano ${p.plano}` : `Mudar para o plano ${p.plano}`, texto, confirmar: 'Confirmar' },
+      })
+      .afterClosed()
+      .subscribe((confirmou) => {
+        if (!confirmou) return;
+        this.enviando.set(true);
+        this.cliente.trocarPlano(p.planoId).subscribe({
+          next: (resposta) => {
+            this.enviando.set(false);
+            registrarNoConsole('Trocar plano', resposta.diagnostico);
+            if (resposta.linkPagamento) {
+              window.open(resposta.linkPagamento, '_blank', 'noopener');
+              this.toast.sucesso('Upgrade criado. Conclua o pagamento na página do Asaas.');
+            } else {
+              this.toast.sucesso(resposta.aplicaEm ? 'Mudança de plano agendada.' : `Plano trocado para ${resposta.plano}.`);
+            }
+            this.carregar(false);
+          },
+          error: (erro: unknown) => {
+            this.enviando.set(false);
+            if (erro instanceof HttpErrorResponse) registrarNoConsole('Trocar plano (falhou)', erro.error?.diagnostico);
+            this.toast.erro(mensagemDeErro(erro));
+          },
+        });
+      });
+  }
+
+  protected desistirTroca(tipo: 'Upgrade' | 'Downgrade'): void {
+    this.enviando.set(true);
+    this.cliente.desistirTroca().subscribe({
+      next: (resposta) => {
+        this.enviando.set(false);
+        registrarNoConsole('Desistir da troca', resposta.diagnostico);
+        this.toast.sucesso(tipo === 'Upgrade' ? 'Upgrade cancelado.' : 'Você continua no plano atual.');
+        this.carregar(false);
+      },
+      error: (erro: unknown) => {
+        this.enviando.set(false);
+        this.toast.erro(mensagemDeErro(erro));
+      },
+    });
+  }
+
   private carregar(primeira: boolean): void {
+    this.cliente.trocas().subscribe({ next: (trocas) => this.trocas.set(trocas), error: () => undefined });
     this.cliente.situacao().subscribe({
       next: (situacao) => {
         this.situacao.set(situacao);
