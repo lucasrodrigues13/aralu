@@ -28,11 +28,13 @@ import { ComprovanteDialog } from '../dinheiro/comprovante.dialog';
 import { pagamentosPorMes } from '../dinheiro/pagamentos-por-mes';
 import { ParcelarPagamentoDialog } from '../dinheiro/parcelar-pagamento.dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { HttpErrorResponse } from '@angular/common/http';
+import { AcessoLinkComponent } from './acesso-link.component';
 
 /** Página do cliente, sem login (SPEC-046): acompanha e atualiza o financeiro do evento quando a organizadora libera. */
 @Component({
   selector: 'app-cliente',
-  imports: [MatCardModule, MatButtonModule, MatCheckboxModule, MatIconModule, MatTabsModule, GdDataPipe, GdDinheiroPipe, ConvidadosTopoComponent, MatTooltipModule],
+  imports: [MatCardModule, MatButtonModule, MatCheckboxModule, MatIconModule, MatTabsModule, GdDataPipe, GdDinheiroPipe, ConvidadosTopoComponent, MatTooltipModule, AcessoLinkComponent],
   template: `
     <main class="pagina">
       @if (carregando()) {
@@ -43,6 +45,8 @@ import { MatTooltipModule } from '@angular/material/tooltip';
           <h1>Este link não está mais disponível</h1>
           <p class="text-muted">Peça um novo link à organizadora do seu evento.</p>
         </mat-card-content></mat-card>
+      } @else if (pedeCodigo()) {
+        <app-acesso-link [token]="token" (aberto)="carregar()" />
       } @else if (dados(); as d) {
         <header class="topo">
           <h1>{{ d.evento }}</h1>
@@ -217,17 +221,26 @@ export class LinkClientePage implements OnInit {
   protected readonly carregando = signal(true);
   protected readonly indisponivel = signal(false);
   protected readonly grupos = computed(() => pagamentosPorMes(this.dados()?.financeiro?.pagamentosFornecedores ?? []));
-  private token = '';
+  /** Sem sessão do link: pede o código enviado ao e-mail do cliente (SPEC-063). */
+  protected readonly pedeCodigo = signal(false);
+  protected token = '';
 
   ngOnInit(): void {
     this.token = this.rota.snapshot.paramMap.get('token') ?? '';
+    this.carregar();
+  }
+
+  protected carregar(): void {
+    this.carregando.set(true);
     this.cliente.obter(this.token).subscribe({
       next: (dados) => {
         this.dados.set(dados);
+        this.pedeCodigo.set(false);
         this.carregando.set(false);
       },
-      error: () => {
-        this.indisponivel.set(true);
+      error: (erro: unknown) => {
+        if (sessaoVencida(erro)) this.pedeCodigo.set(true);
+        else this.indisponivel.set(true);
         this.carregando.set(false);
       },
     });
@@ -374,9 +387,21 @@ export class LinkClientePage implements OnInit {
         this.dados.set(dados);
         this.toast.sucesso(sucesso);
       },
-      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+      error: (erro: unknown) => {
+        if (sessaoVencida(erro)) {
+          this.dados.set(null);
+          this.pedeCodigo.set(true);
+          return;
+        }
+        this.toast.erro(mensagemDeErro(erro));
+      },
     });
   }
+}
+
+/** 401 nas rotas do link = sessão vencida ou ausente (SPEC-063 §11): volta para o pedido de código. */
+function sessaoVencida(erro: unknown): boolean {
+  return erro instanceof HttpErrorResponse && erro.status === 401;
 }
 
 /** Convite como o cliente vê, no formato do formulário único (SPEC-059). Sem observação: o cliente não a vê. */

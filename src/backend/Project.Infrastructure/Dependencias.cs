@@ -62,6 +62,8 @@ public static class Dependencias
         services.AddScoped<DinheiroServico>();
         services.AddScoped<IDadosLinkCliente, DadosLinkClienteEf>();
         services.AddScoped<LinkClienteServico>();
+        services.AddScoped<IDadosAcessoLinkCliente, DadosAcessoLinkClienteEf>();
+        services.AddScoped<AcessoLinkClienteServico>();
         services.AddScoped<IDadosPortaria, DadosPortariaEf>();
         services.AddScoped<PortariaServico>();
         services.AddScoped<IDadosContrato, DadosContratoEf>();

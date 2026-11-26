@@ -118,6 +118,55 @@ export class OrcamentoFunilDialog implements OnInit {
   }
 }
 
+/**
+ * Validade da proposta no envio (SPEC-064 §6.2): vem com os dias do envio anterior ou o padrão da conta;
+ * o reenvio recomeça o prazo a partir de hoje.
+ */
+@Component({
+  selector: 'app-validade-proposta-dialog',
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule],
+  template: `
+    <h2 mat-dialog-title>{{ dados.enviadoEm ? 'Reenviar proposta' : 'Enviar proposta' }}</h2>
+    <mat-dialog-content>
+      <div class="campo">
+        <mat-label class="font-semibold mb-2 block">Válida por</mat-label>
+        <mat-form-field appearance="outline" class="w-full">
+          <input matInput type="number" min="1" max="180" aria-label="Validade em dias" [formControl]="dias" />
+          <span matTextSuffix>dias</span>
+        </mat-form-field>
+      </div>
+      <p class="text-sm text-muted">
+        @if (dias.valid) { Vale até o fim do dia {{ ultimoDia() }}. } @else { A validade da proposta vai de 1 a 180 dias. }
+        @if (dados.enviadoEm) { O prazo recomeça a contar hoje. }
+      </p>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-stroked-button type="button" (click)="ref.close()">Cancelar</button>
+      <button mat-flat-button type="button" [disabled]="dias.invalid" (click)="ref.close(dias.value)">Gerar link</button>
+    </mat-dialog-actions>
+  `,
+})
+export class ValidadePropostaDialog implements OnInit {
+  private readonly negocio = inject(NegocioClient);
+  protected readonly dados = inject<OrcamentoFunil>(MAT_DIALOG_DATA);
+  protected readonly ref = inject(MatDialogRef<ValidadePropostaDialog>);
+  protected readonly dias = new FormControl<number>(this.dados.diasValidade ?? 30, {
+    nonNullable: true,
+    validators: [Validators.required, Validators.min(1), Validators.max(180), Validators.pattern(/^\d+$/)],
+  });
+
+  ngOnInit(): void {
+    if (this.dados.diasValidade) return;
+    this.negocio.configuracaoPropostas().subscribe({ next: (c) => this.dias.setValue(c.validadeDias), error: () => undefined });
+  }
+
+  protected ultimoDia(): string {
+    const data = new Date();
+    data.setDate(data.getDate() + Number(this.dias.value));
+    return data.toLocaleDateString('pt-BR');
+  }
+}
+
 /** Link da proposta: copiar ou mandar pelo WhatsApp (SPEC-031 §6.6, item 2). */
 @Component({
   selector: 'app-enviar-proposta-dialog',
@@ -364,14 +413,17 @@ export class OrcamentosFunilPage implements OnInit {
     this.dialog.open(ParcelasOrcamentoDialog, { ...DIALOG, data: item }).afterClosed().subscribe((ok) => ok && this.carregar());
   }
 
-  /** Gera o link e abre as opções de envio (SPEC-031 §6.6). */
+  /** Pergunta a validade (SPEC-064), gera o link e abre as opções de envio (SPEC-031 §6.6). */
   protected enviar(item: OrcamentoFunil): void {
-    this.negocio.enviarOrcamentoFunil(item.id).subscribe({
-      next: (enviado) => {
-        this.carregar();
-        this.mostrarLink(enviado);
-      },
-      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+    this.dialog.open(ValidadePropostaDialog, { ...DIALOG_PEQUENO, data: item }).afterClosed().subscribe((dias?: number) => {
+      if (!dias) return;
+      this.negocio.enviarOrcamentoFunil(item.id, dias).subscribe({
+        next: (enviado) => {
+          this.carregar();
+          this.mostrarLink(enviado);
+        },
+        error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+      });
     });
   }
 

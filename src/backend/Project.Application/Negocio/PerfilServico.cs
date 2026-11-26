@@ -38,6 +38,9 @@ public sealed record SalvarPerfil(
     string? Estado,
     string? ChavePix = null);
 
+/// <summary>Configurações → Propostas (SPEC-064): validade padrão em dias.</summary>
+public sealed record ConfiguracaoPropostas(int ValidadeDias);
+
 public sealed class PerfilServico(IDados dados, IConsultaCep consultaCep)
 {
     public async Task<PerfilLeitura> ObterAsync(Guid contaId, string email, CancellationToken ct)
@@ -118,6 +121,23 @@ public sealed class PerfilServico(IDados dados, IConsultaCep consultaCep)
         perfil.FotoId = null;
         await dados.SalvarPerfilAsync(perfil, ct);
         return Resultado<Guid?>.Sucesso(anterior);
+    }
+
+    /// <summary>Validade padrão das propostas da conta (SPEC-064 §6.1).</summary>
+    public async Task<ConfiguracaoPropostas> ObterPropostasAsync(Guid contaId, CancellationToken ct) =>
+        new(ParametrosOrcamento.DiasDeValidade(await dados.ObterPerfilAsync(contaId, ct)));
+
+    public async Task<Resultado<ConfiguracaoPropostas>> SalvarPropostasAsync(Guid contaId, ConfiguracaoPropostas pedido, CancellationToken ct)
+    {
+        if (!Domain.Funil.OrcamentoFunil.DiasValidos(pedido.ValidadeDias))
+        {
+            return Resultado<ConfiguracaoPropostas>.Erro(Codigos.Validacao, Domain.Funil.OrcamentoFunil.MensagemDias);
+        }
+
+        var perfil = await ObterOuCriarAsync(contaId, ct);
+        perfil.ValidadePropostaDias = pedido.ValidadeDias;
+        await dados.SalvarPerfilAsync(perfil, ct);
+        return Resultado<ConfiguracaoPropostas>.Sucesso(new ConfiguracaoPropostas(pedido.ValidadeDias));
     }
 
     private async Task<PerfilAssessoria> ObterOuCriarAsync(Guid contaId, CancellationToken ct)

@@ -12,7 +12,9 @@ namespace Project.Application.Negocio;
 /// </summary>
 public static partial class ParametrosOrcamento
 {
-    public const int DiasDeValidade = 30;
+    /// <summary>Dias de validade da conta (SPEC-064 R2): o padrão gravado ou 30.</summary>
+    public static int DiasDeValidade(PerfilAssessoria? perfil) =>
+        perfil?.ValidadePropostaDias is int dias && Domain.Funil.OrcamentoFunil.DiasValidos(dias) ? dias : Domain.Funil.OrcamentoFunil.DiasPadrao;
 
     public static readonly IReadOnlyList<string> Lista =
     [
@@ -84,7 +86,7 @@ public static partial class ParametrosOrcamento
             ["endereco_cerimonia"] = Endereco(oportunidade.EnderecoCerimonia, oportunidade.NumeroCerimonia, oportunidade.BairroCerimonia),
             ["endereco_recepcao"] = Endereco(oportunidade.EnderecoRecepcao, oportunidade.NumeroRecepcao, oportunidade.BairroRecepcao, oportunidade.CidadeRecepcao),
             ["valor"] = (valor ?? oportunidade.ValorProposta)?.ToString("C", pt) ?? "",
-            ["validade"] = (validadeJaCalculada ? validade : validade.AddDays(DiasDeValidade)).ToString("dd/MM/yyyy", pt),
+            ["validade"] = (validadeJaCalculada ? validade : validade.AddDays(DiasDeValidade(perfil))).ToString("dd/MM/yyyy", pt),
             ["servicos_contratados"] = oportunidade.ServicoProduto ?? "",
             ["forma_pagamento"] = FormaPagamento(parcelas, pt),
             ["nome_assessoria"] = perfil?.NomeEmpresa ?? "",

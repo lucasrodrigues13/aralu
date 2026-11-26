@@ -849,7 +849,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     Estado = table.Column<string>(type: "text", nullable: true),
                     FotoId = table.Column<Guid>(type: "uuid", nullable: true),
                     ChavePix = table.Column<string>(type: "text", nullable: true),
-                    CapturaLeadRsvp = table.Column<bool>(type: "boolean", nullable: false)
+                    CapturaLeadRsvp = table.Column<bool>(type: "boolean", nullable: false),
+                    ValidadePropostaDias = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -1833,6 +1834,67 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "CodigosAcessoCliente",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    LinkId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Email = table.Column<string>(type: "character varying(320)", maxLength: 320, nullable: false),
+                    CodigoHash = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    CriadoEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    ExpiraEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    Tentativas = table.Column<int>(type: "integer", nullable: false),
+                    UsadoEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    Invalidado = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CodigosAcessoCliente", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_CodigosAcessoCliente_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_CodigosAcessoCliente_LinksCliente_LinkId",
+                        column: x => x.LinkId,
+                        principalTable: "LinksCliente",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SessoesLinkCliente",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    LinkId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
+                    TokenHash = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    CriadaEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    ExpiraEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    UltimoAcesso = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SessoesLinkCliente", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_SessoesLinkCliente_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_SessoesLinkCliente_LinksCliente_LinkId",
+                        column: x => x.LinkId,
+                        principalTable: "LinksCliente",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "BriefingsOportunidade",
                 columns: table => new
                 {
@@ -2004,6 +2066,7 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    DiasValidade = table.Column<int>(type: "integer", nullable: true),
                     ContaId = table.Column<Guid>(type: "uuid", nullable: false),
                     OportunidadeId = table.Column<Guid>(type: "uuid", nullable: false),
                     Conteudo = table.Column<string>(type: "text", nullable: false),
@@ -2838,6 +2901,16 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 columns: new[] { "ContaId", "Vencimento" });
 
             migrationBuilder.CreateIndex(
+                name: "IX_CodigosAcessoCliente_ContaId",
+                table: "CodigosAcessoCliente",
+                column: "ContaId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CodigosAcessoCliente_LinkId_CriadoEm",
+                table: "CodigosAcessoCliente",
+                columns: new[] { "LinkId", "CriadoEm" });
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ComentariosTarefa_AutorMembroId",
                 table: "ComentariosTarefa",
                 column: "AutorMembroId");
@@ -3558,6 +3631,17 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_SessoesLinkCliente_ContaId",
+                table: "SessoesLinkCliente",
+                column: "ContaId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SessoesLinkCliente_LinkId_TokenHash",
+                table: "SessoesLinkCliente",
+                columns: new[] { "LinkId", "TokenHash" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_SubitemServico_ContaId",
                 table: "SubitemServico",
                 column: "ContaId");
@@ -3673,6 +3757,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 name: "CobrancasAssinatura");
 
             migrationBuilder.DropTable(
+                name: "CodigosAcessoCliente");
+
+            migrationBuilder.DropTable(
                 name: "ComentariosTarefa");
 
             migrationBuilder.DropTable(
@@ -3724,9 +3811,6 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 name: "LeadsRsvp");
 
             migrationBuilder.DropTable(
-                name: "LinksCliente");
-
-            migrationBuilder.DropTable(
                 name: "LinksPortaria");
 
             migrationBuilder.DropTable(
@@ -3770,6 +3854,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
             migrationBuilder.DropTable(
                 name: "RespostasPropostaFunil");
+
+            migrationBuilder.DropTable(
+                name: "SessoesLinkCliente");
 
             migrationBuilder.DropTable(
                 name: "SubitemServico");
@@ -3827,6 +3914,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
             migrationBuilder.DropTable(
                 name: "OrcamentosFunil");
+
+            migrationBuilder.DropTable(
+                name: "LinksCliente");
 
             migrationBuilder.DropTable(
                 name: "Planos");

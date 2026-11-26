@@ -6,7 +6,8 @@ using Project.Domain.Eventos;
 namespace Project.Application.Negocio;
 
 /// <summary>Link do cliente como a organizadora vê (SPEC-046 §6.1). <paramref name="Token"/> é nulo quando não há link.</summary>
-public sealed record LinkClienteLeitura(bool Ativo, string? Token, bool FinanceiroLiberado, bool ConvidadosLiberado = false);
+/// <summary><paramref name="ClienteComEmail"/>: algum cliente do evento tem e-mail para receber o código (SPEC-063 §7).</summary>
+public sealed record LinkClienteLeitura(bool Ativo, string? Token, bool FinanceiroLiberado, bool ConvidadosLiberado = false, bool ClienteComEmail = true);
 
 /// <summary><paramref name="ConvidadosLiberado"/> nulo mantém a marcação como está (SPEC-052).</summary>
 public sealed record SalvarLinkCliente(bool FinanceiroLiberado, bool? ConvidadosLiberado = null);
@@ -87,7 +88,8 @@ public sealed class LinkClienteServico(
     FornecedorServico fornecedores,
     Arquivos.IArmazenamentoArquivo armazenamento,
     ConviteServico conviteServico,
-    ImportacaoServico importacoes)
+    ImportacaoServico importacoes,
+    IDadosAcessoLinkCliente acessos)
 {
     private const string LinkInvalido = "Link inválido.";
     private const string ConvidadosFechado = "A organizadora ainda não liberou o cadastro de convidados deste evento.";
@@ -103,7 +105,7 @@ public sealed class LinkClienteServico(
         }
 
         var link = await dados.ObterPorEventoAsync(eventoId, ct);
-        return Resultado<LinkClienteLeitura>.Sucesso(Ler(link));
+        return Resultado<LinkClienteLeitura>.Sucesso(await LerAsync(contaId, eventoId, link, ct));
     }
 
     /// <summary>Gera o link do evento ou, se já existe, troca o código (o endereço antigo deixa de valer).</summary>
@@ -122,11 +124,13 @@ public sealed class LinkClienteServico(
         }
         else
         {
+            // Link novo derruba as sessões e os códigos do anterior (SPEC-063 R6).
+            await acessos.RemoverAcessosAsync(link.Id, ct);
             link.Token = NovoToken();
         }
 
         await dados.SalvarAsync(ct);
-        return Resultado<LinkClienteLeitura>.Sucesso(Ler(link));
+        return Resultado<LinkClienteLeitura>.Sucesso(await LerAsync(contaId, eventoId, link, ct));
     }
 
     public async Task<Resultado<LinkClienteLeitura>> SalvarAsync(Guid contaId, Guid eventoId, SalvarLinkCliente pedido, CancellationToken ct)
@@ -140,7 +144,7 @@ public sealed class LinkClienteServico(
         link.FinanceiroLiberado = pedido.FinanceiroLiberado;
         link.ConvidadosLiberado = pedido.ConvidadosLiberado ?? link.ConvidadosLiberado;
         await dados.SalvarAsync(ct);
-        return Resultado<LinkClienteLeitura>.Sucesso(Ler(link));
+        return Resultado<LinkClienteLeitura>.Sucesso(await LerAsync(contaId, eventoId, link, ct));
     }
 
     public async Task<Resultado<LinkClienteLeitura>> DesativarAsync(Guid contaId, Guid eventoId, CancellationToken ct)
@@ -157,7 +161,7 @@ public sealed class LinkClienteServico(
             await dados.SalvarAsync(ct);
         }
 
-        return Resultado<LinkClienteLeitura>.Sucesso(Ler(null));
+        return Resultado<LinkClienteLeitura>.Sucesso(await LerAsync(contaId, eventoId, null, ct));
     }
 
     // ---- Cliente ----
@@ -503,6 +507,9 @@ public sealed class LinkClienteServico(
 
     private async Task<LinkCliente?> ObterDaContaAsync(Guid contaId, Guid eventoId, CancellationToken ct) =>
         await dados.ObterEventoAsync(contaId, eventoId, ct) is null ? null : await dados.ObterPorEventoAsync(eventoId, ct);
+
+    private async Task<LinkClienteLeitura> LerAsync(Guid contaId, Guid eventoId, LinkCliente? link, CancellationToken ct) =>
+        Ler(link) with { ClienteComEmail = (await acessos.ListarEmailsClientesAsync(contaId, eventoId, ct)).Count > 0 };
 
     private static LinkClienteLeitura Ler(LinkCliente? link) =>
         new(link is not null, link?.Token, link?.FinanceiroLiberado ?? false, link?.ConvidadosLiberado ?? false);

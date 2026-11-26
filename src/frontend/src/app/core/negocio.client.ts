@@ -1380,8 +1380,17 @@ export class NegocioClient {
   }
 
   /** Gera (ou mantém) o link da proposta e leva o lead para "Orçamento enviado" (SPEC-031 §6.6). */
-  enviarOrcamentoFunil(id: string) {
-    return this.http.post<OrcamentoFunil>(`${this.base}/api/v1/orcamentos-funil/${id}/enviar`, {});
+  enviarOrcamentoFunil(id: string, dias?: number) {
+    return this.http.post<OrcamentoFunil>(`${this.base}/api/v1/orcamentos-funil/${id}/enviar`, dias ? { dias } : {});
+  }
+
+  /** Validade padrão das propostas da conta, em dias (SPEC-064). */
+  configuracaoPropostas() {
+    return this.http.get<{ validadeDias: number }>(`${this.base}/api/v1/configuracoes/propostas`);
+  }
+
+  salvarConfiguracaoPropostas(validadeDias: number) {
+    return this.http.put<{ validadeDias: number }>(`${this.base}/api/v1/configuracoes/propostas`, { validadeDias });
   }
 
   /** Página pública da proposta, sem login. */
@@ -1708,6 +1717,8 @@ export interface OrcamentoFunil {
   respostaEm: string | null;
   criadoPor?: string | null;
   parcelas: ParcelaOrcamento[];
+  /** Dias de validade do último envio (SPEC-064); nulo antes do primeiro envio. */
+  diasValidade?: number | null;
 }
 
 export interface PedidoParcelas {

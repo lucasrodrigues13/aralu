@@ -17,7 +17,7 @@ public class LinkClienteTests
     {
         var dados = new DadosFalsos();
         // O financeiro (DinheiroServico, FornecedorServico) não é alcançado nestes cenários.
-        return (new LinkClienteServico(dados, null!, null!, null!, null!, null!), dados);
+        return (new LinkClienteServico(dados, null!, null!, null!, null!, null!, new AcessosFalsos()), dados);
     }
 
     [Fact]
@@ -397,6 +397,26 @@ public class LinkClienteTests
             links.Remove(link);
             return Task.CompletedTask;
         }
+
+        public Task SalvarAsync(CancellationToken ct) => Task.CompletedTask;
+    }
+
+    /// <summary>Códigos e sessões do link (SPEC-063): não são alcançados nestes cenários.</summary>
+    private sealed class AcessosFalsos : IDadosAcessoLinkCliente
+    {
+        public Task<IReadOnlyList<(Guid ClienteId, string Email)>> ListarEmailsClientesAsync(Guid contaId, Guid eventoId, CancellationToken ct) =>
+            Task.FromResult<IReadOnlyList<(Guid ClienteId, string Email)>>([]);
+
+        public Task<IReadOnlyList<CodigoAcessoCliente>> ListarCodigosAsync(Guid linkId, DateTimeOffset desde, CancellationToken ct) =>
+            Task.FromResult<IReadOnlyList<CodigoAcessoCliente>>([]);
+
+        public Task<SessaoLinkCliente?> ObterSessaoAsync(Guid linkId, string tokenHash, CancellationToken ct) => Task.FromResult<SessaoLinkCliente?>(null);
+
+        public Task InserirCodigoAsync(CodigoAcessoCliente codigo, CancellationToken ct) => Task.CompletedTask;
+
+        public Task InserirSessaoAsync(SessaoLinkCliente sessao, CancellationToken ct) => Task.CompletedTask;
+
+        public Task RemoverAcessosAsync(Guid linkId, CancellationToken ct) => Task.CompletedTask;
 
         public Task SalvarAsync(CancellationToken ct) => Task.CompletedTask;
     }

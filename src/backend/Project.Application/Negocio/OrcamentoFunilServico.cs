@@ -23,7 +23,11 @@ public sealed record OrcamentoFunilLeitura(
     string? RespostaMensagem = null,
     DateTimeOffset? RespostaEm = null,
     string? CriadoPor = null,
-    IReadOnlyList<ParcelaOrcamentoLeitura>? Parcelas = null);
+    IReadOnlyList<ParcelaOrcamentoLeitura>? Parcelas = null,
+    int? DiasValidade = null);
+
+/// <summary>Envio da proposta (SPEC-064): <c>Dias</c> nulo usa o padrão da conta.</summary>
+public sealed record PedidoEnvioProposta(int? Dias);
 
 public sealed record SalvarOrcamentoFunil(
     Guid? OportunidadeId,
@@ -282,8 +286,20 @@ public sealed class OrcamentoFunilServico(IDados dados)
     /// Enviar proposta (SPEC-031 §6.6): gera o link no primeiro envio (o mesmo link vale nos reenvios,
     /// com a validade renovada) e leva o lead para "Orçamento enviado" quando ele está antes desse estágio.
     /// </summary>
-    public async Task<Resultado<OrcamentoFunilLeitura>> EnviarAsync(Guid contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<OrcamentoFunilLeitura>> EnviarAsync(Guid contaId, Guid id, CancellationToken ct) =>
+        await EnviarAsync(contaId, id, null, DateTimeOffset.UtcNow, ct);
+
+    /// <summary>
+    /// <paramref name="dias"/> nulo usa o padrão da conta (SPEC-064 R2). O prazo conta a partir de
+    /// <paramref name="agora"/>, também no reenvio, e vale até o fim do último dia (R1).
+    /// </summary>
+    public async Task<Resultado<OrcamentoFunilLeitura>> EnviarAsync(Guid contaId, Guid id, int? dias, DateTimeOffset agora, CancellationToken ct)
     {
+        if (dias is int escolhidos && !OrcamentoFunil.DiasValidos(escolhidos))
+        {
+            return Resultado<OrcamentoFunilLeitura>.Erro(Codigos.Validacao, OrcamentoFunil.MensagemDias);
+        }
+
         var item = await dados.ObterOrcamentoFunilAsync(contaId, id, ct);
         if (item is null)
         {
@@ -295,9 +311,10 @@ public sealed class OrcamentoFunilServico(IDados dados)
             return Resultado<OrcamentoFunilLeitura>.Erro(Codigos.Validacao, "Orçamento cancelado não pode ser enviado.");
         }
 
-        var agora = DateTimeOffset.UtcNow;
+        var validade = dias ?? ParametrosOrcamento.DiasDeValidade(await dados.ObterPerfilAsync(contaId, ct));
         item.TokenLink ??= NovoToken();
-        item.ValidoAte = agora.Add(OrcamentoFunil.ValidadeLink);
+        item.DiasValidade = validade;
+        item.ValidoAte = OrcamentoFunil.ValidoAteDe(agora, validade);
         item.EnviadoEm = agora;
 
         var oportunidade = await dados.ObterOportunidadeAsync(contaId, item.OportunidadeId, ct);
@@ -614,7 +631,7 @@ public sealed class OrcamentoFunilServico(IDados dados)
         if (HtmlSeguro.SanitizarPagina(item.HtmlAceite) is { Length: > 0 } htmlPagina && oportunidade is not null)
         {
             var modelo = item.ModeloId is Guid modeloId ? await dados.ObterModeloOrcamentoFunilAsync(item.ContaId, modeloId, ct) : null;
-            var validade = DateOnly.FromDateTime((item.ValidoAte ?? agora).UtcDateTime);
+            var validade = OrcamentoFunil.UltimoDiaDe(item.ValidoAte ?? agora);
             pagina = PaginaAceite.Montar(new DadosPaginaAceite(
                 htmlPagina,
                 ParametrosOrcamento.Valores(oportunidade, item.Valor, validade, perfil, parcelas, validadeJaCalculada: true),
@@ -715,5 +732,6 @@ public sealed class OrcamentoFunilServico(IDados dados)
             item.Parcelas
                 .OrderBy(parcela => parcela.Numero)
                 .Select(parcela => new ParcelaOrcamentoLeitura(parcela.Numero, parcela.Vencimento, parcela.Valor, parcela.Entrada))
-                .ToArray());
+                .ToArray(),
+            item.DiasValidade);
 }

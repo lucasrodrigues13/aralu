@@ -28,6 +28,9 @@ public static class NegocioEndpoints
         api.AddEndpointFilter(EscopoAssistente.Filtro);
         api.MapGet("/perfil", Perfil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapPut("/perfil", GravarPerfil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
+        // SPEC-064: a janela de envio lê o padrão (Equipe); só o Dono muda (SPEC-062 R5).
+        api.MapGet("/configuracoes/propostas", LerConfiguracaoPropostas).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPut("/configuracoes/propostas", GravarConfiguracaoPropostas).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapPost("/perfil/foto", FotoPerfil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer)).DisableAntiforgery();
         api.MapDelete("/perfil/foto", RemoverFotoPerfil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapGet("/painel", Painel).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
@@ -1377,8 +1380,14 @@ public static class NegocioEndpoints
     private static Task<IResult> AtualizarOrcamentoFunil(Guid id, SalvarOrcamentoFunil pedido, ClaimsPrincipal usuario, OrcamentoFunilServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.AtualizarAsync(conta, id, pedido, ct)));
 
-    private static Task<IResult> EnviarOrcamentoFunil(Guid id, ClaimsPrincipal usuario, OrcamentoFunilServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.EnviarAsync(conta, id, ct)));
+    private static Task<IResult> EnviarOrcamentoFunil(Guid id, PedidoEnvioProposta? pedido, ClaimsPrincipal usuario, OrcamentoFunilServico servico, CancellationToken ct) =>
+        ComConta(usuario, conta => De(servico.EnviarAsync(conta, id, pedido?.Dias, DateTimeOffset.UtcNow, ct)));
+
+    private static Task<IResult> LerConfiguracaoPropostas(ClaimsPrincipal usuario, PerfilServico servico, CancellationToken ct) =>
+        ComConta(usuario, async conta => Results.Ok(await servico.ObterPropostasAsync(conta, ct)));
+
+    private static Task<IResult> GravarConfiguracaoPropostas(ConfiguracaoPropostas pedido, ClaimsPrincipal usuario, PerfilServico servico, CancellationToken ct) =>
+        ComConta(usuario, conta => De(servico.SalvarPropostasAsync(conta, pedido, ct)));
 
     /// <summary>
     /// Sem login. Se a própria dona estiver logada, a abertura não conta (SPEC-031 §8). A página manda também a

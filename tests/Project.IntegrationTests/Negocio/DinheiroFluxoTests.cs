@@ -378,7 +378,7 @@ public class DinheiroFluxoTests
         Assert.False(gerado.GetProperty("financeiroLiberado").GetBoolean());
 
         // Cliente sem login, financeiro fechado: vê o evento, não vê valores nem age.
-        var cliente = _banco.Fabrica.CreateClient();
+        var cliente = await LinkClienteDeTeste.AbrirAsync(_banco.Fabrica, dono, eventoId, token);
         var baseLink = $"/api/v1/publico/cliente/{token}";
         var fechado = await Ler(await cliente.GetAsync(baseLink));
         Assert.False(fechado.GetProperty("financeiroLiberado").GetBoolean());
@@ -424,7 +424,7 @@ public class DinheiroFluxoTests
         var (eventoId, _, _) = await EventoComFornecedorContratado(dono, 1);
         var urlLink = $"/api/v1/eventos/{eventoId}/link-cliente";
         var token = (await Ler(await dono.PostAsync(urlLink, null))).GetProperty("token").GetString()!;
-        var cliente = _banco.Fabrica.CreateClient();
+        var cliente = await LinkClienteDeTeste.AbrirAsync(_banco.Fabrica, dono, eventoId, token);
         var baseLink = $"/api/v1/publico/cliente/{token}";
         var pedido = new
         {
@@ -488,7 +488,7 @@ public class DinheiroFluxoTests
         var (eventoId, _, _) = await EventoComFornecedorContratado(dono, 1);
         var urlLink = $"/api/v1/eventos/{eventoId}/link-cliente";
         var token = (await Ler(await dono.PostAsync(urlLink, null))).GetProperty("token").GetString()!;
-        var cliente = _banco.Fabrica.CreateClient();
+        var cliente = await LinkClienteDeTeste.AbrirAsync(_banco.Fabrica, dono, eventoId, token);
         var baseLink = $"/api/v1/publico/cliente/{token}";
 
         // Fechado: nenhuma ferramenta responde.

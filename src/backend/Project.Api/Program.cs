@@ -76,7 +76,7 @@ builder.Services.AddRateLimiter(options =>
 var origens = builder.Configuration.GetSection("Cors:Origins").Get<string[]>() ?? ["http://localhost:4200"];
 builder.Services.AddCors(options =>
 {
-    options.AddDefaultPolicy(policy => policy.WithOrigins(origens).AllowAnyHeader().AllowAnyMethod());
+    options.AddDefaultPolicy(policy => policy.WithOrigins(origens).AllowAnyHeader().AllowAnyMethod().AllowCredentials());
 });
 
 var issuer = builder.Configuration["Jwt:Issuer"] ?? "aralu";

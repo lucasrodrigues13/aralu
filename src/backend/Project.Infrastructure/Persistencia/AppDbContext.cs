@@ -72,6 +72,10 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<LinkCliente> LinksCliente => Set<LinkCliente>();
 
+    public DbSet<CodigoAcessoCliente> CodigosAcessoCliente => Set<CodigoAcessoCliente>();
+
+    public DbSet<SessaoLinkCliente> SessoesLinkCliente => Set<SessaoLinkCliente>();
+
     public DbSet<LinkPortaria> LinksPortaria => Set<LinkPortaria>();
 
     public DbSet<Convite> Convites => Set<Convite>();

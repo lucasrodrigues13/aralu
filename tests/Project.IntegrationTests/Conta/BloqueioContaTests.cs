@@ -42,6 +42,7 @@ public class BloqueioContaTests
         var membro = await AceitarEEntrar(email);
         var evento = (await Ler(await dona.PostAsJsonAsync("/api/v1/eventos", new { tipo = "Aniversario", primeiroNome = "Festa" }))).GetProperty("id").GetGuid();
         var token = (await Ler(await dona.PostAsync($"/api/v1/eventos/{evento}/link-cliente", null))).GetProperty("token").GetString();
+        var (emailCliente, clienteId) = await LinkClienteDeTeste.VincularClienteComEmailAsync(dona, evento);
 
         // T2: 15º dia sem assinatura.
         await MudarAssinatura(contaId, item => item.TrialTerminaEm = DateTimeOffset.UtcNow.AddMinutes(-1));
@@ -60,7 +61,13 @@ public class BloqueioContaTests
         Assert.False(situacao.GetProperty("liberada").GetBoolean());
 
         // T8: o cliente abre o link normalmente.
-        Assert.Equal(HttpStatusCode.OK, (await _banco.Fabrica.CreateClient().GetAsync($"/api/v1/publico/cliente/{token}")).StatusCode);
+        // SPEC-063 C9: pedir e usar o código também funcionam com a conta bloqueada.
+        var clienteLink = _banco.Fabrica.CreateClient();
+        Assert.Equal(HttpStatusCode.Unauthorized, (await clienteLink.GetAsync($"/api/v1/publico/cliente/{token}")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await clienteLink.PostAsJsonAsync($"/api/v1/publico/cliente/{token}/acesso/codigo", new { clienteId })).StatusCode);
+        var codigo = LinkClienteDeTeste.UltimoCodigo(_banco.Fabrica, emailCliente);
+        Assert.Equal(HttpStatusCode.OK, (await clienteLink.PostAsJsonAsync($"/api/v1/publico/cliente/{token}/acesso/confirmar", new { codigo })).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await clienteLink.GetAsync($"/api/v1/publico/cliente/{token}")).StatusCode);
 
         // T6: pagamento confirmado devolve tudo.
         await MudarAssinatura(contaId, item => item.Situacao = SituacaoAssinatura.Ativa);

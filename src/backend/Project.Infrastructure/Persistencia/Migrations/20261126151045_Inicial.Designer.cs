@@ -13,7 +13,7 @@ using Project.Infrastructure.Persistencia;
 namespace Project.Infrastructure.Persistencia.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261126142619_Inicial")]
+    [Migration("20261126151045_Inicial")]
     partial class Inicial
     {
         /// <inheritdoc />
@@ -1304,6 +1304,52 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.ToTable("PermissoesGrupo", (string)null);
                 });
 
+            modelBuilder.Entity("Project.Domain.Eventos.CodigoAcessoCliente", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CodigoHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)");
+
+                    b.Property<DateTimeOffset>("ExpiraEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("Invalidado")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("LinkId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Tentativas")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("UsadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContaId");
+
+                    b.HasIndex("LinkId", "CriadoEm");
+
+                    b.ToTable("CodigosAcessoCliente", (string)null);
+                });
+
             modelBuilder.Entity("Project.Domain.Eventos.CompromissoAgenda", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1687,6 +1733,42 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.HasIndex("ServicoContaId");
 
                     b.ToTable("ServicoModelo");
+                });
+
+            modelBuilder.Entity("Project.Domain.Eventos.SessaoLinkCliente", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CriadaEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("ExpiraEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("LinkId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTimeOffset>("UltimoAcesso")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContaId");
+
+                    b.HasIndex("LinkId", "TokenHash")
+                        .IsUnique();
+
+                    b.ToTable("SessoesLinkCliente", (string)null);
                 });
 
             modelBuilder.Entity("Project.Domain.Eventos.SubitemServico", b =>
@@ -2647,6 +2729,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<string>("CriadoPor")
                         .HasColumnType("text");
 
+                    b.Property<int?>("DiasValidade")
+                        .HasColumnType("integer");
+
                     b.Property<DateTimeOffset?>("EnviadoEm")
                         .HasColumnType("timestamp with time zone");
 
@@ -3193,6 +3278,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
                     b.Property<string>("Responsavel")
                         .HasColumnType("text");
+
+                    b.Property<int?>("ValidadePropostaDias")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -3970,6 +4058,21 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Project.Domain.Eventos.CodigoAcessoCliente", b =>
+                {
+                    b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
+                        .WithMany()
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Project.Domain.Eventos.LinkCliente", null)
+                        .WithMany()
+                        .HasForeignKey("LinkId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Project.Domain.Eventos.CompromissoAgenda", b =>
                 {
                     b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
@@ -4201,6 +4304,21 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .WithMany()
                         .HasForeignKey("ServicoContaId")
                         .OnDelete(DeleteBehavior.SetNull);
+                });
+
+            modelBuilder.Entity("Project.Domain.Eventos.SessaoLinkCliente", b =>
+                {
+                    b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
+                        .WithMany()
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Project.Domain.Eventos.LinkCliente", null)
+                        .WithMany()
+                        .HasForeignKey("LinkId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Project.Domain.Eventos.SubitemServico", b =>

@@ -152,8 +152,11 @@ public class IsolamentoContasTests
         var link = await Ler(await a.PostAsync($"/api/v1/eventos/{eventoId}/link-cliente", null));
         var token = link.GetProperty("token").GetString();
 
-        var comLoginDeOutraConta = await b.GetAsync($"/api/v1/publico/cliente/{token}");
-        var semLogin = await _banco.Fabrica.CreateClient().GetAsync($"/api/v1/publico/cliente/{token}");
+        // SPEC-063: sem sessão, a página pede o código; o pedido de código abre para qualquer visitante.
+        var comLoginDeOutraConta = await b.GetAsync($"/api/v1/publico/cliente/{token}/acesso");
+        var semLogin = await _banco.Fabrica.CreateClient().GetAsync($"/api/v1/publico/cliente/{token}/acesso");
+        var comSessao = await LinkClienteDeTeste.AbrirAsync(_banco.Fabrica, a, eventoId, token!);
+        Assert.Equal(HttpStatusCode.OK, (await comSessao.GetAsync($"/api/v1/publico/cliente/{token}")).StatusCode);
 
         Assert.Equal(HttpStatusCode.OK, comLoginDeOutraConta.StatusCode);
         Assert.Equal(HttpStatusCode.OK, semLogin.StatusCode);

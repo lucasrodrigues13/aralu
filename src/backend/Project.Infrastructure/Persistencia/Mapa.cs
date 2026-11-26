@@ -214,6 +214,19 @@ public static class Mapa
         linkCliente.HasIndex(item => item.EventoId).IsUnique();
         linkCliente.HasOne<Evento>().WithMany().HasForeignKey(item => item.EventoId).OnDelete(DeleteBehavior.Cascade);
 
+        var codigoAcesso = modelBuilder.Entity<CodigoAcessoCliente>();
+        codigoAcesso.ToTable("CodigosAcessoCliente");
+        codigoAcesso.Property(item => item.Email).HasMaxLength(320);
+        codigoAcesso.Property(item => item.CodigoHash).HasMaxLength(64);
+        codigoAcesso.HasIndex(item => new { item.LinkId, item.CriadoEm });
+        codigoAcesso.HasOne<LinkCliente>().WithMany().HasForeignKey(item => item.LinkId).OnDelete(DeleteBehavior.Cascade);
+
+        var sessaoLink = modelBuilder.Entity<SessaoLinkCliente>();
+        sessaoLink.ToTable("SessoesLinkCliente");
+        sessaoLink.Property(item => item.TokenHash).HasMaxLength(64);
+        sessaoLink.HasIndex(item => new { item.LinkId, item.TokenHash }).IsUnique();
+        sessaoLink.HasOne<LinkCliente>().WithMany().HasForeignKey(item => item.LinkId).OnDelete(DeleteBehavior.Cascade);
+
         var linkPortaria = modelBuilder.Entity<LinkPortaria>();
         linkPortaria.ToTable("LinksPortaria");
         linkPortaria.Property(item => item.Token).HasMaxLength(64);
