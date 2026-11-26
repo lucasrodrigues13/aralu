@@ -221,3 +221,22 @@ Tudo o que mexe em schema entra junto, para gerar a migration inicial uma vez s�
 **Diferença do plano:** os `Where(ContaId == …)` escritos em cada consulta **ficaram**. O filtro global é a segunda camada; tirar os filtros manuais seria troca grande sem ganho de segurança. Se um dia saírem, o teste de isolamento e o `FiltroGlobalPorContaTests` cobrem.
 
 **Próximo:** lote 2.5 (34 FKs, rename `Vinculos` → `ClienteEventos`, remoção de `FornecedorContaId`, divisão das colunas polimórficas de responsável).
+
+### Fase 2 — lote 2.5 concluído (Claude Code)
+
+**Feito**
+- 32 FKs novas com o `ON DELETE` de `docs/banco/fonte/dec.js` (`Mapa.LigarReferencias`): 17 para `Arquivos`, as do funil, serviços, fornecedor no serviço e presenças.
+- `LeadRsvp.EventoId`/`ConviteId` passam a aceitar nulo (o lead fica como histórico se o evento ou convite for apagado); DTO e tipo do frontend acompanham.
+- Tabela `Vinculos` renomeada para `ClienteEventos`. `ServicoEvento.FornecedorContaId` removida.
+- Suíte: 314 + 98, verdes. Build do frontend ok.
+
+**Diferenças do plano/explorador (registradas no `dec.js`)**
+- `Convites.PrincipalId` fica **sem FK**: aponta para um convidado do próprio convite, que aponta de volta; FK nos dois sentidos impede gravar convite e convidados juntos (o EF acusa dependência circular). Os convidados saem em cascata com o convite.
+- Proposta e contrato do funil saem com a oportunidade (`CASCADE`, não `RESTRICT`): a SPEC-032 diz que a dona exclui tudo no funil, e o teste dela quebrava com `RESTRICT`. Bloquear ou arquivar continua pendência 9.
+- A divisão das colunas polimórficas de responsável vai para a **Fase 3**, porque precisa de `MembrosConta`.
+- O `data.json` do explorador ainda mostra a versão anterior dessas três decisões.
+
+**Pendência fora do escopo encontrada**
+- `npx ng test` não compila: `src/app/pages/tarefas/checklist-tarefa.spec.ts` (tipo `number | null | undefined`). O erro já existia na `staging`; esta branch só mudou o tipo `LeadRsvp` no frontend.
+
+**Fase 2 de schema concluída**, exceto o lote 2.6 (tabelas de planos e assinatura, sem fluxo).

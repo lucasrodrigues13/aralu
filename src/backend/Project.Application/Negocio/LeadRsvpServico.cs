@@ -9,8 +9,8 @@ public sealed record LeadRsvpLeitura(
     string Evento,
     DateTimeOffset CriadoEm,
     string? Telefone,
-    Guid ConviteId,
-    Guid EventoId);
+    Guid? ConviteId,
+    Guid? EventoId);
 
 public sealed class LeadRsvpServico(IDados dados)
 {

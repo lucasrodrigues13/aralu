@@ -230,106 +230,6 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Clientes",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Nome = table.Column<string>(type: "text", nullable: false),
-                    Papel = table.Column<string>(type: "text", nullable: true),
-                    Nascimento = table.Column<DateOnly>(type: "date", nullable: true),
-                    Email = table.Column<string>(type: "text", nullable: false),
-                    Ddi = table.Column<string>(type: "text", nullable: false),
-                    Celular = table.Column<string>(type: "text", nullable: false),
-                    TelefoneFixo = table.Column<string>(type: "text", nullable: true),
-                    Cpf = table.Column<string>(type: "text", nullable: true),
-                    Cnpj = table.Column<string>(type: "text", nullable: true),
-                    Profissao = table.Column<string>(type: "text", nullable: true),
-                    EstadoCivil = table.Column<string>(type: "text", nullable: true),
-                    Nacionalidade = table.Column<string>(type: "text", nullable: true),
-                    InscricaoMunicipal = table.Column<string>(type: "text", nullable: true),
-                    Religiao = table.Column<string>(type: "text", nullable: true),
-                    Observacao = table.Column<string>(type: "text", nullable: true),
-                    Facebook = table.Column<string>(type: "text", nullable: true),
-                    Instagram = table.Column<string>(type: "text", nullable: true),
-                    Pais = table.Column<string>(type: "text", nullable: true),
-                    Cep = table.Column<string>(type: "text", nullable: true),
-                    Endereco = table.Column<string>(type: "text", nullable: true),
-                    Numero = table.Column<string>(type: "text", nullable: true),
-                    Estado = table.Column<string>(type: "text", nullable: true),
-                    Cidade = table.Column<string>(type: "text", nullable: true),
-                    Bairro = table.Column<string>(type: "text", nullable: true),
-                    Complemento = table.Column<string>(type: "text", nullable: true),
-                    FotoId = table.Column<Guid>(type: "uuid", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Clientes", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Clientes_Contas_ContaId",
-                        column: x => x.ContaId,
-                        principalTable: "Contas",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ContratosConta",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Nome = table.Column<string>(type: "character varying(120)", maxLength: 120, nullable: false),
-                    Texto = table.Column<string>(type: "text", nullable: false),
-                    LogoArquivoId = table.Column<Guid>(type: "uuid", nullable: true),
-                    FundoArquivoId = table.Column<Guid>(type: "uuid", nullable: true),
-                    Formato = table.Column<string>(type: "text", nullable: false),
-                    WordArquivoId = table.Column<Guid>(type: "uuid", nullable: true),
-                    WordNome = table.Column<string>(type: "text", nullable: true),
-                    CriadoEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    AtualizadoEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ContratosConta", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_ContratosConta_Contas_ContaId",
-                        column: x => x.ContaId,
-                        principalTable: "Contas",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ContratosFunil",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
-                    OportunidadeId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Conteudo = table.Column<string>(type: "text", nullable: false),
-                    Situacao = table.Column<string>(type: "text", nullable: false),
-                    CriadoEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    CriadoPor = table.Column<string>(type: "text", nullable: true),
-                    EnviadoEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    AssinadoEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    ModeloId = table.Column<Guid>(type: "uuid", nullable: true),
-                    LogoArquivoId = table.Column<Guid>(type: "uuid", nullable: true),
-                    FundoArquivoId = table.Column<Guid>(type: "uuid", nullable: true),
-                    DocumentoArquivoId = table.Column<Guid>(type: "uuid", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ContratosFunil", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_ContratosFunil_Contas_ContaId",
-                        column: x => x.ContaId,
-                        principalTable: "Contas",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "EstagiosFunil",
                 columns: table => new
                 {
@@ -345,142 +245,6 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     table.PrimaryKey("PK_EstagiosFunil", x => x.Id);
                     table.ForeignKey(
                         name: "FK_EstagiosFunil_Contas_ContaId",
-                        column: x => x.ContaId,
-                        principalTable: "Contas",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Eventos",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
-                    CriadoEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    Nome = table.Column<string>(type: "text", nullable: false),
-                    PrimeiroNome = table.Column<string>(type: "text", nullable: true),
-                    SegundoNome = table.Column<string>(type: "text", nullable: true),
-                    Tipo = table.Column<string>(type: "text", nullable: false),
-                    Situacao = table.Column<string>(type: "text", nullable: false),
-                    Data = table.Column<DateOnly>(type: "date", nullable: true),
-                    PrazoRsvp = table.Column<DateOnly>(type: "date", nullable: true),
-                    DataEnvioConvites = table.Column<DateOnly>(type: "date", nullable: true),
-                    Hora = table.Column<TimeOnly>(type: "time without time zone", nullable: true),
-                    OrcamentoEstimado = table.Column<decimal>(type: "numeric(12,2)", precision: 12, scale: 2, nullable: true),
-                    ConvidadosEstimados = table.Column<int>(type: "integer", nullable: true),
-                    TempoFesta = table.Column<TimeOnly>(type: "time without time zone", nullable: true),
-                    InicioCerimonia = table.Column<TimeOnly>(type: "time without time zone", nullable: true),
-                    InicioRecepcao = table.Column<TimeOnly>(type: "time without time zone", nullable: true),
-                    QuantidadePadrinhos = table.Column<int>(type: "integer", nullable: true),
-                    QuantidadeDamas = table.Column<int>(type: "integer", nullable: true),
-                    NotificarAssessor = table.Column<bool>(type: "boolean", nullable: false),
-                    NotificarAssistentes = table.Column<bool>(type: "boolean", nullable: false),
-                    NotificarClientes = table.Column<bool>(type: "boolean", nullable: false),
-                    SalvarNaAgenda = table.Column<bool>(type: "boolean", nullable: false),
-                    ImagemId = table.Column<Guid>(type: "uuid", nullable: true),
-                    Cerimonia_Nome = table.Column<string>(type: "text", nullable: true),
-                    Cerimonia_Pais = table.Column<string>(type: "text", nullable: true),
-                    Cerimonia_Cep = table.Column<string>(type: "text", nullable: true),
-                    Cerimonia_Endereco = table.Column<string>(type: "text", nullable: true),
-                    Cerimonia_Numero = table.Column<string>(type: "text", nullable: true),
-                    Cerimonia_Estado = table.Column<string>(type: "text", nullable: true),
-                    Cerimonia_Cidade = table.Column<string>(type: "text", nullable: true),
-                    Cerimonia_Bairro = table.Column<string>(type: "text", nullable: true),
-                    Cerimonia_Persistido = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
-                    Recepcao_Nome = table.Column<string>(type: "text", nullable: true),
-                    Recepcao_Pais = table.Column<string>(type: "text", nullable: true),
-                    Recepcao_Cep = table.Column<string>(type: "text", nullable: true),
-                    Recepcao_Endereco = table.Column<string>(type: "text", nullable: true),
-                    Recepcao_Numero = table.Column<string>(type: "text", nullable: true),
-                    Recepcao_Estado = table.Column<string>(type: "text", nullable: true),
-                    Recepcao_Cidade = table.Column<string>(type: "text", nullable: true),
-                    Recepcao_Bairro = table.Column<string>(type: "text", nullable: true),
-                    Recepcao_Persistido = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Eventos", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Eventos_Contas_ContaId",
-                        column: x => x.ContaId,
-                        principalTable: "Contas",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Fornecedores",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Nome = table.Column<string>(type: "text", nullable: false),
-                    FotoId = table.Column<Guid>(type: "uuid", nullable: true),
-                    RazaoSocial = table.Column<string>(type: "text", nullable: true),
-                    Cnpj = table.Column<string>(type: "text", nullable: true),
-                    Cpf = table.Column<string>(type: "text", nullable: true),
-                    NomeResponsavel = table.Column<string>(type: "text", nullable: true),
-                    PrecoDe = table.Column<decimal>(type: "numeric(12,2)", precision: 12, scale: 2, nullable: true),
-                    PrecoAte = table.Column<decimal>(type: "numeric(12,2)", precision: 12, scale: 2, nullable: true),
-                    Site = table.Column<string>(type: "text", nullable: true),
-                    Facebook = table.Column<string>(type: "text", nullable: true),
-                    Instagram = table.Column<string>(type: "text", nullable: true),
-                    Youtube = table.Column<string>(type: "text", nullable: true),
-                    Pinterest = table.Column<string>(type: "text", nullable: true),
-                    Pais = table.Column<string>(type: "text", nullable: true),
-                    Cep = table.Column<string>(type: "text", nullable: true),
-                    Endereco = table.Column<string>(type: "text", nullable: true),
-                    Numero = table.Column<string>(type: "text", nullable: true),
-                    Estado = table.Column<string>(type: "text", nullable: true),
-                    Cidade = table.Column<string>(type: "text", nullable: true),
-                    Bairro = table.Column<string>(type: "text", nullable: true),
-                    Complemento = table.Column<string>(type: "text", nullable: true),
-                    Banco = table.Column<string>(type: "text", nullable: true),
-                    Agencia = table.Column<string>(type: "text", nullable: true),
-                    ContaBancaria = table.Column<string>(type: "text", nullable: true),
-                    TitularConta = table.Column<string>(type: "text", nullable: true),
-                    TipoConta = table.Column<string>(type: "text", nullable: true),
-                    DocumentosBancarios = table.Column<string>(type: "text", nullable: true),
-                    PixTipo = table.Column<string>(type: "text", nullable: true),
-                    PixChave = table.Column<string>(type: "text", nullable: true),
-                    Diferencial = table.Column<string>(type: "text", nullable: true),
-                    DiferencialVisivelCliente = table.Column<bool>(type: "boolean", nullable: false),
-                    InformacoesGerais = table.Column<string>(type: "text", nullable: true),
-                    Portfolio = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Fornecedores", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Fornecedores_Contas_ContaId",
-                        column: x => x.ContaId,
-                        principalTable: "Contas",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "LeadsRsvp",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ConviteId = table.Column<Guid>(type: "uuid", nullable: false),
-                    EventoId = table.Column<Guid>(type: "uuid", nullable: false),
-                    NomeConvite = table.Column<string>(type: "text", nullable: false),
-                    NomeEvento = table.Column<string>(type: "text", nullable: false),
-                    Telefone = table.Column<string>(type: "text", nullable: true),
-                    CriadoEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    Situacao = table.Column<string>(type: "text", nullable: false),
-                    OportunidadeId = table.Column<Guid>(type: "uuid", nullable: true),
-                    ContatadoEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_LeadsRsvp", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_LeadsRsvp_Contas_ContaId",
                         column: x => x.ContaId,
                         principalTable: "Contas",
                         principalColumn: "Id",
@@ -678,75 +442,6 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "OrcamentosFunil",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
-                    OportunidadeId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Conteudo = table.Column<string>(type: "text", nullable: false),
-                    Valor = table.Column<decimal>(type: "numeric(12,2)", precision: 12, scale: 2, nullable: true),
-                    Situacao = table.Column<string>(type: "text", nullable: false),
-                    CriadoEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    CriadoPor = table.Column<string>(type: "text", nullable: true),
-                    EnviadoEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    RespondidoEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    ModeloId = table.Column<Guid>(type: "uuid", nullable: true),
-                    HtmlAceite = table.Column<string>(type: "text", nullable: true),
-                    ExtrasAceite = table.Column<string>(type: "text", nullable: true),
-                    TokenLink = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
-                    ValidoAte = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    AbertoEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    Resposta = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
-                    RespostaMensagem = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
-                    RespostaEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_OrcamentosFunil", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_OrcamentosFunil_Contas_ContaId",
-                        column: x => x.ContaId,
-                        principalTable: "Contas",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Perfis",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
-                    NomeEmpresa = table.Column<string>(type: "text", nullable: true),
-                    Responsavel = table.Column<string>(type: "text", nullable: true),
-                    Documento = table.Column<string>(type: "text", nullable: true),
-                    Celular = table.Column<string>(type: "text", nullable: true),
-                    Nascimento = table.Column<DateOnly>(type: "date", nullable: true),
-                    Pais = table.Column<string>(type: "text", nullable: true),
-                    Cep = table.Column<string>(type: "text", nullable: true),
-                    Endereco = table.Column<string>(type: "text", nullable: true),
-                    Numero = table.Column<string>(type: "text", nullable: true),
-                    Complemento = table.Column<string>(type: "text", nullable: true),
-                    Bairro = table.Column<string>(type: "text", nullable: true),
-                    Cidade = table.Column<string>(type: "text", nullable: true),
-                    Estado = table.Column<string>(type: "text", nullable: true),
-                    FotoId = table.Column<Guid>(type: "uuid", nullable: true),
-                    ChavePix = table.Column<string>(type: "text", nullable: true),
-                    CapturaLeadRsvp = table.Column<bool>(type: "boolean", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Perfis", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Perfis_Contas_ContaId",
-                        column: x => x.ContaId,
-                        principalTable: "Contas",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "ServicosConta",
                 columns: table => new
                 {
@@ -786,26 +481,49 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "TarefasFunil",
+                name: "Clientes",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     ContaId = table.Column<Guid>(type: "uuid", nullable: false),
-                    OportunidadeId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Titulo = table.Column<string>(type: "text", nullable: false),
+                    Nome = table.Column<string>(type: "text", nullable: false),
+                    Papel = table.Column<string>(type: "text", nullable: true),
+                    Nascimento = table.Column<DateOnly>(type: "date", nullable: true),
+                    Email = table.Column<string>(type: "text", nullable: false),
+                    Ddi = table.Column<string>(type: "text", nullable: false),
+                    Celular = table.Column<string>(type: "text", nullable: false),
+                    TelefoneFixo = table.Column<string>(type: "text", nullable: true),
+                    Cpf = table.Column<string>(type: "text", nullable: true),
+                    Cnpj = table.Column<string>(type: "text", nullable: true),
+                    Profissao = table.Column<string>(type: "text", nullable: true),
+                    EstadoCivil = table.Column<string>(type: "text", nullable: true),
+                    Nacionalidade = table.Column<string>(type: "text", nullable: true),
+                    InscricaoMunicipal = table.Column<string>(type: "text", nullable: true),
+                    Religiao = table.Column<string>(type: "text", nullable: true),
                     Observacao = table.Column<string>(type: "text", nullable: true),
-                    Tipo = table.Column<string>(type: "text", nullable: false),
-                    Responsavel = table.Column<string>(type: "text", nullable: false),
-                    Prazo = table.Column<DateOnly>(type: "date", nullable: false),
-                    Completa = table.Column<bool>(type: "boolean", nullable: false),
-                    AnexoArquivoId = table.Column<Guid>(type: "uuid", nullable: true),
-                    CriadoPor = table.Column<string>(type: "text", nullable: true)
+                    Facebook = table.Column<string>(type: "text", nullable: true),
+                    Instagram = table.Column<string>(type: "text", nullable: true),
+                    Pais = table.Column<string>(type: "text", nullable: true),
+                    Cep = table.Column<string>(type: "text", nullable: true),
+                    Endereco = table.Column<string>(type: "text", nullable: true),
+                    Numero = table.Column<string>(type: "text", nullable: true),
+                    Estado = table.Column<string>(type: "text", nullable: true),
+                    Cidade = table.Column<string>(type: "text", nullable: true),
+                    Bairro = table.Column<string>(type: "text", nullable: true),
+                    Complemento = table.Column<string>(type: "text", nullable: true),
+                    FotoId = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_TarefasFunil", x => x.Id);
+                    table.PrimaryKey("PK_Clientes", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_TarefasFunil_Contas_ContaId",
+                        name: "FK_Clientes_Arquivos_FotoId",
+                        column: x => x.FotoId,
+                        principalTable: "Arquivos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_Clientes_Contas_ContaId",
                         column: x => x.ContaId,
                         principalTable: "Contas",
                         principalColumn: "Id",
@@ -813,30 +531,422 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "ParcelasContrato",
+                name: "ContratosConta",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     ContaId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ContratoFunilId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Numero = table.Column<int>(type: "integer", nullable: false),
-                    Vencimento = table.Column<DateOnly>(type: "date", nullable: false),
-                    Valor = table.Column<decimal>(type: "numeric(12,2)", precision: 12, scale: 2, nullable: false),
-                    Entrada = table.Column<bool>(type: "boolean", nullable: false)
+                    Nome = table.Column<string>(type: "character varying(120)", maxLength: 120, nullable: false),
+                    Texto = table.Column<string>(type: "text", nullable: false),
+                    LogoArquivoId = table.Column<Guid>(type: "uuid", nullable: true),
+                    FundoArquivoId = table.Column<Guid>(type: "uuid", nullable: true),
+                    Formato = table.Column<string>(type: "text", nullable: false),
+                    WordArquivoId = table.Column<Guid>(type: "uuid", nullable: true),
+                    WordNome = table.Column<string>(type: "text", nullable: true),
+                    CriadoEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    AtualizadoEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ParcelasContrato", x => x.Id);
+                    table.PrimaryKey("PK_ContratosConta", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_ParcelasContrato_Contas_ContaId",
+                        name: "FK_ContratosConta_Arquivos_FundoArquivoId",
+                        column: x => x.FundoArquivoId,
+                        principalTable: "Arquivos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_ContratosConta_Arquivos_LogoArquivoId",
+                        column: x => x.LogoArquivoId,
+                        principalTable: "Arquivos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_ContratosConta_Arquivos_WordArquivoId",
+                        column: x => x.WordArquivoId,
+                        principalTable: "Arquivos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_ContratosConta_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Eventos",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CriadoEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    Nome = table.Column<string>(type: "text", nullable: false),
+                    PrimeiroNome = table.Column<string>(type: "text", nullable: true),
+                    SegundoNome = table.Column<string>(type: "text", nullable: true),
+                    Tipo = table.Column<string>(type: "text", nullable: false),
+                    Situacao = table.Column<string>(type: "text", nullable: false),
+                    Data = table.Column<DateOnly>(type: "date", nullable: true),
+                    PrazoRsvp = table.Column<DateOnly>(type: "date", nullable: true),
+                    DataEnvioConvites = table.Column<DateOnly>(type: "date", nullable: true),
+                    Hora = table.Column<TimeOnly>(type: "time without time zone", nullable: true),
+                    OrcamentoEstimado = table.Column<decimal>(type: "numeric(12,2)", precision: 12, scale: 2, nullable: true),
+                    ConvidadosEstimados = table.Column<int>(type: "integer", nullable: true),
+                    TempoFesta = table.Column<TimeOnly>(type: "time without time zone", nullable: true),
+                    InicioCerimonia = table.Column<TimeOnly>(type: "time without time zone", nullable: true),
+                    InicioRecepcao = table.Column<TimeOnly>(type: "time without time zone", nullable: true),
+                    QuantidadePadrinhos = table.Column<int>(type: "integer", nullable: true),
+                    QuantidadeDamas = table.Column<int>(type: "integer", nullable: true),
+                    NotificarAssessor = table.Column<bool>(type: "boolean", nullable: false),
+                    NotificarAssistentes = table.Column<bool>(type: "boolean", nullable: false),
+                    NotificarClientes = table.Column<bool>(type: "boolean", nullable: false),
+                    SalvarNaAgenda = table.Column<bool>(type: "boolean", nullable: false),
+                    ImagemId = table.Column<Guid>(type: "uuid", nullable: true),
+                    Cerimonia_Nome = table.Column<string>(type: "text", nullable: true),
+                    Cerimonia_Pais = table.Column<string>(type: "text", nullable: true),
+                    Cerimonia_Cep = table.Column<string>(type: "text", nullable: true),
+                    Cerimonia_Endereco = table.Column<string>(type: "text", nullable: true),
+                    Cerimonia_Numero = table.Column<string>(type: "text", nullable: true),
+                    Cerimonia_Estado = table.Column<string>(type: "text", nullable: true),
+                    Cerimonia_Cidade = table.Column<string>(type: "text", nullable: true),
+                    Cerimonia_Bairro = table.Column<string>(type: "text", nullable: true),
+                    Cerimonia_Persistido = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
+                    Recepcao_Nome = table.Column<string>(type: "text", nullable: true),
+                    Recepcao_Pais = table.Column<string>(type: "text", nullable: true),
+                    Recepcao_Cep = table.Column<string>(type: "text", nullable: true),
+                    Recepcao_Endereco = table.Column<string>(type: "text", nullable: true),
+                    Recepcao_Numero = table.Column<string>(type: "text", nullable: true),
+                    Recepcao_Estado = table.Column<string>(type: "text", nullable: true),
+                    Recepcao_Cidade = table.Column<string>(type: "text", nullable: true),
+                    Recepcao_Bairro = table.Column<string>(type: "text", nullable: true),
+                    Recepcao_Persistido = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Eventos", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Eventos_Arquivos_ImagemId",
+                        column: x => x.ImagemId,
+                        principalTable: "Arquivos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_Eventos_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Fornecedores",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Nome = table.Column<string>(type: "text", nullable: false),
+                    FotoId = table.Column<Guid>(type: "uuid", nullable: true),
+                    RazaoSocial = table.Column<string>(type: "text", nullable: true),
+                    Cnpj = table.Column<string>(type: "text", nullable: true),
+                    Cpf = table.Column<string>(type: "text", nullable: true),
+                    NomeResponsavel = table.Column<string>(type: "text", nullable: true),
+                    PrecoDe = table.Column<decimal>(type: "numeric(12,2)", precision: 12, scale: 2, nullable: true),
+                    PrecoAte = table.Column<decimal>(type: "numeric(12,2)", precision: 12, scale: 2, nullable: true),
+                    Site = table.Column<string>(type: "text", nullable: true),
+                    Facebook = table.Column<string>(type: "text", nullable: true),
+                    Instagram = table.Column<string>(type: "text", nullable: true),
+                    Youtube = table.Column<string>(type: "text", nullable: true),
+                    Pinterest = table.Column<string>(type: "text", nullable: true),
+                    Pais = table.Column<string>(type: "text", nullable: true),
+                    Cep = table.Column<string>(type: "text", nullable: true),
+                    Endereco = table.Column<string>(type: "text", nullable: true),
+                    Numero = table.Column<string>(type: "text", nullable: true),
+                    Estado = table.Column<string>(type: "text", nullable: true),
+                    Cidade = table.Column<string>(type: "text", nullable: true),
+                    Bairro = table.Column<string>(type: "text", nullable: true),
+                    Complemento = table.Column<string>(type: "text", nullable: true),
+                    Banco = table.Column<string>(type: "text", nullable: true),
+                    Agencia = table.Column<string>(type: "text", nullable: true),
+                    ContaBancaria = table.Column<string>(type: "text", nullable: true),
+                    TitularConta = table.Column<string>(type: "text", nullable: true),
+                    TipoConta = table.Column<string>(type: "text", nullable: true),
+                    DocumentosBancarios = table.Column<string>(type: "text", nullable: true),
+                    PixTipo = table.Column<string>(type: "text", nullable: true),
+                    PixChave = table.Column<string>(type: "text", nullable: true),
+                    Diferencial = table.Column<string>(type: "text", nullable: true),
+                    DiferencialVisivelCliente = table.Column<bool>(type: "boolean", nullable: false),
+                    InformacoesGerais = table.Column<string>(type: "text", nullable: true),
+                    Portfolio = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Fornecedores", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Fornecedores_Arquivos_FotoId",
+                        column: x => x.FotoId,
+                        principalTable: "Arquivos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_Fornecedores_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Perfis",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
+                    NomeEmpresa = table.Column<string>(type: "text", nullable: true),
+                    Responsavel = table.Column<string>(type: "text", nullable: true),
+                    Documento = table.Column<string>(type: "text", nullable: true),
+                    Celular = table.Column<string>(type: "text", nullable: true),
+                    Nascimento = table.Column<DateOnly>(type: "date", nullable: true),
+                    Pais = table.Column<string>(type: "text", nullable: true),
+                    Cep = table.Column<string>(type: "text", nullable: true),
+                    Endereco = table.Column<string>(type: "text", nullable: true),
+                    Numero = table.Column<string>(type: "text", nullable: true),
+                    Complemento = table.Column<string>(type: "text", nullable: true),
+                    Bairro = table.Column<string>(type: "text", nullable: true),
+                    Cidade = table.Column<string>(type: "text", nullable: true),
+                    Estado = table.Column<string>(type: "text", nullable: true),
+                    FotoId = table.Column<Guid>(type: "uuid", nullable: true),
+                    ChavePix = table.Column<string>(type: "text", nullable: true),
+                    CapturaLeadRsvp = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Perfis", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Perfis_Arquivos_FotoId",
+                        column: x => x.FotoId,
+                        principalTable: "Arquivos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_Perfis_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "VinculoModeloEvento",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ModeloId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Tipo = table.Column<string>(type: "text", nullable: false),
+                    BibliotecaId = table.Column<Guid>(type: "uuid", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_VinculoModeloEvento", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_VinculoModeloEvento_Contas_ContaId",
                         column: x => x.ContaId,
                         principalTable: "Contas",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_ParcelasContrato_ContratosFunil_ContratoFunilId",
-                        column: x => x.ContratoFunilId,
-                        principalTable: "ContratosFunil",
+                        name: "FK_VinculoModeloEvento_Modelos_ModeloId",
+                        column: x => x.ModeloId,
+                        principalTable: "Modelos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SecaoBriefing",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ModeloId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Titulo = table.Column<string>(type: "text", nullable: false),
+                    Descricao = table.Column<string>(type: "text", nullable: true),
+                    Ordem = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SecaoBriefing", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_SecaoBriefing_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_SecaoBriefing_ModelosBriefing_ModeloId",
+                        column: x => x.ModeloId,
+                        principalTable: "ModelosBriefing",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ItemCronograma",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ModeloId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Rotulo = table.Column<string>(type: "text", nullable: true),
+                    Descricao = table.Column<string>(type: "text", nullable: true),
+                    Data = table.Column<DateOnly>(type: "date", nullable: true),
+                    Hora = table.Column<TimeOnly>(type: "time without time zone", nullable: true),
+                    Responsavel = table.Column<string>(type: "text", nullable: true),
+                    RecadoFornecedores = table.Column<string>(type: "text", nullable: true),
+                    Ordem = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ItemCronograma", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ItemCronograma_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_ItemCronograma_ModelosCronograma_ModeloId",
+                        column: x => x.ModeloId,
+                        principalTable: "ModelosCronograma",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ItemInspiracao",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
+                    GaleriaId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ArquivoId = table.Column<Guid>(type: "uuid", nullable: true),
+                    Url = table.Column<string>(type: "text", nullable: true),
+                    Ordem = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ItemInspiracao", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ItemInspiracao_Arquivos_ArquivoId",
+                        column: x => x.ArquivoId,
+                        principalTable: "Arquivos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_ItemInspiracao_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_ItemInspiracao_ModelosInspiracao_GaleriaId",
+                        column: x => x.GaleriaId,
+                        principalTable: "ModelosInspiracao",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SecaoRoteiro",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ModeloId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Titulo = table.Column<string>(type: "text", nullable: true),
+                    Horario = table.Column<TimeOnly>(type: "time without time zone", nullable: true),
+                    Musica = table.Column<string>(type: "text", nullable: true),
+                    Ordem = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SecaoRoteiro", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_SecaoRoteiro_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_SecaoRoteiro_ModelosRoteiro_ModeloId",
+                        column: x => x.ModeloId,
+                        principalTable: "ModelosRoteiro",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ServicoModelo",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ModeloId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ServicoContaId = table.Column<Guid>(type: "uuid", nullable: true),
+                    Nome = table.Column<string>(type: "text", nullable: false),
+                    ValorEstimado = table.Column<decimal>(type: "numeric(12,2)", precision: 12, scale: 2, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ServicoModelo", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ServicoModelo_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_ServicoModelo_Modelos_ModeloId",
+                        column: x => x.ModeloId,
+                        principalTable: "Modelos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ServicoModelo_ServicosConta_ServicoContaId",
+                        column: x => x.ServicoContaId,
+                        principalTable: "ServicosConta",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ClienteEventos",
+                columns: table => new
+                {
+                    ClienteId = table.Column<Guid>(type: "uuid", nullable: false),
+                    EventoId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ClienteEventos", x => new { x.ClienteId, x.EventoId });
+                    table.ForeignKey(
+                        name: "FK_ClienteEventos_Clientes_ClienteId",
+                        column: x => x.ClienteId,
+                        principalTable: "Clientes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ClienteEventos_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_ClienteEventos_Eventos_EventoId",
+                        column: x => x.EventoId,
+                        principalTable: "Eventos",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -922,6 +1032,30 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         name: "FK_EventosAssistentes_Eventos_EventoId",
                         column: x => x.EventoId,
                         principalTable: "Eventos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "EventoTagConta",
+                columns: table => new
+                {
+                    EventosId = table.Column<Guid>(type: "uuid", nullable: false),
+                    TagsId = table.Column<Guid>(type: "uuid", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_EventoTagConta", x => new { x.EventosId, x.TagsId });
+                    table.ForeignKey(
+                        name: "FK_EventoTagConta_Eventos_EventosId",
+                        column: x => x.EventosId,
+                        principalTable: "Eventos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_EventoTagConta_Tags_TagsId",
+                        column: x => x.TagsId,
+                        principalTable: "Tags",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -1085,6 +1219,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 {
                     table.PrimaryKey("PK_Oportunidades", x => x.Id);
                     table.ForeignKey(
+                        name: "FK_Oportunidades_Clientes_ClienteId",
+                        column: x => x.ClienteId,
+                        principalTable: "Clientes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
                         name: "FK_Oportunidades_Contas_ContaId",
                         column: x => x.ContaId,
                         principalTable: "Contas",
@@ -1102,6 +1242,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         principalTable: "Eventos",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_Oportunidades_ModelosServicoFunil_ModeloServicoFunilId",
+                        column: x => x.ModeloServicoFunilId,
+                        principalTable: "ModelosServicoFunil",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
                 });
 
             migrationBuilder.CreateTable(
@@ -1113,7 +1259,6 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     EventoId = table.Column<Guid>(type: "uuid", nullable: false),
                     Nome = table.Column<string>(type: "text", nullable: false),
                     ServicoContaId = table.Column<Guid>(type: "uuid", nullable: true),
-                    FornecedorContaId = table.Column<string>(type: "text", nullable: true),
                     Contratado = table.Column<bool>(type: "boolean", nullable: false),
                     ValorEstimado = table.Column<decimal>(type: "numeric(12,2)", precision: 12, scale: 2, nullable: true),
                     ValorContratado = table.Column<decimal>(type: "numeric(12,2)", precision: 12, scale: 2, nullable: true),
@@ -1135,37 +1280,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         principalTable: "Eventos",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Vinculos",
-                columns: table => new
-                {
-                    ClienteId = table.Column<Guid>(type: "uuid", nullable: false),
-                    EventoId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ContaId = table.Column<Guid>(type: "uuid", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Vinculos", x => new { x.ClienteId, x.EventoId });
                     table.ForeignKey(
-                        name: "FK_Vinculos_Clientes_ClienteId",
-                        column: x => x.ClienteId,
-                        principalTable: "Clientes",
+                        name: "FK_ServicoEvento_ServicosConta_ServicoContaId",
+                        column: x => x.ServicoContaId,
+                        principalTable: "ServicosConta",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_Vinculos_Contas_ContaId",
-                        column: x => x.ContaId,
-                        principalTable: "Contas",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_Vinculos_Eventos_EventoId",
-                        column: x => x.EventoId,
-                        principalTable: "Eventos",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.SetNull);
                 });
 
             migrationBuilder.CreateTable(
@@ -1195,6 +1315,37 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "FornecedorServico",
+                columns: table => new
+                {
+                    FornecedorId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ServicoContaId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_FornecedorServico", x => new { x.FornecedorId, x.ServicoContaId });
+                    table.ForeignKey(
+                        name: "FK_FornecedorServico_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_FornecedorServico_Fornecedores_FornecedorId",
+                        column: x => x.FornecedorId,
+                        principalTable: "Fornecedores",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_FornecedorServico_ServicosConta_ServicoContaId",
+                        column: x => x.ServicoContaId,
+                        principalTable: "ServicosConta",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "OrcamentoFornecedor",
                 columns: table => new
                 {
@@ -1209,6 +1360,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_OrcamentoFornecedor", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_OrcamentoFornecedor_Arquivos_AnexoId",
+                        column: x => x.AnexoId,
+                        principalTable: "Arquivos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_OrcamentoFornecedor_Contas_ContaId",
                         column: x => x.ContaId,
@@ -1253,343 +1410,96 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "ServicoModelo",
+                name: "PerguntaBriefing",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     ContaId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ModeloId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ServicoContaId = table.Column<Guid>(type: "uuid", nullable: true),
-                    Nome = table.Column<string>(type: "text", nullable: false),
-                    ValorEstimado = table.Column<decimal>(type: "numeric(12,2)", precision: 12, scale: 2, nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ServicoModelo", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_ServicoModelo_Contas_ContaId",
-                        column: x => x.ContaId,
-                        principalTable: "Contas",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_ServicoModelo_Modelos_ModeloId",
-                        column: x => x.ModeloId,
-                        principalTable: "Modelos",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "VinculoModeloEvento",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ModeloId = table.Column<Guid>(type: "uuid", nullable: false),
+                    SecaoId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Enunciado = table.Column<string>(type: "text", nullable: false),
                     Tipo = table.Column<string>(type: "text", nullable: false),
-                    BibliotecaId = table.Column<Guid>(type: "uuid", nullable: false)
+                    Ordem = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_VinculoModeloEvento", x => x.Id);
+                    table.PrimaryKey("PK_PerguntaBriefing", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_VinculoModeloEvento_Contas_ContaId",
+                        name: "FK_PerguntaBriefing_Contas_ContaId",
                         column: x => x.ContaId,
                         principalTable: "Contas",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_VinculoModeloEvento_Modelos_ModeloId",
-                        column: x => x.ModeloId,
-                        principalTable: "Modelos",
+                        name: "FK_PerguntaBriefing_SecaoBriefing_SecaoId",
+                        column: x => x.SecaoId,
+                        principalTable: "SecaoBriefing",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
-                name: "SecaoBriefing",
+                name: "ItemRoteiro",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
+                    SecaoId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Texto = table.Column<string>(type: "text", nullable: false),
+                    Ordem = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ItemRoteiro", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ItemRoteiro_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_ItemRoteiro_SecaoRoteiro_SecaoId",
+                        column: x => x.SecaoId,
+                        principalTable: "SecaoRoteiro",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TarefaModelo",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     ContaId = table.Column<Guid>(type: "uuid", nullable: false),
                     ModeloId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ServicoModeloId = table.Column<Guid>(type: "uuid", nullable: true),
                     Titulo = table.Column<string>(type: "text", nullable: false),
                     Descricao = table.Column<string>(type: "text", nullable: true),
-                    Ordem = table.Column<int>(type: "integer", nullable: false)
+                    PrazoRelativo = table.Column<int>(type: "integer", nullable: true),
+                    Prioridade = table.Column<string>(type: "text", nullable: false),
+                    Visibilidade = table.Column<string>(type: "text", nullable: false),
+                    Responsaveis = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_SecaoBriefing", x => x.Id);
+                    table.PrimaryKey("PK_TarefaModelo", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_SecaoBriefing_Contas_ContaId",
+                        name: "FK_TarefaModelo_Contas_ContaId",
                         column: x => x.ContaId,
                         principalTable: "Contas",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_SecaoBriefing_ModelosBriefing_ModeloId",
+                        name: "FK_TarefaModelo_Modelos_ModeloId",
                         column: x => x.ModeloId,
-                        principalTable: "ModelosBriefing",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ItemCronograma",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ModeloId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Rotulo = table.Column<string>(type: "text", nullable: true),
-                    Descricao = table.Column<string>(type: "text", nullable: true),
-                    Data = table.Column<DateOnly>(type: "date", nullable: true),
-                    Hora = table.Column<TimeOnly>(type: "time without time zone", nullable: true),
-                    Responsavel = table.Column<string>(type: "text", nullable: true),
-                    RecadoFornecedores = table.Column<string>(type: "text", nullable: true),
-                    Ordem = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ItemCronograma", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_ItemCronograma_Contas_ContaId",
-                        column: x => x.ContaId,
-                        principalTable: "Contas",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_ItemCronograma_ModelosCronograma_ModeloId",
-                        column: x => x.ModeloId,
-                        principalTable: "ModelosCronograma",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ItemInspiracao",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
-                    GaleriaId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ArquivoId = table.Column<Guid>(type: "uuid", nullable: true),
-                    Url = table.Column<string>(type: "text", nullable: true),
-                    Ordem = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ItemInspiracao", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_ItemInspiracao_Contas_ContaId",
-                        column: x => x.ContaId,
-                        principalTable: "Contas",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_ItemInspiracao_ModelosInspiracao_GaleriaId",
-                        column: x => x.GaleriaId,
-                        principalTable: "ModelosInspiracao",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "SecaoRoteiro",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ModeloId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Titulo = table.Column<string>(type: "text", nullable: true),
-                    Horario = table.Column<TimeOnly>(type: "time without time zone", nullable: true),
-                    Musica = table.Column<string>(type: "text", nullable: true),
-                    Ordem = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_SecaoRoteiro", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_SecaoRoteiro_Contas_ContaId",
-                        column: x => x.ContaId,
-                        principalTable: "Contas",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_SecaoRoteiro_ModelosRoteiro_ModeloId",
-                        column: x => x.ModeloId,
-                        principalTable: "ModelosRoteiro",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ParcelasOrcamento",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
-                    OrcamentoFunilId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Numero = table.Column<int>(type: "integer", nullable: false),
-                    Vencimento = table.Column<DateOnly>(type: "date", nullable: false),
-                    Valor = table.Column<decimal>(type: "numeric(12,2)", precision: 12, scale: 2, nullable: false),
-                    Entrada = table.Column<bool>(type: "boolean", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ParcelasOrcamento", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_ParcelasOrcamento_Contas_ContaId",
-                        column: x => x.ContaId,
-                        principalTable: "Contas",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_ParcelasOrcamento_OrcamentosFunil_OrcamentoFunilId",
-                        column: x => x.OrcamentoFunilId,
-                        principalTable: "OrcamentosFunil",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "RespostasPropostaFunil",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
-                    OrcamentoFunilId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Tipo = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
-                    Mensagem = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
-                    Em = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_RespostasPropostaFunil", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_RespostasPropostaFunil_Contas_ContaId",
-                        column: x => x.ContaId,
-                        principalTable: "Contas",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_RespostasPropostaFunil_OrcamentosFunil_OrcamentoFunilId",
-                        column: x => x.OrcamentoFunilId,
-                        principalTable: "OrcamentosFunil",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "FornecedorServico",
-                columns: table => new
-                {
-                    FornecedorId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ServicoContaId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ContaId = table.Column<Guid>(type: "uuid", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_FornecedorServico", x => new { x.FornecedorId, x.ServicoContaId });
-                    table.ForeignKey(
-                        name: "FK_FornecedorServico_Contas_ContaId",
-                        column: x => x.ContaId,
-                        principalTable: "Contas",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_FornecedorServico_Fornecedores_FornecedorId",
-                        column: x => x.FornecedorId,
-                        principalTable: "Fornecedores",
+                        principalTable: "Modelos",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_FornecedorServico_ServicosConta_ServicoContaId",
-                        column: x => x.ServicoContaId,
-                        principalTable: "ServicosConta",
+                        name: "FK_TarefaModelo_ServicoModelo_ServicoModeloId",
+                        column: x => x.ServicoModeloId,
+                        principalTable: "ServicoModelo",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "EventoTagConta",
-                columns: table => new
-                {
-                    EventosId = table.Column<Guid>(type: "uuid", nullable: false),
-                    TagsId = table.Column<Guid>(type: "uuid", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_EventoTagConta", x => new { x.EventosId, x.TagsId });
-                    table.ForeignKey(
-                        name: "FK_EventoTagConta_Eventos_EventosId",
-                        column: x => x.EventosId,
-                        principalTable: "Eventos",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_EventoTagConta_Tags_TagsId",
-                        column: x => x.TagsId,
-                        principalTable: "Tags",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ResponsaveisTarefaFunil",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
-                    TarefaFunilId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Papel = table.Column<string>(type: "text", nullable: false),
-                    ReferenciaId = table.Column<string>(type: "text", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ResponsaveisTarefaFunil", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_ResponsaveisTarefaFunil_Contas_ContaId",
-                        column: x => x.ContaId,
-                        principalTable: "Contas",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_ResponsaveisTarefaFunil_TarefasFunil_TarefaFunilId",
-                        column: x => x.TarefaFunilId,
-                        principalTable: "TarefasFunil",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "RecebimentosParcela",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ParcelaId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Valor = table.Column<decimal>(type: "numeric(12,2)", precision: 12, scale: 2, nullable: false),
-                    Forma = table.Column<string>(type: "text", nullable: false),
-                    Data = table.Column<DateOnly>(type: "date", nullable: false),
-                    CriadoEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_RecebimentosParcela", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_RecebimentosParcela_Contas_ContaId",
-                        column: x => x.ContaId,
-                        principalTable: "Contas",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_RecebimentosParcela_ParcelasContrato_ParcelaId",
-                        column: x => x.ParcelaId,
-                        principalTable: "ParcelasContrato",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.SetNull);
                 });
 
             migrationBuilder.CreateTable(
@@ -1648,6 +1558,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
+                        name: "FK_BriefingsOportunidade_ModelosBriefing_ModeloBriefingId",
+                        column: x => x.ModeloBriefingId,
+                        principalTable: "ModelosBriefing",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
                         name: "FK_BriefingsOportunidade_Oportunidades_OportunidadeId",
                         column: x => x.OportunidadeId,
                         principalTable: "Oportunidades",
@@ -1685,6 +1601,196 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ContratosFunil",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
+                    OportunidadeId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Conteudo = table.Column<string>(type: "text", nullable: false),
+                    Situacao = table.Column<string>(type: "text", nullable: false),
+                    CriadoEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    CriadoPor = table.Column<string>(type: "text", nullable: true),
+                    EnviadoEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    AssinadoEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    ModeloId = table.Column<Guid>(type: "uuid", nullable: true),
+                    LogoArquivoId = table.Column<Guid>(type: "uuid", nullable: true),
+                    FundoArquivoId = table.Column<Guid>(type: "uuid", nullable: true),
+                    DocumentoArquivoId = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ContratosFunil", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ContratosFunil_Arquivos_DocumentoArquivoId",
+                        column: x => x.DocumentoArquivoId,
+                        principalTable: "Arquivos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_ContratosFunil_Arquivos_FundoArquivoId",
+                        column: x => x.FundoArquivoId,
+                        principalTable: "Arquivos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_ContratosFunil_Arquivos_LogoArquivoId",
+                        column: x => x.LogoArquivoId,
+                        principalTable: "Arquivos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_ContratosFunil_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_ContratosFunil_ContratosConta_ModeloId",
+                        column: x => x.ModeloId,
+                        principalTable: "ContratosConta",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_ContratosFunil_Oportunidades_OportunidadeId",
+                        column: x => x.OportunidadeId,
+                        principalTable: "Oportunidades",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "LeadsRsvp",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ConviteId = table.Column<Guid>(type: "uuid", nullable: true),
+                    EventoId = table.Column<Guid>(type: "uuid", nullable: true),
+                    NomeConvite = table.Column<string>(type: "text", nullable: false),
+                    NomeEvento = table.Column<string>(type: "text", nullable: false),
+                    Telefone = table.Column<string>(type: "text", nullable: true),
+                    CriadoEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    Situacao = table.Column<string>(type: "text", nullable: false),
+                    OportunidadeId = table.Column<Guid>(type: "uuid", nullable: true),
+                    ContatadoEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_LeadsRsvp", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_LeadsRsvp_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_LeadsRsvp_Convites_ConviteId",
+                        column: x => x.ConviteId,
+                        principalTable: "Convites",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_LeadsRsvp_Eventos_EventoId",
+                        column: x => x.EventoId,
+                        principalTable: "Eventos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_LeadsRsvp_Oportunidades_OportunidadeId",
+                        column: x => x.OportunidadeId,
+                        principalTable: "Oportunidades",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "OrcamentosFunil",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
+                    OportunidadeId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Conteudo = table.Column<string>(type: "text", nullable: false),
+                    Valor = table.Column<decimal>(type: "numeric(12,2)", precision: 12, scale: 2, nullable: true),
+                    Situacao = table.Column<string>(type: "text", nullable: false),
+                    CriadoEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    CriadoPor = table.Column<string>(type: "text", nullable: true),
+                    EnviadoEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    RespondidoEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    ModeloId = table.Column<Guid>(type: "uuid", nullable: true),
+                    HtmlAceite = table.Column<string>(type: "text", nullable: true),
+                    ExtrasAceite = table.Column<string>(type: "text", nullable: true),
+                    TokenLink = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
+                    ValidoAte = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    AbertoEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    Resposta = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
+                    RespostaMensagem = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    RespostaEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_OrcamentosFunil", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_OrcamentosFunil_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_OrcamentosFunil_ModelosOrcamentoFunil_ModeloId",
+                        column: x => x.ModeloId,
+                        principalTable: "ModelosOrcamentoFunil",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_OrcamentosFunil_Oportunidades_OportunidadeId",
+                        column: x => x.OportunidadeId,
+                        principalTable: "Oportunidades",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TarefasFunil",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
+                    OportunidadeId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Titulo = table.Column<string>(type: "text", nullable: false),
+                    Observacao = table.Column<string>(type: "text", nullable: true),
+                    Tipo = table.Column<string>(type: "text", nullable: false),
+                    Responsavel = table.Column<string>(type: "text", nullable: false),
+                    Prazo = table.Column<DateOnly>(type: "date", nullable: false),
+                    Completa = table.Column<bool>(type: "boolean", nullable: false),
+                    AnexoArquivoId = table.Column<Guid>(type: "uuid", nullable: true),
+                    CriadoPor = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TarefasFunil", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_TarefasFunil_Arquivos_AnexoArquivoId",
+                        column: x => x.AnexoArquivoId,
+                        principalTable: "Arquivos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_TarefasFunil_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_TarefasFunil_Oportunidades_OportunidadeId",
+                        column: x => x.OportunidadeId,
+                        principalTable: "Oportunidades",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "FornecedorNoServico",
                 columns: table => new
                 {
@@ -1703,6 +1809,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         name: "FK_FornecedorNoServico_Contas_ContaId",
                         column: x => x.ContaId,
                         principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_FornecedorNoServico_Fornecedores_FornecedorId",
+                        column: x => x.FornecedorId,
+                        principalTable: "Fornecedores",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
@@ -1782,94 +1894,30 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "TarefaModelo",
+                name: "ItensChecklistTarefaModelo",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     ContaId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ModeloId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ServicoModeloId = table.Column<Guid>(type: "uuid", nullable: true),
-                    Titulo = table.Column<string>(type: "text", nullable: false),
-                    Descricao = table.Column<string>(type: "text", nullable: true),
-                    PrazoRelativo = table.Column<int>(type: "integer", nullable: true),
-                    Prioridade = table.Column<string>(type: "text", nullable: false),
-                    Visibilidade = table.Column<string>(type: "text", nullable: false),
-                    Responsaveis = table.Column<string>(type: "text", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_TarefaModelo", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_TarefaModelo_Contas_ContaId",
-                        column: x => x.ContaId,
-                        principalTable: "Contas",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_TarefaModelo_Modelos_ModeloId",
-                        column: x => x.ModeloId,
-                        principalTable: "Modelos",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_TarefaModelo_ServicoModelo_ServicoModeloId",
-                        column: x => x.ServicoModeloId,
-                        principalTable: "ServicoModelo",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.SetNull);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "PerguntaBriefing",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
-                    SecaoId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Enunciado = table.Column<string>(type: "text", nullable: false),
-                    Tipo = table.Column<string>(type: "text", nullable: false),
-                    Ordem = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_PerguntaBriefing", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_PerguntaBriefing_Contas_ContaId",
-                        column: x => x.ContaId,
-                        principalTable: "Contas",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_PerguntaBriefing_SecaoBriefing_SecaoId",
-                        column: x => x.SecaoId,
-                        principalTable: "SecaoBriefing",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ItemRoteiro",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
-                    SecaoId = table.Column<Guid>(type: "uuid", nullable: false),
+                    TarefaModeloId = table.Column<Guid>(type: "uuid", nullable: false),
                     Texto = table.Column<string>(type: "text", nullable: false),
-                    Ordem = table.Column<int>(type: "integer", nullable: false)
+                    Ordem = table.Column<int>(type: "integer", nullable: false),
+                    PrazoRelativo = table.Column<int>(type: "integer", nullable: true),
+                    ResponsavelPapel = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ItemRoteiro", x => x.Id);
+                    table.PrimaryKey("PK_ItensChecklistTarefaModelo", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_ItemRoteiro_Contas_ContaId",
+                        name: "FK_ItensChecklistTarefaModelo_Contas_ContaId",
                         column: x => x.ContaId,
                         principalTable: "Contas",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_ItemRoteiro_SecaoRoteiro_SecaoId",
-                        column: x => x.SecaoId,
-                        principalTable: "SecaoRoteiro",
+                        name: "FK_ItensChecklistTarefaModelo_TarefaModelo_TarefaModeloId",
+                        column: x => x.TarefaModeloId,
+                        principalTable: "TarefaModelo",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -1899,6 +1947,18 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         name: "FK_PresencasEvento_Convidados_ConvidadoId",
                         column: x => x.ConvidadoId,
                         principalTable: "Convidados",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_PresencasEvento_Convites_ConviteId",
+                        column: x => x.ConviteId,
+                        principalTable: "Convites",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_PresencasEvento_Eventos_EventoId",
+                        column: x => x.EventoId,
+                        principalTable: "Eventos",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -1933,6 +1993,119 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ParcelasContrato",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContratoFunilId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Numero = table.Column<int>(type: "integer", nullable: false),
+                    Vencimento = table.Column<DateOnly>(type: "date", nullable: false),
+                    Valor = table.Column<decimal>(type: "numeric(12,2)", precision: 12, scale: 2, nullable: false),
+                    Entrada = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ParcelasContrato", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ParcelasContrato_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_ParcelasContrato_ContratosFunil_ContratoFunilId",
+                        column: x => x.ContratoFunilId,
+                        principalTable: "ContratosFunil",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ParcelasOrcamento",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
+                    OrcamentoFunilId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Numero = table.Column<int>(type: "integer", nullable: false),
+                    Vencimento = table.Column<DateOnly>(type: "date", nullable: false),
+                    Valor = table.Column<decimal>(type: "numeric(12,2)", precision: 12, scale: 2, nullable: false),
+                    Entrada = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ParcelasOrcamento", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ParcelasOrcamento_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_ParcelasOrcamento_OrcamentosFunil_OrcamentoFunilId",
+                        column: x => x.OrcamentoFunilId,
+                        principalTable: "OrcamentosFunil",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "RespostasPropostaFunil",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
+                    OrcamentoFunilId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Tipo = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    Mensagem = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    Em = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RespostasPropostaFunil", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_RespostasPropostaFunil_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_RespostasPropostaFunil_OrcamentosFunil_OrcamentoFunilId",
+                        column: x => x.OrcamentoFunilId,
+                        principalTable: "OrcamentosFunil",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ResponsaveisTarefaFunil",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
+                    TarefaFunilId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Papel = table.Column<string>(type: "text", nullable: false),
+                    ReferenciaId = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ResponsaveisTarefaFunil", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ResponsaveisTarefaFunil_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_ResponsaveisTarefaFunil_TarefasFunil_TarefaFunilId",
+                        column: x => x.TarefaFunilId,
+                        principalTable: "TarefasFunil",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "ContratosFornecedor",
                 columns: table => new
                 {
@@ -1954,6 +2127,18 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ContratosFornecedor", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ContratosFornecedor_Arquivos_ComprovanteArquivoId",
+                        column: x => x.ComprovanteArquivoId,
+                        principalTable: "Arquivos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_ContratosFornecedor_Arquivos_ContratoAssinadoArquivoId",
+                        column: x => x.ContratoAssinadoArquivoId,
+                        principalTable: "Arquivos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_ContratosFornecedor_Contas_ContaId",
                         column: x => x.ContaId,
@@ -1989,6 +2174,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AnexosTarefa", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_AnexosTarefa_Arquivos_ArquivoId",
+                        column: x => x.ArquivoId,
+                        principalTable: "Arquivos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_AnexosTarefa_Contas_ContaId",
                         column: x => x.ContaId,
@@ -2092,30 +2283,30 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "ItensChecklistTarefaModelo",
+                name: "RecebimentosParcela",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     ContaId = table.Column<Guid>(type: "uuid", nullable: false),
-                    TarefaModeloId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Texto = table.Column<string>(type: "text", nullable: false),
-                    Ordem = table.Column<int>(type: "integer", nullable: false),
-                    PrazoRelativo = table.Column<int>(type: "integer", nullable: true),
-                    ResponsavelPapel = table.Column<string>(type: "text", nullable: true)
+                    ParcelaId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Valor = table.Column<decimal>(type: "numeric(12,2)", precision: 12, scale: 2, nullable: false),
+                    Forma = table.Column<string>(type: "text", nullable: false),
+                    Data = table.Column<DateOnly>(type: "date", nullable: false),
+                    CriadoEm = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ItensChecklistTarefaModelo", x => x.Id);
+                    table.PrimaryKey("PK_RecebimentosParcela", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_ItensChecklistTarefaModelo_Contas_ContaId",
+                        name: "FK_RecebimentosParcela_Contas_ContaId",
                         column: x => x.ContaId,
                         principalTable: "Contas",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_ItensChecklistTarefaModelo_TarefaModelo_TarefaModeloId",
-                        column: x => x.TarefaModeloId,
-                        principalTable: "TarefaModelo",
+                        name: "FK_RecebimentosParcela_ParcelasContrato_ParcelaId",
+                        column: x => x.ParcelaId,
+                        principalTable: "ParcelasContrato",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -2141,6 +2332,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 {
                     table.PrimaryKey("PK_ParcelasContratoFornecedor", x => x.Id);
                     table.ForeignKey(
+                        name: "FK_ParcelasContratoFornecedor_Arquivos_ComprovanteArquivoId",
+                        column: x => x.ComprovanteArquivoId,
+                        principalTable: "Arquivos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
                         name: "FK_ParcelasContratoFornecedor_Contas_ContaId",
                         column: x => x.ContaId,
                         principalTable: "Contas",
@@ -2153,6 +2350,11 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AnexosTarefa_ArquivoId",
+                table: "AnexosTarefa",
+                column: "ArquivoId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AnexosTarefa_ContaId",
@@ -2227,15 +2429,35 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 column: "ContaId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_BriefingsOportunidade_ModeloBriefingId",
+                table: "BriefingsOportunidade",
+                column: "ModeloBriefingId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_BriefingsOportunidade_OportunidadeId",
                 table: "BriefingsOportunidade",
                 column: "OportunidadeId",
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_ClienteEventos_ContaId",
+                table: "ClienteEventos",
+                column: "ContaId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ClienteEventos_EventoId",
+                table: "ClienteEventos",
+                column: "EventoId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Clientes_ContaId_Nome",
                 table: "Clientes",
                 columns: new[] { "ContaId", "Nome" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Clientes_FotoId",
+                table: "Clientes",
+                column: "FotoId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ComentariosTarefa_ContaId",
@@ -2280,9 +2502,34 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 column: "ContaId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ContratosConta_FundoArquivoId",
+                table: "ContratosConta",
+                column: "FundoArquivoId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ContratosConta_LogoArquivoId",
+                table: "ContratosConta",
+                column: "LogoArquivoId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ContratosConta_WordArquivoId",
+                table: "ContratosConta",
+                column: "WordArquivoId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ContratosFornecedor_ComprovanteArquivoId",
+                table: "ContratosFornecedor",
+                column: "ComprovanteArquivoId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ContratosFornecedor_ContaId",
                 table: "ContratosFornecedor",
                 column: "ContaId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ContratosFornecedor_ContratoAssinadoArquivoId",
+                table: "ContratosFornecedor",
+                column: "ContratoAssinadoArquivoId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ContratosFornecedor_ServicoId",
@@ -2299,6 +2546,31 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 name: "IX_ContratosFunil_ContaId",
                 table: "ContratosFunil",
                 column: "ContaId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ContratosFunil_DocumentoArquivoId",
+                table: "ContratosFunil",
+                column: "DocumentoArquivoId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ContratosFunil_FundoArquivoId",
+                table: "ContratosFunil",
+                column: "FundoArquivoId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ContratosFunil_LogoArquivoId",
+                table: "ContratosFunil",
+                column: "LogoArquivoId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ContratosFunil_ModeloId",
+                table: "ContratosFunil",
+                column: "ModeloId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ContratosFunil_OportunidadeId",
+                table: "ContratosFunil",
+                column: "OportunidadeId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Convidados_ContaId",
@@ -2354,6 +2626,11 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 columns: new[] { "ContaId", "Data" });
 
             migrationBuilder.CreateIndex(
+                name: "IX_Eventos_ImagemId",
+                table: "Eventos",
+                column: "ImagemId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_EventosAssistentes_AssistenteId",
                 table: "EventosAssistentes",
                 column: "AssistenteId");
@@ -2369,9 +2646,19 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 column: "ContaId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Fornecedores_FotoId",
+                table: "Fornecedores",
+                column: "FotoId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_FornecedorNoServico_ContaId",
                 table: "FornecedorNoServico",
                 column: "ContaId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_FornecedorNoServico_FornecedorId",
+                table: "FornecedorNoServico",
+                column: "FornecedorId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_FornecedorNoServico_ServicoId",
@@ -2412,6 +2699,11 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 name: "IX_ItemCronograma_ModeloId",
                 table: "ItemCronograma",
                 column: "ModeloId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ItemInspiracao_ArquivoId",
+                table: "ItemInspiracao",
+                column: "ArquivoId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ItemInspiracao_ContaId",
@@ -2467,6 +2759,21 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 name: "IX_LeadsRsvp_ContaId",
                 table: "LeadsRsvp",
                 column: "ContaId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_LeadsRsvp_ConviteId",
+                table: "LeadsRsvp",
+                column: "ConviteId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_LeadsRsvp_EventoId",
+                table: "LeadsRsvp",
+                column: "EventoId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_LeadsRsvp_OportunidadeId",
+                table: "LeadsRsvp",
+                column: "OportunidadeId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_LinksCliente_ContaId",
@@ -2549,6 +2856,11 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 column: "ContaId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Oportunidades_ClienteId",
+                table: "Oportunidades",
+                column: "ClienteId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Oportunidades_ContaId",
                 table: "Oportunidades",
                 column: "ContaId");
@@ -2566,6 +2878,16 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 filter: "\"EventoId\" IS NOT NULL");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Oportunidades_ModeloServicoFunilId",
+                table: "Oportunidades",
+                column: "ModeloServicoFunilId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OrcamentoFornecedor_AnexoId",
+                table: "OrcamentoFornecedor",
+                column: "AnexoId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_OrcamentoFornecedor_ContaId",
                 table: "OrcamentoFornecedor",
                 column: "ContaId");
@@ -2579,6 +2901,16 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 name: "IX_OrcamentosFunil_ContaId",
                 table: "OrcamentosFunil",
                 column: "ContaId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OrcamentosFunil_ModeloId",
+                table: "OrcamentosFunil",
+                column: "ModeloId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OrcamentosFunil_OportunidadeId",
+                table: "OrcamentosFunil",
+                column: "OportunidadeId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_OrcamentosFunil_TokenLink",
@@ -2595,6 +2927,11 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 name: "IX_ParcelasContrato_ContratoFunilId",
                 table: "ParcelasContrato",
                 column: "ContratoFunilId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ParcelasContratoFornecedor_ComprovanteArquivoId",
+                table: "ParcelasContratoFornecedor",
+                column: "ComprovanteArquivoId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ParcelasContratoFornecedor_ContaId",
@@ -2623,6 +2960,11 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_Perfis_FotoId",
+                table: "Perfis",
+                column: "FotoId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_PerguntaBriefing_ContaId",
                 table: "PerguntaBriefing",
                 column: "ContaId");
@@ -2642,6 +2984,11 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 table: "PresencasEvento",
                 column: "ConvidadoId",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PresencasEvento_ConviteId",
+                table: "PresencasEvento",
+                column: "ConviteId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_PresencasEvento_EventoId",
@@ -2719,6 +3066,11 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 column: "EventoId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ServicoEvento_ServicoContaId",
+                table: "ServicoEvento",
+                column: "ServicoContaId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ServicoModelo_ContaId",
                 table: "ServicoModelo",
                 column: "ContaId");
@@ -2786,9 +3138,19 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 column: "ServicoEventoId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_TarefasFunil_AnexoArquivoId",
+                table: "TarefasFunil",
+                column: "AnexoArquivoId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_TarefasFunil_ContaId",
                 table: "TarefasFunil",
                 column: "ContaId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TarefasFunil_OportunidadeId",
+                table: "TarefasFunil",
+                column: "OportunidadeId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TelefoneFornecedor_ContaId",
@@ -2809,16 +3171,6 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 name: "IX_VinculoModeloEvento_ModeloId",
                 table: "VinculoModeloEvento",
                 column: "ModeloId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Vinculos_ContaId",
-                table: "Vinculos",
-                column: "ContaId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Vinculos_EventoId",
-                table: "Vinculos",
-                column: "EventoId");
         }
 
         /// <inheritdoc />
@@ -2826,9 +3178,6 @@ namespace Project.Infrastructure.Persistencia.Migrations
         {
             migrationBuilder.DropTable(
                 name: "AnexosTarefa");
-
-            migrationBuilder.DropTable(
-                name: "Arquivos");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoleClaims");
@@ -2846,6 +3195,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
+                name: "ClienteEventos");
+
+            migrationBuilder.DropTable(
                 name: "ComentariosTarefa");
 
             migrationBuilder.DropTable(
@@ -2853,9 +3205,6 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
             migrationBuilder.DropTable(
                 name: "ContatoOportunidade");
-
-            migrationBuilder.DropTable(
-                name: "ContratosConta");
 
             migrationBuilder.DropTable(
                 name: "EmailFornecedor");
@@ -2906,12 +3255,6 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 name: "ModelosMensagem");
 
             migrationBuilder.DropTable(
-                name: "ModelosOrcamentoFunil");
-
-            migrationBuilder.DropTable(
-                name: "ModelosServicoFunil");
-
-            migrationBuilder.DropTable(
                 name: "OrcamentoFornecedor");
 
             migrationBuilder.DropTable(
@@ -2951,9 +3294,6 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 name: "VinculoModeloEvento");
 
             migrationBuilder.DropTable(
-                name: "Vinculos");
-
-            migrationBuilder.DropTable(
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
@@ -2961,9 +3301,6 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
             migrationBuilder.DropTable(
                 name: "Tags");
-
-            migrationBuilder.DropTable(
-                name: "ServicosConta");
 
             migrationBuilder.DropTable(
                 name: "ModelosCronograma");
@@ -3002,16 +3339,7 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 name: "OrcamentosFunil");
 
             migrationBuilder.DropTable(
-                name: "Fornecedores");
-
-            migrationBuilder.DropTable(
-                name: "Clientes");
-
-            migrationBuilder.DropTable(
                 name: "ModelosRoteiro");
-
-            migrationBuilder.DropTable(
-                name: "Oportunidades");
 
             migrationBuilder.DropTable(
                 name: "ServicoModelo");
@@ -3029,16 +3357,40 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 name: "ContratosFunil");
 
             migrationBuilder.DropTable(
-                name: "EstagiosFunil");
+                name: "ModelosOrcamentoFunil");
 
             migrationBuilder.DropTable(
                 name: "Modelos");
 
             migrationBuilder.DropTable(
+                name: "Fornecedores");
+
+            migrationBuilder.DropTable(
                 name: "ServicoEvento");
 
             migrationBuilder.DropTable(
+                name: "ContratosConta");
+
+            migrationBuilder.DropTable(
+                name: "Oportunidades");
+
+            migrationBuilder.DropTable(
+                name: "ServicosConta");
+
+            migrationBuilder.DropTable(
+                name: "Clientes");
+
+            migrationBuilder.DropTable(
+                name: "EstagiosFunil");
+
+            migrationBuilder.DropTable(
                 name: "Eventos");
+
+            migrationBuilder.DropTable(
+                name: "ModelosServicoFunil");
+
+            migrationBuilder.DropTable(
+                name: "Arquivos");
 
             migrationBuilder.DropTable(
                 name: "Contas");

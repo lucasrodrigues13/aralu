@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Project.Domain.Clientes;
+using Project.Domain.Contratos;
 using Project.Domain.Convidados;
 using Project.Domain.Equipe;
 using Project.Domain.Eventos;
@@ -46,6 +47,63 @@ public static class Mapa
         modelBuilder.Entity<CompromissoAgenda>().HasIndex(item => new { item.ContaId, item.Data });
         modelBuilder.Entity<Convite>().HasIndex(item => new { item.ContaId, item.EventoId });
     }
+
+    /// <summary>
+    /// SPEC-062, lote 2.5: referências que só existiam no código viram FK.
+    /// SET NULL quando o registro sobrevive sem o pai; RESTRICT quando apagar o pai perderia algo
+    /// importante (documento, contrato, proposta); CASCADE quando o filho não tem uso sem o pai.
+    /// Decisões e motivos em docs/banco/fonte/dec.js.
+    /// </summary>
+    public static void LigarReferencias(ModelBuilder modelBuilder)
+    {
+        // Arquivos: imagem opcional some sem levar o registro; documento não pode sumir em uso.
+        Arquivo<Cliente>(modelBuilder, item => item.FotoId, DeleteBehavior.SetNull);
+        Arquivo<Fornecedor>(modelBuilder, item => item.FotoId, DeleteBehavior.SetNull);
+        Arquivo<PerfilAssessoria>(modelBuilder, item => item.FotoId, DeleteBehavior.SetNull);
+        Arquivo<Evento>(modelBuilder, item => item.ImagemId, DeleteBehavior.SetNull);
+        Arquivo<ItemInspiracao>(modelBuilder, item => item.ArquivoId, DeleteBehavior.SetNull);
+        Arquivo<ContratoFunil>(modelBuilder, item => item.DocumentoArquivoId, DeleteBehavior.Restrict);
+        Arquivo<ContratoFunil>(modelBuilder, item => item.LogoArquivoId, DeleteBehavior.Restrict);
+        Arquivo<ContratoFunil>(modelBuilder, item => item.FundoArquivoId, DeleteBehavior.Restrict);
+        Arquivo<ContratoConta>(modelBuilder, item => item.LogoArquivoId, DeleteBehavior.Restrict);
+        Arquivo<ContratoConta>(modelBuilder, item => item.FundoArquivoId, DeleteBehavior.Restrict);
+        Arquivo<ContratoConta>(modelBuilder, item => item.WordArquivoId, DeleteBehavior.Restrict);
+        Arquivo<Project.Domain.Dinheiro.ContratoFornecedor>(modelBuilder, item => item.ComprovanteArquivoId, DeleteBehavior.Restrict);
+        Arquivo<Project.Domain.Dinheiro.ContratoFornecedor>(modelBuilder, item => item.ContratoAssinadoArquivoId, DeleteBehavior.Restrict);
+        Arquivo<Project.Domain.Dinheiro.ParcelaContratoFornecedor>(modelBuilder, item => item.ComprovanteArquivoId, DeleteBehavior.Restrict);
+        Arquivo<AnexoTarefa>(modelBuilder, item => item.ArquivoId, DeleteBehavior.Restrict);
+        Arquivo<TarefaFunil>(modelBuilder, item => item.AnexoArquivoId, DeleteBehavior.Restrict);
+        Arquivo<OrcamentoFornecedor>(modelBuilder, item => item.AnexoId, DeleteBehavior.Restrict);
+
+        // Funil.
+        // Proposta e contrato saem com a oportunidade (SPEC-032: a dona exclui tudo no funil). Bloquear ou arquivar
+        // é decisão pendente do produto (plano, pendência 9).
+        modelBuilder.Entity<ContratoFunil>().HasOne<Oportunidade>().WithMany().HasForeignKey(item => item.OportunidadeId).OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<OrcamentoFunil>().HasOne<Oportunidade>().WithMany().HasForeignKey(item => item.OportunidadeId).OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<TarefaFunil>().HasOne<Oportunidade>().WithMany().HasForeignKey(item => item.OportunidadeId).OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<LeadRsvp>().HasOne<Oportunidade>().WithMany().HasForeignKey(item => item.OportunidadeId).OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<LeadRsvp>().HasOne<Evento>().WithMany().HasForeignKey(item => item.EventoId).OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<LeadRsvp>().HasOne<Convite>().WithMany().HasForeignKey(item => item.ConviteId).OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<Oportunidade>().HasOne<Cliente>().WithMany().HasForeignKey(item => item.ClienteId).OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<Oportunidade>().HasOne<ModeloServicoFunil>().WithMany().HasForeignKey(item => item.ModeloServicoFunilId).OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<OrcamentoFunil>().HasOne<ModeloOrcamentoFunil>().WithMany().HasForeignKey(item => item.ModeloId).OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<ContratoFunil>().HasOne<ContratoConta>().WithMany().HasForeignKey(item => item.ModeloId).OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<BriefingOportunidade>().HasOne<ModeloBriefing>().WithMany().HasForeignKey(item => item.ModeloBriefingId).OnDelete(DeleteBehavior.SetNull);
+
+        // Serviços, fornecedores, convites.
+        modelBuilder.Entity<ServicoEvento>().HasOne<ServicoConta>().WithMany().HasForeignKey(item => item.ServicoContaId).OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<ServicoModelo>().HasOne<ServicoConta>().WithMany().HasForeignKey(item => item.ServicoContaId).OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<FornecedorNoServico>().HasOne<Fornecedor>().WithMany().HasForeignKey(item => item.FornecedorId).OnDelete(DeleteBehavior.Restrict);
+        // Convite.PrincipalId fica sem FK de propósito: aponta para um convidado do próprio convite, que por sua vez
+        // aponta para o convite. FK nos dois sentidos impede gravar convite e convidados juntos (dependência circular).
+        // Os convidados saem em cascata com o convite.
+        modelBuilder.Entity<PresencaEvento>().HasOne<Evento>().WithMany().HasForeignKey(item => item.EventoId).OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<PresencaEvento>().HasOne<Convite>().WithMany().HasForeignKey(item => item.ConviteId).OnDelete(DeleteBehavior.Cascade);
+    }
+
+    private static void Arquivo<T>(ModelBuilder modelBuilder, System.Linq.Expressions.Expression<Func<T, object?>> coluna, DeleteBehavior regra)
+        where T : class =>
+        modelBuilder.Entity<T>().HasOne<ArquivoRegistro>().WithMany().HasForeignKey(coluna).OnDelete(regra);
 
     public static void Aplicar(ModelBuilder modelBuilder)
     {
@@ -124,6 +182,7 @@ public static class Mapa
         modelBuilder.Entity<ComentarioTarefa>().ToTable("ComentariosTarefa");
 
         modelBuilder.Entity<Cliente>().Property(cliente => cliente.Papel).HasConversion<string>();
+        modelBuilder.Entity<VinculoCliente>().ToTable("ClienteEventos");
         modelBuilder.Entity<VinculoCliente>().HasKey(vinculo => new { vinculo.ClienteId, vinculo.EventoId });
         modelBuilder.Entity<VinculoCliente>().HasOne<Cliente>().WithMany(cliente => cliente.Vinculos).HasForeignKey(vinculo => vinculo.ClienteId).OnDelete(DeleteBehavior.Cascade);
         modelBuilder.Entity<VinculoCliente>().HasOne<Evento>().WithMany().HasForeignKey(vinculo => vinculo.EventoId).OnDelete(DeleteBehavior.Cascade);

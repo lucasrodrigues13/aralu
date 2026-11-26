@@ -13,7 +13,7 @@ using Project.Infrastructure.Persistencia;
 namespace Project.Infrastructure.Persistencia.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261126041125_Inicial")]
+    [Migration("20261126042332_Inicial")]
     partial class Inicial
     {
         /// <inheritdoc />
@@ -266,6 +266,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("FotoId");
+
                     b.HasIndex("ContaId", "Nome");
 
                     b.ToTable("Clientes");
@@ -288,7 +290,7 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
                     b.HasIndex("EventoId");
 
-                    b.ToTable("Vinculos");
+                    b.ToTable("ClienteEventos", (string)null);
                 });
 
             modelBuilder.Entity("Project.Domain.Contratos.ContratoConta", b =>
@@ -334,6 +336,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ContaId");
+
+                    b.HasIndex("FundoArquivoId");
+
+                    b.HasIndex("LogoArquivoId");
+
+                    b.HasIndex("WordArquivoId");
 
                     b.ToTable("ContratosConta", (string)null);
                 });
@@ -526,6 +534,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.HasIndex("ConvidadoId")
                         .IsUnique();
 
+                    b.HasIndex("ConviteId");
+
                     b.HasIndex("EventoId");
 
                     b.ToTable("PresencasEvento", (string)null);
@@ -583,7 +593,11 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ComprovanteArquivoId");
+
                     b.HasIndex("ContaId");
+
+                    b.HasIndex("ContratoAssinadoArquivoId");
 
                     b.HasIndex("ServicoId");
 
@@ -671,6 +685,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .HasColumnType("date");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ComprovanteArquivoId");
 
                     b.HasIndex("ContaId");
 
@@ -954,6 +970,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ImagemId");
+
                     b.HasIndex("ContaId", "Data");
 
                     b.ToTable("Eventos");
@@ -988,6 +1006,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ContaId");
+
+                    b.HasIndex("FornecedorId");
 
                     b.HasIndex("ServicoId");
 
@@ -1154,9 +1174,6 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<Guid>("EventoId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("FornecedorContaId")
-                        .HasColumnType("text");
-
                     b.Property<string>("Nome")
                         .IsRequired()
                         .HasColumnType("text");
@@ -1183,6 +1200,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.HasIndex("ContaId");
 
                     b.HasIndex("EventoId");
+
+                    b.HasIndex("ServicoContaId");
 
                     b.ToTable("ServicoEvento");
                 });
@@ -1490,6 +1509,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
                     b.HasIndex("ContaId");
 
+                    b.HasIndex("FotoId");
+
                     b.ToTable("Fornecedores");
                 });
 
@@ -1539,6 +1560,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .HasColumnType("boolean");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AnexoId");
 
                     b.HasIndex("ContaId");
 
@@ -1633,6 +1656,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
                     b.HasIndex("ContaId");
 
+                    b.HasIndex("ModeloBriefingId");
+
                     b.HasIndex("OportunidadeId")
                         .IsUnique();
 
@@ -1721,6 +1746,16 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
                     b.HasIndex("ContaId");
 
+                    b.HasIndex("DocumentoArquivoId");
+
+                    b.HasIndex("FundoArquivoId");
+
+                    b.HasIndex("LogoArquivoId");
+
+                    b.HasIndex("ModeloId");
+
+                    b.HasIndex("OportunidadeId");
+
                     b.ToTable("ContratosFunil");
                 });
 
@@ -1808,13 +1843,13 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<DateTimeOffset?>("ContatadoEm")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("ConviteId")
+                    b.Property<Guid?>("ConviteId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("CriadoEm")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("EventoId")
+                    b.Property<Guid?>("EventoId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("NomeConvite")
@@ -1838,6 +1873,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ContaId");
+
+                    b.HasIndex("ConviteId");
+
+                    b.HasIndex("EventoId");
+
+                    b.HasIndex("OportunidadeId");
 
                     b.ToTable("LeadsRsvp");
                 });
@@ -2120,6 +2161,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ClienteId");
+
                     b.HasIndex("ContaId");
 
                     b.HasIndex("EstagioFunilId");
@@ -2127,6 +2170,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.HasIndex("EventoId")
                         .IsUnique()
                         .HasFilter("\"EventoId\" IS NOT NULL");
+
+                    b.HasIndex("ModeloServicoFunilId");
 
                     b.ToTable("Oportunidades");
                 });
@@ -2200,6 +2245,10 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ContaId");
+
+                    b.HasIndex("ModeloId");
+
+                    b.HasIndex("OportunidadeId");
 
                     b.HasIndex("TokenLink")
                         .IsUnique();
@@ -2310,7 +2359,11 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("AnexoArquivoId");
+
                     b.HasIndex("ContaId");
+
+                    b.HasIndex("OportunidadeId");
 
                     b.ToTable("TarefasFunil");
                 });
@@ -2379,6 +2432,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ArquivoId");
 
                     b.HasIndex("ContaId");
 
@@ -2690,6 +2745,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.HasIndex("ContaId")
                         .IsUnique();
 
+                    b.HasIndex("FotoId");
+
                     b.ToTable("Perfis");
                 });
 
@@ -2720,6 +2777,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ArquivoId");
 
                     b.HasIndex("ContaId");
 
@@ -3062,6 +3121,11 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .HasForeignKey("ContaId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("Project.Infrastructure.Persistencia.ArquivoRegistro", null)
+                        .WithMany()
+                        .HasForeignKey("FotoId")
+                        .OnDelete(DeleteBehavior.SetNull);
                 });
 
             modelBuilder.Entity("Project.Domain.Clientes.VinculoCliente", b =>
@@ -3092,6 +3156,21 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .HasForeignKey("ContaId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("Project.Infrastructure.Persistencia.ArquivoRegistro", null)
+                        .WithMany()
+                        .HasForeignKey("FundoArquivoId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Project.Infrastructure.Persistencia.ArquivoRegistro", null)
+                        .WithMany()
+                        .HasForeignKey("LogoArquivoId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Project.Infrastructure.Persistencia.ArquivoRegistro", null)
+                        .WithMany()
+                        .HasForeignKey("WordArquivoId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("Project.Domain.Convidados.Convidado", b =>
@@ -3152,15 +3231,37 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .HasForeignKey("ConvidadoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("Project.Domain.Convidados.Convite", null)
+                        .WithMany()
+                        .HasForeignKey("ConviteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Project.Domain.Eventos.Evento", null)
+                        .WithMany()
+                        .HasForeignKey("EventoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Project.Domain.Dinheiro.ContratoFornecedor", b =>
                 {
+                    b.HasOne("Project.Infrastructure.Persistencia.ArquivoRegistro", null)
+                        .WithMany()
+                        .HasForeignKey("ComprovanteArquivoId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
                         .WithMany()
                         .HasForeignKey("ContaId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("Project.Infrastructure.Persistencia.ArquivoRegistro", null)
+                        .WithMany()
+                        .HasForeignKey("ContratoAssinadoArquivoId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("Project.Domain.Eventos.ServicoEvento", null)
                         .WithMany("Contratos")
@@ -3192,6 +3293,11 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
             modelBuilder.Entity("Project.Domain.Dinheiro.ParcelaContratoFornecedor", b =>
                 {
+                    b.HasOne("Project.Infrastructure.Persistencia.ArquivoRegistro", null)
+                        .WithMany()
+                        .HasForeignKey("ComprovanteArquivoId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
                         .WithMany()
                         .HasForeignKey("ContaId")
@@ -3289,6 +3395,11 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .HasForeignKey("ContaId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("Project.Infrastructure.Persistencia.ArquivoRegistro", null)
+                        .WithMany()
+                        .HasForeignKey("ImagemId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.OwnsOne("Project.Domain.Eventos.LocalEvento", "Cerimonia", b1 =>
                         {
@@ -3389,6 +3500,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Project.Domain.Fornecedores.Fornecedor", null)
+                        .WithMany()
+                        .HasForeignKey("FornecedorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Project.Domain.Eventos.ServicoEvento", null)
                         .WithMany("Fornecedores")
                         .HasForeignKey("ServicoId")
@@ -3463,6 +3580,11 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .HasForeignKey("EventoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("Project.Domain.Fornecedores.ServicoConta", null)
+                        .WithMany()
+                        .HasForeignKey("ServicoContaId")
+                        .OnDelete(DeleteBehavior.SetNull);
                 });
 
             modelBuilder.Entity("Project.Domain.Eventos.ServicoModelo", b =>
@@ -3478,6 +3600,11 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .HasForeignKey("ModeloId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("Project.Domain.Fornecedores.ServicoConta", null)
+                        .WithMany()
+                        .HasForeignKey("ServicoContaId")
+                        .OnDelete(DeleteBehavior.SetNull);
                 });
 
             modelBuilder.Entity("Project.Domain.Eventos.SubitemServico", b =>
@@ -3561,6 +3688,11 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .HasForeignKey("ContaId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("Project.Infrastructure.Persistencia.ArquivoRegistro", null)
+                        .WithMany()
+                        .HasForeignKey("FotoId")
+                        .OnDelete(DeleteBehavior.SetNull);
                 });
 
             modelBuilder.Entity("Project.Domain.Fornecedores.FornecedorServico", b =>
@@ -3586,6 +3718,11 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
             modelBuilder.Entity("Project.Domain.Fornecedores.OrcamentoFornecedor", b =>
                 {
+                    b.HasOne("Project.Infrastructure.Persistencia.ArquivoRegistro", null)
+                        .WithMany()
+                        .HasForeignKey("AnexoId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
                         .WithMany()
                         .HasForeignKey("ContaId")
@@ -3631,6 +3768,11 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Project.Domain.Modelos.ModeloBriefing", null)
+                        .WithMany()
+                        .HasForeignKey("ModeloBriefingId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Project.Domain.Funil.Oportunidade", null)
                         .WithMany()
                         .HasForeignKey("OportunidadeId")
@@ -3659,6 +3801,32 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .WithMany()
                         .HasForeignKey("ContaId")
                         .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Project.Infrastructure.Persistencia.ArquivoRegistro", null)
+                        .WithMany()
+                        .HasForeignKey("DocumentoArquivoId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Project.Infrastructure.Persistencia.ArquivoRegistro", null)
+                        .WithMany()
+                        .HasForeignKey("FundoArquivoId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Project.Infrastructure.Persistencia.ArquivoRegistro", null)
+                        .WithMany()
+                        .HasForeignKey("LogoArquivoId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Project.Domain.Contratos.ContratoConta", null)
+                        .WithMany()
+                        .HasForeignKey("ModeloId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Project.Domain.Funil.Oportunidade", null)
+                        .WithMany()
+                        .HasForeignKey("OportunidadeId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
@@ -3693,6 +3861,21 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .HasForeignKey("ContaId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("Project.Domain.Convidados.Convite", null)
+                        .WithMany()
+                        .HasForeignKey("ConviteId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Project.Domain.Eventos.Evento", null)
+                        .WithMany()
+                        .HasForeignKey("EventoId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Project.Domain.Funil.Oportunidade", null)
+                        .WithMany()
+                        .HasForeignKey("OportunidadeId")
+                        .OnDelete(DeleteBehavior.SetNull);
                 });
 
             modelBuilder.Entity("Project.Domain.Funil.MetricasRsvpFunil", b =>
@@ -3724,6 +3907,11 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
             modelBuilder.Entity("Project.Domain.Funil.Oportunidade", b =>
                 {
+                    b.HasOne("Project.Domain.Clientes.Cliente", null)
+                        .WithMany()
+                        .HasForeignKey("ClienteId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
                         .WithMany()
                         .HasForeignKey("ContaId")
@@ -3741,6 +3929,11 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .HasForeignKey("EventoId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("Project.Domain.Funil.ModeloServicoFunil", null)
+                        .WithMany()
+                        .HasForeignKey("ModeloServicoFunilId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.Navigation("EstagioFunil");
                 });
 
@@ -3750,6 +3943,17 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .WithMany()
                         .HasForeignKey("ContaId")
                         .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Project.Domain.Funil.ModeloOrcamentoFunil", null)
+                        .WithMany()
+                        .HasForeignKey("ModeloId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Project.Domain.Funil.Oportunidade", null)
+                        .WithMany()
+                        .HasForeignKey("OportunidadeId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
@@ -3785,10 +3989,21 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
             modelBuilder.Entity("Project.Domain.Funil.TarefaFunil", b =>
                 {
+                    b.HasOne("Project.Infrastructure.Persistencia.ArquivoRegistro", null)
+                        .WithMany()
+                        .HasForeignKey("AnexoArquivoId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
                         .WithMany()
                         .HasForeignKey("ContaId")
                         .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Project.Domain.Funil.Oportunidade", null)
+                        .WithMany()
+                        .HasForeignKey("OportunidadeId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
@@ -3809,6 +4024,11 @@ namespace Project.Infrastructure.Persistencia.Migrations
 
             modelBuilder.Entity("Project.Domain.Modelos.ItemInspiracao", b =>
                 {
+                    b.HasOne("Project.Infrastructure.Persistencia.ArquivoRegistro", null)
+                        .WithMany()
+                        .HasForeignKey("ArquivoId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
                         .WithMany()
                         .HasForeignKey("ContaId")
@@ -3934,10 +4154,21 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .HasForeignKey("ContaId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("Project.Infrastructure.Persistencia.ArquivoRegistro", null)
+                        .WithMany()
+                        .HasForeignKey("FotoId")
+                        .OnDelete(DeleteBehavior.SetNull);
                 });
 
             modelBuilder.Entity("Project.Domain.Tarefas.AnexoTarefa", b =>
                 {
+                    b.HasOne("Project.Infrastructure.Persistencia.ArquivoRegistro", null)
+                        .WithMany()
+                        .HasForeignKey("ArquivoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
                         .WithMany()
                         .HasForeignKey("ContaId")

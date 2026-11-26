@@ -1658,8 +1658,9 @@ export interface LeadRsvp {
   evento: string;
   criadoEm: string;
   telefone: string | null;
-  conviteId: string;
-  eventoId: string;
+  /** Nulo se o convite foi apagado depois (SPEC-062: o lead fica como histórico). */
+  conviteId: string | null;
+  eventoId: string | null;
 }
 
 export interface ContratoFunil {

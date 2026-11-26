@@ -108,8 +108,6 @@ public sealed class ServicoEvento : ITemConta
 
     public Guid? ServicoContaId { get; set; }
 
-    public string? FornecedorContaId { get; set; }
-
     public bool Contratado { get; set; }
 
     public decimal? ValorEstimado { get; set; }

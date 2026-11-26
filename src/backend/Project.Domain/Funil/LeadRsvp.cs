@@ -14,9 +14,9 @@ public sealed class LeadRsvp : ITemConta
 
     public Guid ContaId { get; set; }
 
-    public Guid ConviteId { get; set; }
+    public Guid? ConviteId { get; set; }
 
-    public Guid EventoId { get; set; }
+    public Guid? EventoId { get; set; }
 
     public string NomeConvite { get; set; } = "";
 

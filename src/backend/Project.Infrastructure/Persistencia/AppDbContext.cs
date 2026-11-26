@@ -264,6 +264,7 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser>
         base.OnModelCreating(modelBuilder);
         Mapa.Aplicar(modelBuilder);
         Mapa.LigarContas(modelBuilder);
+        Mapa.LigarReferencias(modelBuilder);
         FiltrarPorConta(modelBuilder);
     }
 }
