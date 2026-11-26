@@ -1,10 +1,11 @@
+using Project.Domain.Comum;
 namespace Project.Domain.Convidados;
 
 /// <summary>
 /// Importação de planilha de convidados na fila (SPEC-059 §6.6): o envio grava o arquivo como Pendente e o
 /// processamento em segundo plano da própria API passa para Processando e termina em Importado ou Erro.
 /// </summary>
-public sealed class ImportacaoConvidados
+public sealed class ImportacaoConvidados : ITemConta
 {
     public Guid Id { get; set; }
 

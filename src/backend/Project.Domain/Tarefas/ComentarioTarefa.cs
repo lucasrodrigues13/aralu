@@ -1,8 +1,11 @@
+using Project.Domain.Comum;
 namespace Project.Domain.Tarefas;
 
-public sealed class ComentarioTarefa
+public sealed class ComentarioTarefa : ITemConta
 {
     public Guid Id { get; set; }
+
+    public Guid ContaId { get; set; }
 
     public Guid TarefaId { get; set; }
 

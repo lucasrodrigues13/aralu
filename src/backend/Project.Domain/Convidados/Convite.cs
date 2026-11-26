@@ -1,6 +1,7 @@
+using Project.Domain.Comum;
 namespace Project.Domain.Convidados;
 
-public sealed class Convite
+public sealed class Convite : ITemConta
 {
     public Guid Id { get; set; }
 
@@ -28,9 +29,11 @@ public sealed class Convite
     public List<Convidado> Convidados { get; set; } = [];
 }
 
-public sealed class Convidado
+public sealed class Convidado : ITemConta
 {
     public Guid Id { get; set; }
+
+    public Guid ContaId { get; set; }
 
     public Guid ConviteId { get; set; }
 

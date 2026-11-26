@@ -1,8 +1,9 @@
+using Project.Domain.Comum;
 using Project.Domain.Fornecedores;
 
 namespace Project.Domain.Eventos;
 
-public sealed class Evento
+public sealed class Evento : ITemConta
 {
     public Guid Id { get; set; }
 
@@ -84,7 +85,7 @@ public sealed class LocalEvento
     public string? Bairro { get; set; }
 }
 
-public sealed class TagConta
+public sealed class TagConta : ITemConta
 {
     public Guid Id { get; set; }
 
@@ -95,9 +96,11 @@ public sealed class TagConta
     public List<Evento> Eventos { get; set; } = [];
 }
 
-public sealed class ServicoEvento
+public sealed class ServicoEvento : ITemConta
 {
     public Guid Id { get; set; }
+
+    public Guid ContaId { get; set; }
 
     public Guid EventoId { get; set; }
 
@@ -133,9 +136,11 @@ public sealed class ServicoEvento
     public List<FornecedorNoServico> Fornecedores { get; set; } = [];
 }
 
-public sealed class SubitemServico
+public sealed class SubitemServico : ITemConta
 {
     public Guid Id { get; set; }
+
+    public Guid ContaId { get; set; }
 
     public Guid ServicoId { get; set; }
 
@@ -146,9 +151,11 @@ public sealed class SubitemServico
     public decimal ValorUnitario { get; set; }
 }
 
-public sealed class FornecedorNoServico
+public sealed class FornecedorNoServico : ITemConta
 {
     public Guid Id { get; set; }
+
+    public Guid ContaId { get; set; }
 
     public Guid ServicoId { get; set; }
 
@@ -161,7 +168,7 @@ public sealed class FornecedorNoServico
     public string? Observacoes { get; set; }
 }
 
-public sealed class CompromissoAgenda
+public sealed class CompromissoAgenda : ITemConta
 {
     public Guid Id { get; set; }
 

@@ -1,3 +1,4 @@
+using Project.Domain.Comum;
 namespace Project.Domain.Funil;
 
 public enum SituacaoLeadRsvp
@@ -7,7 +8,7 @@ public enum SituacaoLeadRsvp
     Descartado = 2,
 }
 
-public sealed class LeadRsvp
+public sealed class LeadRsvp : ITemConta
 {
     public Guid Id { get; set; }
 
@@ -32,7 +33,7 @@ public sealed class LeadRsvp
     public DateTimeOffset? ContatadoEm { get; set; }
 }
 
-public sealed class MetricasRsvpFunil
+public sealed class MetricasRsvpFunil : ITemConta
 {
     public Guid Id { get; set; }
 

@@ -1,3 +1,4 @@
+using Project.Domain.Comum;
 namespace Project.Domain.Funil;
 
 /// <summary>Papel do estágio no funil (SPEC-031 §8). Só os abertos são configuráveis.</summary>
@@ -9,7 +10,7 @@ public enum TipoEstagioFunil
 }
 
 /// <summary>Estágio do funil de uma conta: nome, cor e ordem escolhidos pela dona.</summary>
-public sealed class EstagioFunil
+public sealed class EstagioFunil : ITemConta
 {
     public Guid Id { get; set; }
 

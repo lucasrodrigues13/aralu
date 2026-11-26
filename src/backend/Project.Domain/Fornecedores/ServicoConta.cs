@@ -1,6 +1,7 @@
+using Project.Domain.Comum;
 namespace Project.Domain.Fornecedores;
 
-public sealed class ServicoConta
+public sealed class ServicoConta : ITemConta
 {
     public Guid Id { get; set; }
 

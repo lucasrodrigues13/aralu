@@ -1,6 +1,7 @@
+using Project.Domain.Comum;
 namespace Project.Domain.Funil;
 
-public sealed class ModeloServicoFunil
+public sealed class ModeloServicoFunil : ITemConta
 {
     public Guid Id { get; set; }
 
@@ -13,7 +14,7 @@ public sealed class ModeloServicoFunil
     public decimal? Valor { get; set; }
 }
 
-public sealed class ModeloOrcamentoFunil
+public sealed class ModeloOrcamentoFunil : ITemConta
 {
     public Guid Id { get; set; }
 

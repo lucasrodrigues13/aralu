@@ -1,6 +1,7 @@
+using Project.Domain.Comum;
 namespace Project.Domain.Modelos;
 
-public sealed class ModeloMensagem
+public sealed class ModeloMensagem : ITemConta
 {
     public Guid Id { get; set; }
 

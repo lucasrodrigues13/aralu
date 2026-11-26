@@ -1,10 +1,11 @@
+using Project.Domain.Comum;
 using System.Globalization;
 using System.Text.RegularExpressions;
 
 namespace Project.Domain.Contratos;
 
 /// <summary>Contrato da conta com campos de mesclagem (SPEC-030 v2).</summary>
-public sealed class ContratoConta
+public sealed class ContratoConta : ITemConta
 {
     public Guid Id { get; set; }
 

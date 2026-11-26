@@ -1,3 +1,4 @@
+using Project.Domain.Comum;
 namespace Project.Domain.Funil;
 
 public enum SituacaoOrcamentoFunil
@@ -15,7 +16,7 @@ public enum RespostaProposta
     Recusar = 2,
 }
 
-public sealed class OrcamentoFunil
+public sealed class OrcamentoFunil : ITemConta
 {
     /// <summary>Validade do link da proposta (SPEC-031 §17, ponto 10).</summary>
     public static readonly TimeSpan ValidadeLink = TimeSpan.FromDays(30);
@@ -72,7 +73,7 @@ public sealed class OrcamentoFunil
 }
 
 /// <summary>Cada resposta do lead à proposta, na ordem em que chegou. Não é editável.</summary>
-public sealed class RespostaPropostaFunil
+public sealed class RespostaPropostaFunil : ITemConta
 {
     public Guid Id { get; set; }
 

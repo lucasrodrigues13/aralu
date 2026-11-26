@@ -1,3 +1,4 @@
+using Project.Domain.Comum;
 namespace Project.Domain.Funil;
 
 public enum TipoTarefaFunil
@@ -8,7 +9,7 @@ public enum TipoTarefaFunil
     Tarefa = 3,
 }
 
-public sealed class TarefaFunil
+public sealed class TarefaFunil : ITemConta
 {
     public Guid Id { get; set; }
 
@@ -37,9 +38,11 @@ public sealed class TarefaFunil
     public List<ResponsavelTarefaFunil> Responsaveis { get; set; } = [];
 }
 
-public sealed class ResponsavelTarefaFunil
+public sealed class ResponsavelTarefaFunil : ITemConta
 {
     public Guid Id { get; set; }
+
+    public Guid ContaId { get; set; }
 
     public Guid TarefaFunilId { get; set; }
 

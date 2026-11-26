@@ -1,8 +1,9 @@
+using Project.Domain.Comum;
 using Project.Domain.Tarefas;
 
 namespace Project.Domain.Eventos;
 
-public sealed class ModeloEvento
+public sealed class ModeloEvento : ITemConta
 {
     public Guid Id { get; set; }
 
@@ -30,9 +31,11 @@ public sealed class ModeloEvento
 }
 
 /// <summary>Serviço do modelo: ligado ao serviço do cadastro da conta (SPEC-012 v3 §8.4). O nome fica guardado para exibição.</summary>
-public sealed class ServicoModelo
+public sealed class ServicoModelo : ITemConta
 {
     public Guid Id { get; set; }
+
+    public Guid ContaId { get; set; }
 
     public Guid ModeloId { get; set; }
 
@@ -45,9 +48,11 @@ public sealed class ServicoModelo
 }
 
 /// <summary>Tarefa do modelo: mesmo formato da tarefa do evento, sem data exata, situação, comentários e anexos (SPEC-012 v3 §8.2).</summary>
-public sealed class TarefaModelo
+public sealed class TarefaModelo : ITemConta
 {
     public Guid Id { get; set; }
+
+    public Guid ContaId { get; set; }
 
     public Guid ModeloId { get; set; }
 
@@ -74,9 +79,11 @@ public sealed class TarefaModelo
 }
 
 /// <summary>Item da checklist da tarefa do modelo: sem feito/cancelado; prazo só relativo; responsável por papel.</summary>
-public sealed class ItemChecklistTarefaModelo
+public sealed class ItemChecklistTarefaModelo : ITemConta
 {
     public Guid Id { get; set; }
+
+    public Guid ContaId { get; set; }
 
     public Guid TarefaModeloId { get; set; }
 
@@ -112,9 +119,11 @@ public enum TipoVinculoModelo
     Mensagem = 3,
 }
 
-public sealed class VinculoModeloEvento
+public sealed class VinculoModeloEvento : ITemConta
 {
     public Guid Id { get; set; }
+
+    public Guid ContaId { get; set; }
 
     public Guid ModeloId { get; set; }
 

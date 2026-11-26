@@ -1,6 +1,7 @@
+using Project.Domain.Comum;
 namespace Project.Domain.Modelos;
 
-public sealed class ModeloCronograma
+public sealed class ModeloCronograma : ITemConta
 {
     public Guid Id { get; set; }
 
@@ -13,9 +14,11 @@ public sealed class ModeloCronograma
     public List<ItemCronograma> Itens { get; set; } = [];
 }
 
-public sealed class ItemCronograma
+public sealed class ItemCronograma : ITemConta
 {
     public Guid Id { get; set; }
+
+    public Guid ContaId { get; set; }
 
     public Guid ModeloId { get; set; }
 

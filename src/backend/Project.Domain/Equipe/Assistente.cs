@@ -1,3 +1,4 @@
+using Project.Domain.Comum;
 namespace Project.Domain.Equipe;
 
 public enum SituacaoAssistente
@@ -12,7 +13,7 @@ public enum SituacaoAssistente
 }
 
 /// <summary>Assistente da conta (SPEC-032). O login fica no Identity (<see cref="UsuarioId"/>).</summary>
-public sealed class Assistente
+public sealed class Assistente : ITemConta
 {
     public Guid Id { get; set; }
 

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Project.Domain.Clientes;
+using Project.Domain.Comum;
 using Project.Domain.Convidados;
 using Project.Domain.Equipe;
 using Project.Domain.Eventos;
@@ -100,7 +101,68 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser>
     public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
     {
         await SincronizarPresencasAsync(cancellationToken);
+        await PreencherContaAsync(cancellationToken);
         return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+    }
+
+    /// <summary>
+    /// SPEC-062: registro novo sem ContaId herda a conta do registro pai (pela FK).
+    /// Os registros raiz já chegam com ContaId; as filhas (itens, parcelas, seções...) herdam aqui.
+    /// Roda em passadas até não mudar mais, para cobrir neto criado junto com o filho.
+    /// </summary>
+    private async Task PreencherContaAsync(CancellationToken ct)
+    {
+        bool mudou;
+        do
+        {
+            mudou = false;
+            var pendentes = ChangeTracker.Entries<ITemConta>()
+                .Where(entrada => entrada.State == EntityState.Added && entrada.Entity.ContaId == Guid.Empty)
+                .ToList();
+            foreach (var entrada in pendentes)
+            {
+                var conta = await ContaDoPaiAsync(entrada, ct);
+                if (conta is not null)
+                {
+                    entrada.Entity.ContaId = conta.Value;
+                    mudou = true;
+                }
+            }
+        }
+        while (mudou);
+
+        var semConta = ChangeTracker.Entries<ITemConta>()
+            .FirstOrDefault(entrada => entrada.State == EntityState.Added && entrada.Entity.ContaId == Guid.Empty);
+        if (semConta is not null)
+        {
+            throw new InvalidOperationException(
+                $"{semConta.Metadata.ClrType.Name} sem ContaId e sem registro pai de onde herdar a conta.");
+        }
+    }
+
+    private async Task<Guid?> ContaDoPaiAsync(Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry<ITemConta> entrada, CancellationToken ct)
+    {
+        foreach (var chave in entrada.Metadata.GetForeignKeys())
+        {
+            var tipoPai = chave.PrincipalEntityType.ClrType;
+            if (tipoPai == typeof(ContaAssessoria) || !typeof(ITemConta).IsAssignableFrom(tipoPai))
+            {
+                continue;
+            }
+
+            var valores = chave.Properties.Select(propriedade => entrada.Property(propriedade.Name).CurrentValue).ToArray();
+            if (valores.Any(valor => valor is null))
+            {
+                continue;
+            }
+
+            if (await FindAsync(tipoPai, valores, ct) is ITemConta pai && pai.ContaId != Guid.Empty)
+            {
+                return pai.ContaId;
+            }
+        }
+
+        return null;
     }
 
     private async Task SincronizarPresencasAsync(CancellationToken ct)

@@ -1,10 +1,11 @@
+using Project.Domain.Comum;
 namespace Project.Domain.Eventos;
 
 /// <summary>
 /// Link da portaria (SPEC-058): um por evento, sem senha, só para a equipe que autoriza a entrada.
 /// Trocar o código desliga o endereço antigo; desativar apaga o link.
 /// </summary>
-public sealed class LinkPortaria
+public sealed class LinkPortaria : ITemConta
 {
     public Guid Id { get; set; }
 

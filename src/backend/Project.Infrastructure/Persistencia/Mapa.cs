@@ -37,6 +37,14 @@ public static class Mapa
                 .HasForeignKey("ContaId")
                 .OnDelete(DeleteBehavior.Restrict);
         }
+
+        // A FK já cria um índice por ContaId em cada tabela. Nas listagens mais usadas,
+        // o índice composto cobre o filtro por conta e a ordenação da tela.
+        modelBuilder.Entity<Evento>().HasIndex(item => new { item.ContaId, item.Data });
+        modelBuilder.Entity<Tarefa>().HasIndex(item => new { item.ContaId, item.Prazo });
+        modelBuilder.Entity<Cliente>().HasIndex(item => new { item.ContaId, item.Nome });
+        modelBuilder.Entity<CompromissoAgenda>().HasIndex(item => new { item.ContaId, item.Data });
+        modelBuilder.Entity<Convite>().HasIndex(item => new { item.ContaId, item.EventoId });
     }
 
     public static void Aplicar(ModelBuilder modelBuilder)

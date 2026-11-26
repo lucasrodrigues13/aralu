@@ -1,6 +1,7 @@
+using Project.Domain.Comum;
 namespace Project.Domain.Tarefas;
 
-public sealed class Tarefa
+public sealed class Tarefa : ITemConta
 {
     public Guid Id { get; set; }
 

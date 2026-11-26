@@ -1,10 +1,11 @@
+using Project.Domain.Comum;
 namespace Project.Domain.Funil;
 
 /// <summary>
 /// Briefing aplicado a um lead (SPEC-031 §6.7, ponto 4): cópia das perguntas de um modelo (SPEC-013)
 /// que a dona usa como roteiro da conversa, anotando as respostas. Editar o modelo depois não muda o lead.
 /// </summary>
-public sealed class BriefingOportunidade
+public sealed class BriefingOportunidade : ITemConta
 {
     public Guid Id { get; set; }
 
@@ -22,9 +23,11 @@ public sealed class BriefingOportunidade
     public List<ItemBriefingOportunidade> Itens { get; set; } = [];
 }
 
-public sealed class ItemBriefingOportunidade
+public sealed class ItemBriefingOportunidade : ITemConta
 {
     public Guid Id { get; set; }
+
+    public Guid ContaId { get; set; }
 
     public Guid BriefingOportunidadeId { get; set; }
 

@@ -1,6 +1,7 @@
+using Project.Domain.Comum;
 namespace Project.Domain.Clientes;
 
-public sealed class Cliente
+public sealed class Cliente : ITemConta
 {
     public Guid Id { get; set; }
 
@@ -62,8 +63,10 @@ public sealed class Cliente
     public List<VinculoCliente> Vinculos { get; set; } = [];
 }
 
-public sealed class VinculoCliente
+public sealed class VinculoCliente : ITemConta
 {
+
+    public Guid ContaId { get; set; }
     public Guid ClienteId { get; set; }
 
     public Guid EventoId { get; set; }

@@ -817,6 +817,7 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
                     ContratoFunilId = table.Column<Guid>(type: "uuid", nullable: false),
                     Numero = table.Column<int>(type: "integer", nullable: false),
                     Vencimento = table.Column<DateOnly>(type: "date", nullable: false),
@@ -826,6 +827,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ParcelasContrato", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ParcelasContrato_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_ParcelasContrato_ContratosFunil_ContratoFunilId",
                         column: x => x.ContratoFunilId,
@@ -1102,6 +1109,7 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
                     EventoId = table.Column<Guid>(type: "uuid", nullable: false),
                     Nome = table.Column<string>(type: "text", nullable: false),
                     ServicoContaId = table.Column<Guid>(type: "uuid", nullable: true),
@@ -1116,6 +1124,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 {
                     table.PrimaryKey("PK_ServicoEvento", x => x.Id);
                     table.ForeignKey(
+                        name: "FK_ServicoEvento_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
                         name: "FK_ServicoEvento_Eventos_EventoId",
                         column: x => x.EventoId,
                         principalTable: "Eventos",
@@ -1128,7 +1142,8 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 columns: table => new
                 {
                     ClienteId = table.Column<Guid>(type: "uuid", nullable: false),
-                    EventoId = table.Column<Guid>(type: "uuid", nullable: false)
+                    EventoId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -1139,6 +1154,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         principalTable: "Clientes",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Vinculos_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Vinculos_Eventos_EventoId",
                         column: x => x.EventoId,
@@ -1152,12 +1173,19 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
                     FornecedorId = table.Column<Guid>(type: "uuid", nullable: false),
                     Endereco = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_EmailFornecedor", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_EmailFornecedor_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_EmailFornecedor_Fornecedores_FornecedorId",
                         column: x => x.FornecedorId,
@@ -1171,6 +1199,7 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
                     FornecedorId = table.Column<Guid>(type: "uuid", nullable: false),
                     Titulo = table.Column<string>(type: "text", nullable: false),
                     Link = table.Column<string>(type: "text", nullable: true),
@@ -1180,6 +1209,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_OrcamentoFornecedor", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_OrcamentoFornecedor_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_OrcamentoFornecedor_Fornecedores_FornecedorId",
                         column: x => x.FornecedorId,
@@ -1193,6 +1228,7 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
                     FornecedorId = table.Column<Guid>(type: "uuid", nullable: false),
                     Responsavel = table.Column<string>(type: "text", nullable: true),
                     Ddi = table.Column<string>(type: "text", nullable: true),
@@ -1202,6 +1238,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_TelefoneFornecedor", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_TelefoneFornecedor_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_TelefoneFornecedor_Fornecedores_FornecedorId",
                         column: x => x.FornecedorId,
@@ -1215,6 +1257,7 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
                     ModeloId = table.Column<Guid>(type: "uuid", nullable: false),
                     ServicoContaId = table.Column<Guid>(type: "uuid", nullable: true),
                     Nome = table.Column<string>(type: "text", nullable: false),
@@ -1223,6 +1266,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ServicoModelo", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ServicoModelo_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_ServicoModelo_Modelos_ModeloId",
                         column: x => x.ModeloId,
@@ -1236,6 +1285,7 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
                     ModeloId = table.Column<Guid>(type: "uuid", nullable: false),
                     Tipo = table.Column<string>(type: "text", nullable: false),
                     BibliotecaId = table.Column<Guid>(type: "uuid", nullable: false)
@@ -1243,6 +1293,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_VinculoModeloEvento", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_VinculoModeloEvento_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_VinculoModeloEvento_Modelos_ModeloId",
                         column: x => x.ModeloId,
@@ -1256,6 +1312,7 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
                     ModeloId = table.Column<Guid>(type: "uuid", nullable: false),
                     Titulo = table.Column<string>(type: "text", nullable: false),
                     Descricao = table.Column<string>(type: "text", nullable: true),
@@ -1264,6 +1321,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_SecaoBriefing", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_SecaoBriefing_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_SecaoBriefing_ModelosBriefing_ModeloId",
                         column: x => x.ModeloId,
@@ -1277,6 +1340,7 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
                     ModeloId = table.Column<Guid>(type: "uuid", nullable: false),
                     Rotulo = table.Column<string>(type: "text", nullable: true),
                     Descricao = table.Column<string>(type: "text", nullable: true),
@@ -1290,6 +1354,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 {
                     table.PrimaryKey("PK_ItemCronograma", x => x.Id);
                     table.ForeignKey(
+                        name: "FK_ItemCronograma_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
                         name: "FK_ItemCronograma_ModelosCronograma_ModeloId",
                         column: x => x.ModeloId,
                         principalTable: "ModelosCronograma",
@@ -1302,6 +1372,7 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
                     GaleriaId = table.Column<Guid>(type: "uuid", nullable: false),
                     ArquivoId = table.Column<Guid>(type: "uuid", nullable: true),
                     Url = table.Column<string>(type: "text", nullable: true),
@@ -1310,6 +1381,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ItemInspiracao", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ItemInspiracao_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_ItemInspiracao_ModelosInspiracao_GaleriaId",
                         column: x => x.GaleriaId,
@@ -1323,6 +1400,7 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
                     ModeloId = table.Column<Guid>(type: "uuid", nullable: false),
                     Titulo = table.Column<string>(type: "text", nullable: true),
                     Horario = table.Column<TimeOnly>(type: "time without time zone", nullable: true),
@@ -1332,6 +1410,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_SecaoRoteiro", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_SecaoRoteiro_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_SecaoRoteiro_ModelosRoteiro_ModeloId",
                         column: x => x.ModeloId,
@@ -1345,6 +1429,7 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
                     OrcamentoFunilId = table.Column<Guid>(type: "uuid", nullable: false),
                     Numero = table.Column<int>(type: "integer", nullable: false),
                     Vencimento = table.Column<DateOnly>(type: "date", nullable: false),
@@ -1354,6 +1439,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ParcelasOrcamento", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ParcelasOrcamento_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_ParcelasOrcamento_OrcamentosFunil_OrcamentoFunilId",
                         column: x => x.OrcamentoFunilId,
@@ -1395,11 +1486,18 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 columns: table => new
                 {
                     FornecedorId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ServicoContaId = table.Column<Guid>(type: "uuid", nullable: false)
+                    ServicoContaId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_FornecedorServico", x => new { x.FornecedorId, x.ServicoContaId });
+                    table.ForeignKey(
+                        name: "FK_FornecedorServico_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_FornecedorServico_Fornecedores_FornecedorId",
                         column: x => x.FornecedorId,
@@ -1443,6 +1541,7 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
                     TarefaFunilId = table.Column<Guid>(type: "uuid", nullable: false),
                     Papel = table.Column<string>(type: "text", nullable: false),
                     ReferenciaId = table.Column<string>(type: "text", nullable: false)
@@ -1450,6 +1549,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ResponsaveisTarefaFunil", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ResponsaveisTarefaFunil_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_ResponsaveisTarefaFunil_TarefasFunil_TarefaFunilId",
                         column: x => x.TarefaFunilId,
@@ -1463,6 +1568,7 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
                     ParcelaId = table.Column<Guid>(type: "uuid", nullable: false),
                     Valor = table.Column<decimal>(type: "numeric(12,2)", precision: 12, scale: 2, nullable: false),
                     Forma = table.Column<string>(type: "text", nullable: false),
@@ -1472,6 +1578,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_RecebimentosParcela", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_RecebimentosParcela_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_RecebimentosParcela_ParcelasContrato_ParcelaId",
                         column: x => x.ParcelaId,
@@ -1485,6 +1597,7 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
                     ConviteId = table.Column<Guid>(type: "uuid", nullable: false),
                     Nome = table.Column<string>(type: "text", nullable: false),
                     Ddi = table.Column<string>(type: "text", nullable: true),
@@ -1500,6 +1613,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Convidados", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Convidados_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Convidados_Convites_ConviteId",
                         column: x => x.ConviteId,
@@ -1541,6 +1660,7 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
                     OportunidadeId = table.Column<Guid>(type: "uuid", nullable: false),
                     Nome = table.Column<string>(type: "text", nullable: false),
                     Telefone = table.Column<string>(type: "text", nullable: true),
@@ -1550,6 +1670,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ContatoOportunidade", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ContatoOportunidade_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_ContatoOportunidade_Oportunidades_OportunidadeId",
                         column: x => x.OportunidadeId,
@@ -1563,6 +1689,7 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
                     ServicoId = table.Column<Guid>(type: "uuid", nullable: false),
                     FornecedorId = table.Column<Guid>(type: "uuid", nullable: false),
                     Etapa = table.Column<string>(type: "text", nullable: false),
@@ -1572,6 +1699,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_FornecedorNoServico", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_FornecedorNoServico_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_FornecedorNoServico_ServicoEvento_ServicoId",
                         column: x => x.ServicoId,
@@ -1585,6 +1718,7 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
                     ServicoId = table.Column<Guid>(type: "uuid", nullable: false),
                     Descricao = table.Column<string>(type: "text", nullable: false),
                     Quantidade = table.Column<int>(type: "integer", nullable: false),
@@ -1593,6 +1727,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_SubitemServico", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_SubitemServico_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_SubitemServico_ServicoEvento_ServicoId",
                         column: x => x.ServicoId,
@@ -1646,6 +1786,7 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
                     ModeloId = table.Column<Guid>(type: "uuid", nullable: false),
                     ServicoModeloId = table.Column<Guid>(type: "uuid", nullable: true),
                     Titulo = table.Column<string>(type: "text", nullable: false),
@@ -1658,6 +1799,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_TarefaModelo", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_TarefaModelo_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_TarefaModelo_Modelos_ModeloId",
                         column: x => x.ModeloId,
@@ -1677,6 +1824,7 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
                     SecaoId = table.Column<Guid>(type: "uuid", nullable: false),
                     Enunciado = table.Column<string>(type: "text", nullable: false),
                     Tipo = table.Column<string>(type: "text", nullable: false),
@@ -1685,6 +1833,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_PerguntaBriefing", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_PerguntaBriefing_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_PerguntaBriefing_SecaoBriefing_SecaoId",
                         column: x => x.SecaoId,
@@ -1698,6 +1852,7 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
                     SecaoId = table.Column<Guid>(type: "uuid", nullable: false),
                     Texto = table.Column<string>(type: "text", nullable: false),
                     Ordem = table.Column<int>(type: "integer", nullable: false)
@@ -1705,6 +1860,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ItemRoteiro", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ItemRoteiro_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_ItemRoteiro_SecaoRoteiro_SecaoId",
                         column: x => x.SecaoId,
@@ -1718,6 +1879,7 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
                     EventoId = table.Column<Guid>(type: "uuid", nullable: false),
                     ConviteId = table.Column<Guid>(type: "uuid", nullable: false),
                     ConvidadoId = table.Column<Guid>(type: "uuid", nullable: false),
@@ -1727,6 +1889,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_PresencasEvento", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_PresencasEvento_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_PresencasEvento_Convidados_ConvidadoId",
                         column: x => x.ConvidadoId,
@@ -1740,6 +1908,7 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
                     BriefingOportunidadeId = table.Column<Guid>(type: "uuid", nullable: false),
                     Ordem = table.Column<int>(type: "integer", nullable: false),
                     Secao = table.Column<string>(type: "text", nullable: true),
@@ -1755,6 +1924,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         principalTable: "BriefingsOportunidade",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ItensBriefingOportunidade_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -1762,6 +1937,7 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
                     ServicoId = table.Column<Guid>(type: "uuid", nullable: false),
                     VinculoId = table.Column<Guid>(type: "uuid", nullable: false),
                     Pago = table.Column<bool>(type: "boolean", nullable: false),
@@ -1778,6 +1954,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ContratosFornecedor", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ContratosFornecedor_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_ContratosFornecedor_FornecedorNoServico_VinculoId",
                         column: x => x.VinculoId,
@@ -1797,6 +1979,7 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
                     TarefaId = table.Column<Guid>(type: "uuid", nullable: false),
                     ArquivoId = table.Column<Guid>(type: "uuid", nullable: false),
                     Nome = table.Column<string>(type: "text", nullable: false),
@@ -1806,6 +1989,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AnexosTarefa", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_AnexosTarefa_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_AnexosTarefa_Tarefas_TarefaId",
                         column: x => x.TarefaId,
@@ -1819,6 +2008,7 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
                     TarefaId = table.Column<Guid>(type: "uuid", nullable: false),
                     AutorContaId = table.Column<string>(type: "text", nullable: false),
                     Texto = table.Column<string>(type: "text", nullable: false),
@@ -1827,6 +2017,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ComentariosTarefa", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ComentariosTarefa_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_ComentariosTarefa_Tarefas_TarefaId",
                         column: x => x.TarefaId,
@@ -1840,6 +2036,7 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
                     TarefaId = table.Column<Guid>(type: "uuid", nullable: false),
                     Texto = table.Column<string>(type: "text", nullable: false),
                     Feito = table.Column<bool>(type: "boolean", nullable: false),
@@ -1854,6 +2051,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 {
                     table.PrimaryKey("PK_ItensChecklistTarefa", x => x.Id);
                     table.ForeignKey(
+                        name: "FK_ItensChecklistTarefa_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
                         name: "FK_ItensChecklistTarefa_Tarefas_TarefaId",
                         column: x => x.TarefaId,
                         principalTable: "Tarefas",
@@ -1866,6 +2069,7 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
                     TarefaId = table.Column<Guid>(type: "uuid", nullable: false),
                     Papel = table.Column<string>(type: "text", nullable: false),
                     ReferenciaId = table.Column<string>(type: "text", nullable: true)
@@ -1873,6 +2077,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ResponsaveisTarefa", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ResponsaveisTarefa_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_ResponsaveisTarefa_Tarefas_TarefaId",
                         column: x => x.TarefaId,
@@ -1886,6 +2096,7 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
                     TarefaModeloId = table.Column<Guid>(type: "uuid", nullable: false),
                     Texto = table.Column<string>(type: "text", nullable: false),
                     Ordem = table.Column<int>(type: "integer", nullable: false),
@@ -1895,6 +2106,12 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ItensChecklistTarefaModelo", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ItensChecklistTarefaModelo_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_ItensChecklistTarefaModelo_TarefaModelo_TarefaModeloId",
                         column: x => x.TarefaModeloId,
@@ -1908,6 +2125,7 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaId = table.Column<Guid>(type: "uuid", nullable: false),
                     ContratoFornecedorId = table.Column<Guid>(type: "uuid", nullable: false),
                     Numero = table.Column<int>(type: "integer", nullable: false),
                     Vencimento = table.Column<DateOnly>(type: "date", nullable: false),
@@ -1923,12 +2141,23 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 {
                     table.PrimaryKey("PK_ParcelasContratoFornecedor", x => x.Id);
                     table.ForeignKey(
+                        name: "FK_ParcelasContratoFornecedor_Contas_ContaId",
+                        column: x => x.ContaId,
+                        principalTable: "Contas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
                         name: "FK_ParcelasContratoFornecedor_ContratosFornecedor_ContratoForn~",
                         column: x => x.ContratoFornecedorId,
                         principalTable: "ContratosFornecedor",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AnexosTarefa_ContaId",
+                table: "AnexosTarefa",
+                column: "ContaId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AnexosTarefa_TarefaId",
@@ -2004,8 +2233,13 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Clientes_ContaId",
+                name: "IX_Clientes_ContaId_Nome",
                 table: "Clientes",
+                columns: new[] { "ContaId", "Nome" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ComentariosTarefa_ContaId",
+                table: "ComentariosTarefa",
                 column: "ContaId");
 
             migrationBuilder.CreateIndex(
@@ -2014,9 +2248,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 column: "TarefaId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Compromissos_ContaId",
+                name: "IX_Compromissos_ContaId_Data",
                 table: "Compromissos",
-                column: "ContaId");
+                columns: new[] { "ContaId", "Data" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Compromissos_EventoId",
@@ -2031,6 +2265,11 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 column: "DonoUsuarioId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ContatoOportunidade_ContaId",
+                table: "ContatoOportunidade",
+                column: "ContaId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ContatoOportunidade_OportunidadeId",
                 table: "ContatoOportunidade",
                 column: "OportunidadeId");
@@ -2038,6 +2277,11 @@ namespace Project.Infrastructure.Persistencia.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_ContratosConta_ContaId",
                 table: "ContratosConta",
+                column: "ContaId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ContratosFornecedor_ContaId",
+                table: "ContratosFornecedor",
                 column: "ContaId");
 
             migrationBuilder.CreateIndex(
@@ -2057,14 +2301,19 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 column: "ContaId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Convidados_ContaId",
+                table: "Convidados",
+                column: "ContaId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Convidados_ConviteId",
                 table: "Convidados",
                 column: "ConviteId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Convites_ContaId",
+                name: "IX_Convites_ContaId_EventoId",
                 table: "Convites",
-                column: "ContaId");
+                columns: new[] { "ContaId", "EventoId" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Convites_EventoId",
@@ -2076,6 +2325,11 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 table: "Convites",
                 column: "Token",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EmailFornecedor_ContaId",
+                table: "EmailFornecedor",
+                column: "ContaId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_EmailFornecedor_FornecedorId",
@@ -2095,9 +2349,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 filter: "\"Tipo\" <> 'Aberto'");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Eventos_ContaId",
+                name: "IX_Eventos_ContaId_Data",
                 table: "Eventos",
-                column: "ContaId");
+                columns: new[] { "ContaId", "Data" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_EventosAssistentes_AssistenteId",
@@ -2115,9 +2369,19 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 column: "ContaId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_FornecedorNoServico_ContaId",
+                table: "FornecedorNoServico",
+                column: "ContaId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_FornecedorNoServico_ServicoId",
                 table: "FornecedorNoServico",
                 column: "ServicoId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_FornecedorServico_ContaId",
+                table: "FornecedorServico",
+                column: "ContaId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_FornecedorServico_ServicoContaId",
@@ -2140,14 +2404,29 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 column: "Situacao");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ItemCronograma_ContaId",
+                table: "ItemCronograma",
+                column: "ContaId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ItemCronograma_ModeloId",
                 table: "ItemCronograma",
                 column: "ModeloId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ItemInspiracao_ContaId",
+                table: "ItemInspiracao",
+                column: "ContaId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ItemInspiracao_GaleriaId",
                 table: "ItemInspiracao",
                 column: "GaleriaId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ItemRoteiro_ContaId",
+                table: "ItemRoteiro",
+                column: "ContaId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ItemRoteiro_SecaoId",
@@ -2160,9 +2439,24 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 column: "BriefingOportunidadeId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ItensBriefingOportunidade_ContaId",
+                table: "ItensBriefingOportunidade",
+                column: "ContaId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ItensChecklistTarefa_ContaId",
+                table: "ItensChecklistTarefa",
+                column: "ContaId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ItensChecklistTarefa_TarefaId",
                 table: "ItensChecklistTarefa",
                 column: "TarefaId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ItensChecklistTarefaModelo_ContaId",
+                table: "ItensChecklistTarefaModelo",
+                column: "ContaId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ItensChecklistTarefaModelo_TarefaModeloId",
@@ -2272,6 +2566,11 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 filter: "\"EventoId\" IS NOT NULL");
 
             migrationBuilder.CreateIndex(
+                name: "IX_OrcamentoFornecedor_ContaId",
+                table: "OrcamentoFornecedor",
+                column: "ContaId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_OrcamentoFornecedor_FornecedorId",
                 table: "OrcamentoFornecedor",
                 column: "FornecedorId");
@@ -2288,14 +2587,29 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_ParcelasContrato_ContaId",
+                table: "ParcelasContrato",
+                column: "ContaId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ParcelasContrato_ContratoFunilId",
                 table: "ParcelasContrato",
                 column: "ContratoFunilId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ParcelasContratoFornecedor_ContaId",
+                table: "ParcelasContratoFornecedor",
+                column: "ContaId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ParcelasContratoFornecedor_ContratoFornecedorId",
                 table: "ParcelasContratoFornecedor",
                 column: "ContratoFornecedorId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ParcelasOrcamento_ContaId",
+                table: "ParcelasOrcamento",
+                column: "ContaId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ParcelasOrcamento_OrcamentoFunilId",
@@ -2309,9 +2623,19 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_PerguntaBriefing_ContaId",
+                table: "PerguntaBriefing",
+                column: "ContaId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_PerguntaBriefing_SecaoId",
                 table: "PerguntaBriefing",
                 column: "SecaoId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PresencasEvento_ContaId",
+                table: "PresencasEvento",
+                column: "ContaId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_PresencasEvento_ConvidadoId",
@@ -2325,14 +2649,29 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 column: "EventoId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_RecebimentosParcela_ContaId",
+                table: "RecebimentosParcela",
+                column: "ContaId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_RecebimentosParcela_ParcelaId",
                 table: "RecebimentosParcela",
                 column: "ParcelaId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ResponsaveisTarefa_ContaId",
+                table: "ResponsaveisTarefa",
+                column: "ContaId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ResponsaveisTarefa_TarefaId",
                 table: "ResponsaveisTarefa",
                 column: "TarefaId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ResponsaveisTarefaFunil_ContaId",
+                table: "ResponsaveisTarefaFunil",
+                column: "ContaId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ResponsaveisTarefaFunil_TarefaFunilId",
@@ -2350,9 +2689,19 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 column: "OrcamentoFunilId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_SecaoBriefing_ContaId",
+                table: "SecaoBriefing",
+                column: "ContaId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_SecaoBriefing_ModeloId",
                 table: "SecaoBriefing",
                 column: "ModeloId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SecaoRoteiro_ContaId",
+                table: "SecaoRoteiro",
+                column: "ContaId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SecaoRoteiro_ModeloId",
@@ -2360,9 +2709,19 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 column: "ModeloId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ServicoEvento_ContaId",
+                table: "ServicoEvento",
+                column: "ContaId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ServicoEvento_EventoId",
                 table: "ServicoEvento",
                 column: "EventoId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ServicoModelo_ContaId",
+                table: "ServicoModelo",
+                column: "ContaId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ServicoModelo_ModeloId",
@@ -2381,6 +2740,11 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_SubitemServico_ContaId",
+                table: "SubitemServico",
+                column: "ContaId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_SubitemServico_ServicoId",
                 table: "SubitemServico",
                 column: "ServicoId");
@@ -2390,6 +2754,11 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 table: "Tags",
                 columns: new[] { "ContaId", "Nome" },
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TarefaModelo_ContaId",
+                table: "TarefaModelo",
+                column: "ContaId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TarefaModelo_ModeloId",
@@ -2402,9 +2771,9 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 column: "ServicoModeloId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Tarefas_ContaId",
+                name: "IX_Tarefas_ContaId_Prazo",
                 table: "Tarefas",
-                column: "ContaId");
+                columns: new[] { "ContaId", "Prazo" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Tarefas_EventoId",
@@ -2422,14 +2791,29 @@ namespace Project.Infrastructure.Persistencia.Migrations
                 column: "ContaId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_TelefoneFornecedor_ContaId",
+                table: "TelefoneFornecedor",
+                column: "ContaId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_TelefoneFornecedor_FornecedorId",
                 table: "TelefoneFornecedor",
                 column: "FornecedorId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_VinculoModeloEvento_ContaId",
+                table: "VinculoModeloEvento",
+                column: "ContaId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_VinculoModeloEvento_ModeloId",
                 table: "VinculoModeloEvento",
                 column: "ModeloId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Vinculos_ContaId",
+                table: "Vinculos",
+                column: "ContaId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Vinculos_EventoId",

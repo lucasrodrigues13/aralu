@@ -1,6 +1,7 @@
+using Project.Domain.Comum;
 namespace Project.Domain.Perfil;
 
-public sealed class PerfilAssessoria
+public sealed class PerfilAssessoria : ITemConta
 {
     public Guid Id { get; set; }
 

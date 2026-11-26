@@ -198,3 +198,15 @@ Tudo o que mexe em schema entra junto, para gerar a migration inicial uma vez s�
 - O banco de staging precisa ser **recriado** antes de subir esta branch: o `schema.sql` novo tem uma única migration `Inicial`, e um banco com o histórico antigo falharia ao criar tabelas que já existem.
 
 **Próximo:** lote 2.3 (`ContaId` nas tabelas filhas, preenchido no `SaveChanges` a partir do pai). A tabela implícita `EventoTagConta` e `EventosAssistentes` ficam sem `ContaId` por ora (a primeira é junção sem entidade; a segunda sai na Fase 3).
+
+### Fase 2 — lote 2.3 concluído (Claude Code)
+
+**Feito**
+- Interface `ITemConta` (`Domain/Comum`) em todas as 64 entidades de negócio. As 32 filhas que não tinham ganharam `ContaId`, com FK `RESTRICT` para `Contas` (o laço do `Mapa.LigarContas` pega todas).
+- `AppDbContext.SaveChangesAsync` preenche o `ContaId` de registro novo a partir do pai pela FK, em passadas (cobre neto criado junto). Registro novo sem conta e sem pai é recusado com erro claro.
+- Índices compostos nas listagens principais: Eventos (ContaId, Data), Tarefas (ContaId, Prazo), Clientes (ContaId, Nome), Compromissos (ContaId, Data), Convites (ContaId, EventoId). As demais tabelas têm o índice por ContaId criado pela FK.
+- Testes `ContaNasFilhasTests` (filho e neto juntos, filho depois, órfão recusado). Suíte: 314 + 89, verdes.
+
+**Diferença do explorador:** os índices compostos com o segundo campo foram feitos só nas 5 listagens mais usadas; o resto fica com o índice simples por ContaId até aparecer consulta que justifique.
+
+**Próximo:** lote 2.4 (filtro global por conta).

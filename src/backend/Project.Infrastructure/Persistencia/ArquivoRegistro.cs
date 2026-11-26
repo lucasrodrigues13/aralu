@@ -1,6 +1,7 @@
+using Project.Domain.Comum;
 namespace Project.Infrastructure.Persistencia;
 
-public sealed class ArquivoRegistro
+public sealed class ArquivoRegistro : ITemConta
 {
     public Guid Id { get; set; }
 
