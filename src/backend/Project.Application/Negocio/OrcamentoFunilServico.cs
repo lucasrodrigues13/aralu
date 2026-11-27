@@ -117,6 +117,44 @@ public sealed class OrcamentoFunilServico(IDados dados)
         return Resultado<string>.Sucesso(ParametrosOrcamento.Aplicar(modelo.Texto, oportunidade, valor, DateOnly.FromDateTime(DateTime.UtcNow), perfil));
     }
 
+    /// <summary>
+    /// Modelo de mensagem com as tags trocadas pelos dados do lead e do orçamento. Tag de mensagem sem dado aqui
+    /// (convidado, mesa, QR code…) vira texto vazio; {{link_proposta}} recebe o link informado.
+    /// </summary>
+    public async Task<Resultado<string>> MensagemAsync(Guid contaId, Guid orcamentoId, Guid modeloMensagemId, string? linkProposta, CancellationToken ct)
+    {
+        var item = await dados.ObterOrcamentoFunilAsync(contaId, orcamentoId, ct);
+        var modelo = await dados.ObterMensagemAsync(contaId, modeloMensagemId, ct);
+        var oportunidade = item is null ? null : await dados.ObterOportunidadeAsync(contaId, item.OportunidadeId, ct);
+        if (item is null || modelo is null || oportunidade is null)
+        {
+            return Resultado<string>.Erro(Codigos.Indisponivel, "Indisponível.");
+        }
+
+        var perfil = await dados.ObterPerfilAsync(contaId, ct);
+        var parcelas = item.Parcelas
+            .OrderBy(parcela => parcela.Numero)
+            .Select(parcela => new ParcelaOrcamentoLeitura(parcela.Numero, parcela.Vencimento, parcela.Valor, parcela.Entrada))
+            .ToArray();
+        var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
+        var valores = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var tag in Domain.Modelos.ParametrosMensagem.Todos)
+        {
+            valores[tag.Trim('{', '}')] = "";
+        }
+
+        var validade = item.ValidoAte is DateTimeOffset ate ? OrcamentoFunil.UltimoDiaDe(ate) : hoje;
+        foreach (var (chave, valor) in ParametrosOrcamento.Valores(oportunidade, item.Valor, validade, perfil, parcelas, validadeJaCalculada: item.ValidoAte is not null))
+        {
+            valores[chave] = valor;
+        }
+
+        valores["nome_evento"] = oportunidade.Nome;
+        valores["nome_da_empresa"] = perfil?.NomeEmpresa ?? "";
+        valores["link_proposta"] = linkProposta ?? "";
+        return Resultado<string>.Sucesso(ParametrosOrcamento.Trocar(modelo.Texto, valores, html: false));
+    }
+
     public async Task<Resultado<OrcamentoFunilLeitura>> CriarAsync(Guid contaId, SalvarOrcamentoFunil pedido, CancellationToken ct, string? criadoPor = null)
     {
         if (pedido.OportunidadeId is not Guid oportunidadeId ||

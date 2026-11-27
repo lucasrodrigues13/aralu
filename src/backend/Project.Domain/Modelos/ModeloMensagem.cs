@@ -17,6 +17,17 @@ public static class ParametrosMensagem
     public static readonly string[] Todos =
     [
         "{{nome_da_empresa}}",
+        "{{nome_oportunidade}}",
+        "{{nome_contratante}}",
+        "{{convidados}}",
+        "{{valor}}",
+        "{{validade}}",
+        "{{servicos_contratados}}",
+        "{{forma_pagamento}}",
+        "{{nome_assessoria}}",
+        "{{telefone_assessoria}}",
+        "{{link_whatsapp}}",
+        "{{link_proposta}}",
         "{{nome_evento}}",
         "{{tipo_evento}}",
         "{{data_evento}}",

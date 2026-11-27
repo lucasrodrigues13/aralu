@@ -12,14 +12,14 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { mensagemDeErro } from '../../core/mensagem-erro';
-import { ModeloOrcamentoFunil, NegocioClient, Oportunidade, OrcamentoFunil, RespostaProposta } from '../../core/negocio.client';
+import { MensagemModelo, ModeloOrcamentoFunil, NegocioClient, Oportunidade, OrcamentoFunil, RespostaProposta } from '../../core/negocio.client';
 import { AuthService } from '../../core/auth.service';
 import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { CampoDinheiroComponent } from '../../shared/campo-dinheiro';
 import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
-import { linkProposta, SELO_PROPOSTA, whatsappProposta } from '../../shared/proposta';
+import { linkProposta, SELO_PROPOSTA, whatsappProposta, whatsappTexto } from '../../shared/proposta';
 import { ParcelasOrcamentoDialog } from './parcelas-orcamento.dialog';
 import { EditorRico } from '../../shared/editor-rico';
 
@@ -170,7 +170,7 @@ export class ValidadePropostaDialog implements OnInit {
 /** Link da proposta: copiar ou mandar pelo WhatsApp (SPEC-031 §6.6, item 2). */
 @Component({
   selector: 'app-enviar-proposta-dialog',
-  imports: [MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, GdDataPipe],
+  imports: [MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatSelectModule, GdDataPipe],
   template: `
     <h2 mat-dialog-title>Enviar proposta</h2>
     <mat-dialog-content>
@@ -184,7 +184,22 @@ export class ValidadePropostaDialog implements OnInit {
           <input matInput readonly aria-label="Link da proposta" [value]="link" (focus)="$any($event.target).select()" />
         </mat-form-field>
       </div>
+      @if (modelos().length) {
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Modelo de mensagem</mat-label>
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-select aria-label="Modelo de mensagem" [value]="modeloId()" (selectionChange)="escolherModelo($event.value)">
+              <mat-option [value]="null">Mensagem padrão com o link</mat-option>
+              @for (m of modelos(); track m.id) { <mat-option [value]="m.id">{{ m.nome }}</mat-option> }
+            </mat-select>
+          </mat-form-field>
+        </div>
+        @if (texto(); as t) {
+          <p class="text-sm mb-4" style="white-space: pre-line; border: 1px solid var(--mat-sys-outline-variant); border-radius: 8px; padding: 12px;">{{ t }}</p>
+        }
+      }
       <div class="flex flex-wrap gap-2">
+        @if (texto()) { <button mat-stroked-button type="button" (click)="copiarMensagem()"><mat-icon>content_copy</mat-icon> Copiar mensagem</button> }
         <button mat-stroked-button type="button" (click)="copiar()"><mat-icon>content_copy</mat-icon> Copiar link</button>
         <button mat-flat-button type="button" (click)="abrirWhatsapp()"><mat-icon>chat</mat-icon> Enviar pelo WhatsApp</button>
       </div>
@@ -202,17 +217,39 @@ export class EnviarPropostaDialog implements OnInit {
   protected readonly ref = inject(MatDialogRef<EnviarPropostaDialog>);
   protected readonly link = linkProposta(this.dados.tokenLink ?? '');
   protected readonly contato = signal<{ nome: string; telefone: string | null } | null>(null);
+  protected readonly modelos = signal<MensagemModelo[]>([]);
+  protected readonly modeloId = signal<string | null>(null);
+  protected readonly texto = signal<string | null>(null);
 
   ngOnInit(): void {
     this.negocio.oportunidade(this.dados.oportunidadeId).subscribe({
       next: (o) => this.contato.set(o.contatos[0] ?? null),
       error: () => this.contato.set(null),
     });
+    this.negocio.mensagens().subscribe({ next: (lista) => this.modelos.set(lista), error: () => this.modelos.set([]) });
+  }
+
+  protected escolherModelo(id: string | null): void {
+    this.modeloId.set(id);
+    this.texto.set(null);
+    if (!id) return;
+    this.negocio.mensagemDoOrcamento(this.dados.id, id, this.link).subscribe({
+      next: (r) => this.texto.set(r.texto),
+      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+    });
   }
 
   protected abrirWhatsapp(): void {
     const c = this.contato();
-    window.open(whatsappProposta(c?.telefone, c?.nome, this.link), '_blank', 'noopener');
+    const texto = this.texto();
+    window.open(texto ? whatsappTexto(c?.telefone, texto) : whatsappProposta(c?.telefone, c?.nome, this.link), '_blank', 'noopener');
+  }
+
+  protected copiarMensagem(): void {
+    void navigator.clipboard.writeText(this.texto() ?? '').then(
+      () => this.toast.sucesso('Mensagem copiada.'),
+      () => this.toast.erro('Não deu para copiar. Selecione o texto e copie.'),
+    );
   }
 
   protected copiar(): void {

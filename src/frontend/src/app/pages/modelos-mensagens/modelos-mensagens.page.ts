@@ -18,6 +18,17 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 /** Tags das mensagens, com o que cada uma vira no envio. */
 const TAGS_MENSAGEM: { marca: string; rotulo: string }[] = [
   { marca: '{{nome_da_empresa}}', rotulo: 'Nome da sua empresa' },
+  { marca: '{{nome_oportunidade}}', rotulo: 'Lead: nome da oportunidade (ex.: Ana e Pedro)' },
+  { marca: '{{nome_contratante}}', rotulo: 'Lead/cliente: nome do contratante' },
+  { marca: '{{convidados}}', rotulo: 'Lead: quantidade prevista de convidados' },
+  { marca: '{{valor}}', rotulo: 'Orçamento: valor da proposta' },
+  { marca: '{{validade}}', rotulo: 'Orçamento: validade da proposta' },
+  { marca: '{{servicos_contratados}}', rotulo: 'Orçamento: serviços da proposta' },
+  { marca: '{{forma_pagamento}}', rotulo: 'Orçamento: forma de pagamento (entrada e parcelas)' },
+  { marca: '{{nome_assessoria}}', rotulo: 'Nome da sua assessoria' },
+  { marca: '{{telefone_assessoria}}', rotulo: 'Telefone da sua assessoria' },
+  { marca: '{{link_whatsapp}}', rotulo: 'Link do WhatsApp da sua assessoria' },
+  { marca: '{{link_proposta}}', rotulo: 'Orçamento: link da proposta para o lead responder' },
   { marca: '{{nome_evento}}', rotulo: 'Nome do evento' },
   { marca: '{{tipo_evento}}', rotulo: 'Tipo do evento (casamento, 15 anos…)' },
   { marca: '{{data_evento}}', rotulo: 'Data do evento' },
@@ -44,7 +55,7 @@ const TAGS_MENSAGEM: { marca: string; rotulo: string }[] = [
     <h2 mat-dialog-title>Como usar as tags</h2>
     <mat-dialog-content>
       <p class="text-sm mb-3">
-        Tags são trechos entre chaves duplas que o sistema troca pelos dados do evento e do convidado quando a mensagem é enviada.
+        Tags são trechos entre chaves duplas que o sistema troca pelos dados do lead, do orçamento, do cliente, do evento e do convidado quando a mensagem é enviada.
         Clique no texto onde o dado deve entrar, abra "Inserir tags no cursor", marque uma ou mais e feche a lista: elas entram na posição do cursor, na ordem da lista.
       </p>
       <table class="w-full text-sm">

@@ -180,6 +180,7 @@ public static class NegocioEndpoints
         api.MapGet("/orcamentos-funil/{id:guid}", OrcamentoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPut("/orcamentos-funil/{id:guid}", AtualizarOrcamentoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPut("/orcamentos-funil/{id:guid}/parcelas", DefinirParcelasOrcamentoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapGet("/orcamentos-funil/{id:guid}/mensagem", MensagemDoOrcamentoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/orcamentos-funil/{id:guid}/enviar", EnviarOrcamentoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/orcamentos-funil/{id:guid}/responder", ResponderOrcamentoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/orcamentos-funil/{id:guid}/cancelar", CancelarOrcamentoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
@@ -789,6 +790,13 @@ public static class NegocioEndpoints
         ComConta(usuario, async conta =>
         {
             return await De(servico.CriarAsync(conta, id, pedido, Hoje(), ct));
+        });
+
+    private static Task<IResult> MensagemDoOrcamentoFunil(Guid id, Guid modeloId, string? link, ClaimsPrincipal usuario, OrcamentoFunilServico servico, CancellationToken ct) =>
+        ComConta(usuario, async conta =>
+        {
+            var texto = await servico.MensagemAsync(conta, id, modeloId, link, ct);
+            return texto.Ok ? Results.Ok(new { texto = texto.Valor }) : Falha(texto.Falha!);
         });
 
     private static Task<IResult> TextoDoModeloOrcamento(Guid modeloId, Guid oportunidadeId, decimal? valor, ClaimsPrincipal usuario, OrcamentoFunilServico servico, CancellationToken ct) =>

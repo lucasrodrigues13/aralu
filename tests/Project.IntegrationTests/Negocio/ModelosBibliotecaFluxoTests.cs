@@ -208,6 +208,32 @@ public class ModelosBibliotecaFluxoTests
             texto = "Olá, confirme presença em {{nome_evento}}",
         }));
         Assert.Contains(mensagem.GetProperty("parametros").EnumerateArray(), item => item.GetString() == "{{nome_evento}}");
+        Assert.Contains(mensagem.GetProperty("parametros").EnumerateArray(), item => item.GetString() == "{{nome_contratante}}");
+        Assert.Contains(mensagem.GetProperty("parametros").EnumerateArray(), item => item.GetString() == "{{valor}}");
+        var paraLead = await Ler(await dono.PostAsJsonAsync("/api/v1/modelos-mensagens", new
+        {
+            nome = "Orçamento",
+            texto = "Olá! {{nome_oportunidade}}: {{valor}} até {{validade}}. Veja: {{link_proposta}}{{mesa_dos_convidados}} {{tag_desconhecida}}",
+        }));
+        var lead = (await Ler(await dono.PostAsJsonAsync("/api/v1/oportunidades", new
+        {
+            nome = "Ana e Pedro",
+            estagio = "Contato inicial",
+            contatos = new[] { new { nome = "Ana", telefone = "11977770009", email = "ana9@ex.com" } },
+            contratante = ContratanteDeTeste.Completo,
+        }))).GetProperty("id").GetGuid();
+        var orcamento = (await Ler(await dono.PostAsJsonAsync("/api/v1/orcamentos-funil", new { oportunidadeId = lead, conteudo = "Proposta", valor = 8500m })))
+            .GetProperty("id").GetGuid();
+        var aplicada = (await Ler(await dono.GetAsync(
+            $"/api/v1/orcamentos-funil/{orcamento}/mensagem?modeloId={paraLead.GetProperty("id").GetGuid()}&link=https://x.com/p/1")))
+            .GetProperty("texto").GetString()!;
+        Assert.StartsWith("Olá! Ana e Pedro: R$", aplicada);
+        Assert.Contains("8.500,00", aplicada);
+        Assert.EndsWith("Veja: https://x.com/p/1 {{tag_desconhecida}}", aplicada);
+        Assert.DoesNotContain("{{validade}}", aplicada);
+        Assert.Equal(HttpStatusCode.NotFound, (await outra.GetAsync(
+            $"/api/v1/orcamentos-funil/{orcamento}/mensagem?modeloId={paraLead.GetProperty("id").GetGuid()}")).StatusCode);
+
         var mensagemClone = await Ler(await dono.PostAsJsonAsync($"/api/v1/modelos-mensagens/{mensagem.GetProperty("id").GetGuid()}/clonar", new { }));
         Assert.Equal(HttpStatusCode.OK, (await dono.DeleteAsync($"/api/v1/modelos-mensagens/{mensagemClone.GetProperty("id").GetGuid()}")).StatusCode);
         Assert.Empty((await Ler(await outra.GetAsync("/api/v1/modelos-mensagens"))).EnumerateArray());

@@ -719,6 +719,12 @@ export class NegocioClient {
     return this.http.delete(`${this.base}/api/v1/modelos-briefing/${id}`);
   }
 
+  /** Modelo de mensagem com as tags trocadas pelos dados do lead e do orçamento. */
+  mensagemDoOrcamento(orcamentoId: string, modeloId: string, link: string) {
+    const params = new HttpParams().set('modeloId', modeloId).set('link', link);
+    return this.http.get<{ texto: string }>(`${this.base}/api/v1/orcamentos-funil/${orcamentoId}/mensagem`, { params });
+  }
+
   textoDoModeloOrcamento(modeloId: string, oportunidadeId: string, valor: number | null) {
     let params = new HttpParams().set('modeloId', modeloId).set('oportunidadeId', oportunidadeId);
     if (valor !== null) params = params.set('valor', String(valor));

@@ -20,9 +20,13 @@ export function linkProposta(token: string, origem: string = location.origin): s
  * o WhatsApp abre para escolher o contato.
  */
 export function whatsappProposta(telefone: string | null | undefined, nomeContato: string | null | undefined, link: string): string {
+  const saudacao = nomeContato?.trim() ? `Olá, ${nomeContato.trim().split(/\s+/)[0]}!` : 'Olá!';
+  return whatsappTexto(telefone, `${saudacao} Segue a sua proposta: ${link}\nÉ só abrir e responder por lá.`);
+}
+
+/** wa.me com um texto qualquer (ex.: modelo de mensagem já com as tags trocadas). */
+export function whatsappTexto(telefone: string | null | undefined, texto: string): string {
   const digitos = (telefone ?? '').replace(/\D/g, '');
   const destino = digitos.length >= 10 ? (digitos.length <= 11 ? '55' + digitos : digitos) : '';
-  const saudacao = nomeContato?.trim() ? `Olá, ${nomeContato.trim().split(/\s+/)[0]}!` : 'Olá!';
-  const texto = `${saudacao} Segue a sua proposta: ${link}\nÉ só abrir e responder por lá.`;
   return `https://wa.me/${destino}?text=${encodeURIComponent(texto)}`;
 }
