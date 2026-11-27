@@ -363,6 +363,87 @@ html {
   color: var(--mat-sys-primary);
 }
 
+// Nome clicável da primeira coluna (vale para button e a).
+.link-nome {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--mat-sys-primary);
+  cursor: pointer;
+  text-align: start;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.link-nome:hover {
+  text-decoration: underline;
+}
+
+.link-nome:focus-visible {
+  outline: 2px solid var(--mat-sys-primary);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+// ---------------------------------------------------------------- Lista agrupada
+.grupos-lista {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border: 1px solid rgba(128, 128, 128, 0.25);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.grupos-lista.com-cabecalho {
+  border-top-left-radius: 0 !important;
+  border-top-right-radius: 0 !important;
+}
+
+.grupo + .grupo {
+  border-top: 1px solid rgba(128, 128, 128, 0.25);
+}
+
+.grupo-cabecalho {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 16px 16px 12px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.grupo-cabecalho:focus-visible {
+  outline: 2px solid var(--mat-sys-primary);
+  outline-offset: -2px;
+}
+
+.grupo-cabecalho:hover {
+  background: rgba(128, 128, 128, 0.08);
+}
+
+.grupo-texto {
+  flex: 1;
+  min-width: 0;
+}
+
+.grupo-cabecalho .seta {
+  transition: transform 0.15s;
+  flex-shrink: 0;
+  transform: rotate(-90deg);
+}
+
+.grupo.aberto .grupo-cabecalho .seta {
+  transform: none;
+}
+
 // ---------------------------------------------------------------- Modal
 .aralu-dialog .mat-mdc-dialog-surface {
   overflow: hidden;
@@ -376,6 +457,15 @@ html {
 
 .aralu-dialog .mat-mdc-dialog-title {
   margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mat-mdc-unelevated-button.botao-perigo:not(:disabled) {
+  --mat-button-filled-container-color: var(--mat-sys-error);
+  --mat-button-filled-label-text-color: var(--mat-sys-on-error);
 }
 
 .aralu-dialog .mat-mdc-dialog-content {
@@ -436,6 +526,29 @@ html {
   top: 16px;
   right: 16px;
   z-index: 30;
+}
+
+body:has(app-pagina-publica) app-tema.tema-fixo {
+  display: none;
+}
+
+.acoes-publicas {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+@media (max-width: 559px) {
+  .acoes-publicas {
+    flex-direction: column-reverse;
+  }
+
+  .acoes-publicas > * {
+    width: 100%;
+    min-height: 44px;
+  }
 }
 
 .painel-marca {
