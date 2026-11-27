@@ -15,7 +15,7 @@ namespace Project.IntegrationTests.Conta;
 [Collection(ColecaoApi.Nome)]
 public partial class AssinaturaAsaasTests
 {
-    private const string Senha = "abcdefgh";
+    private const string Senha = "ceu-de-junho-42";
     private readonly BancoFixture _banco;
 
     public AssinaturaAsaasTests(BancoFixture banco) => _banco = banco;

@@ -7,7 +7,7 @@ name: aralu
 
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:16-alpine@sha256:f2f98726820d0342055351c6e9d36e705f5bfffb3dd53ff556325114b08afb6d
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-aralu}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
@@ -25,7 +25,7 @@ services:
       retries: 12
 
   migrate:
-    image: postgres:16-alpine
+    image: postgres:16-alpine@sha256:f2f98726820d0342055351c6e9d36e705f5bfffb3dd53ff556325114b08afb6d
     environment:
       PGPASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
       PGHOST: postgres
@@ -75,9 +75,8 @@ services:
       Bootstrap__Enabled: ${BOOTSTRAP_ENABLED:-false}
       Bootstrap__AdminEmail: ${BOOTSTRAP_ADMIN_EMAIL:-}
       Bootstrap__AdminPassword: ${BOOTSTRAP_ADMIN_PASSWORD:-}
-      ForwardedHeaders__KnownNetworks__0: 172.16.0.0/12
-      ForwardedHeaders__KnownNetworks__1: 10.0.0.0/8
-      ForwardedHeaders__KnownNetworks__2: 192.168.0.0/16
+      # Só a rede interna fixa (o Caddy do frontend); ver networks.interna.
+      ForwardedHeaders__KnownNetworks__0: ${DOCKER_SUBNET:?defina DOCKER_SUBNET no .env}
     volumes:
       - storage:/storage
       - chaves:/keys
@@ -124,3 +123,7 @@ volumes:
 
 networks:
   interna:
+    ipam:
+      config:
+        # Produção 172.30.0.0/24, staging 172.31.0.0/24 (A06-001).
+        - subnet: ${DOCKER_SUBNET:?defina DOCKER_SUBNET no .env}

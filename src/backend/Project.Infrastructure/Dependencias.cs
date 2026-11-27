@@ -29,6 +29,7 @@ public static class Dependencias
 
         services.AddIdentityCore<ApplicationUser>(OpcoesDeConta.Aplicar)
             .AddRoles<IdentityRole>()
+            .AddPasswordValidator<SenhaComumValidador>()
             .AddEntityFrameworkStores<AppDbContext>()
             .AddSignInManager()
             .AddTokenProvider<ConfirmacaoEmailTokenProvider>(ConfirmacaoEmailTokenProvider.Nome)
@@ -40,8 +41,13 @@ public static class Dependencias
         services.Configure<BootstrapOpcoes>(configuration.GetSection("Bootstrap"));
         services.Configure<ArmazenamentoOpcoes>(configuration.GetSection("Storage"));
         services.Configure<Project.Infrastructure.Assinaturas.AsaasOpcoes>(configuration.GetSection("Asaas"));
+        services.PostConfigure<Project.Infrastructure.Assinaturas.AsaasOpcoes>(opcoes => opcoes.Ambiente = configuration["App:Environment"]);
+        services.AddHostedService<Project.Infrastructure.Assinaturas.AvisoDiagnosticoAsaas>();
         services.AddHttpClient<Project.Infrastructure.Assinaturas.IAsaas, Project.Infrastructure.Assinaturas.AsaasHttp>(cliente => cliente.Timeout = TimeSpan.FromSeconds(20));
         services.AddSingleton<IEmissorJwt, EmissorJwt>();
+        services.AddMemoryCache();
+        services.AddSingleton<Project.Application.Comum.LogSeguranca>();
+        services.AddScoped<SessaoServico>();
         services.AddScoped<IDados, DadosEf>();
         services.AddScoped<PerfilServico>();
         services.AddScoped<ModeloServico>();

@@ -2,6 +2,9 @@ using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using Project.Application.Comum;
 using Project.Application.Conta;
+using Project.Domain.Dinheiro;
+using Project.Domain.Eventos;
+using Project.Domain.Tarefas;
 using Project.Infrastructure.Persistencia;
 
 namespace Project.Api.Conta;
@@ -37,6 +40,50 @@ public static class EscopoAssistente
             .Select(item => item.EventoId)
             .ToListAsync(ct);
         return ids.ToHashSet();
+    }
+
+    /// <summary>
+    /// Arquivo ligado a um evento (imagem, anexo de tarefa, comprovante, contrato assinado) só abre se o evento estiver liberado.
+    /// Arquivos sem evento (modelo, perfil, foto de cliente/fornecedor, funil) seguem liberados.
+    /// </summary>
+    public static async Task<bool> PodeAbrirArquivoAsync(ClaimsPrincipal usuario, AppDbContext banco, Guid arquivoId, CancellationToken ct)
+    {
+        var liberados = await LiberadosAsync(usuario, banco, ct);
+        if (liberados is null)
+        {
+            return true;
+        }
+
+        var eventos = await EventosDoArquivoAsync(banco, arquivoId, ct);
+        return eventos.All(liberados.Contains);
+    }
+
+    private static async Task<List<Guid>> EventosDoArquivoAsync(AppDbContext banco, Guid arquivoId, CancellationToken ct)
+    {
+        var eventos = await banco.Eventos.AsNoTracking().Where(item => item.ImagemId == arquivoId).Select(item => item.Id).ToListAsync(ct);
+        eventos.AddRange(await banco.Set<AnexoTarefa>().AsNoTracking()
+            .Where(item => item.ArquivoId == arquivoId)
+            .Join(banco.Tarefas, anexo => anexo.TarefaId, tarefa => tarefa.Id, (anexo, tarefa) => tarefa.EventoId)
+            .ToListAsync(ct));
+
+        var contratos = await banco.Set<ContratoFornecedor>().AsNoTracking()
+            .Where(item => item.ComprovanteArquivoId == arquivoId || item.ContratoAssinadoArquivoId == arquivoId)
+            .Select(item => item.Id)
+            .ToListAsync(ct);
+        contratos.AddRange(await banco.Set<ParcelaContratoFornecedor>().AsNoTracking()
+            .Where(item => item.ComprovanteArquivoId == arquivoId)
+            .Select(item => item.ContratoFornecedorId)
+            .ToListAsync(ct));
+        if (contratos.Count > 0)
+        {
+            eventos.AddRange(await banco.Set<ContratoFornecedor>().AsNoTracking()
+                .Where(item => contratos.Contains(item.Id))
+                .Join(banco.Set<FornecedorNoServico>(), contrato => contrato.VinculoId, vinculo => vinculo.Id, (contrato, vinculo) => vinculo.ServicoId)
+                .Join(banco.Set<ServicoEvento>(), servico => servico, servicoEvento => servicoEvento.Id, (servico, servicoEvento) => servicoEvento.EventoId)
+                .ToListAsync(ct));
+        }
+
+        return eventos;
     }
 
     /// <summary>Filtro de grupo: devolve 404 quando a rota aponta para um evento fora do alcance.</summary>

@@ -61,6 +61,8 @@ export class EntrarPage {
     const aviso = this.rota.snapshot.queryParamMap.get('aviso');
     if (aviso === 'acesso-removido') {
       this.toast.erro('Seu acesso foi removido.');
+    } else if (aviso === 'sessao-encerrada') {
+      this.toast.erro('Sua sessão foi encerrada. Entre novamente.');
     } else if (aviso === 'sessao-expirada') {
       this.toast.erro('Sua sessão expirou. Entre novamente.');
     }

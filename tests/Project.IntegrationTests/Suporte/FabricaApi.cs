@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -25,6 +26,11 @@ public sealed class FabricaApi : WebApplicationFactory<Program>
     private readonly int _loginPorMinuto;
     private readonly int _recuperacaoPorHora;
     private readonly int _reenvioPorHora;
+    private readonly int _loginPorEmail;
+    private readonly string? _ipConexao;
+    private readonly string? _redeConhecida;
+    private readonly int _publicoPorMinuto;
+    private readonly int _leadsPorContaPorHora;
 
     public FabricaApi(
         string conexao,
@@ -35,7 +41,12 @@ public sealed class FabricaApi : WebApplicationFactory<Program>
         int cadastroPorHora = 1000,
         int loginPorMinuto = 1000,
         int recuperacaoPorHora = 1000,
-        int reenvioPorHora = 1000)
+        int reenvioPorHora = 1000,
+        int loginPorEmail = 1000,
+        string? ipConexao = null,
+        string? redeConhecida = null,
+        int publicoPorMinuto = 100000,
+        int leadsPorContaPorHora = 100000)
     {
         _conexao = conexao;
         Email = email ?? new EmailCapturado();
@@ -47,6 +58,11 @@ public sealed class FabricaApi : WebApplicationFactory<Program>
         _loginPorMinuto = loginPorMinuto;
         _recuperacaoPorHora = recuperacaoPorHora;
         _reenvioPorHora = reenvioPorHora;
+        _loginPorEmail = loginPorEmail;
+        _ipConexao = ipConexao;
+        _redeConhecida = redeConhecida;
+        _publicoPorMinuto = publicoPorMinuto;
+        _leadsPorContaPorHora = leadsPorContaPorHora;
     }
 
     public EmailCapturado Email { get; }
@@ -72,6 +88,14 @@ public sealed class FabricaApi : WebApplicationFactory<Program>
         builder.UseSetting("RateLimit:LoginPorMinuto", _loginPorMinuto.ToString());
         builder.UseSetting("RateLimit:RecuperacaoPorHora", _recuperacaoPorHora.ToString());
         builder.UseSetting("RateLimit:ReenvioPorHora", _reenvioPorHora.ToString());
+        builder.UseSetting("RateLimit:LoginPorEmail", _loginPorEmail.ToString());
+        if (_redeConhecida is not null)
+        {
+            builder.UseSetting("ForwardedHeaders:KnownNetworks:0", _redeConhecida);
+        }
+
+        builder.UseSetting("RateLimit:PublicoPorMinuto", _publicoPorMinuto.ToString());
+        builder.UseSetting("RateLimit:LeadsPorContaPorHora", _leadsPorContaPorHora.ToString());
         builder.UseSetting("Swagger:Enabled", "false");
         builder.UseSetting("Asaas:WebhookToken", AsaasDeTeste.TokenWebhook);
         builder.UseSetting("Asaas:DiagnosticoNoNavegador", "true");
@@ -89,6 +113,25 @@ public sealed class FabricaApi : WebApplicationFactory<Program>
             services.AddSingleton<IConsultaCep, CepDeTeste>();
             services.RemoveAll<Project.Infrastructure.Assinaturas.IAsaas>();
             services.AddSingleton<Project.Infrastructure.Assinaturas.IAsaas>(Asaas);
+            if (_ipConexao is not null)
+            {
+                services.AddSingleton<Microsoft.AspNetCore.Hosting.IStartupFilter>(new IpDaConexao(System.Net.IPAddress.Parse(_ipConexao)));
+            }
         });
     }
+}
+
+// O TestServer não tem IP de conexão; simula o Caddy interno chamando a API.
+internal sealed class IpDaConexao(System.Net.IPAddress ip) : IStartupFilter
+{
+    public Action<Microsoft.AspNetCore.Builder.IApplicationBuilder> Configure(Action<Microsoft.AspNetCore.Builder.IApplicationBuilder> proximo) =>
+        app =>
+        {
+            app.Use((contexto, seguinte) =>
+            {
+                contexto.Connection.RemoteIpAddress = ip;
+                return seguinte();
+            });
+            proximo(app);
+        };
 }

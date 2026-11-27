@@ -12,7 +12,7 @@ namespace Project.IntegrationTests.Negocio;
 [Collection(ColecaoApi.Nome)]
 public class AssistentesFluxoTests
 {
-    private const string Senha = "abcdefgh";
+    private const string Senha = "ceu-de-junho-42";
     private readonly BancoFixture _banco;
 
     public AssistentesFluxoTests(BancoFixture banco) => _banco = banco;
@@ -98,6 +98,54 @@ public class AssistentesFluxoTests
         var reativada = await Ler(await dona.PostAsync($"/api/v1/equipe/{assistenteId}/reativar", null));
         Assert.Equal("Ativa", reativada.GetProperty("situacao").GetString());
         Assert.Equal(HttpStatusCode.OK, (await assistente.GetAsync($"/api/v1/eventos/{marcado}")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Somente_dela_nao_ve_painel_clientes_nem_arquivos_de_evento_fora_do_alcance()
+    {
+        var dona = await EntrarOrganizer();
+        var (assistente, assistenteId, _) = await ConvidarEAtivar(dona, financeiro: false, somenteDela: true);
+
+        var marcado = (await CriarEvento(dona, "Marcado A01")).GetProperty("id").GetGuid();
+        var outro = (await CriarEvento(dona, "Outro A01")).GetProperty("id").GetGuid();
+        Assert.Equal(HttpStatusCode.OK, (await dona.PutAsJsonAsync($"/api/v1/eventos/{marcado}/assistentes", new { assistentes = new[] { assistenteId } })).StatusCode);
+
+        // Painel: contagem e lista de em andamento só com o evento dela.
+        var painel = await Ler(await assistente.GetAsync("/api/v1/painel"));
+        var andamento = painel.GetProperty("eventosEmAndamento").EnumerateArray().Select(item => item.GetProperty("id").GetGuid()).ToArray();
+        Assert.Equal([marcado], andamento);
+        Assert.Equal(1, painel.GetProperty("emAndamento").GetInt32());
+
+        // Clientes: o cadastro aparece, mas o evento fora do alcance some do vínculo.
+        var clienteId = (await Ler(await dona.PostAsJsonAsync("/api/v1/clientes", new
+        {
+            nome = "Cliente A01",
+            papel = "Noiva",
+            email = $"cliente-a01-{Guid.NewGuid():N}@aralu.test",
+            celular = "11988887777",
+        }))).GetProperty("id").GetGuid();
+        await Ler(await dona.PostAsJsonAsync($"/api/v1/eventos/{marcado}/clientes", new { clienteId }));
+        await Ler(await dona.PostAsJsonAsync($"/api/v1/eventos/{outro}/clientes", new { clienteId }));
+        var cliente = (await Ler(await assistente.GetAsync("/api/v1/clientes"))).EnumerateArray().First(item => item.GetProperty("id").GetGuid() == clienteId);
+        Assert.Equal([marcado], cliente.GetProperty("eventos").EnumerateArray().Select(item => item.GetProperty("id").GetGuid()).ToArray());
+        var daDona = (await Ler(await dona.GetAsync("/api/v1/clientes"))).EnumerateArray().First(item => item.GetProperty("id").GetGuid() == clienteId);
+        Assert.Equal(2, daDona.GetProperty("eventos").GetArrayLength());
+
+        // Arquivos: imagem do evento dela abre; a do outro evento responde 404 (a dona abre as duas).
+        var imagemMarcado = await EnviarImagem(dona, marcado);
+        var imagemOutro = await EnviarImagem(dona, outro);
+        Assert.Equal(HttpStatusCode.OK, (await assistente.GetAsync($"/api/v1/arquivos/{imagemMarcado}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await assistente.GetAsync($"/api/v1/arquivos/{imagemOutro}")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await dona.GetAsync($"/api/v1/arquivos/{imagemOutro}")).StatusCode);
+    }
+
+    private static async Task<Guid> EnviarImagem(HttpClient cliente, Guid eventoId)
+    {
+        using var conteudo = new MultipartFormDataContent();
+        var arquivo = new ByteArrayContent([0xFF, 0xD8, 0xFF, 0xD9]);
+        arquivo.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg");
+        conteudo.Add(arquivo, "arquivo", "foto.jpg");
+        return (await Ler(await cliente.PostAsync($"/api/v1/eventos/{eventoId}/imagem", conteudo))).GetProperty("imagemId").GetGuid();
     }
 
     [Fact]
@@ -368,7 +416,7 @@ public class AssistentesFluxoTests
         var (assistente, assistenteId, email) = await ConvidarEAtivar(dona, financeiro: true, somenteDela: true);
 
         var adminEmail = $"adm-{Guid.NewGuid():N}@aralu.test";
-        const string senhaAdmin = "administrador";
+        const string senhaAdmin = "administrador-de-teste";
         await using var fabrica = new FabricaApi(_banco.Conexao, bootstrap: true, adminEmail: adminEmail, adminSenha: senhaAdmin);
         var admin = fabrica.CreateClient();
         await using (var escopo = fabrica.Services.CreateAsyncScope())
@@ -475,6 +523,26 @@ public class AssistentesFluxoTests
             .Select(modulo => new { modulo, ver = modulo != "Financeiro" || financeiro, editar = modulo != "Financeiro" || financeiro, excluir = modulo != "Financeiro" || financeiro })
             .ToArray(),
     };
+
+    [Fact]
+    public async Task Trocar_a_senha_invalida_o_token_antigo_do_membro()
+    {
+        var dona = await EntrarOrganizer();
+        var (assistente, _, email) = await ConvidarNoGrupoPadrao(dona);
+        var outroDispositivo = _banco.Fabrica.CreateClient();
+        var entrada = await (await outroDispositivo.PostAsJsonAsync("/api/v1/conta/entrar", new { email, senha = Senha })).Content.ReadFromJsonAsync<Sessao>();
+        outroDispositivo.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", entrada!.Token);
+        Assert.Equal(HttpStatusCode.OK, (await outroDispositivo.GetAsync("/api/v1/minha-conta")).StatusCode);
+
+        Assert.Equal(HttpStatusCode.OK, (await assistente.PostAsJsonAsync("/api/v1/minha-conta/senha", new { atual = Senha, nova = "outrasenha" })).StatusCode);
+
+        foreach (var antigo in new[] { assistente, outroDispositivo })
+        {
+            var depois = await antigo.GetAsync("/api/v1/minha-conta");
+            Assert.Equal(HttpStatusCode.Unauthorized, depois.StatusCode);
+            Assert.Contains("sessao_encerrada", await depois.Content.ReadAsStringAsync(), StringComparison.Ordinal);
+        }
+    }
 
     private async Task<(HttpClient Cliente, Guid Id, string Email)> ConvidarNoGrupoPadrao(HttpClient dona)
     {

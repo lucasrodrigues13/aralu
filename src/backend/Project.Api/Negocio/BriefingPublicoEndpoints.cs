@@ -12,7 +12,7 @@ public static class BriefingPublicoEndpoints
 
     public static void Mapear(WebApplication app)
     {
-        var rota = app.MapGroup("/api/v1/publico/briefings/{token}");
+        var rota = app.MapGroup("/api/v1/publico/briefings/{token}").RequireRateLimiting("publico-ip");
         rota.MapGet("/acesso", LerAcesso);
         rota.MapPost("/acesso/codigo", PedirCodigo);
         rota.MapPost("/acesso/confirmar", Confirmar);

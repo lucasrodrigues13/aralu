@@ -29,7 +29,7 @@ import { ToastService } from '../../core/toast.service';
               <div class="campo">
                 <mat-label class="font-semibold mb-2 block">Seu nome</mat-label>
                 <mat-form-field appearance="outline" class="w-full">
-                <input [attr.aria-label]="'Seu nome'" matInput formControlName="contatoNome" />
+                <input [attr.aria-label]="'Seu nome'" matInput maxlength="120" formControlName="contatoNome" />
               </mat-form-field>
               </div>
               <div class="campo">
@@ -74,6 +74,9 @@ import { ToastService } from '../../core/toast.service';
                   </mat-form-field>
                 </div>
               </div>
+              <!-- Campo isca (honeypot): fora da tela; pessoas não preenchem, robôs sim. -->
+              <input type="text" name="site" formControlName="site" tabindex="-1" autocomplete="off" aria-hidden="true"
+                style="position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden" />
               <div class="acoes-publicas">
                 <button mat-flat-button type="submit" [disabled]="!contaId">Enviar</button>
               </div>
@@ -93,9 +96,10 @@ export class LeadPublicoPage implements OnInit {
   protected contaId = '';
   protected readonly enviado = signal(false);
   protected readonly form = this.fb.nonNullable.group({
-    contatoNome: ['', Validators.required],
-    telefone: [''],
-    email: [''],
+    contatoNome: ['', [Validators.required, Validators.maxLength(120)]],
+    telefone: ['', Validators.maxLength(200)],
+    email: ['', Validators.maxLength(200)],
+    site: [''],
     tipoEvento: this.fb.control<string | null>(null),
     dataPrevista: this.fb.control<Date | null>(null),
     quantidadeConvidados: this.fb.control<number | null>(null),
@@ -105,7 +109,11 @@ export class LeadPublicoPage implements OnInit {
 
   ngOnInit(): void {
     this.contaId = this.rota.snapshot.paramMap.get('contaId') ?? '';
+    this.iniciadoEm = Date.now();
   }
+
+  /** Quando o formulário abriu (epoch ms): envio rápido demais é descartado no servidor. */
+  private iniciadoEm = 0;
 
   protected enviar(): void {
     if (this.form.invalid || !this.contaId) {
@@ -123,6 +131,8 @@ export class LeadPublicoPage implements OnInit {
       quantidadeConvidados: v.quantidadeConvidados,
       cidade: v.cidade || null,
       uf: v.uf || null,
+      site: v.site || null,
+      iniciadoEm: this.iniciadoEm,
     }).subscribe({
       next: () => {
         this.enviado.set(true);

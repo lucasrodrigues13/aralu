@@ -38,7 +38,7 @@ describe('CadastroPage', () => {
     fixture.detectChanges();
     const navegar = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
 
-    preencher(fixture.nativeElement, 'pessoa@aralu.test', 'abcdefgh', 'abcdefgh');
+    preencher(fixture.nativeElement, 'pessoa@aralu.test', 'ceu-de-junho-42', 'ceu-de-junho-42');
     fixture.detectChanges();
     fixture.nativeElement.querySelector('form').dispatchEvent(new Event('submit'));
 
@@ -55,7 +55,7 @@ describe('CadastroPage', () => {
     fixture.detectChanges();
     const navegar = vi.spyOn(TestBed.inject(Router), 'navigateByUrl');
 
-    preencher(fixture.nativeElement, 'pessoa@aralu.test', 'abcdefgh', 'abcdefgh');
+    preencher(fixture.nativeElement, 'pessoa@aralu.test', 'ceu-de-junho-42', 'ceu-de-junho-42');
     fixture.detectChanges();
     fixture.nativeElement.querySelector('form').dispatchEvent(new Event('submit'));
 

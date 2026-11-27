@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Identity;
+using Project.Application.Comum;
 using Project.Application.Conta;
 using Microsoft.EntityFrameworkCore;
 using Project.Domain.Equipe;
@@ -71,7 +72,11 @@ public static class ContaEndpoints
             case ResultadoCadastro.Duplicado:
                 return Erro(StatusCodes.Status409Conflict, "duplicado", "Já existe conta para este e-mail.");
             case ResultadoCadastro.SenhaInvalida:
-                return Erro(StatusCodes.Status400BadRequest, "validacao", "A senha não atende às regras.");
+                return SenhaRecusada(MotivoSenha.Regras);
+            case ResultadoCadastro.SenhaCurta:
+                return SenhaRecusada(MotivoSenha.Curta);
+            case ResultadoCadastro.SenhaComum:
+                return SenhaRecusada(MotivoSenha.Comum);
             case ResultadoCadastro.Falhou:
                 return Erro(StatusCodes.Status500InternalServerError, "erro", "Não foi possível concluir a ação.");
         }
@@ -95,28 +100,47 @@ public static class ContaEndpoints
         SignInManager<ApplicationUser> acesso,
         IEmissorJwt emissor,
         AppDbContext banco,
+        LogSeguranca seguranca,
+        LimiteLoginPorEmail limitePorEmail,
+        HttpContext http,
         CancellationToken ct)
     {
+        var ip = http.Connection.RemoteIpAddress?.ToString();
         var email = EmailNormalizado(pedido.Email);
         if (email is null || string.IsNullOrWhiteSpace(pedido.Senha))
         {
             return CredencialInvalida();
         }
 
+        using var permissao = limitePorEmail.Tentar(email);
+        if (!permissao.IsAcquired)
+        {
+            if (permissao.TryGetMetadata(System.Threading.RateLimiting.MetadataName.RetryAfter, out var espera))
+            {
+                http.Response.Headers.RetryAfter =
+                    Math.Ceiling(espera.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture);
+            }
+
+            return Erro(StatusCodes.Status429TooManyRequests, "limite", "A ação não pode ser repetida agora.");
+        }
+
         var usuario = await usuarios.FindByEmailAsync(email);
         if (usuario is null)
         {
+            seguranca.LoginFalhou(email, ip, MotivoLoginFalhou.Inexistente);
             return CredencialInvalida();
         }
 
         var resultado = await acesso.CheckPasswordSignInAsync(usuario, pedido.Senha!, lockoutOnFailure: true);
         if (resultado.IsLockedOut)
         {
+            seguranca.LoginBloqueado(usuario.Id, email, ip);
             return Erro(StatusCodes.Status423Locked, "bloqueio", "A ação não pode ser repetida agora.");
         }
 
         if (!resultado.Succeeded)
         {
+            seguranca.LoginFalhou(email, ip, MotivoLoginFalhou.Senha);
             return CredencialInvalida();
         }
 
@@ -132,11 +156,15 @@ public static class ContaEndpoints
 
         if (papeis.Count == 0)
         {
+            seguranca.LoginFalhou(email, ip, MotivoLoginFalhou.SemMembro);
             return CredencialInvalida();
         }
 
+        seguranca.LoginOk(usuario.Id, ip);
+
         var emailConfirmado = usuario.Email ?? email;
-        var token = emissor.Emitir(usuario.Id, emailConfirmado, papeis, membro?.ContaId.ToString());
+        var stamp = SessaoServico.HashDoStamp(await usuarios.GetSecurityStampAsync(usuario));
+        var token = emissor.Emitir(usuario.Id, emailConfirmado, papeis, membro?.ContaId.ToString(), stamp);
         return Results.Ok(new { token, email = emailConfirmado, papeis });
     }
 
@@ -211,7 +239,7 @@ public static class ContaEndpoints
         return Results.Ok(new { mensagem = "Se a conta existir, enviaremos um link para redefinir a senha." });
     }
 
-    private static async Task<IResult> RedefinirSenha(RedefinicaoPedido pedido, UserManager<ApplicationUser> usuarios)
+    private static async Task<IResult> RedefinirSenha(RedefinicaoPedido pedido, UserManager<ApplicationUser> usuarios, SessaoServico sessoes)
     {
         if (string.IsNullOrWhiteSpace(pedido.Senha))
         {
@@ -233,18 +261,30 @@ public static class ContaEndpoints
         var resultado = await usuarios.ResetPasswordAsync(usuario, pedido.Token!, senha);
         if (!resultado.Succeeded)
         {
-            if (resultado.Errors.Any(erro => erro.Code.Contains("Password", StringComparison.Ordinal)))
+            if (resultado.Errors.Any(erro => erro.Code.Contains("Password", StringComparison.Ordinal) || erro.Code == SenhaComumValidador.CodigoErro))
             {
-                return Erro(StatusCodes.Status400BadRequest, "validacao", "A senha não atende às regras.");
+                return SenhaRecusada(MotivoSenha.De(resultado.Errors));
             }
 
             return TokenInvalido();
         }
 
+        await sessoes.EncerrarAsync(usuario, MotivoEncerramento.SenhaRedefinida);
         return Results.Ok(new { mensagem = "Senha redefinida." });
     }
 
-    private static IResult Sair() => Results.NoContent();
+    /// <summary>Encerra a sessão em todos os dispositivos: troca o security stamp (A07-001).</summary>
+    private static async Task<IResult> Sair(ClaimsPrincipal principal, UserManager<ApplicationUser> usuarios, SessaoServico sessoes)
+    {
+        var id = principal.FindFirstValue(ClaimTypes.NameIdentifier);
+        var usuario = string.IsNullOrWhiteSpace(id) ? null : await usuarios.FindByIdAsync(id);
+        if (usuario is not null)
+        {
+            await sessoes.EncerrarAsync(usuario, MotivoEncerramento.Sair);
+        }
+
+        return Results.NoContent();
+    }
 
     private static IResult Area(ClaimsPrincipal usuario)
     {
@@ -369,6 +409,9 @@ public static class ContaEndpoints
 
     private static IResult TokenInvalido()
         => Erro(StatusCodes.Status400BadRequest, "token", "O link é inválido ou expirou.");
+
+    private static IResult SenhaRecusada(string motivo)
+        => Results.Json(new ErroResposta("validacao", MotivoSenha.Mensagem(motivo), motivo), statusCode: StatusCodes.Status400BadRequest);
 
     private static IResult Erro(int status, string code, string message)
         => Results.Json(new ErroResposta(code, message), statusCode: status);

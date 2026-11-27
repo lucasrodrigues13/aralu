@@ -83,15 +83,17 @@ Cada lote sai em um commit/PR próprio para a `staging`, é validado lá e só e
 1. `src/frontend/Caddyfile` (vale para produção e staging, porque o proxy da VPS só repassa):
    ```
    header {
-   	Strict-Transport-Security "max-age=31536000; includeSubDomains"
+   	Strict-Transport-Security "max-age=86400"
    	X-Frame-Options "DENY"
    	X-Content-Type-Options "nosniff"
    	Referrer-Policy "strict-origin-when-cross-origin"
    	Permissions-Policy "camera=(self), geolocation=(), microphone=()"
-   	Content-Security-Policy-Report-Only "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' blob: data:; frame-src 'self' blob:; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'"
+   	Content-Security-Policy-Report-Only "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' https: blob: data:; frame-src 'self' blob:; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'"
    }
    ```
-   - `camera=(self)`: a portaria lê QR code; confirme se usa câmera.
+   - `camera=(self)`: confirmado, a portaria lê QR code com `getUserMedia` (`leitor-qr.component.ts`).
+   - HSTS entrou conservador: `max-age=86400`, sem `includeSubDomains`. **Você aumenta depois**: passada uma semana sem problema, trocar para `max-age=31536000` e, se todos os subdomínios forem HTTPS, acrescentar `includeSubDomains`.
+   - `img-src` inclui `https:`: o iframe da página de aceite usa `srcdoc`, herda a CSP do pai e mostra a capa do YouTube (`i.ytimg.com`). Fontes do Google já cobertas por `style-src`/`font-src`.
    - A CSP entra primeiro em **Report-Only** em staging. Depois de uma rodada do [roteiro-teste-evento](../roteiro-teste-evento.md) e do [roteiro-teste-funil](../roteiro-teste-funil.md) sem violações no console, trocar para `Content-Security-Policy`.
    - Iframe da página de aceite: se for `srcdoc`, herda a CSP do pai, então conferir se as Google Fonts do HTML da assessoria continuam carregando (`style-src`/`font-src` acima já cobrem).
 2. API: um middleware simples que adiciona `X-Content-Type-Options: nosniff` e `Cache-Control: no-store` nas respostas de `/api/` (exceto mídias públicas, que já definem cache).
@@ -164,6 +166,7 @@ grep -n ASAAS_DIAGNOSTICO /opt/aralu/.env /opt/aralu-staging/.env
 1. `folha-contrato.ts:78`: `el.innerHTML = cabecalho + linhas.map((l) => \`<div class="linha">${limparHtml(l)}</div>\`).join('');`, ou limpar uma vez em `blocosDoContrato(limparHtml(html))`, que é mais eficiente.
 2. `limparHtml`: acrescentar `src` com `data:` só para `img` (para não quebrar a logo, se ela vier como data URL) e remover `srcdoc`, `formaction` e `xlink:href`.
 3. Revisar os outros `innerHTML` do front (`previa-word.ts:49` só limpa; `proposta-publica` e `tarefas-funil` passam pelo sanitizador do Angular, então estão ok).
+   - **Resultado da revisão (feita):** `previa-word.ts:49` só faz `innerHTML = ''` (limpeza), sem risco. `proposta-publica.page.ts:56` e `tarefas-funil.page.ts:206` usam `[innerHTML]` do Angular, que sanitiza, sem `bypassSecurityTrust*` no front. `folha-contrato.ts:78` (medidor) agora recebe o HTML já passado por `limparHtml()`. Nenhum outro ponto a corrigir.
 
 **Testes:** spec com `<img src=x onerror=alert(1)>` e `<a href="javascript:...">`: os atributos somem e o texto fica.
 

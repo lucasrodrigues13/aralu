@@ -22,7 +22,7 @@ public static class LinkClienteEndpoints
         dona.MapDelete("", Desativar);
 
         // Código de acesso (SPEC-063): estas rotas não pedem sessão; todas as outras do link pedem (R1).
-        var acesso = app.MapGroup("/api/v1/publico/cliente/{token}/acesso");
+        var acesso = app.MapGroup("/api/v1/publico/cliente/{token}/acesso").RequireRateLimiting("publico-ip");
         acesso.MapGet("", LerAcesso);
         acesso.MapPost("/codigo", PedirCodigo);
         acesso.MapPost("/confirmar", ConfirmarCodigo);

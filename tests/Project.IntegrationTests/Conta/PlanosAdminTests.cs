@@ -19,7 +19,7 @@ namespace Project.IntegrationTests.Conta;
 [Collection(ColecaoApi.Nome)]
 public class PlanosAdminTests
 {
-    private const string Senha = "abcdefgh";
+    private const string Senha = "ceu-de-junho-42";
     private readonly BancoFixture _banco;
 
     public PlanosAdminTests(BancoFixture banco) => _banco = banco;
@@ -141,7 +141,7 @@ public class PlanosAdminTests
     private async Task<HttpClient> EntrarAdmin()
     {
         var adminEmail = $"adm-{Guid.NewGuid():N}@aralu.test";
-        const string senhaAdmin = "administrador";
+        const string senhaAdmin = "administrador-de-teste";
         var fabrica = new FabricaApi(_banco.Conexao, bootstrap: true, adminEmail: adminEmail, adminSenha: senhaAdmin);
         await using (var escopo = fabrica.Services.CreateAsyncScope())
         {
@@ -152,6 +152,26 @@ public class PlanosAdminTests
         var sessao = await Ler(await cliente.PostAsJsonAsync("/api/v1/conta/entrar", new { email = adminEmail, senha = senhaAdmin }));
         cliente.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", sessao.GetProperty("token").GetString());
         return cliente;
+    }
+
+    [Fact]
+    public async Task Admin_entra_na_conta_pelo_id_que_a_lista_devolve()
+    {
+        var admin = await EntrarAdmin();
+        var (dona, contaId) = await EntrarDono();
+        var evento = (await Ler(await dona.PostAsJsonAsync("/api/v1/eventos", new { tipo = "Aniversario", primeiroNome = "Festa do admin" }))).GetProperty("id").GetGuid();
+
+        var lista = (await Ler(await admin.GetAsync("/api/v1/admin/usuarios"))).EnumerateArray().Select(item => item.GetProperty("id").GetString()).ToArray();
+        Assert.Contains(contaId.ToString(), lista);
+
+        using var naConta = new HttpRequestMessage(HttpMethod.Get, "/api/v1/eventos");
+        naConta.Headers.Add(AdminEndpoints.CabecalhoConta, contaId.ToString());
+        var eventos = await Ler(await admin.SendAsync(naConta));
+        Assert.Contains(eventos.EnumerateArray(), item => item.GetProperty("id").GetGuid() == evento);
+
+        using var inexistente = new HttpRequestMessage(HttpMethod.Get, "/api/v1/eventos");
+        inexistente.Headers.Add(AdminEndpoints.CabecalhoConta, Guid.NewGuid().ToString());
+        Assert.Equal(HttpStatusCode.BadRequest, (await admin.SendAsync(inexistente)).StatusCode);
     }
 
     private async Task<(HttpClient Cliente, Guid ContaId)> EntrarDono()

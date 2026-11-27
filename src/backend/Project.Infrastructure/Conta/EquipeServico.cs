@@ -44,7 +44,8 @@ public sealed class EquipeServico(
     AppDbContext banco,
     UserManager<ApplicationUser> usuarios,
     IEnvioEmail email,
-    IConfiguration configuracao)
+    IConfiguration configuracao,
+    SessaoServico sessoes)
 {
     public const string ErroUltimoDono = "ultimo_dono";
     public const string ErroJaMembro = "ja_membro";
@@ -395,7 +396,7 @@ public sealed class EquipeServico(
         var senhaCriada = await usuarios.AddPasswordAsync(usuario, senha);
         if (!senhaCriada.Succeeded)
         {
-            return Resultado<bool>.Erro(Codigos.Validacao, "A senha não atende às regras.");
+            return Resultado<bool>.Erro(Codigos.Validacao, MotivoSenha.Mensagem(MotivoSenha.De(senhaCriada.Errors)));
         }
 
         await usuarios.UpdateSecurityStampAsync(usuario);
@@ -456,9 +457,15 @@ public sealed class EquipeServico(
         }
 
         var troca = await usuarios.ChangePasswordAsync(usuario, atual, nova);
-        return troca.Succeeded
-            ? Resultado<bool>.Sucesso(true)
-            : Resultado<bool>.Erro(Codigos.Validacao, "A senha atual não confere ou a nova não atende às regras.");
+        if (troca.Succeeded)
+        {
+            await sessoes.EncerrarAsync(usuario, MotivoEncerramento.SenhaTrocada);
+            return Resultado<bool>.Sucesso(true);
+        }
+
+        return troca.Errors.Any(erro => erro.Code == nameof(IdentityErrorDescriber.PasswordMismatch))
+            ? Resultado<bool>.Erro(Codigos.Validacao, "A senha atual não confere.")
+            : Resultado<bool>.Erro(Codigos.Validacao, MotivoSenha.Mensagem(MotivoSenha.De(troca.Errors)));
     }
 
     public static string PapelDo(TipoMembro tipo) => tipo == TipoMembro.Dono ? Papeis.Organizer : Papeis.Assistant;

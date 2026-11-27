@@ -129,7 +129,7 @@ function telaEstreita(): boolean {
                 <span class="block text-xs text-muted">{{ empresa() ? 'Assistente de ' + empresa() : 'Conectado como' }}</span>
                 <span class="block text-sm font-semibold truncate" [title]="nomeDisplay() || auth.email()">{{ nomeDisplay() || auth.email() }}</span>
               </div>
-              <button mat-icon-button type="button" (click)="sair()" aria-label="Sair" matTooltip="Sair">
+              <button mat-icon-button type="button" (click)="sair()" aria-label="Sair de todos os dispositivos" matTooltip="Sair (encerra a sessão em todos os dispositivos)">
                 <mat-icon>logout</mat-icon>
               </button>
             </div>
@@ -183,7 +183,7 @@ function telaEstreita(): boolean {
               <a mat-menu-item routerLink="/perfil"><mat-icon>apartment</mat-icon>Perfil da assessoria</a>
             }
             <a mat-menu-item routerLink="/conta"><mat-icon>manage_accounts</mat-icon>Minha conta</a>
-            <button mat-menu-item type="button" (click)="sair()"><mat-icon>logout</mat-icon>Sair</button>
+            <button mat-menu-item type="button" (click)="sair()" matTooltip="Encerra a sessão em todos os dispositivos"><mat-icon>logout</mat-icon>Sair de todos os dispositivos</button>
           </mat-menu>
         </mat-toolbar>
 

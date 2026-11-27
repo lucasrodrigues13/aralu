@@ -14,7 +14,7 @@ namespace Project.IntegrationTests.Negocio;
 [Collection(ColecaoApi.Nome)]
 public class CodigoAcessoLinkTests
 {
-    private const string Senha = "abcdefgh";
+    private const string Senha = "ceu-de-junho-42";
     private readonly BancoFixture _banco;
 
     public CodigoAcessoLinkTests(BancoFixture banco) => _banco = banco;
@@ -100,6 +100,12 @@ public class CodigoAcessoLinkTests
 
         var quinto = await anonimo.PostAsJsonAsync($"{baseLink}/acesso/confirmar", new { codigo = Errado(codigo) });
         Assert.Contains("Este código não vale mais. Peça um novo.", await quinto.Content.ReadAsStringAsync());
+        // A09-001: o esgotamento vira evento de segurança, sem o código digitado.
+        var esgotado = _banco.Fabrica.Logs.Entradas.Last(item => item.Evento.Name == "codigo_link_esgotado");
+        Assert.Equal(9009, esgotado.Evento.Id);
+        Assert.Equal("link_cliente", esgotado.Campos["Tipo"]);
+        Assert.Equal(Project.Application.Comum.LogSeguranca.Categoria, esgotado.Categoria);
+        Assert.Equal(["LinkId", "Tipo", "{OriginalFormat}"], esgotado.Campos.Keys.Order(StringComparer.Ordinal));
         Assert.Equal(HttpStatusCode.BadRequest, (await anonimo.PostAsJsonAsync($"{baseLink}/acesso/confirmar", new { codigo })).StatusCode);
 
         // C5: código digitado depois de 10 minutos é recusado como expirado.
