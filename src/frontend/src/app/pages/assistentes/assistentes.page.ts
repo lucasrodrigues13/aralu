@@ -13,14 +13,14 @@ import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { AssistenteFormDialog } from './assistente-form.dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
-/** Configurações → Equipe (só o Dono, SPEC-062 §13): convidar Dono ou Membro, mudar tipo e grupo, reenviar, desativar e reativar. */
+/** Configurações → Assistentes (só o Dono, SPEC-062 §13): convidar Dono ou Membro, mudar tipo e grupo, reenviar, desativar e reativar. */
 @Component({
   selector: 'app-assistentes',
   imports: [MatCardModule, MatButtonModule, MatIconModule, MatTooltipModule, MatFormFieldModule, MatSelectModule],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6">
-        <mat-card-title class="mb-0">Equipe</mat-card-title>
+        <mat-card-title class="mb-0">Assistentes</mat-card-title>
         <mat-card-subtitle>Donos e membros da conta, cada um com login próprio. O membro acessa o que o grupo dele permite.</mat-card-subtitle>
       </div>
       <mat-card-content class="border-t border-border">

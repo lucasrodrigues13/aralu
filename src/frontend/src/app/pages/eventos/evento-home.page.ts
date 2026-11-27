@@ -198,7 +198,7 @@ export class ClientesEventoDialog implements OnInit {
                 }
                 @if (!auth.ehAssistente()) {
                   <button mat-menu-item type="button" (click)="linkDoCliente()"><mat-icon>link</mat-icon> Link do cliente</button>
-                  <button mat-menu-item type="button" (click)="equipeDoEvento()"><mat-icon>badge</mat-icon> Equipe do evento</button>
+                  <button mat-menu-item type="button" (click)="equipeDoEvento()"><mat-icon>badge</mat-icon> Equipe de apoio</button>
                 }
                 @if (atual.situacao === 'EmAndamento') {
                   <button mat-menu-item type="button" (click)="aplicarModelo()"><mat-icon>playlist_add</mat-icon> Aplicar modelo</button>

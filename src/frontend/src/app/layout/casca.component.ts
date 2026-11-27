@@ -305,7 +305,7 @@ export class CascaComponent implements OnDestroy {
         { rotulo: 'Perfil', icone: 'apartment', rota: '/perfil', soDona: true },
         { rotulo: 'Assinatura', icone: 'credit_card', rota: '/configuracoes/assinatura', soDona: true },
         { rotulo: 'Propostas', icone: 'request_quote', rota: '/configuracoes/propostas', soDona: true },
-        { rotulo: 'Equipe', icone: 'support_agent', rota: '/configuracoes/equipe', soDona: true },
+        { rotulo: 'Assistentes', icone: 'support_agent', rota: '/configuracoes/equipe', soDona: true },
         { rotulo: 'Grupos de acesso', icone: 'admin_panel_settings', rota: '/configuracoes/grupos', soDona: true },
       ],
     },

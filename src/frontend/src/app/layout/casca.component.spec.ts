@@ -50,9 +50,10 @@ describe('CascaComponent', () => {
     expect(texto).toContain('Assistente de Aralu Eventos');
   });
 
-  it('mostra Perfil, Equipe, Grupos de acesso e Gestão Financeira para a dona, e esta no grupo Principal (SPEC-041)', () => {
+  it('mostra Perfil, Assistentes, Grupos de acesso e Gestão Financeira para a dona, e esta no grupo Principal (SPEC-041)', () => {
     const texto = (montar(false).nativeElement as HTMLElement).textContent ?? '';
     expect(texto).toContain('Perfil');
+    expect(texto).toContain('Assistentes');
     expect(texto).toContain('Grupos de acesso');
     expect(texto).toContain('Gestão Financeira');
     expect(texto).not.toContain('Pagamentos');

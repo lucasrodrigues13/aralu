@@ -1,10 +1,10 @@
-# 067. Equipe do evento: links individuais com código por e-mail
+# 067. Equipe de apoio do evento: links individuais com código por e-mail
 
 **Status: implementada (27/11/2026).** Fonte: card #74. Usa a portaria da [SPEC-058](058-portaria-do-evento.md), os modelos de roteiro e de cronograma da biblioteca e as regras de código de acesso da [SPEC-063](063-codigo-de-acesso-do-cliente.md)/[SPEC-066](066-briefing-preenchido-pelo-cliente.md). Substitui o link aberto da portaria da SPEC-058: a portaria agora só abre pelo link de uma pessoa da equipe.
 
 ## 1. Identificador e nome
 
-SPEC-067. Equipe do evento: cadastro de quem trabalha no dia e envio de links sem login (portaria, cronograma, roteiro), com código por e-mail.
+SPEC-067. Equipe de apoio do evento: cadastro de quem trabalha no dia e envio de links sem login (portaria, cronograma, roteiro), com código por e-mail.
 
 ## 2. Objetivo
 
@@ -23,13 +23,13 @@ No dia do evento trabalham pessoas que não são membros da conta: segurança, b
 | Ator | Pode |
 |---|---|
 | Organizer (dona) | Escolher o roteiro e o cronograma do evento; cadastrar, editar e remover pessoas; marcar o que cada uma recebe; enviar, copiar e encerrar o link de cada uma. |
-| Assistant | Não vê **Equipe do evento** no menu. A API responde 403. |
+| Assistant | Não vê **Equipe de apoio** no menu. A API responde 403. |
 | Pessoa da equipe (sem login) | Receber o código no próprio e-mail (mascarado na tela) e ver só os itens marcados, apenas daquele evento. Na portaria, marcar quem compareceu como na SPEC-058. Não envia nem repassa links. |
 | Sistema | Gerar e enviar o código, contar tentativas e pedidos, expirar código, sessão e link. |
 
 ## 5. Comportamento
 
-### 5.1. Organizer: menu **Mais › Equipe do evento**
+### 5.1. Organizer: menu **Mais › Equipe de apoio**
 
 1. O diálogo abre com dois campos: **Cronograma do evento** e **Roteiro do evento**, com os modelos da biblioteca (ou "Nenhum"). A escolha é uma referência: editar o modelo na biblioteca muda o que a equipe vê; excluir o modelo desvincula.
 2. Abaixo, a lista de pessoas: nome, função, o que recebe e a situação (Não enviado, Enviado, Acessou, Vencido, Encerrado), com a validade quando o link está aberto.
@@ -78,4 +78,4 @@ No dia do evento trabalham pessoas que não são membros da conta: segurança, b
 
 ## 8. Para o manual
 
-> **Equipe do evento.** No evento, abra **Mais › Equipe do evento**. Escolha o cronograma e o roteiro que a equipe vai ver e cadastre quem trabalha no dia (segurança, buffet, DJ…) com nome, e-mail e função. Marque o que cada pessoa recebe: portaria, cronograma e roteiro. Envie o link pelo WhatsApp ou copie. A pessoa não precisa de conta: ela abre o link, recebe um código no e-mail e vê só o que você liberou. O link vale até o dia seguinte ao evento; para cortar o acesso antes, use **Encerrar link**. A portaria só abre por aqui: cadastre quem vai receber os convidados com **Portaria** marcada.
+> **Equipe de apoio.** No evento, abra **Mais › Equipe de apoio**. Escolha o cronograma e o roteiro que a equipe vai ver e cadastre quem trabalha no dia (segurança, buffet, DJ…) com nome, e-mail e função. Marque o que cada pessoa recebe: portaria, cronograma e roteiro. Envie o link pelo WhatsApp ou copie. A pessoa não precisa de conta: ela abre o link, recebe um código no e-mail e vê só o que você liberou. O link vale até o dia seguinte ao evento; para cortar o acesso antes, use **Encerrar link**. A portaria só abre por aqui: cadastre quem vai receber os convidados com **Portaria** marcada.

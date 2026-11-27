@@ -43,14 +43,14 @@ export function itensDaPessoa(p: Pick<PessoaEquipe, 'recebePortaria' | 'recebeRo
 }
 
 /**
- * Equipe do evento (SPEC-067), só para a Organizer: escolhe o roteiro e o cronograma que a equipe vê,
+ * Equipe de apoio do evento (SPEC-067), só para a Organizer: escolhe o roteiro e o cronograma que a equipe vê,
  * cadastra quem trabalha no dia e envia o link de cada pessoa (abre só com código no e-mail dela).
  */
 @Component({
   selector: 'app-equipe-evento-dialog',
   imports: [DatePipe, FormsModule, MatDialogModule, MatButtonModule, MatCheckboxModule, MatFormFieldModule, MatIconModule, MatInputModule, MatMenuModule, MatSelectModule],
   template: `
-    <h2 mat-dialog-title>Equipe do evento</h2>
+    <h2 mat-dialog-title>Equipe de apoio</h2>
     <mat-dialog-content>
       <p class="text-muted text-sm mt-0">
         Quem trabalha no dia (segurança, buffet, DJ…) sem ser da sua conta. Cada pessoa recebe um link próprio, que só abre
@@ -139,7 +139,7 @@ export function itensDaPessoa(p: Pick<PessoaEquipe, 'recebePortaria' | 'recebeRo
                 </div>
               </li>
             } @empty {
-              <li class="text-muted text-sm">Ninguém na equipe ainda.</li>
+              <li class="text-muted text-sm">Ninguém na equipe de apoio ainda.</li>
             }
           </ul>
           <button mat-stroked-button type="button" (click)="novo()"><mat-icon>person_add</mat-icon> Adicionar pessoa</button>
@@ -291,7 +291,7 @@ export class EquipeEventoDialog implements OnInit {
   }
 
   protected remover(p: PessoaEquipe): void {
-    this.confirmar('Remover pessoa', `${p.nome} sai da equipe e o link deixa de funcionar.`, 'Remover', () =>
+    this.confirmar('Remover pessoa', `${p.nome} sai da equipe de apoio e o link deixa de funcionar.`, 'Remover', () =>
       this.cliente.remover(this.dados.eventoId, p.id).subscribe({
         next: () => {
           this.equipe.update((e) => (e ? { ...e, pessoas: e.pessoas.filter((item) => item.id !== p.id) } : e));
