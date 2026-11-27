@@ -52,7 +52,7 @@ Este plano padroniza listas, modais, botões, estados e telas sem login. Não cr
 
 Objetivo: o padrão escrito passa a refletir as decisões acima antes de qualquer tela mudar.
 
-- [ ] `docs/design-system.md`: mudar o cabeçalho para **Versão 5, 27/11/2026** e aplicar:
+- [x] `docs/design-system.md`: mudar o cabeçalho para **Versão 5, 27/11/2026** e aplicar:
   - §1 regra 2: acrescentar "O botão de confirmar é vermelho (`botao-perigo`)". Acrescentar regra 7 com o vocabulário D7.
   - §2 tabela "Onde fica": incluir `shared/fechar-modal.ts`, `shared/estado.ts`, `shared/pagina-publica.ts`, `shared/casca-acesso.ts`.
   - §5.1: trocar o exemplo. A ação principal fica em `div.barra-lista > div.barra-lista-acoes`, dentro do `mat-card-content`; o cabeçalho `div.p-6` tem só título e subtítulo. Copiar a marcação de `pages/clientes/clientes.page.ts`. Incluir a regra D8.
@@ -63,7 +63,7 @@ Objetivo: o padrão escrito passa a refletir as decisões acima antes de qualque
   - Nova §5.13 "Lista agrupada": marcação e classes da fase 4.
   - §6: reescrever conforme D12 e D13 (fases 7 e 8). Remover "Botão de tema fixo no canto" para as públicas; ele continua só nas telas de acesso.
   - §7: manter. Acrescentar: "`aria-label` e `matTooltip` não levam o nome do registro".
-- [ ] `.cursor/rules/frontend.mdc`: apagar toda menção a `gd-*`, `--gd-*`, Apex e `gd-dialog-descricao`. O arquivo passa a dizer que a fonte é `docs/design-system.md` versão 5 e a resumir D2 a D14 em uma linha cada.
+- [x] `.cursor/rules/frontend.mdc`: apagar toda menção a `gd-*`, `--gd-*`, Apex e `gd-dialog-descricao`. O arquivo passa a dizer que a fonte é `docs/design-system.md` versão 5 e a resumir D2 a D14 em uma linha cada.
 
 Pronto quando: os dois arquivos não citam `gd-` e descrevem todos os padrões D1 a D14.
 
