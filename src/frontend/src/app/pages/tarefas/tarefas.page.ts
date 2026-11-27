@@ -9,6 +9,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatTableModule } from '@angular/material/table';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { AssistentesClient } from '../../core/assistentes.client';
@@ -28,10 +29,11 @@ import { TarefaLeituraDialog } from './tarefa-leitura.dialog';
 import { ChecklistTarefaComponent, progressoChecklist } from './checklist-tarefa';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Estado } from '../../shared/estado';
+import { Paginacao } from '../../shared/paginacao';
 
 @Component({
   selector: 'app-tarefas',
-  imports: [RouterLink, ReactiveFormsModule, MatCardModule, MatButtonModule, MatButtonToggleModule, MatIconModule, MatTableModule, MatFormFieldModule, MatInputModule, MatSelectModule, GdDataPipe, CampoDataComponent, ChecklistTarefaComponent, MatCheckboxModule, MatTooltipModule, Estado],
+  imports: [RouterLink, ReactiveFormsModule, MatCardModule, MatButtonModule, MatButtonToggleModule, MatIconModule, MatTableModule, MatPaginatorModule, MatFormFieldModule, MatInputModule, MatSelectModule, GdDataPipe, CampoDataComponent, ChecklistTarefaComponent, MatCheckboxModule, MatTooltipModule, Estado],
   template: `
     <mat-card class="cardWithShadow">
     <div class="p-6 flex flex-wrap items-center justify-between gap-4">
@@ -45,7 +47,7 @@ import { Estado } from '../../shared/estado';
       <div class="flex items-center gap-3 rounded p-4 mb-6 bg-light-warning text-warning">
         <mat-icon>warning</mat-icon>
         <strong class="flex-1 min-w-0">Mostrando só as tarefas atrasadas.</strong>
-        <button mat-stroked-button type="button" (click)="somenteAtrasadas.set(false)">Ver todas</button>
+        <button mat-stroked-button type="button" (click)="somenteAtrasadas.set(false); pagina.inicio()">Ver todas</button>
       </div>
     }
     <form class="flex flex-wrap items-end gap-4 mb-6" [formGroup]="filtro" (ngSubmit)="aplicarFiltro()">
@@ -108,7 +110,7 @@ import { Estado } from '../../shared/estado';
           <app-estado [titulo]="tarefas().length === 0 ? 'Nenhuma tarefa ainda' : 'Nada encontrado'" [texto]="tarefas().length === 0 ? undefined : 'Mude a busca ou os filtros.'" />
         } @else {
           <div class="relative">
-          <table mat-table class="min-w-full" [dataSource]="visiveis()" multiTemplateDataRows>
+          <table mat-table class="min-w-full" [dataSource]="pagina.itens()" multiTemplateDataRows>
             <ng-container matColumnDef="expandir">
               <th mat-header-cell *matHeaderCellDef class="coluna-expandir"><span class="sr-only">Checklist</span></th>
               <td mat-cell *matCellDef="let tarefa" class="coluna-expandir" (click)="$event.stopPropagation()">
@@ -176,6 +178,9 @@ import { Estado } from '../../shared/estado';
             <tr mat-row *matRowDef="let row; columns: ['detalhe']" class="linha-detalhe" [class.fechada]="!aberta(row)"></tr>
           </table>
           </div>
+          <mat-paginator showFirstLastButtons aria-label="Páginas de tarefas"
+            [length]="pagina.total()" [pageIndex]="pagina.indice()" [pageSize]="pagina.tamanho()"
+            [pageSizeOptions]="pagina.tamanhos" (page)="pagina.mudar($event)" />
         }
     } @else if (visao() === 'situacao') {
       @if (!carregado()) {
@@ -274,6 +279,7 @@ export class TarefasPage implements OnInit {
     const base = this.somenteAtrasadas() ? this.tarefas().filter(atrasada) : this.tarefas();
     return filtrarTarefas(base, this.filtroAplicado());
   });
+  protected readonly pagina = new Paginacao(this.visiveis);
   protected readonly porDia = computed(() => colunasPorDia(this.visiveis()));
   protected readonly eventos = computed(() => {
     const vistos = new Map<string, string>();
@@ -344,6 +350,7 @@ export class TarefasPage implements OnInit {
 
   protected aplicarFiltro(): void {
     const valor = this.filtro.getRawValue();
+    this.pagina.inicio();
     this.filtroAplicado.set({
       situacao: valor.situacao,
       eventoId: valor.eventoId,
@@ -358,6 +365,7 @@ export class TarefasPage implements OnInit {
   protected limparFiltros(): void {
     this.filtro.reset({ situacao: '', eventoId: '', responsavel: '', servicoId: '', tag: '', prazoDe: null, prazoAte: null });
     this.filtroAplicado.set(filtroVazio());
+    this.pagina.inicio();
   }
 
   protected ler(tarefa: Tarefa): void {

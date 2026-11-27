@@ -381,11 +381,11 @@ Pronto quando: `grep -rn "Carregando\.\.\." src/frontend/src/app` e `grep -rn "t
 
 Aplicar `Paginacao` conforme `docs/design-system.md` §5.5.1, sem mudar filtros: `protected readonly pagina = new Paginacao(<sinal já filtrado>)`, `[dataSource]="pagina.itens()"`, `mat-paginator` logo abaixo da tabela e `pagina.inicio()` onde a busca ou o filtro mudam. Se a tela não tiver um sinal `computed` com a lista filtrada, pare e pergunte.
 
-- [ ] `pages/clientes/clientes.page.ts`
+- [x] `pages/clientes/clientes.page.ts`
 - [x] `pages/eventos/eventos.page.ts` (só a tabela de eventos; as tabelas de ranking não)
-- [ ] `pages/leads-rsvp/leads-rsvp.page.ts`
-- [ ] `pages/contratos-funil/contratos-funil.page.ts`
-- [ ] `pages/orcamentos-funil/orcamentos-funil.page.ts`
+- [x] `pages/leads-rsvp/leads-rsvp.page.ts`
+- [x] `pages/contratos-funil/contratos-funil.page.ts`
+- [x] `pages/orcamentos-funil/orcamentos-funil.page.ts`
 - [x] `pages/tarefas-funil/tarefas-funil.page.ts`
 - [x] `pages/tarefas/tarefas.page.ts` (só a visão em tabela)
 

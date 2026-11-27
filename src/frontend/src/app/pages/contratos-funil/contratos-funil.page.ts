@@ -8,6 +8,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatTableModule } from '@angular/material/table';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { ContratoFunil, ModeloParaContratoFunil, NegocioClient, Oportunidade } from '../../core/negocio.client';
@@ -25,6 +26,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { ActivatedRoute } from '@angular/router';
 import { FecharModal } from '../../shared/fechar-modal';
 import { Estado } from '../../shared/estado';
+import { Paginacao } from '../../shared/paginacao';
 
 @Component({
   selector: 'app-contrato-funil-dialog',
@@ -187,7 +189,7 @@ export class ContratoFunilVerDialog {
 
 @Component({
   selector: 'app-contratos-funil',
-  imports: [MatButtonToggleModule, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, GdDataPipe, MatTooltipModule, MatMenuModule, Estado],
+  imports: [MatButtonToggleModule, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatPaginatorModule, GdDataPipe, MatTooltipModule, MatMenuModule, Estado],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6">
@@ -196,7 +198,7 @@ export class ContratoFunilVerDialog {
       <mat-card-content class="border-t border-border">
       <div class="barra-lista">
         <div class="barra-lista-filtros">
-          <mat-button-toggle-group [value]="situacao()" (change)="situacao.set($event.value); carregar()" aria-label="Situação">
+          <mat-button-toggle-group [value]="situacao()" (change)="situacao.set($event.value); pagina.inicio(); carregar()" aria-label="Situação">
             @for (aba of abas; track aba.valor) {
               <mat-button-toggle [value]="aba.valor">{{ aba.rotulo }}</mat-button-toggle>
             }
@@ -218,7 +220,7 @@ export class ContratoFunilVerDialog {
       } @else if (lista().length === 0) {
         <app-estado [titulo]="busca() ? 'Nada encontrado' : 'Nenhum contrato ainda'" [texto]="busca() ? 'Mude a busca ou os filtros.' : undefined" />
       } @else {
-        <table mat-table class="min-w-full" [dataSource]="lista()">
+        <table mat-table class="min-w-full" [dataSource]="pagina.itens()">
           <ng-container matColumnDef="oportunidade">
             <th mat-header-cell *matHeaderCellDef>Oportunidade</th>
             <td mat-cell *matCellDef="let item"><button type="button" class="link-nome" (click)="ver(item)">{{ item.oportunidadeNome }}</button></td>
@@ -264,6 +266,9 @@ export class ContratoFunilVerDialog {
           <tr mat-header-row *matHeaderRowDef="colunas"></tr>
           <tr mat-row *matRowDef="let row; columns: colunas"></tr>
         </table>
+        <mat-paginator showFirstLastButtons aria-label="Páginas de contratos"
+          [length]="pagina.total()" [pageIndex]="pagina.indice()" [pageSize]="pagina.tamanho()"
+          [pageSizeOptions]="pagina.tamanhos" (page)="pagina.mudar($event)" />
       }
     </mat-card-content>
     </mat-card>
@@ -283,6 +288,7 @@ export class ContratosFunilPage implements OnInit {
   protected readonly carregado = signal(false);
   protected readonly busca = signal('');
   protected readonly lista = signal<ContratoFunil[]>([]);
+  protected readonly pagina = new Paginacao(this.lista);
   protected readonly colunas = ['oportunidade', 'criadoEm', 'envio', 'acoes'];
 
   private readonly rota = inject(ActivatedRoute);
@@ -294,6 +300,7 @@ export class ContratosFunilPage implements OnInit {
 
   protected buscar(evento: Event): void {
     this.busca.set((evento.target as HTMLInputElement).value);
+    this.pagina.inicio();
     this.carregar();
   }
 

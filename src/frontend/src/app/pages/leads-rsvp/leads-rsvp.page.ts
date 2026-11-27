@@ -4,17 +4,19 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatTableModule } from '@angular/material/table';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { LeadRsvp, NegocioClient } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { Estado } from '../../shared/estado';
+import { Paginacao } from '../../shared/paginacao';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-leads-rsvp',
-  imports: [MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, GdDataPipe, MatTooltipModule, Estado],
+  imports: [MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatPaginatorModule, GdDataPipe, MatTooltipModule, Estado],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6 flex flex-wrap items-center justify-between gap-4">
@@ -38,7 +40,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
       } @else if (lista().length === 0) {
         <app-estado [titulo]="busca() ? 'Nada encontrado' : 'Nenhum lead ainda'" [texto]="busca() ? 'Mude a busca ou os filtros.' : undefined" />
       } @else {
-        <table mat-table class="min-w-full" [dataSource]="lista()">
+        <table mat-table class="min-w-full" [dataSource]="pagina.itens()">
           <ng-container matColumnDef="convite">
             <th mat-header-cell *matHeaderCellDef>Convite</th>
             <td mat-cell *matCellDef="let item">{{ item.convite }}</td>
@@ -62,6 +64,9 @@ import { MatTooltipModule } from '@angular/material/tooltip';
           <tr mat-header-row *matHeaderRowDef="colunas"></tr>
           <tr mat-row *matRowDef="let row; columns: colunas"></tr>
         </table>
+        <mat-paginator showFirstLastButtons aria-label="Páginas de leads"
+          [length]="pagina.total()" [pageIndex]="pagina.indice()" [pageSize]="pagina.tamanho()"
+          [pageSizeOptions]="pagina.tamanhos" (page)="pagina.mudar($event)" />
       }
     </mat-card-content>
     </mat-card>
@@ -73,6 +78,7 @@ export class LeadsRsvpPage implements OnInit {
   protected readonly lista = signal<LeadRsvp[]>([]);
   protected readonly carregado = signal(false);
   protected readonly busca = signal('');
+  protected readonly pagina = new Paginacao(this.lista);
   protected readonly colunas = ['convite', 'evento', 'criadoEm', 'acoes'];
 
   ngOnInit(): void {
@@ -81,6 +87,7 @@ export class LeadsRsvpPage implements OnInit {
 
   protected buscar(evento: Event): void {
     this.busca.set((evento.target as HTMLInputElement).value);
+    this.pagina.inicio();
     this.carregar();
   }
 

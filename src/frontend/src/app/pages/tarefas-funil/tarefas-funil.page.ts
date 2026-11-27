@@ -10,6 +10,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatTableModule } from '@angular/material/table';
 import { AssistentesClient } from '../../core/assistentes.client';
 import { mensagemDeErro } from '../../core/mensagem-erro';
@@ -26,6 +27,7 @@ import { aplicarLink, aplicarLista, aplicarNegrito, EdicaoTexto, htmlDeTextoSimp
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { FecharModal } from '../../shared/fechar-modal';
 import { Estado } from '../../shared/estado';
+import { Paginacao } from '../../shared/paginacao';
 
 @Component({
   selector: 'app-tarefa-funil-dialog',
@@ -153,7 +155,7 @@ export class TarefaFunilDialog implements OnInit {
 
 @Component({
   selector: 'app-tarefas-funil',
-  imports: [ReactiveFormsModule, CampoDataComponent, MatButtonToggleModule, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatSelectModule, GdDataPipe, MatTooltipModule, Estado],
+  imports: [ReactiveFormsModule, CampoDataComponent, MatButtonToggleModule, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatPaginatorModule, MatSelectModule, GdDataPipe, MatTooltipModule, Estado],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6">
@@ -162,14 +164,14 @@ export class TarefaFunilDialog implements OnInit {
       <mat-card-content class="border-t border-border">
       <div class="barra-lista">
         <div class="barra-lista-filtros">
-          <mat-button-toggle-group [value]="completa()" (change)="completa.set($event.value); carregar()" aria-label="Situação das tarefas">
+          <mat-button-toggle-group [value]="completa()" (change)="completa.set($event.value); pagina.inicio(); carregar()" aria-label="Situação das tarefas">
             <mat-button-toggle [value]="false">Incompletas</mat-button-toggle>
             <mat-button-toggle [value]="true">Completas</mat-button-toggle>
           </mat-button-toggle-group>
           <div class="campo w-full sm:w-48">
             <mat-label class="font-semibold mb-2 block">Tipo</mat-label>
             <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
-            <mat-select [attr.aria-label]="'Tipo'" [value]="tipo()" (selectionChange)="tipo.set($event.value); carregar()">
+            <mat-select [attr.aria-label]="'Tipo'" [value]="tipo()" (selectionChange)="tipo.set($event.value); pagina.inicio(); carregar()">
               <mat-option value="">Todos</mat-option>
               @for (t of tipos; track t.valor) { <mat-option [value]="t.valor">{{ t.rotulo }}</mat-option> }
             </mat-select>
@@ -178,7 +180,7 @@ export class TarefaFunilDialog implements OnInit {
           <div class="campo w-full sm:w-52">
             <mat-label class="font-semibold mb-2 block">Responsável</mat-label>
             <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
-            <mat-select [attr.aria-label]="'Responsável'" [value]="responsavel()" (selectionChange)="responsavel.set($event.value); carregar()">
+            <mat-select [attr.aria-label]="'Responsável'" [value]="responsavel()" (selectionChange)="responsavel.set($event.value); pagina.inicio(); carregar()">
               <mat-option value="">Todos</mat-option>
               @for (o of opcoes(); track o.valor) { <mat-option [value]="o.valor">{{ o.rotulo }}</mat-option> }
             </mat-select>
@@ -196,7 +198,7 @@ export class TarefaFunilDialog implements OnInit {
       } @else if (lista().length === 0) {
         <app-estado titulo="Nenhuma tarefa ainda" />
       } @else {
-        <table mat-table class="min-w-full" [dataSource]="lista()">
+        <table mat-table class="min-w-full" [dataSource]="pagina.itens()">
           <ng-container matColumnDef="titulo">
             <th mat-header-cell *matHeaderCellDef>Título</th>
             <td mat-cell *matCellDef="let item">
@@ -233,6 +235,9 @@ export class TarefaFunilDialog implements OnInit {
           <tr mat-header-row *matHeaderRowDef="colunas"></tr>
           <tr mat-row *matRowDef="let row; columns: colunas"></tr>
         </table>
+        <mat-paginator showFirstLastButtons aria-label="Páginas de tarefas"
+          [length]="pagina.total()" [pageIndex]="pagina.indice()" [pageSize]="pagina.tamanho()"
+          [pageSizeOptions]="pagina.tamanhos" (page)="pagina.mudar($event)" />
       }
     </mat-card-content>
     </mat-card>
@@ -251,6 +256,7 @@ export class TarefasFunilPage implements OnInit {
   protected readonly prazoDe = new FormControl<Date | null>(null);
   protected readonly prazoAte = new FormControl<Date | null>(null);
   protected readonly lista = signal<TarefaFunil[]>([]);
+  protected readonly pagina = new Paginacao(this.lista);
   protected readonly colunas = ['titulo', 'tipo', 'responsaveis', 'prazo', 'acoes'];
   private readonly assistentes = inject(AssistentesClient);
   private readonly destroyRef = inject(DestroyRef);
@@ -271,7 +277,7 @@ export class TarefasFunilPage implements OnInit {
     });
     merge(this.prazoDe.valueChanges, this.prazoAte.valueChanges)
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.carregar());
+      .subscribe(() => { this.pagina.inicio(); this.carregar(); });
     this.carregar();
   }
 

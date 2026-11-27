@@ -9,6 +9,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatTableModule } from '@angular/material/table';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import {
@@ -26,13 +27,14 @@ import { deDataParaIso } from '../../shared/data';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { STATUS } from '../../shared/status';
 import { Estado } from '../../shared/estado';
+import { Paginacao } from '../../shared/paginacao';
 import { EventoFormPage } from './evento-form.page';
 import { NovoEventoDialog } from './novo-evento.dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-eventos',
-  imports: [ReactiveFormsModule, RouterLink, MatButtonModule, MatButtonToggleModule, MatCardModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, MatTableModule, CampoDataComponent, GdDataPipe, MatTooltipModule, Estado],
+  imports: [ReactiveFormsModule, RouterLink, MatButtonModule, MatButtonToggleModule, MatCardModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, MatTableModule, MatPaginatorModule, CampoDataComponent, GdDataPipe, MatTooltipModule, Estado],
   template: `
     @if (estatisticas(); as stats) {
       <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 mb-6">
@@ -96,7 +98,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
         </mat-button-toggle-group>
 
         @if (!ehEstatisticas()) {
-          <form class="flex flex-wrap items-end gap-4" [formGroup]="filtro" (ngSubmit)="carregar()">
+          <form class="flex flex-wrap items-end gap-4" [formGroup]="filtro" (ngSubmit)="pagina.inicio(); carregar()">
             <div class="campo w-full sm:w-64">
               <mat-label class="font-semibold mb-2 block">Nome</mat-label>
               <mat-form-field appearance="outline" class="w-full">
@@ -218,7 +220,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
           <app-estado titulo="Nenhum evento ainda" />
         } @else {
           <div class="relative">
-            <table mat-table [dataSource]="eventos()" class="min-w-full">
+            <table mat-table [dataSource]="pagina.itens()" class="min-w-full">
               <ng-container matColumnDef="nome">
                 <th mat-header-cell *matHeaderCellDef class="font-semibold text-sm pl-0!">Evento</th>
                 <td mat-cell *matCellDef="let evento" class="pl-0! whitespace-nowrap">
@@ -264,6 +266,9 @@ import { MatTooltipModule } from '@angular/material/tooltip';
               <tr mat-row *matRowDef="let row; columns: colunas"></tr>
             </table>
           </div>
+          <mat-paginator showFirstLastButtons aria-label="Páginas de eventos"
+            [length]="pagina.total()" [pageIndex]="pagina.indice()" [pageSize]="pagina.tamanho()"
+            [pageSizeOptions]="pagina.tamanhos" (page)="pagina.mudar($event)" />
         }
       </mat-card-content>
     </mat-card>
@@ -279,6 +284,7 @@ export class EventosPage implements OnInit {
   protected readonly tipos = TIPOS;
   protected readonly meses = MESES;
   protected readonly eventos = signal<EventoResumo[]>([]);
+  protected readonly pagina = new Paginacao(this.eventos);
   protected readonly carregado = signal(false);
   protected readonly estatisticas = signal<EstatisticasEventos | null>(null);
   protected readonly abaAtual = signal(0);
@@ -306,6 +312,7 @@ export class EventosPage implements OnInit {
       const situacao = params.get('situacao') ?? 'EmAndamento';
       const indice = this.abas.findIndex((aba) => aba.valor === situacao);
       this.abaAtual.set(indice >= 0 ? indice : 0);
+      this.pagina.inicio();
       if (this.ehEstatisticas()) {
         this.carregarEstatisticas();
       } else {
@@ -352,6 +359,7 @@ export class EventosPage implements OnInit {
 
   protected limparFiltros(): void {
     this.filtro.reset({ nome: '', tipo: '', de: null, ate: null, tag: '' });
+    this.pagina.inicio();
     this.carregar();
   }
 

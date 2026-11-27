@@ -9,6 +9,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatMenuModule } from '@angular/material/menu';
@@ -26,6 +27,7 @@ import { EditorRico } from '../../shared/editor-rico';
 import { abrirPreviaAceite } from '../modelos-funil/pagina-aceite';
 import { FecharModal } from '../../shared/fechar-modal';
 import { Estado } from '../../shared/estado';
+import { Paginacao } from '../../shared/paginacao';
 
 @Component({
   selector: 'app-orcamento-funil-dialog',
@@ -381,7 +383,7 @@ export class RespostaManualDialog {
 
 @Component({
   selector: 'app-orcamentos-funil',
-  imports: [MatButtonToggleModule, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatCheckboxModule, MatTooltipModule, MatMenuModule, GdDataPipe, Estado],
+  imports: [MatButtonToggleModule, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatPaginatorModule, MatCheckboxModule, MatTooltipModule, MatMenuModule, GdDataPipe, Estado],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6">
@@ -390,7 +392,7 @@ export class RespostaManualDialog {
       <mat-card-content class="border-t border-border">
       <div class="barra-lista">
         <div class="barra-lista-filtros">
-          <mat-button-toggle-group [value]="situacao()" (change)="situacao.set($event.value); carregar()" aria-label="Situação">
+          <mat-button-toggle-group [value]="situacao()" (change)="situacao.set($event.value); pagina.inicio(); carregar()" aria-label="Situação">
             @for (aba of abas; track aba.valor) {
               <mat-button-toggle [value]="aba.valor">{{ aba.rotulo }}</mat-button-toggle>
             }
@@ -412,7 +414,7 @@ export class RespostaManualDialog {
       } @else if (lista().length === 0) {
         <app-estado [titulo]="busca() ? 'Nada encontrado' : 'Nenhum orçamento ainda'" [texto]="busca() ? 'Mude a busca ou os filtros.' : undefined" />
       } @else {
-        <table mat-table class="min-w-full" [dataSource]="lista()">
+        <table mat-table class="min-w-full" [dataSource]="pagina.itens()">
           <ng-container matColumnDef="oportunidade">
             <th mat-header-cell *matHeaderCellDef>Oportunidade</th>
             <td mat-cell *matCellDef="let item">@if (item.situacao === 'EmAndamento') {
@@ -464,6 +466,9 @@ export class RespostaManualDialog {
           <tr mat-header-row *matHeaderRowDef="colunas"></tr>
           <tr mat-row *matRowDef="let row; columns: colunas"></tr>
         </table>
+        <mat-paginator showFirstLastButtons aria-label="Páginas de orçamentos"
+          [length]="pagina.total()" [pageIndex]="pagina.indice()" [pageSize]="pagina.tamanho()"
+          [pageSizeOptions]="pagina.tamanhos" (page)="pagina.mudar($event)" />
       }
     </mat-card-content>
     </mat-card>
@@ -483,6 +488,7 @@ export class OrcamentosFunilPage implements OnInit {
   protected readonly carregado = signal(false);
   protected readonly busca = signal('');
   protected readonly lista = signal<OrcamentoFunil[]>([]);
+  protected readonly pagina = new Paginacao(this.lista);
   protected readonly colunas = ['oportunidade', 'criadoEm', 'proposta', 'acoes'];
   protected seloDe(item: OrcamentoFunil) {
     return item.situacaoProposta ? SELO_PROPOSTA[item.situacaoProposta] : null;
@@ -494,6 +500,7 @@ export class OrcamentosFunilPage implements OnInit {
 
   protected buscar(evento: Event): void {
     this.busca.set((evento.target as HTMLInputElement).value);
+    this.pagina.inicio();
     this.carregar();
   }
 
