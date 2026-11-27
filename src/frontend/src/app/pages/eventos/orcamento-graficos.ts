@@ -18,14 +18,26 @@ export interface GraficoOrcamento {
   excesso: number;
 }
 
-export interface BarraServico {
+export interface FatiaServico {
   id: string;
   nome: string;
-  estimado: number;
-  contratado: number;
-  larguraEstimado: number;
-  larguraContratado: number;
+  /** Contratado quando houver; senão o estimado. */
+  valor: number;
+  contratado: boolean;
+  percentual: number;
+  cor: string;
 }
+
+export interface RoscaServicos {
+  fatias: FatiaServico[];
+  total: number;
+  /** Valor de background (conic-gradient) do círculo. */
+  fundo: string;
+}
+
+const CORES_SERVICO = ['#1565c0', '#2e7d32', '#f9a825', '#6a1b9a', '#00838f'];
+const COR_OUTROS = '#9e9e9e';
+const MAX_FATIAS = 5;
 
 const positivo = (valor: number): number => (valor > 0 ? valor : 0);
 
@@ -63,16 +75,32 @@ export function montarGraficoOrcamento(dados: BudgetEvento): GraficoOrcamento {
   return { fatias, semOrcamento, vazio: usado === 0, excesso };
 }
 
-/** Barras Estimado e Contratado por serviço, na mesma escala. */
-export function montarBarrasPorServico(dados: BudgetEvento): BarraServico[] {
-  const maximo = Math.max(0, ...dados.servicos.flatMap((s) => [positivo(s.estimado), positivo(s.contratado)]));
-  const largura = (valor: number): number => (maximo > 0 ? (positivo(valor) / maximo) * 100 : 0);
-  return dados.servicos.map((s) => ({
-    id: s.id,
-    nome: s.nome,
-    estimado: s.estimado,
-    contratado: s.contratado,
-    larguraEstimado: largura(s.estimado),
-    larguraContratado: largura(s.contratado),
-  }));
+/**
+ * Rosca por serviço: cada serviço vale o contratado ou, sem contrato, o estimado.
+ * Os cinco maiores aparecem; o resto vira "Outros".
+ */
+export function montarRoscaPorServico(dados: BudgetEvento): RoscaServicos {
+  const itens = dados.servicos
+    .map((s) => {
+      const contratado = positivo(s.contratado) > 0;
+      return { id: s.id, nome: s.nome, contratado, valor: contratado ? positivo(s.contratado) : positivo(s.estimado) };
+    })
+    .filter((s) => s.valor > 0)
+    .sort((a, b) => b.valor - a.valor);
+  const principais = itens.length > MAX_FATIAS + 1 ? itens.slice(0, MAX_FATIAS) : itens;
+  const resto = itens.slice(principais.length);
+  const total = itens.reduce((t, s) => t + s.valor, 0);
+  const percentual = (valor: number): number => (total > 0 ? (valor / total) * 100 : 0);
+  const fatias: FatiaServico[] = principais.map((s, i) => ({ ...s, percentual: percentual(s.valor), cor: CORES_SERVICO[i % CORES_SERVICO.length] }));
+  if (resto.length > 0) {
+    const valor = resto.reduce((t, s) => t + s.valor, 0);
+    fatias.push({ id: 'outros', nome: `Outros (${resto.length})`, contratado: false, valor, percentual: percentual(valor), cor: COR_OUTROS });
+  }
+  let acumulado = 0;
+  const partes = fatias.map((f) => {
+    const inicio = acumulado;
+    acumulado += f.percentual;
+    return `${f.cor} ${inicio}% ${acumulado}%`;
+  });
+  return { fatias, total, fundo: partes.length > 0 ? `conic-gradient(${partes.join(', ')})` : 'rgba(128,128,128,.18)' };
 }

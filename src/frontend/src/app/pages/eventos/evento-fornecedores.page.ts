@@ -32,7 +32,7 @@ import { GdDinheiroPipe } from '../../shared/gd-dinheiro.pipe';
 import { DIALOG_FORNECEDOR, FornecedorFormDialog } from '../fornecedores/fornecedor-form.dialog';
 import { NovoServicoDialog } from '../fornecedores/novo-servico.dialog';
 import { EventoAbasComponent } from './evento-abas.component';
-import { BarraServico, GraficoOrcamento, montarBarrasPorServico, montarGraficoOrcamento } from './orcamento-graficos';
+import { GraficoOrcamento, RoscaServicos, montarGraficoOrcamento, montarRoscaPorServico } from './orcamento-graficos';
 import { OpcaoSelecao, SeletorMultiploDados, SeletorMultiploDialog } from './seletor-multiplo.dialog';
 
 interface ContratarResultado {
@@ -239,16 +239,26 @@ const CLASSE_ETAPA: Record<string, string> = {
           </div>
           <div class="grafico">
             <h4 class="titulo">Por serviço</h4>
-            <ul class="servicos">
-              @for (barra of g.servicos; track barra.id) {
-                <li role="img" [attr.aria-label]="descricaoServico(barra)">
-                  <span class="nome-servico">{{ barra.nome }}</span>
-                  <span class="linha"><span class="trilho"><span class="fatia estimado" [style.width.%]="barra.larguraEstimado"></span></span><span class="num">{{ barra.estimado | gdDinheiro }}</span></span>
-                  <span class="linha"><span class="trilho"><span class="fatia contratado" [style.width.%]="barra.larguraContratado"></span></span><span class="num">{{ barra.contratado | gdDinheiro }}</span></span>
-                </li>
-              }
-            </ul>
-            <p class="legenda-servicos"><span class="ponto estimado"></span>Estimado <span class="ponto contratado"></span>Contratado</p>
+            @if (g.servicos.total === 0) {
+              <p class="text-sm text-muted">Informe o estimado dos serviços para ver os gráficos.</p>
+            } @else {
+              <div class="rosca-area">
+                <div class="rosca" role="img" [attr.aria-label]="descricaoRosca(g.servicos)" [style.background]="g.servicos.fundo">
+                  <div class="rosca-centro"><span class="text-xs text-muted">Total</span><strong>{{ g.servicos.total | gdDinheiro }}</strong></div>
+                </div>
+                <ul class="legenda-rosca">
+                  @for (fatia of g.servicos.fatias; track fatia.id) {
+                    <li>
+                      <span class="ponto" [style.background]="fatia.cor"></span>
+                      <span class="nome-fatia" [title]="fatia.nome">{{ fatia.nome }}</span>
+                      <strong class="num">{{ fatia.valor | gdDinheiro }}</strong>
+                      <span class="text-muted pct">{{ fatia.percentual | number: '1.0-0' }}%</span>
+                    </li>
+                  }
+                </ul>
+              </div>
+              <p class="text-xs text-muted mt-2">Contratado quando houver; senão, o estimado.</p>
+            }
           </div>
         </div>
       </section>
@@ -391,14 +401,17 @@ const CLASSE_ETAPA: Record<string, string> = {
     .barra.alerta { box-shadow: 0 0 0 2px #c62828; }
     .ponto { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
     .legenda { list-style: none; padding: 0; margin: 12px 0 0; display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
-    .servicos { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }
-    .nome-servico { display: block; font-size: 13px; font-weight: 500; margin-bottom: 2px; }
-    .linha { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
-    .trilho { flex: 1; height: 10px; border-radius: 5px; background: rgba(128,128,128,.18); overflow: hidden; display: block; }
-    .trilho .fatia { display: block; height: 100%; }
-    .num { min-width: 90px; text-align: right; font-size: 12px; white-space: nowrap; }
-    .legenda-servicos { font-size: 12px; margin: 12px 0 0; }
-    .legenda-servicos .ponto:not(:first-child) { margin-left: 12px; }
+    .rosca-area { display: flex; align-items: center; gap: 20px; }
+    .rosca { position: relative; flex-shrink: 0; width: 160px; height: 160px; border-radius: 50%; }
+    .rosca-centro { position: absolute; inset: 28px; border-radius: 50%; background: var(--mat-sys-surface, #fff); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+    .rosca-centro strong { font-size: 14px; }
+    .legenda-rosca { list-style: none; padding: 0; margin: 0; flex: 1; min-width: 0; max-height: 170px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+    .legenda-rosca li { display: flex; align-items: center; gap: 6px; }
+    .legenda-rosca .ponto { margin-right: 0; flex-shrink: 0; }
+    .nome-fatia { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .num { text-align: right; font-size: 12px; white-space: nowrap; }
+    .pct { width: 36px; text-align: right; font-size: 12px; }
+    @media (max-width: 480px) { .rosca-area { flex-direction: column; align-items: stretch; } .rosca { align-self: center; } }
     .valor { font-weight: 600; white-space: nowrap; }
 
     .servicos-lista { list-style: none; padding: 0; margin: 0; border: 1px solid rgba(128,128,128,.25); border-radius: 8px; overflow: hidden; }
@@ -436,10 +449,10 @@ export class EventoFornecedoresPage implements OnInit {
   protected readonly etapa = signal('');
   protected readonly abertos = signal<Set<string>>(new Set());
   protected readonly budget = signal<BudgetEvento | null>(null);
-  protected readonly graficos = computed<{ dados: BudgetEvento; orcamento: GraficoOrcamento; servicos: BarraServico[] } | null>(() => {
+  protected readonly graficos = computed<{ dados: BudgetEvento; orcamento: GraficoOrcamento; servicos: RoscaServicos } | null>(() => {
     const dados = this.budget();
     return dados && dados.servicos.length > 0
-      ? { dados, orcamento: montarGraficoOrcamento(dados), servicos: montarBarrasPorServico(dados) }
+      ? { dados, orcamento: montarGraficoOrcamento(dados), servicos: montarRoscaPorServico(dados) }
       : null;
   });
   protected id = '';
@@ -714,8 +727,8 @@ export class EventoFornecedoresPage implements OnInit {
     return grafico.fatias.map((fatia) => `${fatia.rotulo}: ${formatarReais(fatia.valor)}`).join('; ');
   }
 
-  protected descricaoServico(barra: BarraServico): string {
-    return `${barra.nome}: estimado ${formatarReais(barra.estimado)}, contratado ${formatarReais(barra.contratado)}`;
+  protected descricaoRosca(rosca: RoscaServicos): string {
+    return rosca.fatias.map((f) => `${f.nome}: ${formatarReais(f.valor)} (${Math.round(f.percentual)}%)`).join('; ');
   }
 
   private confirmar(titulo: string, texto: string, acao: () => Observable<EventoDetalhe>, sucesso: string): void {

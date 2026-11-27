@@ -1,5 +1,5 @@
 import { BudgetEvento } from '../../core/negocio.client';
-import { montarBarrasPorServico, montarGraficoOrcamento } from './orcamento-graficos';
+import { montarRoscaPorServico, montarGraficoOrcamento } from './orcamento-graficos';
 
 function dados(parcial: Partial<BudgetEvento>): BudgetEvento {
   return { budget: 0, estimado: 0, contratado: 0, provaReal: 0, custoPorConvidado: null, servicos: [], ...parcial };
@@ -75,21 +75,30 @@ describe('orcamento-graficos', () => {
     expect(g.fatias.every((f) => f.largura === 0)).toBe(true);
   });
 
-  it('por serviço: mesma escala para estimado e contratado', () => {
-    const barras = montarBarrasPorServico(dados({
+  it('por serviço: usa o contratado ou o estimado e ordena do maior', () => {
+    const r = montarRoscaPorServico(dados({
       servicos: [
         { id: 'a', nome: 'Buffet', estimado: 1000, contratado: 500 },
-        { id: 'b', nome: 'Foto', estimado: 250, contratado: 0 },
+        { id: 'b', nome: 'Foto', estimado: 1500, contratado: 0 },
       ],
     }));
-    expect(barras[0].larguraEstimado).toBe(100);
-    expect(barras[0].larguraContratado).toBe(50);
-    expect(barras[1].larguraEstimado).toBe(25);
-    expect(barras[1].larguraContratado).toBe(0);
+    expect(r.total).toBe(2000);
+    expect(r.fatias.map((f) => f.id)).toEqual(['b', 'a']);
+    expect(r.fatias[0].percentual).toBe(75);
+    expect(r.fatias[1].contratado).toBe(true);
+  });
+
+  it('por serviço: mais de seis serviços agrupa o resto em Outros', () => {
+    const servicos = Array.from({ length: 8 }, (_, i) => ({ id: `s${i}`, nome: `S${i}`, estimado: 100 + i, contratado: 0 }));
+    const r = montarRoscaPorServico(dados({ servicos }));
+    expect(r.fatias.length).toBe(6);
+    expect(r.fatias[5].nome).toBe('Outros (3)');
+    expect(r.fatias.reduce((t, f) => t + f.percentual, 0)).toBeCloseTo(100);
   });
 
   it('por serviço zerado não divide por zero', () => {
-    const barras = montarBarrasPorServico(dados({ servicos: [{ id: 'a', nome: 'X', estimado: 0, contratado: 0 }] }));
-    expect(barras[0].larguraEstimado).toBe(0);
+    const r = montarRoscaPorServico(dados({ servicos: [{ id: 'a', nome: 'X', estimado: 0, contratado: 0 }] }));
+    expect(r.total).toBe(0);
+    expect(r.fatias.length).toBe(0);
   });
 });
