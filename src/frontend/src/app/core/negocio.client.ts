@@ -1249,6 +1249,8 @@ export class NegocioClient {
       quantidadeConvidados?: number | null;
       cidade?: string | null;
       uf?: string | null;
+      site?: string | null;
+      iniciadoEm?: number | null;
     },
   ) {
     return this.http.post(`${this.base}/api/v1/public/leads/${contaId}`, pedido);

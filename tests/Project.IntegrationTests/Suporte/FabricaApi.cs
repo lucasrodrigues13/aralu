@@ -29,6 +29,8 @@ public sealed class FabricaApi : WebApplicationFactory<Program>
     private readonly int _loginPorEmail;
     private readonly string? _ipConexao;
     private readonly string? _redeConhecida;
+    private readonly int _publicoPorMinuto;
+    private readonly int _leadsPorContaPorHora;
 
     public FabricaApi(
         string conexao,
@@ -42,7 +44,9 @@ public sealed class FabricaApi : WebApplicationFactory<Program>
         int reenvioPorHora = 1000,
         int loginPorEmail = 1000,
         string? ipConexao = null,
-        string? redeConhecida = null)
+        string? redeConhecida = null,
+        int publicoPorMinuto = 100000,
+        int leadsPorContaPorHora = 100000)
     {
         _conexao = conexao;
         Email = email ?? new EmailCapturado();
@@ -57,6 +61,8 @@ public sealed class FabricaApi : WebApplicationFactory<Program>
         _loginPorEmail = loginPorEmail;
         _ipConexao = ipConexao;
         _redeConhecida = redeConhecida;
+        _publicoPorMinuto = publicoPorMinuto;
+        _leadsPorContaPorHora = leadsPorContaPorHora;
     }
 
     public EmailCapturado Email { get; }
@@ -88,6 +94,8 @@ public sealed class FabricaApi : WebApplicationFactory<Program>
             builder.UseSetting("ForwardedHeaders:KnownNetworks:0", _redeConhecida);
         }
 
+        builder.UseSetting("RateLimit:PublicoPorMinuto", _publicoPorMinuto.ToString());
+        builder.UseSetting("RateLimit:LeadsPorContaPorHora", _leadsPorContaPorHora.ToString());
         builder.UseSetting("Swagger:Enabled", "false");
         builder.UseSetting("Asaas:WebhookToken", AsaasDeTeste.TokenWebhook);
         builder.UseSetting("Asaas:DiagnosticoNoNavegador", "true");

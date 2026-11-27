@@ -129,7 +129,15 @@ public sealed record LeadPublicoPedido(
     DateOnly? DataPrevista = null,
     int? QuantidadeConvidados = null,
     string? Cidade = null,
-    string? Uf = null);
+    string? Uf = null,
+    string? Site = null,
+    long? IniciadoEm = null)
+{
+    /// <summary>Envio antes disso (desde que o formulário abriu) é tratado como robô.</summary>
+    public const long TempoMinimoMs = 3_000;
+    public const int MaxNome = 120;
+    public const int MaxContato = 200;
+}
 
 public sealed record ChecagemDataLeitura(bool TemCompromisso);
 
@@ -419,6 +427,15 @@ public sealed class OportunidadeServico(IDados dados)
             return Resultado<OportunidadeLeitura>.Erro(Codigos.Validacao, "Informe o nome e o contato.");
         }
 
+        if (Longo(pedido.Nome, LeadPublicoPedido.MaxNome) || Longo(pedido.ContatoNome, LeadPublicoPedido.MaxNome)
+            || Longo(pedido.Cidade, LeadPublicoPedido.MaxNome)
+            || Longo(pedido.Telefone, LeadPublicoPedido.MaxContato) || Longo(pedido.Email, LeadPublicoPedido.MaxContato)
+            || Longo(pedido.Fonte, LeadPublicoPedido.MaxContato) || Longo(pedido.TipoEvento, LeadPublicoPedido.MaxContato)
+            || Longo(pedido.Uf, 2))
+        {
+            return Resultado<OportunidadeLeitura>.Erro(Codigos.Validacao, "Algum campo passou do tamanho permitido.");
+        }
+
         TipoEvento? tipo = null;
         if (!string.IsNullOrWhiteSpace(pedido.TipoEvento))
         {
@@ -440,7 +457,14 @@ public sealed class OportunidadeServico(IDados dados)
             ?? (tipo is null ? contatoNome : $"{RotuloTipoLead(tipo.Value)} {contatoNome}");
 
         var agora = DateTimeOffset.UtcNow;
-        var primeiro = PrimeiroAberto(await dados.ListarEstagiosFunilAsync(contaId, ct));
+        var estagios = await dados.ListarEstagiosFunilAsync(contaId, ct);
+        if (!estagios.Any(e => e.Tipo == TipoEstagioFunil.Aberto))
+        {
+            // Conta inexistente (ou sem funil): 404, não 500.
+            return Resultado<OportunidadeLeitura>.Erro(Codigos.Indisponivel, "Indisponível.");
+        }
+
+        var primeiro = PrimeiroAberto(estagios);
         var item = new Oportunidade
         {
             Id = Guid.NewGuid(),
@@ -509,6 +533,8 @@ public sealed class OportunidadeServico(IDados dados)
     };
 
     /// <summary>Primeiro estágio aberto: onde nasce o lead público e o do RSVP.</summary>
+    private static bool Longo(string? valor, int maximo) => valor is not null && valor.Trim().Length > maximo;
+
     internal static EstagioFunil PrimeiroAberto(IEnumerable<EstagioFunil> estagios) =>
         EstagiosFunil.Ordenar(estagios).First(e => e.Tipo == TipoEstagioFunil.Aberto);
 

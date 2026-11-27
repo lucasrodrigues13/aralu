@@ -81,6 +81,19 @@ builder.Services.AddRateLimiter(options =>
     options.AddPolicy("login", http => Janela(http, loginPorMinuto, TimeSpan.FromMinutes(1)));
     options.AddPolicy("recuperacao", http => Janela(http, recuperacaoPorHora, TimeSpan.FromHours(1)));
     options.AddPolicy("reenvio", http => Janela(http, reenvioPorHora, TimeSpan.FromHours(1)));
+
+    // Lote 5 (A06-002): rotas anônimas — por IP e, no lead público, também por conta.
+    var publicoPorMinuto = limites.GetValue("PublicoPorMinuto", 20);
+    var leadsPorHora = limites.GetValue("LeadsPorContaPorHora", 30);
+    options.AddPolicy("publico-ip", http => Janela(http, publicoPorMinuto, TimeSpan.FromMinutes(1)));
+    options.AddPolicy("lead-conta", http => RateLimitPartition.GetFixedWindowLimiter(
+        "lead:" + (http.Request.RouteValues["contaId"]?.ToString() ?? "desconhecida"),
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = leadsPorHora,
+            Window = TimeSpan.FromHours(1),
+            QueueLimit = 0,
+        }));
 });
 
 var origens = builder.Configuration.GetSection("Cors:Origins").Get<string[]>() ?? ["http://localhost:4200"];

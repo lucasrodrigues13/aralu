@@ -203,10 +203,10 @@ public static class NegocioEndpoints
 
         app.MapGet("/api/v1/rsvp/{token}", AbrirRsvp);
         app.MapGet("/api/v1/rsvp/{token}/qr-entrada", QrEntradaDoRsvp);
-        app.MapPost("/api/v1/rsvp/{token}", ResponderRsvp);
-        app.MapPost("/api/v1/public/leads/{contaId}", LeadPublico);
+        app.MapPost("/api/v1/rsvp/{token}", ResponderRsvp).RequireRateLimiting("publico-ip");
+        app.MapPost("/api/v1/public/leads/{contaId}", LeadPublico).RequireRateLimiting("publico-ip").RequireRateLimiting("lead-conta");
         app.MapGet("/api/v1/publico/propostas/{token}", PropostaPublica);
-        app.MapPost("/api/v1/publico/propostas/{token}/resposta", ResponderPropostaPublica);
+        app.MapPost("/api/v1/publico/propostas/{token}/resposta", ResponderPropostaPublica).RequireRateLimiting("publico-ip");
         app.MapGet("/api/v1/publico/propostas/{token}/midias/{arquivoId:guid}", MidiaPropostaPublica);
         app.MapGet("/api/v1/publico/propostas/{token}/cep/{cep}", CepPropostaPublica);
     }
@@ -1332,8 +1332,31 @@ public static class NegocioEndpoints
             return Results.Text(csv, "text/csv");
         });
 
-    private static Task<IResult> LeadPublico(Guid contaId, LeadPublicoPedido pedido, OportunidadeServico servico, CancellationToken ct) =>
-        De(servico.CriarLeadPublicoAsync(contaId, pedido, ct));
+    private static async Task<IResult> LeadPublico(
+        Guid contaId,
+        LeadPublicoPedido pedido,
+        OportunidadeServico servico,
+        ILoggerFactory logs,
+        CancellationToken ct)
+    {
+        // Honeypot (A06-002): campo isca preenchido ou envio rápido demais = robô.
+        // Responde sucesso falso (201 sem gravar) para o robô não aprender a contornar.
+        var agora = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        var isca = !string.IsNullOrWhiteSpace(pedido.Site);
+        if (isca || (pedido.IniciadoEm is { } inicio && agora - inicio < LeadPublicoPedido.TempoMinimoMs))
+        {
+            logs.CreateLogger("LeadPublico").LogWarning(
+                "lead_descartado_honeypot conta={ContaId} isca={Isca}",
+                contaId,
+                isca);
+            return Results.Json(new { id = Guid.NewGuid() }, statusCode: StatusCodes.Status201Created);
+        }
+
+        var resultado = await servico.CriarLeadPublicoAsync(contaId, pedido, ct);
+        return resultado.Ok
+            ? Results.Json(resultado.Valor, statusCode: StatusCodes.Status201Created)
+            : Falha(resultado.Falha!);
+    }
 
     private static Task<IResult> LeadsRsvp(ClaimsPrincipal usuario, LeadRsvpServico servico, string? busca, CancellationToken ct) =>
         ComConta(usuario, async conta => Results.Ok(await servico.ListarAsync(conta, busca, ct)));
