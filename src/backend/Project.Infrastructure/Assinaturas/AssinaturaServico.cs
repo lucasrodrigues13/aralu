@@ -75,7 +75,7 @@ public sealed partial class AssinaturaServico(AppDbContext banco, IAsaas asaas, 
             assinatura.Valor,
             assinatura.FormaPagamento?.ToString(),
             assinatura.AsaasSubscriptionId is not null && assinatura.Situacao != SituacaoAssinatura.Cancelada,
-            opcoes.Value.DiagnosticoNoNavegador,
+            opcoes.Value.DiagnosticoAtivo,
             await TrocaPendenteAsync(assinatura, ct));
     }
 
@@ -381,7 +381,7 @@ public sealed partial class AssinaturaServico(AppDbContext banco, IAsaas asaas, 
     /// <summary>Staging: os avisos do Asaas que chegaram para a conta, para acompanhar no DevTools.</summary>
     public async Task<IReadOnlyList<EventoDiagnostico>?> EventosParaDiagnosticoAsync(Guid contaId, CancellationToken ct)
     {
-        if (!opcoes.Value.DiagnosticoNoNavegador)
+        if (!opcoes.Value.DiagnosticoAtivo)
         {
             return null;
         }
@@ -529,7 +529,7 @@ public sealed partial class AssinaturaServico(AppDbContext banco, IAsaas asaas, 
         return existente;
     }
 
-    private IReadOnlyList<PassoAsaas>? Diagnostico(List<PassoAsaas> passos) => opcoes.Value.DiagnosticoNoNavegador ? passos : null;
+    private IReadOnlyList<PassoAsaas>? Diagnostico(List<PassoAsaas> passos) => opcoes.Value.DiagnosticoAtivo ? passos : null;
 
     private Task<Assinatura?> DaContaAsync(Guid contaId, CancellationToken ct, bool rastrear)
     {

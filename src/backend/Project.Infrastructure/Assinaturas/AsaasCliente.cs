@@ -23,11 +23,35 @@ public sealed class AsaasOpcoes
     /// </summary>
     public bool DiagnosticoNoNavegador { get; set; }
 
+    /// <summary>Ambiente da aplicação (App:Environment); "production" nunca expõe o diagnóstico, mesmo com a flag ligada.</summary>
+    public string? Ambiente { get; set; }
+
+    public bool EmProducao => string.Equals(Ambiente?.Trim(), "production", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Flag ligada e ambiente que não é produção.</summary>
+    public bool DiagnosticoAtivo => DiagnosticoNoNavegador && !EmProducao;
+
     public bool Configurado => !string.IsNullOrWhiteSpace(ApiKey);
 }
 
 /// <summary>Um passo da conversa com o Asaas, para o diagnóstico no navegador e para o log do servidor.</summary>
 public sealed record PassoAsaas(string Passo, string Metodo, string Rota, int Status, JsonNode? Enviado, JsonNode? Resposta);
+
+/// <summary>Avisa no boot quando o diagnóstico do Asaas está ligado em produção (ele fica desativado de qualquer forma).</summary>
+public sealed class AvisoDiagnosticoAsaas(IOptions<AsaasOpcoes> opcoes, ILogger<AvisoDiagnosticoAsaas> logs) : Microsoft.Extensions.Hosting.IHostedService
+{
+    public Task StartAsync(CancellationToken ct)
+    {
+        if (opcoes.Value.DiagnosticoNoNavegador && opcoes.Value.EmProducao)
+        {
+            logs.LogWarning("Asaas:DiagnosticoNoNavegador está ligado em produção; o diagnóstico fica desativado. Desligue ASAAS_DIAGNOSTICO.");
+        }
+
+        return Task.CompletedTask;
+    }
+
+    public Task StopAsync(CancellationToken ct) => Task.CompletedTask;
+}
 
 public sealed record ClienteAsaas(string Id);
 
