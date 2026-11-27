@@ -71,7 +71,11 @@ public static class ContaEndpoints
             case ResultadoCadastro.Duplicado:
                 return Erro(StatusCodes.Status409Conflict, "duplicado", "Já existe conta para este e-mail.");
             case ResultadoCadastro.SenhaInvalida:
-                return Erro(StatusCodes.Status400BadRequest, "validacao", "A senha não atende às regras.");
+                return SenhaRecusada(MotivoSenha.Regras);
+            case ResultadoCadastro.SenhaCurta:
+                return SenhaRecusada(MotivoSenha.Curta);
+            case ResultadoCadastro.SenhaComum:
+                return SenhaRecusada(MotivoSenha.Comum);
             case ResultadoCadastro.Falhou:
                 return Erro(StatusCodes.Status500InternalServerError, "erro", "Não foi possível concluir a ação.");
         }
@@ -233,9 +237,9 @@ public static class ContaEndpoints
         var resultado = await usuarios.ResetPasswordAsync(usuario, pedido.Token!, senha);
         if (!resultado.Succeeded)
         {
-            if (resultado.Errors.Any(erro => erro.Code.Contains("Password", StringComparison.Ordinal)))
+            if (resultado.Errors.Any(erro => erro.Code.Contains("Password", StringComparison.Ordinal) || erro.Code == SenhaComumValidador.CodigoErro))
             {
-                return Erro(StatusCodes.Status400BadRequest, "validacao", "A senha não atende às regras.");
+                return SenhaRecusada(MotivoSenha.De(resultado.Errors));
             }
 
             return TokenInvalido();
@@ -369,6 +373,9 @@ public static class ContaEndpoints
 
     private static IResult TokenInvalido()
         => Erro(StatusCodes.Status400BadRequest, "token", "O link é inválido ou expirou.");
+
+    private static IResult SenhaRecusada(string motivo)
+        => Results.Json(new ErroResposta("validacao", MotivoSenha.Mensagem(motivo), motivo), statusCode: StatusCodes.Status400BadRequest);
 
     private static IResult Erro(int status, string code, string message)
         => Results.Json(new ErroResposta(code, message), statusCode: status);

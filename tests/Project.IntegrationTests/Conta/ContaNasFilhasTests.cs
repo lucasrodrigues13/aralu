@@ -10,7 +10,7 @@ namespace Project.IntegrationTests.Conta;
 [Collection(ColecaoApi.Nome)]
 public class ContaNasFilhasTests
 {
-    private const string Senha = "abcdefgh";
+    private const string Senha = "ceu-de-junho-42";
     private readonly BancoFixture _banco;
 
     public ContaNasFilhasTests(BancoFixture banco)

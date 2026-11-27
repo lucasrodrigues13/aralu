@@ -17,7 +17,7 @@ namespace Project.IntegrationTests.Negocio;
 [Collection(ColecaoApi.Nome)]
 public class ClienteAcessoFluxoTests
 {
-    private const string Senha = "abcdefgh";
+    private const string Senha = "ceu-de-junho-42";
     private const string PapelLegado = "Client";
     private readonly BancoFixture _banco;
 

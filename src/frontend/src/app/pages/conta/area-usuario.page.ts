@@ -45,7 +45,7 @@ import { MascaraDirective } from '../../shared/mascara.directive';
             </div>
             <div class="campo">
               <mat-label class="font-semibold mb-2 block">Nova senha</mat-label>
-              <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Nova senha'" matInput type="password" formControlName="nova" autocomplete="new-password" /></mat-form-field>
+              <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Nova senha'" matInput type="password" formControlName="nova" autocomplete="new-password" /><mat-hint>Pelo menos 10 caracteres. Evite senhas comuns.</mat-hint></mat-form-field>
             </div>
             <div class="sm:col-span-2"><button mat-stroked-button type="submit" [disabled]="senha.invalid">Trocar senha</button></div>
           </form>
@@ -68,7 +68,7 @@ export class AreaUsuarioPage implements OnInit {
   });
   protected readonly senha = this.fb.nonNullable.group({
     atual: ['', Validators.required],
-    nova: ['', [Validators.required, Validators.minLength(8)]],
+    nova: ['', [Validators.required, Validators.minLength(10)]],
   });
 
   ngOnInit(): void {

@@ -15,7 +15,7 @@ namespace Project.IntegrationTests.Conta;
 [Collection(ColecaoApi.Nome)]
 public class ContaFluxoTests
 {
-    private const string Senha = "abcdefgh";
+    private const string Senha = "ceu-de-junho-42";
     private readonly BancoFixture _banco;
 
     public ContaFluxoTests(BancoFixture banco)
@@ -69,7 +69,7 @@ public class ContaFluxoTests
     {
         var cliente = _banco.Fabrica.CreateClient();
 
-        var fraca = await cliente.PostAsJsonAsync("/api/v1/conta/cadastro", new { email = Unico(), senha = "12345678", confirmacao = "12345678", aceiteTermos = true });
+        var fraca = await cliente.PostAsJsonAsync("/api/v1/conta/cadastro", new { email = Unico(), senha = "SENHA-SEM-MINUSCULA", confirmacao = "SENHA-SEM-MINUSCULA", aceiteTermos = true });
         var divergente = await cliente.PostAsJsonAsync("/api/v1/conta/cadastro", new { email = Unico(), senha = Senha, confirmacao = "outra-senha", aceiteTermos = true });
 
         Assert.Equal(HttpStatusCode.BadRequest, fraca.StatusCode);
@@ -191,16 +191,16 @@ public class ContaFluxoTests
         Assert.DoesNotContain("token", textoConhecida, StringComparison.OrdinalIgnoreCase);
 
         var link = Link(_banco.Fabrica.Email, email, "redefinicao");
-        var invalida = await cliente.PostAsJsonAsync("/api/v1/conta/redefinir-senha", new { usuarioId = link.UsuarioId, token = "token-alterado", senha = "novasenha", confirmacao = "novasenha" });
-        var nova = await cliente.PostAsJsonAsync("/api/v1/conta/redefinir-senha", new { usuarioId = link.UsuarioId, token = link.Token, senha = "novasenha", confirmacao = "novasenha" });
+        var invalida = await cliente.PostAsJsonAsync("/api/v1/conta/redefinir-senha", new { usuarioId = link.UsuarioId, token = "token-alterado", senha = "nova-senha-de-junho", confirmacao = "nova-senha-de-junho" });
+        var nova = await cliente.PostAsJsonAsync("/api/v1/conta/redefinir-senha", new { usuarioId = link.UsuarioId, token = link.Token, senha = "nova-senha-de-junho", confirmacao = "nova-senha-de-junho" });
         var antiga = await cliente.PostAsJsonAsync("/api/v1/conta/entrar", new { email, senha = Senha });
-        var atual = await cliente.PostAsJsonAsync("/api/v1/conta/entrar", new { email, senha = "novasenha" });
+        var atual = await cliente.PostAsJsonAsync("/api/v1/conta/entrar", new { email, senha = "nova-senha-de-junho" });
 
         Assert.Equal(HttpStatusCode.BadRequest, invalida.StatusCode);
         Assert.Equal(HttpStatusCode.OK, nova.StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, antiga.StatusCode);
         Assert.Equal(HttpStatusCode.OK, atual.StatusCode);
-        Assert.DoesNotContain("novasenha", await nova.Content.ReadAsStringAsync(), StringComparison.Ordinal);
+        Assert.DoesNotContain("nova-senha-de-junho", await nova.Content.ReadAsStringAsync(), StringComparison.Ordinal);
     }
 
     [Fact]
@@ -321,7 +321,7 @@ public class ContaFluxoTests
         }
 
         var adminEmail = Unico();
-        const string senhaAdmin = "administrador";
+        const string senhaAdmin = "administrador-de-teste";
         await using var ligado = new FabricaApi(_banco.Conexao, bootstrap: true, adminEmail: adminEmail, adminSenha: senhaAdmin);
         var cliente = ligado.CreateClient();
         await using (var escopo = ligado.Services.CreateAsyncScope())
@@ -417,6 +417,41 @@ public class ContaFluxoTests
         var token = Link(_banco.Fabrica.Email, email, "confirmacao").Token;
         Assert.DoesNotContain(token, corpoCadastro, StringComparison.Ordinal);
         Assert.DoesNotContain(token, logs, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("12345678ab", "comum")]
+    [InlineData("aralu2026!", "comum")]
+    [InlineData("senhacurt", "curta")]
+    public async Task Senha_nova_curta_ou_comum_e_recusada_com_o_motivo(string senha, string motivo)
+    {
+        var cliente = _banco.Fabrica.CreateClient();
+
+        var resposta = await cliente.PostAsJsonAsync("/api/v1/conta/cadastro", new { email = Unico(), senha, confirmacao = senha, aceiteTermos = true });
+        var corpo = await resposta.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
+
+        Assert.Equal(HttpStatusCode.BadRequest, resposta.StatusCode);
+        Assert.Equal(motivo, corpo.GetProperty("motivo").GetString());
+    }
+
+    [Fact]
+    public async Task Login_com_senha_antiga_de_8_caracteres_continua_funcionando()
+    {
+        var email = Unico();
+        var cliente = _banco.Fabrica.CreateClient();
+        await CadastrarEConfirmar(cliente, email);
+        await using (var escopo = _banco.Fabrica.Services.CreateAsyncScope())
+        {
+            // Simula a senha gravada antes da regra de 10: o hash vai direto, sem passar pelos validadores.
+            var usuarios = escopo.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            var usuario = (await usuarios.FindByEmailAsync(email))!;
+            usuario.PasswordHash = usuarios.PasswordHasher.HashPassword(usuario, "antiga8c");
+            await usuarios.UpdateAsync(usuario);
+        }
+
+        var entrada = await cliente.PostAsJsonAsync("/api/v1/conta/entrar", new { email, senha = "antiga8c" });
+
+        Assert.Equal(HttpStatusCode.OK, entrada.StatusCode);
     }
 
     private async Task Cadastrar(HttpClient cliente, string email)
