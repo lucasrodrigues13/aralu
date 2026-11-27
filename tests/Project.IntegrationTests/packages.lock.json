@@ -842,6 +842,7 @@
       "project.application": {
         "type": "Project",
         "dependencies": {
+          "Microsoft.Extensions.Logging.Abstractions": "[10.0.4, )",
           "Project.Domain": "[1.0.0, )"
         }
       },
