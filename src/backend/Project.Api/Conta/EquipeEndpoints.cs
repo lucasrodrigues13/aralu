@@ -18,7 +18,7 @@ public static class EquipeEndpoints
 
     public static void Mapear(WebApplication app)
     {
-        app.MapPost("/api/v1/conta/aceitar-convite", AceitarConvite);
+        app.MapPost("/api/v1/conta/aceitar-convite", AceitarConvite).RequireRateLimiting("publico-ip");
 
         var equipe = app.MapGroup("/api/v1/equipe").RequireAuthorization(policy => policy.RequireRole(SoDono));
         equipe.MapGet("", Listar);

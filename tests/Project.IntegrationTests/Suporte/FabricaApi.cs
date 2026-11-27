@@ -25,6 +25,8 @@ public sealed class FabricaApi : WebApplicationFactory<Program>
     private readonly int _loginPorMinuto;
     private readonly int _recuperacaoPorHora;
     private readonly int _reenvioPorHora;
+    private readonly int _publicoPorMinuto;
+    private readonly int _leadsPorContaPorHora;
 
     public FabricaApi(
         string conexao,
@@ -35,7 +37,9 @@ public sealed class FabricaApi : WebApplicationFactory<Program>
         int cadastroPorHora = 1000,
         int loginPorMinuto = 1000,
         int recuperacaoPorHora = 1000,
-        int reenvioPorHora = 1000)
+        int reenvioPorHora = 1000,
+        int publicoPorMinuto = 100000,
+        int leadsPorContaPorHora = 100000)
     {
         _conexao = conexao;
         Email = email ?? new EmailCapturado();
@@ -47,6 +51,8 @@ public sealed class FabricaApi : WebApplicationFactory<Program>
         _loginPorMinuto = loginPorMinuto;
         _recuperacaoPorHora = recuperacaoPorHora;
         _reenvioPorHora = reenvioPorHora;
+        _publicoPorMinuto = publicoPorMinuto;
+        _leadsPorContaPorHora = leadsPorContaPorHora;
     }
 
     public EmailCapturado Email { get; }
@@ -72,6 +78,8 @@ public sealed class FabricaApi : WebApplicationFactory<Program>
         builder.UseSetting("RateLimit:LoginPorMinuto", _loginPorMinuto.ToString());
         builder.UseSetting("RateLimit:RecuperacaoPorHora", _recuperacaoPorHora.ToString());
         builder.UseSetting("RateLimit:ReenvioPorHora", _reenvioPorHora.ToString());
+        builder.UseSetting("RateLimit:PublicoPorMinuto", _publicoPorMinuto.ToString());
+        builder.UseSetting("RateLimit:LeadsPorContaPorHora", _leadsPorContaPorHora.ToString());
         builder.UseSetting("Swagger:Enabled", "false");
         builder.UseSetting("Asaas:WebhookToken", AsaasDeTeste.TokenWebhook);
         builder.UseSetting("Asaas:DiagnosticoNoNavegador", "true");
