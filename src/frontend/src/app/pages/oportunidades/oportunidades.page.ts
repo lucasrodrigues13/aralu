@@ -801,7 +801,7 @@ matTooltip="Ações do lead"
                 </button>
                 <mat-menu #menu="matMenu">
                   <button mat-menu-item type="button" (click)="abrir(item)"><mat-icon>edit</mat-icon> Editar</button>
-                  <button mat-menu-item type="button" (click)="briefing(item)"><mat-icon>quiz</mat-icon> Briefing</button>
+                  <button mat-menu-item type="button" (click)="briefing(item)"><mat-icon>quiz</mat-icon> Briefing / enviar ao cliente</button>
                   @for (destino of estagios(); track destino.id; let j = $index) {
                     @if (destino.id !== item.estagioId) {
                       <button mat-menu-item type="button" (click)="mover(item, destino)">
@@ -863,9 +863,7 @@ matTooltip="Ações do lead"
                   <li class="linha-retorno" [class.text-error]="sit === 'atrasado'" [class.text-warning]="sit === 'hoje'">
                     <mat-icon>event</mat-icon>
                     <span>retornar {{ textoRetorno(item.retornarEm, item.retornarHora) }}</span>
-                    @if (sit !== 'futuro') {
-                      <button mat-button type="button" class="retornei" (click)="$event.stopPropagation(); marcarRetorno(item, 'retornei')">Retornei</button>
-                    }
+                    <button mat-button type="button" class="retornei" (click)="$event.stopPropagation(); marcarRetorno(item, 'retornei')">Retornei</button>
                   </li>
                 }
                 @if (item.proposta?.mensagem && (item.proposta?.situacao === 'Duvidas' || item.proposta?.situacao === 'Recusada')) {
@@ -1138,7 +1136,18 @@ export class OportunidadesPage implements OnInit {
   }
 
   protected briefing(item: Oportunidade): void {
-    this.dialog.open(BriefingLeadDialog, { ...DIALOG, data: { id: item.id, nome: item.nome } });
+    const contato = item.contatos?.find((c) => c.contratante && c.telefone) ?? item.contatos?.find((c) => c.telefone) ?? item.contatos?.[0];
+    this.dialog.open(BriefingLeadDialog, {
+      ...DIALOG,
+      data: {
+        id: item.id,
+        nome: item.nome,
+        contatoNome: contato?.nome ?? null,
+        telefone: contato?.telefone ?? null,
+        // SPEC-066: o código de acesso vai para o e-mail de um contato ou do contratante.
+        temEmail: !!(item.contatos?.some((c) => c.email?.trim()) || item.contratante?.email?.trim()),
+      },
+    });
   }
 
   protected abrir(item?: Oportunidade): void {

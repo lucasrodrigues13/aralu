@@ -18,8 +18,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     cabecalhos['X-Aralu-Conta'] = conta.id;
   }
 
-  // SPEC-063: a sessão do link do cliente vai num cookie; um 401 ali é o pedido de código, não sessão expirada.
-  const linkCliente = req.url.includes('/api/v1/publico/cliente/');
+  // SPEC-063 e SPEC-066: a sessão do link do cliente e do briefing vai num cookie; um 401 ali é o pedido de
+  // código, não sessão expirada.
+  const linkCliente = req.url.includes('/api/v1/publico/cliente/') || req.url.includes('/api/v1/publico/briefings/');
   const comCookie = linkCliente ? req.clone({ withCredentials: true }) : req;
   const pedido = token ? comCookie.clone({ setHeaders: cabecalhos }) : comCookie;
   return next(pedido).pipe(

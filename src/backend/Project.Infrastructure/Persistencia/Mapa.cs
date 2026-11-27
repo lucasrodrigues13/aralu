@@ -321,9 +321,25 @@ public static class Mapa
         briefingLead.ToTable("BriefingsOportunidade");
         briefingLead.HasIndex(item => item.OportunidadeId).IsUnique();
         briefingLead.Property(item => item.ModeloNome).HasMaxLength(200);
+        briefingLead.Property(item => item.TokenLink).HasMaxLength(64);
+        briefingLead.HasIndex(item => item.TokenLink).IsUnique();
         briefingLead.HasOne<Oportunidade>().WithMany().HasForeignKey(item => item.OportunidadeId).OnDelete(DeleteBehavior.Cascade);
         briefingLead.HasMany(item => item.Itens).WithOne().HasForeignKey(item => item.BriefingOportunidadeId).OnDelete(DeleteBehavior.Cascade);
         modelBuilder.Entity<ItemBriefingOportunidade>().ToTable("ItensBriefingOportunidade");
+
+        var codigoBriefing = modelBuilder.Entity<CodigoAcessoBriefing>();
+        codigoBriefing.ToTable("CodigosAcessoBriefing");
+        codigoBriefing.Property(item => item.Email).HasMaxLength(320);
+        codigoBriefing.Property(item => item.CodigoHash).HasMaxLength(64);
+        codigoBriefing.HasIndex(item => new { item.BriefingId, item.CriadoEm });
+        codigoBriefing.HasOne<BriefingOportunidade>().WithMany().HasForeignKey(item => item.BriefingId).OnDelete(DeleteBehavior.Cascade);
+
+        var sessaoBriefing = modelBuilder.Entity<SessaoBriefing>();
+        sessaoBriefing.ToTable("SessoesBriefing");
+        sessaoBriefing.Property(item => item.TokenHash).HasMaxLength(64);
+        sessaoBriefing.HasIndex(item => new { item.BriefingId, item.TokenHash }).IsUnique();
+        sessaoBriefing.HasOne<BriefingOportunidade>().WithMany().HasForeignKey(item => item.BriefingId).OnDelete(DeleteBehavior.Cascade);
+
         modelBuilder.Entity<ResponsavelTarefaFunil>().ToTable("ResponsaveisTarefaFunil");
         modelBuilder.Entity<ResponsavelTarefaFunil>().Property(item => item.Papel).HasConversion<string>();
         modelBuilder.Entity<TarefaFunil>().HasMany(item => item.Responsaveis).WithOne().HasForeignKey(item => item.TarefaFunilId).OnDelete(DeleteBehavior.Cascade);

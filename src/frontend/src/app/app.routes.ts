@@ -4,6 +4,7 @@ import { adminGuard, authGuard, donaGuard, financeiroGuard, moduloGuard } from '
 export const routes: Routes = [
   { path: 'rsvp/:token', loadComponent: () => import('./pages/rsvp/rsvp.page').then((m) => m.RsvpPage) },
   { path: 'proposta/:token', loadComponent: () => import('./pages/proposta-publica/proposta-publica.page').then((m) => m.PropostaPublicaPage) },
+  { path: 'briefing/:token', loadComponent: () => import('./pages/briefing-publico/briefing-publico.page').then((m) => m.BriefingPublicoPage) },
   { path: 'cliente/:token', loadComponent: () => import('./pages/link-cliente/link-cliente.page').then((m) => m.LinkClientePage) },
   { path: 'portaria/:token', loadComponent: () => import('./pages/portaria/portaria.page').then((m) => m.PortariaPage) },
   {

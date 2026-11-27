@@ -189,6 +189,7 @@ Project.Api.Conta.AdminEndpoints.Mapear(app);
 NegocioEndpoints.Mapear(app);
 DinheiroEndpoints.Mapear(app);
 LinkClienteEndpoints.Mapear(app);
+BriefingPublicoEndpoints.Mapear(app);
 PortariaEndpoints.Mapear(app);
 ContratoEndpoints.Mapear(app);
 

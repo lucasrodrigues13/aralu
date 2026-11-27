@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
 using Project.Application.Comum;
 using Project.Domain.Funil;
@@ -6,7 +7,16 @@ namespace Project.Infrastructure.Persistencia;
 
 public sealed record ItemBriefingLeadLeitura(Guid Id, string? Secao, string Pergunta, string? Resposta);
 
-public sealed record BriefingLeadLeitura(Guid? ModeloId, string ModeloNome, DateTimeOffset AplicadoEm, IReadOnlyList<ItemBriefingLeadLeitura> Itens);
+public sealed record BriefingLeadLeitura(
+    Guid? ModeloId,
+    string ModeloNome,
+    DateTimeOffset AplicadoEm,
+    IReadOnlyList<ItemBriefingLeadLeitura> Itens,
+    string? Token = null,
+    DateTimeOffset? LiberadoEm = null,
+    DateTimeOffset? RespondidoEm = null,
+    DateTimeOffset? ValidoAte = null,
+    DateTimeOffset? ConcluidoEm = null);
 
 public sealed record AplicarBriefingLead(Guid? ModeloId);
 
@@ -53,6 +63,10 @@ public sealed class BriefingLeadServico(AppDbContext banco)
             return Resultado<BriefingLeadLeitura?>.Erro(Codigos.Validacao, "Escolha o modelo de briefing.");
         }
 
+        var anterior = await banco.BriefingsOportunidade.AsNoTracking()
+            .Where(item => item.ContaId == contaId && item.OportunidadeId == oportunidadeId)
+            .Select(item => new { item.TokenLink, item.LiberadoEm, item.ValidoAte, item.ConcluidoEm })
+            .FirstOrDefaultAsync(ct);
         await banco.BriefingsOportunidade
             .Where(item => item.ContaId == contaId && item.OportunidadeId == oportunidadeId)
             .ExecuteDeleteAsync(ct);
@@ -65,6 +79,11 @@ public sealed class BriefingLeadServico(AppDbContext banco)
             ModeloBriefingId = modelo.Id,
             ModeloNome = modelo.Nome,
             AplicadoEm = DateTimeOffset.UtcNow,
+            // Trocar o modelo mantém o mesmo link: quem já recebeu passa a ver as perguntas novas.
+            TokenLink = anterior?.TokenLink,
+            LiberadoEm = anterior?.LiberadoEm,
+            ValidoAte = anterior?.ValidoAte,
+            ConcluidoEm = anterior?.ConcluidoEm,
         };
         var ordem = 0;
         foreach (var secao in modelo.Secoes.OrderBy(item => item.Ordem))
@@ -130,15 +149,72 @@ public sealed class BriefingLeadServico(AppDbContext banco)
             : Resultado<bool>.Sucesso(true);
     }
 
+    /// <summary>
+    /// Libera o briefing para o cliente responder pelo link (SPEC-066). Exige um contato com e-mail, que recebe o
+    /// código de acesso. Cada liberação vale <see cref="BriefingOportunidade.DiasDeValidade"/> dias e reabre um
+    /// briefing concluído. Repetir não troca o token.
+    /// </summary>
+    public async Task<Resultado<BriefingLeadLeitura?>> LiberarAsync(Guid contaId, Guid oportunidadeId, DateTimeOffset agora, CancellationToken ct)
+    {
+        var briefing = await banco.BriefingsOportunidade
+            .Include(item => item.Itens)
+            .FirstOrDefaultAsync(item => item.ContaId == contaId && item.OportunidadeId == oportunidadeId, ct);
+        if (briefing is null)
+        {
+            return Resultado<BriefingLeadLeitura?>.Erro(Codigos.Indisponivel, "Aplique um modelo de briefing antes de enviar ao cliente.");
+        }
+
+        if ((await BriefingAcessoServico.EmailsDoLeadAsync(banco, oportunidadeId, ct)).Count == 0)
+        {
+            return Resultado<BriefingLeadLeitura?>.Erro(Codigos.Validacao, SemEmail);
+        }
+
+        briefing.TokenLink ??= NovoToken();
+        briefing.LiberadoEm = agora;
+        briefing.ValidoAte = agora.AddDays(BriefingOportunidade.DiasDeValidade);
+        briefing.ConcluidoEm = null;
+        await banco.SaveChangesAsync(ct);
+        return Resultado<BriefingLeadLeitura?>.Sucesso(Ler(briefing));
+    }
+
+    public const string SemEmail = "Cadastre o e-mail do contato para enviar o briefing. O cliente recebe nele o código de acesso.";
+
+    /// <summary>Fecha o link na hora e derruba as sessões abertas.</summary>
+    public async Task<Resultado<BriefingLeadLeitura?>> EncerrarAsync(Guid contaId, Guid oportunidadeId, CancellationToken ct)
+    {
+        var briefing = await banco.BriefingsOportunidade
+            .Include(item => item.Itens)
+            .FirstOrDefaultAsync(item => item.ContaId == contaId && item.OportunidadeId == oportunidadeId, ct);
+        if (briefing is null)
+        {
+            return Resultado<BriefingLeadLeitura?>.Erro(Codigos.Indisponivel, "Indisponível.");
+        }
+
+        briefing.LiberadoEm = null;
+        briefing.ValidoAte = null;
+        await banco.SessoesBriefing.Where(item => item.BriefingId == briefing.Id).ExecuteDeleteAsync(ct);
+        await banco.CodigosAcessoBriefing.Where(item => item.BriefingId == briefing.Id).ExecuteDeleteAsync(ct);
+        await banco.SaveChangesAsync(ct);
+        return Resultado<BriefingLeadLeitura?>.Sucesso(Ler(briefing));
+    }
+
+    private static string NovoToken() =>
+        Convert.ToBase64String(RandomNumberGenerator.GetBytes(32)).Replace('+', '-').Replace('/', '_').TrimEnd('=');
+
     private Task<bool> LeadDaContaAsync(Guid contaId, Guid oportunidadeId, CancellationToken ct) =>
         banco.Oportunidades.AnyAsync(item => item.ContaId == contaId && item.Id == oportunidadeId, ct);
 
-    private static BriefingLeadLeitura Ler(BriefingOportunidade briefing) => new(
+    internal static BriefingLeadLeitura Ler(BriefingOportunidade briefing) => new(
         briefing.ModeloBriefingId,
         briefing.ModeloNome,
         briefing.AplicadoEm,
         briefing.Itens
             .OrderBy(item => item.Ordem)
             .Select(item => new ItemBriefingLeadLeitura(item.Id, item.Secao, item.Pergunta, item.Resposta))
-            .ToArray());
+            .ToArray(),
+        briefing.TokenLink,
+        briefing.LiberadoEm,
+        briefing.RespondidoEm,
+        briefing.ValidoAte,
+        briefing.ConcluidoEm);
 }

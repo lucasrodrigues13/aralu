@@ -150,6 +150,8 @@ public static class NegocioEndpoints
         api.MapPost("/oportunidades/{id:guid}/briefing", AplicarBriefingAoLead).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPut("/oportunidades/{id:guid}/briefing", SalvarBriefingDoLead).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapDelete("/oportunidades/{id:guid}/briefing", RemoverBriefingDoLead).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/oportunidades/{id:guid}/briefing/liberacao", LiberarBriefingDoLead).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapDelete("/oportunidades/{id:guid}/briefing/liberacao", EncerrarBriefingDoLead).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapGet("/estagios-funil", EstagiosFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPut("/estagios-funil", SalvarEstagiosFunil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
 
@@ -811,6 +813,12 @@ public static class NegocioEndpoints
             var resultado = await servico.RemoverAsync(conta, id, ct);
             return resultado.Ok ? Results.NoContent() : Falha(resultado.Falha!);
         });
+
+    private static Task<IResult> LiberarBriefingDoLead(Guid id, ClaimsPrincipal usuario, BriefingLeadServico servico, CancellationToken ct) =>
+        ComConta(usuario, async conta => await ComoBriefing(servico.LiberarAsync(conta, id, DateTimeOffset.UtcNow, ct)));
+
+    private static Task<IResult> EncerrarBriefingDoLead(Guid id, ClaimsPrincipal usuario, BriefingLeadServico servico, CancellationToken ct) =>
+        ComConta(usuario, async conta => await ComoBriefing(servico.EncerrarAsync(conta, id, ct)));
 
     private static async Task<IResult> ComoBriefing(Task<Resultado<BriefingLeadLeitura?>> tarefa)
     {

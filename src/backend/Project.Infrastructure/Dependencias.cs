@@ -99,6 +99,7 @@ public static class Dependencias
         services.AddHostedService<Project.Infrastructure.Assinaturas.ControleDiarioAssinaturas>();
         services.AddScoped<CadastroDeConta>();
         services.AddScoped<BriefingLeadServico>();
+        services.AddScoped<BriefingAcessoServico>();
         services.AddScoped<IArmazenamentoArquivo, ArmazenamentoArquivo>();
         services.AddHttpClient<IConsultaCep, ViaCepConsulta>(cliente =>
         {

@@ -110,6 +110,10 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<BriefingOportunidade> BriefingsOportunidade => Set<BriefingOportunidade>();
 
+    public DbSet<CodigoAcessoBriefing> CodigosAcessoBriefing => Set<CodigoAcessoBriefing>();
+
+    public DbSet<SessaoBriefing> SessoesBriefing => Set<SessaoBriefing>();
+
     public DbSet<LeadRsvp> LeadsRsvp => Set<LeadRsvp>();
 
     public DbSet<MetricasRsvpFunil> MetricasRsvpFunil => Set<MetricasRsvpFunil>();

@@ -2186,8 +2186,14 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<DateTimeOffset>("AplicadoEm")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateTimeOffset?>("ConcluidoEm")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<Guid>("ContaId")
                         .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("LiberadoEm")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid?>("ModeloBriefingId")
                         .HasColumnType("uuid");
@@ -2200,6 +2206,16 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.Property<Guid>("OportunidadeId")
                         .HasColumnType("uuid");
 
+                    b.Property<DateTimeOffset?>("RespondidoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TokenLink")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTimeOffset?>("ValidoAte")
+                        .HasColumnType("timestamp with time zone");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ContaId");
@@ -2209,7 +2225,56 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.HasIndex("OportunidadeId")
                         .IsUnique();
 
+                    b.HasIndex("TokenLink")
+                        .IsUnique();
+
                     b.ToTable("BriefingsOportunidade", (string)null);
+                });
+
+            modelBuilder.Entity("Project.Domain.Funil.CodigoAcessoBriefing", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BriefingId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CodigoHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)");
+
+                    b.Property<DateTimeOffset>("ExpiraEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("Invalidado")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("Tentativas")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("UsadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContaId");
+
+                    b.HasIndex("BriefingId", "CriadoEm");
+
+                    b.ToTable("CodigosAcessoBriefing", (string)null);
                 });
 
             modelBuilder.Entity("Project.Domain.Funil.ContatoOportunidade", b =>
@@ -2872,6 +2937,39 @@ namespace Project.Infrastructure.Persistencia.Migrations
                     b.HasIndex("OrcamentoFunilId");
 
                     b.ToTable("RespostasPropostaFunil");
+                });
+
+            modelBuilder.Entity("Project.Domain.Funil.SessaoBriefing", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BriefingId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ContaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CriadaEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("ExpiraEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContaId");
+
+                    b.HasIndex("BriefingId", "TokenHash")
+                        .IsUnique();
+
+                    b.ToTable("SessoesBriefing", (string)null);
                 });
 
             modelBuilder.Entity("Project.Domain.Funil.TarefaFunil", b =>
@@ -4511,6 +4609,21 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Project.Domain.Funil.CodigoAcessoBriefing", b =>
+                {
+                    b.HasOne("Project.Domain.Funil.BriefingOportunidade", null)
+                        .WithMany()
+                        .HasForeignKey("BriefingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
+                        .WithMany()
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Project.Domain.Funil.ContatoOportunidade", b =>
                 {
                     b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
@@ -4720,6 +4833,21 @@ namespace Project.Infrastructure.Persistencia.Migrations
                         .WithMany()
                         .HasForeignKey("OrcamentoFunilId")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Project.Domain.Funil.SessaoBriefing", b =>
+                {
+                    b.HasOne("Project.Domain.Funil.BriefingOportunidade", null)
+                        .WithMany()
+                        .HasForeignKey("BriefingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Project.Domain.Equipe.ContaAssessoria", null)
+                        .WithMany()
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 

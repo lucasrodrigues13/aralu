@@ -741,6 +741,38 @@ export class NegocioClient {
     return this.http.delete<void>(`${this.base}/api/v1/oportunidades/${oportunidadeId}/briefing`);
   }
 
+  /** Libera o briefing para o cliente responder pelo link (SPEC-066). */
+  liberarBriefingDoLead(oportunidadeId: string) {
+    return this.http.post<{ briefing: BriefingDoLead | null }>(`${this.base}/api/v1/oportunidades/${oportunidadeId}/briefing/liberacao`, {});
+  }
+
+  encerrarBriefingDoLead(oportunidadeId: string) {
+    return this.http.delete<{ briefing: BriefingDoLead | null }>(`${this.base}/api/v1/oportunidades/${oportunidadeId}/briefing/liberacao`);
+  }
+
+  briefingPublico(token: string) {
+    return this.http.get<BriefingPublico>(`${this.base}/api/v1/publico/briefings/${encodeURIComponent(token)}`);
+  }
+
+  /** Salva as respostas; `concluir` fecha o link (SPEC-066). Pede sessão aberta pelo código. */
+  responderBriefingPublico(token: string, respostas: { id: string; resposta: string }[], concluir = false) {
+    return this.http.put<BriefingPublico>(`${this.base}/api/v1/publico/briefings/${encodeURIComponent(token)}`, { respostas, concluir });
+  }
+
+  // Código de acesso do briefing (SPEC-066, regras da SPEC-063): a sessão volta num cookie.
+
+  acessoBriefing(token: string) {
+    return this.http.get<AcessoBriefing>(`${this.base}/api/v1/publico/briefings/${encodeURIComponent(token)}/acesso`);
+  }
+
+  pedirCodigoBriefing(token: string, emailId: string) {
+    return this.http.post<AcessoBriefing>(`${this.base}/api/v1/publico/briefings/${encodeURIComponent(token)}/acesso/codigo`, { emailId });
+  }
+
+  confirmarCodigoBriefing(token: string, codigo: string) {
+    return this.http.post<{ ok: boolean }>(`${this.base}/api/v1/publico/briefings/${encodeURIComponent(token)}/acesso/confirmar`, { codigo });
+  }
+
   clonarBriefing(id: string) {
     return this.http.post<Briefing>(`${this.base}/api/v1/modelos-briefing/${id}/clonar`, {});
   }
@@ -1543,6 +1575,34 @@ export interface BriefingDoLead {
   modeloNome: string;
   aplicadoEm: string;
   itens: { id: string; secao: string | null; pergunta: string; resposta: string | null }[];
+  /** Link público (SPEC-066): token nasce na primeira liberação. */
+  token: string | null;
+  liberadoEm: string | null;
+  respondidoEm: string | null;
+  /** Fim da liberação: o link fecha sozinho. */
+  validoAte: string | null;
+  /** O cliente clicou em "Concluir". */
+  concluidoEm: string | null;
+}
+
+/** Briefing que o cliente abre pelo link, depois do código (SPEC-066). */
+export interface BriefingPublico {
+  empresa: string | null;
+  nome: string;
+  itens: { id: string; secao: string | null; pergunta: string; resposta: string | null }[];
+  respondidoEm: string | null;
+  validoAte: string | null;
+}
+
+/** O que a página do briefing recebe antes do código: e-mails só mascarados. */
+export interface AcessoBriefing {
+  empresa: string | null;
+  nome: string;
+  emails: { id: string; email: string }[];
+  sessaoValida: boolean;
+  aguardarSegundos: number;
+  codigoEnviado: boolean;
+  enviadoPara: string | null;
 }
 
 export interface ContatoOportunidade {

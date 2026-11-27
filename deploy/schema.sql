@@ -3131,3 +3131,122 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261126235937_BriefingPeloCliente') THEN
+    ALTER TABLE "BriefingsOportunidade" ADD "ConcluidoEm" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261126235937_BriefingPeloCliente') THEN
+    ALTER TABLE "BriefingsOportunidade" ADD "LiberadoEm" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261126235937_BriefingPeloCliente') THEN
+    ALTER TABLE "BriefingsOportunidade" ADD "RespondidoEm" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261126235937_BriefingPeloCliente') THEN
+    ALTER TABLE "BriefingsOportunidade" ADD "TokenLink" character varying(64);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261126235937_BriefingPeloCliente') THEN
+    ALTER TABLE "BriefingsOportunidade" ADD "ValidoAte" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261126235937_BriefingPeloCliente') THEN
+    CREATE TABLE "CodigosAcessoBriefing" (
+        "Id" uuid NOT NULL,
+        "BriefingId" uuid NOT NULL,
+        "ContaId" uuid NOT NULL,
+        "Email" character varying(320) NOT NULL,
+        "CodigoHash" character varying(64) NOT NULL,
+        "CriadoEm" timestamp with time zone NOT NULL,
+        "ExpiraEm" timestamp with time zone NOT NULL,
+        "Tentativas" integer NOT NULL,
+        "UsadoEm" timestamp with time zone,
+        "Invalidado" boolean NOT NULL,
+        CONSTRAINT "PK_CodigosAcessoBriefing" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_CodigosAcessoBriefing_BriefingsOportunidade_BriefingId" FOREIGN KEY ("BriefingId") REFERENCES "BriefingsOportunidade" ("Id") ON DELETE CASCADE,
+        CONSTRAINT "FK_CodigosAcessoBriefing_Contas_ContaId" FOREIGN KEY ("ContaId") REFERENCES "Contas" ("Id") ON DELETE RESTRICT
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261126235937_BriefingPeloCliente') THEN
+    CREATE TABLE "SessoesBriefing" (
+        "Id" uuid NOT NULL,
+        "BriefingId" uuid NOT NULL,
+        "ContaId" uuid NOT NULL,
+        "TokenHash" character varying(64) NOT NULL,
+        "CriadaEm" timestamp with time zone NOT NULL,
+        "ExpiraEm" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_SessoesBriefing" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_SessoesBriefing_BriefingsOportunidade_BriefingId" FOREIGN KEY ("BriefingId") REFERENCES "BriefingsOportunidade" ("Id") ON DELETE CASCADE,
+        CONSTRAINT "FK_SessoesBriefing_Contas_ContaId" FOREIGN KEY ("ContaId") REFERENCES "Contas" ("Id") ON DELETE RESTRICT
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261126235937_BriefingPeloCliente') THEN
+    CREATE UNIQUE INDEX "IX_BriefingsOportunidade_TokenLink" ON "BriefingsOportunidade" ("TokenLink");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261126235937_BriefingPeloCliente') THEN
+    CREATE INDEX "IX_CodigosAcessoBriefing_BriefingId_CriadoEm" ON "CodigosAcessoBriefing" ("BriefingId", "CriadoEm");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261126235937_BriefingPeloCliente') THEN
+    CREATE INDEX "IX_CodigosAcessoBriefing_ContaId" ON "CodigosAcessoBriefing" ("ContaId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261126235937_BriefingPeloCliente') THEN
+    CREATE UNIQUE INDEX "IX_SessoesBriefing_BriefingId_TokenHash" ON "SessoesBriefing" ("BriefingId", "TokenHash");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261126235937_BriefingPeloCliente') THEN
+    CREATE INDEX "IX_SessoesBriefing_ContaId" ON "SessoesBriefing" ("ContaId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261126235937_BriefingPeloCliente') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261126235937_BriefingPeloCliente', '10.0.4');
+    END IF;
+END $EF$;
+COMMIT;
+

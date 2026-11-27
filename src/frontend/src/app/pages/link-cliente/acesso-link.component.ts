@@ -5,8 +5,16 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { Observable } from 'rxjs';
 import { AcessoLink, LinkClienteClient } from '../../core/link-cliente.client';
 import { mensagemDeErro } from '../../core/mensagem-erro';
+
+/** De onde vem o código: o link do cliente (padrão) ou outro link público, como o briefing (SPEC-066). */
+export interface PortaAcesso {
+  acesso(token: string): Observable<AcessoLink>;
+  pedirCodigo(token: string, id: string): Observable<AcessoLink>;
+  confirmarCodigo(token: string, codigo: string): Observable<unknown>;
+}
 
 /**
  * Pedido do código antes de abrir o link do cliente (SPEC-063 §6 e §10): o cliente escolhe o e-mail dele
@@ -21,7 +29,7 @@ import { mensagemDeErro } from '../../core/mensagem-erro';
         <mat-icon class="icone">lock</mat-icon>
         <h1>{{ a.evento }}</h1>
         @if (a.emails.length === 0) {
-          <p class="text-muted">Fale com a organizadora do evento.</p>
+          <p class="text-muted">{{ semEmail() }}</p>
         } @else if (!enviadoPara()) {
           <p>Para sua segurança, enviaremos um código para o seu e-mail.</p>
           <p class="text-sm text-muted">Escolha o seu e-mail:</p>
@@ -37,7 +45,7 @@ import { mensagemDeErro } from '../../core/mensagem-erro';
               <mat-label>Código</mat-label>
               <input matInput [formControl]="codigo" inputmode="numeric" autocomplete="one-time-code" maxlength="6" aria-label="Código de 6 dígitos" />
             </mat-form-field>
-            <button mat-flat-button type="submit" [disabled]="codigo.invalid || enviando()">Abrir o link</button>
+            <button mat-flat-button type="submit" [disabled]="codigo.invalid || enviando()">{{ rotuloAbrir() }}</button>
           </form>
           <button mat-button type="button" [disabled]="segundos() > 0 || enviando()" (click)="pedir(escolhido!, enviadoPara()!)">
             {{ segundos() > 0 ? 'Reenviar código em ' + tempo(segundos()) : 'Reenviar código' }}
@@ -59,7 +67,16 @@ import { mensagemDeErro } from '../../core/mensagem-erro';
   `,
 })
 export class AcessoLinkComponent implements OnInit {
-  private readonly cliente = inject(LinkClienteClient);
+  private readonly linkCliente = inject(LinkClienteClient);
+  /** Outra origem do código; sem ela, vale o link do cliente. */
+  readonly porta = input<PortaAcesso | null>(null);
+  /** Texto do botão que confere o código. */
+  readonly rotuloAbrir = input('Abrir o link');
+  /** Mensagem quando não há e-mail para enviar o código. */
+  readonly semEmail = input('Fale com a organizadora do evento.');
+  private get cliente(): PortaAcesso {
+    return this.porta() ?? this.linkCliente;
+  }
   private readonly destruir = inject(DestroyRef);
   readonly token = input.required<string>();
   /** Código certo: a sessão está no cookie e a página pode carregar. */
