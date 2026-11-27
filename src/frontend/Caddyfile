@@ -1,3 +1,10 @@
+{
+	servers {
+		# Confia no X-Forwarded-For do proxy da VPS (A06-001).
+		trusted_proxies static private_ranges
+	}
+}
+
 {$SITE_ADDRESS::80} {
 	request_body {
 		max_size 50MB

@@ -97,6 +97,7 @@ public static class ContaEndpoints
         IEmissorJwt emissor,
         AppDbContext banco,
         LogSeguranca seguranca,
+        LimiteLoginPorEmail limitePorEmail,
         HttpContext http,
         CancellationToken ct)
     {
@@ -105,6 +106,18 @@ public static class ContaEndpoints
         if (email is null || string.IsNullOrWhiteSpace(pedido.Senha))
         {
             return CredencialInvalida();
+        }
+
+        using var permissao = limitePorEmail.Tentar(email);
+        if (!permissao.IsAcquired)
+        {
+            if (permissao.TryGetMetadata(System.Threading.RateLimiting.MetadataName.RetryAfter, out var espera))
+            {
+                http.Response.Headers.RetryAfter =
+                    Math.Ceiling(espera.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture);
+            }
+
+            return Erro(StatusCodes.Status429TooManyRequests, "limite", "A ação não pode ser repetida agora.");
         }
 
         var usuario = await usuarios.FindByEmailAsync(email);
