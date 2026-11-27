@@ -60,7 +60,7 @@ export interface PortaAcesso {
   `,
   styles: `
     .acesso { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; padding: 24px 8px; }
-    .icone { font-size: 40px; width: 40px; height: 40px; color: var(--mat-sys-primary); }
+    .icone { font-size: 40px; width: 40px; height: 40px; line-height: 40px; color: var(--mat-sys-primary); }
     .emails { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 320px; }
     .codigo { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; }
     .codigo mat-form-field { width: 160px; }

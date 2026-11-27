@@ -189,10 +189,10 @@ const RESPONDIDO: Record<RespostaProposta, { titulo: string; texto: string; icon
     .botoes button { min-height: 44px; }
     .acoes { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
     .respondido { text-align: center; }
-    .respondido mat-icon { font-size: 36px; width: 36px; height: 36px; color: var(--color-success); }
+    .respondido mat-icon { font-size: 36px; width: 36px; height: 36px; line-height: 36px; color: var(--color-success); }
     .citacao { font-style: italic; overflow-wrap: anywhere; }
     .aviso { text-align: center; padding: 40px 16px; }
-    .aviso mat-icon { font-size: 40px; width: 40px; height: 40px; color: var(--mat-sys-outline); }
+    .aviso mat-icon { font-size: 40px; width: 40px; height: 40px; line-height: 40px; color: var(--mat-sys-outline); }
     .pagina-propria { display: block; width: 100%; height: 100vh; height: 100dvh; border: 0; background: #fff; }
     .faixa-assessoria { position: fixed; top: 0; left: 0; right: 0; z-index: 2; display: flex; align-items: center; gap: 8px; padding: 8px 16px;
       font-size: 13px; background: var(--color-light-warning, #faeeda); color: #633806; }

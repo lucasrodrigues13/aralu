@@ -186,7 +186,7 @@ import { AcessoLinkComponent } from './acesso-link.component';
     .topo { border-bottom: 1px solid var(--mat-sys-outline-variant); padding-bottom: 12px; }
     h1 { font-size: 22px; margin: 0; overflow-wrap: anywhere; }
     .aviso { text-align: center; padding: 32px 16px; }
-    .aviso mat-icon { font-size: 40px; width: 40px; height: 40px; color: var(--mat-sys-outline); }
+    .aviso mat-icon { font-size: 40px; width: 40px; height: 40px; line-height: 40px; color: var(--mat-sys-outline); }
     .resumo mat-card-content { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; text-align: center; }
     .rotulo { display: block; font-size: 12px; color: var(--mat-sys-outline); }
     .aba { display: grid; gap: 12px; padding-top: 16px; }

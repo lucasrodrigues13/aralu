@@ -105,7 +105,7 @@ function comoAcessoLink(a: AcessoBriefing): AcessoLink {
     .aviso { display: flex; align-items: center; gap: 8px; color: var(--mat-sys-primary); margin: 16px 0 0; }
     .acoes { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-top: 16px; }
     .fim { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; padding: 24px 8px; }
-    .icone { font-size: 40px; width: 40px; height: 40px; color: var(--mat-sys-primary); }
+    .icone { font-size: 40px; width: 40px; height: 40px; line-height: 40px; color: var(--mat-sys-primary); }
   `,
 })
 export class BriefingPublicoPage implements OnInit {

@@ -120,7 +120,7 @@ import { LeitorQrComponent } from './leitor-qr.component';
     h1 { font-size: 22px; margin: 0; overflow-wrap: anywhere; }
     .titulo { font-size: 17px; font-weight: 600; margin: 0; overflow-wrap: anywhere; }
     .aviso { text-align: center; padding: 32px 16px; }
-    .aviso mat-icon { font-size: 40px; width: 40px; height: 40px; color: var(--mat-sys-outline); }
+    .aviso mat-icon { font-size: 40px; width: 40px; height: 40px; line-height: 40px; color: var(--mat-sys-outline); }
     .resumo mat-card-content { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; text-align: center; }
     .resumo strong { font-size: 22px; }
     .rotulo { display: block; font-size: 12px; color: var(--mat-sys-outline); }
