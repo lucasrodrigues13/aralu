@@ -7,4 +7,7 @@ public static class ContaClaims
 
     /// <summary>Id do membro (tabela MembrosConta). Posto a cada pedido, não vem do JWT.</summary>
     public const string MembroId = "membro_id";
+
+    /// <summary>Hash curto do security stamp (A07-001). Diferente do stamp atual = sessão encerrada.</summary>
+    public const string Stamp = "aralu_stamp";
 }

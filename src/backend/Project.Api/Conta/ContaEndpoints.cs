@@ -136,7 +136,8 @@ public static class ContaEndpoints
         }
 
         var emailConfirmado = usuario.Email ?? email;
-        var token = emissor.Emitir(usuario.Id, emailConfirmado, papeis, membro?.ContaId.ToString());
+        var stamp = SessaoServico.HashDoStamp(await usuarios.GetSecurityStampAsync(usuario));
+        var token = emissor.Emitir(usuario.Id, emailConfirmado, papeis, membro?.ContaId.ToString(), stamp);
         return Results.Ok(new { token, email = emailConfirmado, papeis });
     }
 
@@ -211,7 +212,7 @@ public static class ContaEndpoints
         return Results.Ok(new { mensagem = "Se a conta existir, enviaremos um link para redefinir a senha." });
     }
 
-    private static async Task<IResult> RedefinirSenha(RedefinicaoPedido pedido, UserManager<ApplicationUser> usuarios)
+    private static async Task<IResult> RedefinirSenha(RedefinicaoPedido pedido, UserManager<ApplicationUser> usuarios, SessaoServico sessoes)
     {
         if (string.IsNullOrWhiteSpace(pedido.Senha))
         {
@@ -241,10 +242,22 @@ public static class ContaEndpoints
             return TokenInvalido();
         }
 
+        await sessoes.EncerrarAsync(usuario, MotivoEncerramento.SenhaRedefinida);
         return Results.Ok(new { mensagem = "Senha redefinida." });
     }
 
-    private static IResult Sair() => Results.NoContent();
+    /// <summary>Encerra a sessão em todos os dispositivos: troca o security stamp (A07-001).</summary>
+    private static async Task<IResult> Sair(ClaimsPrincipal principal, UserManager<ApplicationUser> usuarios, SessaoServico sessoes)
+    {
+        var id = principal.FindFirstValue(ClaimTypes.NameIdentifier);
+        var usuario = string.IsNullOrWhiteSpace(id) ? null : await usuarios.FindByIdAsync(id);
+        if (usuario is not null)
+        {
+            await sessoes.EncerrarAsync(usuario, MotivoEncerramento.Sair);
+        }
+
+        return Results.NoContent();
+    }
 
     private static IResult Area(ClaimsPrincipal usuario)
     {

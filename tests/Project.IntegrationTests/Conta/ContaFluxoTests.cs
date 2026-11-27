@@ -104,7 +104,67 @@ public class ContaFluxoTests
         Assert.Equal(HttpStatusCode.Forbidden, admin.StatusCode);
         Assert.Contains("não tem acesso", await admin.Content.ReadAsStringAsync(), StringComparison.Ordinal);
         Assert.Equal(HttpStatusCode.NoContent, saida.StatusCode);
-        Assert.Equal(HttpStatusCode.OK, areaDepois.StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, areaDepois.StatusCode);
+        Assert.Contains("sessao_encerrada", await areaDepois.Content.ReadAsStringAsync(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Sair_encerra_a_sessao_em_todos_os_dispositivos()
+    {
+        var email = Unico();
+        var anonimo = _banco.Fabrica.CreateClient();
+        await CadastrarEConfirmar(anonimo, email);
+        var celular = await Entrar(email, Senha);
+        var computador = await Entrar(email, Senha);
+        Assert.Equal(HttpStatusCode.OK, (await computador.GetAsync("/api/v1/conta/area")).StatusCode);
+
+        Assert.Equal(HttpStatusCode.NoContent, (await celular.PostAsync("/api/v1/conta/sair", null)).StatusCode);
+
+        var depois = await computador.GetAsync("/api/v1/conta/area");
+        Assert.Equal(HttpStatusCode.Unauthorized, depois.StatusCode);
+        Assert.Contains("sessao_encerrada", await depois.Content.ReadAsStringAsync(), StringComparison.Ordinal);
+        var novo = await Entrar(email, Senha);
+        Assert.Equal(HttpStatusCode.OK, (await novo.GetAsync("/api/v1/conta/area")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Redefinir_a_senha_invalida_o_token_antigo()
+    {
+        var email = Unico();
+        var anonimo = _banco.Fabrica.CreateClient();
+        await CadastrarEConfirmar(anonimo, email);
+        var antigo = await Entrar(email, Senha);
+        Assert.Equal(HttpStatusCode.OK, (await antigo.GetAsync("/api/v1/conta/area")).StatusCode);
+
+        await anonimo.PostAsJsonAsync("/api/v1/conta/esqueci-senha", new { email });
+        var link = Link(_banco.Fabrica.Email, email, "redefinicao");
+        Assert.Equal(HttpStatusCode.OK, (await anonimo.PostAsJsonAsync("/api/v1/conta/redefinir-senha", new { usuarioId = link.UsuarioId, token = link.Token, senha = "novasenha", confirmacao = "novasenha" })).StatusCode);
+
+        var depois = await antigo.GetAsync("/api/v1/conta/area");
+        Assert.Equal(HttpStatusCode.Unauthorized, depois.StatusCode);
+        Assert.Contains("sessao_encerrada", await depois.Content.ReadAsStringAsync(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Sair_tambem_invalida_o_token_do_admin()
+    {
+        var adminEmail = Unico();
+        const string senhaAdmin = "administrador";
+        await using var fabrica = new FabricaApi(_banco.Conexao, bootstrap: true, adminEmail: adminEmail, adminSenha: senhaAdmin);
+        await using (var escopo = fabrica.Services.CreateAsyncScope())
+        {
+            await escopo.ServiceProvider.GetRequiredService<BootstrapAdministrador>().ExecutarAsync();
+        }
+
+        var admin = await Entrar(adminEmail, senhaAdmin, fabrica.CreateClient());
+        var outraAba = await Entrar(adminEmail, senhaAdmin, fabrica.CreateClient());
+        Assert.Equal(HttpStatusCode.OK, (await outraAba.GetAsync("/api/v1/admin/area")).StatusCode);
+
+        Assert.Equal(HttpStatusCode.NoContent, (await admin.PostAsync("/api/v1/conta/sair", null)).StatusCode);
+
+        var depois = await outraAba.GetAsync("/api/v1/admin/area");
+        Assert.Equal(HttpStatusCode.Unauthorized, depois.StatusCode);
+        Assert.Contains("sessao_encerrada", await depois.Content.ReadAsStringAsync(), StringComparison.Ordinal);
     }
 
     [Fact]
@@ -417,6 +477,16 @@ public class ContaFluxoTests
         var token = Link(_banco.Fabrica.Email, email, "confirmacao").Token;
         Assert.DoesNotContain(token, corpoCadastro, StringComparison.Ordinal);
         Assert.DoesNotContain(token, logs, StringComparison.Ordinal);
+    }
+
+    private async Task<HttpClient> Entrar(string email, string senha, HttpClient? cliente = null)
+    {
+        cliente ??= _banco.Fabrica.CreateClient();
+        var entrada = await cliente.PostAsJsonAsync("/api/v1/conta/entrar", new { email, senha });
+        Assert.Equal(HttpStatusCode.OK, entrada.StatusCode);
+        var sessao = await entrada.Content.ReadFromJsonAsync<Sessao>();
+        cliente.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", sessao!.Token);
+        return cliente;
     }
 
     private async Task Cadastrar(HttpClient cliente, string email)
