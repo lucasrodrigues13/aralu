@@ -83,7 +83,7 @@ describe('Tarefas do evento no Resumo', () => {
     const raiz = montar('Concluido', []).nativeElement as HTMLElement;
 
     expect(raiz.textContent).not.toContain('Nova tarefa');
-    expect(raiz.textContent).toContain('Não há tarefa para mostrar.');
+    expect(raiz.textContent).toContain('Nenhuma tarefa ainda');
   });
 
   it('Nova tarefa abre o modal de criação', () => {

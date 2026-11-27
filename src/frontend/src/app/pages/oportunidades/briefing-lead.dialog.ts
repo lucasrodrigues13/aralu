@@ -12,6 +12,7 @@ import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { DIALOG_PEQUENO } from '../../shared/dialog';
 import { FecharModal } from '../../shared/fechar-modal';
+import { Estado } from '../../shared/estado';
 
 export interface BriefingLeadDados {
   id: string;
@@ -47,13 +48,13 @@ export function whatsappBriefing(telefone: string | null | undefined, nomeContat
 /** Briefing do lead: roteiro interno da conversa, com as respostas anotadas (SPEC-031 §6.7, ponto 4). */
 @Component({
   selector: 'app-briefing-lead-dialog',
-  imports: [FecharModal, DatePipe, FormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule],
+  imports: [FecharModal, DatePipe, FormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, Estado],
   template: `
     <h2 mat-dialog-title>Briefing de {{ dados.nome }} <app-fechar-modal /></h2>
     <p class="text-muted text-sm px-6 -mt-2 mb-4">Use as perguntas como roteiro da conversa e anote as respostas aqui.</p>
     <mat-dialog-content>
       @if (carregando()) {
-        <p class="text-center text-muted py-6">Carregando...</p>
+        <app-estado titulo="Carregando…" />
       } @else {
         <div class="flex flex-wrap items-end gap-3 mb-4">
           <div class="campo flex-1 min-w-48">

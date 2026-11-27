@@ -27,11 +27,12 @@ import { EventoAbasComponent } from '../eventos/evento-abas.component';
 import { ComprovanteDialog } from './comprovante.dialog';
 import { ParcelarPagamentoDialog } from './parcelar-pagamento.dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { Estado } from '../../shared/estado';
 
 /** Aba Financeiro do evento (SPEC-043): pagamentos a fornecedores, com parcelas, marcação de pago e comprovantes. */
 @Component({
   selector: 'app-evento-dinheiro',
-  imports: [ExpandirTodosComponent, MatCardModule, MatButtonModule, MatCheckboxModule, MatIconModule, GdDataPipe, GdDinheiroPipe, EventoAbasComponent, MatTooltipModule],
+  imports: [ExpandirTodosComponent, MatCardModule, MatButtonModule, MatCheckboxModule, MatIconModule, GdDataPipe, GdDinheiroPipe, EventoAbasComponent, MatTooltipModule, Estado],
   template: `
     <app-evento-abas [eventoId]="id" />
 
@@ -48,7 +49,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
         </div>
         <mat-card-content class="border-t border-border">
           @if (d.pagamentosFornecedores.length === 0) {
-            <p class="text-center text-muted py-10">Nenhum pagamento. Eles aparecem ao contratar um fornecedor na aba Fornecedores.</p>
+            <app-estado titulo="Nenhum pagamento ainda" texto="Eles aparecem ao contratar um fornecedor na aba Fornecedores." />
           } @else {
             <app-expandir-todos [abertos]="todosAbertos()" (alternar)="alternarTodos()">
               {{ grupos().length }} {{ grupos().length === 1 ? 'serviço' : 'serviços' }} ·

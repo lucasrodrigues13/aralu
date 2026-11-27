@@ -15,14 +15,14 @@ import { CampoHoraComponent } from '../../shared/campo-hora';
 import { horaParaApi } from '../../shared/mascaras';
 import { moverControle } from '../../shared/mestre-detalhe';
 import { FecharModal } from '../../shared/fechar-modal';
+import { Estado } from '../../shared/estado';
 
 /** Editor de roteiro em mestre e detalhe, no mesmo desenho do editor de briefing. */
 @Component({
   selector: 'app-roteiro-editor-dialog',
   imports: [FecharModal, 
     ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule,
-    MatMenuModule, MatTooltipModule, CdkDropList, CdkDrag, CdkDragHandle, CampoHoraComponent,
-  ],
+    MatMenuModule, MatTooltipModule, CdkDropList, CdkDrag, CdkDragHandle, CampoHoraComponent, Estado],
   template: `
     <h2 mat-dialog-title>{{ dados ? 'Editar roteiro' : 'Novo roteiro' }} <app-fechar-modal /></h2>
     <mat-dialog-content>
@@ -91,10 +91,9 @@ import { FecharModal } from '../../shared/fechar-modal';
                 </div>
               </div>
             } @else {
-              <div class="flex flex-col items-center gap-3 text-center text-muted py-10">
-                <p class="m-0">Crie o primeiro momento do roteiro.</p>
+              <app-estado titulo="Nenhum momento ainda" texto="Crie o primeiro momento do roteiro.">
                 <button mat-stroked-button type="button" (click)="adicionarSecao()"><mat-icon>add</mat-icon> Novo momento</button>
-              </div>
+              </app-estado>
             }
           </section>
         </div>

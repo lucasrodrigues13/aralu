@@ -25,6 +25,7 @@ import { ParcelasOrcamentoDialog } from './parcelas-orcamento.dialog';
 import { EditorRico } from '../../shared/editor-rico';
 import { abrirPreviaAceite } from '../modelos-funil/pagina-aceite';
 import { FecharModal } from '../../shared/fechar-modal';
+import { Estado } from '../../shared/estado';
 
 @Component({
   selector: 'app-orcamento-funil-dialog',
@@ -380,7 +381,7 @@ export class RespostaManualDialog {
 
 @Component({
   selector: 'app-orcamentos-funil',
-  imports: [MatButtonToggleModule, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatCheckboxModule, MatTooltipModule, MatMenuModule, GdDataPipe],
+  imports: [MatButtonToggleModule, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatCheckboxModule, MatTooltipModule, MatMenuModule, GdDataPipe, Estado],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6">
@@ -406,8 +407,10 @@ export class RespostaManualDialog {
           <button mat-flat-button type="button" (click)="abrir()"><mat-icon>add</mat-icon> Novo orçamento</button>
         </div>
       </div>
-      @if (lista().length === 0) {
-        <p class="text-center text-muted py-10">Não há orçamento nesta aba.</p>
+      @if (!carregado()) {
+        <app-estado titulo="Carregando…" />
+      } @else if (lista().length === 0) {
+        <app-estado [titulo]="busca() ? 'Nada encontrado' : 'Nenhum orçamento ainda'" [texto]="busca() ? 'Mude a busca ou os filtros.' : undefined" />
       } @else {
         <table mat-table class="min-w-full" [dataSource]="lista()">
           <ng-container matColumnDef="oportunidade">
@@ -477,6 +480,7 @@ export class OrcamentosFunilPage implements OnInit {
     { valor: 'Cancelado', rotulo: 'Cancelados' },
   ];
   protected readonly situacao = signal('EmAndamento');
+  protected readonly carregado = signal(false);
   protected readonly busca = signal('');
   protected readonly lista = signal<OrcamentoFunil[]>([]);
   protected readonly colunas = ['oportunidade', 'criadoEm', 'proposta', 'acoes'];
@@ -550,8 +554,8 @@ export class OrcamentosFunilPage implements OnInit {
 
   protected carregar(): void {
     this.negocio.orcamentosFunil({ situacao: this.situacao(), busca: this.busca() || undefined }).subscribe({
-      next: (lista) => this.lista.set(lista),
-      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+      next: (lista) => { this.lista.set(lista); this.carregado.set(true); },
+      error: (erro: unknown) => { this.carregado.set(true); this.toast.erro(mensagemDeErro(erro)); },
     });
   }
 }

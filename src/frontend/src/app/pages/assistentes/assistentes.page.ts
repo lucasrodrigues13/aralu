@@ -11,12 +11,14 @@ import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { AssistenteFormDialog } from './assistente-form.dialog';
+import { Estado } from '../../shared/estado';
+import { STATUS } from '../../shared/status';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 /** Configurações → Assistentes (só o Dono, SPEC-062 §13): convidar Dono ou Membro, mudar tipo e grupo, reenviar, desativar e reativar. */
 @Component({
   selector: 'app-assistentes',
-  imports: [MatCardModule, MatButtonModule, MatIconModule, MatTooltipModule, MatFormFieldModule, MatSelectModule],
+  imports: [MatCardModule, MatButtonModule, MatIconModule, MatTooltipModule, MatFormFieldModule, MatSelectModule, Estado],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6">
@@ -37,15 +39,15 @@ import { MatTooltipModule } from '@angular/material/tooltip';
             </div>
           </div>
           <div class="barra-lista-acoes">
-            <button mat-flat-button type="button" (click)="convidar()"><mat-icon>person_add</mat-icon> Convidar pessoa</button>
+            <button mat-flat-button type="button" (click)="convidar()"><mat-icon>add</mat-icon> Convidar pessoa</button>
           </div>
         </div>
         @if (carregando()) {
-          <p class="text-center text-muted py-10">Carregando...</p>
+          <app-estado titulo="Carregando…" />
         } @else if (itens().length === 0) {
-          <p class="text-center text-muted py-10">Ninguém na equipe ainda. Convide a primeira pessoa.</p>
+          <app-estado titulo="Nenhuma pessoa ainda" texto="Convide a primeira pessoa." />
         } @else if (visiveis().length === 0) {
-          <p class="text-center text-muted py-10">{{ filtro() === 'inativas' ? 'Ninguém com acesso desativado.' : 'Ninguém ativo.' }}</p>
+          <app-estado titulo="Nada encontrado" texto="Mude a busca ou os filtros." />
         } @else {
           <div>
             <table class="tabela">
@@ -66,9 +68,9 @@ import { MatTooltipModule } from '@angular/material/tooltip';
                     <td>{{ item.email }}</td>
                     <td>
                       @switch (item.situacao) {
-                        @case ('Ativa') { <span [class]="selo('success')">Ativa</span> }
-                        @case ('Inativa') { <span [class]="selo('error')">Acesso desativado</span> }
-                        @default { <span [class]="selo('warning')">Convite enviado</span> }
+                        @case ('Ativa') { <span [class]="STATUS.sucesso">Ativa</span> }
+                        @case ('Inativa') { <span [class]="STATUS.erro">Acesso desativado</span> }
+                        @default { <span [class]="STATUS.alerta">Convite enviado</span> }
                       }
                     </td>
                     <td>{{ item.tipo }}</td>
@@ -99,6 +101,7 @@ export class AssistentesPage implements OnInit {
   private readonly dialog = inject(MatDialog);
   private readonly toast = inject(ToastService);
   protected readonly itens = signal<Assistente[]>([]);
+  protected readonly STATUS = STATUS;
   protected readonly carregando = signal(true);
   protected readonly filtro = signal<'ativas' | 'inativas'>('ativas');
   protected readonly visiveis = computed(() =>
@@ -107,10 +110,6 @@ export class AssistentesPage implements OnInit {
 
   ngOnInit(): void {
     this.carregar();
-  }
-
-  protected selo(cor: 'success' | 'warning' | 'error'): string {
-    return `inline-block rounded font-semibold px-2 py-1 text-xs whitespace-nowrap bg-light-${cor} text-${cor}`;
   }
 
   protected convidar(): void {

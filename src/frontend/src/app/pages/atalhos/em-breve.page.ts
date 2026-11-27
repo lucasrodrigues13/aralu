@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
+import { Estado } from '../../shared/estado';
 
 const TITULOS: Record<string, string> = {
   pagamentos: 'Pagamentos',
@@ -11,7 +12,7 @@ const TITULOS: Record<string, string> = {
 
 @Component({
   selector: 'app-em-breve',
-  imports: [MatCardModule],
+  imports: [MatCardModule, Estado],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6 flex flex-wrap items-center justify-between gap-4">
@@ -21,7 +22,7 @@ const TITULOS: Record<string, string> = {
       </div>
     </div>
       <mat-card-content class="border-t border-border">
-      <p class="text-center text-muted py-10">Em breve — módulo em construção</p>
+      <app-estado titulo="Em breve" texto="Módulo em construção." />
     </mat-card-content>
     </mat-card>
   `,

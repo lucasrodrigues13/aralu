@@ -30,6 +30,7 @@ import { NegocioClient } from '../../core/negocio.client';
 import { FolhaContrato } from './folha-contrato';
 import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
+import { Estado } from '../../shared/estado';
 import { DIALOG_LARGO, DIALOG_PEQUENO, DIALOG_PREVIA } from '../../shared/dialog';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { filtrarCampos, previaDestacada, tagsDesconhecidas } from './mesclagem';
@@ -717,7 +718,7 @@ export class ContratoDialog {
 /** Tela Contratos (SPEC-030 §6.1): lista e botão "Novo contrato" acima da tabela. */
 @Component({
   selector: 'app-contratos',
-  imports: [MatCardModule, MatButtonModule, MatIconModule, MatFormFieldModule, MatInputModule, GdDataPipe, MatTooltipModule],
+  imports: [MatCardModule, MatButtonModule, MatIconModule, MatFormFieldModule, MatInputModule, GdDataPipe, MatTooltipModule, Estado],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6">
@@ -741,8 +742,10 @@ export class ContratoDialog {
           <button mat-flat-button type="button" (click)="abrir()"><mat-icon>add</mat-icon> Novo modelo</button>
         </div>
       </div>
-      @if (visiveis().length === 0) {
-        <p class="text-center text-muted py-10">{{ contratos().length === 0 ? 'Nenhum modelo cadastrado.' : 'Nenhum modelo com esse nome.' }}</p>
+      @if (!carregado()) {
+        <app-estado titulo="Carregando…" />
+      } @else if (visiveis().length === 0) {
+        <app-estado [titulo]="contratos().length === 0 ? 'Nenhum modelo ainda' : 'Nada encontrado'" [texto]="contratos().length === 0 ? undefined : 'Mude a busca ou os filtros.'" />
       } @else {
         <table class="tabela">
           <thead><tr><th>Nome</th><th>Tipo</th><th>Atualizado em</th><th class="text-end! whitespace-nowrap">Ações</th></tr></thead>
@@ -770,6 +773,7 @@ export class ContratosPage implements OnInit {
   private readonly dialog = inject(MatDialog);
   private readonly toast = inject(ToastService);
   protected readonly contratos = signal<ContratoResumo[]>([]);
+  protected readonly carregado = signal(false);
   protected readonly busca = signal('');
   private campos: CampoMesclagem[] = [];
 
@@ -841,8 +845,8 @@ export class ContratosPage implements OnInit {
 
   private carregar(): void {
     this.contratoClient.listar().subscribe({
-      next: (lista) => this.contratos.set(lista),
-      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+      next: (lista) => { this.contratos.set(lista); this.carregado.set(true); },
+      error: (erro: unknown) => { this.carregado.set(true); this.toast.erro(mensagemDeErro(erro)); },
     });
   }
 }

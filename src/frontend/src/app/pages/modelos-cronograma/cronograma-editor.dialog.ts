@@ -19,14 +19,14 @@ import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { horaParaApi } from '../../shared/mascaras';
 import { moverControle } from '../../shared/mestre-detalhe';
 import { FecharModal } from '../../shared/fechar-modal';
+import { Estado } from '../../shared/estado';
 
 /** Editor de cronograma em mestre e detalhe: itens à esquerda, campos do item escolhido à direita. */
 @Component({
   selector: 'app-cronograma-editor-dialog',
   imports: [FecharModal, 
     ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule,
-    MatMenuModule, MatSelectModule, MatTooltipModule, CdkDropList, CdkDrag, CampoDataComponent, CampoHoraComponent, GdDataPipe,
-  ],
+    MatMenuModule, MatSelectModule, MatTooltipModule, CdkDropList, CdkDrag, CampoDataComponent, CampoHoraComponent, GdDataPipe, Estado],
   template: `
     <h2 mat-dialog-title>{{ dados ? 'Editar cronograma' : 'Novo cronograma' }} <app-fechar-modal /></h2>
     <mat-dialog-content>
@@ -102,10 +102,9 @@ import { FecharModal } from '../../shared/fechar-modal';
                 </div>
               </div>
             } @else {
-              <div class="flex flex-col items-center gap-3 text-center text-muted py-10">
-                <p class="m-0">Crie o primeiro item do cronograma.</p>
+              <app-estado titulo="Nenhum item ainda" texto="Crie o primeiro item do cronograma.">
                 <button mat-stroked-button type="button" (click)="adicionarItem()"><mat-icon>add</mat-icon> Novo item</button>
-              </div>
+              </app-estado>
             }
           </section>
         </div>

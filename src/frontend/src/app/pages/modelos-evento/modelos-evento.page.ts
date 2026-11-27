@@ -17,6 +17,7 @@ import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { ImportarTarefasModeloDialog } from './importar-tarefas-modelo.dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { FecharModal } from '../../shared/fechar-modal';
+import { Estado } from '../../shared/estado';
 
 @Component({
   selector: 'app-criar-modelo-dialog',
@@ -76,7 +77,7 @@ export class CriarModeloDialog {
 
 @Component({
   selector: 'app-modelos-evento',
-  imports: [MatCardModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatTooltipModule],
+  imports: [MatCardModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatTooltipModule, Estado],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6">
@@ -98,7 +99,7 @@ export class CriarModeloDialog {
         </div>
         <div class="barra-lista-acoes">
           <button mat-stroked-button type="button" (click)="importar()">
-          <mat-icon>upload</mat-icon>
+          <mat-icon>upload_file</mat-icon>
           Importar modelo
           </button>
           <button mat-flat-button type="button" (click)="criar()">
@@ -107,8 +108,10 @@ export class CriarModeloDialog {
           </button>
         </div>
       </div>
-      @if (modelos().length === 0) {
-        <p class="text-center text-muted py-10">Não há modelo cadastrado.</p>
+      @if (!carregado()) {
+        <app-estado titulo="Carregando…" />
+      } @else if (modelos().length === 0) {
+        <app-estado [titulo]="busca() ? 'Nada encontrado' : 'Nenhum modelo ainda'" [texto]="busca() ? 'Mude a busca ou os filtros.' : undefined" />
       } @else {
         <table mat-table class="min-w-full" [dataSource]="modelos()">
           <ng-container matColumnDef="nome">
@@ -147,6 +150,7 @@ export class ModelosEventoPage implements OnInit {
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
   protected readonly modelos = signal<Modelo[]>([]);
+  protected readonly carregado = signal(false);
   protected readonly busca = signal('');
   protected readonly colunas = ['nome', 'tipo', 'pacote', 'acoes'];
   protected readonly tipos = TIPOS;
@@ -212,8 +216,8 @@ export class ModelosEventoPage implements OnInit {
 
   private carregar(): void {
     this.negocio.modelos(this.busca()).subscribe({
-      next: (lista) => this.modelos.set(lista),
-      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+      next: (lista) => { this.modelos.set(lista); this.carregado.set(true); },
+      error: (erro: unknown) => { this.carregado.set(true); this.toast.erro(mensagemDeErro(erro)); },
     });
   }
 }

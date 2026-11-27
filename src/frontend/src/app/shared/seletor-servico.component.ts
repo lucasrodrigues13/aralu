@@ -39,7 +39,7 @@ const SEM_SERVICO = '__sem-servico__';
         [matAutocomplete]="lista"
       />
       @if (valor() && !desligado()) {
-        <button matIconSuffix mat-icon-button type="button" aria-label="Tirar o serviço" matTooltip="Tirar o serviço" (click)="escolher(semServico)"><mat-icon>close</mat-icon></button>
+        <button matIconSuffix mat-icon-button type="button" aria-label="Remover serviço" matTooltip="Remover serviço" (click)="escolher(semServico)"><mat-icon>close</mat-icon></button>
       }
       <mat-autocomplete #lista="matAutocomplete" class="painel-com-criar" (optionSelected)="escolher($event.option.value); busca.blur()">
         <mat-option class="opcao-criar" [value]="novoServico"><mat-icon>add</mat-icon> Adicionar serviço</mat-option>

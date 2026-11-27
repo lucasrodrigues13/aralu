@@ -72,7 +72,7 @@ type Vinculo = EventoServico['fornecedores'][number];
                           <button mat-button type="button" (click)="abrir(contrato.arquivoId, false)"><mat-icon>open_in_new</mat-icon> Abrir</button>
                           <button mat-button type="button" (click)="abrir(contrato.arquivoId, true, contrato.nome)"><mat-icon>download</mat-icon> Baixar</button>
                           <button mat-button type="button" (click)="enviar(grupo.servicoId, vinculo)"><mat-icon>upload_file</mat-icon> Nova versão</button>
-                          <button mat-icon-button type="button" aria-label="Excluir contrato" matTooltip="Excluir contrato" (click)="excluir(grupo.servicoId, vinculo)"><mat-icon>delete</mat-icon></button>
+                          <button mat-icon-button type="button" aria-label="Excluir" matTooltip="Excluir" (click)="excluir(grupo.servicoId, vinculo)"><mat-icon>delete</mat-icon></button>
                         </div>
                       } @else {
                         <div class="text-sm text-muted sem-contrato">Nenhum contrato enviado</div>

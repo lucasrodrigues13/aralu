@@ -24,12 +24,13 @@ import { ChecklistTarefaComponent } from './checklist-tarefa';
 import { exibirPrazoRelativo } from '../../shared/prazo-modelo';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { FecharModal } from '../../shared/fechar-modal';
+import { Estado } from '../../shared/estado';
 
 export type AcaoLeitura = 'editar' | 'mudou' | false;
 
 @Component({
   selector: 'app-tarefa-leitura',
-  imports: [FecharModal, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, GdDataPipe, ChecklistTarefaComponent, MatTooltipModule],
+  imports: [FecharModal, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, GdDataPipe, ChecklistTarefaComponent, MatTooltipModule, Estado],
   template: `
     <h2 mat-dialog-title>{{ tarefa().titulo }} <app-fechar-modal [manual]="true" (fechar)="fechar()" /></h2>
     <p class="text-muted text-sm px-6 -mt-2 mb-4">{{ tarefa().evento }}</p>
@@ -50,7 +51,7 @@ export type AcaoLeitura = 'editar' | 'mudou' | false;
       </button>
       @if (checklistAberto()) {
         @if (tarefa().checklist.length === 0) {
-          <p class="text-center text-muted py-10">Nenhum item.</p>
+          <app-estado titulo="Nenhum item ainda" />
         } @else {
           <app-checklist-tarefa [tarefa]="tarefa()" [opcoes]="opcoes()" [editavel]="tarefa().eventoEmAndamento" (mudou)="checklistMudou($event)" />
         }
@@ -62,7 +63,7 @@ export type AcaoLeitura = 'editar' | 'mudou' | false;
       </button>
       @if (anexosAberto()) {
         @if (tarefa().anexos.length === 0) {
-          <p class="text-center text-muted py-10">Nenhum anexo.</p>
+          <app-estado titulo="Nenhum anexo ainda" />
         } @else {
           <ul class="anexos">
             @for (anexo of tarefa().anexos; track anexo.id) {
@@ -88,7 +89,7 @@ export type AcaoLeitura = 'editar' | 'mudou' | false;
 
       <h3>Comentários</h3>
       @if (tarefa().comentarios.length === 0) {
-        <p class="text-center text-muted py-10">Nenhum comentário.</p>
+        <app-estado titulo="Nenhum comentário ainda" />
       } @else {
         <ul>
           @for (comentario of tarefa().comentarios; track comentario.id) {

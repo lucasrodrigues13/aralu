@@ -8,13 +8,14 @@ import { AssistentesClient, GrupoAcesso, MODULOS_GRUPO } from '../../core/assist
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
+import { Estado } from '../../shared/estado';
 import { DIALOG_LARGO, DIALOG_PEQUENO } from '../../shared/dialog';
 import { GrupoFormDialog } from './grupo-form.dialog';
 
-/** Configurações → Grupos (só o Dono, SPEC-062 §13): lista com número de membros, criar, editar e apagar. */
+/** Configurações → Grupos (só o Dono, SPEC-062 §13): lista com número de membros, criar, editar e excluir. */
 @Component({
   selector: 'app-grupos',
-  imports: [MatCardModule, MatButtonModule, MatIconModule, MatTooltipModule],
+  imports: [MatCardModule, MatButtonModule, MatIconModule, MatTooltipModule, Estado],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6">
@@ -25,13 +26,13 @@ import { GrupoFormDialog } from './grupo-form.dialog';
         <div class="barra-lista">
           <div class="barra-lista-filtros"></div>
           <div class="barra-lista-acoes">
-            <button mat-flat-button type="button" (click)="abrir()"><mat-icon>group_add</mat-icon> Novo grupo</button>
+            <button mat-flat-button type="button" (click)="abrir()"><mat-icon>add</mat-icon> Novo grupo</button>
           </div>
         </div>
         @if (carregando()) {
-          <p class="text-center text-muted py-10">Carregando...</p>
+          <app-estado titulo="Carregando…" />
         } @else if (itens().length === 0) {
-          <p class="text-center text-muted py-10">Nenhum grupo. Crie um para convidar membros.</p>
+          <app-estado titulo="Nenhum grupo ainda" texto="Crie um para convidar membros." />
         } @else {
           <table class="tabela">
             <thead>
@@ -52,7 +53,7 @@ import { GrupoFormDialog } from './grupo-form.dialog';
                   <td>{{ modulosQueVe(item) }}</td>
                   <td class="text-end! whitespace-nowrap">
                     <button mat-icon-button type="button" aria-label="Editar" matTooltip="Editar" (click)="abrir(item)"><mat-icon>edit</mat-icon></button>
-                    <button mat-icon-button type="button" aria-label="Excluir" matTooltip="Excluir" (click)="apagar(item)"><mat-icon>delete</mat-icon></button>
+                    <button mat-icon-button type="button" aria-label="Excluir" matTooltip="Excluir" (click)="excluir(item)"><mat-icon>delete</mat-icon></button>
                   </td>
                 </tr>
               }
@@ -89,7 +90,7 @@ export class GruposPage implements OnInit {
       });
   }
 
-  protected apagar(grupo: GrupoAcesso): void {
+  protected excluir(grupo: GrupoAcesso): void {
     if (grupo.membros > 0) {
       this.toast.erro(grupo.membros === 1 ? 'Mova o membro deste grupo antes de apagá-lo.' : `Mova os ${grupo.membros} membros deste grupo antes de apagá-lo.`);
       return;
@@ -98,7 +99,7 @@ export class GruposPage implements OnInit {
     this.dialog
       .open(ConfirmaDialog, {
         ...DIALOG_PEQUENO,
-        data: { titulo: 'Apagar grupo', texto: `O grupo ${grupo.nome} será apagado.`, confirmar: 'Apagar grupo', destrutivo: true },
+        data: { titulo: 'Excluir grupo', texto: `O grupo ${grupo.nome} será excluído.`, confirmar: 'Excluir grupo', destrutivo: true },
       })
       .afterClosed()
       .subscribe((confirmou) => {

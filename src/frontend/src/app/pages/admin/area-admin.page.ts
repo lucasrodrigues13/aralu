@@ -76,7 +76,7 @@ export class AreaAdminPage implements OnInit {
   private readonly assistentes = inject(AssistentesClient);
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
-  protected readonly status = signal('Carregando...');
+  protected readonly status = signal('Carregando…');
   protected readonly usuarios = signal<UsuarioAdmin[]>([]);
   protected readonly contas = signal<ContaComAssistentes[]>([]);
 

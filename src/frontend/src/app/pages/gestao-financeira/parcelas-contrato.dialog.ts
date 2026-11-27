@@ -14,6 +14,7 @@ import { linkWhatsapp, textoCobranca } from '../dinheiro/cobranca';
 import { ChavePixDialog, ReceberDialog } from '../dinheiro/dinheiro.dialogs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { FecharModal } from '../../shared/fechar-modal';
+import { Estado } from '../../shared/estado';
 
 /**
  * Parcelas do contrato com o cliente (SPEC-040): cobrar pelo WhatsApp, registrar o que o cliente pagou
@@ -21,7 +22,7 @@ import { FecharModal } from '../../shared/fechar-modal';
  */
 @Component({
   selector: 'app-parcelas-contrato-dialog',
-  imports: [FecharModal, MatDialogModule, MatButtonModule, MatIconModule, MatMenuModule, GdDataPipe, GdDinheiroPipe, MatTooltipModule],
+  imports: [FecharModal, MatDialogModule, MatButtonModule, MatIconModule, MatMenuModule, GdDataPipe, GdDinheiroPipe, MatTooltipModule, Estado],
   template: `
     <h2 mat-dialog-title>Parcelas do contrato <app-fechar-modal /></h2>
     @if (contrato(); as c) {
@@ -30,9 +31,7 @@ import { FecharModal } from '../../shared/fechar-modal';
       </p>
       <mat-dialog-content>
         @if (c.parcelas.length === 0) {
-          <p class="text-center text-muted py-6">
-            Este contrato não tem parcelas. Elas vêm do orçamento aceito: defina as parcelas no orçamento antes de gerar o contrato.
-          </p>
+          <app-estado titulo="Nenhuma parcela ainda" texto="Elas vêm do orçamento aceito: defina as parcelas no orçamento antes de gerar o contrato." />
         } @else {
           <div class="relative">
             <table class="tabela">

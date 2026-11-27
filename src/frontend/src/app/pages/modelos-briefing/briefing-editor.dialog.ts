@@ -13,6 +13,7 @@ import { Briefing, NegocioClient } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { moverControle } from '../../shared/mestre-detalhe';
 import { FecharModal } from '../../shared/fechar-modal';
+import { Estado } from '../../shared/estado';
 
 /**
  * Editor de modelo de briefing em mestre e detalhe: seções à esquerda, a seção escolhida à direita
@@ -22,8 +23,7 @@ import { FecharModal } from '../../shared/fechar-modal';
   selector: 'app-briefing-editor-dialog',
   imports: [FecharModal, 
     ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule,
-    MatMenuModule, MatTooltipModule, CdkDropList, CdkDrag, CdkDragHandle,
-  ],
+    MatMenuModule, MatTooltipModule, CdkDropList, CdkDrag, CdkDragHandle, Estado],
   template: `
     <h2 mat-dialog-title>{{ dados ? 'Editar briefing' : 'Novo briefing' }} <app-fechar-modal /></h2>
     <mat-dialog-content>
@@ -96,10 +96,9 @@ import { FecharModal } from '../../shared/fechar-modal';
                 </div>
               </div>
             } @else {
-              <div class="flex flex-col items-center gap-3 text-center text-muted py-10">
-                <p class="m-0">Crie a primeira seção para começar a adicionar perguntas.</p>
+              <app-estado titulo="Nenhuma seção ainda" texto="Crie a primeira seção para começar a adicionar perguntas.">
                 @if (!somenteLeitura) { <button mat-stroked-button type="button" (click)="adicionarSecao()"><mat-icon>add</mat-icon> Nova seção</button> }
-              </div>
+              </app-estado>
             }
           </section>
         </div>

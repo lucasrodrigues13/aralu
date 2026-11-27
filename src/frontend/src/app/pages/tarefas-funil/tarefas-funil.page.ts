@@ -25,6 +25,7 @@ import { chaveResponsavel, opcoesResponsavel, OpcaoResponsavel, pedidoResponsave
 import { aplicarLink, aplicarLista, aplicarNegrito, EdicaoTexto, htmlDeTextoSimples } from '../../shared/texto-simples';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { FecharModal } from '../../shared/fechar-modal';
+import { Estado } from '../../shared/estado';
 
 @Component({
   selector: 'app-tarefa-funil-dialog',
@@ -152,7 +153,7 @@ export class TarefaFunilDialog implements OnInit {
 
 @Component({
   selector: 'app-tarefas-funil',
-  imports: [ReactiveFormsModule, CampoDataComponent, MatButtonToggleModule, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatSelectModule, GdDataPipe, MatTooltipModule],
+  imports: [ReactiveFormsModule, CampoDataComponent, MatButtonToggleModule, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatSelectModule, GdDataPipe, MatTooltipModule, Estado],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6">
@@ -187,11 +188,13 @@ export class TarefaFunilDialog implements OnInit {
           <div class="w-full sm:w-44"><app-campo-data [formControl]="prazoAte" rotulo="Prazo até" /></div>
         </div>
         <div class="barra-lista-acoes">
-          <button mat-flat-button type="button" (click)="abrir()"><mat-icon>add</mat-icon> Adicionar tarefa</button>
+          <button mat-flat-button type="button" (click)="abrir()"><mat-icon>add</mat-icon> Nova tarefa</button>
         </div>
       </div>
-      @if (lista().length === 0) {
-        <p class="text-center text-muted py-10">Não há tarefa.</p>
+      @if (!carregado()) {
+        <app-estado titulo="Carregando…" />
+      } @else if (lista().length === 0) {
+        <app-estado titulo="Nenhuma tarefa ainda" />
       } @else {
         <table mat-table class="min-w-full" [dataSource]="lista()">
           <ng-container matColumnDef="titulo">
@@ -216,14 +219,14 @@ export class TarefaFunilDialog implements OnInit {
           <ng-container matColumnDef="acoes">
             <th mat-header-cell *matHeaderCellDef class="text-end! whitespace-nowrap">Ações</th>
             <td mat-cell *matCellDef="let item" class="text-end! whitespace-nowrap">
-              <button mat-icon-button aria-label="Editar tarefa" matTooltip="Editar tarefa" type="button" (click)="abrir(item)"><mat-icon>edit</mat-icon></button>
+              <button mat-icon-button aria-label="Editar" matTooltip="Editar" type="button" (click)="abrir(item)"><mat-icon>edit</mat-icon></button>
               @if (!item.completa) {
                 <button mat-icon-button aria-label="Concluir tarefa" matTooltip="Concluir tarefa" type="button" (click)="concluir(item)"><mat-icon>check</mat-icon></button>
               } @else {
                 <button mat-icon-button aria-label="Reabrir tarefa" matTooltip="Reabrir tarefa" type="button" (click)="reabrir(item)"><mat-icon>undo</mat-icon></button>
               }
               @if (auth.podeExcluirDoFunil(item.criadoPor)) {
-                <button mat-icon-button aria-label="Excluir tarefa" matTooltip="Excluir tarefa" type="button" (click)="excluir(item)"><mat-icon>delete</mat-icon></button>
+                <button mat-icon-button aria-label="Excluir tarefa" matTooltip="Excluir" type="button" (click)="excluir(item)"><mat-icon>delete</mat-icon></button>
               }
             </td>
           </ng-container>
@@ -241,6 +244,7 @@ export class TarefasFunilPage implements OnInit {
   private readonly dialog = inject(MatDialog);
   private readonly toast = inject(ToastService);
   protected readonly tipos = TIPOS_TAREFA_FUNIL;
+  protected readonly carregado = signal(false);
   protected readonly completa = signal(false);
   protected readonly tipo = signal('');
   protected readonly responsavel = signal('');
@@ -310,8 +314,8 @@ export class TarefasFunilPage implements OnInit {
       prazoDe: deDataParaIso(this.prazoDe.value) ?? undefined,
       prazoAte: deDataParaIso(this.prazoAte.value) ?? undefined,
     }).subscribe({
-      next: (lista) => this.lista.set(lista),
-      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+      next: (lista) => { this.lista.set(lista); this.carregado.set(true); },
+      error: (erro: unknown) => { this.carregado.set(true); this.toast.erro(mensagemDeErro(erro)); },
     });
   }
 }

@@ -12,12 +12,13 @@ import { Cliente, NegocioClient, ROTULO_PAPEL } from '../../core/negocio.client'
 import { ToastService } from '../../core/toast.service';
 import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
+import { Estado } from '../../shared/estado';
 import { ClienteFormDialog } from './cliente-form.dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-clientes',
-  imports: [MatCardModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatTooltipModule],
+  imports: [MatCardModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatTooltipModule, Estado],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6">
@@ -44,8 +45,10 @@ import { MatTooltipModule } from '@angular/material/tooltip';
           </button>
         </div>
       </div>
-      @if (clientes().length === 0) {
-        <p class="text-center text-muted py-10">Não há cliente para mostrar.</p>
+      @if (!carregado()) {
+        <app-estado titulo="Carregando…" />
+      } @else if (clientes().length === 0) {
+        <app-estado [titulo]="busca() ? 'Nada encontrado' : 'Nenhum cliente ainda'" [texto]="busca() ? 'Mude a busca ou os filtros.' : undefined" />
       } @else {
         <table mat-table class="min-w-full" [dataSource]="clientes()">
           <ng-container matColumnDef="nome">
@@ -94,6 +97,7 @@ export class ClientesPage implements OnInit {
   private readonly dialog = inject(MatDialog);
   private readonly toast = inject(ToastService);
   protected readonly clientes = signal<Cliente[]>([]);
+  protected readonly carregado = signal(false);
   protected readonly busca = signal('');
   protected readonly colunas = ['nome', 'contato', 'eventos', 'acoes'];
 
@@ -140,8 +144,8 @@ export class ClientesPage implements OnInit {
 
   private carregar(): void {
     this.negocio.clientes(this.busca()).subscribe({
-      next: (clientes) => this.clientes.set(clientes),
-      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+      next: (clientes) => { this.clientes.set(clientes); this.carregado.set(true); },
+      error: (erro: unknown) => { this.carregado.set(true); this.toast.erro(mensagemDeErro(erro)); },
     });
   }
 }

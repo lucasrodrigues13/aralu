@@ -36,6 +36,7 @@ import { EventoAbasComponent } from './evento-abas.component';
 import { GraficoOrcamento, RoscaServicos, montarGraficoOrcamento, montarRoscaPorServico } from './orcamento-graficos';
 import { OpcaoSelecao, SeletorMultiploDados, SeletorMultiploDialog } from './seletor-multiplo.dialog';
 import { FecharModal } from '../../shared/fechar-modal';
+import { Estado } from '../../shared/estado';
 
 interface ContratarResultado {
   valor: number;
@@ -194,7 +195,7 @@ const CLASSE_ETAPA: Record<string, string> = {
 /** Aba Fornecedores do evento: lista de serviços, cada um com N fornecedores (SPEC-018; SPEC-008 v2, 8.2). */
 @Component({
   selector: 'app-evento-fornecedores',
-  imports: [ExpandirTodosComponent, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, MatMenuModule, GdDinheiroPipe, DecimalPipe, EventoAbasComponent, MatTooltipModule, RouterLink],
+  imports: [ExpandirTodosComponent, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, MatMenuModule, GdDinheiroPipe, DecimalPipe, EventoAbasComponent, MatTooltipModule, RouterLink, Estado],
   template: `
     <app-evento-abas [eventoId]="id" />
     <mat-card class="cardWithShadow">
@@ -288,17 +289,16 @@ const CLASSE_ETAPA: Record<string, string> = {
             </div>
            </div>
            <div class="barra-lista-acoes">
-             <button mat-flat-button type="button" (click)="adicionarServicos()"><mat-icon>playlist_add</mat-icon> Adicionar serviço</button>
+             <button mat-flat-button type="button" (click)="adicionarServicos()"><mat-icon>add</mat-icon> Adicionar serviço</button>
            </div>
           </div>
 
         @if (atual.servicos.length === 0) {
-          <div class="flex flex-col items-center gap-3 text-center text-muted py-10">
-            <p>Nenhum serviço neste evento ainda.</p>
-            <button mat-flat-button type="button" (click)="adicionarServicos()"><mat-icon>playlist_add</mat-icon> Adicionar serviço</button>
-          </div>
+          <app-estado titulo="Nenhum serviço ainda">
+            <button mat-flat-button type="button" (click)="adicionarServicos()"><mat-icon>add</mat-icon> Adicionar serviço</button>
+          </app-estado>
         } @else if (visiveis().length === 0) {
-          <p class="text-center text-muted py-10">Nada encontrado com esses filtros.</p>
+          <app-estado titulo="Nada encontrado" texto="Mude a busca ou os filtros." />
         } @else {
           <app-expandir-todos [abertos]="todosAbertos()" (alternar)="alternarTodos()">
             {{ visiveis().length }} {{ visiveis().length === 1 ? 'serviço' : 'serviços' }} ·

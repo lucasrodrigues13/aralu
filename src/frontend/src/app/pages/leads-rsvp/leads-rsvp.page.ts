@@ -9,11 +9,12 @@ import { mensagemDeErro } from '../../core/mensagem-erro';
 import { LeadRsvp, NegocioClient } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
+import { Estado } from '../../shared/estado';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-leads-rsvp',
-  imports: [MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, GdDataPipe, MatTooltipModule],
+  imports: [MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, GdDataPipe, MatTooltipModule, Estado],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6 flex flex-wrap items-center justify-between gap-4">
@@ -32,8 +33,10 @@ import { MatTooltipModule } from '@angular/material/tooltip';
         </mat-form-field>
         </div>
       </div>
-      @if (lista().length === 0) {
-        <p class="text-center text-muted py-10">Não há lead de RSVP.</p>
+      @if (!carregado()) {
+        <app-estado titulo="Carregando…" />
+      } @else if (lista().length === 0) {
+        <app-estado [titulo]="busca() ? 'Nada encontrado' : 'Nenhum lead ainda'" [texto]="busca() ? 'Mude a busca ou os filtros.' : undefined" />
       } @else {
         <table mat-table class="min-w-full" [dataSource]="lista()">
           <ng-container matColumnDef="convite">
@@ -68,6 +71,7 @@ export class LeadsRsvpPage implements OnInit {
   private readonly negocio = inject(NegocioClient);
   private readonly toast = inject(ToastService);
   protected readonly lista = signal<LeadRsvp[]>([]);
+  protected readonly carregado = signal(false);
   protected readonly busca = signal('');
   protected readonly colunas = ['convite', 'evento', 'criadoEm', 'acoes'];
 
@@ -114,8 +118,8 @@ export class LeadsRsvpPage implements OnInit {
 
   private carregar(): void {
     this.negocio.leadsRsvp(this.busca()).subscribe({
-      next: (lista) => this.lista.set(lista),
-      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+      next: (lista) => { this.lista.set(lista); this.carregado.set(true); },
+      error: (erro: unknown) => { this.carregado.set(true); this.toast.erro(mensagemDeErro(erro)); },
     });
   }
 }

@@ -27,10 +27,11 @@ import { TarefaFormDialog } from './tarefa-form.dialog';
 import { TarefaLeituraDialog } from './tarefa-leitura.dialog';
 import { ChecklistTarefaComponent, progressoChecklist } from './checklist-tarefa';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { Estado } from '../../shared/estado';
 
 @Component({
   selector: 'app-tarefas',
-  imports: [RouterLink, ReactiveFormsModule, MatCardModule, MatButtonModule, MatButtonToggleModule, MatIconModule, MatTableModule, MatFormFieldModule, MatInputModule, MatSelectModule, GdDataPipe, CampoDataComponent, ChecklistTarefaComponent, MatCheckboxModule, MatTooltipModule],
+  imports: [RouterLink, ReactiveFormsModule, MatCardModule, MatButtonModule, MatButtonToggleModule, MatIconModule, MatTableModule, MatFormFieldModule, MatInputModule, MatSelectModule, GdDataPipe, CampoDataComponent, ChecklistTarefaComponent, MatCheckboxModule, MatTooltipModule, Estado],
   template: `
     <mat-card class="cardWithShadow">
     <div class="p-6 flex flex-wrap items-center justify-between gap-4">
@@ -101,8 +102,10 @@ import { MatTooltipModule } from '@angular/material/tooltip';
       <mat-button-toggle value="dia">Quadro por dia</mat-button-toggle>
     </mat-button-toggle-group>
     @if (visao() === 'lista') {
-        @if (visiveis().length === 0) {
-          <p class="text-center text-muted py-10">Não há tarefa.</p>
+        @if (!carregado()) {
+          <app-estado titulo="Carregando…" />
+        } @else if (visiveis().length === 0) {
+          <app-estado [titulo]="tarefas().length === 0 ? 'Nenhuma tarefa ainda' : 'Nada encontrado'" [texto]="tarefas().length === 0 ? undefined : 'Mude a busca ou os filtros.'" />
         } @else {
           <div class="relative">
           <table mat-table class="min-w-full" [dataSource]="visiveis()" multiTemplateDataRows>
@@ -175,8 +178,10 @@ import { MatTooltipModule } from '@angular/material/tooltip';
           </div>
         }
     } @else if (visao() === 'situacao') {
-      @if (visiveis().length === 0) {
-        <p class="text-center text-muted py-10">Não há tarefa.</p>
+      @if (!carregado()) {
+        <app-estado titulo="Carregando…" />
+      } @else if (visiveis().length === 0) {
+        <app-estado [titulo]="tarefas().length === 0 ? 'Nenhuma tarefa ainda' : 'Nada encontrado'" [texto]="tarefas().length === 0 ? undefined : 'Mude a busca ou os filtros.'" />
       } @else {
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           @for (coluna of situacoes; track coluna.valor) {
@@ -190,8 +195,10 @@ import { MatTooltipModule } from '@angular/material/tooltip';
         </div>
       }
     } @else {
-      @if (porDia().length === 0) {
-        <p class="text-center text-muted py-10">Não há tarefa.</p>
+      @if (!carregado()) {
+        <app-estado titulo="Carregando…" />
+      } @else if (porDia().length === 0) {
+        <app-estado [titulo]="tarefas().length === 0 ? 'Nenhuma tarefa ainda' : 'Nada encontrado'" [texto]="tarefas().length === 0 ? undefined : 'Mude a busca ou os filtros.'" />
       } @else {
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           @for (coluna of porDia(); track coluna.id) {
@@ -250,6 +257,7 @@ export class TarefasPage implements OnInit {
   private readonly auth = inject(AuthService);
   protected readonly papeis = signal<OpcaoResponsavel[]>(opcoesResponsavel([], this.auth.ehAssistente() ? 'Dona da conta' : 'Eu'));
   protected readonly tarefas = signal<Tarefa[]>([]);
+  protected readonly carregado = signal(false);
   protected readonly visao = signal('lista');
   protected readonly somenteAtrasadas = signal(false);
   protected readonly filtroAplicado = signal<FiltroTarefasLista>(filtroVazio());
@@ -378,8 +386,8 @@ export class TarefasPage implements OnInit {
 
   private carregar(): void {
     this.negocio.tarefas().subscribe({
-      next: (tarefas) => this.tarefas.set(tarefas),
-      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+      next: (tarefas) => { this.tarefas.set(tarefas); this.carregado.set(true); },
+      error: (erro: unknown) => { this.carregado.set(true); this.toast.erro(mensagemDeErro(erro)); },
     });
   }
 }

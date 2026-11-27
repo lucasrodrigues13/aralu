@@ -15,6 +15,7 @@ import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { FecharModal } from '../../shared/fechar-modal';
+import { Estado } from '../../shared/estado';
 
 /** Tags das mensagens, com o que cada uma vira no envio. */
 const TAGS_MENSAGEM: { marca: string; rotulo: string }[] = [
@@ -176,7 +177,7 @@ export class MensagemEditorDialog {
 
 @Component({
   selector: 'app-modelos-mensagens',
-  imports: [MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatTooltipModule],
+  imports: [MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatTooltipModule, Estado],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6">
@@ -203,8 +204,10 @@ export class MensagemEditorDialog {
           </button>
         </div>
       </div>
-      @if (lista().length === 0) {
-        <p class="text-center text-muted py-10">Sem modelos de mensagens cadastrados</p>
+      @if (!carregado()) {
+        <app-estado titulo="Carregando…" />
+      } @else if (lista().length === 0) {
+        <app-estado [titulo]="busca() ? 'Nada encontrado' : 'Nenhum modelo ainda'" [texto]="busca() ? 'Mude a busca ou os filtros.' : undefined" />
       } @else {
         <table mat-table class="min-w-full" [dataSource]="lista()">
           <ng-container matColumnDef="nome">
@@ -236,6 +239,7 @@ export class ModelosMensagensPage implements OnInit {
   private readonly dialog = inject(MatDialog);
   private readonly toast = inject(ToastService);
   protected readonly lista = signal<MensagemModelo[]>([]);
+  protected readonly carregado = signal(false);
   protected readonly busca = signal('');
   protected readonly colunas = ['nome', 'texto', 'acoes'];
 
@@ -289,8 +293,8 @@ export class ModelosMensagensPage implements OnInit {
 
   private carregar(): void {
     this.negocio.mensagens(this.busca()).subscribe({
-      next: (lista) => this.lista.set(lista),
-      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+      next: (lista) => { this.lista.set(lista); this.carregado.set(true); },
+      error: (erro: unknown) => { this.carregado.set(true); this.toast.erro(mensagemDeErro(erro)); },
     });
   }
 }

@@ -25,11 +25,12 @@ import { AdicionarTarefasEmMassaDialog } from './adicionar-tarefas-em-massa.dial
 import { exibirPrazoRelativo } from '../../shared/prazo-modelo';
 import { TarefaLeituraDialog } from './tarefa-leitura.dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { Estado } from '../../shared/estado';
 
 /** Tarefas do evento dentro do Resumo (SPEC-051): lista agrupada pela distância até o evento, com todas as ações (SPEC-003 v4). */
 @Component({
   selector: 'app-evento-tarefas',
-  imports: [ExpandirTodosComponent, MatCardModule, MatButtonModule, MatIconModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule, GdDataPipe, ChecklistTarefaComponent, MatTooltipModule],
+  imports: [ExpandirTodosComponent, MatCardModule, MatButtonModule, MatIconModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule, GdDataPipe, ChecklistTarefaComponent, MatTooltipModule, Estado],
   template: `
     <mat-card class="cardWithShadow" id="tarefas-do-evento">
     <div class="p-6 flex flex-wrap items-center justify-between gap-4">
@@ -109,8 +110,10 @@ import { MatTooltipModule } from '@angular/material/tooltip';
             }
             <span class="text-sm text-muted mb-2.5 ml-auto">{{ plural(visiveisEvento().length, 'tarefa encontrada', 'tarefas encontradas') }}</span>
         </div>
-        @if (secoesEvento().length === 0) {
-          <p class="text-center text-muted py-10">Não há tarefa para mostrar.</p>
+        @if (!carregado()) {
+          <app-estado titulo="Carregando…" />
+        } @else if (secoesEvento().length === 0) {
+          <app-estado [titulo]="tarefas().length === 0 ? 'Nenhuma tarefa ainda' : 'Nada encontrado'" [texto]="tarefas().length === 0 ? undefined : 'Mude a busca ou os filtros.'" />
         } @else {
           <app-expandir-todos [abertos]="todosGruposAbertos()" (alternar)="alternarTodosGrupos()">
             {{ secoesEvento().length }} {{ secoesEvento().length === 1 ? 'grupo' : 'grupos' }} ·
@@ -254,6 +257,7 @@ export class EventoTarefasComponent implements OnInit {
   protected readonly situacoes = SITUACOES_TAREFA;
   protected readonly papeis = signal<OpcaoResponsavel[]>(opcoesResponsavel([], this.auth.ehAssistente() ? 'Dona da conta' : 'Eu'));
   protected readonly tarefas = signal<Tarefa[]>([]);
+  protected readonly carregado = signal(false);
   protected readonly podeEditar = signal(false);
   protected readonly somenteAtrasadas = signal(false);
   protected readonly dataEvento = signal<string | null>(null);
@@ -463,9 +467,10 @@ export class EventoTarefasComponent implements OnInit {
     this.negocio.tarefasDoEvento(this.eventoId()).subscribe({
       next: (tarefas) => {
         this.tarefas.set(tarefas);
+        this.carregado.set(true);
         this.mudou.emit();
       },
-      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+      error: (erro: unknown) => { this.carregado.set(true); this.toast.erro(mensagemDeErro(erro)); },
     });
   }
 }

@@ -340,9 +340,9 @@ Pronto quando: `grep -rn "servico-cabecalho\|servicos-lista" src/frontend/src/ap
 
 ### 5.1 Vocabulário (D7)
 
-- [ ] `pages/grupos/grupos.page.ts`: "Apagar" vira "Excluir" (tooltip, título e botão da confirmação: "Excluir grupo" / `confirmar: 'Excluir'`).
+- [x] `pages/grupos/grupos.page.ts`: "Apagar" vira "Excluir" (tooltip, título e botão da confirmação: "Excluir grupo" / `confirmar: 'Excluir'`).
 - [x] `pages/modelos-evento/modelo-evento-editor.page.ts`: tooltip "Tirar o serviço" vira "Remover serviço".
-- [ ] Tooltips "Excluir tarefa", "Editar tarefa", "Excluir contrato" em coluna Ações viram "Excluir" e "Editar". "Excluir comprovante" fica, porque na mesma linha há outro Excluir.
+- [x] Tooltips "Excluir tarefa", "Editar tarefa", "Excluir contrato" em coluna Ações viram "Excluir" e "Editar". "Excluir comprovante" fica, porque na mesma linha há outro Excluir.
 
 ### 5.2 Botão principal da lista (D8)
 
@@ -362,16 +362,16 @@ Os botões secundários de `modelo-evento-editor.page.ts` ("Adicionar em massa",
 
 ### 5.3 Estado vazio (D10)
 
-- [ ] Trocar todo `p.text-center.text-muted.py-10`, `py-8` e `py-6` e todo `div.flex.flex-col.items-center.gap-3.text-center.text-muted.py-10` que represente lista vazia por `<app-estado titulo="…" texto="…" />`. O botão de ação, quando existir, vai dentro do `app-estado`.
+- [x] Trocar todo `p.text-center.text-muted.py-10`, `py-8` e `py-6` e todo `div.flex.flex-col.items-center.gap-3.text-center.text-muted.py-10` que represente lista vazia por `<app-estado titulo="…" texto="…" />`. O botão de ação, quando existir, vai dentro do `app-estado`.
 - Texto quando a lista não tem nenhum registro: título "Nenhum cliente ainda" (ou "Nenhuma tarefa ainda"), mantendo como `texto` a dica que a tela já tiver.
 - Texto quando há filtro ou busca sem resultado: título "Nada encontrado", texto "Mude a busca ou os filtros."
 - **Não trocar:** "Nenhum … encontrado" dentro de `mat-autocomplete`, textos dentro de célula ("Nenhum evento vinculado", "Sem responsável", "Sem prazo") e rótulos de grupo ("Sem serviço").
 
 ### 5.4 Carregando (D10)
 
-- [ ] Toda lista de página que hoje mostra o vazio antes da resposta ganha `protected readonly carregado = signal(false)`, ligado no `next` e no `error` da primeira carga. Template: `@if (!carregado()) { <app-estado titulo="Carregando…" /> } @else if (vazio) { … } @else { … }`. As 9 telas que já têm `carregando = signal(true)` mantêm o sinal e só trocam a marcação.
-- [ ] "Carregando..." (três pontos) vira "Carregando…" (reticências) em todo o app.
-- [ ] `pages/assistentes/assistentes.page.ts`: apagar o método `selo()` e usar `STATUS.sucesso`, `STATUS.erro` e `STATUS.alerta` de `shared/status.ts`.
+- [x] Toda lista de página que hoje mostra o vazio antes da resposta ganha `protected readonly carregado = signal(false)`, ligado no `next` e no `error` da primeira carga. Template: `@if (!carregado()) { <app-estado titulo="Carregando…" /> } @else if (vazio) { … } @else { … }`. As 9 telas que já têm `carregando = signal(true)` mantêm o sinal e só trocam a marcação.
+- [x] "Carregando..." (três pontos) vira "Carregando…" (reticências) em todo o app.
+- [x] `pages/assistentes/assistentes.page.ts`: apagar o método `selo()` e usar `STATUS.sucesso`, `STATUS.erro` e `STATUS.alerta` de `shared/status.ts`.
 
 Pronto quando: `grep -rn "Carregando\.\.\." src/frontend/src/app` e `grep -rn "text-center text-muted py-10" src/frontend/src/app` não retornam nada.
 

@@ -24,6 +24,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatMenuModule } from '@angular/material/menu';
 import { ActivatedRoute } from '@angular/router';
 import { FecharModal } from '../../shared/fechar-modal';
+import { Estado } from '../../shared/estado';
 
 @Component({
   selector: 'app-contrato-funil-dialog',
@@ -186,7 +187,7 @@ export class ContratoFunilVerDialog {
 
 @Component({
   selector: 'app-contratos-funil',
-  imports: [MatButtonToggleModule, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, GdDataPipe, MatTooltipModule, MatMenuModule],
+  imports: [MatButtonToggleModule, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, GdDataPipe, MatTooltipModule, MatMenuModule, Estado],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6">
@@ -212,8 +213,10 @@ export class ContratoFunilVerDialog {
           <button mat-flat-button type="button" (click)="abrir()"><mat-icon>add</mat-icon> Novo contrato</button>
         </div>
       </div>
-      @if (lista().length === 0) {
-        <p class="text-center text-muted py-10">Não há contrato nesta aba.</p>
+      @if (!carregado()) {
+        <app-estado titulo="Carregando…" />
+      } @else if (lista().length === 0) {
+        <app-estado [titulo]="busca() ? 'Nada encontrado' : 'Nenhum contrato ainda'" [texto]="busca() ? 'Mude a busca ou os filtros.' : undefined" />
       } @else {
         <table mat-table class="min-w-full" [dataSource]="lista()">
           <ng-container matColumnDef="oportunidade">
@@ -277,6 +280,7 @@ export class ContratosFunilPage implements OnInit {
     { valor: 'Cancelado', rotulo: 'Cancelados' },
   ];
   protected readonly situacao = signal('EmAndamento');
+  protected readonly carregado = signal(false);
   protected readonly busca = signal('');
   protected readonly lista = signal<ContratoFunil[]>([]);
   protected readonly colunas = ['oportunidade', 'criadoEm', 'envio', 'acoes'];
@@ -337,8 +341,8 @@ export class ContratosFunilPage implements OnInit {
 
   protected carregar(): void {
     this.negocio.contratosFunil({ situacao: this.situacao(), busca: this.busca() || undefined }).subscribe({
-      next: (lista) => this.lista.set(lista),
-      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+      next: (lista) => { this.lista.set(lista); this.carregado.set(true); },
+      error: (erro: unknown) => { this.carregado.set(true); this.toast.erro(mensagemDeErro(erro)); },
     });
   }
 }

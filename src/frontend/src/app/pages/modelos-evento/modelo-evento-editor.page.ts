@@ -38,6 +38,7 @@ import { TarefaFormDialog, TarefaModeloEdicao } from '../tarefas/tarefa-form.dia
 import { SelecionarBibliotecaDialog, ItemBiblioteca } from './selecionar-biblioteca.dialog';
 import { NgTemplateOutlet } from '@angular/common';
 import { FecharModal } from '../../shared/fechar-modal';
+import { Estado } from '../../shared/estado';
 
 /** Serviço do modelo na tela: a `chave` liga as tarefas a ele até o Salvar. */
 interface ServicoEdicao {
@@ -122,7 +123,7 @@ export class RemoverServicoModeloDialog {
 /** Editor do modelo de evento (SPEC-012 v3 §6.2 e §6.3). */
 @Component({
   selector: 'app-modelo-evento-editor',
-  imports: [ExpandirTodosComponent, MatCardModule, ReactiveFormsModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatTabsModule, MatIconModule, MatMenuModule, MatTooltipModule, NgTemplateOutlet, GdDinheiroPipe],
+  imports: [ExpandirTodosComponent, MatCardModule, ReactiveFormsModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatTabsModule, MatIconModule, MatMenuModule, MatTooltipModule, NgTemplateOutlet, GdDinheiroPipe, Estado],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6 flex flex-wrap items-center justify-between gap-4">
@@ -177,16 +178,15 @@ export class RemoverServicoModeloDialog {
                 </div>
               </div>
               <div class="barra-lista-acoes">
-                <button mat-flat-button type="button" (click)="adicionarVinculos(tipo, titulo, itens)"><mat-icon>add_link</mat-icon> Adicionar {{ titulo }}</button>
+                <button mat-flat-button type="button" (click)="adicionarVinculos(tipo, titulo, itens)"><mat-icon>add</mat-icon> Adicionar {{ titulo }}</button>
               </div>
             </div>
             @if (vinculadosTipo.length === 0) {
-              <div class="flex flex-col items-center gap-3 text-center text-muted py-10">
-                <p>Nenhum modelo de {{ singular }} vinculado.</p>
-                <button mat-flat-button type="button" (click)="adicionarVinculos(tipo, titulo, itens)"><mat-icon>add_link</mat-icon> Adicionar {{ titulo }}</button>
-              </div>
+              <app-estado [titulo]="'Nenhum modelo de ' + singular + ' vinculado'">
+                <button mat-flat-button type="button" (click)="adicionarVinculos(tipo, titulo, itens)"><mat-icon>add</mat-icon> Adicionar {{ titulo }}</button>
+              </app-estado>
             } @else if (listaTipo.length === 0) {
-              <p class="text-center text-muted py-10">Nada encontrado com essa busca.</p>
+              <app-estado titulo="Nada encontrado" texto="Mude a busca ou os filtros." />
             } @else {
               <ul class="grupos-lista" [attr.aria-label]="cabecalho">
                 @for (item of listaTipo; track item.id) {
@@ -239,7 +239,7 @@ export class RemoverServicoModeloDialog {
                 <div class="barra-lista-acoes">
                   <button mat-stroked-button type="button" (click)="emMassa()"><mat-icon>library_add</mat-icon> Adicionar em massa</button>
                   <button mat-stroked-button type="button" (click)="adicionarServicos()"><mat-icon>playlist_add</mat-icon> Adicionar serviços</button>
-                  <button mat-flat-button type="button" (click)="novaTarefa(null)"><mat-icon>add_task</mat-icon> Nova tarefa</button>
+                  <button mat-flat-button type="button" (click)="novaTarefa(null)"><mat-icon>add</mat-icon> Nova tarefa</button>
                 </div>
               </div>
 
@@ -250,15 +250,14 @@ export class RemoverServicoModeloDialog {
               </div>
 
               @if (servicos().length === 0 && tarefas().length === 0) {
-                <div class="flex flex-col items-center gap-3 text-center text-muted py-10">
-                  <p>Nenhum serviço nem tarefa neste modelo ainda.</p>
+                <app-estado titulo="Nenhum serviço nem tarefa ainda">
                   <div class="flex flex-wrap justify-center gap-2">
                     <button mat-stroked-button type="button" (click)="emMassa()"><mat-icon>library_add</mat-icon> Adicionar em massa</button>
                     <button mat-flat-button type="button" (click)="adicionarServicos()"><mat-icon>playlist_add</mat-icon> Adicionar serviços</button>
                   </div>
-                </div>
+                </app-estado>
               } @else if (blocosVisiveis().length === 0) {
-                <p class="text-center text-muted py-10">Nada encontrado com esses filtros.</p>
+                <app-estado titulo="Nada encontrado" texto="Mude a busca ou os filtros." />
               } @else {
                 <app-expandir-todos [abertos]="todosAbertos()" (alternar)="alternarTodos()">
                   {{ blocosVisiveis().length }} {{ modo() === 'prazo' ? (blocosVisiveis().length === 1 ? 'faixa' : 'faixas') : (blocosVisiveis().length === 1 ? 'serviço' : 'serviços') }} ·
@@ -324,8 +323,8 @@ export class RemoverServicoModeloDialog {
                                 @if (tarefa.prioridade === 'Alta') { <span class="inline-block rounded font-semibold px-2 py-1 text-xs whitespace-nowrap alerta">Alta</span> }
                               </span>
                               <div class="item-acoes">
-                                <button mat-icon-button type="button" aria-label="Editar tarefa" matTooltip="Editar tarefa" (click)="editarTarefa(tarefa); $event.stopPropagation()"><mat-icon>edit</mat-icon></button>
-                                <button mat-icon-button type="button" aria-label="Excluir tarefa" matTooltip="Excluir tarefa" (click)="removerTarefa(tarefa); $event.stopPropagation()"><mat-icon>delete</mat-icon></button>
+                                <button mat-icon-button type="button" aria-label="Editar" matTooltip="Editar" (click)="editarTarefa(tarefa); $event.stopPropagation()"><mat-icon>edit</mat-icon></button>
+                                <button mat-icon-button type="button" aria-label="Excluir tarefa" matTooltip="Excluir" (click)="removerTarefa(tarefa); $event.stopPropagation()"><mat-icon>delete</mat-icon></button>
                               </div>
                             </div>
                           } @empty {

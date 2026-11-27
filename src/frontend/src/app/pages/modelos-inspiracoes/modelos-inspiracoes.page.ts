@@ -12,12 +12,13 @@ import { Inspiracao, NegocioClient } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { DIALOG, DIALOG_EM_MASSA, DIALOG_PEQUENO } from '../../shared/dialog';
+import { Estado } from '../../shared/estado';
 import { InspiracaoEditorDialog } from './inspiracao-editor.dialog';
 import { InspiracaoVisualizarDialog } from './inspiracao-visualizar.dialog';
 
 @Component({
   selector: 'app-modelos-inspiracoes',
-  imports: [MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatTooltipModule],
+  imports: [MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatTooltipModule, Estado],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6">
@@ -44,8 +45,10 @@ import { InspiracaoVisualizarDialog } from './inspiracao-visualizar.dialog';
           </button>
         </div>
       </div>
-      @if (lista().length === 0) {
-        <p class="text-center text-muted py-10">Sem galerias cadastradas</p>
+      @if (!carregado()) {
+        <app-estado titulo="Carregando…" />
+      } @else if (lista().length === 0) {
+        <app-estado [titulo]="busca() ? 'Nada encontrado' : 'Nenhuma galeria ainda'" [texto]="busca() ? 'Mude a busca ou os filtros.' : undefined" />
       } @else {
         <table mat-table class="min-w-full" [dataSource]="lista()">
           <ng-container matColumnDef="nome">
@@ -76,6 +79,7 @@ export class ModelosInspiracoesPage implements OnInit {
   private readonly dialog = inject(MatDialog);
   private readonly toast = inject(ToastService);
   protected readonly lista = signal<Inspiracao[]>([]);
+  protected readonly carregado = signal(false);
   protected readonly busca = signal('');
   protected readonly colunas = ['nome', 'acoes'];
 
@@ -136,8 +140,8 @@ export class ModelosInspiracoesPage implements OnInit {
 
   private carregar(): void {
     this.negocio.inspiracoes(this.busca()).subscribe({
-      next: (lista) => this.lista.set(lista),
-      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+      next: (lista) => { this.lista.set(lista); this.carregado.set(true); },
+      error: (erro: unknown) => { this.carregado.set(true); this.toast.erro(mensagemDeErro(erro)); },
     });
   }
 }

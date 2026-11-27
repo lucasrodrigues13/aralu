@@ -14,6 +14,7 @@ import { FornecedorResumo, NegocioClient, ServicoConta } from '../../core/negoci
 import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { DIALOG, DIALOG_LARGO, DIALOG_PEQUENO } from '../../shared/dialog';
+import { Estado } from '../../shared/estado';
 import { Paginacao } from '../../shared/paginacao';
 import { FornecedorFormDialog } from './fornecedor-form.dialog';
 import { NovoServicoDialog } from './novo-servico.dialog';
@@ -23,7 +24,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-fornecedores',
-  imports: [MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatTabsModule, MatTooltipModule, MatPaginatorModule, MatAutocompleteModule],
+  imports: [MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatTabsModule, MatTooltipModule, MatPaginatorModule, MatAutocompleteModule, Estado],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6">
@@ -68,8 +69,10 @@ import { MatTooltipModule } from '@angular/material/tooltip';
               <button mat-flat-button type="button" (click)="abrirFornecedor()"><mat-icon>add</mat-icon> Novo fornecedor</button>
             </div>
           </div>
-          @if (fornecedoresFiltrados().length === 0) {
-            <p class="text-center text-muted py-10">{{ servicoForn() ? 'Nenhum fornecedor presta esse serviço.' : 'Não há fornecedor cadastrado.' }}</p>
+          @if (!fornecedoresCarregado()) {
+            <app-estado titulo="Carregando…" />
+          } @else if (fornecedoresFiltrados().length === 0) {
+            <app-estado [titulo]="servicoForn() || buscaForn() ? 'Nada encontrado' : 'Nenhum fornecedor ainda'" [texto]="servicoForn() || buscaForn() ? 'Mude a busca ou os filtros.' : undefined" />
           } @else {
             <table mat-table class="min-w-full" [dataSource]="paginaForn.itens()">
               <ng-container matColumnDef="nome">
@@ -110,11 +113,13 @@ import { MatTooltipModule } from '@angular/material/tooltip';
               </div>
             </div>
             <div class="barra-lista-acoes">
-              <button mat-flat-button type="button" (click)="criarServico()"><mat-icon>add</mat-icon> Adicionar serviço</button>
+              <button mat-flat-button type="button" (click)="criarServico()"><mat-icon>add</mat-icon> Novo serviço</button>
             </div>
           </div>
-          @if (servicos().length === 0) {
-            <p class="text-center text-muted py-10">Não há serviço da conta.</p>
+          @if (!servicosCarregado()) {
+            <app-estado titulo="Carregando…" />
+          } @else if (servicos().length === 0) {
+            <app-estado [titulo]="buscaServ() ? 'Nada encontrado' : 'Nenhum serviço ainda'" [texto]="buscaServ() ? 'Mude a busca ou os filtros.' : undefined" />
           } @else {
             <table mat-table class="min-w-full" [dataSource]="paginaServ.itens()">
               <ng-container matColumnDef="nome">
@@ -149,6 +154,8 @@ export class FornecedoresPage implements OnInit {
   private readonly toast = inject(ToastService);
   protected readonly fornecedores = signal<FornecedorResumo[]>([]);
   protected readonly servicos = signal<ServicoConta[]>([]);
+  protected readonly fornecedoresCarregado = signal(false);
+  protected readonly servicosCarregado = signal(false);
   protected readonly buscaForn = signal('');
   protected readonly buscaServ = signal('');
   /** Nome do serviço escolhido no filtro; vazio mostra todos. */
@@ -263,8 +270,8 @@ export class FornecedoresPage implements OnInit {
 
   private carregarFornecedores(): void {
     this.negocio.fornecedores(this.buscaForn()).subscribe({
-      next: (lista) => this.fornecedores.set(lista),
-      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+      next: (lista) => { this.fornecedores.set(lista); this.fornecedoresCarregado.set(true); },
+      error: (erro: unknown) => { this.fornecedoresCarregado.set(true); this.toast.erro(mensagemDeErro(erro)); },
     });
   }
 
@@ -275,8 +282,9 @@ export class FornecedoresPage implements OnInit {
         if (!this.buscaServ()) {
           this.todosServicos.set(lista);
         }
+        this.servicosCarregado.set(true);
       },
-      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+      error: (erro: unknown) => { this.servicosCarregado.set(true); this.toast.erro(mensagemDeErro(erro)); },
     });
   }
 }

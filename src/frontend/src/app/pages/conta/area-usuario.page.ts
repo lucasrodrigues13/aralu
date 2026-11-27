@@ -60,7 +60,7 @@ export class AreaUsuarioPage implements OnInit {
   private readonly assistentes = inject(AssistentesClient);
   private readonly toast = inject(ToastService);
   private readonly fb = inject(FormBuilder);
-  protected readonly status = signal('Carregando...');
+  protected readonly status = signal('Carregando…');
   protected readonly perfil = this.fb.nonNullable.group({
     nome: ['', [Validators.required, Validators.pattern(/\S/)]],
     celular: '',

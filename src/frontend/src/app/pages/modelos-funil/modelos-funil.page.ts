@@ -23,6 +23,7 @@ import {
   TAGS_BLOCOS, TAGS_COMPONENTES, TAGS_DADOS,
 } from './pagina-aceite';
 import { FecharModal } from '../../shared/fechar-modal';
+import { Estado } from '../../shared/estado';
 
 type TipoModelo = 'servico' | 'orcamento';
 
@@ -200,7 +201,7 @@ export class ModeloFunilDialog {
 
 @Component({
   selector: 'app-modelos-funil',
-  imports: [MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatTooltipModule],
+  imports: [MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatTooltipModule, Estado],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6">
@@ -224,8 +225,10 @@ export class ModeloFunilDialog {
           <button mat-flat-button type="button" (click)="abrir()"><mat-icon>add</mat-icon> {{ rotuloNovo }}</button>
         </div>
       </div>
-      @if (lista().length === 0) {
-        <p class="text-center text-muted py-10">{{ vazio }}</p>
+      @if (!carregado()) {
+        <app-estado titulo="Carregando…" />
+      } @else if (lista().length === 0) {
+        <app-estado [titulo]="busca() ? 'Nada encontrado' : vazio" [texto]="busca() ? 'Mude a busca ou os filtros.' : undefined" />
       } @else {
         <table mat-table class="min-w-full" [dataSource]="lista()">
           <ng-container matColumnDef="nome">
@@ -257,6 +260,7 @@ export class ModelosFunilPage implements OnInit {
   private readonly dialog = inject(MatDialog);
   private readonly toast = inject(ToastService);
   protected readonly lista = signal<Array<ModeloServicoFunil | ModeloOrcamentoFunil>>([]);
+  protected readonly carregado = signal(false);
   protected readonly busca = signal('');
   protected readonly colunas = ['nome', 'detalhe', 'acoes'];
 
@@ -273,7 +277,7 @@ export class ModelosFunilPage implements OnInit {
   }
 
   get vazio(): string {
-    return this.tipo === 'servico' ? 'Não há serviço/produto cadastrado.' : 'Não há modelo cadastrado.';
+    return this.tipo === 'servico' ? 'Nenhum serviço ainda' : 'Nenhum modelo ainda';
   }
 
   ngOnInit(): void {
@@ -324,8 +328,8 @@ export class ModelosFunilPage implements OnInit {
     const req: Observable<Array<ModeloServicoFunil | ModeloOrcamentoFunil>> =
       this.tipo === 'servico' ? this.negocio.modelosServicoFunil(this.busca()) : this.negocio.modelosOrcamentoFunil(this.busca());
     req.subscribe({
-      next: (lista) => this.lista.set(lista),
-      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+      next: (lista) => { this.lista.set(lista); this.carregado.set(true); },
+      error: (erro: unknown) => { this.carregado.set(true); this.toast.erro(mensagemDeErro(erro)); },
     });
   }
 }

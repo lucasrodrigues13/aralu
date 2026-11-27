@@ -25,13 +25,14 @@ import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { deDataParaIso } from '../../shared/data';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { STATUS } from '../../shared/status';
+import { Estado } from '../../shared/estado';
 import { EventoFormPage } from './evento-form.page';
 import { NovoEventoDialog } from './novo-evento.dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-eventos',
-  imports: [ReactiveFormsModule, RouterLink, MatButtonModule, MatButtonToggleModule, MatCardModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, MatTableModule, CampoDataComponent, GdDataPipe, MatTooltipModule],
+  imports: [ReactiveFormsModule, RouterLink, MatButtonModule, MatButtonToggleModule, MatCardModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, MatTableModule, CampoDataComponent, GdDataPipe, MatTooltipModule, Estado],
   template: `
     @if (estatisticas(); as stats) {
       <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 mb-6">
@@ -165,7 +166,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
                 <div class="p-4"><mat-card-title>Ranking de orçamento</mat-card-title></div>
                 <mat-card-content class="border-t border-border">
                   @if (stats.rankingOrcamento.length === 0) {
-                    <p class="text-center text-muted py-6">Sem dados.</p>
+                    <app-estado titulo="Sem dados" />
                   } @else {
                     <table mat-table [dataSource]="stats.rankingOrcamento" class="min-w-full">
                       <ng-container matColumnDef="posicao"><th mat-header-cell *matHeaderCellDef class="font-semibold text-sm pl-0!">#</th><td mat-cell *matCellDef="let r" class="pl-0!">{{ r.posicao }}</td></ng-container>
@@ -181,7 +182,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
                 <div class="p-4"><mat-card-title>Fornecedores mais contratados</mat-card-title></div>
                 <mat-card-content class="border-t border-border">
                   @if (stats.rankingFornecedores.length === 0) {
-                    <p class="text-center text-muted py-6">Sem dados.</p>
+                    <app-estado titulo="Sem dados" />
                   } @else {
                     <table mat-table [dataSource]="stats.rankingFornecedores" class="min-w-full">
                       <ng-container matColumnDef="posicao"><th mat-header-cell *matHeaderCellDef class="font-semibold text-sm pl-0!">#</th><td mat-cell *matCellDef="let r" class="pl-0!">{{ r.posicao }}</td></ng-container>
@@ -197,7 +198,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
                 <div class="p-4"><mat-card-title>Serviços mais utilizados</mat-card-title></div>
                 <mat-card-content class="border-t border-border">
                   @if (stats.rankingServicos.length === 0) {
-                    <p class="text-center text-muted py-6">Sem dados.</p>
+                    <app-estado titulo="Sem dados" />
                   } @else {
                     <table mat-table [dataSource]="stats.rankingServicos" class="min-w-full">
                       <ng-container matColumnDef="posicao"><th mat-header-cell *matHeaderCellDef class="font-semibold text-sm pl-0!">#</th><td mat-cell *matCellDef="let r" class="pl-0!">{{ r.posicao }}</td></ng-container>
@@ -211,8 +212,10 @@ import { MatTooltipModule } from '@angular/material/tooltip';
               </mat-card>
             </div>
           }
+        } @else if (!carregado()) {
+          <app-estado titulo="Carregando…" />
         } @else if (eventos().length === 0) {
-          <p class="text-center text-muted py-10">Não há evento para mostrar.</p>
+          <app-estado titulo="Nenhum evento ainda" />
         } @else {
           <div class="relative">
             <table mat-table [dataSource]="eventos()" class="min-w-full">
@@ -276,6 +279,7 @@ export class EventosPage implements OnInit {
   protected readonly tipos = TIPOS;
   protected readonly meses = MESES;
   protected readonly eventos = signal<EventoResumo[]>([]);
+  protected readonly carregado = signal(false);
   protected readonly estatisticas = signal<EstatisticasEventos | null>(null);
   protected readonly abaAtual = signal(0);
   protected readonly colunas = ['nome', 'data', 'situacao', 'tarefas', 'convidados', 'acoes'];
@@ -361,8 +365,8 @@ export class EventosPage implements OnInit {
       ate: deDataParaIso(valor.ate) ?? '',
       tag: valor.tag ?? '',
     }).subscribe({
-      next: (eventos) => this.eventos.set(eventos),
-      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+      next: (eventos) => { this.eventos.set(eventos); this.carregado.set(true); },
+      error: (erro: unknown) => { this.carregado.set(true); this.toast.erro(mensagemDeErro(erro)); },
     });
   }
 

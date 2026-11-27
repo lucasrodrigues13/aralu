@@ -18,6 +18,7 @@ import { ToastService } from '../../core/toast.service';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { GdDinheiroPipe } from '../../shared/gd-dinheiro.pipe';
 import { STATUS } from '../../shared/status';
+import { Estado } from '../../shared/estado';
 
 /** Tarefa aberta de assistente removida (SPEC-032 §18, passo 2). */
 export interface TarefaSemResponsavel {
@@ -71,7 +72,7 @@ function lerPulados(): string[] {
 /** Tela Hoje (SPEC-007 v2): o que pede ação hoje. */
 @Component({
   selector: 'app-hoje',
-  imports: [MatCardModule, MatListModule, MatProgressBarModule, MatSelectModule, RouterLink, MatButtonModule, MatIconModule, GdDataPipe, GdDinheiroPipe],
+  imports: [MatCardModule, MatListModule, MatProgressBarModule, MatSelectModule, RouterLink, MatButtonModule, MatIconModule, GdDataPipe, GdDinheiroPipe, Estado],
   template: `
     @if (dados(); as d) {
       <mat-card class="cardWithShadow">
@@ -180,7 +181,7 @@ function lerPulados(): string[] {
                 <span class="block text-sm text-muted mt-1">{{ p.data | gdData }}</span>
               </div>
             } @else {
-              <p class="text-center text-muted py-10">Nenhum evento com data marcada.</p>
+              <app-estado titulo="Nenhum evento com data marcada" />
             }
           </mat-card-content>
         </mat-card>
@@ -191,7 +192,7 @@ function lerPulados(): string[] {
             <mat-card-title>Cobranças a fazer</mat-card-title>
             <mat-card-subtitle>Parcelas dos contratos com clientes vencidas ou vencendo nos próximos 7 dias</mat-card-subtitle>
             @if (d.cobrancas.length === 0) {
-              <p class="text-center text-muted py-10">Nenhuma parcela de contrato vencida ou vencendo nos próximos 7 dias.</p>
+              <app-estado titulo="Nenhuma parcela vencida ou a vencer" texto="Considera os próximos 7 dias." />
             } @else {
               <div class="relative mt-4">
                 <table class="tabela">
@@ -223,7 +224,7 @@ function lerPulados(): string[] {
           <mat-card-title>Carteira</mat-card-title>
           <mat-card-subtitle>Eventos em andamento</mat-card-subtitle>
           @if (d.carteira.length === 0) {
-            <p class="text-center text-muted py-10">Nenhum evento em andamento.</p>
+            <app-estado titulo="Nenhum evento em andamento" />
           } @else {
             <div class="relative mt-4">
               <table class="tabela">
@@ -306,7 +307,7 @@ function lerPulados(): string[] {
           <mat-card-title>Retornos do funil</mat-card-title>
           <mat-card-subtitle>Leads para retornar hoje ou com retorno atrasado</mat-card-subtitle>
           @if (d.retornosFunil.length === 0) {
-            <p class="text-center text-muted py-10">Nenhum lead para retornar hoje.</p>
+            <app-estado titulo="Nenhum lead para retornar hoje" />
           } @else {
             <div class="relative mt-4">
               <table class="tabela">

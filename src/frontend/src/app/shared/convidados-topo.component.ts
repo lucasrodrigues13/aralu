@@ -101,7 +101,7 @@ import { MascaraDirective } from './mascara.directive';
             <button mat-stroked-button type="button" (click)="envio.emit()"><mat-icon>send</mat-icon> Data de envio</button>
             <button mat-stroked-button type="button" (click)="prazo.emit()"><mat-icon>event_busy</mat-icon> Prazo de confirmação</button>
             <button mat-stroked-button type="button" (click)="presencas.emit()"><mat-icon>fact_check</mat-icon> Lista de presença</button>
-            <button mat-stroked-button type="button" (click)="importar.emit()"><mat-icon>upload</mat-icon> Importar</button>
+            <button mat-stroked-button type="button" (click)="importar.emit()"><mat-icon>upload_file</mat-icon> Importar planilha</button>
             <button mat-flat-button type="button" (click)="novoConvite.emit()"><mat-icon>add</mat-icon> Novo convite</button>
           </div>
         </div>

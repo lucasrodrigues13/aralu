@@ -109,7 +109,7 @@ export class ContaAdminPage implements OnInit {
   private readonly rota = inject(ActivatedRoute);
   protected readonly conta = signal<ContaAssinatura | null>(null);
   protected readonly planos = signal<Plano[]>([]);
-  protected readonly aviso = signal('Carregando...');
+  protected readonly aviso = signal('Carregando…');
   protected motivo = '';
   protected planoId: string | null = null;
   protected valor: number | null = null;

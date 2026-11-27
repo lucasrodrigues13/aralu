@@ -21,12 +21,13 @@ import { ImportacoesDados, ImportacoesDialog } from '../../shared/importacoes.di
 import { EventoAbasComponent } from '../eventos/evento-abas.component';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatMenuModule } from '@angular/material/menu';
+import { Estado } from '../../shared/estado';
 
 export { cardsPorSituacao } from '../../shared/convite-lista';
 
 @Component({
   selector: 'app-convidados',
-  imports: [ExpandirTodosComponent, MatCardModule, MatButtonToggleModule, MatButtonModule, EventoAbasComponent, MatIconModule, MatDialogModule, ConvidadosTopoComponent, MatTooltipModule, MatMenuModule],
+  imports: [ExpandirTodosComponent, MatCardModule, MatButtonToggleModule, MatButtonModule, EventoAbasComponent, MatIconModule, MatDialogModule, ConvidadosTopoComponent, MatTooltipModule, MatMenuModule, Estado],
   template: `
     @if (!eventoId()) {
       <mat-card class="cardWithShadow">
@@ -57,11 +58,7 @@ export { cardsPorSituacao } from '../../shared/convite-lista';
         </mat-button-toggle-group>
         @if (lista(); as dados) {
           @if (dados.convites.length === 0) {
-            <div class="flex flex-col items-center gap-2 text-center text-muted py-10">
-              <mat-icon>mail</mat-icon>
-              <strong>Nenhum convite</strong>
-              Crie o primeiro convite ou importe a planilha.
-            </div>
+            <app-estado icone="mail" titulo="Nenhum convite ainda" texto="Crie o primeiro convite ou importe a planilha." />
           } @else if (visao() === 'convite') {
             <app-expandir-todos [abertos]="todosAbertos()" (alternar)="alternarTodos()">
               {{ dados.convites.length }} {{ dados.convites.length === 1 ? 'convite' : 'convites' }}

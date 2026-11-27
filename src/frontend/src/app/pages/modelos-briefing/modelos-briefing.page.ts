@@ -13,12 +13,13 @@ import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { DIALOG, DIALOG_LARGO, DIALOG_PEQUENO } from '../../shared/dialog';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
+import { Estado } from '../../shared/estado';
 import { ImportarBriefingDialog } from './importar-briefing.dialog';
 import { BriefingEditorDialog } from './briefing-editor.dialog';
 
 @Component({
   selector: 'app-modelos-briefing',
-  imports: [MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, GdDataPipe, MatTooltipModule],
+  imports: [MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, GdDataPipe, MatTooltipModule, Estado],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6">
@@ -46,8 +47,10 @@ import { BriefingEditorDialog } from './briefing-editor.dialog';
           </button>
         </div>
       </div>
-      @if (lista().length === 0) {
-        <p class="text-center text-muted py-10">Não há modelo de briefing.</p>
+      @if (!carregado()) {
+        <app-estado titulo="Carregando…" />
+      } @else if (lista().length === 0) {
+        <app-estado [titulo]="busca() ? 'Nada encontrado' : 'Nenhum modelo ainda'" [texto]="busca() ? 'Mude a busca ou os filtros.' : undefined" />
       } @else {
         <table mat-table class="min-w-full" [dataSource]="lista()">
           <ng-container matColumnDef="nome">
@@ -82,6 +85,7 @@ export class ModelosBriefingPage implements OnInit {
   private readonly dialog = inject(MatDialog);
   private readonly toast = inject(ToastService);
   protected readonly lista = signal<Briefing[]>([]);
+  protected readonly carregado = signal(false);
   protected readonly busca = signal('');
   protected readonly colunas = ['nome', 'data', 'acoes'];
 
@@ -140,8 +144,8 @@ export class ModelosBriefingPage implements OnInit {
 
   private carregar(): void {
     this.negocio.briefings(this.busca()).subscribe({
-      next: (lista) => this.lista.set(lista),
-      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+      next: (lista) => { this.lista.set(lista); this.carregado.set(true); },
+      error: (erro: unknown) => { this.carregado.set(true); this.toast.erro(mensagemDeErro(erro)); },
     });
   }
 }

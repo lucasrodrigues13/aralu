@@ -21,6 +21,7 @@ import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { FecharModal } from '../../shared/fechar-modal';
+import { Estado } from '../../shared/estado';
 
 /** Dados do modal de compromisso: o item em edição ou a data já escolhida no calendário. */
 export interface CompromissoDialogDados {
@@ -194,7 +195,7 @@ const MAX_NO_DIA = 3;
 
 @Component({
   selector: 'app-agenda',
-  imports: [MatCardModule, MatButtonModule, MatButtonToggleModule, MatIconModule, GdDataPipe, MatTooltipModule],
+  imports: [MatCardModule, MatButtonModule, MatButtonToggleModule, MatIconModule, GdDataPipe, MatTooltipModule, Estado],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6 flex flex-wrap items-center justify-between gap-4">
@@ -273,7 +274,7 @@ const MAX_NO_DIA = 3;
           <span class="inline-flex items-center gap-2"><i class="tarefa"></i> Tarefa</span>
         </div>
       } @else if (itens().length === 0) {
-        <p class="text-center text-muted py-10">Nada marcado neste período.</p>
+        <app-estado titulo="Nada marcado neste período" />
       } @else {
         <ul class="list-none p-0 m-0 divide-y divide-border [&>li]:flex [&>li]:items-center [&>li]:gap-3 [&>li]:py-3">
           @for (item of ordenados(); track item.id) {

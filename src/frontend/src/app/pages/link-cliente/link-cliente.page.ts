@@ -30,11 +30,12 @@ import { ParcelarPagamentoDialog } from '../dinheiro/parcelar-pagamento.dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AcessoLinkComponent } from './acesso-link.component';
+import { Estado } from '../../shared/estado';
 
 /** Página do cliente, sem login (SPEC-046): acompanha e atualiza o financeiro do evento quando a organizadora libera. */
 @Component({
   selector: 'app-cliente',
-  imports: [ExpandirTodosComponent, MatCardModule, MatButtonModule, MatCheckboxModule, MatIconModule, MatTabsModule, GdDataPipe, GdDinheiroPipe, ConvidadosTopoComponent, MatTooltipModule, AcessoLinkComponent],
+  imports: [ExpandirTodosComponent, MatCardModule, MatButtonModule, MatCheckboxModule, MatIconModule, MatTabsModule, GdDataPipe, GdDinheiroPipe, ConvidadosTopoComponent, MatTooltipModule, AcessoLinkComponent, Estado],
   template: `
     <main class="pagina">
       @if (carregando()) {
@@ -71,7 +72,7 @@ import { AcessoLinkComponent } from './acesso-link.component';
                 </mat-card-content></mat-card>
 
                 @if (d.financeiro.pagamentosFornecedores.length === 0) {
-                  <p class="text-center text-muted py-10">Nenhum pagamento ainda. Eles aparecem quando a organizadora contrata um fornecedor.</p>
+                  <app-estado titulo="Nenhum pagamento ainda" texto="Eles aparecem quando a organizadora contrata um fornecedor." />
                 }
                 @for (grupo of grupos(); track grupo.chave) {
                   <h2 class="mes">{{ grupo.mes }} · {{ grupo.total | gdDinheiro }}</h2>
@@ -147,9 +148,9 @@ import { AcessoLinkComponent } from './acesso-link.component';
                   (presencas)="abrirPresencas()"
                   (importar)="abrirImportacoes()">
                 @if (convites.length === 0) {
-                  <p class="text-center text-muted py-6">Nenhum convite ainda. Use "Novo convite" para cadastrar quem vai receber.</p>
+                  <app-estado titulo="Nenhum convite ainda" texto="Use &quot;Novo convite&quot; para cadastrar quem vai receber." />
                 } @else if (convitesFiltrados().length === 0) {
-                  <p class="text-center text-muted py-6">Nenhum convite com estes filtros.</p>
+                  <app-estado titulo="Nada encontrado" texto="Mude a busca ou os filtros." />
                 }
                 @if (convitesFiltrados().length > 0) {
                   <app-expandir-todos class="mb-3 rounded-lg! border-b!" [abertos]="todosAbertos()" (alternar)="alternarTodos()">
