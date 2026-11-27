@@ -4,20 +4,21 @@ import { MatCardModule } from '@angular/material/card';
 import { Router, RouterLink } from '@angular/router';
 import { AssinaturaClient } from '../../core/assinatura.client';
 import { AuthService } from '../../core/auth.service';
+import { Estado } from '../../shared/estado';
 
 /** Tela de conta bloqueada (SPEC-062 §7 e §13): mensagem diferente para Dono e Membro. Nenhum dado é apagado. */
 @Component({
   selector: 'app-conta-bloqueada',
-  imports: [MatCardModule, MatButtonModule, RouterLink],
+  imports: [MatCardModule, MatButtonModule, RouterLink, Estado],
   template: `
-    <mat-card class="cardWithShadow max-w-xl mx-auto mt-10">
-      <mat-card-content class="p-8 text-center">
-        <h1 class="text-2xl font-semibold mb-3">{{ titulo() }}</h1>
+    <mat-card class="cardWithShadow">
+      <mat-card-content>
         @if (auth.ehAssistente()) {
-          <p class="text-muted mb-6">A conta da assessoria está bloqueada. Fale com o responsável pela conta.</p>
+          <app-estado icone="lock" [titulo]="titulo()" texto="A conta da assessoria está bloqueada. Fale com o responsável pela conta." />
         } @else {
-          <p class="text-muted mb-6">Seus dados estão guardados. Assine para voltar a usar a plataforma. Os links dos seus clientes continuam funcionando.</p>
-          <a mat-flat-button routerLink="/configuracoes/assinatura">Assinar</a>
+          <app-estado icone="lock" [titulo]="titulo()" texto="Seus dados estão guardados. Assine para voltar a usar a plataforma. Os links dos seus clientes continuam funcionando.">
+            <a mat-flat-button routerLink="/configuracoes/assinatura">Assinar</a>
+          </app-estado>
         }
       </mat-card-content>
     </mat-card>

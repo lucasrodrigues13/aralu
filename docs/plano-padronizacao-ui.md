@@ -397,11 +397,11 @@ Fora desta fase: listas agrupadas, convidados, gestão financeira e modelos.
 
 Telas: `entrar`, `cadastro`, `esqueci-senha`, `redefinir-senha`, `confirmar-email`, `reenviar`, `assistentes/convite-assistente`.
 
-- [ ] Cada tela passa a ser `<app-casca-acesso titulo="…" subtitulo="…">` com o formulário dentro. Somem o `section`, o `mat-card` e o `app-marca` de cada arquivo.
-- [ ] Formulário: `form.grid.grid-cols-1.gap-4`; cada campo em `div.campo` com `mat-label.font-semibold.mb-2.block` (no Entrar, tirar o `text-sm` dos rótulos e o `mb-4` dos campos).
-- [ ] Botão principal `mat-flat-button.w-full`, `[disabled]="enviando()"` apenas. No início do `enviar()`: se o formulário for inválido, `formulario.markAllAsTouched()` e `return`.
-- [ ] `mat-error` dentro de cada `mat-form-field`, um por validador que o formulário já tem: obrigatório "Preencha este campo."; e-mail "Informe um e-mail válido."; tamanho mínimo "Use pelo menos N caracteres." (N do validador); confirmação diferente "As senhas não conferem."; termos não aceitos (cadastro) em `p.text-error.text-sm` abaixo da caixa: "Aceite os termos para continuar." Não criar validador novo.
-- [ ] Textos:
+- [x] Cada tela passa a ser `<app-casca-acesso titulo="…" subtitulo="…">` com o formulário dentro. Somem o `section`, o `mat-card` e o `app-marca` de cada arquivo.
+- [x] Formulário: `form.grid.grid-cols-1.gap-4`; cada campo em `div.campo` com `mat-label.font-semibold.mb-2.block` (no Entrar, tirar o `text-sm` dos rótulos e o `mb-4` dos campos).
+- [x] Botão principal `mat-flat-button.w-full`, `[disabled]="enviando()"` apenas. No início do `enviar()`: se o formulário for inválido, `formulario.markAllAsTouched()` e `return`.
+- [x] `mat-error` dentro de cada `mat-form-field`, um por validador que o formulário já tem: obrigatório "Preencha este campo."; e-mail "Informe um e-mail válido."; tamanho mínimo "Use pelo menos N caracteres." (N do validador); confirmação diferente "As senhas não conferem."; termos não aceitos (cadastro) em `p.text-error.text-sm` abaixo da caixa: "Aceite os termos para continuar." Não criar validador novo.
+- [x] Textos:
 
 | Tela | Título | Subtítulo | Botão | Link abaixo |
 |---|---|---|---|---|
@@ -414,11 +414,11 @@ Telas: `entrar`, `cadastro`, `esqueci-senha`, `redefinir-senha`, `confirmar-emai
 | confirmar-email | Confirmar e-mail | (sem) | (sem) | Voltar para entrar |
 
   No cadastro, a frase "O cadastro abre um teste grátis…" sai do formulário, porque virou subtítulo.
-- [ ] `confirmar-email`: o `p[role=status]` vira `app-estado`: enquanto confere, `titulo="Carregando…"`; sucesso, `icone="check_circle"`; falha, `icone="error_outline"`. O título é o texto que `status()` já devolve.
-- [ ] `convite-assistente`, estado `pronto()`: `app-estado icone="check_circle" titulo="Senha criada"` com o botão "Entrar" dentro.
-- [ ] `pages/conta-bloqueada/conta-bloqueada.page.ts` e `pages/atalhos/sem-acesso.page.ts` (ficam dentro da casca logada): `mat-card.cardWithShadow > mat-card-content` com `app-estado` (`icone="lock"`), mantendo os textos e o botão.
-- [ ] Ajustar `pages/cadastro/cadastro.page.spec.ts` ao novo comportamento do botão e aos novos textos.
-- [ ] Atualizar em `docs/specs/001-autenticacao-e-conta.md` e `docs/specs/032-assistentes.md` os textos de interface que mudaram.
+- [x] `confirmar-email`: o `p[role=status]` vira `app-estado`: enquanto confere, `titulo="Carregando…"`; sucesso, `icone="check_circle"`; falha, `icone="error_outline"`. O título é o texto que `status()` já devolve.
+- [x] `convite-assistente`, estado `pronto()`: `app-estado icone="check_circle" titulo="Senha criada"` com o botão "Entrar" dentro.
+- [x] `pages/conta-bloqueada/conta-bloqueada.page.ts` e `pages/atalhos/sem-acesso.page.ts` (ficam dentro da casca logada): `mat-card.cardWithShadow > mat-card-content` com `app-estado` (`icone="lock"`), mantendo os textos e o botão.
+- [x] Ajustar `pages/cadastro/cadastro.page.spec.ts` ao novo comportamento do botão e aos novos textos.
+- [x] Atualizar em `docs/specs/001-autenticacao-e-conta.md` e `docs/specs/032-assistentes.md` os textos de interface que mudaram.
 
 ---
 
