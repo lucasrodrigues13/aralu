@@ -7,7 +7,7 @@ name: proxy
 
 services:
   caddy:
-    image: caddy:2.8-alpine
+    image: caddy:2.8-alpine@sha256:af32e97399febea808609119bb21544d0265c58a02836576e32a2d082c262c17
     # Rede do host: escuta 80/443 direto e alcança produção (127.0.0.1:8081) e staging (127.0.0.1:8082).
     network_mode: host
     restart: unless-stopped

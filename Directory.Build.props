@@ -1,0 +1,7 @@
+<Project>
+  <!-- Lote 8 (A08-001): restore reproduzível. Cada projeto gera um packages.lock.json versionado;
+       o Dockerfile restaura com locked-mode e falha se o lock não bater com os pacotes. -->
+  <PropertyGroup>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+  </PropertyGroup>
+</Project>
