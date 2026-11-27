@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
@@ -188,7 +188,22 @@ export class ValidadePropostaDialog implements OnInit {
   }
 }
 
-/** Link da proposta: copiar ou mandar pelo WhatsApp (SPEC-031 §6.6, item 2). */
+/** Há mensagem de modelo e ela não traz o link da proposta. Sem modelo (nulo) vale a mensagem padrão, que já tem o link. */
+export function mensagemSemLink(texto: string | null, link: string): boolean {
+  return texto !== null && !!link && !texto.includes(link);
+}
+
+/** Troca o trecho [inicio, fim) pelo trecho novo, com espaço em volta quando encosta em outra palavra. */
+export function inserirTexto(atual: string, trecho: string, inicio: number, fim: number): { texto: string; cursor: number } {
+  const antes = atual.slice(0, inicio);
+  const depois = atual.slice(fim);
+  const esquerda = antes && !/\s$/.test(antes) ? ' ' : '';
+  const direita = depois && !/^\s/.test(depois) ? ' ' : '';
+  const texto = antes + esquerda + trecho + direita + depois;
+  return { texto, cursor: (antes + esquerda + trecho).length };
+}
+
+/** Link da proposta: copiar ou mandar pelo WhatsApp (SPEC-031 §6.6, item 2). A mensagem do modelo pode ser editada antes do envio. */
 @Component({
   selector: 'app-enviar-proposta-dialog',
   imports: [MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatSelectModule, GdDataPipe],
@@ -215,8 +230,22 @@ export class ValidadePropostaDialog implements OnInit {
             </mat-select>
           </mat-form-field>
         </div>
-        @if (texto(); as t) {
-          <p class="text-sm mb-4" style="white-space: pre-line; border: 1px solid var(--mat-sys-outline-variant); border-radius: 8px; padding: 12px;">{{ t }}</p>
+        @if (texto() !== null) {
+          <div class="campo">
+            <mat-label class="font-semibold mb-2 block">Mensagem</mat-label>
+            <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+              <textarea #caixa matInput rows="7" aria-label="Mensagem" [value]="texto()" (input)="texto.set(caixa.value)"></textarea>
+              <mat-hint>Você pode ajustar o texto antes de enviar.</mat-hint>
+            </mat-form-field>
+            @if (semLink()) {
+              <div class="aviso-link" role="alert">
+                <mat-icon>link_off</mat-icon>
+                <span class="grow">A mensagem está sem o link da proposta. Coloque o cursor onde ele deve ficar e insira.
+                  Para não precisar disso, use a tag <code>{{ '{{link_proposta}}' }}</code> no modelo.</span>
+                <button mat-stroked-button type="button" (click)="inserirLink(caixa)">Inserir link</button>
+              </div>
+            }
+          </div>
         }
       }
       <div class="flex flex-wrap gap-2">
@@ -230,6 +259,11 @@ export class ValidadePropostaDialog implements OnInit {
       <button mat-stroked-button type="button" (click)="ref.close()">Fechar</button>
     </mat-dialog-actions>
   `,
+  styles: `
+    .aviso-link { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; padding: 10px 12px; border-radius: 8px;
+      background: var(--mat-sys-error-container); color: var(--mat-sys-on-error-container); font-size: 13px; }
+    .aviso-link code { font-size: 12px; }
+  `,
 })
 export class EnviarPropostaDialog implements OnInit {
   private readonly negocio = inject(NegocioClient);
@@ -241,6 +275,8 @@ export class EnviarPropostaDialog implements OnInit {
   protected readonly modelos = signal<MensagemModelo[]>([]);
   protected readonly modeloId = signal<string | null>(null);
   protected readonly texto = signal<string | null>(null);
+  /** Modelo escolhido e o texto não traz o link (o modelo não tem {{link_proposta}} ou o link foi apagado na edição). */
+  protected readonly semLink = computed(() => mensagemSemLink(this.texto(), this.link));
 
   ngOnInit(): void {
     this.negocio.oportunidade(this.dados.oportunidadeId).subscribe({
@@ -260,13 +296,33 @@ export class EnviarPropostaDialog implements OnInit {
     });
   }
 
+  /** Põe o link onde está o cursor (ou no fim) e devolve o foco logo depois dele. */
+  protected inserirLink(caixa: HTMLTextAreaElement): void {
+    const atual = this.texto() ?? '';
+    const inicio = caixa.selectionStart ?? atual.length;
+    const fim = caixa.selectionEnd ?? inicio;
+    const novo = inserirTexto(atual, this.link, inicio, fim);
+    this.texto.set(novo.texto);
+    caixa.value = novo.texto;
+    caixa.focus();
+    caixa.setSelectionRange(novo.cursor, novo.cursor);
+  }
+
   protected abrirWhatsapp(): void {
+    if (this.semLink()) {
+      this.toast.erro('Insira o link da proposta na mensagem antes de enviar.');
+      return;
+    }
     const c = this.contato();
     const texto = this.texto();
     window.open(texto ? whatsappTexto(c?.telefone, texto) : whatsappProposta(c?.telefone, c?.nome, this.link), '_blank', 'noopener');
   }
 
   protected copiarMensagem(): void {
+    if (this.semLink()) {
+      this.toast.erro('Insira o link da proposta na mensagem antes de copiar.');
+      return;
+    }
     void navigator.clipboard.writeText(this.texto() ?? '').then(
       () => this.toast.sucesso('Mensagem copiada.'),
       () => this.toast.erro('Não deu para copiar. Selecione o texto e copie.'),
