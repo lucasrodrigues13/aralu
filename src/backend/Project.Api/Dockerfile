@@ -1,15 +1,21 @@
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+# dotnet/sdk:10.0 fixado por digest (Dependabot atualiza)
+FROM mcr.microsoft.com/dotnet/sdk:10.0@sha256:8c6edfb26c85153f236d26efebd9ad349aec403583f343f201ee67838b23658d AS build
 WORKDIR /src
-COPY nuget.config ./
+COPY nuget.config Directory.Build.props ./
 COPY src/backend/Project.Domain/Project.Domain.csproj src/backend/Project.Domain/
 COPY src/backend/Project.Application/Project.Application.csproj src/backend/Project.Application/
 COPY src/backend/Project.Infrastructure/Project.Infrastructure.csproj src/backend/Project.Infrastructure/
 COPY src/backend/Project.Api/Project.Api.csproj src/backend/Project.Api/
-RUN dotnet restore src/backend/Project.Api/Project.Api.csproj
+COPY src/backend/Project.Domain/packages.lock.json src/backend/Project.Domain/
+COPY src/backend/Project.Application/packages.lock.json src/backend/Project.Application/
+COPY src/backend/Project.Infrastructure/packages.lock.json src/backend/Project.Infrastructure/
+COPY src/backend/Project.Api/packages.lock.json src/backend/Project.Api/
+RUN dotnet restore src/backend/Project.Api/Project.Api.csproj --locked-mode
 COPY src/backend/ src/backend/
 RUN dotnet publish src/backend/Project.Api/Project.Api.csproj -c Release -o /app --no-restore /p:UseAppHost=false
 
-FROM mcr.microsoft.com/dotnet/aspnet:10.0
+# dotnet/aspnet:10.0 fixado por digest
+FROM mcr.microsoft.com/dotnet/aspnet:10.0@sha256:aac50ceef10391e78a899e3d2ccd00bbafa2dcb56ccf4586cbccf00edb84fc21
 WORKDIR /app
 COPY --from=build /app .
 # Volume nomeado herda o dono deste diretório. A API roda como APP_UID.
