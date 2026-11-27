@@ -40,13 +40,13 @@ type Vinculo = EventoServico['fornecedores'][number];
             {{ grupos().length }} {{ grupos().length === 1 ? 'serviço' : 'serviços' }} ·
             {{ totalFornecedores() }} {{ totalFornecedores() === 1 ? 'fornecedor' : 'fornecedores' }}
           </app-expandir-todos>
-          <ul class="servicos-lista com-cabecalho" aria-label="Contratos por serviço">
+          <ul class="grupos-lista com-cabecalho" aria-label="Contratos por serviço">
             @for (grupo of grupos(); track grupo.servicoId) {
-              <li class="servico" [class.aberto]="!fechados().has(grupo.servicoId)">
-                <button type="button" class="servico-cabecalho" [attr.aria-expanded]="!fechados().has(grupo.servicoId)"
+              <li class="grupo" [class.aberto]="!fechados().has(grupo.servicoId)">
+                <button type="button" class="grupo-cabecalho" [attr.aria-expanded]="!fechados().has(grupo.servicoId)"
                   [attr.aria-controls]="'contratos-' + grupo.servicoId" (click)="alternar(grupo.servicoId)">
                   <mat-icon class="seta">expand_more</mat-icon>
-                  <span class="servico-texto">
+                  <span class="grupo-texto">
                     <span class="nome">{{ grupo.servico }}</span>
                     <span class="block text-xs text-muted">{{ grupo.enviados }} de {{ grupo.itens.length }} {{ grupo.itens.length === 1 ? 'contrato enviado' : 'contratos enviados' }}</span>
                   </span>
@@ -93,19 +93,11 @@ type Vinculo = EventoServico['fornecedores'][number];
   `,
   styles: `
     .nome { display: block; font-weight: 500; }
-    .com-cabecalho { border-top-left-radius: 0 !important; border-top-right-radius: 0 !important; }
-    .servicos-lista { list-style: none; padding: 0; margin: 0; border: 1px solid rgba(128,128,128,.25); border-radius: 8px; overflow: hidden; }
-    .servico + .servico { border-top: 1px solid rgba(128,128,128,.25); }
-    .servico-cabecalho { width: 100%; display: flex; align-items: center; gap: 12px; padding: 16px 16px 16px 12px; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
-    .servico-cabecalho:focus-visible { outline: 2px solid var(--mat-sys-primary); outline-offset: -2px; }
-    .seta { transition: transform .15s; flex-shrink: 0; transform: rotate(-90deg); }
-    .servico.aberto .seta { transform: none; }
-    .servico-texto { flex: 1; min-width: 0; }
     .fornecedores { background: rgba(128,128,128,.1); border-top: 1px solid rgba(128,128,128,.3); }
     .sem-contrato { grid-column: span 2; }
     .fornecedor { display: grid; grid-template-columns: minmax(160px, 2fr) minmax(110px, 1fr) minmax(110px, 1fr) auto; align-items: center; gap: 12px; padding: 10px 16px 10px 52px; }
     .fornecedor + .fornecedor { border-top: 1px dashed rgba(128,128,128,.2); }
-    .fornecedor:hover, .servico-cabecalho:hover { background: rgba(128,128,128,.08); }
+    .fornecedor:hover { background: rgba(128,128,128,.08); }
     .fornecedor-acoes { display: flex; justify-content: flex-end; gap: 4px; white-space: nowrap; }
     @media (max-width: 900px) {
       .fornecedor { grid-template-columns: 1fr 1fr; padding-left: 16px; }

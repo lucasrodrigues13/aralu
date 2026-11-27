@@ -54,13 +54,13 @@ import { MatTooltipModule } from '@angular/material/tooltip';
               {{ grupos().length }} {{ grupos().length === 1 ? 'serviço' : 'serviços' }} ·
               {{ d.pagamentosFornecedores.length }} {{ d.pagamentosFornecedores.length === 1 ? 'pagamento' : 'pagamentos' }}
             </app-expandir-todos>
-            <ul class="servicos-lista com-cabecalho" aria-label="Pagamentos por serviço">
+            <ul class="grupos-lista com-cabecalho" aria-label="Pagamentos por serviço">
               @for (grupo of grupos(); track grupo.servicoId) {
-                <li class="servico" [class.aberto]="!fechados().has(grupo.servicoId)">
-                  <button type="button" class="servico-cabecalho" [attr.aria-expanded]="!fechados().has(grupo.servicoId)"
+                <li class="grupo" [class.aberto]="!fechados().has(grupo.servicoId)">
+                  <button type="button" class="grupo-cabecalho" [attr.aria-expanded]="!fechados().has(grupo.servicoId)"
                     [attr.aria-controls]="'pagamentos-' + grupo.servicoId" (click)="alternarServico(grupo.servicoId)">
                     <mat-icon class="seta">expand_more</mat-icon>
-                    <span class="servico-texto">
+                    <span class="grupo-texto">
                       <span class="nome">{{ grupo.servico }}</span>
                       <span class="block text-xs text-muted">Contratado {{ grupo.total | gdDinheiro }} · pago {{ grupo.pago | gdDinheiro }}</span>
                     </span>
@@ -150,18 +150,10 @@ import { MatTooltipModule } from '@angular/material/tooltip';
   styles: `
     .nome { display: block; font-weight: 500; }
     .valor { font-weight: 600; white-space: nowrap; }
-    .com-cabecalho { border-top-left-radius: 0 !important; border-top-right-radius: 0 !important; }
-    .servicos-lista { list-style: none; padding: 0; margin: 0; border: 1px solid rgba(128,128,128,.25); border-radius: 8px; overflow: hidden; }
-    .servico + .servico { border-top: 1px solid rgba(128,128,128,.25); }
-    .servico-cabecalho { width: 100%; display: flex; align-items: center; gap: 12px; padding: 16px 16px 16px 12px; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
-    .servico-cabecalho:focus-visible { outline: 2px solid var(--mat-sys-primary); outline-offset: -2px; }
-    .servico-texto { flex: 1; min-width: 0; }
-    .seta { transition: transform .15s; flex-shrink: 0; transform: rotate(-90deg); }
-    .servico.aberto .seta { transform: none; }
     .fornecedores { background: rgba(128,128,128,.1); border-top: 1px solid rgba(128,128,128,.3); }
     .fornecedor { display: grid; grid-template-columns: minmax(180px, 2fr) 100px minmax(110px, 1fr) minmax(150px, 1.2fr) auto; align-items: center; gap: 12px; padding: 10px 16px 10px 52px; }
     .fornecedor + .fornecedor { border-top: 1px dashed rgba(128,128,128,.2); }
-    .fornecedor:hover, .servico-cabecalho:hover { background: rgba(128,128,128,.08); }
+    .fornecedor:hover { background: rgba(128,128,128,.08); }
     .fornecedor-nome { position: relative; }
     .seta-parcelas { position: absolute; left: -44px; top: 50%; transform: translateY(-50%); }
     .seta-parcelas mat-icon { transition: transform .15s; transform: rotate(-90deg); }

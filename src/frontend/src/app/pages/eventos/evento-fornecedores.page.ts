@@ -304,14 +304,14 @@ const CLASSE_ETAPA: Record<string, string> = {
             {{ visiveis().length }} {{ visiveis().length === 1 ? 'serviço' : 'serviços' }} ·
             {{ fornecedoresVisiveis() }} {{ fornecedoresVisiveis() === 1 ? 'fornecedor' : 'fornecedores' }}
           </app-expandir-todos>
-          <ul class="servicos-lista com-cabecalho" aria-label="Serviços do evento">
+          <ul class="grupos-lista com-cabecalho" aria-label="Serviços do evento">
             @for (item of visiveis(); track item.servico.id) {
-              <li class="servico" [class.aberto]="estaAberto(item.servico.id)">
-                <div class="servico-cabecalho">
-                  <button type="button" class="servico-alternar" [attr.aria-expanded]="estaAberto(item.servico.id)"
+              <li class="grupo" [class.aberto]="estaAberto(item.servico.id)">
+                <div class="grupo-cabecalho com-acoes">
+                  <button type="button" class="grupo-alternar" [attr.aria-expanded]="estaAberto(item.servico.id)"
                     [attr.aria-controls]="'fornecedores-' + item.servico.id" (click)="alternar(item.servico.id)">
                     <mat-icon class="seta">expand_more</mat-icon>
-                    <span class="servico-texto">
+                    <span class="grupo-texto">
                       <span class="nome">{{ item.servico.nome }}</span>
                       <span class="block text-xs text-muted">
                         Estimado {{ estimado(item.servico) | gdDinheiro }}
@@ -326,7 +326,7 @@ const CLASSE_ETAPA: Record<string, string> = {
                       </span>
                     }
                   </button>
-                  <div class="servico-acoes">
+                  <div class="grupo-acoes">
                     <button mat-stroked-button type="button" (click)="adicionarFornecedores(item.servico)"><mat-icon>add</mat-icon> Fornecedor</button>
                     <button mat-icon-button type="button" aria-label="Ações do serviço" matTooltip="Ações do serviço" [matMenuTriggerFor]="menuServico"><mat-icon>more_vert</mat-icon></button>
                     <mat-menu #menuServico="matMenu" xPosition="before">
@@ -420,17 +420,7 @@ const CLASSE_ETAPA: Record<string, string> = {
     @media (max-width: 480px) { .rosca-area { flex-direction: column; align-items: stretch; } .rosca { align-self: center; } }
     .valor { font-weight: 600; white-space: nowrap; }
 
-    .servicos-lista { list-style: none; padding: 0; margin: 0; border: 1px solid rgba(128,128,128,.25); border-radius: 8px; overflow: hidden; }
-    .servicos-lista.com-cabecalho { border-radius: 0 0 8px 8px; }
-    .servico + .servico { border-top: 1px solid rgba(128,128,128,.25); }
-    .servico-cabecalho { display: flex; align-items: center; gap: 8px; padding: 8px 12px 8px 4px; }
-    .servico-cabecalho:hover, .fornecedor:hover { background: rgba(128,128,128,.08); }
-    .servico-alternar { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 8px; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; border-radius: 6px; }
-    .servico-alternar:focus-visible { outline: 2px solid var(--mat-sys-primary); }
-    .servico-texto { flex: 1; min-width: 0; }
-    .seta { transition: transform .15s; flex-shrink: 0; }
-    .servico.aberto .seta { transform: rotate(180deg); }
-    .servico-acoes { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+    .fornecedor:hover { background: rgba(128,128,128,.08); }
     .fornecedores { background: rgba(128,128,128,.1); border-top: 1px solid rgba(128,128,128,.3); }
     .fornecedor { display: grid; grid-template-columns: minmax(160px, 2fr) 110px minmax(110px, 1fr) minmax(140px, 1.4fr) auto; align-items: center; gap: 12px; padding: 10px 16px 10px 52px; }
     .fornecedor + .fornecedor { border-top: 1px dashed rgba(128,128,128,.2); }

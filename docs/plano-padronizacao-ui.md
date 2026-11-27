@@ -323,12 +323,12 @@ Comportamento único: o cabeçalho inteiro do grupo é um `<button type="button"
 
 Em cada arquivo: trocar as classes conforme a tabela da fase 1.8 e **apagar do `styles:`** as regras que agora são globais. Um arquivo por vez, conferindo no navegador.
 
-- [ ] `pages/dinheiro/evento-dinheiro.page.ts`
-- [ ] `pages/eventos/evento-contratos.page.ts`
-- [ ] `pages/eventos/evento-fornecedores.page.ts`
-- [ ] `pages/portaria/portaria.page.ts`
-- [ ] `pages/modelos-evento/modelo-evento-editor.page.ts`
-- [ ] `pages/tarefas/evento-tarefas.component.ts`: só o cabeçalho de grupo (`tr.cabeca-grupo`). A seta passa para a esquerda, com ícone fixo `expand_more` e a mesma rotação (hoje troca entre `expand_more` e `expand_less` à direita). **Não** mexer em `tr.linha-tarefa` nem na seta da linha.
+- [x] `pages/dinheiro/evento-dinheiro.page.ts`
+- [x] `pages/eventos/evento-contratos.page.ts`
+- [x] `pages/eventos/evento-fornecedores.page.ts`
+- [x] `pages/portaria/portaria.page.ts`
+- [x] `pages/modelos-evento/modelo-evento-editor.page.ts`
+- [x] `pages/tarefas/evento-tarefas.component.ts`: só o cabeçalho de grupo (`tr.cabeca-grupo`). A seta passa para a esquerda, com ícone fixo `expand_more` e a mesma rotação (hoje troca entre `expand_more` e `expand_less` à direita). **Não** mexer em `tr.linha-tarefa` nem na seta da linha.
 
 Fora desta fase: as linhas expansíveis de `convidados.page.ts` e `link-cliente.page.ts` (seta em `mat-icon-button`) já têm o mesmo desenho e ficam como estão.
 
@@ -341,7 +341,7 @@ Pronto quando: `grep -rn "servico-cabecalho\|servicos-lista" src/frontend/src/ap
 ### 5.1 Vocabulário (D7)
 
 - [ ] `pages/grupos/grupos.page.ts`: "Apagar" vira "Excluir" (tooltip, título e botão da confirmação: "Excluir grupo" / `confirmar: 'Excluir'`).
-- [ ] `pages/modelos-evento/modelo-evento-editor.page.ts`: tooltip "Tirar o serviço" vira "Remover serviço".
+- [x] `pages/modelos-evento/modelo-evento-editor.page.ts`: tooltip "Tirar o serviço" vira "Remover serviço".
 - [ ] Tooltips "Excluir tarefa", "Editar tarefa", "Excluir contrato" em coluna Ações viram "Excluir" e "Editar". "Excluir comprovante" fica, porque na mesma linha há outro Excluir.
 
 ### 5.2 Botão principal da lista (D8)
@@ -382,12 +382,12 @@ Pronto quando: `grep -rn "Carregando\.\.\." src/frontend/src/app` e `grep -rn "t
 Aplicar `Paginacao` conforme `docs/design-system.md` §5.5.1, sem mudar filtros: `protected readonly pagina = new Paginacao(<sinal já filtrado>)`, `[dataSource]="pagina.itens()"`, `mat-paginator` logo abaixo da tabela e `pagina.inicio()` onde a busca ou o filtro mudam. Se a tela não tiver um sinal `computed` com a lista filtrada, pare e pergunte.
 
 - [ ] `pages/clientes/clientes.page.ts`
-- [ ] `pages/eventos/eventos.page.ts` (só a tabela de eventos; as tabelas de ranking não)
+- [x] `pages/eventos/eventos.page.ts` (só a tabela de eventos; as tabelas de ranking não)
 - [ ] `pages/leads-rsvp/leads-rsvp.page.ts`
 - [ ] `pages/contratos-funil/contratos-funil.page.ts`
 - [ ] `pages/orcamentos-funil/orcamentos-funil.page.ts`
-- [ ] `pages/tarefas-funil/tarefas-funil.page.ts`
-- [ ] `pages/tarefas/tarefas.page.ts` (só a visão em tabela)
+- [x] `pages/tarefas-funil/tarefas-funil.page.ts`
+- [x] `pages/tarefas/tarefas.page.ts` (só a visão em tabela)
 
 Fora desta fase: listas agrupadas, convidados, gestão financeira e modelos.
 

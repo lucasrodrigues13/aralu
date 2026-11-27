@@ -67,16 +67,16 @@ type StatusConvite = 'Pendente' | 'Parcial' | 'Completo';
               <app-expandir-todos [abertos]="todosAbertos()" (alternar)="alternarTodos()">
                 {{ filtrados().length }} {{ filtrados().length === 1 ? 'convite' : 'convites' }}
               </app-expandir-todos>
-              <ul class="convites" aria-label="Convites confirmados">
+              <ul class="grupos-lista com-cabecalho" aria-label="Convites confirmados">
                 @for (item of filtrados(); track item.id) {
                   @let aberto = abertos().has(item.id);
                   @let status = statusDe(item);
-                  <li class="convite" [class.aberto]="aberto" [id]="'convite-' + item.id" data-teste="convite">
-                    <div class="convite-cabecalho">
-                      <button type="button" class="convite-alternar" data-teste="alternar-convite" [attr.aria-expanded]="aberto"
+                  <li class="grupo" [class.aberto]="aberto" [id]="'convite-' + item.id" data-teste="convite">
+                    <div class="grupo-cabecalho com-acoes">
+                      <button type="button" class="grupo-alternar" data-teste="alternar-convite" [attr.aria-expanded]="aberto"
                         [attr.aria-controls]="'pessoas-' + item.id" (click)="alternarConvite(item.id)">
                         <mat-icon class="seta">expand_more</mat-icon>
-                        <span class="convite-texto">
+                        <span class="grupo-texto">
                           <span class="nome">{{ item.nome }}</span>
                           <span class="block text-xs text-muted">{{ resumo(item) }}</span>
                         </span>
@@ -146,15 +146,6 @@ type StatusConvite = 'Pendente' | 'Parcial' | 'Completo';
     .busca input { width: 100%; padding: 10px 12px; border: 1px solid var(--mat-sys-outline-variant); border-radius: 8px; background: transparent; color: inherit; font: inherit; }
     .acoes { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-top: 12px; }
 
-    .convites { list-style: none; padding: 0; margin: 0; border: 1px solid rgba(128,128,128,.25); border-radius: 0 0 8px 8px; overflow: hidden; }
-    .convite + .convite { border-top: 1px solid rgba(128,128,128,.25); }
-    .convite-cabecalho { display: flex; flex-wrap: wrap; align-items: center; }
-    .convite-alternar { flex: 1 1 240px; min-width: 0; display: flex; align-items: center; gap: 10px; padding: 14px 12px 14px 8px; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
-    .convite-alternar:hover { background: rgba(128,128,128,.08); }
-    .convite-alternar:focus-visible { outline: 2px solid var(--mat-sys-primary); outline-offset: -2px; }
-    .seta { transition: transform .15s; flex-shrink: 0; transform: rotate(-90deg); }
-    .convite.aberto .seta { transform: none; }
-    .convite-texto { flex: 1; min-width: 0; }
     .nome { display: block; font-weight: 600; overflow-wrap: anywhere; }
     .confirmar { margin: 0 12px 0 4px; }
     .pessoas { background: rgba(128,128,128,.1); border-top: 1px solid rgba(128,128,128,.3); }

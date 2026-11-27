@@ -188,13 +188,13 @@ export class RemoverServicoModeloDialog {
             } @else if (listaTipo.length === 0) {
               <p class="text-center text-muted py-10">Nada encontrado com essa busca.</p>
             } @else {
-              <ul class="servicos-lista" [attr.aria-label]="cabecalho">
+              <ul class="grupos-lista" [attr.aria-label]="cabecalho">
                 @for (item of listaTipo; track item.id) {
-                  <li class="servico">
-                    <div class="servico-cabecalho vinculo">
+                  <li class="grupo">
+                    <div class="grupo-cabecalho com-acoes vinculo">
                       <mat-icon class="seta text-muted">{{ icone }}</mat-icon>
-                      <span class="servico-texto"><span class="nome">{{ item.nome }}</span></span>
-                      <div class="servico-acoes">
+                      <span class="grupo-texto"><span class="nome">{{ item.nome }}</span></span>
+                      <div class="grupo-acoes">
                         <button mat-icon-button type="button" [attr.aria-label]="'Remover ' + singular" [matTooltip]="'Remover ' + singular" (click)="removerVinculo(tipo, item.id)"><mat-icon>link_off</mat-icon></button>
                       </div>
                     </div>
@@ -264,14 +264,14 @@ export class RemoverServicoModeloDialog {
                   {{ blocosVisiveis().length }} {{ modo() === 'prazo' ? (blocosVisiveis().length === 1 ? 'faixa' : 'faixas') : (blocosVisiveis().length === 1 ? 'serviço' : 'serviços') }} ·
                   {{ tarefasVisiveis() }} {{ tarefasVisiveis() === 1 ? 'tarefa' : 'tarefas' }}
                 </app-expandir-todos>
-                <ul class="servicos-lista com-cabecalho" aria-label="Serviços e tarefas do modelo">
+                <ul class="grupos-lista com-cabecalho" aria-label="Serviços e tarefas do modelo">
                   @for (bloco of blocosVisiveis(); track bloco.chave) {
-                    <li class="servico" [class.aberto]="estaAberto(bloco.chave)">
-                      <div class="servico-cabecalho">
-                        <button type="button" class="servico-alternar" [attr.aria-expanded]="estaAberto(bloco.chave)"
+                    <li class="grupo" [class.aberto]="estaAberto(bloco.chave)">
+                      <div class="grupo-cabecalho com-acoes">
+                        <button type="button" class="grupo-alternar" [attr.aria-expanded]="estaAberto(bloco.chave)"
                           [attr.aria-controls]="'tarefas-' + bloco.chave" (click)="alternar(bloco.chave)">
                           <mat-icon class="seta">expand_more</mat-icon>
-                          <span class="servico-texto">
+                          <span class="grupo-texto">
                             @if (bloco.rotulo) {
                               <span class="nome">{{ bloco.rotulo }}</span>
                             } @else if (bloco.servico; as servico) {
@@ -291,7 +291,7 @@ export class RemoverServicoModeloDialog {
                           }
                         </button>
                         @if (!bloco.rotulo) {
-                          <div class="servico-acoes">
+                          <div class="grupo-acoes">
                             <button mat-stroked-button type="button" (click)="novaTarefa(bloco.servico)"><mat-icon>add</mat-icon> Tarefa</button>
                             @if (bloco.servico; as servico) {
                               <button mat-icon-button type="button" aria-label="Ações do serviço" matTooltip="Ações do serviço" [matMenuTriggerFor]="menuServico"><mat-icon>more_vert</mat-icon></button>
@@ -360,17 +360,8 @@ export class RemoverServicoModeloDialog {
   `,
   styles: `
     .nome { display: block; font-weight: 500; }
-    .servicos-lista { list-style: none; padding: 0; margin: 0; border: 1px solid rgba(128,128,128,.25); border-radius: 8px; overflow: hidden; }
-    .servicos-lista.com-cabecalho { border-radius: 0 0 8px 8px; }
-    .servico + .servico { border-top: 1px solid rgba(128,128,128,.25); }
-    .servico-cabecalho { display: flex; align-items: center; gap: 8px; padding: 8px 12px 8px 4px; }
-    .servico-cabecalho:hover, .tarefa:hover { background: rgba(128,128,128,.08); }
-    .servico-alternar { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 8px; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; border-radius: 6px; }
-    .servico-alternar:focus-visible, .tarefa:focus-visible { outline: 2px solid var(--mat-sys-primary); }
-    .servico-texto { flex: 1; min-width: 0; }
-    .seta { transition: transform .15s; flex-shrink: 0; }
-    .servico.aberto .seta { transform: rotate(180deg); }
-    .servico-acoes { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+    .tarefa:hover { background: rgba(128,128,128,.08); }
+    .tarefa:focus-visible { outline: 2px solid var(--mat-sys-primary); }
     .modo-agrupamento { position: relative; display: inline-grid; grid-template-columns: 1fr 1fr; margin-bottom: 12px; padding: 3px; border: 1px solid rgba(128,128,128,.3); border-radius: 999px; }
     .modo-agrupamento .marcador { position: absolute; top: 3px; bottom: 3px; left: 3px; width: calc(50% - 3px); border-radius: 999px; background: var(--mat-sys-primary); transition: transform .2s ease; }
     .modo-agrupamento.prazo .marcador { transform: translateX(100%); }
@@ -378,7 +369,8 @@ export class RemoverServicoModeloDialog {
     .modo-agrupamento button mat-icon { font-size: 18px; width: 18px; height: 18px; }
     .modo-agrupamento button[aria-checked="true"] { color: var(--mat-sys-on-primary); }
     .modo-agrupamento button:focus-visible { outline: 2px solid var(--mat-sys-primary); outline-offset: 2px; }
-    .servico-cabecalho.vinculo { padding: 8px 12px 8px 16px; gap: 12px; }
+    .grupo-cabecalho.vinculo { padding-left: 16px; gap: 12px; flex-wrap: nowrap; }
+    .grupo-cabecalho.vinculo .seta { transform: none; }
     .itens { background: rgba(128,128,128,.1); border-top: 1px solid rgba(128,128,128,.3); }
     .tarefa { display: grid; grid-template-columns: minmax(0, 2fr) minmax(120px, 1fr) minmax(120px, 1fr) 56px auto; align-items: center; gap: 12px; padding: 8px 16px 8px 52px; cursor: pointer; }
     .tarefa + .tarefa { border-top: 1px dashed rgba(128,128,128,.2); }

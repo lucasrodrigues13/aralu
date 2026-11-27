@@ -130,13 +130,13 @@ import { MatTooltipModule } from '@angular/material/tooltip';
               </thead>
               @for (secao of secoesEvento(); track secao.id) {
                 <tbody>
-                  <tr class="cabeca-grupo" (click)="alternarGrupo(secao.id)">
+                  <tr class="cabeca-grupo grupo" [class.aberto]="!grupoFechado(secao.id)" (click)="alternarGrupo(secao.id)">
                     <td colspan="6">
-                      <button type="button" class="botao-grupo" [attr.aria-expanded]="!grupoFechado(secao.id)">
-                        <span class="nome-grupo">{{ secao.rotulo }}</span>
+                      <button type="button" class="grupo-cabecalho" [attr.aria-expanded]="!grupoFechado(secao.id)">
+                        <mat-icon class="seta">expand_more</mat-icon>
+                        <span class="grupo-texto nome-grupo">{{ secao.rotulo }}</span>
                         <span class="contagem-grupo">
                           {{ plural(secao.tarefas.length, 'tarefa', 'tarefas') }}
-                          <mat-icon>{{ grupoFechado(secao.id) ? 'expand_more' : 'expand_less' }}</mat-icon>
                         </span>
                       </button>
                     </td>
@@ -217,9 +217,9 @@ import { MatTooltipModule } from '@angular/material/tooltip';
   styles: `
     tr { cursor: pointer; }
     .coluna-expandir { width: 40px; padding-right: 0 !important; }
-    .seta { width: 32px; height: 32px; padding: 4px; color: var(--mat-sys-surface-container-lowest); }
-    .seta mat-icon { transition: transform 0.15s; }
-    .seta.aberta mat-icon { transform: rotate(90deg); }
+    button.seta { width: 32px; height: 32px; padding: 4px; color: var(--mat-sys-surface-container-lowest); }
+    button.seta mat-icon { transition: transform 0.15s; }
+    button.seta.aberta mat-icon { transform: rotate(90deg); }
     .progresso { display: inline-flex; align-items: center; gap: 2px; vertical-align: middle; }
     .progresso mat-icon { font-size: 14px; width: 14px; height: 14px; }
     tr.com-detalhe td { border-bottom-color: transparent !important; }
@@ -229,10 +229,8 @@ import { MatTooltipModule } from '@angular/material/tooltip';
     td.detalhe { padding: 0 0 12px 40px !important; }
     .agrupada tr.cabeca-grupo td { padding: 0 !important; background: color-mix(in oklab, var(--mat-sys-surface-bright) 60%, transparent); border-bottom: 1px solid var(--mat-sys-outline-variant); }
     .agrupada tr.cabeca-grupo:hover td { background: var(--mat-sys-surface-bright) !important; }
-    .botao-grupo { display: flex; width: 100%; align-items: center; justify-content: space-between; padding: 10px 12px; border: 0; background: transparent; color: var(--mat-sys-on-background); font: inherit; cursor: pointer; }
     .nome-grupo { font-size: 13px; font-weight: 600; letter-spacing: 0.02em; text-transform: uppercase; }
     .contagem-grupo { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--mat-sys-surface-container-lowest); }
-    .contagem-grupo mat-icon { font-size: 18px; width: 18px; height: 18px; }
     .titulo-tarefa { display: flex; align-items: flex-start; gap: 10px; }
     .titulo-tarefa .concluir { flex-shrink: 0; margin: -10px -6px -10px -10px; }
     .titulo-tarefa.concluida .texto-tarefa { color: var(--mat-sys-surface-container-lowest); text-decoration: line-through; }
