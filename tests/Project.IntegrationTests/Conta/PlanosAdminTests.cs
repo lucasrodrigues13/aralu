@@ -154,6 +154,26 @@ public class PlanosAdminTests
         return cliente;
     }
 
+    [Fact]
+    public async Task Admin_entra_na_conta_pelo_id_que_a_lista_devolve()
+    {
+        var admin = await EntrarAdmin();
+        var (dona, contaId) = await EntrarDono();
+        var evento = (await Ler(await dona.PostAsJsonAsync("/api/v1/eventos", new { tipo = "Aniversario", primeiroNome = "Festa do admin" }))).GetProperty("id").GetGuid();
+
+        var lista = (await Ler(await admin.GetAsync("/api/v1/admin/usuarios"))).EnumerateArray().Select(item => item.GetProperty("id").GetString()).ToArray();
+        Assert.Contains(contaId.ToString(), lista);
+
+        using var naConta = new HttpRequestMessage(HttpMethod.Get, "/api/v1/eventos");
+        naConta.Headers.Add(AdminEndpoints.CabecalhoConta, contaId.ToString());
+        var eventos = await Ler(await admin.SendAsync(naConta));
+        Assert.Contains(eventos.EnumerateArray(), item => item.GetProperty("id").GetGuid() == evento);
+
+        using var inexistente = new HttpRequestMessage(HttpMethod.Get, "/api/v1/eventos");
+        inexistente.Headers.Add(AdminEndpoints.CabecalhoConta, Guid.NewGuid().ToString());
+        Assert.Equal(HttpStatusCode.BadRequest, (await admin.SendAsync(inexistente)).StatusCode);
+    }
+
     private async Task<(HttpClient Cliente, Guid ContaId)> EntrarDono()
     {
         var email = $"org-{Guid.NewGuid():N}@aralu.test";
