@@ -193,6 +193,7 @@ app.UseExceptionHandler(handler =>
     });
 });
 app.UseForwardedHeaders();
+app.Use(Project.Api.Comum.CabecalhosDeSeguranca.Aplicar);
 if (swagger)
 {
     app.UseSwagger();

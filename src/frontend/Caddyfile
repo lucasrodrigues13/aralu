@@ -10,6 +10,17 @@
 		max_size 50MB
 	}
 
+	# A06-003. HSTS conservador (1 dia, sem includeSubDomains); aumentar depois, ver docs/seguranca/plano-correcoes-owasp.md.
+	# CSP em Report-Only até rodar os roteiros de teste sem violações. img-src https: cobre a capa do YouTube da página de aceite (o iframe srcdoc herda a CSP).
+	header {
+		Strict-Transport-Security "max-age=86400"
+		X-Frame-Options "DENY"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(self), geolocation=(), microphone=()"
+		Content-Security-Policy-Report-Only "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' https: blob: data:; frame-src 'self' blob:; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'"
+	}
+
 	handle /api/* {
 		reverse_proxy api:8080
 	}
