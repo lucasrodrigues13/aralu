@@ -1,4 +1,5 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { ExpandirTodosComponent } from '../../shared/expandir-todos.component';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -24,7 +25,7 @@ export { cardsPorSituacao } from '../../shared/convite-lista';
 
 @Component({
   selector: 'app-convidados',
-  imports: [MatCardModule, MatButtonToggleModule, MatButtonModule, EventoAbasComponent, MatIconModule, MatDialogModule, ConvidadosTopoComponent, MatTooltipModule],
+  imports: [ExpandirTodosComponent, MatCardModule, MatButtonToggleModule, MatButtonModule, EventoAbasComponent, MatIconModule, MatDialogModule, ConvidadosTopoComponent, MatTooltipModule],
   template: `
     @if (!eventoId()) {
       <mat-card class="cardWithShadow">
@@ -61,6 +62,9 @@ export { cardsPorSituacao } from '../../shared/convite-lista';
               Crie o primeiro convite ou importe a planilha.
             </div>
           } @else if (visao() === 'convite') {
+            <app-expandir-todos [abertos]="todosAbertos()" (alternar)="alternarTodos()">
+              {{ dados.convites.length }} {{ dados.convites.length === 1 ? 'convite' : 'convites' }}
+            </app-expandir-todos>
             <div class="relative">
               <table class="tabela">
                 <thead>
@@ -351,6 +355,15 @@ export class ConvidadosPage implements OnInit {
 
   /** Instruções de preenchimento com o download do modelo dentro do modal (SPEC-059). */
   /** Convites nascem recolhidos; clicar mostra os convidados (SPEC-059). */
+  protected readonly todosAbertos = computed(() => {
+    const convites = this.lista()?.convites ?? [];
+    return convites.length > 0 && convites.every((convite) => this.abertos().has(convite.id));
+  });
+
+  protected alternarTodos(): void {
+    this.abertos.set(this.todosAbertos() ? new Set() : new Set((this.lista()?.convites ?? []).map((convite) => convite.id)));
+  }
+
   protected aberto(id: string): boolean {
     return this.abertos().has(id);
   }

@@ -1,3 +1,4 @@
+import { ExpandirTodosComponent } from '../../shared/expandir-todos.component';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -185,14 +186,14 @@ interface ServicoVisivel {
 const SEM_FORNECEDOR = 'SemFornecedor';
 
 const CLASSE_ETAPA: Record<string, string> = {
-  Orcamento: 'alerta',
-  Contratado: 'ok',
+  Orcamento: 'bg-light-warning text-warning',
+  Contratado: 'bg-light-success text-success',
 };
 
 /** Aba Fornecedores do evento: lista de serviços, cada um com N fornecedores (SPEC-018; SPEC-008 v2, 8.2). */
 @Component({
   selector: 'app-evento-fornecedores',
-  imports: [MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, MatMenuModule, GdDinheiroPipe, DecimalPipe, EventoAbasComponent, MatTooltipModule, RouterLink],
+  imports: [ExpandirTodosComponent, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, MatMenuModule, GdDinheiroPipe, DecimalPipe, EventoAbasComponent, MatTooltipModule, RouterLink],
   template: `
     <app-evento-abas [eventoId]="id" />
     <mat-card class="cardWithShadow">
@@ -298,15 +299,10 @@ const CLASSE_ETAPA: Record<string, string> = {
         } @else if (visiveis().length === 0) {
           <p class="text-center text-muted py-10">Nada encontrado com esses filtros.</p>
         } @else {
-          <div class="servicos-lista-cabecalho">
-            <button type="button" class="alternar-todos" data-teste="alternar-todos" (click)="alternarTodos()">
-              <mat-icon>{{ todosAbertos() ? 'unfold_less' : 'unfold_more' }}</mat-icon> {{ todosAbertos() ? 'Recolher todos' : 'Expandir todos' }}
-            </button>
-            <span class="text-sm text-muted">
-              {{ visiveis().length }} {{ visiveis().length === 1 ? 'serviço' : 'serviços' }} ·
-              {{ fornecedoresVisiveis() }} {{ fornecedoresVisiveis() === 1 ? 'fornecedor' : 'fornecedores' }}
-            </span>
-          </div>
+          <app-expandir-todos [abertos]="todosAbertos()" (alternar)="alternarTodos()">
+            {{ visiveis().length }} {{ visiveis().length === 1 ? 'serviço' : 'serviços' }} ·
+            {{ fornecedoresVisiveis() }} {{ fornecedoresVisiveis() === 1 ? 'fornecedor' : 'fornecedores' }}
+          </app-expandir-todos>
           <ul class="servicos-lista com-cabecalho" aria-label="Serviços do evento">
             @for (item of visiveis(); track item.servico.id) {
               <li class="servico" [class.aberto]="estaAberto(item.servico.id)">
@@ -424,12 +420,7 @@ const CLASSE_ETAPA: Record<string, string> = {
     .valor { font-weight: 600; white-space: nowrap; }
 
     .servicos-lista { list-style: none; padding: 0; margin: 0; border: 1px solid rgba(128,128,128,.25); border-radius: 8px; overflow: hidden; }
-    .servicos-lista-cabecalho { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 12px 4px 4px; border: 1px solid rgba(128,128,128,.25); border-bottom: 0; border-radius: 8px 8px 0 0; background: rgba(128,128,128,.08); }
     .servicos-lista.com-cabecalho { border-radius: 0 0 8px 8px; }
-    .alternar-todos { display: flex; align-items: center; gap: 6px; padding: 6px 8px; border: 0; background: none; color: inherit; font: inherit; font-size: .875rem; cursor: pointer; border-radius: 6px; }
-    .alternar-todos mat-icon { font-size: 20px; width: 20px; height: 20px; }
-    .alternar-todos:hover { background: rgba(128,128,128,.12); }
-    .alternar-todos:focus-visible { outline: 2px solid var(--mat-sys-primary); }
     .servico + .servico { border-top: 1px solid rgba(128,128,128,.25); }
     .servico-cabecalho { display: flex; align-items: center; gap: 8px; padding: 8px 12px 8px 4px; }
     .servico-cabecalho:hover, .fornecedor:hover { background: rgba(128,128,128,.08); }
@@ -548,7 +539,7 @@ export class EventoFornecedoresPage implements OnInit {
   }
 
   protected classeEtapa(etapa: string): string {
-    return `inline-block rounded font-semibold px-2 py-1 text-xs whitespace-nowrap ${CLASSE_ETAPA[etapa] ?? 'neutro'}`;
+    return `inline-block rounded font-semibold px-2 py-1 text-xs whitespace-nowrap ${CLASSE_ETAPA[etapa] ?? 'bg-light-primary text-primary'}`;
   }
 
   /** Serviços do catálogo da conta (ou um novo); os que já estão no evento vêm bloqueados. */

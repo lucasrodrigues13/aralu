@@ -80,7 +80,7 @@ export function itensDaPessoa(p: Pick<PessoaEquipe, 'recebePortaria' | 'recebeRo
                 <input matInput maxlength="40" inputmode="tel" [(ngModel)]="form.telefone" name="telefone" />
               </mat-form-field>
             </div>
-            <p class="text-sm font-semibold mb-0">Recebe</p>
+            <p class="rotulo">O que essa pessoa recebe</p>
             <div class="opcoes">
               <mat-checkbox [(ngModel)]="form.recebePortaria" name="portaria">Portaria (check-in dos convidados)</mat-checkbox>
               <mat-checkbox [(ngModel)]="form.recebeCronograma" name="cronograma">
@@ -90,11 +90,7 @@ export function itensDaPessoa(p: Pick<PessoaEquipe, 'recebePortaria' | 'recebeRo
                 Roteiro @if (!e.roteiro) { <span class="text-xs text-muted">(escolha o roteiro acima)</span> }
               </mat-checkbox>
             </div>
-            @if (erroForm()) { <p class="text-error text-sm" role="alert">{{ erroForm() }}</p> }
-            <div class="acoes">
-              <button mat-button type="button" (click)="cancelar()">Cancelar</button>
-              <button mat-flat-button type="button" [disabled]="salvando()" (click)="salvar()">Salvar</button>
-            </div>
+            @if (erroForm()) { <p class="text-error text-sm mb-0" role="alert">{{ erroForm() }}</p> }
           </section>
         } @else {
           <div class="grade">
@@ -150,14 +146,21 @@ export function itensDaPessoa(p: Pick<PessoaEquipe, 'recebePortaria' | 'recebeRo
       }
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-stroked-button type="button" mat-dialog-close>Fechar</button>
+      @if (editando()) {
+        <button mat-button type="button" (click)="cancelar()">Cancelar</button>
+        <button mat-flat-button type="button" [disabled]="salvando()" (click)="salvar()">Salvar</button>
+      } @else {
+        <button mat-stroked-button type="button" mat-dialog-close>Fechar</button>
+      }
     </mat-dialog-actions>
   `,
   styles: `
-    .grade { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 12px; }
-    .opcoes { display: grid; gap: 2px; margin-bottom: 8px; }
-    .form h3 { font-size: 16px; margin: 0 0 12px; }
-    .acoes { display: flex; justify-content: flex-end; gap: 8px; }
+    .grade { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 16px; padding-top: 6px; margin-bottom: 16px; }
+    .grade mat-form-field { width: 100%; }
+    @media (max-width: 560px) { .grade { grid-template-columns: 1fr; } }
+    .rotulo { font-size: 14px; font-weight: 600; margin: 4px 0 2px; }
+    .opcoes { display: grid; margin-left: -11px; }
+    .form h3 { font-size: 16px; margin: 0 0 10px; }
     .pessoas { list-style: none; padding: 0; margin: 0 0 12px; }
     .pessoa { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--mat-sys-outline-variant); }
     .botoes { display: flex; align-items: center; gap: 4px; flex: none; }

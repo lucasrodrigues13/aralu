@@ -1,3 +1,4 @@
+import { ExpandirTodosComponent } from '../../shared/expandir-todos.component';
 import { DatePipe } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
@@ -19,7 +20,7 @@ type Vinculo = EventoServico['fornecedores'][number];
 /** Aba Contratos do evento: contratos de fornecedor enviados ao sistema, pelo organizador ou pelo cliente (SPEC-048). */
 @Component({
   selector: 'app-evento-contratos',
-  imports: [DatePipe, MatCardModule, MatButtonModule, MatIconModule, MatTooltipModule, EventoAbasComponent],
+  imports: [ExpandirTodosComponent, DatePipe, MatCardModule, MatButtonModule, MatIconModule, MatTooltipModule, EventoAbasComponent],
   template: `
     <app-evento-abas [eventoId]="id" />
     <mat-card class="cardWithShadow">
@@ -35,7 +36,11 @@ type Vinculo = EventoServico['fornecedores'][number];
             Nenhum fornecedor neste evento ainda. Adicione serviços e fornecedores na aba Fornecedores para enviar os contratos.
           </p>
         } @else {
-          <ul class="servicos-lista" aria-label="Contratos por serviço">
+          <app-expandir-todos [abertos]="todosAbertos()" (alternar)="alternarTodos()">
+            {{ grupos().length }} {{ grupos().length === 1 ? 'serviço' : 'serviços' }} ·
+            {{ totalFornecedores() }} {{ totalFornecedores() === 1 ? 'fornecedor' : 'fornecedores' }}
+          </app-expandir-todos>
+          <ul class="servicos-lista com-cabecalho" aria-label="Contratos por serviço">
             @for (grupo of grupos(); track grupo.servicoId) {
               <li class="servico" [class.aberto]="!fechados().has(grupo.servicoId)">
                 <button type="button" class="servico-cabecalho" [attr.aria-expanded]="!fechados().has(grupo.servicoId)"
@@ -88,6 +93,7 @@ type Vinculo = EventoServico['fornecedores'][number];
   `,
   styles: `
     .nome { display: block; font-weight: 500; }
+    .com-cabecalho { border-top-left-radius: 0 !important; border-top-right-radius: 0 !important; }
     .servicos-lista { list-style: none; padding: 0; margin: 0; border: 1px solid rgba(128,128,128,.25); border-radius: 8px; overflow: hidden; }
     .servico + .servico { border-top: 1px solid rgba(128,128,128,.25); }
     .servico-cabecalho { width: 100%; display: flex; align-items: center; gap: 12px; padding: 16px 16px 16px 12px; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
@@ -127,6 +133,13 @@ export class EventoContratosPage implements OnInit {
       enviados: servico.fornecedores.filter((vinculo) => !!vinculo.contratoAssinado).length,
     }))
     .sort((a, b) => a.servico.localeCompare(b.servico, 'pt-BR')));
+
+  protected readonly totalFornecedores = computed(() => this.grupos().reduce((soma, grupo) => soma + grupo.itens.length, 0));
+  protected readonly todosAbertos = computed(() => this.grupos().every((grupo) => !this.fechados().has(grupo.servicoId)));
+
+  protected alternarTodos(): void {
+    this.fechados.set(this.todosAbertos() ? new Set(this.grupos().map((grupo) => grupo.servicoId)) : new Set());
+  }
 
   ngOnInit(): void {
     this.id = this.rota.snapshot.paramMap.get('id') ?? '';

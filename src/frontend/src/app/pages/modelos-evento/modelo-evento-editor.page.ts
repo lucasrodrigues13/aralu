@@ -1,3 +1,4 @@
+import { ExpandirTodosComponent } from '../../shared/expandir-todos.component';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -120,7 +121,7 @@ export class RemoverServicoModeloDialog {
 /** Editor do modelo de evento (SPEC-012 v3 §6.2 e §6.3). */
 @Component({
   selector: 'app-modelo-evento-editor',
-  imports: [MatCardModule, ReactiveFormsModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatTabsModule, MatIconModule, MatMenuModule, MatTooltipModule, NgTemplateOutlet, GdDinheiroPipe],
+  imports: [ExpandirTodosComponent, MatCardModule, ReactiveFormsModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatTabsModule, MatIconModule, MatMenuModule, MatTooltipModule, NgTemplateOutlet, GdDinheiroPipe],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6 flex flex-wrap items-center justify-between gap-4">
@@ -258,15 +259,10 @@ export class RemoverServicoModeloDialog {
               } @else if (blocosVisiveis().length === 0) {
                 <p class="text-center text-muted py-10">Nada encontrado com esses filtros.</p>
               } @else {
-                <div class="servicos-lista-cabecalho">
-                  <button type="button" class="alternar-todos" data-teste="alternar-todos" (click)="alternarTodos()">
-                    <mat-icon>{{ todosAbertos() ? 'unfold_less' : 'unfold_more' }}</mat-icon> {{ todosAbertos() ? 'Recolher todos' : 'Expandir todos' }}
-                  </button>
-                  <span class="text-sm text-muted">
-                    {{ blocosVisiveis().length }} {{ modo() === 'prazo' ? (blocosVisiveis().length === 1 ? 'faixa' : 'faixas') : (blocosVisiveis().length === 1 ? 'serviço' : 'serviços') }} ·
-                    {{ tarefasVisiveis() }} {{ tarefasVisiveis() === 1 ? 'tarefa' : 'tarefas' }}
-                  </span>
-                </div>
+                <app-expandir-todos [abertos]="todosAbertos()" (alternar)="alternarTodos()">
+                  {{ blocosVisiveis().length }} {{ modo() === 'prazo' ? (blocosVisiveis().length === 1 ? 'faixa' : 'faixas') : (blocosVisiveis().length === 1 ? 'serviço' : 'serviços') }} ·
+                  {{ tarefasVisiveis() }} {{ tarefasVisiveis() === 1 ? 'tarefa' : 'tarefas' }}
+                </app-expandir-todos>
                 <ul class="servicos-lista com-cabecalho" aria-label="Serviços e tarefas do modelo">
                   @for (bloco of blocosVisiveis(); track bloco.chave) {
                     <li class="servico" [class.aberto]="estaAberto(bloco.chave)">
@@ -364,12 +360,7 @@ export class RemoverServicoModeloDialog {
   styles: `
     .nome { display: block; font-weight: 500; }
     .servicos-lista { list-style: none; padding: 0; margin: 0; border: 1px solid rgba(128,128,128,.25); border-radius: 8px; overflow: hidden; }
-    .servicos-lista-cabecalho { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 12px 4px 4px; border: 1px solid rgba(128,128,128,.25); border-bottom: 0; border-radius: 8px 8px 0 0; background: rgba(128,128,128,.08); }
     .servicos-lista.com-cabecalho { border-radius: 0 0 8px 8px; }
-    .alternar-todos { display: flex; align-items: center; gap: 6px; padding: 6px 8px; border: 0; background: none; color: inherit; font: inherit; font-size: .875rem; cursor: pointer; border-radius: 6px; }
-    .alternar-todos mat-icon { font-size: 20px; width: 20px; height: 20px; }
-    .alternar-todos:hover { background: rgba(128,128,128,.12); }
-    .alternar-todos:focus-visible { outline: 2px solid var(--mat-sys-primary); }
     .servico + .servico { border-top: 1px solid rgba(128,128,128,.25); }
     .servico-cabecalho { display: flex; align-items: center; gap: 8px; padding: 8px 12px 8px 4px; }
     .servico-cabecalho:hover, .tarefa:hover { background: rgba(128,128,128,.08); }

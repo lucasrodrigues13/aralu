@@ -1,3 +1,4 @@
+import { ExpandirTodosComponent } from '../../shared/expandir-todos.component';
 import { Component, computed, inject, input, OnInit, output, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -28,7 +29,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 /** Tarefas do evento dentro do Resumo (SPEC-051): lista agrupada pela distância até o evento, com todas as ações (SPEC-003 v4). */
 @Component({
   selector: 'app-evento-tarefas',
-  imports: [MatCardModule, MatButtonModule, MatIconModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule, GdDataPipe, ChecklistTarefaComponent, MatTooltipModule],
+  imports: [ExpandirTodosComponent, MatCardModule, MatButtonModule, MatIconModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule, GdDataPipe, ChecklistTarefaComponent, MatTooltipModule],
   template: `
     <mat-card class="cardWithShadow" id="tarefas-do-evento">
     <div class="p-6 flex flex-wrap items-center justify-between gap-4">
@@ -111,6 +112,10 @@ import { MatTooltipModule } from '@angular/material/tooltip';
         @if (secoesEvento().length === 0) {
           <p class="text-center text-muted py-10">Não há tarefa para mostrar.</p>
         } @else {
+          <app-expandir-todos [abertos]="todosGruposAbertos()" (alternar)="alternarTodosGrupos()">
+            {{ secoesEvento().length }} {{ secoesEvento().length === 1 ? 'grupo' : 'grupos' }} ·
+            {{ plural(visiveisEvento().length, 'tarefa', 'tarefas') }}
+          </app-expandir-todos>
           <div class="relative">
             <table class="tabela agrupada">
               <thead>
@@ -348,6 +353,12 @@ export class EventoTarefasComponent implements OnInit {
     if (situacao === 'Atrasada') return 'erro';
     if (situacao === 'EmAndamento') return 'info';
     return 'alerta';
+  }
+
+  protected readonly todosGruposAbertos = computed(() => this.secoesEvento().every((secao) => !this.gruposFechados().has(secao.id)));
+
+  protected alternarTodosGrupos(): void {
+    this.gruposFechados.set(this.todosGruposAbertos() ? new Set(this.secoesEvento().map((secao) => secao.id)) : new Set());
   }
 
   protected grupoFechado(id: string): boolean {

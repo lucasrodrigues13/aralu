@@ -1,3 +1,4 @@
+import { ExpandirTodosComponent } from '../../shared/expandir-todos.component';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -30,7 +31,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 /** Aba Financeiro do evento (SPEC-043): pagamentos a fornecedores, com parcelas, marcação de pago e comprovantes. */
 @Component({
   selector: 'app-evento-dinheiro',
-  imports: [MatCardModule, MatButtonModule, MatCheckboxModule, MatIconModule, GdDataPipe, GdDinheiroPipe, EventoAbasComponent, MatTooltipModule],
+  imports: [ExpandirTodosComponent, MatCardModule, MatButtonModule, MatCheckboxModule, MatIconModule, GdDataPipe, GdDinheiroPipe, EventoAbasComponent, MatTooltipModule],
   template: `
     <app-evento-abas [eventoId]="id" />
 
@@ -49,7 +50,11 @@ import { MatTooltipModule } from '@angular/material/tooltip';
           @if (d.pagamentosFornecedores.length === 0) {
             <p class="text-center text-muted py-10">Nenhum pagamento. Eles aparecem ao contratar um fornecedor na aba Fornecedores.</p>
           } @else {
-            <ul class="servicos-lista" aria-label="Pagamentos por serviço">
+            <app-expandir-todos [abertos]="todosAbertos()" (alternar)="alternarTodos()">
+              {{ grupos().length }} {{ grupos().length === 1 ? 'serviço' : 'serviços' }} ·
+              {{ d.pagamentosFornecedores.length }} {{ d.pagamentosFornecedores.length === 1 ? 'pagamento' : 'pagamentos' }}
+            </app-expandir-todos>
+            <ul class="servicos-lista com-cabecalho" aria-label="Pagamentos por serviço">
               @for (grupo of grupos(); track grupo.servicoId) {
                 <li class="servico" [class.aberto]="!fechados().has(grupo.servicoId)">
                   <button type="button" class="servico-cabecalho" [attr.aria-expanded]="!fechados().has(grupo.servicoId)"
@@ -145,6 +150,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
   styles: `
     .nome { display: block; font-weight: 500; }
     .valor { font-weight: 600; white-space: nowrap; }
+    .com-cabecalho { border-top-left-radius: 0 !important; border-top-right-radius: 0 !important; }
     .servicos-lista { list-style: none; padding: 0; margin: 0; border: 1px solid rgba(128,128,128,.25); border-radius: 8px; overflow: hidden; }
     .servico + .servico { border-top: 1px solid rgba(128,128,128,.25); }
     .servico-cabecalho { width: 100%; display: flex; align-items: center; gap: 12px; padding: 16px 16px 16px 12px; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
@@ -182,6 +188,12 @@ export class EventoDinheiroPage implements OnInit {
 
   /** Serviços recolhidos; todos começam abertos. */
   protected readonly fechados = signal<ReadonlySet<string>>(new Set());
+
+  protected readonly todosAbertos = computed(() => this.grupos().every((grupo) => !this.fechados().has(grupo.servicoId)));
+
+  protected alternarTodos(): void {
+    this.fechados.set(this.todosAbertos() ? new Set(this.grupos().map((grupo) => grupo.servicoId)) : new Set());
+  }
 
   /** Pagamentos agrupados por serviço, no mesmo padrão das abas Fornecedores e Contratos. */
   protected readonly grupos = computed(() => {

@@ -1,3 +1,4 @@
+import { ExpandirTodosComponent } from '../../shared/expandir-todos.component';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -33,7 +34,7 @@ import { AcessoLinkComponent } from './acesso-link.component';
 /** Página do cliente, sem login (SPEC-046): acompanha e atualiza o financeiro do evento quando a organizadora libera. */
 @Component({
   selector: 'app-cliente',
-  imports: [MatCardModule, MatButtonModule, MatCheckboxModule, MatIconModule, MatTabsModule, GdDataPipe, GdDinheiroPipe, ConvidadosTopoComponent, MatTooltipModule, AcessoLinkComponent],
+  imports: [ExpandirTodosComponent, MatCardModule, MatButtonModule, MatCheckboxModule, MatIconModule, MatTabsModule, GdDataPipe, GdDinheiroPipe, ConvidadosTopoComponent, MatTooltipModule, AcessoLinkComponent],
   template: `
     <main class="pagina">
       @if (carregando()) {
@@ -149,6 +150,11 @@ import { AcessoLinkComponent } from './acesso-link.component';
                   <p class="text-center text-muted py-6">Nenhum convite ainda. Use "Novo convite" para cadastrar quem vai receber.</p>
                 } @else if (convitesFiltrados().length === 0) {
                   <p class="text-center text-muted py-6">Nenhum convite com estes filtros.</p>
+                }
+                @if (convitesFiltrados().length > 0) {
+                  <app-expandir-todos class="mb-3 rounded-lg! border-b!" [abertos]="todosAbertos()" (alternar)="alternarTodos()">
+                    {{ convitesFiltrados().length }} {{ convitesFiltrados().length === 1 ? 'convite' : 'convites' }}
+                  </app-expandir-todos>
                 }
                 @for (convite of convitesFiltrados(); track convite.id) {
                   <mat-card class="cardWithShadow"><mat-card-content>
@@ -275,6 +281,15 @@ export class LinkClientePage implements OnInit {
     this.dialog.open(ImportacoesDialog, { ...DIALOG, data: dados }).afterClosed().subscribe((importou?: boolean) => {
       if (importou) this.cliente.obter(this.token).subscribe((leitura) => this.dados.set(leitura));
     });
+  }
+
+  protected readonly todosAbertos = computed(() => {
+    const convites = this.convitesFiltrados();
+    return convites.length > 0 && convites.every((convite) => this.abertos().has(convite.id));
+  });
+
+  protected alternarTodos(): void {
+    this.abertos.set(this.todosAbertos() ? new Set() : new Set(this.convitesFiltrados().map((convite) => convite.id)));
   }
 
   protected aberto(id: string): boolean {
