@@ -166,6 +166,7 @@ grep -n ASAAS_DIAGNOSTICO /opt/aralu/.env /opt/aralu-staging/.env
 1. `folha-contrato.ts:78`: `el.innerHTML = cabecalho + linhas.map((l) => \`<div class="linha">${limparHtml(l)}</div>\`).join('');`, ou limpar uma vez em `blocosDoContrato(limparHtml(html))`, que é mais eficiente.
 2. `limparHtml`: acrescentar `src` com `data:` só para `img` (para não quebrar a logo, se ela vier como data URL) e remover `srcdoc`, `formaction` e `xlink:href`.
 3. Revisar os outros `innerHTML` do front (`previa-word.ts:49` só limpa; `proposta-publica` e `tarefas-funil` passam pelo sanitizador do Angular, então estão ok).
+   - **Resultado da revisão (feita):** `previa-word.ts:49` só faz `innerHTML = ''` (limpeza), sem risco. `proposta-publica.page.ts:56` e `tarefas-funil.page.ts:206` usam `[innerHTML]` do Angular, que sanitiza, sem `bypassSecurityTrust*` no front. `folha-contrato.ts:78` (medidor) agora recebe o HTML já passado por `limparHtml()`. Nenhum outro ponto a corrigir.
 
 **Testes:** spec com `<img src=x onerror=alert(1)>` e `<a href="javascript:...">`: os atributos somem e o texto fica.
 
