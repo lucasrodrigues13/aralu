@@ -22,10 +22,11 @@ import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { linkProposta, SELO_PROPOSTA, whatsappProposta, whatsappTexto } from '../../shared/proposta';
 import { ParcelasOrcamentoDialog } from './parcelas-orcamento.dialog';
 import { EditorRico } from '../../shared/editor-rico';
+import { abrirPreviaAceite } from '../modelos-funil/pagina-aceite';
 
 @Component({
   selector: 'app-orcamento-funil-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, CampoDinheiroComponent, EditorRico],
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule, MatSelectModule, CampoDinheiroComponent, EditorRico],
   template: `
     <h2 mat-dialog-title>{{ dados ? 'Editar orçamento' : 'Novo orçamento' }}</h2>
     <mat-dialog-content>
@@ -57,6 +58,11 @@ import { EditorRico } from '../../shared/editor-rico';
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
+      @if (!dados) {
+        <button mat-stroked-button type="button" class="mr-auto" [disabled]="!form.controls.modeloId.value" (click)="previa()">
+          <mat-icon>visibility</mat-icon> Live Preview
+        </button>
+      }
       <button mat-stroked-button type="button" (click)="ref.close()">Cancelar</button>
       <button mat-flat-button type="button" (click)="salvar()">Salvar</button>
     </mat-dialog-actions>
@@ -66,6 +72,7 @@ export class OrcamentoFunilDialog implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly negocio = inject(NegocioClient);
   private readonly toast = inject(ToastService);
+  private readonly dialog = inject(MatDialog);
   protected readonly dados = inject<OrcamentoFunil | null>(MAT_DIALOG_DATA);
   protected readonly ref = inject(MatDialogRef<OrcamentoFunilDialog, boolean>);
   protected readonly oportunidades = signal<Oportunidade[]>([]);
@@ -96,6 +103,20 @@ export class OrcamentoFunilDialog implements OnInit {
     this.negocio.textoDoModeloOrcamento(modelo.id, oportunidadeId, this.form.controls.valor.value).subscribe({
       next: (resposta) => this.form.controls.conteudo.setValue(resposta.texto),
       error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+    });
+  }
+
+  /** Mostra em tela cheia a página que o lead vai ver, para conferir se o modelo escolhido é o certo. */
+  protected previa(): void {
+    const modelo = this.modelos().find((m) => m.id === this.form.controls.modeloId.value);
+    if (!modelo) return;
+    abrirPreviaAceite(this.dialog, {
+      texto: this.form.controls.conteudo.value || modelo.texto || null,
+      htmlAceite: modelo.htmlAceite ?? null,
+      corPrimaria: modelo.corPrimaria,
+      corSecundaria: modelo.corSecundaria,
+      midias: modelo.midias ?? [],
+      depoimentos: modelo.depoimentos ?? [],
     });
   }
 
