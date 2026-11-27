@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -11,7 +11,9 @@ import { map } from 'rxjs';
 import { AcessoLink } from '../../core/link-cliente.client';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { AcessoBriefing, BriefingPublico, NegocioClient } from '../../core/negocio.client';
+import { Estado } from '../../shared/estado';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
+import { PaginaPublica } from '../../shared/pagina-publica';
 import { AcessoLinkComponent, PortaAcesso } from '../link-cliente/acesso-link.component';
 
 type Etapa = 'carregando' | 'codigo' | 'aberto' | 'concluido' | 'indisponivel';
@@ -34,12 +36,12 @@ function comoAcessoLink(a: AcessoBriefing): AcessoLink {
  */
 @Component({
   selector: 'app-briefing-publico',
-  imports: [FormsModule, MatCardModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule, GdDataPipe, AcessoLinkComponent],
+  imports: [FormsModule, MatCardModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule, Estado, PaginaPublica, AcessoLinkComponent],
   template: `
-    <main class="pagina">
+    <app-pagina-publica [titulo]="titulo()" [subtitulo]="subtitulo()" [empresa]="briefing()?.empresa">
       @switch (etapa()) {
         @case ('carregando') {
-          <p class="text-xs text-muted">Carregando…</p>
+          <mat-card class="cardWithShadow"><mat-card-content><app-estado titulo="Carregando…" /></mat-card-content></mat-card>
         }
         @case ('codigo') {
           <app-acesso-link [token]="token" [porta]="porta" rotuloAbrir="Abrir o briefing"
@@ -48,13 +50,6 @@ function comoAcessoLink(a: AcessoBriefing): AcessoLink {
         @case ('aberto') {
           @if (briefing(); as b) {
             <mat-card class="cardWithShadow"><mat-card-content>
-              <header class="topo">
-                @if (b.empresa) { <span class="block text-sm font-semibold text-primary">{{ b.empresa }}</span> }
-                <h1>Briefing{{ b.nome ? ': ' + b.nome : '' }}</h1>
-                <span class="block text-sm text-muted">
-                  Responda com calma. Você pode salvar e voltar depois pelo mesmo link{{ b.validoAte ? ' até ' + (b.validoAte | gdData) : '' }}.
-                </span>
-              </header>
               @for (item of b.itens; track item.id; let i = $index) {
                 @if (item.secao && (i === 0 || b.itens[i - 1].secao !== item.secao)) {
                   <h2>{{ item.secao }}</h2>
@@ -67,10 +62,10 @@ function comoAcessoLink(a: AcessoBriefing): AcessoLink {
                 </div>
               }
               @if (salvo()) {
-                <p class="aviso" role="status"><mat-icon>check_circle</mat-icon> Respostas salvas.</p>
+                <p class="flex items-center gap-2 text-primary mt-4" role="status"><mat-icon>check_circle</mat-icon> Respostas salvas.</p>
               }
               @if (erro()) { <p class="text-error text-sm" role="alert">{{ erro() }}</p> }
-              <div class="acoes">
+              <div class="acoes-publicas">
                 <button mat-stroked-button type="button" [disabled]="salvando()" (click)="salvar(false)">Salvar e continuar depois</button>
                 <button mat-flat-button type="button" [disabled]="salvando()" (click)="salvar(true)">Concluir e enviar</button>
               </div>
@@ -79,33 +74,21 @@ function comoAcessoLink(a: AcessoBriefing): AcessoLink {
           }
         }
         @case ('concluido') {
-          <mat-card class="cardWithShadow"><mat-card-content class="fim">
-            <mat-icon class="icone">check_circle</mat-icon>
-            <h1>Briefing enviado</h1>
-            <p class="text-muted">Obrigado! A assessoria já recebeu as suas respostas.</p>
+          <mat-card class="cardWithShadow"><mat-card-content>
+            <app-estado icone="check_circle" titulo="Briefing enviado" texto="Obrigado! A assessoria já recebeu as suas respostas." />
           </mat-card-content></mat-card>
         }
         @default {
-          <mat-card class="cardWithShadow"><mat-card-content class="fim">
-            <mat-icon class="icone">lock</mat-icon>
-            <h1>Link indisponível</h1>
-            <p class="text-muted">{{ erro() || 'Este briefing não está disponível. Fale com a assessoria.' }}</p>
+          <mat-card class="cardWithShadow"><mat-card-content>
+            <app-estado icone="link_off" titulo="Este link não está mais disponível" [texto]="erro() || 'Fale com a assessoria.'" />
           </mat-card-content></mat-card>
         }
       }
-    </main>
+    </app-pagina-publica>
   `,
   styles: `
-    :host { display: block; min-height: 100vh; background: var(--mat-sys-background); }
-    .pagina { max-width: 720px; margin: 0 auto; padding: 24px 16px 48px; }
-    .topo { border-bottom: 1px solid var(--mat-sys-outline-variant); padding-bottom: 16px; margin-bottom: 16px; }
-    h1 { font-size: 20px; margin: 4px 0; overflow-wrap: anywhere; }
     h2 { font-size: 17px; margin: 20px 0 8px; }
     .campo { margin-bottom: 12px; }
-    .aviso { display: flex; align-items: center; gap: 8px; color: var(--mat-sys-primary); margin: 16px 0 0; }
-    .acoes { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-top: 16px; }
-    .fim { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; padding: 24px 8px; }
-    .icone { font-size: 40px; width: 40px; height: 40px; line-height: 40px; color: var(--mat-sys-primary); }
   `,
 })
 export class BriefingPublicoPage implements OnInit {
@@ -117,6 +100,17 @@ export class BriefingPublicoPage implements OnInit {
   protected readonly erro = signal('');
   protected readonly briefing = signal<BriefingPublico | null>(null);
   protected readonly respostas = signal<Record<string, string>>({});
+  protected readonly titulo = computed(() => {
+    const b = this.briefing();
+    return this.etapa() === 'aberto' && b ? 'Briefing' + (b.nome ? ': ' + b.nome : '') : undefined;
+  });
+  private readonly data = new GdDataPipe();
+  protected readonly subtitulo = computed(() => {
+    const b = this.briefing();
+    return this.etapa() === 'aberto' && b
+      ? 'Responda com calma. Você pode salvar e voltar depois pelo mesmo link' + (b.validoAte ? ' até ' + this.data.transform(b.validoAte) : '') + '.'
+      : undefined;
+  });
 
   protected readonly porta: PortaAcesso = {
     acesso: (t) => this.negocio.acessoBriefing(t).pipe(map(comoAcessoLink)),

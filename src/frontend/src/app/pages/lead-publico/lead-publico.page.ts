@@ -9,20 +9,21 @@ import { MatSelectModule } from '@angular/material/select';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { NegocioClient, TIPOS } from '../../core/negocio.client';
 import { CampoDataComponent } from '../../shared/campo-data';
+import { Estado } from '../../shared/estado';
+import { PaginaPublica } from '../../shared/pagina-publica';
 import { MascaraDirective } from '../../shared/mascara.directive';
 import { deDataParaIso } from '../../shared/data';
 import { ToastService } from '../../core/toast.service';
 
 @Component({
   selector: 'app-lead-publico',
-  imports: [ReactiveFormsModule, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, CampoDataComponent, MascaraDirective],
+  imports: [ReactiveFormsModule, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, CampoDataComponent, MascaraDirective, Estado, PaginaPublica],
   template: `
-    <section class="flex min-h-screen w-full items-center justify-center p-4 bg-light">
-      <mat-card class="cardWithShadow w-full max-w-[440px] mb-0!">
-        <div class="px-6 pt-6"><h3 class="text-xl font-semibold">Solicitar orçamento</h3></div>
-        <mat-card-content class="pt-6!">
+    <app-pagina-publica titulo="Solicitar orçamento" [estreita]="true">
+      <mat-card class="cardWithShadow">
+        <mat-card-content>
           @if (enviado()) {
-            <p>Recebemos o seu contato. Em breve a assessoria retorna.</p>
+            <app-estado icone="check_circle" titulo="Pedido enviado" texto="Em breve a assessoria retorna." />
           } @else {
             <form class="grid grid-cols-1 gap-4" [formGroup]="form" (ngSubmit)="enviar()">
               <div class="campo">
@@ -73,12 +74,14 @@ import { ToastService } from '../../core/toast.service';
                   </mat-form-field>
                 </div>
               </div>
-              <button mat-flat-button class="w-full" type="submit" [disabled]="!contaId">Enviar</button>
+              <div class="acoes-publicas">
+                <button mat-flat-button type="submit" [disabled]="!contaId">Enviar</button>
+              </div>
             </form>
           }
         </mat-card-content>
       </mat-card>
-    </section>
+    </app-pagina-publica>
   `,
 })
 export class LeadPublicoPage implements OnInit {

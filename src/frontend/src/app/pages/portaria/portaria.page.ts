@@ -10,7 +10,9 @@ import { mensagemDeErro } from '../../core/mensagem-erro';
 import { ConvidadoPortaria, ConvitePortaria, PortariaClient, PortariaLeitura } from '../../core/portaria.client';
 import { ToastService } from '../../core/toast.service';
 import { ExpandirTodosComponent } from '../../shared/expandir-todos.component';
+import { Estado } from '../../shared/estado';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
+import { PaginaPublica } from '../../shared/pagina-publica';
 import { LeitorQrComponent } from './leitor-qr.component';
 
 type StatusConvite = 'Pendente' | 'Parcial' | 'Completo';
@@ -21,23 +23,17 @@ type StatusConvite = 'Pendente' | 'Parcial' | 'Completo';
  */
 @Component({
   selector: 'app-portaria',
-  imports: [MatCardModule, MatButtonModule, MatCheckboxModule, MatIconModule, DatePipe, GdDataPipe, LeitorQrComponent, RouterLink, ExpandirTodosComponent],
+  imports: [MatCardModule, MatButtonModule, MatCheckboxModule, MatIconModule, DatePipe, LeitorQrComponent, RouterLink, ExpandirTodosComponent, Estado, PaginaPublica],
   template: `
-    <main class="pagina">
+    <app-pagina-publica [titulo]="titulo()" [subtitulo]="subtitulo()">
       @if (carregando()) {
-        <p class="text-xs text-muted">Carregando…</p>
+        <mat-card class="cardWithShadow"><mat-card-content><app-estado titulo="Carregando…" /></mat-card-content></mat-card>
       } @else if (indisponivel()) {
-        <mat-card class="cardWithShadow"><mat-card-content class="aviso">
-          <mat-icon>link_off</mat-icon>
-          <h1>Este link não está mais disponível</h1>
-          <p class="text-muted">Fale com quem organizou o evento.</p>
+        <mat-card class="cardWithShadow"><mat-card-content>
+          <app-estado icone="link_off" titulo="Este link não está mais disponível" texto="Fale com quem organizou o evento." />
         </mat-card-content></mat-card>
       } @else if (dados(); as d) {
-        <header class="topo">
-          <a mat-button [routerLink]="['/equipe', token]"><mat-icon>arrow_back</mat-icon> Voltar</a>
-          <h1>Portaria: {{ d.evento }}</h1>
-          @if (d.data) { <span class="text-sm text-muted">{{ d.data | gdData }}</span> }
-        </header>
+        <div><a mat-button [routerLink]="['/equipe', token]"><mat-icon>arrow_back</mat-icon> Voltar</a></div>
 
         @if (escaneando()) {
           <mat-card class="cardWithShadow"><mat-card-content>
@@ -131,15 +127,9 @@ type StatusConvite = 'Pendente' | 'Parcial' | 'Completo';
           }
         }
       }
-    </main>
+    </app-pagina-publica>
   `,
   styles: `
-    :host { display: block; min-height: 100vh; background: var(--mat-sys-background); }
-    .pagina { max-width: 640px; margin: 0 auto; padding: 24px 16px 48px; display: grid; gap: 12px; }
-    .topo { border-bottom: 1px solid var(--mat-sys-outline-variant); padding-bottom: 12px; }
-    h1 { font-size: 22px; margin: 0; overflow-wrap: anywhere; }
-    .aviso { text-align: center; padding: 32px 16px; }
-    .aviso mat-icon { font-size: 40px; width: 40px; height: 40px; line-height: 40px; color: var(--mat-sys-outline); }
     .resumo mat-card-content { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; text-align: center; }
     .resumo strong { font-size: 22px; }
     .rotulo { display: block; font-size: 12px; color: var(--mat-sys-outline); }
@@ -187,6 +177,16 @@ export class PortariaPage implements OnInit {
   });
   protected readonly todosAbertos = computed(() => this.filtrados().length > 0 && this.filtrados().every((item) => this.abertos().has(item.id)));
   protected token = '';
+  private readonly dataPipe = new GdDataPipe();
+  private readonly aberta = computed(() => (this.carregando() || this.indisponivel() ? null : this.dados()));
+  protected readonly titulo = computed(() => {
+    const d = this.aberta();
+    return d ? 'Portaria: ' + d.evento : undefined;
+  });
+  protected readonly subtitulo = computed(() => {
+    const d = this.aberta();
+    return d?.data ? this.dataPipe.transform(d.data) : undefined;
+  });
 
   ngOnInit(): void {
     this.token = this.rota.snapshot.paramMap.get('token') ?? '';

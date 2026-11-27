@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -9,7 +9,9 @@ import { AcessoEquipe, EquipeEventoClient, EquipePublica } from '../../core/equi
 import { AcessoLink } from '../../core/link-cliente.client';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { Cronograma, Roteiro } from '../../core/negocio.client';
+import { Estado } from '../../shared/estado';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
+import { PaginaPublica } from '../../shared/pagina-publica';
 import { AcessoLinkComponent, PortaAcesso } from '../link-cliente/acesso-link.component';
 
 type Etapa = 'carregando' | 'codigo' | 'aberto' | 'indisponivel';
@@ -38,12 +40,12 @@ function hora(valor: string | null): string {
  */
 @Component({
   selector: 'app-equipe-publica',
-  imports: [RouterLink, MatButtonModule, MatCardModule, MatIconModule, GdDataPipe, AcessoLinkComponent],
+  imports: [RouterLink, MatButtonModule, MatCardModule, MatIconModule, GdDataPipe, AcessoLinkComponent, Estado, PaginaPublica],
   template: `
-    <main class="pagina">
+    <app-pagina-publica [titulo]="titulo()" [subtitulo]="subtitulo()" [empresa]="painel()?.empresa">
       @switch (etapa()) {
         @case ('carregando') {
-          <p class="text-xs text-muted">Carregando…</p>
+          <mat-card class="cardWithShadow"><mat-card-content><app-estado titulo="Carregando…" /></mat-card-content></mat-card>
         }
         @case ('codigo') {
           <app-acesso-link [token]="token" [porta]="porta" rotuloAbrir="Abrir o evento"
@@ -53,13 +55,6 @@ function hora(valor: string | null): string {
           @if (painel(); as p) {
             @if (vista() === 'painel') {
               <mat-card class="cardWithShadow"><mat-card-content>
-                <header class="topo">
-                  @if (p.empresa) { <span class="block text-sm font-semibold text-primary">{{ p.empresa }}</span> }
-                  <h1>{{ p.evento }}</h1>
-                  @if (p.data) {
-                    <span class="block text-sm text-muted">{{ p.data | gdData }}{{ p.hora ? ' às ' + horaCurta(p.hora) : '' }}</span>
-                  }
-                </header>
                 <p class="ola">Olá, {{ primeiroNome(p.nome) }}{{ p.funcao ? ' · ' + p.funcao : '' }}</p>
                 @for (local of p.locais; track local.rotulo) {
                   <p class="local"><mat-icon>place</mat-icon>
@@ -104,7 +99,7 @@ function hora(valor: string | null): string {
                         </li>
                       }
                     </ol>
-                  } @else { <p class="text-xs text-muted">Carregando…</p> }
+                  } @else { <app-estado titulo="Carregando…" /> }
                 } @else {
                   @if (roteiro(); as r) {
                     <h1>{{ r.nome }}</h1>
@@ -124,7 +119,7 @@ function hora(valor: string | null): string {
                         </li>
                       }
                     </ol>
-                  } @else { <p class="text-xs text-muted">Carregando…</p> }
+                  } @else { <app-estado titulo="Carregando…" /> }
                 }
                 @if (erro()) { <p class="text-error text-sm" role="alert">{{ erro() }}</p> }
               </mat-card-content></mat-card>
@@ -132,20 +127,14 @@ function hora(valor: string | null): string {
           }
         }
         @default {
-          <mat-card class="cardWithShadow"><mat-card-content class="fim">
-            <mat-icon class="icone">link_off</mat-icon>
-            <h1>Link indisponível</h1>
-            <p class="text-muted">{{ erro() || 'Este link não está mais disponível. Fale com quem organizou o evento.' }}</p>
+          <mat-card class="cardWithShadow"><mat-card-content>
+            <app-estado icone="link_off" titulo="Este link não está mais disponível" [texto]="erro() || 'Fale com quem organizou o evento.'" />
           </mat-card-content></mat-card>
         }
       }
-    </main>
+    </app-pagina-publica>
   `,
   styles: `
-    :host { display: block; min-height: 100vh; background: var(--mat-sys-background); }
-    .pagina { max-width: 640px; margin: 0 auto; padding: 24px 16px 48px; }
-    .topo { border-bottom: 1px solid var(--mat-sys-outline-variant); padding-bottom: 12px; margin-bottom: 12px; }
-    h1 { font-size: 20px; margin: 4px 0; overflow-wrap: anywhere; }
     .ola { font-weight: 600; margin: 0 0 8px; }
     .local { display: flex; gap: 8px; align-items: flex-start; margin: 4px 0; }
     .local mat-icon { color: var(--mat-sys-primary); flex: none; }
@@ -158,8 +147,6 @@ function hora(valor: string | null): string {
     .recado { display: flex; gap: 6px; align-items: flex-start; color: var(--mat-sys-primary); font-size: 14px; }
     .recado mat-icon, .mini { font-size: 18px; width: 18px; height: 18px; vertical-align: -4px; flex: none; }
     .sub { margin: 4px 0 0; padding-left: 20px; }
-    .fim { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; padding: 24px 8px; }
-    .icone { font-size: 40px; width: 40px; height: 40px; line-height: 40px; color: var(--mat-sys-outline); }
   `,
 })
 export class EquipePublicaPage implements OnInit {
@@ -179,6 +166,13 @@ export class EquipePublicaPage implements OnInit {
   };
 
   protected readonly horaCurta = hora;
+  private readonly data = new GdDataPipe();
+  private readonly painelVisivel = computed(() => (this.etapa() === 'aberto' && this.vista() === 'painel' ? this.painel() : null));
+  protected readonly titulo = computed(() => this.painelVisivel()?.evento);
+  protected readonly subtitulo = computed(() => {
+    const p = this.painelVisivel();
+    return p?.data ? this.data.transform(p.data) + (p.hora ? ' às ' + hora(p.hora) : '') : undefined;
+  });
 
   ngOnInit(): void {
     this.carregar();

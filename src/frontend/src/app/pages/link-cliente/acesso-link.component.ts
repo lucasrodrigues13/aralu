@@ -8,6 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { Observable } from 'rxjs';
 import { AcessoLink, LinkClienteClient } from '../../core/link-cliente.client';
 import { mensagemDeErro } from '../../core/mensagem-erro';
+import { Estado } from '../../shared/estado';
 
 /** De onde vem o código: o link do cliente (padrão) ou outro link público, como o briefing (SPEC-066). */
 export interface PortaAcesso {
@@ -22,12 +23,11 @@ export interface PortaAcesso {
  */
 @Component({
   selector: 'app-acesso-link',
-  imports: [FormsModule, ReactiveFormsModule, MatButtonModule, MatCardModule, MatFormFieldModule, MatIconModule, MatInputModule],
+  imports: [FormsModule, ReactiveFormsModule, MatButtonModule, MatCardModule, MatFormFieldModule, MatIconModule, MatInputModule, Estado],
   template: `
-    <mat-card class="cardWithShadow"><mat-card-content class="acesso">
+    <mat-card class="cardWithShadow"><mat-card-content>
       @if (acesso(); as a) {
-        <mat-icon class="icone">lock</mat-icon>
-        <h1>{{ a.evento }}</h1>
+        <app-estado icone="lock" [titulo]="a.evento">
         @if (a.emails.length === 0) {
           <p class="text-muted">{{ semEmail() }}</p>
         } @else if (!enviadoPara()) {
@@ -41,10 +41,12 @@ export interface PortaAcesso {
         } @else {
           <p>Enviamos um código de 6 dígitos para <strong>{{ enviadoPara() }}</strong>. Ele vale 10 minutos.</p>
           <form class="codigo" (ngSubmit)="confirmar()">
-            <mat-form-field appearance="outline">
-              <mat-label>Código</mat-label>
+            <div class="campo">
+              <mat-label class="font-semibold mb-2 block">Código</mat-label>
+              <mat-form-field appearance="outline">
               <input matInput [formControl]="codigo" inputmode="numeric" autocomplete="one-time-code" maxlength="6" aria-label="Código de 6 dígitos" />
-            </mat-form-field>
+              </mat-form-field>
+            </div>
             <button mat-flat-button type="submit" [disabled]="codigo.invalid || enviando()">{{ rotuloAbrir() }}</button>
           </form>
           <button mat-button type="button" [disabled]="segundos() > 0 || enviando()" (click)="pedir(escolhido!, enviadoPara()!)">
@@ -53,16 +55,15 @@ export interface PortaAcesso {
           <button mat-button type="button" (click)="trocarEmail()">Usar outro e-mail</button>
         }
         @if (erro()) { <p class="text-error text-sm" role="alert">{{ erro() }}</p> }
+        </app-estado>
       } @else {
-        <p class="text-xs text-muted">Carregando…</p>
+        <app-estado titulo="Carregando…" />
       }
     </mat-card-content></mat-card>
   `,
   styles: `
-    .acesso { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; padding: 24px 8px; }
-    .icone { font-size: 40px; width: 40px; height: 40px; line-height: 40px; color: var(--mat-sys-primary); }
     .emails { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 320px; }
-    .codigo { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; }
+    .codigo { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end; gap: 8px; }
     .codigo mat-form-field { width: 160px; }
   `,
 })

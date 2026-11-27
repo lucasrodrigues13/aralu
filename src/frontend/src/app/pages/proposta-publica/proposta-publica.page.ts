@@ -1,5 +1,5 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { Component, computed, effect, ElementRef, inject, OnInit, signal, viewChild } from '@angular/core';
+import { Component, computed, effect, ElementRef, inject, OnDestroy, OnInit, signal, viewChild } from '@angular/core';
 import { FormBuilder, FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -10,7 +10,10 @@ import { MatInputModule } from '@angular/material/input';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { faltaParaContrato, NegocioClient, PropostaPublica, RespostaProposta } from '../../core/negocio.client';
 import { ContratanteCamposComponent, contratantePedido, grupoContratante, preencherContratante } from '../../shared/contratante-campos';
+import { Estado } from '../../shared/estado';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
+import { PaginaPublica } from '../../shared/pagina-publica';
+import { TemaService } from '../../core/tema.service';
 import { GdDinheiroPipe } from '../../shared/gd-dinheiro.pipe';
 import { ehHtml } from '../../shared/editor-rico';
 
@@ -25,7 +28,7 @@ const RESPONDIDO: Record<RespostaProposta, { titulo: string; texto: string; icon
 /** Proposta aberta pelo lead, sem login (SPEC-031 §6.6). Pensada para o celular. */
 @Component({
   selector: 'app-proposta-publica',
-  imports: [NgTemplateOutlet, ReactiveFormsModule, ContratanteCamposComponent, MatCardModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule, GdDataPipe, GdDinheiroPipe],
+  imports: [NgTemplateOutlet, ReactiveFormsModule, ContratanteCamposComponent, MatCardModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule, GdDataPipe, GdDinheiroPipe, Estado, PaginaPublica],
   template: `
     @if (paginaPropria(); as p) {
       <!-- Página da assessoria (SPEC-061): HTML montado e sanitizado no servidor, num iframe sem scripts. -->
@@ -43,17 +46,12 @@ const RESPONDIDO: Record<RespostaProposta, { titulo: string; texto: string; icon
         </section>
       }
     } @else {
-    <main class="pagina">
+    <app-pagina-publica [titulo]="titulo()" [subtitulo]="subtitulo()" [empresa]="disponivel()?.empresa">
       @if (carregando()) {
-        <p class="block text-xs text-muted">Carregando…</p>
+        <mat-card class="cardWithShadow"><mat-card-content><app-estado titulo="Carregando…" /></mat-card-content></mat-card>
       } @else if (proposta(); as p) {
         @if (p.estado === 'Disponivel') {
           <mat-card class="cardWithShadow"><mat-card-content>
-            <header class="topo">
-              @if (p.empresa) { <span class="block text-sm font-semibold text-primary">{{ p.empresa }}</span> }
-              <h1>Proposta{{ p.titulo ? ': ' + p.titulo : '' }}</h1>
-              @if (p.validoAte) { <span class="block text-xs text-muted">Válida até {{ p.validoAte | gdData }}.</span> }
-            </header>
             @if (ehHtml(p.conteudo)) {
               <div class="texto rico" [innerHTML]="p.conteudo"></div>
             } @else {
@@ -93,26 +91,24 @@ const RESPONDIDO: Record<RespostaProposta, { titulo: string; texto: string; icon
             <ng-container [ngTemplateOutlet]="cartaoResposta" />
           </mat-card-content></mat-card>
         } @else {
-          <mat-card class="cardWithShadow aviso"><mat-card-content>
-            <mat-icon>link_off</mat-icon>
+          <mat-card class="cardWithShadow"><mat-card-content>
             @if (p.estado === 'Vencida') {
-              <h1>Esta proposta venceu</h1>
-              <p>Fale com {{ p.empresa || 'a assessoria' }} para receber uma nova.</p>
+              <app-estado icone="link_off" titulo="Esta proposta venceu" [texto]="'Fale com ' + (p.empresa || 'a assessoria') + ' para receber uma nova.'">
+                @if (p.contato) { <p class="text-sm text-muted m-0">Contato: {{ p.contato }}</p> }
+              </app-estado>
             } @else {
-              <h1>Esta proposta não está mais disponível</h1>
-              <p>Fale com {{ p.empresa || 'a assessoria' }} se tiver alguma dúvida.</p>
+              <app-estado icone="link_off" titulo="Este link não está mais disponível" texto="Fale com a assessoria.">
+                @if (p.contato) { <p class="text-sm text-muted m-0">Contato: {{ p.contato }}</p> }
+              </app-estado>
             }
-            @if (p.contato) { <p class="text-sm text-muted">Contato: {{ p.contato }}</p> }
           </mat-card-content></mat-card>
         }
       } @else {
-        <mat-card class="cardWithShadow aviso"><mat-card-content>
-          <mat-icon>link_off</mat-icon>
-          <h1>Link inválido</h1>
-          <p>Confira o link recebido ou fale com a assessoria.</p>
+        <mat-card class="cardWithShadow"><mat-card-content>
+          <app-estado icone="link_off" titulo="Este link não está mais disponível" texto="Fale com a assessoria." />
         </mat-card-content></mat-card>
       }
-    </main>
+    </app-pagina-publica>
     }
 
     <ng-template #cartaoResposta>
@@ -141,7 +137,7 @@ const RESPONDIDO: Record<RespostaProposta, { titulo: string; texto: string; icon
                   <mat-hint align="end">{{ mensagem.value.length }}/{{ limite }}</mat-hint>
                 </mat-form-field>
               }
-              <div class="acoes mt-4">
+              <div class="acoes-publicas">
                 <button mat-stroked-button type="button" (click)="escolher(null)" [disabled]="enviando()">Voltar</button>
                 <button mat-flat-button type="button" (click)="responder(tipo)" [disabled]="enviando()">
                   {{ tipo === 'Aceitar' ? 'Confirmar' : 'Enviar' }}
@@ -163,10 +159,6 @@ const RESPONDIDO: Record<RespostaProposta, { titulo: string; texto: string; icon
     </ng-template>
   `,
   styles: `
-    :host { display: block; min-height: 100vh; background: var(--mat-sys-background); }
-    .pagina { max-width: 720px; margin: 0 auto; padding: 24px 16px 48px; }
-    .topo { border-bottom: 1px solid var(--mat-sys-outline-variant); padding-bottom: 16px; margin-bottom: 16px; }
-    h1 { font-size: 20px; margin: 4px 0; overflow-wrap: anywhere; }
     h2 { font-size: 17px; margin: 0 0 12px; }
     .dados-contrato { font-size: 15px; font-weight: 600; margin: 16px 0 4px; }
     .texto { white-space: pre-wrap; font-size: 15px; line-height: 1.7; overflow-wrap: anywhere; }
@@ -187,12 +179,9 @@ const RESPONDIDO: Record<RespostaProposta, { titulo: string; texto: string; icon
     .botoes { display: grid; gap: 12px; }
     @media (min-width: 560px) { .botoes { grid-template-columns: repeat(3, 1fr); } }
     .botoes button { min-height: 44px; }
-    .acoes { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
     .respondido { text-align: center; }
     .respondido mat-icon { font-size: 36px; width: 36px; height: 36px; line-height: 36px; color: var(--color-success); }
     .citacao { font-style: italic; overflow-wrap: anywhere; }
-    .aviso { text-align: center; padding: 40px 16px; }
-    .aviso mat-icon { font-size: 40px; width: 40px; height: 40px; line-height: 40px; color: var(--mat-sys-outline); }
     .pagina-propria { display: block; width: 100%; height: 100vh; height: 100dvh; border: 0; background: #fff; }
     .faixa-assessoria { position: fixed; top: 0; left: 0; right: 0; z-index: 2; display: flex; align-items: center; gap: 8px; padding: 8px 16px;
       font-size: 13px; background: var(--color-light-warning, #faeeda); color: #633806; }
@@ -203,7 +192,9 @@ const RESPONDIDO: Record<RespostaProposta, { titulo: string; texto: string; icon
     .fechar-painel { display: flex; justify-content: center; margin-top: 12px; }
   `,
 })
-export class PropostaPublicaPage implements OnInit {
+export class PropostaPublicaPage implements OnInit, OnDestroy {
+  private readonly tema = inject(TemaService);
+  private readonly dataPipe = new GdDataPipe();
   protected readonly ehHtml = ehHtml;
   private readonly negocio = inject(NegocioClient);
   private readonly rota = inject(ActivatedRoute);
@@ -226,7 +217,26 @@ export class PropostaPublicaPage implements OnInit {
     return p?.estado === 'Disponivel' && p.paginaAceite ? p : null;
   });
 
+  /** Proposta disponível exibida na casca pública (sem página própria). */
+  protected readonly disponivel = computed(() => {
+    const p = this.proposta();
+    return !this.carregando() && p?.estado === 'Disponivel' && !p.paginaAceite ? p : null;
+  });
+  protected readonly titulo = computed(() => {
+    const p = this.disponivel();
+    return p ? 'Proposta' + (p.titulo ? ': ' + p.titulo : '') : undefined;
+  });
+  protected readonly subtitulo = computed(() => {
+    const p = this.disponivel();
+    return p?.validoAte ? 'Válida até ' + this.dataPipe.transform(p.validoAte) + '.' : undefined;
+  });
+
   constructor() {
+    this.tema.fixarClaro();
+    // A casca pública restaura o tema ao sair de cena; na página própria (iframe) o tema continua claro.
+    effect(() => {
+      if (this.paginaPropria()) queueMicrotask(() => this.tema.fixarClaro());
+    });
     effect(() => {
       const p = this.paginaPropria();
       const quadro = this.quadro();
@@ -235,6 +245,10 @@ export class PropostaPublicaPage implements OnInit {
         quadro.nativeElement.srcdoc = this.resolverEnderecos(p.paginaAceite);
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    this.tema.restaurar();
   }
 
   ngOnInit(): void {

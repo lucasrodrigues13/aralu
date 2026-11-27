@@ -31,34 +31,27 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AcessoLinkComponent } from './acesso-link.component';
 import { Estado } from '../../shared/estado';
+import { PaginaPublica } from '../../shared/pagina-publica';
 
 /** Página do cliente, sem login (SPEC-046): acompanha e atualiza o financeiro do evento quando a organizadora libera. */
 @Component({
   selector: 'app-cliente',
-  imports: [ExpandirTodosComponent, MatCardModule, MatButtonModule, MatCheckboxModule, MatIconModule, MatTabsModule, GdDataPipe, GdDinheiroPipe, ConvidadosTopoComponent, MatTooltipModule, AcessoLinkComponent, Estado],
+  imports: [ExpandirTodosComponent, MatCardModule, MatButtonModule, MatCheckboxModule, MatIconModule, MatTabsModule, GdDataPipe, GdDinheiroPipe, ConvidadosTopoComponent, MatTooltipModule, AcessoLinkComponent, Estado, PaginaPublica],
   template: `
-    <main class="pagina">
+    <app-pagina-publica [titulo]="titulo()" [subtitulo]="subtitulo()">
       @if (carregando()) {
-        <p class="text-xs text-muted">Carregando…</p>
+        <mat-card class="cardWithShadow"><mat-card-content><app-estado titulo="Carregando…" /></mat-card-content></mat-card>
       } @else if (indisponivel()) {
-        <mat-card class="cardWithShadow"><mat-card-content class="aviso">
-          <mat-icon>link_off</mat-icon>
-          <h1>Este link não está mais disponível</h1>
-          <p class="text-muted">Peça um novo link à organizadora do seu evento.</p>
+        <mat-card class="cardWithShadow"><mat-card-content>
+          <app-estado icone="link_off" titulo="Este link não está mais disponível" texto="Fale com a assessoria." />
         </mat-card-content></mat-card>
       } @else if (pedeCodigo()) {
         <app-acesso-link [token]="token" (aberto)="carregar()" />
       } @else if (dados(); as d) {
-        <header class="topo">
-          <h1>{{ d.evento }}</h1>
-          @if (d.data) { <span class="text-sm text-muted">{{ d.data | gdData }}</span> }
-        </header>
-
         @if (!d.financeiro && !d.convites) {
           @if (!d.convidadosLiberado) {
-            <mat-card class="cardWithShadow"><mat-card-content class="aviso">
-              <mat-icon>lock</mat-icon>
-              <p>A organizadora ainda não liberou o financeiro nem o cadastro de convidados deste evento.</p>
+            <mat-card class="cardWithShadow"><mat-card-content>
+              <app-estado icone="lock" titulo="A organizadora ainda não liberou o financeiro nem o cadastro de convidados deste evento." />
             </mat-card-content></mat-card>
           }
         } @else {
@@ -183,15 +176,9 @@ import { Estado } from '../../shared/estado';
           </mat-tab-group>
         }
       }
-    </main>
+    </app-pagina-publica>
   `,
   styles: `
-    :host { display: block; min-height: 100vh; background: var(--mat-sys-background); }
-    .pagina { max-width: 760px; margin: 0 auto; padding: 24px 16px 48px; display: grid; gap: 12px; }
-    .topo { border-bottom: 1px solid var(--mat-sys-outline-variant); padding-bottom: 12px; }
-    h1 { font-size: 22px; margin: 0; overflow-wrap: anywhere; }
-    .aviso { text-align: center; padding: 32px 16px; }
-    .aviso mat-icon { font-size: 40px; width: 40px; height: 40px; line-height: 40px; color: var(--mat-sys-outline); }
     .resumo mat-card-content { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; text-align: center; }
     .rotulo { display: block; font-size: 12px; color: var(--mat-sys-outline); }
     .aba { display: grid; gap: 12px; padding-top: 16px; }
@@ -229,6 +216,13 @@ export class LinkClientePage implements OnInit {
   /** Sem sessão do link: pede o código enviado ao e-mail do cliente (SPEC-063). */
   protected readonly pedeCodigo = signal(false);
   protected token = '';
+  private readonly dataPipe = new GdDataPipe();
+  private readonly aberta = computed(() => (this.carregando() || this.indisponivel() || this.pedeCodigo() ? null : this.dados()));
+  protected readonly titulo = computed(() => this.aberta()?.evento);
+  protected readonly subtitulo = computed(() => {
+    const d = this.aberta();
+    return d?.data ? this.dataPipe.transform(d.data) : undefined;
+  });
 
   ngOnInit(): void {
     this.token = this.rota.snapshot.paramMap.get('token') ?? '';

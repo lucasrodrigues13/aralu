@@ -428,7 +428,7 @@ Telas: `rsvp`, `lead-publico`, `briefing-publico`, `proposta-publica`, `equipe-p
 
 ### 8.1 Casca
 
-- [ ] Cada tela passa a ter `<app-pagina-publica>` como raiz. Somem de cada arquivo: `main.pagina`, o `section` centrado, o `header.topo` e, do `styles:`, as regras `:host`, `.pagina`, `.topo`, `h1`, `.fim`, `.aviso`, `.icone` e `.acoes`.
+- [x] Cada tela passa a ter `<app-pagina-publica>` como raiz. Somem de cada arquivo: `main.pagina`, o `section` centrado, o `header.topo` e, do `styles:`, as regras `:host`, `.pagina`, `.topo`, `h1`, `.fim`, `.aviso`, `.icone` e `.acoes`.
 - Entradas por tela:
 
 | Tela | `titulo` | `subtitulo` | `empresa` | `estreita` |
@@ -443,11 +443,11 @@ Telas: `rsvp`, `lead-publico`, `briefing-publico`, `proposta-publica`, `equipe-p
 
 - O conteúdo de cada tela fica em `mat-card.cardWithShadow > mat-card-content` dentro da casca. RSVP e lead deixam de usar `max-w-[440px]` e o `h3` do cartão.
 - Enquanto a tela pede o código (`app-acesso-link`), está carregando ou o link é inválido, a casca vai sem `titulo`.
-- [ ] `proposta-publica`, ramo da página própria (`iframe`): não usa a casca. O construtor chama `TemaService.fixarClaro()` e o `ngOnDestroy` chama `restaurar()`.
+- [x] `proposta-publica`, ramo da página própria (`iframe`): não usa a casca. O construtor chama `TemaService.fixarClaro()` e o `ngOnDestroy` chama `restaurar()`.
 
 ### 8.2 Estados
 
-- [ ] Todo bloco de link inválido, vencido, concluído e carregando vira `app-estado` dentro de um cartão:
+- [x] Todo bloco de link inválido, vencido, concluído e carregando vira `app-estado` dentro de um cartão:
 
 | Situação | `icone` | `titulo` | `texto` |
 |---|---|---|---|
@@ -463,18 +463,18 @@ Telas: `rsvp`, `lead-publico`, `briefing-publico`, `proposta-publica`, `equipe-p
 
 ### 8.3 Botões
 
-- [ ] Todo grupo de botões de ação usa `div.acoes-publicas`, com o botão principal por último no HTML: briefing (Salvar e continuar depois, Concluir e enviar), proposta (Voltar, Confirmar ou Enviar) e os botões de enviar de RSVP e lead (tiram o `w-full`).
-- [ ] Não mexer nos três botões de resposta da proposta (`.botoes`) nem nos atalhos da equipe (`.itens`).
+- [x] Todo grupo de botões de ação usa `div.acoes-publicas`, com o botão principal por último no HTML: briefing (Salvar e continuar depois, Concluir e enviar), proposta (Voltar, Confirmar ou Enviar) e os botões de enviar de RSVP e lead (tiram o `w-full`).
+- [x] Não mexer nos três botões de resposta da proposta (`.botoes`) nem nos atalhos da equipe (`.itens`).
 
 ### 8.4 Campo do código
 
-- [ ] `pages/link-cliente/acesso-link.component.ts`: o campo "Código" passa a ter o rótulo acima (`div.campo` + `mat-label.font-semibold.mb-2.block`), sem `mat-label` dentro do `mat-form-field`. O bloco `.acesso` vira `app-estado icone="lock"` com `titulo` igual a `a.evento`, e o restante dentro dele.
+- [x] `pages/link-cliente/acesso-link.component.ts`: o campo "Código" passa a ter o rótulo acima (`div.campo` + `mat-label.font-semibold.mb-2.block`), sem `mat-label` dentro do `mat-form-field`. O bloco `.acesso` vira `app-estado icone="lock"` com `titulo` igual a `a.evento`, e o restante dentro dele.
 
 ### 8.5 Texto do RSVP
 
-- [ ] `pages/rsvp/rsvp.page.ts`: rótulos "Confirmado" e "Não comparecerá" viram "Vou" e "Não vou". Os `value` (`Confirmado`, `NaoComparecera`) não mudam. O botão "Enviar" vira "Enviar resposta".
-- [ ] Ajustar `pages/rsvp/rsvp.page.spec.ts` e os trechos de interface em `docs/specs/004-convites-e-rsvp.md`, `010-convites-convidados-completo.md` e `054-rsvp-com-prazo.md`.
-- [ ] Ajustar `pages/portaria/portaria.page.spec.ts` se algum seletor mudou.
+- [x] `pages/rsvp/rsvp.page.ts`: rótulos "Confirmado" e "Não comparecerá" viram "Vou" e "Não vou". Os `value` (`Confirmado`, `NaoComparecera`) não mudam. O botão "Enviar" vira "Enviar resposta".
+- [x] Ajustar `pages/rsvp/rsvp.page.spec.ts` e os trechos de interface em `docs/specs/004-convites-e-rsvp.md`, `010-convites-convidados-completo.md` e `054-rsvp-com-prazo.md`.
+- [x] Ajustar `pages/portaria/portaria.page.spec.ts` se algum seletor mudou.
 
 Pronto quando: `grep -rn "class=\"pagina\"" src/frontend/src/app/pages` não retorna nada; nenhuma tela pública mostra o botão de tema; as sete abrem no claro mesmo com o aparelho no escuro.
 
