@@ -51,7 +51,7 @@ import { RoteiroEditorDialog } from './roteiro-editor.dialog';
         <table mat-table class="min-w-full" [dataSource]="lista()">
           <ng-container matColumnDef="nome">
             <th mat-header-cell *matHeaderCellDef>Nome</th>
-            <td mat-cell *matCellDef="let item">{{ item.nome }}</td>
+            <td mat-cell *matCellDef="let item"><button type="button" class="link-nome" (click)="abrir(item)">{{ item.nome }}</button></td>
           </ng-container>
           <ng-container matColumnDef="acoes">
             <th mat-header-cell *matHeaderCellDef class="text-end! whitespace-nowrap">Ações</th>

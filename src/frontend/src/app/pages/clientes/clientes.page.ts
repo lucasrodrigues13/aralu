@@ -51,7 +51,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
           <ng-container matColumnDef="nome">
             <th mat-header-cell *matHeaderCellDef>Cliente</th>
             <td mat-cell *matCellDef="let cliente">
-              {{ cliente.nome }}
+              <button type="button" class="link-nome" (click)="abrir(cliente)">{{ cliente.nome }}</button>
               <span class="block text-xs text-muted">{{ rotulo(cliente.papel) }}</span>
             </td>
           </ng-container>

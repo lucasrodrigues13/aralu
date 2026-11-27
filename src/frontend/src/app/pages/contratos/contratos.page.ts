@@ -57,32 +57,27 @@ export interface ContratoPedido {
         Tags são trechos como <code>{{ marca({ marca: 'contratante_nome', rotulo: '', fonte: '', exemplo: '' }) }}</code> que o sistema troca pelos dados reais quando o contrato é gerado.
         Use o campo "Inserir tag no cursor" para colocar uma tag onde o cursor está no texto. Quando um dado não existe, aparece uma linha em branco (________).
       </p>
-      <div class="tabela-tags">
-        <table class="w-full text-sm">
-          <thead>
-            <tr><th>Tag</th><th>O que representa</th><th>De onde puxa o valor</th><th>Exemplo</th></tr>
-          </thead>
-          <tbody>
-            @for (campo of dados.campos; track campo.marca) {
-              <tr>
-                <td><code>{{ marca(campo) }}</code></td>
-                <td>{{ campo.rotulo }}</td>
-                <td>{{ campo.fonte }}</td>
-                <td>{{ campo.exemplo }}</td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
+      <table class="tabela">
+        <thead>
+          <tr><th>Tag</th><th>O que representa</th><th>De onde puxa o valor</th><th>Exemplo</th></tr>
+        </thead>
+        <tbody>
+          @for (campo of dados.campos; track campo.marca) {
+            <tr>
+              <td><code>{{ marca(campo) }}</code></td>
+              <td>{{ campo.rotulo }}</td>
+              <td>{{ campo.fonte }}</td>
+              <td>{{ campo.exemplo }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <button mat-stroked-button type="button" mat-dialog-close>Fechar</button>
     </mat-dialog-actions>
   `,
   styles: `
-    .tabela-tags { overflow-x: auto; }
-    th { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--mat-sys-outline-variant); }
-    td { vertical-align: top; padding: 6px 8px; border-bottom: 1px solid var(--mat-sys-outline-variant); }
     code { font-size: 12px; white-space: nowrap; }
   `,
 })
@@ -239,28 +234,26 @@ export class AjudaTextoDialog {
         <li>Quando um dado não existir no cadastro, o contrato mostra uma linha em branco (________) para preencher à mão.</li>
         <li>Para mudar o texto depois, edite o arquivo no seu computador e envie de novo no modelo. Contratos já gerados não mudam.</li>
       </ol>
-      <div class="tabela-tags">
-        <table class="w-full text-sm">
-          <thead>
-            <tr><th>Tag para colar no Word</th><th>O que representa</th><th>De onde puxa o valor</th><th>Exemplo</th></tr>
-          </thead>
-          <tbody>
-            @for (campo of dados.campos; track campo.marca) {
-              <tr>
-                <td class="whitespace-nowrap">
-                  <code>{{ marca(campo) }}</code>
-                  <button mat-icon-button type="button" class="copiar" [attr.aria-label]="'Copiar ' + marca(campo)" [matTooltip]="copiada() === campo.marca ? 'Copiada!' : 'Copiar'" (click)="copiar(campo)">
-                    <mat-icon>{{ copiada() === campo.marca ? 'check' : 'content_copy' }}</mat-icon>
-                  </button>
-                </td>
-                <td>{{ campo.rotulo }}</td>
-                <td>{{ campo.fonte }}</td>
-                <td>{{ campo.exemplo }}</td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
+      <table class="tabela">
+        <thead>
+          <tr><th>Tag para colar no Word</th><th>O que representa</th><th>De onde puxa o valor</th><th>Exemplo</th></tr>
+        </thead>
+        <tbody>
+          @for (campo of dados.campos; track campo.marca) {
+            <tr>
+              <td class="whitespace-nowrap">
+                <code>{{ marca(campo) }}</code>
+                <button mat-icon-button type="button" class="copiar" [attr.aria-label]="'Copiar ' + marca(campo)" [matTooltip]="copiada() === campo.marca ? 'Copiada!' : 'Copiar'" (click)="copiar(campo)">
+                  <mat-icon>{{ copiada() === campo.marca ? 'check' : 'content_copy' }}</mat-icon>
+                </button>
+              </td>
+              <td>{{ campo.rotulo }}</td>
+              <td>{{ campo.fonte }}</td>
+              <td>{{ campo.exemplo }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <button mat-stroked-button type="button" mat-dialog-close>Fechar</button>
@@ -270,9 +263,6 @@ export class AjudaTextoDialog {
   styles: `
     .passos { margin: 0 0 16px; padding-left: 20px; display: grid; gap: 6px; line-height: 1.5; }
     .mini { font-size: 16px; width: 16px; height: 16px; vertical-align: middle; }
-    .tabela-tags { overflow-x: auto; }
-    th { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--mat-sys-outline-variant); }
-    td { vertical-align: middle; padding: 4px 8px; border-bottom: 1px solid var(--mat-sys-outline-variant); }
     code { font-size: 12px; white-space: nowrap; }
     .copiar { transform: scale(0.8); }
   `,
@@ -759,7 +749,7 @@ export class ContratoDialog {
           <tbody>
             @for (contrato of visiveis(); track contrato.id) {
               <tr>
-                <td>{{ contrato.nome }}</td>
+                <td><button type="button" class="link-nome" (click)="abrir(contrato)">{{ contrato.nome }}</button></td>
                 <td>{{ contrato.formato === 'word' ? 'Documento Word' : 'Escrito na plataforma' }}</td>
                 <td>{{ contrato.atualizadoEm | gdData }}</td>
                 <td class="text-end! whitespace-nowrap">

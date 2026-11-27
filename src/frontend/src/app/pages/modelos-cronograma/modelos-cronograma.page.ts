@@ -52,7 +52,7 @@ import { ImportarCronogramaDialog } from './importar-cronograma.dialog';
           <ng-container matColumnDef="titulo">
             <th mat-header-cell *matHeaderCellDef>Título</th>
             <td mat-cell *matCellDef="let item">
-              {{ item.titulo }}
+              <button type="button" class="link-nome" (click)="abrir(item)">{{ item.titulo }}</button>
               @if (item.descricao) { <span class="block text-xs text-muted">{{ item.descricao }}</span> }
             </td>
           </ng-container>

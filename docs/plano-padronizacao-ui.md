@@ -216,22 +216,22 @@ Pronto quando: `grep -rn "<mat-dialog-actions>" src/frontend/src/app` não retor
 
 Trocar `class="w-full text-left"` (ou `w-full text-sm`) por `class="tabela"` e **remover** das células `th` e `td` as classes `py-3`, `pr-4`, `font-semibold`, `border-t`, `border-border` e do `tr` as classes `border-t border-border` e `text-muted text-sm`. Tirar o `div.overflow-x-auto` que envolve a tabela.
 
-- [ ] `pages/grupos/grupos.page.ts`
-- [ ] `pages/assistentes/assistentes.page.ts`
-- [ ] `pages/admin/planos-admin.page.ts`
-- [ ] `pages/assinatura/assinatura.page.ts` (~171)
-- [ ] `pages/grupos/grupo-form.dialog.ts` (~41)
-- [ ] `shared/presencas.dialog.ts`
-- [ ] `pages/contratos/contratos.page.ts` (~60 e ~242)
-- [ ] `pages/modelos-mensagens/modelos-mensagens.page.ts` (~61)
+- [x] `pages/grupos/grupos.page.ts`
+- [x] `pages/assistentes/assistentes.page.ts`
+- [x] `pages/admin/planos-admin.page.ts`
+- [x] `pages/assinatura/assinatura.page.ts` (~171)
+- [x] `pages/grupos/grupo-form.dialog.ts` (~41)
+- [x] `shared/presencas.dialog.ts`
+- [x] `pages/contratos/contratos.page.ts` (~60 e ~242)
+- [x] `pages/modelos-mensagens/modelos-mensagens.page.ts` (~61)
 
 ### 3.2 Cabeçalho da coluna
 
-- [ ] Onde há `<span class="sr-only">Ações</span>` (grupos, assistentes, planos-admin): trocar por `Ações` visível, com `class="text-end! whitespace-nowrap"` no `th` e no `td`.
+- [x] Onde há `<span class="sr-only">Ações</span>` (grupos, assistentes, planos-admin): trocar por `Ações` visível, com `class="text-end! whitespace-nowrap"` no `th` e no `td`.
 
 ### 3.3 Tooltip e `aria-label`
 
-- [ ] `pages/grupos/grupos.page.ts` e `pages/assistentes/assistentes.page.ts`: `aria-label` e `matTooltip` deixam de levar o nome. Ficam "Editar", "Excluir", "Reenviar convite", "Desativar acesso", "Reativar acesso".
+- [x] `pages/grupos/grupos.page.ts` e `pages/assistentes/assistentes.page.ts`: `aria-label` e `matTooltip` deixam de levar o nome. Ficam "Editar", "Excluir", "Reenviar convite", "Desativar acesso", "Reativar acesso".
 
 ### 3.4 Menu "Mais ações" (só nestas três telas)
 
@@ -299,9 +299,9 @@ Regras:
 
 Telas que já têm o nome clicável e só trocam a classe:
 
-- [ ] `pages/eventos/eventos.page.ts`: o `a` do nome troca `text-sm font-semibold no-underline` por `link-nome`.
-- [ ] `pages/modelos-evento/modelos-evento.page.ts`: o `a` do nome ganha `class="link-nome"`.
-- [ ] `pages/modelos-inspiracoes/modelos-inspiracoes.page.ts`: mantém `visualizar(item)` e apaga a regra `.link-nome` do `styles:` (agora é global).
+- [x] `pages/eventos/eventos.page.ts`: o `a` do nome troca `text-sm font-semibold no-underline` por `link-nome`.
+- [x] `pages/modelos-evento/modelos-evento.page.ts`: o `a` do nome ganha `class="link-nome"`.
+- [x] `pages/modelos-inspiracoes/modelos-inspiracoes.page.ts`: mantém `visualizar(item)` e apaga a regra `.link-nome` do `styles:` (agora é global).
 
 Ficam **sem** nome clicável, de propósito:
 

@@ -15,8 +15,8 @@ import { FecharModal } from './fechar-modal';
       @if (presencas.length === 0) {
         <p>Ninguém confirmou ainda.</p>
       } @else {
-        <table class="w-full text-sm">
-          <thead><tr><th class="text-start">Id</th><th class="text-start">Convidado</th><th class="text-start">Convite</th><th class="text-start">Confirmou em</th><th class="text-start">Compareceu</th></tr></thead>
+        <table class="tabela">
+          <thead><tr><th>Id</th><th>Convidado</th><th>Convite</th><th>Confirmou em</th><th>Compareceu</th></tr></thead>
           <tbody>
             @for (item of presencas; track item.id) {
               <tr>

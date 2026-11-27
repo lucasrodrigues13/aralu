@@ -75,7 +75,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
               <ng-container matColumnDef="nome">
                 <th mat-header-cell *matHeaderCellDef>Nome</th>
                 <td mat-cell *matCellDef="let item">
-                  {{ item.nome }}
+                  <button type="button" class="link-nome" (click)="abrirFornecedor(item)">{{ item.nome }}</button>
                   <span class="block text-xs text-muted">{{ item.completo ? 'Completo' : 'Incompleto' }}</span>
                 </td>
               </ng-container>

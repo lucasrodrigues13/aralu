@@ -48,40 +48,40 @@ import { MatTooltipModule } from '@angular/material/tooltip';
           <p class="text-center text-muted py-10">{{ filtro() === 'inativas' ? 'Ninguém com acesso desativado.' : 'Ninguém ativo.' }}</p>
         } @else {
           <div>
-            <table class="w-full text-left">
+            <table class="tabela">
               <thead>
-                <tr class="text-muted text-sm">
-                  <th class="py-3 pr-4 font-semibold">Nome</th>
-                  <th class="py-3 pr-4 font-semibold">E-mail</th>
-                  <th class="py-3 pr-4 font-semibold">Situação</th>
-                  <th class="py-3 pr-4 font-semibold">Tipo</th>
-                  <th class="py-3 pr-4 font-semibold">Grupo</th>
-                  <th class="py-3 font-semibold"><span class="sr-only">Ações</span></th>
+                <tr>
+                  <th>Nome</th>
+                  <th>E-mail</th>
+                  <th>Situação</th>
+                  <th>Tipo</th>
+                  <th>Grupo</th>
+                  <th class="text-end! whitespace-nowrap">Ações</th>
                 </tr>
               </thead>
               <tbody>
                 @for (item of visiveis(); track item.id) {
-                  <tr class="border-t border-border">
-                    <td class="py-3 pr-4">{{ item.nome }}</td>
-                    <td class="py-3 pr-4">{{ item.email }}</td>
-                    <td class="py-3 pr-4">
+                  <tr>
+                    <td><button type="button" class="link-nome" (click)="editar(item)">{{ item.nome }}</button></td>
+                    <td>{{ item.email }}</td>
+                    <td>
                       @switch (item.situacao) {
                         @case ('Ativa') { <span [class]="selo('success')">Ativa</span> }
                         @case ('Inativa') { <span [class]="selo('error')">Acesso desativado</span> }
                         @default { <span [class]="selo('warning')">Convite enviado</span> }
                       }
                     </td>
-                    <td class="py-3 pr-4">{{ item.tipo }}</td>
-                    <td class="py-3 pr-4">{{ item.grupo ?? "—" }}</td>
-                    <td class="py-3 whitespace-nowrap text-right">
-                      <button mat-icon-button type="button" [attr.aria-label]="'Editar ' + item.nome" [matTooltip]="'Editar ' + item.nome" (click)="editar(item)"><mat-icon>edit</mat-icon></button>
+                    <td>{{ item.tipo }}</td>
+                    <td>{{ item.grupo ?? "—" }}</td>
+                    <td class="text-end! whitespace-nowrap">
+                      <button mat-icon-button type="button" aria-label="Editar" matTooltip="Editar" (click)="editar(item)"><mat-icon>edit</mat-icon></button>
                       @if (item.situacao === 'Convidada') {
-                        <button mat-icon-button type="button" [attr.aria-label]="'Reenviar convite para ' + item.nome" [matTooltip]="'Reenviar convite para ' + item.nome" (click)="reenviar(item)"><mat-icon>forward_to_inbox</mat-icon></button>
+                        <button mat-icon-button type="button" aria-label="Reenviar convite" matTooltip="Reenviar convite" (click)="reenviar(item)"><mat-icon>forward_to_inbox</mat-icon></button>
                       }
                       @if (item.situacao === 'Inativa') {
-                        <button mat-icon-button type="button" [attr.aria-label]="'Reativar acesso de ' + item.nome" [matTooltip]="'Reativar acesso de ' + item.nome" (click)="reativar(item)"><mat-icon>person_add_alt</mat-icon></button>
+                        <button mat-icon-button type="button" aria-label="Reativar acesso" matTooltip="Reativar acesso" (click)="reativar(item)"><mat-icon>person_add_alt</mat-icon></button>
                       } @else {
-                        <button mat-icon-button type="button" [attr.aria-label]="'Desativar acesso de ' + item.nome" [matTooltip]="'Desativar acesso de ' + item.nome" (click)="desativar(item)"><mat-icon>person_off</mat-icon></button>
+                        <button mat-icon-button type="button" aria-label="Desativar acesso" matTooltip="Desativar acesso" (click)="desativar(item)"><mat-icon>person_off</mat-icon></button>
                       }
                     </td>
                   </tr>

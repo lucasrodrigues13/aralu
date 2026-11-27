@@ -11,6 +11,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatMenuModule } from '@angular/material/menu';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { MensagemModelo, ModeloOrcamentoFunil, NegocioClient, Oportunidade, OrcamentoFunil, RespostaProposta } from '../../core/negocio.client';
 import { AuthService } from '../../core/auth.service';
@@ -379,7 +380,7 @@ export class RespostaManualDialog {
 
 @Component({
   selector: 'app-orcamentos-funil',
-  imports: [MatButtonToggleModule, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatCheckboxModule, MatTooltipModule, GdDataPipe],
+  imports: [MatButtonToggleModule, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatCheckboxModule, MatTooltipModule, MatMenuModule, GdDataPipe],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6">
@@ -411,7 +412,11 @@ export class RespostaManualDialog {
         <table mat-table class="min-w-full" [dataSource]="lista()">
           <ng-container matColumnDef="oportunidade">
             <th mat-header-cell *matHeaderCellDef>Oportunidade</th>
-            <td mat-cell *matCellDef="let item">{{ item.oportunidadeNome }}</td>
+            <td mat-cell *matCellDef="let item">@if (item.situacao === 'EmAndamento') {
+                <button type="button" class="link-nome" (click)="abrir(item)">{{ item.oportunidadeNome }}</button>
+              } @else {
+                {{ item.oportunidadeNome }}
+              }</td>
           </ng-container>
           <ng-container matColumnDef="criadoEm">
             <th mat-header-cell *matHeaderCellDef>Criado em</th>
@@ -431,16 +436,25 @@ export class RespostaManualDialog {
             <th mat-header-cell *matHeaderCellDef class="text-end! whitespace-nowrap">Ações</th>
             <td mat-cell *matCellDef="let item" class="text-end! whitespace-nowrap">
               @if (item.situacao === 'EmAndamento') {
-                <button mat-icon-button type="button" aria-label="Editar" matTooltip="Editar" (click)="abrir(item)"><mat-icon>edit</mat-icon></button>
-                <button mat-icon-button type="button" aria-label="Parcelas" matTooltip="Parcelas" (click)="parcelar(item)"><mat-icon>payments</mat-icon></button>
                 <button mat-icon-button type="button" aria-label="Enviar proposta" matTooltip="Enviar proposta" (click)="enviar(item)"><mat-icon>send</mat-icon></button>
-                <button mat-icon-button type="button" aria-label="Registrar resposta" matTooltip="Registrar resposta" (click)="responder(item)"><mat-icon>mark_email_read</mat-icon></button>
-                <button mat-icon-button type="button" aria-label="Cancelar" matTooltip="Cancelar" (click)="cancelar(item)"><mat-icon>cancel</mat-icon></button>
-                @if (auth.podeExcluirDoFunil(item.criadoPor)) {
-                  <button mat-icon-button type="button" aria-label="Excluir" matTooltip="Excluir" (click)="excluir(item)"><mat-icon>delete</mat-icon></button>
-                }
-              } @else if (item.situacao === 'Respondido' && item.tokenLink) {
-                <button mat-icon-button type="button" aria-label="Link da proposta" matTooltip="Link da proposta" (click)="mostrarLink(item)"><mat-icon>link</mat-icon></button>
+                <button mat-icon-button type="button" aria-label="Editar" matTooltip="Editar" (click)="abrir(item)"><mat-icon>edit</mat-icon></button>
+              }
+              @if (item.situacao === 'EmAndamento' || (item.situacao === 'Respondido' && item.tokenLink)) {
+                <button mat-icon-button type="button" aria-label="Mais ações" matTooltip="Mais ações" [matMenuTriggerFor]="mais"><mat-icon>more_vert</mat-icon></button>
+                <mat-menu #mais="matMenu" class="cardWithShadow">
+                  @if (item.situacao === 'EmAndamento') {
+                    <button mat-menu-item type="button" (click)="parcelar(item)"><mat-icon>payments</mat-icon> Parcelas</button>
+                    <button mat-menu-item type="button" (click)="responder(item)"><mat-icon>mark_email_read</mat-icon> Registrar resposta</button>
+                  } @else {
+                    <button mat-menu-item type="button" (click)="mostrarLink(item)"><mat-icon>link</mat-icon> Link da proposta</button>
+                  }
+                  @if (item.situacao === 'EmAndamento') {
+                    <button mat-menu-item type="button" (click)="cancelar(item)"><mat-icon>cancel</mat-icon> Cancelar</button>
+                    @if (auth.podeExcluirDoFunil(item.criadoPor)) {
+                      <button mat-menu-item type="button" class="text-error" (click)="excluir(item)"><mat-icon>delete</mat-icon> Excluir</button>
+                    }
+                  }
+                </mat-menu>
               }
             </td>
           </ng-container>

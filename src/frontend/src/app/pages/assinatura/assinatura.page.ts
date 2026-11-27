@@ -168,22 +168,22 @@ const SITUACOES: Record<string, string> = {
 
         @if (faturas().length > 0) {
           <h3 class="font-semibold mt-8 mb-2">Faturas</h3>
-          <table class="w-full text-left">
+          <table class="tabela">
             <thead>
               <tr>
-                <th class="py-2 pr-4 font-semibold">Vencimento</th>
-                <th class="py-2 pr-4 font-semibold">Valor</th>
-                <th class="py-2 pr-4 font-semibold">Situação</th>
-                <th class="py-2 font-semibold"><span class="sr-only">Link</span></th>
+                <th>Vencimento</th>
+                <th>Valor</th>
+                <th>Situação</th>
+                <th><span class="sr-only">Link</span></th>
               </tr>
             </thead>
             <tbody>
               @for (f of faturas(); track f.vencimento + f.status) {
-                <tr class="border-t border-border">
-                  <td class="py-2 pr-4">{{ f.vencimento | date: 'dd/MM/yyyy' }}</td>
-                  <td class="py-2 pr-4">{{ f.valor | currency: 'BRL' }}</td>
-                  <td class="py-2 pr-4">{{ statusFatura(f.status) }}</td>
-                  <td class="py-2">
+                <tr>
+                  <td>{{ f.vencimento | date: 'dd/MM/yyyy' }}</td>
+                  <td>{{ f.valor | currency: 'BRL' }}</td>
+                  <td>{{ statusFatura(f.status) }}</td>
+                  <td>
                     @if (f.link) {
                       <a [href]="f.link" target="_blank" rel="noopener">Abrir fatura</a>
                     }

@@ -197,7 +197,7 @@ export class TarefaFunilDialog implements OnInit {
           <ng-container matColumnDef="titulo">
             <th mat-header-cell *matHeaderCellDef>Título</th>
             <td mat-cell *matCellDef="let item">
-              {{ item.titulo }}<span class="block text-xs text-muted">{{ item.oportunidadeNome }}</span>
+              <button type="button" class="link-nome" (click)="abrir(item)">{{ item.titulo }}</button><span class="block text-xs text-muted">{{ item.oportunidadeNome }}</span>
               @if (item.observacao) { <div class="observacao text-sm mt-1" [innerHTML]="html(item.observacao)"></div> }
             </td>
           </ng-container>

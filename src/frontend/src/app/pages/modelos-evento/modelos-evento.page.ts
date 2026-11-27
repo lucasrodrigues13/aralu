@@ -114,7 +114,7 @@ export class CriarModeloDialog {
           <ng-container matColumnDef="nome">
             <th mat-header-cell *matHeaderCellDef>Nome</th>
             <td mat-cell *matCellDef="let m">
-              <a [routerLink]="['/modelos-evento', m.id]">{{ m.nome }}</a>
+              <a class="link-nome" [routerLink]="['/modelos-evento', m.id]">{{ m.nome }}</a>
             </td>
           </ng-container>
           <ng-container matColumnDef="tipo">

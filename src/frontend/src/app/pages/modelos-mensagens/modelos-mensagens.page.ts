@@ -59,8 +59,8 @@ const TAGS_MENSAGEM: { marca: string; rotulo: string }[] = [
         Tags são trechos entre chaves duplas que o sistema troca pelos dados do lead, do orçamento, do cliente, do evento e do convidado quando a mensagem é enviada.
         Clique no texto onde o dado deve entrar, abra "Inserir tags no cursor", marque uma ou mais e feche a lista: elas entram na posição do cursor, na ordem da lista.
       </p>
-      <table class="w-full text-sm">
-        <thead><tr><th class="text-left">Tag</th><th class="text-left">O que representa</th></tr></thead>
+      <table class="tabela">
+        <thead><tr><th>Tag</th><th>O que representa</th></tr></thead>
         <tbody>
           @for (tag of tags; track tag.marca) { <tr><td><code>{{ tag.marca }}</code></td><td>{{ tag.rotulo }}</td></tr> }
         </tbody>
@@ -68,7 +68,6 @@ const TAGS_MENSAGEM: { marca: string; rotulo: string }[] = [
     </mat-dialog-content>
     <mat-dialog-actions align="end"><button mat-stroked-button type="button" mat-dialog-close>Fechar</button></mat-dialog-actions>
   `,
-  styles: `td, th { padding: 6px 8px; border-bottom: 1px solid var(--mat-sys-outline-variant); }`,
 })
 export class AjudaTagsMensagemDialog {
   protected readonly tags = TAGS_MENSAGEM;
@@ -210,7 +209,7 @@ export class MensagemEditorDialog {
         <table mat-table class="min-w-full" [dataSource]="lista()">
           <ng-container matColumnDef="nome">
             <th mat-header-cell *matHeaderCellDef>Nome</th>
-            <td mat-cell *matCellDef="let item">{{ item.nome }}</td>
+            <td mat-cell *matCellDef="let item"><button type="button" class="link-nome" (click)="abrir(item)">{{ item.nome }}</button></td>
           </ng-container>
           <ng-container matColumnDef="texto">
             <th mat-header-cell *matHeaderCellDef>Texto</th>

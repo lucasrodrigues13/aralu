@@ -38,30 +38,30 @@ export interface GrupoFormDados {
             </mat-select>
           </mat-form-field>
         </div>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-sm">
+        <div>
+          <table class="tabela">
             <thead>
               <tr>
-                <th class="py-2 pr-4 font-semibold">Módulo</th>
-                <th class="py-2 px-2 font-semibold text-center">Ver</th>
-                <th class="py-2 px-2 font-semibold text-center">Editar</th>
-                <th class="py-2 px-2 font-semibold text-center">Excluir</th>
+                <th>Módulo</th>
+                <th class="text-center!">Ver</th>
+                <th class="text-center!">Editar</th>
+                <th class="text-center!">Excluir</th>
               </tr>
             </thead>
             <tbody>
               @for (linha of linhas(); track linha.modulo) {
-                <tr class="border-t border-border">
-                  <td class="py-2 pr-4">
+                <tr>
+                  <td>
                     <span class="font-semibold">{{ rotulo(linha.modulo) }}</span>
                     <span class="block text-muted text-xs">{{ cobre(linha.modulo) }}</span>
                   </td>
-                  <td class="text-center">
+                  <td class="text-center!">
                     <mat-checkbox [attr.aria-label]="'Ver ' + rotulo(linha.modulo)" [checked]="linha.ver" (change)="marcar(linha, 'ver', $event.checked)" />
                   </td>
-                  <td class="text-center">
+                  <td class="text-center!">
                     <mat-checkbox [attr.aria-label]="'Editar ' + rotulo(linha.modulo)" [checked]="linha.editar" (change)="marcar(linha, 'editar', $event.checked)" />
                   </td>
-                  <td class="text-center">
+                  <td class="text-center!">
                     <mat-checkbox [attr.aria-label]="'Excluir ' + rotulo(linha.modulo)" [checked]="linha.excluir" (change)="marcar(linha, 'excluir', $event.checked)" />
                   </td>
                 </tr>

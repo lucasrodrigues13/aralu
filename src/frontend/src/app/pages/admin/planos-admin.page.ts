@@ -29,26 +29,26 @@ interface Edicao extends SalvarPlano {
         <button mat-flat-button type="button" (click)="novo()">Novo plano</button>
       </div>
       <mat-card-content class="border-t border-border">
-        <table class="w-full text-left">
+        <table class="tabela">
           <thead>
             <tr>
-              <th class="py-3 pr-4 font-semibold">Plano</th>
-              <th class="py-3 pr-4 font-semibold">Valor</th>
-              <th class="py-3 pr-4 font-semibold">Público</th>
-              <th class="py-3 pr-4 font-semibold">Ativo</th>
-              <th class="py-3 pr-4 font-semibold">Contas</th>
-              <th class="py-3 font-semibold"><span class="sr-only">Ações</span></th>
+              <th>Plano</th>
+              <th>Valor</th>
+              <th>Público</th>
+              <th>Ativo</th>
+              <th>Contas</th>
+              <th class="text-end! whitespace-nowrap">Ações</th>
             </tr>
           </thead>
           <tbody>
             @for (p of planos(); track p.id) {
-              <tr class="border-t border-border">
-                <td class="py-3 pr-4">{{ p.nome }} @if (p.padrao) { <small class="text-muted">(padrão)</small> }</td>
-                <td class="py-3 pr-4">{{ p.valorMensal | currency: 'BRL' }}</td>
-                <td class="py-3 pr-4">{{ p.publico ? 'Sim' : 'Não' }}</td>
-                <td class="py-3 pr-4">{{ p.ativo ? 'Sim' : 'Não' }}</td>
-                <td class="py-3 pr-4">{{ p.contas }}</td>
-                <td class="py-3 text-right"><button mat-stroked-button type="button" (click)="editar(p)">Editar</button></td>
+              <tr>
+                <td><button type="button" class="link-nome" (click)="editar(p)">{{ p.nome }}</button> @if (p.padrao) { <small class="text-muted">(padrão)</small> }</td>
+                <td>{{ p.valorMensal | currency: 'BRL' }}</td>
+                <td>{{ p.publico ? 'Sim' : 'Não' }}</td>
+                <td>{{ p.ativo ? 'Sim' : 'Não' }}</td>
+                <td>{{ p.contas }}</td>
+                <td class="text-end! whitespace-nowrap"><button mat-stroked-button type="button" (click)="editar(p)">Editar</button></td>
               </tr>
             }
           </tbody>

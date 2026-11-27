@@ -33,33 +33,31 @@ import { GrupoFormDialog } from './grupo-form.dialog';
         } @else if (itens().length === 0) {
           <p class="text-center text-muted py-10">Nenhum grupo. Crie um para convidar membros.</p>
         } @else {
-          <div class="overflow-x-auto">
-            <table class="w-full text-left">
-              <thead>
+          <table class="tabela">
+            <thead>
+              <tr>
+                <th>Grupo</th>
+                <th>Membros</th>
+                <th>Eventos</th>
+                <th>Módulos que vê</th>
+                <th class="text-end! whitespace-nowrap">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of itens(); track item.id) {
                 <tr>
-                  <th class="py-3 pr-4 font-semibold">Grupo</th>
-                  <th class="py-3 pr-4 font-semibold">Membros</th>
-                  <th class="py-3 pr-4 font-semibold">Eventos</th>
-                  <th class="py-3 pr-4 font-semibold">Módulos que vê</th>
-                  <th class="py-3 font-semibold"><span class="sr-only">Ações</span></th>
+                  <td><button type="button" class="link-nome" (click)="abrir(item)">{{ item.nome }}</button></td>
+                  <td>{{ item.membros }}</td>
+                  <td>{{ item.veTodosEventos ? 'Todos' : 'Só os atribuídos' }}</td>
+                  <td>{{ modulosQueVe(item) }}</td>
+                  <td class="text-end! whitespace-nowrap">
+                    <button mat-icon-button type="button" aria-label="Editar" matTooltip="Editar" (click)="abrir(item)"><mat-icon>edit</mat-icon></button>
+                    <button mat-icon-button type="button" aria-label="Excluir" matTooltip="Excluir" (click)="apagar(item)"><mat-icon>delete</mat-icon></button>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                @for (item of itens(); track item.id) {
-                  <tr class="border-t border-border">
-                    <td class="py-3 pr-4">{{ item.nome }}</td>
-                    <td class="py-3 pr-4">{{ item.membros }}</td>
-                    <td class="py-3 pr-4">{{ item.veTodosEventos ? 'Todos' : 'Só os atribuídos' }}</td>
-                    <td class="py-3 pr-4">{{ modulosQueVe(item) }}</td>
-                    <td class="py-3 whitespace-nowrap text-right">
-                      <button mat-icon-button type="button" [attr.aria-label]="'Editar ' + item.nome" [matTooltip]="'Editar ' + item.nome" (click)="abrir(item)"><mat-icon>edit</mat-icon></button>
-                      <button mat-icon-button type="button" [attr.aria-label]="'Apagar ' + item.nome" [matTooltip]="'Apagar ' + item.nome" (click)="apagar(item)"><mat-icon>delete</mat-icon></button>
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
+              }
+            </tbody>
+          </table>
         }
       </mat-card-content>
     </mat-card>

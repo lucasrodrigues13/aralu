@@ -219,7 +219,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
               <ng-container matColumnDef="nome">
                 <th mat-header-cell *matHeaderCellDef class="font-semibold text-sm pl-0!">Evento</th>
                 <td mat-cell *matCellDef="let evento" class="pl-0! whitespace-nowrap">
-                  <a class="text-sm font-semibold no-underline" [routerLink]="['/eventos', evento.id]">{{ evento.nome }}</a>
+                  <a class="link-nome" [routerLink]="['/eventos', evento.id]">{{ evento.nome }}</a>
                   <span class="block text-xs text-muted">{{ rotuloTipo(evento.tipo) }}</span>
                 </td>
               </ng-container>

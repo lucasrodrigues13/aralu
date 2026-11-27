@@ -53,7 +53,7 @@ import { BriefingEditorDialog } from './briefing-editor.dialog';
           <ng-container matColumnDef="nome">
             <th mat-header-cell *matHeaderCellDef>Nome</th>
             <td mat-cell *matCellDef="let item">
-              {{ item.nome }}
+              <button type="button" class="link-nome" (click)="abrir(item)">{{ item.nome }}</button>
               @if (item.padrao) { <span class="block text-xs text-muted">Padrão</span> }
             </td>
           </ng-container>

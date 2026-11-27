@@ -70,7 +70,6 @@ import { InspiracaoVisualizarDialog } from './inspiracao-visualizar.dialog';
     </mat-card-content>
     </mat-card>
   `,
-  styles: `.link-nome { background: none; border: 0; padding: 0; font: inherit; color: var(--mat-sys-primary); cursor: pointer; text-align: start; } .link-nome:hover { text-decoration: underline; }`,
 })
 export class ModelosInspiracoesPage implements OnInit {
   private readonly negocio = inject(NegocioClient);

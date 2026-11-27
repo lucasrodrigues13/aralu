@@ -20,12 +20,13 @@ import { PresencasDialog } from '../../shared/presencas.dialog';
 import { ImportacoesDados, ImportacoesDialog } from '../../shared/importacoes.dialog';
 import { EventoAbasComponent } from '../eventos/evento-abas.component';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatMenuModule } from '@angular/material/menu';
 
 export { cardsPorSituacao } from '../../shared/convite-lista';
 
 @Component({
   selector: 'app-convidados',
-  imports: [ExpandirTodosComponent, MatCardModule, MatButtonToggleModule, MatButtonModule, EventoAbasComponent, MatIconModule, MatDialogModule, ConvidadosTopoComponent, MatTooltipModule],
+  imports: [ExpandirTodosComponent, MatCardModule, MatButtonToggleModule, MatButtonModule, EventoAbasComponent, MatIconModule, MatDialogModule, ConvidadosTopoComponent, MatTooltipModule, MatMenuModule],
   template: `
     @if (!eventoId()) {
       <mat-card class="cardWithShadow">
@@ -82,7 +83,7 @@ export { cardsPorSituacao } from '../../shared/convite-lista';
                         <div class="flex items-start gap-1">
                           <button mat-icon-button type="button" class="seta" [class.aberta]="aberto(item.id)" [attr.aria-expanded]="aberto(item.id)" [attr.aria-controls]="'convidados-' + item.id" [attr.aria-label]="(aberto(item.id) ? 'Recolher' : 'Expandir') + ' convidados de ' + item.nome" [matTooltip]="(aberto(item.id) ? 'Recolher' : 'Expandir') + ' convidados de ' + item.nome" (click)="alternar(item.id)"><mat-icon>chevron_right</mat-icon></button>
                           <div class="min-w-0 pt-2">
-                            <strong>{{ item.nome }}</strong>
+                            <button type="button" class="link-nome" (click)="abrirEdicao(item)">{{ item.nome }}</button>
                             @if (item.email) { <span class="block text-xs text-muted">{{ item.email }}</span> }
                             @if (item.observacao) { <span class="block text-xs text-muted">{{ item.observacao }}</span> }
                             @if (item.excecaoPrazoRsvp) { <span class="block text-xs text-muted">Exceção aberta após o prazo</span> }
@@ -93,14 +94,17 @@ export { cardsPorSituacao } from '../../shared/convite-lista';
                       <td>{{ item.telefone || '—' }}</td>
                       <td class="text-sm">{{ resumo(item.convidados) }}</td>
                       <td class="text-end! whitespace-nowrap">
-                        <button mat-icon-button type="button" aria-label="Copiar link de RSVP" matTooltip="Copiar link de RSVP" (click)="copiar(item.token)"><mat-icon>link</mat-icon></button>
-                        <button mat-icon-button type="button" aria-label="Baixar QR Code" matTooltip="Baixar QR Code" (click)="baixarQr(item.id)"><mat-icon>qr_code_2</mat-icon></button>
-                        @if (temConfirmado(item)) {
-                          <button mat-icon-button type="button" aria-label="Baixar QR de entrada" matTooltip="Baixar QR de entrada" (click)="baixarQrEntrada(item.id)"><mat-icon>qr_code_scanner</mat-icon></button>
-                        }
                         <button mat-icon-button type="button" aria-label="Enviar pelo WhatsApp" matTooltip="Enviar pelo WhatsApp" (click)="whatsapp(item.id)"><mat-icon>chat</mat-icon></button>
                         <button mat-icon-button type="button" aria-label="Editar" matTooltip="Editar" (click)="abrirEdicao(item)"><mat-icon>edit</mat-icon></button>
-                        <button mat-icon-button type="button" aria-label="Excluir" matTooltip="Excluir" (click)="semExclusao('convite')"><mat-icon>delete</mat-icon></button>
+                        <button mat-icon-button type="button" aria-label="Mais ações" matTooltip="Mais ações" [matMenuTriggerFor]="mais"><mat-icon>more_vert</mat-icon></button>
+                        <mat-menu #mais="matMenu" class="cardWithShadow">
+                          <button mat-menu-item type="button" (click)="copiar(item.token)"><mat-icon>link</mat-icon> Copiar link de RSVP</button>
+                          <button mat-menu-item type="button" (click)="baixarQr(item.id)"><mat-icon>qr_code_2</mat-icon> Baixar QR Code</button>
+                          @if (temConfirmado(item)) {
+                            <button mat-menu-item type="button" (click)="baixarQrEntrada(item.id)"><mat-icon>qr_code_scanner</mat-icon> Baixar QR de entrada</button>
+                          }
+                          <button mat-menu-item type="button" class="text-error" (click)="semExclusao('convite')"><mat-icon>delete</mat-icon> Excluir</button>
+                        </mat-menu>
                       </td>
                     </tr>
                     @if (aberto(item.id)) {
