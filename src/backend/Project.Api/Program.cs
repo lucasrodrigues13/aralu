@@ -49,6 +49,9 @@ var cadastroPorHora = limites.GetValue("CadastroPorHora", 5);
 var loginPorMinuto = limites.GetValue("LoginPorMinuto", 10);
 var recuperacaoPorHora = limites.GetValue("RecuperacaoPorHora", 3);
 var reenvioPorHora = limites.GetValue("ReenvioPorHora", 3);
+builder.Services.AddSingleton(new Project.Api.Conta.LimiteLoginPorEmail(
+    limites.GetValue("LoginPorEmail", 5),
+    TimeSpan.FromMinutes(limites.GetValue("LoginPorEmailMinutos", 15))));
 
 builder.Services.AddRateLimiter(options =>
 {
@@ -131,6 +134,8 @@ if (swagger)
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    // Proxy da VPS -> Caddy interno -> API: dois saltos (A06-001).
+    options.ForwardLimit = 2;
     options.KnownIPNetworks.Clear();
     options.KnownProxies.Clear();
     foreach (var rede in builder.Configuration.GetSection("ForwardedHeaders:KnownNetworks").Get<string[]>() ?? [])
@@ -181,7 +186,12 @@ app.Use(Project.Api.Conta.EquipeEndpoints.AplicarAcesso);
 app.Use(Project.Api.Conta.AdminEndpoints.AplicarContaDoAdmin);
 app.UseAuthorization();
 
-app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));
+app.MapGet("/api/health", (HttpContext http, ILoggerFactory logs) =>
+{
+    // Temporário (A06-001): confirmar na VPS que o IP real chega até a API.
+    logs.CreateLogger("aralu").LogDebug("RemoteIp {RemoteIp}", http.Connection.RemoteIpAddress?.ToString());
+    return Results.Ok(new { status = "ok" });
+});
 ContaEndpoints.Mapear(app);
 Project.Api.Conta.EquipeEndpoints.Mapear(app);
 Project.Api.Conta.AssinaturaEndpoints.Mapear(app);
