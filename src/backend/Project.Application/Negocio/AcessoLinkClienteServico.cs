@@ -49,7 +49,11 @@ public interface IDadosAcessoLinkCliente
 /// Código de acesso do link do cliente (SPEC-063): todo link só abre depois que o cliente digita o código enviado
 /// para o e-mail de um cliente do evento. O cliente continua sem login (SPEC-060).
 /// </summary>
-public sealed class AcessoLinkClienteServico(IDadosLinkCliente links, IDadosAcessoLinkCliente dados, IEnvioEmail email)
+public sealed class AcessoLinkClienteServico(
+    IDadosLinkCliente links,
+    IDadosAcessoLinkCliente dados,
+    IEnvioEmail email,
+    LogSeguranca? seguranca = null)
 {
     public const string SemEmail = "Fale com a organizadora do evento.";
     public const string ForaDaLista = "Escolha um dos e-mails da lista.";
@@ -181,6 +185,11 @@ public sealed class AcessoLinkClienteServico(IDadosLinkCliente links, IDadosAces
             atual.Tentativas++;
             await dados.SalvarAsync(ct);
             var restam = RegrasAcessoCliente.TentativasMaximas - atual.Tentativas;
+            if (restam <= 0)
+            {
+                seguranca?.CodigoLinkEsgotado("link_cliente", link.Id);
+            }
+
             return Resultado<SessaoAberta>.Erro(Codigos.Validacao, restam > 0 ? string.Format(Incorreto, restam) : Esgotado);
         }
 

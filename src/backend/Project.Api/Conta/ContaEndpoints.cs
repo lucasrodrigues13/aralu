@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Identity;
+using Project.Application.Comum;
 using Project.Application.Conta;
 using Microsoft.EntityFrameworkCore;
 using Project.Domain.Equipe;
@@ -95,8 +96,11 @@ public static class ContaEndpoints
         SignInManager<ApplicationUser> acesso,
         IEmissorJwt emissor,
         AppDbContext banco,
+        LogSeguranca seguranca,
+        HttpContext http,
         CancellationToken ct)
     {
+        var ip = http.Connection.RemoteIpAddress?.ToString();
         var email = EmailNormalizado(pedido.Email);
         if (email is null || string.IsNullOrWhiteSpace(pedido.Senha))
         {
@@ -106,17 +110,20 @@ public static class ContaEndpoints
         var usuario = await usuarios.FindByEmailAsync(email);
         if (usuario is null)
         {
+            seguranca.LoginFalhou(email, ip, MotivoLoginFalhou.Inexistente);
             return CredencialInvalida();
         }
 
         var resultado = await acesso.CheckPasswordSignInAsync(usuario, pedido.Senha!, lockoutOnFailure: true);
         if (resultado.IsLockedOut)
         {
+            seguranca.LoginBloqueado(usuario.Id, email, ip);
             return Erro(StatusCodes.Status423Locked, "bloqueio", "A ação não pode ser repetida agora.");
         }
 
         if (!resultado.Succeeded)
         {
+            seguranca.LoginFalhou(email, ip, MotivoLoginFalhou.Senha);
             return CredencialInvalida();
         }
 
@@ -132,8 +139,11 @@ public static class ContaEndpoints
 
         if (papeis.Count == 0)
         {
+            seguranca.LoginFalhou(email, ip, MotivoLoginFalhou.SemMembro);
             return CredencialInvalida();
         }
+
+        seguranca.LoginOk(usuario.Id, ip);
 
         var emailConfirmado = usuario.Email ?? email;
         var stamp = SessaoServico.HashDoStamp(await usuarios.GetSecurityStampAsync(usuario));

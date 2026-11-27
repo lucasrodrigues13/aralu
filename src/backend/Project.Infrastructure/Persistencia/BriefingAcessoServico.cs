@@ -40,7 +40,7 @@ public sealed record ResponderBriefingPublico(IReadOnlyList<RespostaBriefingLead
 /// do lead. Reaproveita as regras do link do cliente (<see cref="RegrasAcessoCliente"/>): 6 dígitos, 10 minutos,
 /// 5 tentativas, 1 pedido a cada 2 minutos com espera de 15 depois de 3, sessão de 7 dias.
 /// </summary>
-public sealed class BriefingAcessoServico(AppDbContext banco, IEnvioEmail email)
+public sealed class BriefingAcessoServico(AppDbContext banco, IEnvioEmail email, LogSeguranca? seguranca = null)
 {
     public const string Indisponivel = "Este briefing não está disponível. Fale com a assessoria.";
     public const string Concluido = "Este briefing já foi enviado. Obrigado! Se precisar mudar algo, fale com a assessoria.";
@@ -165,6 +165,11 @@ public sealed class BriefingAcessoServico(AppDbContext banco, IEnvioEmail email)
             atual.Tentativas++;
             await banco.SaveChangesAsync(ct);
             var restam = RegrasAcessoCliente.TentativasMaximas - atual.Tentativas;
+            if (restam <= 0)
+            {
+                seguranca?.CodigoLinkEsgotado("briefing", briefing.Id);
+            }
+
             return Resultado<SessaoAberta>.Erro(
                 Codigos.Validacao,
                 restam > 0 ? string.Format(AcessoLinkClienteServico.Incorreto, restam) : AcessoLinkClienteServico.Esgotado);

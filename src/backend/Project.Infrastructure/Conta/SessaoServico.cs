@@ -2,7 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Logging;
+using Project.Application.Comum;
 
 namespace Project.Infrastructure.Conta;
 
@@ -19,7 +19,7 @@ public enum MotivoEncerramento
 /// stamp do Identity. Trocar o stamp invalida todos os tokens já emitidos do usuário, em todos os dispositivos.
 /// O stamp atual fica 30 s em cache por usuário; <see cref="EncerrarAsync"/> troca o stamp e limpa o cache na hora.
 /// </summary>
-public sealed class SessaoServico(UserManager<ApplicationUser> usuarios, IMemoryCache cache, ILogger<SessaoServico> log)
+public sealed class SessaoServico(UserManager<ApplicationUser> usuarios, IMemoryCache cache, LogSeguranca log)
 {
     public const string ErroSessaoEncerrada = "sessao_encerrada";
     private static readonly TimeSpan Validade = TimeSpan.FromSeconds(30);
@@ -51,11 +51,29 @@ public sealed class SessaoServico(UserManager<ApplicationUser> usuarios, IMemory
     }
 
     /// <summary>
-    /// Ponto único do evento de segurança <c>sessao_encerrada</c>. O Lote 9 (log de segurança) troca este corpo
-    /// pelo registro estruturado; só campos estruturados, nunca texto digitado pelo usuário (CWE-117).
+    /// Eventos de segurança do encerramento (A09-001): <c>senha_redefinida</c> ou <c>senha_trocada</c> quando for o
+    /// caso, e sempre <c>sessao_encerrada</c>. Só id e motivo, nunca texto digitado (CWE-117).
     /// </summary>
-    private void RegistrarEncerramento(string usuarioId, MotivoEncerramento motivo) =>
-        log.LogInformation("sessao_encerrada {UsuarioId} {Motivo}", usuarioId, motivo);
+    private void RegistrarEncerramento(string usuarioId, MotivoEncerramento motivo)
+    {
+        if (motivo == MotivoEncerramento.SenhaRedefinida)
+        {
+            log.SenhaRedefinida(usuarioId);
+        }
+        else if (motivo == MotivoEncerramento.SenhaTrocada)
+        {
+            log.SenhaTrocada(usuarioId);
+        }
+
+        log.SessaoEncerrada(usuarioId, NomeDoMotivo(motivo));
+    }
+
+    public static string NomeDoMotivo(MotivoEncerramento motivo) => motivo switch
+    {
+        MotivoEncerramento.SenhaRedefinida => "senha_redefinida",
+        MotivoEncerramento.SenhaTrocada => "senha_trocada",
+        _ => "sair",
+    };
 
     private static string Chave(string usuarioId) => $"aralu_stamp:{usuarioId}";
 }
