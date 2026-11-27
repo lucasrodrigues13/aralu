@@ -250,8 +250,8 @@ public static class NegocioEndpoints
             return Results.Ok(new { mensagem = "Foto removida." });
         });
 
-    private static Task<IResult> Painel(ClaimsPrincipal usuario, PainelServico servico, CancellationToken ct) =>
-        ComConta(usuario, async conta => Results.Ok(await servico.ObterAsync(conta, ct)));
+    private static Task<IResult> Painel(ClaimsPrincipal usuario, PainelServico servico, AppDbContext banco, CancellationToken ct) =>
+        ComConta(usuario, async conta => Results.Ok(await servico.ObterAsync(conta, ct, await EscopoAssistente.LiberadosAsync(usuario, banco, ct))));
 
     private static Task<IResult> Modelos(ClaimsPrincipal usuario, ModeloServico servico, string? nome, CancellationToken ct) =>
         ComConta(usuario, async conta => Results.Ok(await servico.ListarAsync(conta, nome, ct)));
@@ -947,8 +947,18 @@ public static class NegocioEndpoints
             return await De(servico.ConcluirAsync(conta, id, pedido.Concluida, Hoje(), ct));
         });
 
-    private static Task<IResult> Clientes(ClaimsPrincipal usuario, ClienteServico servico, string? nome, CancellationToken ct) =>
-        ComConta(usuario, async conta => Results.Ok(await servico.ListarAsync(conta, nome, ct)));
+    private static Task<IResult> Clientes(ClaimsPrincipal usuario, ClienteServico servico, string? nome, AppDbContext banco, CancellationToken ct) =>
+        ComConta(usuario, async conta =>
+        {
+            var lista = await servico.ListarAsync(conta, nome, ct);
+            if (await EscopoAssistente.LiberadosAsync(usuario, banco, ct) is { } liberados)
+            {
+                // O cadastro de clientes é da conta; só os eventos vinculados fora do alcance somem.
+                lista = lista.Select(cliente => cliente with { Eventos = cliente.Eventos.Where(evento => liberados.Contains(evento.Id)).ToArray() }).ToArray();
+            }
+
+            return Results.Ok(lista);
+        });
 
     private static Task<IResult> CriarCliente(NovoCliente pedido, ClaimsPrincipal usuario, ClienteServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.CriarAsync(conta, pedido, Hoje(), ct)));
@@ -1164,12 +1174,18 @@ public static class NegocioEndpoints
         HttpContext http,
         IArmazenamentoArquivo armazenamento,
         IDados dados,
+        AppDbContext banco,
         CancellationToken ct)
     {
         var conta = Conta(usuario);
         if (conta is null)
         {
             return NaoAutenticado();
+        }
+
+        if (!await EscopoAssistente.PodeAbrirArquivoAsync(usuario, banco, id, ct))
+        {
+            return Indisponivel();
         }
 
         var aberto = await armazenamento.AbrirAsync(id, conta.Value, ct);

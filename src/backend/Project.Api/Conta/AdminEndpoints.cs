@@ -29,9 +29,14 @@ public static class AdminEndpoints
             && http.Request.Headers.TryGetValue(CabecalhoConta, out var valor)
             && !string.IsNullOrWhiteSpace(valor.ToString()))
         {
+            // O cabeçalho traz o id da conta (o mesmo de ListarUsuarios); um sócio Organizer não é conta própria.
+            var banco = http.RequestServices.GetRequiredService<Project.Infrastructure.Persistencia.AppDbContext>();
+            var conta = Guid.TryParse(valor.ToString().Trim(), out var contaId)
+                ? await banco.Contas.AsNoTracking().Where(item => item.Id == contaId).Select(item => new { item.Id, item.DonoUsuarioId }).FirstOrDefaultAsync(http.RequestAborted)
+                : null;
             var usuarios = http.RequestServices.GetRequiredService<UserManager<ApplicationUser>>();
-            var dona = await usuarios.FindByIdAsync(valor.ToString().Trim());
-            if (dona is null || !await usuarios.IsInRoleAsync(dona, Papeis.Organizer))
+            var dona = conta is null ? null : await usuarios.FindByIdAsync(conta.DonoUsuarioId);
+            if (conta is null || dona is null || !await usuarios.IsInRoleAsync(dona, Papeis.Organizer))
             {
                 http.Response.StatusCode = StatusCodes.Status400BadRequest;
                 await http.Response.WriteAsJsonAsync(new ErroResposta("conta", "A conta escolhida não existe."), http.RequestAborted);
@@ -40,7 +45,7 @@ public static class AdminEndpoints
 
             var extra = new ClaimsIdentity();
             extra.AddClaim(new Claim(ClaimTypes.Role, Papeis.Organizer));
-            extra.AddClaim(new Claim(ContaClaims.ContaId, dona.Id));
+            extra.AddClaim(new Claim(ContaClaims.ContaId, conta.Id.ToString()));
             usuario.AddIdentity(extra);
 
             // A09-001: rota pelo modelo do endpoint, para não levar ao log texto livre do caminho.
