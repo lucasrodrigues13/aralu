@@ -6,6 +6,16 @@ Para cada item: o commit, o que mudou, onde está no manual, os prints a refazer
 
 ## Abertas
 
+### Padronização de interface (27/11/2026)
+
+Textos e telas que mudaram e que o manual (`index.html`) ainda descreve do jeito antigo. Prints não foram refeitos.
+- **Criar a conta e Entrar (linhas ~164 a 177):** telas de acesso com cartão largo e painel da marca; cadastro agora diz "Criar conta" no botão e "Teste grátis de 14 dias, sem cartão." no subtítulo; "Esqueci a senha" e "Reenviar confirmação" com novos botões ("Enviar link", "Reenviar e-mail") e link "Voltar para entrar".
+- **RSVP (linha ~752):** os rótulos "Confirmado" e "Não comparecerá" na página do convite viram "Vou" e "Não vou"; o botão vira "Enviar resposta".
+- **Botões renomeados:** "Novo grupo", "Convidar pessoa", "Adicionar tarefa" (Tarefas do Funil vira "Nova tarefa") e "Adicionar serviço" (Serviços da conta vira "Novo serviço"; no evento e no modelo de evento continua "Adicionar serviço"); botões de importar usam "Importar planilha".
+- **Modais:** todos têm X no topo; "Entendi" e "Pronto" viraram "Fechar"; confirmação destrutiva em vermelho. Capturas de modal ficam com o rodapé e o topo antigos.
+- **Listas:** nome do registro clicável; coluna "Ações" visível; menu "Mais ações" em contratos, orçamentos e convidados; paginação; estados vazio e "Carregando…". Afeta as capturas dessas telas.
+- **Telas públicas** (RSVP, lead, briefing, proposta, equipe, link do cliente, portaria): sempre no tema claro, sem botão de tema; links inválidos mostram "Este link não está mais disponível".
+
 ### Prints do modelo de evento e das tarefas (commits 6cc6926, 4faff6e, 39f5cbf)
 
 O texto já foi atualizado. Faltam os prints, que ainda mostram as telas antigas:
