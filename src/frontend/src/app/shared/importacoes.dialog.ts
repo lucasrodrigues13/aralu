@@ -3,15 +3,21 @@ import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { Observable, Subscription, timer } from 'rxjs';
 import { ImportacaoConvidados, ROTULO_SITUACAO_IMPORTACAO, temImportacaoEmAndamento } from '../core/importacoes';
 import { mensagemDeErro } from '../core/mensagem-erro';
 import { ToastService } from '../core/toast.service';
+import { DIALOG } from './dialog';
+import { PlanilhaInstrucoesDialog } from './planilha-instrucoes.dialog';
 
 export interface ImportacoesDados {
   listar: () => Observable<ImportacaoConvidados[]>;
   enviar: (arquivo: File) => Observable<ImportacaoConvidados>;
+  /** Download da planilha modelo, feito dentro do modal. */
+  baixar: () => Observable<Blob>;
 }
 
 const INTERVALO_MS = 2000;
@@ -24,13 +30,17 @@ const INTERVALO_MS = 2000;
  */
 @Component({
   selector: 'app-importacoes-dialog',
-  imports: [MatDialogModule, MatButtonModule, MatIconModule, DatePipe],
+  imports: [MatDialogModule, MatButtonModule, MatIconModule, MatTooltipModule, DatePipe],
   template: `
     <h2 mat-dialog-title>Importar planilha</h2>
     <mat-dialog-content class="text-sm">
-      <p class="mt-0">Escolha a planilha preenchida a partir do modelo. A lista é verificada em segundo plano e em breve será confirmada aqui; você pode fechar esta janela e voltar depois.</p>
-      <button mat-flat-button type="button" [disabled]="enviando()" (click)="arquivo.click()"><mat-icon>upload</mat-icon> Escolher planilha</button>
-      <input #arquivo type="file" accept=".xlsx,.xls" hidden (change)="escolher($event)" />
+      <p class="mt-0">Baixe a planilha modelo, preencha e envie. A lista é verificada em segundo plano e em breve será confirmada aqui; você pode fechar esta janela e voltar depois.</p>
+      <div class="flex flex-wrap items-center gap-2">
+        <button mat-flat-button type="button" [disabled]="enviando()" (click)="arquivo.click()"><mat-icon>upload_file</mat-icon> Escolher planilha</button>
+        <input #arquivo type="file" accept=".xlsx,.xls" hidden (change)="escolher($event)" />
+        <button mat-button type="button" [disabled]="baixando()" (click)="baixar()"><mat-icon>download</mat-icon> Baixar planilha modelo</button>
+        <button mat-icon-button type="button" aria-label="Ajuda" matTooltip="Como preencher" (click)="ajuda()"><mat-icon>help_outline</mat-icon></button>
+      </div>
 
       <h3 class="text-base font-semibold mt-6 mb-2">Importações</h3>
       @if (itens().length === 0) {
@@ -74,6 +84,8 @@ export class ImportacoesDialog implements OnInit {
   private readonly ref = inject(MatDialogRef<ImportacoesDialog, boolean>);
   private readonly toast = inject(ToastService);
   private readonly destroy = inject(DestroyRef);
+  private readonly dialog = inject(MatDialog);
+  protected readonly baixando = signal(false);
   protected readonly itens = signal<ImportacaoConvidados[]>([]);
   protected readonly enviando = signal(false);
   protected readonly rotulos = ROTULO_SITUACAO_IMPORTACAO;
@@ -102,6 +114,30 @@ export class ImportacoesDialog implements OnInit {
       },
       error: (erro: unknown) => {
         this.enviando.set(false);
+        this.toast.erro(mensagemDeErro(erro));
+      },
+    });
+  }
+
+  /** Instruções de preenchimento, com o mesmo download do modelo. */
+  protected ajuda(): void {
+    this.dialog.open(PlanilhaInstrucoesDialog, { ...DIALOG, data: { baixar: this.dados.baixar } });
+  }
+
+  protected baixar(): void {
+    this.baixando.set(true);
+    this.dados.baixar().subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'convidados.xlsx';
+        link.click();
+        URL.revokeObjectURL(url);
+        this.baixando.set(false);
+      },
+      error: (erro: unknown) => {
+        this.baixando.set(false);
         this.toast.erro(mensagemDeErro(erro));
       },
     });

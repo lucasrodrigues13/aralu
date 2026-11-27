@@ -1127,6 +1127,13 @@ export class NegocioClient {
     );
   }
 
+  /** CEP na página de aceite, liberado pelo token da proposta (sem login). */
+  cepPublico(token: string, cep: string) {
+    return this.http.get<{ endereco: string; estado: string; cidade: string; bairro: string; pais: string }>(
+      `${this.base}/api/v1/publico/propostas/${encodeURIComponent(token)}/cep/${cep}`,
+    );
+  }
+
   convites(eventoId: string, filtro: Record<string, string>) {
     let params = new HttpParams();
     for (const [chave, valor] of Object.entries(filtro)) {

@@ -712,6 +712,13 @@ public sealed class OrcamentoFunilServico(IDados dados)
             PaginaAceite: pagina);
     }
 
+    /// <summary>O link da proposta ainda abre (não cancelado nem vencido): libera a consulta de CEP do aceite.</summary>
+    public async Task<bool> LinkAtivoAsync(string token, CancellationToken ct)
+    {
+        var item = await PorTokenAsync(token, ct);
+        return item is not null && item.Situacao != SituacaoOrcamentoFunil.Cancelado && item.LinkValido(DateTimeOffset.UtcNow);
+    }
+
     /// <summary>Foto da página de aceite pelo link da proposta: só as do orçamento (e o logo do perfil). SPEC-061 §8.5.</summary>
     public async Task<(Guid ContaId, Guid ArquivoId)?> MidiaPublicaAsync(string token, Guid arquivoId, CancellationToken ct)
     {

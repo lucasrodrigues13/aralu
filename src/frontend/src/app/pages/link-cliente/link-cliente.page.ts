@@ -17,7 +17,6 @@ import { ConviteFormDados, ConviteFormDialog } from '../../shared/convite-form.d
 import { contarPorSituacao, dadosPreenchidos, filtrarConvites, FiltroDeConvites, prazoEncerrado, resumoDosConvidados } from '../../shared/convite-lista';
 import { ConvidadosTopoComponent } from '../../shared/convidados-topo.component';
 import { DADOS_ENVIO, DADOS_PRAZO, DataConvitesDialog } from '../../shared/data-convites.dialog';
-import { PlanilhaInstrucoesDados, PlanilhaInstrucoesDialog } from '../../shared/planilha-instrucoes.dialog';
 import { PresencasDialog } from '../../shared/presencas.dialog';
 import { ImportacoesDados, ImportacoesDialog } from '../../shared/importacoes.dialog';
 import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
@@ -145,7 +144,6 @@ import { AcessoLinkComponent } from './acesso-link.component';
                   (envio)="abrirEnvio(d.dataEnvioConvites)"
                   (prazo)="abrirPrazo(d.prazoRsvp)"
                   (presencas)="abrirPresencas()"
-                  (planilha)="abrirPlanilha()"
                   (importar)="abrirImportacoes()">
                 @if (convites.length === 0) {
                   <p class="text-center text-muted py-6">Nenhum convite ainda. Use "Novo convite" para cadastrar quem vai receber.</p>
@@ -267,16 +265,12 @@ export class LinkClientePage implements OnInit {
     });
   }
 
-  protected abrirPlanilha(): void {
-    const dados: PlanilhaInstrucoesDados = { baixar: () => this.cliente.planilha(this.token) };
-    this.dialog.open(PlanilhaInstrucoesDialog, { ...DIALOG, data: dados });
-  }
-
   /** Fila de importações (SPEC-059 §6.6); ao fechar depois de uma importação concluída, recarrega a lista. */
   protected abrirImportacoes(): void {
     const dados: ImportacoesDados = {
       listar: () => this.cliente.importacoes(this.token),
       enviar: (arquivo) => this.cliente.importar(this.token, arquivo),
+      baixar: () => this.cliente.planilha(this.token),
     };
     this.dialog.open(ImportacoesDialog, { ...DIALOG, data: dados }).afterClosed().subscribe((importou?: boolean) => {
       if (importou) this.cliente.obter(this.token).subscribe((leitura) => this.dados.set(leitura));

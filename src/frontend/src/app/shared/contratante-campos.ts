@@ -140,6 +140,8 @@ export class ContratanteCamposComponent {
   @Input() obrigatorios = false;
   /** O CEP consulta a API (exige login: fica desligado na tela pública). */
   @Input() consultarCep = true;
+  /** Na tela pública, o token da proposta libera a consulta de CEP sem login. */
+  @Input() tokenProposta: string | null = null;
   protected readonly estadosCivis = ESTADOS_CIVIS;
 
   protected get marca(): string {
@@ -147,10 +149,11 @@ export class ContratanteCamposComponent {
   }
 
   protected buscarCep(): void {
-    if (!this.consultarCep) return;
+    if (!this.consultarCep && !this.tokenProposta) return;
     const digitos = String(this.grupo.controls['cep'].value ?? '').replace(/\D/g, '');
     if (digitos.length !== 8) return;
-    this.negocio.cep(digitos).subscribe({
+    const consulta = this.tokenProposta ? this.negocio.cepPublico(this.tokenProposta, digitos) : this.negocio.cep(digitos);
+    consulta.subscribe({
       next: (e) =>
         this.grupo.patchValue({
           pais: e.pais || 'Brasil',

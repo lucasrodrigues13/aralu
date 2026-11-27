@@ -131,7 +131,7 @@ const RESPONDIDO: Record<RespostaProposta, { titulo: string; texto: string; icon
                 <p class="text-sm text-muted mb-4">A assessoria será avisada e entra em contato para fechar.</p>
                 <h3 class="dados-contrato">Dados para o contrato</h3>
                 <p class="text-sm text-muted mb-4">Para fechar, preencha mais dados para gerar o contrato. Os campos com * são necessários.</p>
-                <app-contratante-campos [grupo]="contratante" [obrigatorios]="true" [consultarCep]="false" />
+                <app-contratante-campos [grupo]="contratante" [obrigatorios]="true" [consultarCep]="false" [tokenProposta]="token" />
               } @else {
                 <h2>{{ tipo === 'Duvidas' ? 'Qual é a sua dúvida?' : 'Quer contar o motivo?' }}</h2>
                 <mat-form-field appearance="outline" class="w-full">
@@ -216,7 +216,7 @@ export class PropostaPublicaPage implements OnInit {
   protected readonly erro = signal('');
   protected readonly mensagem = new FormControl('', { nonNullable: true });
   protected readonly contratante = grupoContratante(inject(FormBuilder));
-  private token = '';
+  protected token = '';
   private readonly quadro = viewChild<ElementRef<HTMLIFrameElement>>('quadro');
   /** O aviso "Proposta aceita" sobre a página da assessoria pode ser fechado. */
   protected readonly fechouAviso = signal(false);

@@ -208,6 +208,7 @@ public static class NegocioEndpoints
         app.MapGet("/api/v1/publico/propostas/{token}", PropostaPublica);
         app.MapPost("/api/v1/publico/propostas/{token}/resposta", ResponderPropostaPublica);
         app.MapGet("/api/v1/publico/propostas/{token}/midias/{arquivoId:guid}", MidiaPropostaPublica);
+        app.MapGet("/api/v1/publico/propostas/{token}/cep/{cep}", CepPropostaPublica);
     }
 
     private static Task<IResult> Perfil(ClaimsPrincipal usuario, PerfilServico servico, CancellationToken ct) =>
@@ -1190,6 +1191,21 @@ public static class NegocioEndpoints
 
         var digitos = Mascaras.SoDigitos(cep);
         var endereco = digitos is null ? null : await consulta.ConsultarAsync(digitos, ct);
+        return endereco is null
+            ? Results.Json(new ErroResposta(Codigos.Validacao, "CEP não encontrado."), statusCode: StatusCodes.Status404NotFound)
+            : Results.Ok(endereco);
+    }
+
+    /// <summary>CEP na página de aceite: sem login, mas só com um link de proposta ativo.</summary>
+    private static async Task<IResult> CepPropostaPublica(string token, string cep, OrcamentoFunilServico servico, IConsultaCep consulta, CancellationToken ct)
+    {
+        if (!await servico.LinkAtivoAsync(token, ct))
+        {
+            return Indisponivel();
+        }
+
+        var digitos = Mascaras.SoDigitos(cep);
+        var endereco = digitos is { Length: 8 } ? await consulta.ConsultarAsync(digitos, ct) : null;
         return endereco is null
             ? Results.Json(new ErroResposta(Codigos.Validacao, "CEP não encontrado."), statusCode: StatusCodes.Status404NotFound)
             : Results.Ok(endereco);

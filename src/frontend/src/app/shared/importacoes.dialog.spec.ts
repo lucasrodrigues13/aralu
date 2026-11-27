@@ -18,7 +18,7 @@ describe('Modal de importações (SPEC-059 §6.6)', () => {
       imports: [ImportacoesDialog],
       providers: [
         provideNoopAnimations(),
-        { provide: MAT_DIALOG_DATA, useValue: { listar, enviar } },
+        { provide: MAT_DIALOG_DATA, useValue: { listar, enviar, baixar: vi.fn() } },
         { provide: MatDialogRef, useValue: { close: fechar } },
       ],
     });

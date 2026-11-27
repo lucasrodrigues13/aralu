@@ -13,7 +13,6 @@ import { Convite, ListaConvites, NegocioClient } from '../../core/negocio.client
 import { ConviteDoFormulario, PedidoConvite } from '../../core/convite-formulario';
 import { ConviteFormDados, ConviteFormDialog } from '../../shared/convite-form.dialog';
 import { dadosPreenchidos, FiltroDeConvites, resumoDosConvidados } from '../../shared/convite-lista';
-import { PlanilhaInstrucoesDados, PlanilhaInstrucoesDialog } from '../../shared/planilha-instrucoes.dialog';
 import { ConvidadosTopoComponent } from '../../shared/convidados-topo.component';
 import { DADOS_ENVIO, DADOS_PRAZO, DataConvitesDialog } from '../../shared/data-convites.dialog';
 import { PresencasDialog } from '../../shared/presencas.dialog';
@@ -49,7 +48,6 @@ export { cardsPorSituacao } from '../../shared/convite-lista';
         (envio)="abrirEnvio()"
         (prazo)="abrirPrazo()"
         (presencas)="abrirPresencas()"
-        (planilha)="abrirPlanilha()"
         (importar)="abrirImportacoes()">
         <mat-button-toggle-group antesDoFiltro [value]="visao()" (change)="visao.set($event.value)" aria-label="Visão da lista">
           <mat-button-toggle value="convite">Por convite</mat-button-toggle>
@@ -352,11 +350,6 @@ export class ConvidadosPage implements OnInit {
   }
 
   /** Instruções de preenchimento com o download do modelo dentro do modal (SPEC-059). */
-  protected abrirPlanilha(): void {
-    const dados: PlanilhaInstrucoesDados = { baixar: () => this.negocio.planilha(this.eventoId()) };
-    this.dialog.open(PlanilhaInstrucoesDialog, { ...DIALOG, data: dados });
-  }
-
   /** Convites nascem recolhidos; clicar mostra os convidados (SPEC-059). */
   protected aberto(id: string): boolean {
     return this.abertos().has(id);
@@ -382,6 +375,7 @@ export class ConvidadosPage implements OnInit {
     const dados: ImportacoesDados = {
       listar: () => this.negocio.importacoes(this.eventoId()),
       enviar: (arquivo) => this.negocio.importar(this.eventoId(), arquivo),
+      baixar: () => this.negocio.planilha(this.eventoId()),
     };
     this.dialog.open(ImportacoesDialog, { ...DIALOG, data: dados }).afterClosed().subscribe((importou?: boolean) => {
       if (importou) this.carregar();
