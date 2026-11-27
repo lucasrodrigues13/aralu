@@ -133,7 +133,8 @@ public sealed record EventoResumo(
     int TarefasConcluidas,
     int Tarefas,
     int ConvidadosConfirmados,
-    int Convidados);
+    int Convidados,
+    bool ContratoPendente);
 
 public sealed class EventoServico(IDados dados, IConsultaCep cep)
 {
@@ -155,7 +156,8 @@ public sealed class EventoServico(IDados dados, IConsultaCep cep)
             linha.TarefasConcluidas,
             linha.Tarefas,
             linha.ConvidadosConfirmados,
-            linha.Convidados)).ToArray();
+            linha.Convidados,
+            linha.ContratoPendente)).ToArray();
     }
 
     public async Task<Resultado<EventoDetalhe>> ObterAsync(Guid contaId, Guid id, DateOnly hoje, CancellationToken ct)
@@ -515,7 +517,8 @@ public sealed class EventoServico(IDados dados, IConsultaCep cep)
             tarefas,
             convites.SelectMany(convite => convite.Convidados).Select(convidado => convidado.Situacao).ToArray(),
             clientesDoEvento.FirstOrDefault(),
-            hoje));
+            hoje,
+            await dados.OportunidadeComContratoPendenteAsync(contaId, evento.Id, ct)));
     }
 
     /// <summary>Valida e monta o cliente da criação curta: nome e WhatsApp com DDD.</summary>

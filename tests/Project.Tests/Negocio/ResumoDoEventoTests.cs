@@ -27,6 +27,16 @@ public class ResumoDoEventoTests
     }
 
     [Fact]
+    public void Contrato_nao_assinado_vem_primeiro_e_leva_a_busca_da_oportunidade()
+    {
+        var resumo = ResumoDoEvento.Calcular(Evento(null), [], [], null, Hoje, "Casamento Ana e Pedro");
+
+        Assert.Equal("contrato-nao-assinado", resumo.Alertas[0].Codigo);
+        Assert.Equal(DestinoAlerta.Contratos, resumo.Alertas[0].Destino);
+        Assert.Equal("Casamento Ana e Pedro", resumo.Alertas[0].Busca);
+    }
+
+    [Fact]
     public void Alertas_seguem_a_ordem_da_spec_e_param_em_tres()
     {
         var evento = Evento(Hoje.AddDays(20));

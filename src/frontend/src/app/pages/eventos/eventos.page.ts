@@ -234,7 +234,13 @@ import { MatTooltipModule } from '@angular/material/tooltip';
               </ng-container>
               <ng-container matColumnDef="situacao">
                 <th mat-header-cell *matHeaderCellDef class="font-semibold text-sm">Situação</th>
-                <td mat-cell *matCellDef="let evento" class="whitespace-nowrap"><span [class]="classe(evento.situacao)">{{ rotuloSituacao(evento.situacao) }}</span></td>
+                <td mat-cell *matCellDef="let evento" class="whitespace-nowrap"><span [class]="classe(evento.situacao)">{{ rotuloSituacao(evento.situacao) }}</span>
+                  @if (evento.contratoPendente) {
+                    <span class="ml-2 inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs bg-light-warning text-warning" matTooltip="O contrato do cliente ainda não foi marcado como assinado">
+                      <mat-icon class="text-base! w-4! h-4!">warning</mat-icon>Contrato não assinado
+                    </span>
+                  }
+                </td>
               </ng-container>
               <ng-container matColumnDef="tarefas">
                 <th mat-header-cell *matHeaderCellDef class="font-semibold text-sm">Tarefas</th>

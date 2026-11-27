@@ -317,6 +317,8 @@ export interface EventoResumo {
   tarefas: number;
   convidadosConfirmados: number;
   convidados: number;
+  /** Contrato do cliente gerado e ainda não assinado. */
+  contratoPendente?: boolean;
 }
 
 export interface Local {
@@ -1967,13 +1969,15 @@ export const TIPOS_TAREFA_FUNIL = [
 ];
 
 /** Para onde o alerta do resumo leva (SPEC-008 v2, 8.3). */
-export type DestinoAlerta = 'TarefasAtrasadas' | 'Fornecedores' | 'ConvidadosPendentes' | 'Editar';
+export type DestinoAlerta = 'TarefasAtrasadas' | 'Fornecedores' | 'ConvidadosPendentes' | 'Editar' | 'Contratos';
 
 export interface AlertaEvento {
   codigo: string;
   quantidade: number;
   texto: string;
   destino: DestinoAlerta;
+  /** Texto para filtrar a tela de destino (ex.: nome da oportunidade do contrato). */
+  busca?: string | null;
 }
 
 export interface ResumoEvento {

@@ -21,6 +21,7 @@ import { textoEmHtml } from '../contratos/mesclagem';
 import { PreviaWordComponent } from '../contratos/previa-word';
 import { EditorRico } from '../../shared/editor-rico';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-contrato-funil-dialog',
@@ -275,7 +276,10 @@ export class ContratosFunilPage implements OnInit {
   protected readonly lista = signal<ContratoFunil[]>([]);
   protected readonly colunas = ['oportunidade', 'criadoEm', 'envio', 'acoes'];
 
+  private readonly rota = inject(ActivatedRoute);
+
   ngOnInit(): void {
+    this.busca.set(this.rota.snapshot.queryParamMap.get('busca') ?? '');
     this.carregar();
   }
 

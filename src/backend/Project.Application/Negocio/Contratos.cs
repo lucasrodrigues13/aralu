@@ -35,7 +35,8 @@ public sealed record EventoLinha(
     int TarefasConcluidas,
     int Tarefas,
     int ConvidadosConfirmados,
-    int Convidados);
+    int Convidados,
+    bool ContratoPendente = false);
 
 public sealed record ContagemSituacao(SituacaoEvento Situacao, int Quantidade);
 
@@ -73,6 +74,9 @@ public interface IDados
     Task<IReadOnlyList<EventoLinha>> ListarEventosAsync(Guid contaId, FiltroEventos filtro, CancellationToken ct);
 
     Task<Evento?> ObterEventoAsync(Guid contaId, Guid id, CancellationToken ct);
+
+    /// <summary>Nome da oportunidade do evento com contrato gerado e nenhum assinado; nulo se não há pendência.</summary>
+    Task<string?> OportunidadeComContratoPendenteAsync(Guid contaId, Guid eventoId, CancellationToken ct);
 
     Task<bool> EventoDaContaAsync(Guid contaId, Guid id, CancellationToken ct);
 

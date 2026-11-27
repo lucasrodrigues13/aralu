@@ -353,6 +353,7 @@ export class EventoHomePage implements OnInit, OnDestroy {
       Fornecedores: 'Ver fornecedores',
       ConvidadosPendentes: 'Ver convidados',
       Editar: 'Informar data',
+      Contratos: 'Ver contrato',
     }[alerta.destino];
   }
 
@@ -369,6 +370,9 @@ export class EventoHomePage implements OnInit, OnDestroy {
         break;
       case 'Editar':
         this.editar();
+        break;
+      case 'Contratos':
+        void this.router.navigate(['/contratos-funil'], { queryParams: alerta.busca ? { busca: alerta.busca } : {} });
         break;
     }
   }

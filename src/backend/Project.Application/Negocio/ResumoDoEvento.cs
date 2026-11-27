@@ -13,9 +13,11 @@ public enum DestinoAlerta
     Fornecedores,
     ConvidadosPendentes,
     Editar,
+    Contratos,
 }
 
-public sealed record AlertaEvento(string Codigo, int Quantidade, string Texto, DestinoAlerta Destino);
+/// <summary>Alerta do resumo. Busca: texto para filtrar a tela de destino (ex.: nome da oportunidade).</summary>
+public sealed record AlertaEvento(string Codigo, int Quantidade, string Texto, DestinoAlerta Destino, string? Busca = null);
 
 public sealed record ClienteDoResumo(Guid Id, string Nome, string Ddi, string Celular);
 
@@ -48,7 +50,8 @@ public static class ResumoDoEvento
         IReadOnlyList<Tarefa> tarefas,
         IReadOnlyList<SituacaoConvidado> convidados,
         Cliente? cliente,
-        DateOnly hoje)
+        DateOnly hoje,
+        string? oportunidadeComContratoPendente = null)
     {
         var atrasadas = tarefas.Count(tarefa => EstaAtrasada(tarefa, hoje));
 
@@ -67,6 +70,11 @@ public static class ResumoDoEvento
         var alertas = new List<AlertaEvento>();
         if (evento.Situacao == SituacaoEvento.EmAndamento)
         {
+            if (oportunidadeComContratoPendente is not null)
+            {
+                alertas.Add(new("contrato-nao-assinado", 0, "Contrato do cliente ainda não assinado", DestinoAlerta.Contratos, oportunidadeComContratoPendente));
+            }
+
             if (atrasadas > 0)
             {
                 alertas.Add(new("tarefas-atrasadas", atrasadas, Plural(atrasadas, "tarefa atrasada", "tarefas atrasadas"), DestinoAlerta.TarefasAtrasadas));

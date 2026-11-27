@@ -121,10 +121,22 @@ public sealed class DadosEf(AppDbContext banco) : IDados
                     banco.Convites.Any(convite => convite.Id == convidado.ConviteId && convite.EventoId == evento.Id)
                     && convidado.Situacao == SituacaoConvidado.Confirmado),
                 banco.Convidados.Count(convidado =>
-                    banco.Convites.Any(convite => convite.Id == convidado.ConviteId && convite.EventoId == evento.Id))))
+                    banco.Convites.Any(convite => convite.Id == convidado.ConviteId && convite.EventoId == evento.Id)),
+                banco.Oportunidades.Any(oportunidade =>
+                    oportunidade.EventoId == evento.Id
+                    && banco.ContratosFunil.Any(contrato => contrato.OportunidadeId == oportunidade.Id && contrato.Situacao != SituacaoContratoFunil.Cancelado)
+                    && !banco.ContratosFunil.Any(contrato => contrato.OportunidadeId == oportunidade.Id && contrato.Situacao == SituacaoContratoFunil.Assinado))))
             .ToListAsync(ct);
         return linhas;
     }
+
+    public Task<string?> OportunidadeComContratoPendenteAsync(Guid contaId, Guid eventoId, CancellationToken ct) =>
+        banco.Oportunidades.AsNoTracking()
+            .Where(oportunidade => oportunidade.ContaId == contaId && oportunidade.EventoId == eventoId)
+            .Where(oportunidade => banco.ContratosFunil.Any(contrato => contrato.OportunidadeId == oportunidade.Id && contrato.Situacao != SituacaoContratoFunil.Cancelado)
+                && !banco.ContratosFunil.Any(contrato => contrato.OportunidadeId == oportunidade.Id && contrato.Situacao == SituacaoContratoFunil.Assinado))
+            .Select(oportunidade => (string?)oportunidade.Nome)
+            .FirstOrDefaultAsync(ct);
 
     public Task<Evento?> ObterEventoAsync(Guid contaId, Guid id, CancellationToken ct) =>
         banco.Eventos
