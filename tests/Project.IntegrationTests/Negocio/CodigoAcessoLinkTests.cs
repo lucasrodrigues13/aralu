@@ -163,6 +163,34 @@ public class CodigoAcessoLinkTests
         Assert.Equal(7, (await Ler(await dono.GetAsync("/api/v1/configuracoes/propostas"))).GetProperty("validadeDias").GetInt32());
     }
 
+    [Fact]
+    public async Task Validade_definida_no_cadastro_ou_na_edicao_vale_no_envio()
+    {
+        var dono = await Entrar();
+        var oportunidade = await Ler(await dono.PostAsJsonAsync("/api/v1/oportunidades", new
+        {
+            nome = "Lead com prazo próprio",
+            estagio = "Contato inicial",
+            contatos = new[] { new { nome = "Contato", telefone = "11977776666" } },
+        }));
+        var oportunidadeId = oportunidade.GetProperty("id").GetGuid();
+        Assert.Equal(HttpStatusCode.BadRequest, (await dono.PostAsJsonAsync("/api/v1/orcamentos-funil", new { oportunidadeId, conteudo = "Proposta", valor = 100, diasValidade = 0 })).StatusCode);
+
+        var criado = await Ler(await dono.PostAsJsonAsync("/api/v1/orcamentos-funil", new { oportunidadeId, conteudo = "Proposta", valor = 100, diasValidade = 20 }));
+        var id = criado.GetProperty("id").GetGuid();
+        Assert.Equal(20, criado.GetProperty("diasValidade").GetInt32());
+
+        // Envio sem perguntar: usa os 20 dias do cadastro.
+        var enviado = await Ler(await dono.PostAsJsonAsync($"/api/v1/orcamentos-funil/{id}/enviar", new { }));
+        Assert.Equal(20, enviado.GetProperty("diasValidade").GetInt32());
+        Assert.Equal(UltimoDia(20), UltimoDiaDe(enviado));
+
+        // Editar o prazo vale no próximo envio.
+        await Ler(await dono.PutAsJsonAsync($"/api/v1/orcamentos-funil/{id}", new { oportunidadeId, conteudo = "Proposta", valor = 100, diasValidade = 5 }));
+        var reenviado = await Ler(await dono.PostAsJsonAsync($"/api/v1/orcamentos-funil/{id}/enviar", new { }));
+        Assert.Equal(UltimoDia(5), UltimoDiaDe(reenviado));
+    }
+
     private static DateOnly UltimoDia(int dias) =>
         Domain.Funil.OrcamentoFunil.UltimoDia(DateTimeOffset.UtcNow, dias);
 

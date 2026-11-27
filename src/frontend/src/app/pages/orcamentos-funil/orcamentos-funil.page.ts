@@ -55,6 +55,17 @@ import { abrirPreviaAceite } from '../modelos-funil/pagina-aceite';
           <app-editor-rico formControlName="conteudo" rotulo="Conteúdo" altura="260px" />
         </div>
         <app-campo-dinheiro rotulo="Valor" formControlName="valor" />
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Validade da proposta</mat-label>
+          <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+            <input matInput type="number" min="1" max="180" aria-label="Validade em dias" formControlName="diasValidade" />
+            <span matTextSuffix>dias</span>
+            <mat-hint>
+              @if (form.controls.diasValidade.valid) { Conta a partir do envio do link. O padrão vem das configurações de propostas. }
+              @else { A validade da proposta vai de 1 a 180 dias. }
+            </mat-hint>
+          </mat-form-field>
+        </div>
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
@@ -82,9 +93,14 @@ export class OrcamentoFunilDialog implements OnInit {
     modeloId: [this.dados?.modeloId ?? null as string | null],
     conteudo: [this.dados?.conteudo ?? '', Validators.required],
     valor: [this.dados?.valor ?? null as number | null],
+    diasValidade: [this.dados?.diasValidade ?? 30, [Validators.required, Validators.min(1), Validators.max(180), Validators.pattern(/^\d+$/)]],
   });
 
   ngOnInit(): void {
+    // SPEC-064: sem validade própria, o campo vem com o padrão das configurações de propostas.
+    if (!this.dados?.diasValidade) {
+      this.negocio.configuracaoPropostas().subscribe({ next: (c) => this.form.controls.diasValidade.setValue(c.validadeDias), error: () => undefined });
+    }
     this.negocio.oportunidades().subscribe({ next: (lista) => this.oportunidades.set(lista) });
     this.negocio.modelosOrcamentoFunil().subscribe({ next: (lista) => this.modelos.set(lista) });
   }
@@ -125,7 +141,7 @@ export class OrcamentoFunilDialog implements OnInit {
       this.form.markAllAsTouched();
       return;
     }
-    const valor = this.form.getRawValue();
+    const valor = { ...this.form.getRawValue(), diasValidade: Number(this.form.controls.diasValidade.value) };
     const req = this.dados
       ? this.negocio.atualizarOrcamentoFunil(this.dados.id, valor)
       : this.negocio.criarOrcamentoFunil(valor);
@@ -136,55 +152,6 @@ export class OrcamentoFunilDialog implements OnInit {
       },
       error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
     });
-  }
-}
-
-/**
- * Validade da proposta no envio (SPEC-064 §6.2): vem com os dias do envio anterior ou o padrão da conta;
- * o reenvio recomeça o prazo a partir de hoje.
- */
-@Component({
-  selector: 'app-validade-proposta-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule],
-  template: `
-    <h2 mat-dialog-title>{{ dados.enviadoEm ? 'Reenviar proposta' : 'Enviar proposta' }}</h2>
-    <mat-dialog-content>
-      <div class="campo">
-        <mat-label class="font-semibold mb-2 block">Válida por</mat-label>
-        <mat-form-field appearance="outline" class="w-full">
-          <input matInput type="number" min="1" max="180" aria-label="Validade em dias" [formControl]="dias" />
-          <span matTextSuffix>dias</span>
-        </mat-form-field>
-      </div>
-      <p class="text-sm text-muted">
-        @if (dias.valid) { Vale até o fim do dia {{ ultimoDia() }}. } @else { A validade da proposta vai de 1 a 180 dias. }
-        @if (dados.enviadoEm) { O prazo recomeça a contar hoje. }
-      </p>
-    </mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button mat-stroked-button type="button" (click)="ref.close()">Cancelar</button>
-      <button mat-flat-button type="button" [disabled]="dias.invalid" (click)="ref.close(dias.value)">Gerar link</button>
-    </mat-dialog-actions>
-  `,
-})
-export class ValidadePropostaDialog implements OnInit {
-  private readonly negocio = inject(NegocioClient);
-  protected readonly dados = inject<OrcamentoFunil>(MAT_DIALOG_DATA);
-  protected readonly ref = inject(MatDialogRef<ValidadePropostaDialog>);
-  protected readonly dias = new FormControl<number>(this.dados.diasValidade ?? 30, {
-    nonNullable: true,
-    validators: [Validators.required, Validators.min(1), Validators.max(180), Validators.pattern(/^\d+$/)],
-  });
-
-  ngOnInit(): void {
-    if (this.dados.diasValidade) return;
-    this.negocio.configuracaoPropostas().subscribe({ next: (c) => this.dias.setValue(c.validadeDias), error: () => undefined });
-  }
-
-  protected ultimoDia(): string {
-    const data = new Date();
-    data.setDate(data.getDate() + Number(this.dias.value));
-    return data.toLocaleDateString('pt-BR');
   }
 }
 
@@ -527,17 +494,14 @@ export class OrcamentosFunilPage implements OnInit {
     this.dialog.open(ParcelasOrcamentoDialog, { ...DIALOG, data: item }).afterClosed().subscribe((ok) => ok && this.carregar());
   }
 
-  /** Pergunta a validade (SPEC-064), gera o link e abre as opções de envio (SPEC-031 §6.6). */
+  /** Gera o link com a validade salva no orçamento (ou o padrão da conta) e abre as opções de envio (SPEC-031 §6.6, SPEC-064). */
   protected enviar(item: OrcamentoFunil): void {
-    this.dialog.open(ValidadePropostaDialog, { ...DIALOG_PEQUENO, data: item }).afterClosed().subscribe((dias?: number) => {
-      if (!dias) return;
-      this.negocio.enviarOrcamentoFunil(item.id, dias).subscribe({
-        next: (enviado) => {
-          this.carregar();
-          this.mostrarLink(enviado);
-        },
-        error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
-      });
+    this.negocio.enviarOrcamentoFunil(item.id).subscribe({
+      next: (enviado) => {
+        this.carregar();
+        this.mostrarLink(enviado);
+      },
+      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
     });
   }
 

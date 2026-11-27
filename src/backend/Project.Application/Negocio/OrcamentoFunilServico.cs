@@ -33,7 +33,8 @@ public sealed record SalvarOrcamentoFunil(
     Guid? OportunidadeId,
     string? Conteudo,
     decimal? Valor,
-    Guid? ModeloId);
+    Guid? ModeloId,
+    int? DiasValidade = null);
 
 /// <summary>Situação da proposta por link no cartão do lead (SPEC-031 §6.6, item 6).</summary>
 public sealed record PropostaResumo(
@@ -168,6 +169,11 @@ public sealed class OrcamentoFunilServico(IDados dados)
             return Resultado<OrcamentoFunilLeitura>.Erro(Codigos.Validacao, "O valor não pode ser negativo.");
         }
 
+        if (pedido.DiasValidade is int diasPedidos && !OrcamentoFunil.DiasValidos(diasPedidos))
+        {
+            return Resultado<OrcamentoFunilLeitura>.Erro(Codigos.Validacao, OrcamentoFunil.MensagemDias);
+        }
+
         var conteudo = HtmlSeguro.LimparRico(pedido.Conteudo);
         Guid? modeloId = pedido.ModeloId;
         string? htmlAceite = null;
@@ -215,6 +221,7 @@ public sealed class OrcamentoFunilServico(IDados dados)
             HtmlAceite = htmlAceite,
             ExtrasAceite = extrasAceite,
             CriadoPor = criadoPor,
+            DiasValidade = pedido.DiasValidade,
         };
         await dados.InserirOrcamentoFunilAsync(item, ct);
         return Resultado<OrcamentoFunilLeitura>.Sucesso(Ler(item, oportunidade.Nome));
@@ -248,6 +255,11 @@ public sealed class OrcamentoFunilServico(IDados dados)
             return Resultado<OrcamentoFunilLeitura>.Erro(Codigos.Validacao, "O valor não pode ser negativo.");
         }
 
+        if (pedido.DiasValidade is int diasPedidos && !OrcamentoFunil.DiasValidos(diasPedidos))
+        {
+            return Resultado<OrcamentoFunilLeitura>.Erro(Codigos.Validacao, OrcamentoFunil.MensagemDias);
+        }
+
         var mudou = item.Conteudo != conteudo || item.Valor != pedido.Valor;
         if (item.Valor != pedido.Valor && item.Parcelas.Count > 0)
         {
@@ -258,6 +270,7 @@ public sealed class OrcamentoFunilServico(IDados dados)
 
         item.Conteudo = conteudo;
         item.Valor = pedido.Valor;
+        item.DiasValidade = pedido.DiasValidade ?? item.DiasValidade;
         if (mudou && item.TokenLink is not null)
         {
             // SPEC-031 §17, ponto 10: o link continua o mesmo e a proposta volta a "ainda não foi aberta".
@@ -328,7 +341,7 @@ public sealed class OrcamentoFunilServico(IDados dados)
         await EnviarAsync(contaId, id, null, DateTimeOffset.UtcNow, ct);
 
     /// <summary>
-    /// <paramref name="dias"/> nulo usa o padrão da conta (SPEC-064 R2). O prazo conta a partir de
+    /// <paramref name="dias"/> nulo usa a validade salva no orçamento ou, sem ela, o padrão da conta (SPEC-064 R2). O prazo conta a partir de
     /// <paramref name="agora"/>, também no reenvio, e vale até o fim do último dia (R1).
     /// </summary>
     public async Task<Resultado<OrcamentoFunilLeitura>> EnviarAsync(Guid contaId, Guid id, int? dias, DateTimeOffset agora, CancellationToken ct)
@@ -349,7 +362,7 @@ public sealed class OrcamentoFunilServico(IDados dados)
             return Resultado<OrcamentoFunilLeitura>.Erro(Codigos.Validacao, "Orçamento cancelado não pode ser enviado.");
         }
 
-        var validade = dias ?? ParametrosOrcamento.DiasDeValidade(await dados.ObterPerfilAsync(contaId, ct));
+        var validade = dias ?? item.DiasValidade ?? ParametrosOrcamento.DiasDeValidade(await dados.ObterPerfilAsync(contaId, ct));
         item.TokenLink ??= NovoToken();
         item.DiasValidade = validade;
         item.ValidoAte = OrcamentoFunil.ValidoAteDe(agora, validade);
