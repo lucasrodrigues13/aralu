@@ -31,10 +31,11 @@ import { CascaAcesso } from '../../shared/casca-acesso';
           <mat-label class="font-semibold mb-2 block">Senha</mat-label>
           <mat-form-field appearance="outline" class="w-full">
             <input aria-label="Senha" matInput type="password" formControlName="senha" autocomplete="new-password" />
+            <mat-hint>Pelo menos 10 caracteres. Evite senhas comuns.</mat-hint>
             @if (formulario.controls.senha.hasError('required')) {
               <mat-error>Preencha este campo.</mat-error>
             } @else if (formulario.controls.senha.hasError('minlength')) {
-              <mat-error>Use pelo menos 8 caracteres.</mat-error>
+              <mat-error>Use pelo menos 10 caracteres.</mat-error>
             }
           </mat-form-field>
         </div>
@@ -70,7 +71,7 @@ export class CadastroPage {
   protected readonly enviando = signal(false);
   protected readonly formulario = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
-    senha: ['', [Validators.required, Validators.minLength(8)]],
+    senha: ['', [Validators.required, Validators.minLength(10)]],
     confirmacao: ['', Validators.required],
     aceiteTermos: [false, Validators.requiredTrue],
   });

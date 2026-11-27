@@ -19,7 +19,7 @@ namespace Project.IntegrationTests.Conta;
 [Collection(ColecaoApi.Nome)]
 public class PlanosAdminTests
 {
-    private const string Senha = "abcdefgh";
+    private const string Senha = "ceu-de-junho-42";
     private readonly BancoFixture _banco;
 
     public PlanosAdminTests(BancoFixture banco) => _banco = banco;
@@ -141,7 +141,7 @@ public class PlanosAdminTests
     private async Task<HttpClient> EntrarAdmin()
     {
         var adminEmail = $"adm-{Guid.NewGuid():N}@aralu.test";
-        const string senhaAdmin = "administrador";
+        const string senhaAdmin = "administrador-de-teste";
         var fabrica = new FabricaApi(_banco.Conexao, bootstrap: true, adminEmail: adminEmail, adminSenha: senhaAdmin);
         await using (var escopo = fabrica.Services.CreateAsyncScope())
         {

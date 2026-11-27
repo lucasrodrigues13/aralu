@@ -29,6 +29,7 @@ public static class Dependencias
 
         services.AddIdentityCore<ApplicationUser>(OpcoesDeConta.Aplicar)
             .AddRoles<IdentityRole>()
+            .AddPasswordValidator<SenhaComumValidador>()
             .AddEntityFrameworkStores<AppDbContext>()
             .AddSignInManager()
             .AddTokenProvider<ConfirmacaoEmailTokenProvider>(ConfirmacaoEmailTokenProvider.Nome)

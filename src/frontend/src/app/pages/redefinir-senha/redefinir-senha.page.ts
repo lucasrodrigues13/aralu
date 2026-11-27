@@ -19,10 +19,11 @@ import { CascaAcesso } from '../../shared/casca-acesso';
           <mat-label class="font-semibold mb-2 block">Nova senha</mat-label>
           <mat-form-field appearance="outline" class="w-full">
             <input aria-label="Nova senha" matInput type="password" formControlName="senha" autocomplete="new-password" />
+            <mat-hint>Pelo menos 10 caracteres. Evite senhas comuns.</mat-hint>
             @if (formulario.controls.senha.hasError('required')) {
               <mat-error>Preencha este campo.</mat-error>
             } @else if (formulario.controls.senha.hasError('minlength')) {
-              <mat-error>Use pelo menos 8 caracteres.</mat-error>
+              <mat-error>Use pelo menos 10 caracteres.</mat-error>
             }
           </mat-form-field>
         </div>
@@ -51,7 +52,7 @@ export class RedefinirSenhaPage {
   private readonly toast = inject(ToastService);
   protected readonly enviando = signal(false);
   protected readonly formulario = this.fb.nonNullable.group({
-    senha: ['', [Validators.required, Validators.minLength(8)]],
+    senha: ['', [Validators.required, Validators.minLength(10)]],
     confirmacao: ['', Validators.required],
   });
 

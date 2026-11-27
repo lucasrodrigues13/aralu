@@ -34,12 +34,12 @@ public class ContaSemBancoTests
     }
 
     [Fact]
-    public void Senha_exige_8_caracteres_e_minuscula_e_o_bloqueio_e_de_15_minutos()
+    public void Senha_exige_10_caracteres_e_minuscula_e_o_bloqueio_e_de_15_minutos()
     {
         var opcoes = new IdentityOptions();
         OpcoesDeConta.Aplicar(opcoes);
 
-        Assert.Equal(8, opcoes.Password.RequiredLength);
+        Assert.Equal(10, opcoes.Password.RequiredLength);
         Assert.True(opcoes.Password.RequireLowercase);
         Assert.False(opcoes.Password.RequireDigit);
         Assert.False(opcoes.Password.RequireUppercase);

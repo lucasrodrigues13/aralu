@@ -13,7 +13,7 @@ namespace Project.IntegrationTests.Negocio;
 [Collection(ColecaoApi.Nome)]
 public class PropostaFluxoTests
 {
-    private const string Senha = "abcdefgh";
+    private const string Senha = "ceu-de-junho-42";
     private readonly BancoFixture _banco;
 
     public PropostaFluxoTests(BancoFixture banco) => _banco = banco;

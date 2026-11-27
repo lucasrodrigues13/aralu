@@ -6,7 +6,7 @@ public static class OpcoesDeConta
 {
     public static void Aplicar(IdentityOptions options)
     {
-        options.Password.RequiredLength = 8;
+        options.Password.RequiredLength = 10;
         options.Password.RequireDigit = false;
         options.Password.RequireUppercase = false;
         options.Password.RequireNonAlphanumeric = false;

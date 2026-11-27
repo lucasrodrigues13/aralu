@@ -12,6 +12,8 @@ public enum ResultadoCadastro
     Criado,
     Duplicado,
     SenhaInvalida,
+    SenhaCurta,
+    SenhaComum,
     Falhou,
 }
 
@@ -32,7 +34,12 @@ public sealed class CadastroDeConta(AppDbContext banco, UserManager<ApplicationU
         {
             return criado.Errors.Any(erro => erro.Code is "DuplicateUserName" or "DuplicateEmail")
                 ? ResultadoCadastro.Duplicado
-                : ResultadoCadastro.SenhaInvalida;
+                : MotivoSenha.De(criado.Errors) switch
+                {
+                    MotivoSenha.Curta => ResultadoCadastro.SenhaCurta,
+                    MotivoSenha.Comum => ResultadoCadastro.SenhaComum,
+                    _ => ResultadoCadastro.SenhaInvalida,
+                };
         }
 
         var papel = await usuarios.AddToRoleAsync(usuario, Papeis.Organizer);
