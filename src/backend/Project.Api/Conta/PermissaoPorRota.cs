@@ -51,7 +51,7 @@ public static class PermissaoPorRota
             {
                 "clientes" => Modulo.Clientes,
                 "budget" or "dinheiro" => Modulo.Financeiro,
-                "convites" or "envio-convites" or "prazo-rsvp" or "presencas" or "link-portaria" => Modulo.Convidados,
+                "convites" or "envio-convites" or "prazo-rsvp" or "presencas" => Modulo.Convidados,
                 "tarefas" => Modulo.Tarefas,
                 "servicos" => Modulo.Fornecedores,
                 "aplicar-modelo" or "salvar-como-modelo" => Modulo.Modelos,

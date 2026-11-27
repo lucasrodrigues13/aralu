@@ -64,6 +64,11 @@ public sealed class Evento : ITemConta
 
     public List<ServicoEvento> Servicos { get; set; } = [];
 
+    /// <summary>Roteiro da biblioteca que a equipe do evento vê (SPEC-067). Vira nulo se o modelo for excluído.</summary>
+    public Guid? RoteiroId { get; set; }
+
+    /// <summary>Cronograma da biblioteca que a equipe do evento vê (SPEC-067). Vira nulo se o modelo for excluído.</summary>
+    public Guid? CronogramaId { get; set; }
 }
 
 public sealed class LocalEvento

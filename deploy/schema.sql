@@ -3250,3 +3250,176 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261127004154_EquipeDoEvento') THEN
+    DROP TABLE "LinksPortaria";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261127004154_EquipeDoEvento') THEN
+    ALTER TABLE "Eventos" ADD "CronogramaId" uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261127004154_EquipeDoEvento') THEN
+    ALTER TABLE "Eventos" ADD "RoteiroId" uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261127004154_EquipeDoEvento') THEN
+    CREATE TABLE "PessoasEquipeEvento" (
+        "Id" uuid NOT NULL,
+        "ContaId" uuid NOT NULL,
+        "EventoId" uuid NOT NULL,
+        "Nome" character varying(200) NOT NULL,
+        "Email" character varying(320) NOT NULL,
+        "Telefone" character varying(40),
+        "Funcao" character varying(120),
+        "RecebePortaria" boolean NOT NULL,
+        "RecebeRoteiro" boolean NOT NULL,
+        "RecebeCronograma" boolean NOT NULL,
+        "Token" character varying(64) NOT NULL,
+        "EnviadoEm" timestamp with time zone,
+        "ValidoAte" timestamp with time zone,
+        "UltimoAcessoEm" timestamp with time zone,
+        "EncerradoEm" timestamp with time zone,
+        "CriadoEm" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_PessoasEquipeEvento" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_PessoasEquipeEvento_Contas_ContaId" FOREIGN KEY ("ContaId") REFERENCES "Contas" ("Id") ON DELETE RESTRICT,
+        CONSTRAINT "FK_PessoasEquipeEvento_Eventos_EventoId" FOREIGN KEY ("EventoId") REFERENCES "Eventos" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261127004154_EquipeDoEvento') THEN
+    CREATE TABLE "CodigosAcessoEquipe" (
+        "Id" uuid NOT NULL,
+        "PessoaId" uuid NOT NULL,
+        "ContaId" uuid NOT NULL,
+        "CodigoHash" character varying(64) NOT NULL,
+        "CriadoEm" timestamp with time zone NOT NULL,
+        "ExpiraEm" timestamp with time zone NOT NULL,
+        "Tentativas" integer NOT NULL,
+        "UsadoEm" timestamp with time zone,
+        "Invalidado" boolean NOT NULL,
+        CONSTRAINT "PK_CodigosAcessoEquipe" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_CodigosAcessoEquipe_Contas_ContaId" FOREIGN KEY ("ContaId") REFERENCES "Contas" ("Id") ON DELETE RESTRICT,
+        CONSTRAINT "FK_CodigosAcessoEquipe_PessoasEquipeEvento_PessoaId" FOREIGN KEY ("PessoaId") REFERENCES "PessoasEquipeEvento" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261127004154_EquipeDoEvento') THEN
+    CREATE TABLE "SessoesEquipe" (
+        "Id" uuid NOT NULL,
+        "PessoaId" uuid NOT NULL,
+        "ContaId" uuid NOT NULL,
+        "TokenHash" character varying(64) NOT NULL,
+        "CriadaEm" timestamp with time zone NOT NULL,
+        "ExpiraEm" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_SessoesEquipe" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_SessoesEquipe_Contas_ContaId" FOREIGN KEY ("ContaId") REFERENCES "Contas" ("Id") ON DELETE RESTRICT,
+        CONSTRAINT "FK_SessoesEquipe_PessoasEquipeEvento_PessoaId" FOREIGN KEY ("PessoaId") REFERENCES "PessoasEquipeEvento" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261127004154_EquipeDoEvento') THEN
+    CREATE INDEX "IX_Eventos_CronogramaId" ON "Eventos" ("CronogramaId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261127004154_EquipeDoEvento') THEN
+    CREATE INDEX "IX_Eventos_RoteiroId" ON "Eventos" ("RoteiroId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261127004154_EquipeDoEvento') THEN
+    CREATE INDEX "IX_CodigosAcessoEquipe_ContaId" ON "CodigosAcessoEquipe" ("ContaId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261127004154_EquipeDoEvento') THEN
+    CREATE INDEX "IX_CodigosAcessoEquipe_PessoaId_CriadoEm" ON "CodigosAcessoEquipe" ("PessoaId", "CriadoEm");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261127004154_EquipeDoEvento') THEN
+    CREATE INDEX "IX_PessoasEquipeEvento_ContaId" ON "PessoasEquipeEvento" ("ContaId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261127004154_EquipeDoEvento') THEN
+    CREATE INDEX "IX_PessoasEquipeEvento_EventoId" ON "PessoasEquipeEvento" ("EventoId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261127004154_EquipeDoEvento') THEN
+    CREATE UNIQUE INDEX "IX_PessoasEquipeEvento_Token" ON "PessoasEquipeEvento" ("Token");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261127004154_EquipeDoEvento') THEN
+    CREATE INDEX "IX_SessoesEquipe_ContaId" ON "SessoesEquipe" ("ContaId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261127004154_EquipeDoEvento') THEN
+    CREATE UNIQUE INDEX "IX_SessoesEquipe_PessoaId_TokenHash" ON "SessoesEquipe" ("PessoaId", "TokenHash");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261127004154_EquipeDoEvento') THEN
+    ALTER TABLE "Eventos" ADD CONSTRAINT "FK_Eventos_ModelosCronograma_CronogramaId" FOREIGN KEY ("CronogramaId") REFERENCES "ModelosCronograma" ("Id") ON DELETE SET NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261127004154_EquipeDoEvento') THEN
+    ALTER TABLE "Eventos" ADD CONSTRAINT "FK_Eventos_ModelosRoteiro_RoteiroId" FOREIGN KEY ("RoteiroId") REFERENCES "ModelosRoteiro" ("Id") ON DELETE SET NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20261127004154_EquipeDoEvento') THEN
+    INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261127004154_EquipeDoEvento', '10.0.4');
+    END IF;
+END $EF$;
+COMMIT;
+

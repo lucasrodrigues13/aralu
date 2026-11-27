@@ -1,5 +1,6 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -12,10 +13,10 @@ import { ToastService } from '../../core/toast.service';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { LeitorQrComponent } from './leitor-qr.component';
 
-/** Portaria do evento, sem login (SPEC-058): escanear o QR, conferir a lista e marcar quem compareceu. */
+/** Portaria do evento pelo link da pessoa da equipe (SPEC-058 e SPEC-067): escanear o QR, conferir a lista e marcar quem compareceu. */
 @Component({
   selector: 'app-portaria',
-  imports: [MatCardModule, MatButtonModule, MatCheckboxModule, MatIconModule, DatePipe, GdDataPipe, LeitorQrComponent],
+  imports: [MatCardModule, MatButtonModule, MatCheckboxModule, MatIconModule, DatePipe, GdDataPipe, LeitorQrComponent, RouterLink],
   template: `
     <main class="pagina">
       @if (carregando()) {
@@ -24,10 +25,11 @@ import { LeitorQrComponent } from './leitor-qr.component';
         <mat-card class="cardWithShadow"><mat-card-content class="aviso">
           <mat-icon>link_off</mat-icon>
           <h1>Este link não está mais disponível</h1>
-          <p class="text-muted">Peça um novo link à organizadora do evento.</p>
+          <p class="text-muted">Fale com quem organizou o evento.</p>
         </mat-card-content></mat-card>
       } @else if (dados(); as d) {
         <header class="topo">
+          <a mat-button [routerLink]="['/equipe', token]"><mat-icon>arrow_back</mat-icon> Voltar</a>
           <h1>Portaria: {{ d.evento }}</h1>
           @if (d.data) { <span class="text-sm text-muted">{{ d.data | gdData }}</span> }
         </header>
@@ -149,7 +151,8 @@ export class PortariaPage implements OnInit {
       ? convites.filter((item) => item.nome.toLowerCase().includes(termo) || item.convidados.some((pessoa) => pessoa.nome.toLowerCase().includes(termo)))
       : convites;
   });
-  private token = '';
+  private readonly router = inject(Router);
+  protected token = '';
 
   ngOnInit(): void {
     this.token = this.rota.snapshot.paramMap.get('token') ?? '';
@@ -158,7 +161,12 @@ export class PortariaPage implements OnInit {
         this.dados.set(dados);
         this.carregando.set(false);
       },
-      error: () => {
+      error: (erro: unknown) => {
+        // Sem sessão (ou vencida): volta ao painel da equipe, que pede o código.
+        if (erro instanceof HttpErrorResponse && erro.status === 401) {
+          void this.router.navigate(['/equipe', this.token]);
+          return;
+        }
         this.indisponivel.set(true);
         this.carregando.set(false);
       },

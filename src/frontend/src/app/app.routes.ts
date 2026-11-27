@@ -6,7 +6,8 @@ export const routes: Routes = [
   { path: 'proposta/:token', loadComponent: () => import('./pages/proposta-publica/proposta-publica.page').then((m) => m.PropostaPublicaPage) },
   { path: 'briefing/:token', loadComponent: () => import('./pages/briefing-publico/briefing-publico.page').then((m) => m.BriefingPublicoPage) },
   { path: 'cliente/:token', loadComponent: () => import('./pages/link-cliente/link-cliente.page').then((m) => m.LinkClientePage) },
-  { path: 'portaria/:token', loadComponent: () => import('./pages/portaria/portaria.page').then((m) => m.PortariaPage) },
+  { path: 'equipe/:token', loadComponent: () => import('./pages/equipe-publica/equipe-publica.page').then((m) => m.EquipePublicaPage) },
+  { path: 'equipe/:token/portaria', loadComponent: () => import('./pages/portaria/portaria.page').then((m) => m.PortariaPage) },
   {
     path: 'lead/:contaId',
     loadComponent: () => import('./pages/lead-publico/lead-publico.page').then((m) => m.LeadPublicoPage),

@@ -165,7 +165,7 @@ public sealed class CronogramaServico(IDados dados)
         return Resultado<ModeloCronograma>.Sucesso(modelo);
     }
 
-    private static CronogramaLeitura Ler(ModeloCronograma modelo) => new(
+    public static CronogramaLeitura Ler(ModeloCronograma modelo) => new(
         modelo.Id,
         modelo.Titulo,
         modelo.Descricao,

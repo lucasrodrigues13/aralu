@@ -190,7 +190,7 @@ NegocioEndpoints.Mapear(app);
 DinheiroEndpoints.Mapear(app);
 LinkClienteEndpoints.Mapear(app);
 BriefingPublicoEndpoints.Mapear(app);
-PortariaEndpoints.Mapear(app);
+EquipeEventoEndpoints.Mapear(app);
 ContratoEndpoints.Mapear(app);
 
 await using (var escopo = app.Services.CreateAsyncScope())

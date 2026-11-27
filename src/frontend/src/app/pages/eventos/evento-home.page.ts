@@ -25,7 +25,7 @@ import { EventoAbasComponent } from './evento-abas.component';
 import { AplicarModeloDialog } from './aplicar-modelo.dialog';
 import { EventoFormPage } from './evento-form.page';
 import { LinkClienteDialog } from './link-cliente.dialog';
-import { LinkPortariaDialog } from './link-portaria.dialog';
+import { EquipeEventoDialog } from './equipe-evento.dialog';
 import { EventoTarefasComponent } from '../tarefas/evento-tarefas.component';
 import { SalvarComoModeloDialog } from './salvar-como-modelo.dialog';
 
@@ -198,7 +198,7 @@ export class ClientesEventoDialog implements OnInit {
                 }
                 @if (!auth.ehAssistente()) {
                   <button mat-menu-item type="button" (click)="linkDoCliente()"><mat-icon>link</mat-icon> Link do cliente</button>
-                  <button mat-menu-item type="button" (click)="linkDaPortaria()"><mat-icon>qr_code_scanner</mat-icon> Link da portaria</button>
+                  <button mat-menu-item type="button" (click)="equipeDoEvento()"><mat-icon>badge</mat-icon> Equipe do evento</button>
                 }
                 @if (atual.situacao === 'EmAndamento') {
                   <button mat-menu-item type="button" (click)="aplicarModelo()"><mat-icon>playlist_add</mat-icon> Aplicar modelo</button>
@@ -449,8 +449,8 @@ export class EventoHomePage implements OnInit, OnDestroy {
     });
   }
 
-  protected linkDaPortaria(): void {
-    this.dialog.open(LinkPortariaDialog, { ...DIALOG, data: { eventoId: this.id } });
+  protected equipeDoEvento(): void {
+    this.dialog.open(EquipeEventoDialog, { ...DIALOG_LARGO, data: { eventoId: this.id, nomeEvento: this.evento()?.nome ?? '' } });
   }
 
   protected linkDoCliente(): void {

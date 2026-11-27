@@ -135,6 +135,8 @@ public static class Mapa
         evento.OwnsOne(item => item.Recepcao, local => local.Property<bool>("Persistido").HasDefaultValue(true));
         evento.HasMany(item => item.Servicos).WithOne().HasForeignKey(servico => servico.EventoId).OnDelete(DeleteBehavior.Cascade);
         evento.HasMany(item => item.Tags).WithMany(tag => tag.Eventos);
+        evento.HasOne<ModeloRoteiro>().WithMany().HasForeignKey(item => item.RoteiroId).OnDelete(DeleteBehavior.SetNull);
+        evento.HasOne<ModeloCronograma>().WithMany().HasForeignKey(item => item.CronogramaId).OnDelete(DeleteBehavior.SetNull);
 
         var servicoEvento = modelBuilder.Entity<ServicoEvento>();
         servicoEvento.Ignore(servico => servico.ContratosAtivos);
@@ -227,12 +229,28 @@ public static class Mapa
         sessaoLink.HasIndex(item => new { item.LinkId, item.TokenHash }).IsUnique();
         sessaoLink.HasOne<LinkCliente>().WithMany().HasForeignKey(item => item.LinkId).OnDelete(DeleteBehavior.Cascade);
 
-        var linkPortaria = modelBuilder.Entity<LinkPortaria>();
-        linkPortaria.ToTable("LinksPortaria");
-        linkPortaria.Property(item => item.Token).HasMaxLength(64);
-        linkPortaria.HasIndex(item => item.Token).IsUnique();
-        linkPortaria.HasIndex(item => item.EventoId).IsUnique();
-        linkPortaria.HasOne<Evento>().WithMany().HasForeignKey(item => item.EventoId).OnDelete(DeleteBehavior.Cascade);
+        var pessoaEquipe = modelBuilder.Entity<PessoaEquipeEvento>();
+        pessoaEquipe.ToTable("PessoasEquipeEvento");
+        pessoaEquipe.Property(item => item.Nome).HasMaxLength(200);
+        pessoaEquipe.Property(item => item.Email).HasMaxLength(320);
+        pessoaEquipe.Property(item => item.Telefone).HasMaxLength(40);
+        pessoaEquipe.Property(item => item.Funcao).HasMaxLength(120);
+        pessoaEquipe.Property(item => item.Token).HasMaxLength(64);
+        pessoaEquipe.HasIndex(item => item.Token).IsUnique();
+        pessoaEquipe.HasIndex(item => item.EventoId);
+        pessoaEquipe.HasOne<Evento>().WithMany().HasForeignKey(item => item.EventoId).OnDelete(DeleteBehavior.Cascade);
+
+        var codigoEquipe = modelBuilder.Entity<CodigoAcessoEquipe>();
+        codigoEquipe.ToTable("CodigosAcessoEquipe");
+        codigoEquipe.Property(item => item.CodigoHash).HasMaxLength(64);
+        codigoEquipe.HasIndex(item => new { item.PessoaId, item.CriadoEm });
+        codigoEquipe.HasOne<PessoaEquipeEvento>().WithMany().HasForeignKey(item => item.PessoaId).OnDelete(DeleteBehavior.Cascade);
+
+        var sessaoEquipe = modelBuilder.Entity<SessaoEquipe>();
+        sessaoEquipe.ToTable("SessoesEquipe");
+        sessaoEquipe.Property(item => item.TokenHash).HasMaxLength(64);
+        sessaoEquipe.HasIndex(item => new { item.PessoaId, item.TokenHash }).IsUnique();
+        sessaoEquipe.HasOne<PessoaEquipeEvento>().WithMany().HasForeignKey(item => item.PessoaId).OnDelete(DeleteBehavior.Cascade);
 
         var importacao = modelBuilder.Entity<ImportacaoConvidados>();
         importacao.ToTable("ImportacoesConvidados");

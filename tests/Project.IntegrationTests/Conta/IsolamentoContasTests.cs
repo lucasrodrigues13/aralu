@@ -91,8 +91,8 @@ public class IsolamentoContasTests
         var linkCliente = await Ler(await a.PostAsync($"/api/v1/eventos/{eventoId}/link-cliente", null));
         Assert.False(string.IsNullOrWhiteSpace(linkCliente.GetProperty("token").GetString()));
 
-        var linkPortaria = await Ler(await a.PostAsync($"/api/v1/eventos/{eventoId}/link-portaria", null));
-        Assert.False(string.IsNullOrWhiteSpace(linkPortaria.GetProperty("token").GetString()));
+        var pessoaEquipe = await Ler(await a.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/equipe", new { nome = "Seguranca A", email = "seg-a@aralu.test", recebePortaria = true }));
+        Assert.False(string.IsNullOrWhiteSpace(pessoaEquipe.GetProperty("token").GetString()));
 
         // Perfil: cada conta vê o próprio, não o nome da outra.
         var perfilB = await Ler(await b.GetAsync("/api/v1/perfil"));
@@ -118,7 +118,7 @@ public class IsolamentoContasTests
         Assert.Equal(HttpStatusCode.NotFound, (await b.GetAsync($"/api/v1/eventos/{eventoId}/dinheiro")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await b.GetAsync($"/api/v1/eventos/{eventoId}/budget")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await b.GetAsync($"/api/v1/eventos/{eventoId}/link-cliente")).StatusCode);
-        Assert.Equal(HttpStatusCode.NotFound, (await b.GetAsync($"/api/v1/eventos/{eventoId}/link-portaria")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await b.GetAsync($"/api/v1/eventos/{eventoId}/equipe")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await b.GetAsync($"/api/v1/modelos/{modeloId}")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await b.GetAsync($"/api/v1/fornecedores/{fornecedorId}")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await b.GetAsync($"/api/v1/contratos/{contratoId}")).StatusCode);

@@ -176,7 +176,7 @@ public sealed class RoteiroServico(IDados dados)
         return Resultado<ModeloRoteiro>.Sucesso(modelo);
     }
 
-    private static RoteiroLeitura Ler(ModeloRoteiro modelo) => new(
+    public static RoteiroLeitura Ler(ModeloRoteiro modelo) => new(
         modelo.Id,
         modelo.Nome,
         modelo.Secoes.OrderBy(secao => secao.Ordem).Select(secao => new SecaoRoteiroLeitura(

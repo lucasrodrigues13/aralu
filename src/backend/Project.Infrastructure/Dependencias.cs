@@ -100,6 +100,8 @@ public static class Dependencias
         services.AddScoped<CadastroDeConta>();
         services.AddScoped<BriefingLeadServico>();
         services.AddScoped<BriefingAcessoServico>();
+        services.AddScoped<EquipeEventoServico>();
+        services.AddScoped<EquipeAcessoServico>();
         services.AddScoped<IArmazenamentoArquivo, ArmazenamentoArquivo>();
         services.AddHttpClient<IConsultaCep, ViaCepConsulta>(cliente =>
         {
