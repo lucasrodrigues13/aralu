@@ -298,7 +298,7 @@ export class AssinaturaPage implements OnInit {
         data: {
           titulo: 'Cancelar assinatura',
           texto: 'A conta segue liberada até o fim do período já pago e depois é bloqueada. Nenhum dado é apagado.',
-          confirmar: 'Cancelar assinatura',
+          confirmar: 'Cancelar assinatura', destrutivo: true,
         },
       })
       .afterClosed()

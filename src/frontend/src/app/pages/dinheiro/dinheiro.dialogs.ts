@@ -14,15 +14,16 @@ import { CampoDataComponent } from '../../shared/campo-data';
 import { CampoDinheiroComponent } from '../../shared/campo-dinheiro';
 import { deDataParaIso } from '../../shared/data';
 import { GdDinheiroPipe } from '../../shared/gd-dinheiro.pipe';
+import { FecharModal } from '../../shared/fechar-modal';
 
 const BASE = [FormsModule, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule];
 
 /** "Recebi": valor (aceita parcial), forma e data (SPEC-029 §6.3). */
 @Component({
   selector: 'app-receber-dialog',
-  imports: [MatFormFieldModule, ...BASE, CampoDataComponent, CampoDinheiroComponent, GdDinheiroPipe],
+  imports: [FecharModal, MatFormFieldModule, ...BASE, CampoDataComponent, CampoDinheiroComponent, GdDinheiroPipe],
   template: `
-    <h2 mat-dialog-title>Recebi</h2>
+    <h2 mat-dialog-title>Recebi <app-fechar-modal /></h2>
     <p class="text-muted text-sm px-6 -mt-2 mb-4">
       {{ dados.entrada ? 'Entrada' : 'Parcela ' + dados.numero }} · falta receber {{ dados.saldo | gdDinheiro }}.
     </p>
@@ -76,9 +77,9 @@ export class ReceberDialog {
 /** Pede a chave Pix quando o Perfil não tem (SPEC-029 §6.2). */
 @Component({
   selector: 'app-chave-pix-dialog',
-  imports: [MatFormFieldModule, ...BASE],
+  imports: [FecharModal, MatFormFieldModule, ...BASE],
   template: `
-    <h2 mat-dialog-title>Chave Pix</h2>
+    <h2 mat-dialog-title>Chave Pix <app-fechar-modal /></h2>
     <p class="text-muted text-sm px-6 -mt-2 mb-4">Seu Perfil ainda não tem chave Pix. Informe a chave que vai na mensagem de cobrança.</p>
     <mat-dialog-content>
       <form id="chave-pix" class="grid grid-cols-1 gap-4" (ngSubmit)="ok()">

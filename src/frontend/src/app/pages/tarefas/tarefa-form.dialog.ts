@@ -39,6 +39,7 @@ import {
   relativoParaDias,
 } from '../../shared/prazo-modelo';
 import { SeletorServicoComponent } from '../../shared/seletor-servico.component';
+import { FecharModal } from '../../shared/fechar-modal';
 
 /** Tarefa do modelo como o editor guarda (SPEC-012 v3 §8.2): o serviço é o id do cadastro. */
 export interface TarefaModeloEdicao {
@@ -65,9 +66,9 @@ export interface TarefaFormDados {
 /** Formulário da tarefa: o mesmo no evento e no modelo (SPEC-003 v5 §6.1, SPEC-012 v3 §6.3). */
 @Component({
   selector: 'app-tarefa-form',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule, MatIconModule, CampoDataComponent, MatTooltipModule, SeletorServicoComponent],
+  imports: [FecharModal, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule, MatIconModule, CampoDataComponent, MatTooltipModule, SeletorServicoComponent],
   template: `
-    <h2 mat-dialog-title>{{ editando ? 'Editar tarefa' : 'Nova tarefa' }}</h2>
+    <h2 mat-dialog-title>{{ editando ? 'Editar tarefa' : 'Nova tarefa' }} <app-fechar-modal [manual]="true" (fechar)="ref.close(false)" /></h2>
     <p class="text-muted text-sm px-6 -mt-2 mb-4">
       @if (emModelo) { Tarefa do modelo: o prazo conta a partir da data de cada evento. } @else { Título, prazo, responsáveis e os detalhes da tarefa. }
     </p>

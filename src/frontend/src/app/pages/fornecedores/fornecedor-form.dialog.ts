@@ -24,6 +24,7 @@ import { MascaraDirective } from '../../shared/mascara.directive';
 import { TipoMascara, aplicarMascara } from '../../shared/mascaras';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { EditorRico } from '../../shared/editor-rico';
+import { FecharModal } from '../../shared/fechar-modal';
 
 interface BancoBrasil {
   ispb: string;
@@ -41,13 +42,12 @@ const TIPOS_PIX = [
   { valor: 'Aleatoria', rotulo: 'Chave aleatória' },
 ];
 
-export const DIALOG_FORNECEDOR = DIALOG_LARGO;
 
 @Component({
   selector: 'app-fornecedor-form-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatCheckboxModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatTabsModule, MatIconModule, MatAutocompleteModule, MatChipsModule, MascaraDirective, CampoDinheiroComponent, MatTooltipModule, CampoDdiComponent, EditorRico],
+  imports: [FecharModal, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatCheckboxModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatTabsModule, MatIconModule, MatAutocompleteModule, MatChipsModule, MascaraDirective, CampoDinheiroComponent, MatTooltipModule, CampoDdiComponent, EditorRico],
   template: `
-    <h2 mat-dialog-title>{{ dados ? 'Editar fornecedor' : 'Novo fornecedor' }}</h2>
+    <h2 mat-dialog-title>{{ dados ? 'Editar fornecedor' : 'Novo fornecedor' }} <app-fechar-modal /></h2>
     <mat-dialog-content>
       <form class="grid grid-cols-1 gap-4" [formGroup]="form">
         <mat-tab-group dynamicHeight>

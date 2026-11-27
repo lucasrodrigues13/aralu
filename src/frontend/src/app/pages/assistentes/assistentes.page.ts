@@ -157,7 +157,7 @@ export class AssistentesPage implements OnInit {
         data: {
           titulo: 'Desativar acesso',
           texto: `${item.nome} perde o acesso no próximo pedido. O cadastro fica guardado e você pode reativar quando precisar.`,
-          confirmar: 'Desativar acesso',
+          confirmar: 'Desativar acesso', destrutivo: true,
         },
       })
       .afterClosed()

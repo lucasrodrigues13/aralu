@@ -120,7 +120,7 @@ export class ModelosInspiracoesPage implements OnInit {
   protected excluir(item: Inspiracao): void {
     this.dialog.open(ConfirmaDialog, {
       ...DIALOG_PEQUENO,
-      data: { titulo: 'Excluir galeria', texto: `Confirma a exclusão de "${item.nome}"?`, confirmar: 'Excluir' },
+      data: { titulo: 'Excluir galeria', texto: `Confirma a exclusão de "${item.nome}"?`, confirmar: 'Excluir', destrutivo: true },
     }).afterClosed().subscribe((confirmou) => {
       if (!confirmou) {
         return;

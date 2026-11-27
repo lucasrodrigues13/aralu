@@ -167,7 +167,7 @@ export class EventoContratosPage implements OnInit {
   protected excluir(servicoId: string, vinculo: Vinculo): void {
     this.dialog.open(ConfirmaDialog, {
       ...DIALOG_PEQUENO,
-      data: { titulo: 'Excluir contrato', texto: `Excluir o contrato de ${vinculo.fornecedor}? O arquivo é apagado.`, confirmar: 'Excluir' },
+      data: { titulo: 'Excluir contrato', texto: `Excluir o contrato de ${vinculo.fornecedor}? O arquivo é apagado.`, confirmar: 'Excluir', destrutivo: true },
     }).afterClosed().subscribe((confirmou) => {
       if (!confirmou) return;
       this.negocio.excluirContratoAssinado(this.id, servicoId, vinculo.id).subscribe({

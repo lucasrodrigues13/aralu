@@ -11,6 +11,7 @@ import { ToastService } from '../../core/toast.service';
 import { CampoDataComponent } from '../../shared/campo-data';
 import { deDataParaIso, deIsoParaData } from '../../shared/data';
 import { MascaraDirective } from '../../shared/mascara.directive';
+import { FecharModal } from '../../shared/fechar-modal';
 
 export interface AssistenteFormDados {
   assistente?: Assistente;
@@ -19,9 +20,9 @@ export interface AssistenteFormDados {
 /** Convidar ou editar pessoa da equipe: tipo Dono ou Membro e, para Membro, o grupo (SPEC-062 parte C). */
 @Component({
   selector: 'app-assistente-form',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MascaraDirective, CampoDataComponent],
+  imports: [FecharModal, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MascaraDirective, CampoDataComponent],
   template: `
-    <h2 mat-dialog-title>{{ dados.assistente ? 'Editar pessoa da equipe' : 'Convidar para a equipe' }}</h2>
+    <h2 mat-dialog-title>{{ dados.assistente ? 'Editar pessoa da equipe' : 'Convidar para a equipe' }} <app-fechar-modal [manual]="true" (fechar)="ref.close(false)" /></h2>
     <p class="text-muted text-sm px-6 -mt-2 mb-4">
       {{ dados.assistente ? 'A mudança vale no próximo pedido dela.' : 'Ela recebe um e-mail com o link para criar a senha.' }}
     </p>

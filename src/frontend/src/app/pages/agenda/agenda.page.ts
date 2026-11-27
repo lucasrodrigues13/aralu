@@ -20,6 +20,7 @@ import { deDataParaIso, deIsoParaData } from '../../shared/data';
 import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { FecharModal } from '../../shared/fechar-modal';
 
 /** Dados do modal de compromisso: o item em edição ou a data já escolhida no calendário. */
 export interface CompromissoDialogDados {
@@ -29,9 +30,9 @@ export interface CompromissoDialogDados {
 
 @Component({
   selector: 'app-compromisso-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, CampoDataComponent, CampoHoraComponent],
+  imports: [FecharModal, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, CampoDataComponent, CampoHoraComponent],
   template: `
-    <h2 mat-dialog-title>{{ item ? 'Editar compromisso' : 'Novo compromisso' }}</h2>
+    <h2 mat-dialog-title>{{ item ? 'Editar compromisso' : 'Novo compromisso' }} <app-fechar-modal /></h2>
     <p class="text-muted text-sm px-6 -mt-2 mb-4">Reunião, visita, prova ou qualquer marcação da sua agenda.</p>
     <mat-dialog-content>
       <form id="compromisso-form" class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4" [formGroup]="form" (ngSubmit)="salvar()">
@@ -45,7 +46,7 @@ export interface CompromissoDialogDados {
         <app-campo-hora formControlName="hora" rotulo="Hora (opcional)" />
       </form>
     </mat-dialog-content>
-    <mat-dialog-actions>
+    <mat-dialog-actions align="end">
       <button mat-stroked-button type="button" mat-dialog-close>Cancelar</button>
       <button mat-flat-button type="submit" form="compromisso-form" [disabled]="salvando()">Salvar</button>
     </mat-dialog-actions>
@@ -95,10 +96,10 @@ export type AcaoResumo = 'editar' | 'excluir' | undefined;
 /** Resumo do item clicado no calendário: evento da conta ou compromisso avulso. */
 @Component({
   selector: 'app-resumo-agenda-dialog',
-  imports: [MatDialogModule, MatButtonModule, MatIconModule, GdDataPipe],
+  imports: [FecharModal, MatDialogModule, MatButtonModule, MatIconModule, GdDataPipe],
   template: `
     @if (item.deEvento) {
-      <h2 mat-dialog-title>{{ evento()?.nome ?? item.descricao }}</h2>
+      <h2 mat-dialog-title>{{ evento()?.nome ?? item.descricao }} <app-fechar-modal /></h2>
       <p class="text-muted text-sm px-6 -mt-2 mb-4">Evento{{ evento()?.tipo ? ' · ' + evento()!.tipo : '' }}</p>
       <mat-dialog-content>
         @if (carregando()) {
@@ -118,12 +119,12 @@ export type AcaoResumo = 'editar' | 'excluir' | undefined;
           <p class="text-muted">Não foi possível carregar o evento.</p>
         }
       </mat-dialog-content>
-      <mat-dialog-actions>
+      <mat-dialog-actions align="end">
         <button mat-stroked-button type="button" mat-dialog-close>Fechar</button>
         <button mat-flat-button type="button" (click)="abrirEvento()">Abrir evento</button>
       </mat-dialog-actions>
     } @else {
-      <h2 mat-dialog-title>{{ item.descricao }}</h2>
+      <h2 mat-dialog-title>{{ item.descricao }} <app-fechar-modal /></h2>
       <p class="text-muted text-sm px-6 -mt-2 mb-4">Compromisso</p>
       <mat-dialog-content>
         <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 m-0 [&_dt]:text-xs [&_dt]:font-semibold [&_dt]:text-muted [&_dd]:m-0 [&_dd]:mt-0.5">
@@ -131,9 +132,8 @@ export type AcaoResumo = 'editar' | 'excluir' | undefined;
           <div><dt>Hora</dt><dd>{{ item.hora ? item.hora.slice(0, 5) : 'Sem hora' }}</dd></div>
         </dl>
       </mat-dialog-content>
-      <mat-dialog-actions>
-        <button mat-button class="text-error" type="button" (click)="ref.close('excluir')">Excluir</button>
-        <span class="flex-1 min-w-0"></span>
+      <mat-dialog-actions align="end">
+        <button mat-button class="text-error me-auto" type="button" (click)="ref.close('excluir')">Excluir</button>
         <button mat-stroked-button type="button" mat-dialog-close>Fechar</button>
         <button mat-flat-button type="button" (click)="ref.close('editar')">Editar</button>
       </mat-dialog-actions>
@@ -377,7 +377,7 @@ export class AgendaPage implements OnInit {
   private excluir(item: CompromissoAgenda): void {
     this.dialog.open(ConfirmaDialog, {
       ...DIALOG_PEQUENO,
-      data: { titulo: 'Excluir compromisso', texto: `Confirma a exclusão de "${item.descricao}"?`, confirmar: 'Excluir' },
+      data: { titulo: 'Excluir compromisso', texto: `Confirma a exclusão de "${item.descricao}"?`, confirmar: 'Excluir', destrutivo: true },
     }).afterClosed().subscribe((confirmou) => {
       if (!confirmou) return;
       this.negocio.excluirCompromisso(item.id).subscribe({

@@ -7,6 +7,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { Modelo, NegocioClient, PreviaAplicarModelo } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
+import { FecharModal } from '../../shared/fechar-modal';
 
 export interface AplicarModeloDados {
   eventoId: string;
@@ -15,9 +16,9 @@ export interface AplicarModeloDados {
 
 @Component({
   selector: 'app-aplicar-modelo',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatSelectModule],
+  imports: [FecharModal, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatSelectModule],
   template: `
-    <h2 mat-dialog-title>Aplicar modelo</h2>
+    <h2 mat-dialog-title>Aplicar modelo <app-fechar-modal [manual]="true" (fechar)="ref.close(false)" /></h2>
     <p class="text-muted text-sm px-6 -mt-2 mb-4">Acrescenta só o que ainda não existe no evento.</p>
     <mat-dialog-content>
       <form class="grid grid-cols-1 gap-4" [formGroup]="form">

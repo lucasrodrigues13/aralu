@@ -14,7 +14,7 @@ import { ContratoFunil, ModeloParaContratoFunil, NegocioClient, Oportunidade } f
 import { AuthService } from '../../core/auth.service';
 import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
-import { DIALOG, DIALOG_LARGO, DIALOG_PEQUENO } from '../../shared/dialog';
+import { DIALOG, DIALOG_LARGO, DIALOG_PEQUENO, DIALOG_PREVIA } from '../../shared/dialog';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { FolhaContrato, imprimirContrato } from '../contratos/folha-contrato';
 import { textoEmHtml } from '../contratos/mesclagem';
@@ -22,12 +22,13 @@ import { PreviaWordComponent } from '../contratos/previa-word';
 import { EditorRico } from '../../shared/editor-rico';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute } from '@angular/router';
+import { FecharModal } from '../../shared/fechar-modal';
 
 @Component({
   selector: 'app-contrato-funil-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, EditorRico],
+  imports: [FecharModal, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, EditorRico],
   template: `
-    <h2 mat-dialog-title>{{ dados ? 'Editar contrato' : 'Novo contrato' }}</h2>
+    <h2 mat-dialog-title>{{ dados ? 'Editar contrato' : 'Novo contrato' }} <app-fechar-modal /></h2>
     <mat-dialog-content>
       <form class="grid grid-cols-1 gap-4" [formGroup]="form">
         @if (!dados) {
@@ -116,9 +117,9 @@ export class ContratoFunilDialog implements OnInit {
 /** Contrato gerado como chega ao cliente: logo, texto e fundo do modelo, com botão de imprimir (SPEC-056). */
 @Component({
   selector: 'app-contrato-funil-ver-dialog',
-  imports: [MatDialogModule, MatButtonModule, MatIconModule, FolhaContrato, PreviaWordComponent],
+  imports: [FecharModal, MatDialogModule, MatButtonModule, MatIconModule, FolhaContrato, PreviaWordComponent],
   template: `
-    <h2 mat-dialog-title>Contrato de {{ dados.oportunidadeNome }}</h2>
+    <h2 mat-dialog-title>Contrato de {{ dados.oportunidadeNome }} <app-fechar-modal /></h2>
     <mat-dialog-content>
       @if (dados.documentoArquivoId) {
         <app-previa-word [documento]="word()" />
@@ -129,7 +130,7 @@ export class ContratoFunilDialog implements OnInit {
     <mat-dialog-actions align="end">
       <button mat-stroked-button type="button" mat-dialog-close>Fechar</button>
       @if (dados.documentoArquivoId) {
-        <button mat-flat-button type="button" [disabled]="!wordBlob()" (click)="baixarWord()"><mat-icon>download</mat-icon> Baixar Word</button>
+        <button mat-stroked-button type="button" [disabled]="!wordBlob()" (click)="baixarWord()"><mat-icon>download</mat-icon> Baixar Word</button>
       } @else {
         <button mat-flat-button type="button" (click)="imprimir()"><mat-icon>print</mat-icon> Imprimir</button>
       }
@@ -293,7 +294,7 @@ export class ContratosFunilPage implements OnInit {
   }
 
   protected ver(item: ContratoFunil): void {
-    this.dialog.open(ContratoFunilVerDialog, { ...DIALOG_LARGO, width: 'min(1100px, calc(100vw - 32px))', data: item });
+    this.dialog.open(ContratoFunilVerDialog, { ...DIALOG_PREVIA, data: item });
   }
 
   protected enviar(item: ContratoFunil): void {
@@ -320,7 +321,7 @@ export class ContratosFunilPage implements OnInit {
   protected excluir(item: ContratoFunil): void {
     this.dialog.open(ConfirmaDialog, {
       ...DIALOG_PEQUENO,
-      data: { titulo: 'Excluir contrato', texto: 'Confirma a exclusão?', confirmar: 'Excluir' },
+      data: { titulo: 'Excluir contrato', texto: 'Confirma a exclusão?', confirmar: 'Excluir', destrutivo: true },
     }).afterClosed().subscribe((ok) => {
       if (!ok) return;
       this.negocio.excluirContratoFunil(item.id).subscribe({

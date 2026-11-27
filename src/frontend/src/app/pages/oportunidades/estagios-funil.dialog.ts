@@ -17,6 +17,7 @@ import {
   SalvarEstagiosFunil,
 } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
+import { FecharModal } from '../../shared/fechar-modal';
 
 interface LinhaEstagio {
   /** Nulo para estágio novo. */
@@ -62,12 +63,12 @@ export function nomeRepetido(nomes: string[]): string | null {
 /** Gerenciar estágios do funil (SPEC-031 §6.1). Contratado e Descartado são fixos. */
 @Component({
   selector: 'app-estagios-funil-dialog',
-  imports: [
+  imports: [FecharModal, 
     ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule,
     MatIconModule, MatTooltipModule, CdkDropList, CdkDrag, CdkDragHandle,
   ],
   template: `
-    <h2 mat-dialog-title>Gerenciar estágios</h2>
+    <h2 mat-dialog-title>Gerenciar estágios <app-fechar-modal /></h2>
     <mat-dialog-content>
       <p class="text-sm text-muted mb-4">Arraste para mudar a ordem. Contratado e Descartado ficam sempre no fim do funil.</p>
       <div cdkDropList class="lista" (cdkDropListDropped)="reordenar($event)">

@@ -5,6 +5,7 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { FecharModal } from '../../shared/fechar-modal';
 
 export interface ItemBiblioteca {
   id: string;
@@ -22,9 +23,9 @@ export interface SelecionarBibliotecaDados {
 /** Escolhe vários modelos da biblioteca de uma vez, no mesmo padrão do modal de serviços. */
 @Component({
   selector: 'app-selecionar-biblioteca',
-  imports: [MatDialogModule, MatButtonModule, MatCheckboxModule, MatFormFieldModule, MatInputModule, MatIconModule],
+  imports: [FecharModal, MatDialogModule, MatButtonModule, MatCheckboxModule, MatFormFieldModule, MatInputModule, MatIconModule],
   template: `
-    <h2 mat-dialog-title>Adicionar {{ dados.titulo }}</h2>
+    <h2 mat-dialog-title>Adicionar {{ dados.titulo }} <app-fechar-modal /></h2>
     <p class="text-muted text-sm px-6 -mt-2 mb-4">Marque os modelos que devem acompanhar este modelo de evento.</p>
     <mat-dialog-content>
       <mat-form-field appearance="outline" class="w-full">

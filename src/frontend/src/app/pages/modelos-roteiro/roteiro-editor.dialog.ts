@@ -14,16 +14,17 @@ import { ToastService } from '../../core/toast.service';
 import { CampoHoraComponent } from '../../shared/campo-hora';
 import { horaParaApi } from '../../shared/mascaras';
 import { moverControle } from '../../shared/mestre-detalhe';
+import { FecharModal } from '../../shared/fechar-modal';
 
 /** Editor de roteiro em mestre e detalhe, no mesmo desenho do editor de briefing. */
 @Component({
   selector: 'app-roteiro-editor-dialog',
-  imports: [
+  imports: [FecharModal, 
     ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule,
     MatMenuModule, MatTooltipModule, CdkDropList, CdkDrag, CdkDragHandle, CampoHoraComponent,
   ],
   template: `
-    <h2 mat-dialog-title>{{ dados ? 'Editar roteiro' : 'Novo roteiro' }}</h2>
+    <h2 mat-dialog-title>{{ dados ? 'Editar roteiro' : 'Novo roteiro' }} <app-fechar-modal /></h2>
     <mat-dialog-content>
       <form [formGroup]="form" (submit)="$event.preventDefault()">
         <div class="campo">

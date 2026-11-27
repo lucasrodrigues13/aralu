@@ -9,6 +9,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { AssistentesClient, GrupoAcesso, MODULOS_GRUPO, PermissaoGrupo } from '../../core/assistentes.client';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { ToastService } from '../../core/toast.service';
+import { FecharModal } from '../../shared/fechar-modal';
 
 export interface GrupoFormDados {
   grupo?: GrupoAcesso;
@@ -17,9 +18,9 @@ export interface GrupoFormDados {
 /** Editor de grupo (SPEC-062 §9 e §13): nome, alcance de eventos e a grade módulo × ver/editar/excluir. */
 @Component({
   selector: 'app-grupo-form',
-  imports: [FormsModule, MatDialogModule, MatButtonModule, MatCheckboxModule, MatFormFieldModule, MatInputModule, MatSelectModule],
+  imports: [FecharModal, FormsModule, MatDialogModule, MatButtonModule, MatCheckboxModule, MatFormFieldModule, MatInputModule, MatSelectModule],
   template: `
-    <h2 mat-dialog-title>{{ dados.grupo ? 'Editar grupo' : 'Novo grupo' }}</h2>
+    <h2 mat-dialog-title>{{ dados.grupo ? 'Editar grupo' : 'Novo grupo' }} <app-fechar-modal [manual]="true" (fechar)="ref.close(false)" /></h2>
     <mat-dialog-content>
       <form id="grupo-form" (ngSubmit)="salvar()" class="grid gap-4">
         <div class="campo">

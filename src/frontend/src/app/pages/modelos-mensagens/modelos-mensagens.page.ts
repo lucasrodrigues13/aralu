@@ -14,6 +14,7 @@ import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { FecharModal } from '../../shared/fechar-modal';
 
 /** Tags das mensagens, com o que cada uma vira no envio. */
 const TAGS_MENSAGEM: { marca: string; rotulo: string }[] = [
@@ -50,9 +51,9 @@ const TAGS_MENSAGEM: { marca: string; rotulo: string }[] = [
 /** Ajuda das tags das mensagens: como usar e a lista completa. */
 @Component({
   selector: 'app-ajuda-tags-mensagem-dialog',
-  imports: [MatDialogModule, MatButtonModule],
+  imports: [FecharModal, MatDialogModule, MatButtonModule],
   template: `
-    <h2 mat-dialog-title>Como usar as tags</h2>
+    <h2 mat-dialog-title>Como usar as tags <app-fechar-modal /></h2>
     <mat-dialog-content>
       <p class="text-sm mb-3">
         Tags são trechos entre chaves duplas que o sistema troca pelos dados do lead, do orçamento, do cliente, do evento e do convidado quando a mensagem é enviada.
@@ -65,7 +66,7 @@ const TAGS_MENSAGEM: { marca: string; rotulo: string }[] = [
         </tbody>
       </table>
     </mat-dialog-content>
-    <mat-dialog-actions align="end"><button mat-flat-button type="button" mat-dialog-close>Entendi</button></mat-dialog-actions>
+    <mat-dialog-actions align="end"><button mat-stroked-button type="button" mat-dialog-close>Fechar</button></mat-dialog-actions>
   `,
   styles: `td, th { padding: 6px 8px; border-bottom: 1px solid var(--mat-sys-outline-variant); }`,
 })
@@ -75,9 +76,9 @@ export class AjudaTagsMensagemDialog {
 
 @Component({
   selector: 'app-mensagem-editor-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, MatTooltipModule],
+  imports: [FecharModal, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, MatTooltipModule],
   template: `
-    <h2 mat-dialog-title>{{ dados ? 'Editar mensagem' : 'Novo modelo' }}</h2>
+    <h2 mat-dialog-title>{{ dados ? 'Editar mensagem' : 'Novo modelo' }} <app-fechar-modal /></h2>
     <mat-dialog-content>
       <form class="grid grid-cols-1 gap-4" [formGroup]="form">
         <div class="campo">
@@ -272,7 +273,7 @@ export class ModelosMensagensPage implements OnInit {
   protected excluir(item: MensagemModelo): void {
     this.dialog.open(ConfirmaDialog, {
       ...DIALOG_PEQUENO,
-      data: { titulo: 'Excluir mensagem', texto: `Confirma a exclusão de "${item.nome}"?`, confirmar: 'Excluir' },
+      data: { titulo: 'Excluir mensagem', texto: `Confirma a exclusão de "${item.nome}"?`, confirmar: 'Excluir', destrutivo: true },
     }).afterClosed().subscribe((confirmou) => {
       if (!confirmou) {
         return;

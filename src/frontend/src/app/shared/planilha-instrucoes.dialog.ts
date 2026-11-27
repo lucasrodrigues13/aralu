@@ -5,6 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { Observable } from 'rxjs';
 import { mensagemDeErro } from '../core/mensagem-erro';
 import { ToastService } from '../core/toast.service';
+import { FecharModal } from './fechar-modal';
 
 /** O modal só sabe baixar: a organizadora e o link do cliente passam cada um a sua chamada. */
 export interface PlanilhaInstrucoesDados {
@@ -22,9 +23,9 @@ export const EXEMPLO_PLANILHA = [
 /** Instruções da planilha de convidados, com o download do modelo dentro do modal (SPEC-059), nas duas telas. */
 @Component({
   selector: 'app-planilha-instrucoes-dialog',
-  imports: [MatDialogModule, MatButtonModule, MatIconModule],
+  imports: [FecharModal, MatDialogModule, MatButtonModule, MatIconModule],
   template: `
-    <h2 mat-dialog-title>Planilha de convidados</h2>
+    <h2 mat-dialog-title>Planilha de convidados <app-fechar-modal /></h2>
     <mat-dialog-content class="text-sm">
       <p class="mt-0">Use a planilha para cadastrar vários convites de uma vez. Baixe o modelo, preencha a aba <strong>Convidados</strong> e use <strong>Importar</strong>.</p>
       <p class="rounded p-3 bg-light-warning text-warning" data-teste="apagar-exemplos"><strong>O modelo já vem com dois convites de exemplo</strong> (destacados em amarelo, com "(exemplo)" no nome do convite). <strong>Apague essas linhas antes de importar</strong>; se ficarem, a importação é recusada.</p>
@@ -50,7 +51,7 @@ export const EXEMPLO_PLANILHA = [
       </div>
       <p class="text-muted mb-0">A importação é verificada em segundo plano. Se alguma linha tiver erro, nada é importado e a lista de importações mostra todos os erros, com o número da linha.</p>
     </mat-dialog-content>
-    <mat-dialog-actions>
+    <mat-dialog-actions align="end">
       <button mat-stroked-button type="button" mat-dialog-close>Fechar</button>
       <button mat-flat-button type="button" [disabled]="baixando()" (click)="baixar()"><mat-icon>download</mat-icon> Download do modelo</button>
     </mat-dialog-actions>

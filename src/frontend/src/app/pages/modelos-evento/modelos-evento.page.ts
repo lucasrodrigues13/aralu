@@ -16,12 +16,13 @@ import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { ImportarTarefasModeloDialog } from './importar-tarefas-modelo.dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { FecharModal } from '../../shared/fechar-modal';
 
 @Component({
   selector: 'app-criar-modelo-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule],
+  imports: [FecharModal, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule],
   template: `
-    <h2 mat-dialog-title>Criar modelo</h2>
+    <h2 mat-dialog-title>Criar modelo <app-fechar-modal /></h2>
     <mat-dialog-content>
       <form class="grid grid-cols-1 gap-4" [formGroup]="form" (ngSubmit)="salvar()">
         <div class="campo">
@@ -194,7 +195,7 @@ export class ModelosEventoPage implements OnInit {
   protected excluir(modelo: Modelo): void {
     this.dialog.open(ConfirmaDialog, {
       ...DIALOG_PEQUENO,
-      data: { titulo: 'Excluir modelo', texto: `Confirma a exclusão de "${modelo.nome}"?`, confirmar: 'Excluir' },
+      data: { titulo: 'Excluir modelo', texto: `Confirma a exclusão de "${modelo.nome}"?`, confirmar: 'Excluir', destrutivo: true },
     }).afterClosed().subscribe((confirmou) => {
       if (!confirmou) {
         return;

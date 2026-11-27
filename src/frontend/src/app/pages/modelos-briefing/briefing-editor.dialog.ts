@@ -12,6 +12,7 @@ import { mensagemDeErro } from '../../core/mensagem-erro';
 import { Briefing, NegocioClient } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { moverControle } from '../../shared/mestre-detalhe';
+import { FecharModal } from '../../shared/fechar-modal';
 
 /**
  * Editor de modelo de briefing em mestre e detalhe: seções à esquerda, a seção escolhida à direita
@@ -19,12 +20,12 @@ import { moverControle } from '../../shared/mestre-detalhe';
  */
 @Component({
   selector: 'app-briefing-editor-dialog',
-  imports: [
+  imports: [FecharModal, 
     ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule,
     MatMenuModule, MatTooltipModule, CdkDropList, CdkDrag, CdkDragHandle,
   ],
   template: `
-    <h2 mat-dialog-title>{{ dados ? 'Editar briefing' : 'Novo briefing' }}</h2>
+    <h2 mat-dialog-title>{{ dados ? 'Editar briefing' : 'Novo briefing' }} <app-fechar-modal /></h2>
     <mat-dialog-content>
       @if (somenteLeitura) {
         <p class="flex gap-3 rounded p-4 mb-4 bg-light-info text-info">Modelo padrão: clone antes de editar.</p>
@@ -107,7 +108,7 @@ import { moverControle } from '../../shared/mestre-detalhe';
     <mat-dialog-actions align="end">
       <button mat-stroked-button type="button" (click)="ref.close()">Cancelar</button>
       @if (somenteLeitura) {
-        <button mat-flat-button type="button" (click)="clonar()">Clonar</button>
+        <button mat-stroked-button type="button" (click)="clonar()">Clonar</button>
       } @else {
         <button mat-flat-button type="button" (click)="salvar()">Salvar</button>
       }

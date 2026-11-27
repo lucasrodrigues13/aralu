@@ -6,13 +6,14 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { NegocioClient } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
+import { FecharModal } from '../../shared/fechar-modal';
 
 /** Importação de fornecedores pela planilha modelo. Fecha com true quando algo foi criado. */
 @Component({
   selector: 'app-importar-fornecedores-dialog',
-  imports: [MatDialogModule, MatButtonModule, MatIconModule, MatProgressBarModule],
+  imports: [FecharModal, MatDialogModule, MatButtonModule, MatIconModule, MatProgressBarModule],
   template: `
-    <h2 mat-dialog-title>Importar fornecedores</h2>
+    <h2 mat-dialog-title>Importar fornecedores <app-fechar-modal [manual]="true" (fechar)="ref.close(false)" /></h2>
     <mat-dialog-content>
       <ol class="passos">
         <li>

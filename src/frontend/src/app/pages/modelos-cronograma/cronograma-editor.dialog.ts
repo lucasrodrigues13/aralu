@@ -18,16 +18,17 @@ import { deDataParaIso, deIsoParaData } from '../../shared/data';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { horaParaApi } from '../../shared/mascaras';
 import { moverControle } from '../../shared/mestre-detalhe';
+import { FecharModal } from '../../shared/fechar-modal';
 
 /** Editor de cronograma em mestre e detalhe: itens à esquerda, campos do item escolhido à direita. */
 @Component({
   selector: 'app-cronograma-editor-dialog',
-  imports: [
+  imports: [FecharModal, 
     ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule,
     MatMenuModule, MatSelectModule, MatTooltipModule, CdkDropList, CdkDrag, CampoDataComponent, CampoHoraComponent, GdDataPipe,
   ],
   template: `
-    <h2 mat-dialog-title>{{ dados ? 'Editar cronograma' : 'Novo cronograma' }}</h2>
+    <h2 mat-dialog-title>{{ dados ? 'Editar cronograma' : 'Novo cronograma' }} <app-fechar-modal /></h2>
     <mat-dialog-content>
       <form [formGroup]="form" (submit)="$event.preventDefault()">
         <div class="campo">

@@ -4,14 +4,15 @@ import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { Inspiracao } from '../../core/negocio.client';
 import { PreviasArquivo } from './previas-arquivo';
+import { FecharModal } from '../../shared/fechar-modal';
 
 /** Visualização da galeria: carrossel só com as fotos à esquerda e a lista de URLs à direita. */
 @Component({
   selector: 'app-inspiracao-visualizar-dialog',
-  imports: [MatDialogModule, MatButtonModule, MatIconModule],
+  imports: [FecharModal, MatDialogModule, MatButtonModule, MatIconModule],
   providers: [PreviasArquivo],
   template: `
-    <h2 mat-dialog-title>{{ dados.nome }}</h2>
+    <h2 mat-dialog-title>{{ dados.nome }} <app-fechar-modal /></h2>
     <mat-dialog-content>
       <p class="text-sm text-muted mb-3">{{ fotos.length }} {{ fotos.length === 1 ? 'imagem' : 'imagens' }} · {{ links.length }} {{ links.length === 1 ? 'link' : 'links' }}</p>
       @if (fotos.length === 0 && links.length === 0) {
@@ -63,7 +64,7 @@ import { PreviasArquivo } from './previas-arquivo';
       }
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-flat-button type="button" mat-dialog-close>Fechar</button>
+      <button mat-stroked-button type="button" mat-dialog-close>Fechar</button>
     </mat-dialog-actions>
   `,
   styles: `

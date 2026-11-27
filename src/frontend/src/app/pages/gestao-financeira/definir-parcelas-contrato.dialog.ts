@@ -11,6 +11,7 @@ import { ToastService } from '../../core/toast.service';
 import { CampoDataComponent } from '../../shared/campo-data';
 import { CampoDinheiroComponent } from '../../shared/campo-dinheiro';
 import { deDataParaIso } from '../../shared/data';
+import { FecharModal } from '../../shared/fechar-modal';
 
 /**
  * Parcelamento do contrato (SPEC-041): "à vista" (1 parcela) ou em N parcelas mensais, com entrada opcional.
@@ -18,9 +19,9 @@ import { deDataParaIso } from '../../shared/data';
  */
 @Component({
   selector: 'app-definir-parcelas-contrato-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, CampoDataComponent, CampoDinheiroComponent],
+  imports: [FecharModal, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, CampoDataComponent, CampoDinheiroComponent],
   template: `
-    <h2 mat-dialog-title>{{ dados.parcelas.length ? 'Refazer parcelamento' : 'Parcelar contrato' }}</h2>
+    <h2 mat-dialog-title>{{ dados.parcelas.length ? 'Refazer parcelamento' : 'Parcelar contrato' }} <app-fechar-modal /></h2>
     <p class="text-muted text-sm px-6 -mt-2 mb-4">
       {{ dados.oportunidadeNome }}. O valor vem do orçamento aprovado. Para receber de uma vez, use 1 parcela.
     </p>

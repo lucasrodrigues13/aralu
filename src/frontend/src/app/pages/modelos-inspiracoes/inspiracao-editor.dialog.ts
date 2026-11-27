@@ -14,6 +14,7 @@ import { ToastService } from '../../core/toast.service';
 import { moverControle } from '../../shared/mestre-detalhe';
 import { LIMITE_ARQUIVO_BYTES, reduzirImagem } from '../../shared/reduzir-imagem';
 import { PreviasArquivo } from './previas-arquivo';
+import { FecharModal } from '../../shared/fechar-modal';
 
 const TIPOS_ACEITOS = ['image/jpeg', 'image/png'];
 
@@ -23,13 +24,13 @@ const TIPOS_ACEITOS = ['image/jpeg', 'image/png'];
  */
 @Component({
   selector: 'app-inspiracao-editor-dialog',
-  imports: [
+  imports: [FecharModal, 
     ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule,
     MatTooltipModule, CdkDropList, CdkDrag, CdkDragHandle,
   ],
   providers: [PreviasArquivo],
   template: `
-    <h2 mat-dialog-title>{{ dados ? 'Editar galeria' : 'Nova galeria' }}</h2>
+    <h2 mat-dialog-title>{{ dados ? 'Editar galeria' : 'Nova galeria' }} <app-fechar-modal /></h2>
     <mat-dialog-content>
       <form [formGroup]="form" (submit)="$event.preventDefault()">
         <div class="campo">

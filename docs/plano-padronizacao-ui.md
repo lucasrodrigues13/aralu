@@ -159,9 +159,9 @@ Objetivo: todos os modais com a mesma estrutura. São 74 modais em 55 arquivos (
 
 ### 2.1 Em todos os modais
 
-- [ ] Incluir `<app-fechar-modal />` dentro do `h2[mat-dialog-title]`, depois do texto. Onde o botão Cancelar chama um método em vez de `mat-dialog-close` ou `ref.close()`, usar a forma `[manual]="true"` com o mesmo método.
-- [ ] `pages/contratos/contratos.page.ts` linha ~302: remover o `div.topo` e o botão X feito à mão do "Live Preview"; usar `app-fechar-modal` e apagar a regra `.topo` do `styles:` se ficar sem uso.
-- [ ] `<mat-dialog-actions>` sem `align` recebe `align="end"`: `pages/agenda/agenda.page.ts` (3), `pages/eventos/evento-form.page.ts`, `pages/eventos/evento-home.page.ts`, `pages/eventos/novo-evento.dialog.ts`, `shared/data-convites.dialog.ts`, `shared/importacoes.dialog.ts`, `shared/planilha-instrucoes.dialog.ts`, `shared/presencas.dialog.ts`.
+- [x] Incluir `<app-fechar-modal />` dentro do `h2[mat-dialog-title]`, depois do texto. Onde o botão Cancelar chama um método em vez de `mat-dialog-close` ou `ref.close()`, usar a forma `[manual]="true"` com o mesmo método.
+- [x] `pages/contratos/contratos.page.ts` linha ~302: remover o `div.topo` e o botão X feito à mão do "Live Preview"; usar `app-fechar-modal` e apagar a regra `.topo` do `styles:` se ficar sem uso.
+- [x] `<mat-dialog-actions>` sem `align` recebe `align="end"`: `pages/agenda/agenda.page.ts` (3), `pages/eventos/evento-form.page.ts`, `pages/eventos/evento-home.page.ts`, `pages/eventos/novo-evento.dialog.ts`, `shared/data-convites.dialog.ts`, `shared/importacoes.dialog.ts`, `shared/planilha-instrucoes.dialog.ts`, `shared/presencas.dialog.ts`.
 
 ### 2.2 Regras do rodapé
 
@@ -198,13 +198,13 @@ A coluna "Fica" lista os botões na ordem final. S = `mat-stroked-button`, F = `
 
 ### 2.4 Larguras
 
-- [ ] `pages/contratos/contratos.page.ts` ~635, `pages/modelos-funil/pagina-aceite.ts` ~578 e `pages/contratos-funil/contratos-funil.page.ts` ~296: trocar `{ ...DIALOG_LARGO, width: …, maxHeight: … }` por `{ ...DIALOG_PREVIA, data: … }`.
-- [ ] `pages/fornecedores/fornecedor-form.dialog.ts`: apagar `export const DIALOG_FORNECEDOR` e usar `DIALOG_LARGO` nos pontos que a importam.
+- [x] `pages/contratos/contratos.page.ts` ~635, `pages/modelos-funil/pagina-aceite.ts` ~578 e `pages/contratos-funil/contratos-funil.page.ts` ~296: trocar `{ ...DIALOG_LARGO, width: …, maxHeight: … }` por `{ ...DIALOG_PREVIA, data: … }`.
+- [x] `pages/fornecedores/fornecedor-form.dialog.ts`: apagar `export const DIALOG_FORNECEDOR` e usar `DIALOG_LARGO` nos pontos que a importam.
 
 ### 2.5 Confirmações
 
-- [ ] Em toda chamada `open(ConfirmaDialog, …)` cujo `confirmar` seja `'Excluir'`, `'Remover'`, `'Desativar'`, `'Desativar acesso'`, `'Cancelar assinatura'` ou `'Apagar grupo'`: acrescentar `destrutivo: true` em `data`.
-- [ ] Toda chamada `open(ConfirmaDialog, …)` passa a usar `...DIALOG_PEQUENO` (algumas hoje abrem sem tamanho).
+- [x] Em toda chamada `open(ConfirmaDialog, …)` cujo `confirmar` seja `'Excluir'`, `'Remover'`, `'Desativar'`, `'Desativar acesso'`, `'Cancelar assinatura'` ou `'Apagar grupo'`: acrescentar `destrutivo: true` em `data`.
+- [x] Toda chamada `open(ConfirmaDialog, …)` passa a usar `...DIALOG_PEQUENO` (algumas hoje abrem sem tamanho).
 
 Pronto quando: `grep -rn "<mat-dialog-actions>" src/frontend/src/app` não retorna nada; todo arquivo com `mat-dialog-title` contém `app-fechar-modal`; nenhum rodapé tem dois `mat-flat-button`.
 

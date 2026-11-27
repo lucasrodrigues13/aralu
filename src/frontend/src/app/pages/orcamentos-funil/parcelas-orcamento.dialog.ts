@@ -14,13 +14,14 @@ import { CampoDinheiroComponent } from '../../shared/campo-dinheiro';
 import { deDataParaIso, deIsoParaData } from '../../shared/data';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { GdDinheiroPipe } from '../../shared/gd-dinheiro.pipe';
+import { FecharModal } from '../../shared/fechar-modal';
 
 /** Parcelar o orçamento do funil: entrada, número de parcelas e vencimentos (SPEC-042 §6.1). */
 @Component({
   selector: 'app-parcelas-orcamento-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule, CampoDataComponent, CampoDinheiroComponent, GdDataPipe, GdDinheiroPipe],
+  imports: [FecharModal, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule, CampoDataComponent, CampoDinheiroComponent, GdDataPipe, GdDinheiroPipe],
   template: `
-    <h2 mat-dialog-title>Parcelas do orçamento</h2>
+    <h2 mat-dialog-title>Parcelas do orçamento <app-fechar-modal /></h2>
     <p class="text-muted text-sm px-6 -mt-2 mb-4">
       Total: {{ dados.valor | gdDinheiro }}. As parcelas atuais são substituídas ao gerar.
       @if (dados.tokenLink) { A proposta já foi enviada: mudar as parcelas pede nova resposta do cliente. }

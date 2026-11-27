@@ -123,7 +123,7 @@ export class ModelosBriefingPage implements OnInit {
   protected excluir(item: Briefing): void {
     this.dialog.open(ConfirmaDialog, {
       ...DIALOG_PEQUENO,
-      data: { titulo: 'Excluir briefing', texto: `Confirma a exclusão de "${item.nome}"?`, confirmar: 'Excluir' },
+      data: { titulo: 'Excluir briefing', texto: `Confirma a exclusão de "${item.nome}"?`, confirmar: 'Excluir', destrutivo: true },
     }).afterClosed().subscribe((confirmou) => {
       if (!confirmou) {
         return;

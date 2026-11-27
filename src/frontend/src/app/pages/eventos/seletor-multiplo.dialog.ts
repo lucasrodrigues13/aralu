@@ -7,6 +7,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { Observable } from 'rxjs';
+import { FecharModal } from '../../shared/fechar-modal';
 
 export interface OpcaoSelecao {
   id: string;
@@ -35,9 +36,9 @@ const CRIAR = '__criar__';
 /** Escolha de vários itens com busca e cadastro na hora; fecha com os ids marcados. */
 @Component({
   selector: 'app-seletor-multiplo-dialog',
-  imports: [MatDialogModule, MatButtonModule, MatChipsModule, MatAutocompleteModule, MatFormFieldModule, MatIconModule, MatInputModule],
+  imports: [FecharModal, MatDialogModule, MatButtonModule, MatChipsModule, MatAutocompleteModule, MatFormFieldModule, MatIconModule, MatInputModule],
   template: `
-    <h2 mat-dialog-title>{{ dados.titulo }}</h2>
+    <h2 mat-dialog-title>{{ dados.titulo }} <app-fechar-modal /></h2>
     @if (dados.descricao) { <p class="text-muted text-sm px-6 -mt-2 mb-4">{{ dados.descricao }}</p> }
     <mat-dialog-content>
       <div class="campo">

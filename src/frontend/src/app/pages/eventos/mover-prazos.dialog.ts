@@ -1,13 +1,14 @@
 import { Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { FecharModal } from '../../shared/fechar-modal';
 
 /** true = mover, false = manter, undefined = cancelar (SPEC-012 §6.6). */
 @Component({
   selector: 'app-mover-prazos',
-  imports: [MatDialogModule, MatButtonModule],
+  imports: [FecharModal, MatDialogModule, MatButtonModule],
   template: `
-    <h2 mat-dialog-title>Data do evento alterada</h2>
+    <h2 mat-dialog-title>Data do evento alterada <app-fechar-modal [manual]="true" (fechar)="ref.close(undefined)" /></h2>
     <mat-dialog-content>
       Mover os prazos com data exata das tarefas não concluídas junto com a data? Os prazos relativos ao evento acompanham a data sozinhos.
     </mat-dialog-content>

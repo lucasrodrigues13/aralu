@@ -23,12 +23,13 @@ import { linkProposta, SELO_PROPOSTA, whatsappProposta, whatsappTexto } from '..
 import { ParcelasOrcamentoDialog } from './parcelas-orcamento.dialog';
 import { EditorRico } from '../../shared/editor-rico';
 import { abrirPreviaAceite } from '../modelos-funil/pagina-aceite';
+import { FecharModal } from '../../shared/fechar-modal';
 
 @Component({
   selector: 'app-orcamento-funil-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule, MatSelectModule, CampoDinheiroComponent, EditorRico],
+  imports: [FecharModal, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule, MatSelectModule, CampoDinheiroComponent, EditorRico],
   template: `
-    <h2 mat-dialog-title>{{ dados ? 'Editar orçamento' : 'Novo orçamento' }}</h2>
+    <h2 mat-dialog-title>{{ dados ? 'Editar orçamento' : 'Novo orçamento' }} <app-fechar-modal /></h2>
     <mat-dialog-content>
       <form class="grid grid-cols-1 gap-4" [formGroup]="form">
         @if (!dados) {
@@ -69,12 +70,12 @@ import { abrirPreviaAceite } from '../modelos-funil/pagina-aceite';
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
+      <button mat-stroked-button type="button" (click)="ref.close()">Cancelar</button>
       @if (!dados) {
-        <button mat-stroked-button type="button" class="mr-auto" [disabled]="!form.controls.modeloId.value" (click)="previa()">
+        <button mat-stroked-button type="button" [disabled]="!form.controls.modeloId.value" (click)="previa()">
           <mat-icon>visibility</mat-icon> Live Preview
         </button>
       }
-      <button mat-stroked-button type="button" (click)="ref.close()">Cancelar</button>
       <button mat-flat-button type="button" (click)="salvar()">Salvar</button>
     </mat-dialog-actions>
   `,
@@ -173,9 +174,9 @@ export function inserirTexto(atual: string, trecho: string, inicio: number, fim:
 /** Link da proposta: copiar ou mandar pelo WhatsApp (SPEC-031 §6.6, item 2). A mensagem do modelo pode ser editada antes do envio. */
 @Component({
   selector: 'app-enviar-proposta-dialog',
-  imports: [MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatSelectModule, GdDataPipe],
+  imports: [FecharModal, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatSelectModule, GdDataPipe],
   template: `
-    <h2 mat-dialog-title>Enviar proposta</h2>
+    <h2 mat-dialog-title>Enviar proposta <app-fechar-modal /></h2>
     <mat-dialog-content>
       <p class="text-sm text-muted mb-4">
         Mande este link para {{ contato()?.nome || dados.oportunidadeNome }}. O lead abre sem login, vê a proposta e responde por lá.
@@ -307,9 +308,9 @@ export class EnviarPropostaDialog implements OnInit {
 /** A assessoria registra o que o cliente respondeu por fora do link (ligação, WhatsApp, conversa). */
 @Component({
   selector: 'app-resposta-manual-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule],
+  imports: [FecharModal, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule],
   template: `
-    <h2 mat-dialog-title>Registrar resposta</h2>
+    <h2 mat-dialog-title>Registrar resposta <app-fechar-modal /></h2>
     <mat-dialog-content>
       <p class="text-sm text-muted mb-4">{{ dados.oportunidadeNome }}: o que o cliente respondeu?</p>
       <div class="campo">
@@ -335,7 +336,7 @@ export class EnviarPropostaDialog implements OnInit {
       </p>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button type="button" mat-dialog-close>Cancelar</button>
+      <button mat-stroked-button type="button" mat-dialog-close>Cancelar</button>
       <button mat-flat-button type="button" [disabled]="!tipo.value || enviando()" (click)="registrar()">Registrar</button>
     </mat-dialog-actions>
   `,
@@ -523,7 +524,7 @@ export class OrcamentosFunilPage implements OnInit {
   protected excluir(item: OrcamentoFunil): void {
     this.dialog.open(ConfirmaDialog, {
       ...DIALOG_PEQUENO,
-      data: { titulo: 'Excluir orçamento', texto: 'Confirma a exclusão?', confirmar: 'Excluir' },
+      data: { titulo: 'Excluir orçamento', texto: 'Confirma a exclusão?', confirmar: 'Excluir', destrutivo: true },
     }).afterClosed().subscribe((ok) => {
       if (!ok) return;
       this.negocio.excluirOrcamentoFunil(item.id).subscribe({

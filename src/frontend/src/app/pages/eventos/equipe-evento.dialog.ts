@@ -24,6 +24,7 @@ import { NegocioClient } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { DIALOG_PEQUENO } from '../../shared/dialog';
+import { FecharModal } from '../../shared/fechar-modal';
 
 const SITUACAO: Record<SituacaoPessoaEquipe, string> = {
   NaoEnviado: 'Não enviado',
@@ -48,9 +49,9 @@ export function itensDaPessoa(p: Pick<PessoaEquipe, 'recebePortaria' | 'recebeRo
  */
 @Component({
   selector: 'app-equipe-evento-dialog',
-  imports: [DatePipe, FormsModule, MatDialogModule, MatButtonModule, MatCheckboxModule, MatFormFieldModule, MatIconModule, MatInputModule, MatMenuModule, MatSelectModule],
+  imports: [FecharModal, DatePipe, FormsModule, MatDialogModule, MatButtonModule, MatCheckboxModule, MatFormFieldModule, MatIconModule, MatInputModule, MatMenuModule, MatSelectModule],
   template: `
-    <h2 mat-dialog-title>Equipe de apoio</h2>
+    <h2 mat-dialog-title>Equipe de apoio <app-fechar-modal [manual]="true" (fechar)="cancelar()" /></h2>
     <mat-dialog-content>
       <p class="text-muted text-sm mt-0">
         Quem trabalha no dia (segurança, buffet, DJ…) sem ser da sua conta. Cada pessoa recebe um link próprio, que só abre
@@ -147,7 +148,7 @@ export function itensDaPessoa(p: Pick<PessoaEquipe, 'recebePortaria' | 'recebeRo
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       @if (editando()) {
-        <button mat-button type="button" (click)="cancelar()">Cancelar</button>
+        <button mat-stroked-button type="button" (click)="cancelar()">Cancelar</button>
         <button mat-flat-button type="button" [disabled]="salvando()" (click)="salvar()">Salvar</button>
       } @else {
         <button mat-stroked-button type="button" mat-dialog-close>Fechar</button>
@@ -306,7 +307,7 @@ export class EquipeEventoDialog implements OnInit {
   }
 
   private confirmar(titulo: string, texto: string, confirmar: string, acao: () => void): void {
-    this.dialog.open(ConfirmaDialog, { ...DIALOG_PEQUENO, data: { titulo, texto, confirmar } }).afterClosed().subscribe((ok) => {
+    this.dialog.open(ConfirmaDialog, { ...DIALOG_PEQUENO, data: { titulo, texto, confirmar, destrutivo: ['Excluir', 'Remover'].includes(confirmar) } }).afterClosed().subscribe((ok) => {
       if (ok) acao();
     });
   }

@@ -13,6 +13,7 @@ import { ConviteDoFormulario, DDI_PADRAO, FAIXAS, GENEROS, PedidoConvite, pedido
 import { MascaraDirective } from './mascara.directive';
 import { CampoDdiComponent } from './campo-ddi';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { FecharModal } from './fechar-modal';
 
 export interface ConviteFormDados {
   /** Nulo = novo convite. */
@@ -27,9 +28,9 @@ export interface ConviteFormDados {
  */
 @Component({
   selector: 'app-convite-form-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatCheckboxModule, MatSelectModule, MatRadioModule, MascaraDirective, MatTooltipModule, CampoDdiComponent],
+  imports: [FecharModal, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatCheckboxModule, MatSelectModule, MatRadioModule, MascaraDirective, MatTooltipModule, CampoDdiComponent],
   template: `
-    <h2 mat-dialog-title>{{ dados.convite ? 'Editar convite' : 'Novo convite' }}</h2>
+    <h2 mat-dialog-title>{{ dados.convite ? 'Editar convite' : 'Novo convite' }} <app-fechar-modal /></h2>
     <p class="text-muted text-sm px-6 -mt-2 mb-4">Um convite reúne quem recebe junto, como a família. Marque o convidado principal: ele recebe as comunicações e precisa de telefone.</p>
     <mat-dialog-content>
       <form id="convite-form" class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4" [formGroup]="form" (ngSubmit)="salvar()">

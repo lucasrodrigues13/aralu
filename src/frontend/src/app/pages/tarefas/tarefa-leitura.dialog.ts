@@ -23,14 +23,15 @@ import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { ChecklistTarefaComponent } from './checklist-tarefa';
 import { exibirPrazoRelativo } from '../../shared/prazo-modelo';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { FecharModal } from '../../shared/fechar-modal';
 
 export type AcaoLeitura = 'editar' | 'mudou' | false;
 
 @Component({
   selector: 'app-tarefa-leitura',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, GdDataPipe, ChecklistTarefaComponent, MatTooltipModule],
+  imports: [FecharModal, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, GdDataPipe, ChecklistTarefaComponent, MatTooltipModule],
   template: `
-    <h2 mat-dialog-title>{{ tarefa().titulo }}</h2>
+    <h2 mat-dialog-title>{{ tarefa().titulo }} <app-fechar-modal [manual]="true" (fechar)="fechar()" /></h2>
     <p class="text-muted text-sm px-6 -mt-2 mb-4">{{ tarefa().evento }}</p>
     <mat-dialog-content>
       <dl class="leitura">

@@ -30,11 +30,12 @@ import { NegocioClient } from '../../core/negocio.client';
 import { FolhaContrato } from './folha-contrato';
 import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
-import { DIALOG_LARGO, DIALOG_PEQUENO } from '../../shared/dialog';
+import { DIALOG_LARGO, DIALOG_PEQUENO, DIALOG_PREVIA } from '../../shared/dialog';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { filtrarCampos, previaDestacada, tagsDesconhecidas } from './mesclagem';
 import { EditorRico } from '../../shared/editor-rico';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { FecharModal } from '../../shared/fechar-modal';
 
 /** O que o modal devolve: nome, texto e as mudanças de logo e fundo (arquivo novo, null = remover, ausente = sem mudança). */
 export interface ContratoPedido {
@@ -48,9 +49,9 @@ export interface ContratoPedido {
 /** Ajuda das tags (SPEC-053): como usar e a lista completa, da mesma lista do seletor e do preenchimento. */
 @Component({
   selector: 'app-ajuda-tags-dialog',
-  imports: [MatDialogModule, MatButtonModule],
+  imports: [FecharModal, MatDialogModule, MatButtonModule],
   template: `
-    <h2 mat-dialog-title>Como usar as tags</h2>
+    <h2 mat-dialog-title>Como usar as tags <app-fechar-modal /></h2>
     <mat-dialog-content>
       <p class="text-sm mb-2">
         Tags são trechos como <code>{{ marca({ marca: 'contratante_nome', rotulo: '', fonte: '', exemplo: '' }) }}</code> que o sistema troca pelos dados reais quando o contrato é gerado.
@@ -75,7 +76,7 @@ export interface ContratoPedido {
       </div>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-flat-button type="button" mat-dialog-close>Fechar</button>
+      <button mat-stroked-button type="button" mat-dialog-close>Fechar</button>
     </mat-dialog-actions>
   `,
   styles: `
@@ -163,9 +164,9 @@ const FUNDO_EXEMPLO = () =>
 /** Como funciona o modelo escrito na plataforma: texto, tags, imagens, assinatura e um contrato de exemplo. */
 @Component({
   selector: 'app-ajuda-texto-dialog',
-  imports: [MatDialogModule, MatButtonModule, MatIconModule, FolhaContrato],
+  imports: [FecharModal, MatDialogModule, MatButtonModule, MatIconModule, FolhaContrato],
   template: `
-    <h2 mat-dialog-title>Como funciona o modelo escrito na plataforma</h2>
+    <h2 mat-dialog-title>Como funciona o modelo escrito na plataforma <app-fechar-modal /></h2>
     <mat-dialog-content>
       <ol class="passos text-sm">
         <li><strong>Escreva o texto do contrato</strong> no campo "Texto do contrato", do jeito que ele deve chegar ao cliente: título, cláusulas e parágrafos. Cada quebra de linha do texto vira uma linha no contrato; deixe uma linha vazia para separar os blocos.</li>
@@ -194,8 +195,8 @@ const FUNDO_EXEMPLO = () =>
       <p class="text-muted text-xs mt-3 mb-0">Prefere usar um contrato que já tem pronto? Escolha "Enviar meu documento Word" e veja "Como preparar o Word".</p>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-stroked-button type="button" (click)="ref.close(exemplo)"><mat-icon>edit_note</mat-icon> Usar este exemplo no texto</button>
-      <button mat-flat-button type="button" mat-dialog-close>Entendi</button>
+      <button mat-stroked-button type="button" mat-dialog-close>Fechar</button>
+      <button mat-flat-button type="button" (click)="ref.close(exemplo)"><mat-icon>edit_note</mat-icon> Usar este exemplo no texto</button>
     </mat-dialog-actions>
   `,
   styles: `
@@ -224,9 +225,9 @@ export class AjudaTextoDialog {
 /** Orientações para preparar o próprio Word: como escrever as tags e a lista completa, com botão de copiar. */
 @Component({
   selector: 'app-ajuda-word-dialog',
-  imports: [MatDialogModule, MatButtonModule, MatIconModule, MatTooltipModule],
+  imports: [FecharModal, MatDialogModule, MatButtonModule, MatIconModule, MatTooltipModule],
   template: `
-    <h2 mat-dialog-title>Como preparar o seu contrato no Word</h2>
+    <h2 mat-dialog-title>Como preparar o seu contrato no Word <app-fechar-modal /></h2>
     <mat-dialog-content>
       <ol class="passos text-sm">
         <li>Abra o seu contrato no <strong>Microsoft Word</strong> (ou Google Docs / LibreOffice) e salve no formato <strong>.docx</strong>. Outros formatos (.doc, .pdf, .odt) não são aceitos.</li>
@@ -262,8 +263,8 @@ export class AjudaTextoDialog {
       </div>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-stroked-button type="button" (click)="copiarTodas()"><mat-icon>content_copy</mat-icon> Copiar todas as tags</button>
-      <button mat-flat-button type="button" mat-dialog-close>Fechar</button>
+      <button mat-stroked-button type="button" mat-dialog-close>Fechar</button>
+      <button mat-flat-button type="button" (click)="copiarTodas()"><mat-icon>content_copy</mat-icon> Copiar todas as tags</button>
     </mat-dialog-actions>
   `,
   styles: `
@@ -297,12 +298,9 @@ export class AjudaWordDialog {
 /** Live Preview em tela cheia (os dois formatos): só a visualização, num modal grande. */
 @Component({
   selector: 'app-previa-ampliada-dialog',
-  imports: [MatDialogModule, MatButtonModule, MatIconModule, FolhaContrato, PreviaWordComponent],
+  imports: [FecharModal, MatDialogModule, MatButtonModule, FolhaContrato, PreviaWordComponent],
   template: `
-    <div class="topo">
-      <h2 mat-dialog-title class="m-0!">Live Preview · {{ dados.titulo }}</h2>
-      <button mat-icon-button type="button" aria-label="Fechar" mat-dialog-close><mat-icon>close</mat-icon></button>
-    </div>
+    <h2 mat-dialog-title>Live Preview · {{ dados.titulo }} <app-fechar-modal /></h2>
     <mat-dialog-content class="conteudo">
       @if (dados.word) {
         <app-previa-word [documento]="dados.word" [ampliada]="true" />
@@ -313,10 +311,12 @@ export class AjudaWordDialog {
       }
     </mat-dialog-content>
     <p class="text-muted text-xs px-6 pb-4 m-0">Os valores destacados são exemplos. No contrato real entram os dados do cliente, do evento e do orçamento aprovado.</p>
+    <mat-dialog-actions align="end">
+      <button mat-stroked-button type="button" mat-dialog-close>Fechar</button>
+    </mat-dialog-actions>
   `,
   styles: `
-    .topo { display: flex; align-items: center; justify-content: space-between; padding-right: 12px; }
-    .conteudo { max-height: none !important; height: calc(95vh - 140px); display: flex; flex-direction: column; }
+    .conteudo { max-height: none !important; height: calc(95vh - 200px); display: flex; flex-direction: column; }
     .conteudo > * { flex: 1; min-height: 0; }
     .folha-grande ::ng-deep .area { max-height: none; height: 100%; box-sizing: border-box; }
   `,
@@ -328,7 +328,7 @@ export class PreviaAmpliadaDialog {
 /** Novo/editar modelo de contrato com seletor de tags com busca e ajuda (SPEC-053) e Live Preview (SPEC-055, evolui o "Ver como fica" da SPEC-030 §6.1). */
 @Component({
   selector: 'app-contrato-dialog',
-  imports: [
+  imports: [FecharModal, 
     ReactiveFormsModule,
     MatDialogModule,
     MatButtonModule,
@@ -344,7 +344,7 @@ export class PreviaAmpliadaDialog {
     EditorRico,
   ],
   template: `
-    <h2 mat-dialog-title>{{ dados.contrato ? 'Editar modelo de contrato' : 'Novo modelo de contrato' }}</h2>
+    <h2 mat-dialog-title>{{ dados.contrato ? 'Editar modelo de contrato' : 'Novo modelo de contrato' }} <app-fechar-modal /></h2>
     <p class="text-muted text-sm px-6 -mt-2 mb-4">
       {{ ehWord() ? 'Envie o seu contrato em Word com as tags no lugar dos dados. Elas são trocadas pelos dados do evento.' : 'Clique num campo para inserir no texto. Ele é trocado pelos dados do evento.' }}
     </p>
@@ -632,7 +632,7 @@ export class ContratoDialog {
 
   protected abrirAjudaTexto(): void {
     this.dialog
-      .open(AjudaTextoDialog, { ...DIALOG_LARGO, width: 'min(1200px, calc(100vw - 32px))', maxHeight: '95vh', data: { campos: this.dados.campos } })
+      .open(AjudaTextoDialog, { ...DIALOG_PREVIA, data: { campos: this.dados.campos } })
       .afterClosed()
       .subscribe((texto?: string) => {
         if (texto) this.form.controls.texto.setValue(texto);
@@ -835,7 +835,7 @@ export class ContratosPage implements OnInit {
       data: {
         titulo: 'Excluir modelo',
         texto: `Excluir "${contrato.nome}"? Contratos já criados a partir dele não mudam.`,
-        confirmar: 'Excluir',
+        confirmar: 'Excluir', destrutivo: true,
       },
     }).afterClosed().subscribe((confirmou) => {
       if (!confirmou) return;

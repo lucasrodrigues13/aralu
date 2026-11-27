@@ -22,17 +22,18 @@ import {
   abrirAjudaAceite, abrirGerarComIa, abrirPreviaAceite, AssistenteMidiaAceite, AssuntoAjuda, espacosDoHtml, GrupoTags, SeletorTagsAceite,
   TAGS_BLOCOS, TAGS_COMPONENTES, TAGS_DADOS,
 } from './pagina-aceite';
+import { FecharModal } from '../../shared/fechar-modal';
 
 type TipoModelo = 'servico' | 'orcamento';
 
 @Component({
   selector: 'app-modelo-funil-dialog',
-  imports: [
+  imports: [FecharModal, 
     ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTooltipModule,
     CampoDinheiroComponent, EditorRico, SeletorTagsAceite, AssistenteMidiaAceite,
   ],
   template: `
-    <h2 mat-dialog-title>{{ dados.item ? 'Editar' : 'Novo' }} modelo</h2>
+    <h2 mat-dialog-title>{{ dados.item ? 'Editar' : 'Novo' }} modelo <app-fechar-modal /></h2>
     <mat-dialog-content>
       <form class="grid grid-cols-1 gap-4" [formGroup]="form">
         <div class="campo">
@@ -304,7 +305,7 @@ export class ModelosFunilPage implements OnInit {
   protected excluir(item: { id: string; nome: string }): void {
     this.dialog.open(ConfirmaDialog, {
       ...DIALOG_PEQUENO,
-      data: { titulo: 'Excluir modelo', texto: `Confirma a exclusão de "${item.nome}"?`, confirmar: 'Excluir' },
+      data: { titulo: 'Excluir modelo', texto: `Confirma a exclusão de "${item.nome}"?`, confirmar: 'Excluir', destrutivo: true },
     }).afterClosed().subscribe((ok) => {
       if (!ok) return;
       const req: Observable<unknown> =

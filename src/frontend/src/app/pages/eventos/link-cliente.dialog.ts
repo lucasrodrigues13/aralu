@@ -10,13 +10,14 @@ import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { copiarTexto } from '../../shared/copiar-texto';
 import { DIALOG_PEQUENO } from '../../shared/dialog';
+import { FecharModal } from '../../shared/fechar-modal';
 
 /** Link do cliente do evento (SPEC-046 §6.1): gerar, copiar, liberar o financeiro e os convidados, trocar e desativar. */
 @Component({
   selector: 'app-link-cliente-dialog',
-  imports: [MatDialogModule, MatButtonModule, MatIconModule, MatSlideToggleModule],
+  imports: [FecharModal, MatDialogModule, MatButtonModule, MatIconModule, MatSlideToggleModule],
   template: `
-    <h2 mat-dialog-title>Link do cliente</h2>
+    <h2 mat-dialog-title>Link do cliente <app-fechar-modal /></h2>
     <p class="text-muted text-sm px-6 -mt-2 mb-4">Um endereço por evento. O cliente recebe um código no e-mail cadastrado para abrir o link. Trocar o link desliga o antigo.</p>
     <mat-dialog-content>
       @if (link(); as atual) {
@@ -49,12 +50,14 @@ import { DIALOG_PEQUENO } from '../../shared/dialog';
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       @if (link()?.ativo) {
-        <button mat-button type="button" class="text-error" (click)="desativar()">Desativar link</button>
+        <button mat-button type="button" class="text-error me-auto" (click)="desativar()">Desativar link</button>
+      }
+      <button mat-stroked-button type="button" mat-dialog-close>Fechar</button>
+      @if (link()?.ativo) {
         <button mat-stroked-button type="button" (click)="trocar()">Trocar link</button>
       } @else if (link()) {
         <button mat-flat-button type="button" (click)="gerar()">Gerar link</button>
       }
-      <button mat-stroked-button type="button" mat-dialog-close>Fechar</button>
     </mat-dialog-actions>
   `,
   styles: `.aviso-email { display: flex; align-items: center; gap: 8px; color: var(--mat-sys-error); }
@@ -112,7 +115,7 @@ export class LinkClienteDialog implements OnInit {
   protected desativar(): void {
     this.dialog.open(ConfirmaDialog, {
       ...DIALOG_PEQUENO,
-      data: { titulo: 'Desativar link', texto: 'O endereço deixa de funcionar e o cliente perde o acesso.', confirmar: 'Desativar' },
+      data: { titulo: 'Desativar link', texto: 'O endereço deixa de funcionar e o cliente perde o acesso.', confirmar: 'Desativar', destrutivo: true },
     }).afterClosed().subscribe((confirmou) => {
       if (confirmou) this.aplicar(this.cliente.desativar(this.dados.eventoId), 'Link desativado.');
     });

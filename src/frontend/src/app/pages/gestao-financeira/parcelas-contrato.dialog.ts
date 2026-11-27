@@ -13,6 +13,7 @@ import { GdDinheiroPipe } from '../../shared/gd-dinheiro.pipe';
 import { linkWhatsapp, textoCobranca } from '../dinheiro/cobranca';
 import { ChavePixDialog, ReceberDialog } from '../dinheiro/dinheiro.dialogs';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { FecharModal } from '../../shared/fechar-modal';
 
 /**
  * Parcelas do contrato com o cliente (SPEC-040): cobrar pelo WhatsApp, registrar o que o cliente pagou
@@ -20,9 +21,9 @@ import { MatTooltipModule } from '@angular/material/tooltip';
  */
 @Component({
   selector: 'app-parcelas-contrato-dialog',
-  imports: [MatDialogModule, MatButtonModule, MatIconModule, MatMenuModule, GdDataPipe, GdDinheiroPipe, MatTooltipModule],
+  imports: [FecharModal, MatDialogModule, MatButtonModule, MatIconModule, MatMenuModule, GdDataPipe, GdDinheiroPipe, MatTooltipModule],
   template: `
-    <h2 mat-dialog-title>Parcelas do contrato</h2>
+    <h2 mat-dialog-title>Parcelas do contrato <app-fechar-modal /></h2>
     @if (contrato(); as c) {
       <p class="text-muted text-sm px-6 -mt-2 mb-4">
         {{ c.oportunidadeNome }} · Contrato {{ c.valorTotal | gdDinheiro }} · Recebido {{ c.recebido | gdDinheiro }} · Saldo {{ c.saldo | gdDinheiro }}

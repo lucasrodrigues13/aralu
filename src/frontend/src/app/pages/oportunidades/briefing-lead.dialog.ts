@@ -11,6 +11,7 @@ import { Briefing, BriefingDoLead, NegocioClient } from '../../core/negocio.clie
 import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { DIALOG_PEQUENO } from '../../shared/dialog';
+import { FecharModal } from '../../shared/fechar-modal';
 
 export interface BriefingLeadDados {
   id: string;
@@ -46,9 +47,9 @@ export function whatsappBriefing(telefone: string | null | undefined, nomeContat
 /** Briefing do lead: roteiro interno da conversa, com as respostas anotadas (SPEC-031 §6.7, ponto 4). */
 @Component({
   selector: 'app-briefing-lead-dialog',
-  imports: [DatePipe, FormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule],
+  imports: [FecharModal, DatePipe, FormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule],
   template: `
-    <h2 mat-dialog-title>Briefing de {{ dados.nome }}</h2>
+    <h2 mat-dialog-title>Briefing de {{ dados.nome }} <app-fechar-modal /></h2>
     <p class="text-muted text-sm px-6 -mt-2 mb-4">Use as perguntas como roteiro da conversa e anote as respostas aqui.</p>
     <mat-dialog-content>
       @if (carregando()) {
@@ -119,7 +120,7 @@ export function whatsappBriefing(telefone: string | null | undefined, nomeContat
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       @if (briefing()) {
-        <button mat-button type="button" (click)="remover()">Remover briefing</button>
+        <button mat-button type="button" class="text-error me-auto" (click)="remover()">Remover briefing</button>
       }
       <button mat-stroked-button type="button" (click)="ref.close()">Fechar</button>
       @if (briefing()) {
@@ -200,7 +201,7 @@ export class BriefingLeadDialog implements OnInit {
     this.dialog
       .open(ConfirmaDialog, {
         ...DIALOG_PEQUENO,
-        data: { titulo: 'Remover briefing', texto: 'O briefing e as respostas deste lead serão apagados.', confirmar: 'Remover' },
+        data: { titulo: 'Remover briefing', texto: 'O briefing e as respostas deste lead serão apagados.', confirmar: 'Remover', destrutivo: true },
       })
       .afterClosed()
       .subscribe((ok) => {

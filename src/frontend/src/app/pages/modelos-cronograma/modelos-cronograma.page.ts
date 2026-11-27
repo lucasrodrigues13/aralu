@@ -117,7 +117,7 @@ export class ModelosCronogramaPage implements OnInit {
   protected excluir(item: Cronograma): void {
     this.dialog.open(ConfirmaDialog, {
       ...DIALOG_PEQUENO,
-      data: { titulo: 'Excluir cronograma', texto: `Confirma a exclusão de "${item.titulo}"?`, confirmar: 'Excluir' },
+      data: { titulo: 'Excluir cronograma', texto: `Confirma a exclusão de "${item.titulo}"?`, confirmar: 'Excluir', destrutivo: true },
     }).afterClosed().subscribe((confirmou) => {
       if (!confirmou) {
         return;

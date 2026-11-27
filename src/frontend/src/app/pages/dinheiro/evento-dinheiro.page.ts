@@ -248,7 +248,7 @@ export class EventoDinheiroPage implements OnInit {
   protected removerParcelamento(pagamento: PagamentoFornecedor): void {
     this.dialog.open(ConfirmaDialog, {
       ...DIALOG_PEQUENO,
-      data: { titulo: 'Remover parcelamento', texto: `Voltar "${pagamento.servico}" a um pagamento só, sem parcelas?`, confirmar: 'Remover' },
+      data: { titulo: 'Remover parcelamento', texto: `Voltar "${pagamento.servico}" a um pagamento só, sem parcelas?`, confirmar: 'Remover', destrutivo: true },
     }).afterClosed().subscribe((confirmou) => {
       if (confirmou) this.aplicar(this.dinheiro.removerParcelamento(this.id, pagamento.pagamentoId), 'Parcelamento removido.');
     });
@@ -273,7 +273,7 @@ export class EventoDinheiroPage implements OnInit {
     const nome = (parcela ?? pagamento).comprovante?.nome ?? 'comprovante';
     this.dialog.open(ConfirmaDialog, {
       ...DIALOG_PEQUENO,
-      data: { titulo: 'Excluir comprovante', texto: `Excluir "${nome}"? O arquivo é apagado.`, confirmar: 'Excluir' },
+      data: { titulo: 'Excluir comprovante', texto: `Excluir "${nome}"? O arquivo é apagado.`, confirmar: 'Excluir', destrutivo: true },
     }).afterClosed().subscribe((confirmou) => {
       if (confirmou) this.aplicar(this.dinheiro.excluirComprovante(this.id, pagamento.pagamentoId, parcela?.id ?? null), 'Comprovante excluído.');
     });

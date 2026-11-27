@@ -100,7 +100,7 @@ export class GruposPage implements OnInit {
     this.dialog
       .open(ConfirmaDialog, {
         ...DIALOG_PEQUENO,
-        data: { titulo: 'Apagar grupo', texto: `O grupo ${grupo.nome} será apagado.`, confirmar: 'Apagar grupo' },
+        data: { titulo: 'Apagar grupo', texto: `O grupo ${grupo.nome} será apagado.`, confirmar: 'Apagar grupo', destrutivo: true },
       })
       .afterClosed()
       .subscribe((confirmou) => {

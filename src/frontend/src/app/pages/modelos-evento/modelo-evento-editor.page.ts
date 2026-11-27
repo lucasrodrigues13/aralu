@@ -37,6 +37,7 @@ import { AdicionarTarefasEmMassaDialog, ResultadoTarefasEmMassaModelo } from '..
 import { TarefaFormDialog, TarefaModeloEdicao } from '../tarefas/tarefa-form.dialog';
 import { SelecionarBibliotecaDialog, ItemBiblioteca } from './selecionar-biblioteca.dialog';
 import { NgTemplateOutlet } from '@angular/common';
+import { FecharModal } from '../../shared/fechar-modal';
 
 /** Serviço do modelo na tela: a `chave` liga as tarefas a ele até o Salvar. */
 interface ServicoEdicao {
@@ -77,9 +78,9 @@ const SEM_SERVICO = '__sem-servico__';
 /** Valor estimado do serviço do modelo (o nome vem do cadastro). */
 @Component({
   selector: 'app-valor-servico-modelo-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, CampoDinheiroComponent],
+  imports: [FecharModal, ReactiveFormsModule, MatDialogModule, MatButtonModule, CampoDinheiroComponent],
   template: `
-    <h2 mat-dialog-title>Valor estimado · {{ dados.nome }}</h2>
+    <h2 mat-dialog-title>Valor estimado · {{ dados.nome }} <app-fechar-modal /></h2>
     <mat-dialog-content>
       <form id="valor-servico-modelo" [formGroup]="form" (submit)="ref.close({ valor: form.controls.valor.value }); $event.preventDefault()">
         <app-campo-dinheiro rotulo="Valor estimado" formControlName="valor" />
@@ -100,9 +101,9 @@ export class ValorServicoModeloDialog {
 /** Remover serviço com tarefas: mover as tarefas para "Sem serviço" (padrão) ou excluir junto (SPEC-012 v3 §6.3). */
 @Component({
   selector: 'app-remover-servico-modelo-dialog',
-  imports: [MatDialogModule, MatButtonModule],
+  imports: [FecharModal, MatDialogModule, MatButtonModule],
   template: `
-    <h2 mat-dialog-title>Remover serviço</h2>
+    <h2 mat-dialog-title>Remover serviço <app-fechar-modal /></h2>
     <mat-dialog-content>
       <p class="mb-0">"{{ dados.nome }}" tem {{ dados.tarefas }} {{ dados.tarefas === 1 ? 'tarefa' : 'tarefas' }}. O que fazer com {{ dados.tarefas === 1 ? 'ela' : 'elas' }}?</p>
     </mat-dialog-content>
@@ -810,7 +811,7 @@ export class ModeloEventoEditorPage implements OnInit {
   protected excluir(): void {
     this.dialog.open(ConfirmaDialog, {
       ...DIALOG_PEQUENO,
-      data: { titulo: 'Excluir modelo', texto: 'Confirma a exclusão deste modelo?', confirmar: 'Excluir' },
+      data: { titulo: 'Excluir modelo', texto: 'Confirma a exclusão deste modelo?', confirmar: 'Excluir', destrutivo: true },
     }).afterClosed().subscribe((confirmou) => {
       if (!confirmou) return;
       this.negocio.excluirModelo(this.id).subscribe({

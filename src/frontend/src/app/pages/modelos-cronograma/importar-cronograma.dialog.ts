@@ -8,13 +8,14 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { NegocioClient } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
+import { FecharModal } from '../../shared/fechar-modal';
 
 /** Importação de um modelo de cronograma pela planilha modelo. Fecha com true quando o modelo foi criado. */
 @Component({
   selector: 'app-importar-cronograma-dialog',
-  imports: [MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatProgressBarModule],
+  imports: [FecharModal, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatProgressBarModule],
   template: `
-    <h2 mat-dialog-title>Importar cronograma</h2>
+    <h2 mat-dialog-title>Importar cronograma <app-fechar-modal [manual]="true" (fechar)="ref.close(false)" /></h2>
     <mat-dialog-content>
       <ol class="passos">
         <li>

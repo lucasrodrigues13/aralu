@@ -12,6 +12,7 @@ import { mensagemDeErro } from '../core/mensagem-erro';
 import { ToastService } from '../core/toast.service';
 import { DIALOG } from './dialog';
 import { PlanilhaInstrucoesDialog } from './planilha-instrucoes.dialog';
+import { FecharModal } from './fechar-modal';
 
 export interface ImportacoesDados {
   listar: () => Observable<ImportacaoConvidados[]>;
@@ -30,9 +31,9 @@ const INTERVALO_MS = 2000;
  */
 @Component({
   selector: 'app-importacoes-dialog',
-  imports: [MatDialogModule, MatButtonModule, MatIconModule, MatTooltipModule, DatePipe],
+  imports: [FecharModal, MatDialogModule, MatButtonModule, MatIconModule, MatTooltipModule, DatePipe],
   template: `
-    <h2 mat-dialog-title>Importar planilha</h2>
+    <h2 mat-dialog-title>Importar planilha <app-fechar-modal [manual]="true" (fechar)="fechar()" /></h2>
     <mat-dialog-content class="text-sm">
       <p class="mt-0">Baixe a planilha modelo, preencha e envie. A lista é verificada em segundo plano e em breve será confirmada aqui; você pode fechar esta janela e voltar depois.</p>
       <div class="flex flex-wrap items-center gap-2">
@@ -74,7 +75,7 @@ const INTERVALO_MS = 2000;
         </ul>
       }
     </mat-dialog-content>
-    <mat-dialog-actions>
+    <mat-dialog-actions align="end">
       <button mat-stroked-button type="button" (click)="fechar()">Fechar</button>
     </mat-dialog-actions>
   `,

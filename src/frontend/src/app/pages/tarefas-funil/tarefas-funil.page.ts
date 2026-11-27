@@ -24,12 +24,13 @@ import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { chaveResponsavel, opcoesResponsavel, OpcaoResponsavel, pedidoResponsavel, rotuloResponsavel } from '../../shared/responsaveis';
 import { aplicarLink, aplicarLista, aplicarNegrito, EdicaoTexto, htmlDeTextoSimples } from '../../shared/texto-simples';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { FecharModal } from '../../shared/fechar-modal';
 
 @Component({
   selector: 'app-tarefa-funil-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, CampoDataComponent, MatTooltipModule],
+  imports: [FecharModal, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, CampoDataComponent, MatTooltipModule],
   template: `
-    <h2 mat-dialog-title>{{ dados ? 'Editar tarefa' : 'Nova tarefa' }}</h2>
+    <h2 mat-dialog-title>{{ dados ? 'Editar tarefa' : 'Nova tarefa' }} <app-fechar-modal /></h2>
     <mat-dialog-content>
       <form class="grid grid-cols-1 gap-4" [formGroup]="form">
         <div class="campo">
@@ -291,7 +292,7 @@ export class TarefasFunilPage implements OnInit {
   protected excluir(item: TarefaFunil): void {
     this.dialog.open(ConfirmaDialog, {
       ...DIALOG_PEQUENO,
-      data: { titulo: 'Excluir tarefa', texto: `Confirma a exclusão de "${item.titulo}"?`, confirmar: 'Excluir' },
+      data: { titulo: 'Excluir tarefa', texto: `Confirma a exclusão de "${item.titulo}"?`, confirmar: 'Excluir', destrutivo: true },
     }).afterClosed().subscribe((ok) => {
       if (!ok) return;
       this.negocio.excluirTarefaFunil(item.id).subscribe({

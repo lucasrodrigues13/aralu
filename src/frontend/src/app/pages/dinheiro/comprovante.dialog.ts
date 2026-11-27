@@ -3,13 +3,14 @@ import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { validarComprovante } from '../../core/dinheiro.client';
+import { FecharModal } from '../../shared/fechar-modal';
 
 /** Envio de comprovante: JPG, JPEG, PNG ou PDF até 5 MB (SPEC-043 §6.4). */
 @Component({
   selector: 'app-comprovante-dialog',
-  imports: [MatDialogModule, MatButtonModule, MatIconModule],
+  imports: [FecharModal, MatDialogModule, MatButtonModule, MatIconModule],
   template: `
-    <h2 mat-dialog-title>{{ dados?.titulo ?? "Enviar comprovante" }}</h2>
+    <h2 mat-dialog-title>{{ dados?.titulo ?? "Enviar comprovante" }} <app-fechar-modal /></h2>
     <p class="text-muted text-sm px-6 -mt-2 mb-4">JPG, JPEG, PNG ou PDF de até 5 MB. Fotos são reduzidas ao guardar, sem perder a leitura.</p>
     <mat-dialog-content>
       <form id="comprovante" class="grid grid-cols-1 gap-4" (submit)="enviar(); $event.preventDefault()">

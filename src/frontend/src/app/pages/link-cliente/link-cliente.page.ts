@@ -385,7 +385,7 @@ export class LinkClientePage implements OnInit {
   }
 
   private confirmar(titulo: string, texto: string, confirmar: string, acao: () => void): void {
-    this.dialog.open(ConfirmaDialog, { ...DIALOG_PEQUENO, data: { titulo, texto, confirmar } }).afterClosed().subscribe((ok) => {
+    this.dialog.open(ConfirmaDialog, { ...DIALOG_PEQUENO, data: { titulo, texto, confirmar, destrutivo: ['Excluir', 'Remover'].includes(confirmar) } }).afterClosed().subscribe((ok) => {
       if (ok) acao();
     });
   }

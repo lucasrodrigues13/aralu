@@ -8,6 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { NegocioClient, PreviaSalvarComoModelo } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
+import { FecharModal } from '../../shared/fechar-modal';
 
 export interface SalvarComoModeloDados {
   eventoId: string;
@@ -16,9 +17,9 @@ export interface SalvarComoModeloDados {
 
 @Component({
   selector: 'app-salvar-como-modelo',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule],
+  imports: [FecharModal, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule],
   template: `
-    <h2 mat-dialog-title>Salvar como modelo</h2>
+    <h2 mat-dialog-title>Salvar como modelo <app-fechar-modal /></h2>
     <p class="text-muted text-sm px-6 -mt-2 mb-4">Cria um modelo com as tarefas e serviços deste evento.</p>
     <mat-dialog-content>
       <form class="grid grid-cols-1 gap-4" [formGroup]="form">
@@ -33,8 +34,8 @@ export interface SalvarComoModeloDados {
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <button mat-stroked-button type="button" (click)="ref.close()">Cancelar</button>
-      <button mat-flat-button type="button" [disabled]="form.invalid || !previa()" (click)="salvar(false)">Salvar</button>
       <button mat-stroked-button type="button" [disabled]="form.invalid || !previa()" (click)="salvar(true)">Salvar e abrir</button>
+      <button mat-flat-button type="button" [disabled]="form.invalid || !previa()" (click)="salvar(false)">Salvar</button>
     </mat-dialog-actions>
   `,
 })

@@ -13,9 +13,10 @@ import { mensagemDeErro } from '../../core/mensagem-erro';
 import { DepoimentoAceite, MidiaAceite, NegocioClient, PreviaPaginaAceite } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { copiarTexto } from '../../shared/copiar-texto';
-import { DIALOG, DIALOG_LARGO } from '../../shared/dialog';
+import { DIALOG, DIALOG_LARGO, DIALOG_PREVIA } from '../../shared/dialog';
 import { reduzirImagem } from '../../shared/reduzir-imagem';
 import { PreviasArquivo } from '../modelos-inspiracoes/previas-arquivo';
+import { FecharModal } from '../../shared/fechar-modal';
 
 /** Tag para o seletor: a marca vai para o texto, o rótulo ajuda a achar. */
 export interface TagAceite {
@@ -223,11 +224,11 @@ export type AssuntoAjuda = 'tags-texto' | 'tags-html' | 'pagina';
 /** Ajudas do modal do modelo de orçamento (SPEC-061). */
 @Component({
   selector: 'app-ajuda-aceite-dialog',
-  imports: [MatDialogModule, MatButtonModule],
+  imports: [FecharModal, MatDialogModule, MatButtonModule],
   template: `
     @switch (assunto) {
       @case ('tags-texto') {
-        <h2 mat-dialog-title>Tags no texto da proposta</h2>
+        <h2 mat-dialog-title>Tags no texto da proposta <app-fechar-modal /></h2>
         <mat-dialog-content class="ajuda">
           <p>Tags são marcações que o sistema troca pelos dados de cada cliente quando o orçamento é criado.</p>
           <ol>
@@ -238,7 +239,7 @@ export type AssuntoAjuda = 'tags-texto' | 'tags-html' | 'pagina';
         </mat-dialog-content>
       }
       @case ('tags-html') {
-        <h2 mat-dialog-title>Tags na tela de aceite</h2>
+        <h2 mat-dialog-title>Tags na tela de aceite <app-fechar-modal /></h2>
         <mat-dialog-content class="ajuda">
           <p>Clique no ponto do código onde a tag deve entrar e escolha na lista. Há três grupos:</p>
           <ul>
@@ -251,7 +252,7 @@ export type AssuntoAjuda = 'tags-texto' | 'tags-html' | 'pagina';
         </mat-dialog-content>
       }
       @default {
-        <h2 mat-dialog-title>Sua tela de aceite</h2>
+        <h2 mat-dialog-title>Sua tela de aceite <app-fechar-modal /></h2>
         <mat-dialog-content class="ajuda">
           <p>Este campo define <strong>a página inteira</strong> que o cliente vê ao abrir a proposta: fundo, fontes, cores, capa, fotos, seções e textos. É o lugar da sua apresentação, aquela que hoje vai em PDF ou PowerPoint, já com o botão de aceitar.</p>
           <p>O campo aceita HTML e CSS (dentro de <code>&lt;style&gt;</code>). Por segurança, scripts, formulários e iframes são removidos.</p>
@@ -261,7 +262,7 @@ export type AssuntoAjuda = 'tags-texto' | 'tags-html' | 'pagina';
         </mat-dialog-content>
       }
     }
-    <mat-dialog-actions align="end"><button mat-flat-button mat-dialog-close type="button">Entendi</button></mat-dialog-actions>
+    <mat-dialog-actions align="end"><button mat-stroked-button mat-dialog-close type="button">Fechar</button></mat-dialog-actions>
   `,
   styles: `.ajuda p, .ajuda li { line-height: 1.6; } .ajuda li { margin-bottom: 6px; } .destaque { padding: 10px 12px; border-radius: 8px; background: var(--mat-sys-primary-container); color: var(--mat-sys-on-primary-container); }`,
 })
@@ -272,9 +273,9 @@ export class AjudaAceiteDialog {
 /** "Gerar com IA": passo a passo e o prompt pronto para copiar (SPEC-061 §6.1). */
 @Component({
   selector: 'app-gerar-com-ia-dialog',
-  imports: [MatDialogModule, MatButtonModule, MatIconModule],
+  imports: [FecharModal, MatDialogModule, MatButtonModule, MatIconModule],
   template: `
-    <h2 mat-dialog-title>Gerar a tela de aceite com IA</h2>
+    <h2 mat-dialog-title>Gerar a tela de aceite com IA <app-fechar-modal /></h2>
     <mat-dialog-content>
       <ol class="passos">
         <li><strong>Copie o prompt</strong> no botão abaixo.</li>
@@ -330,7 +331,7 @@ export class GerarComIaDialog {
         <iframe #quadro title="Live Preview da tela de aceite" sandbox="allow-popups allow-popups-to-escape-sandbox"></iframe>
       </div>
     </mat-dialog-content>
-    <mat-dialog-actions align="end"><button mat-flat-button mat-dialog-close type="button">Voltar ao editor</button></mat-dialog-actions>
+    <mat-dialog-actions align="end"><button mat-stroked-button mat-dialog-close type="button">Voltar ao editor</button></mat-dialog-actions>
   `,
   styles: `
     .topo { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-right: 16px; flex-wrap: wrap; }
@@ -575,5 +576,5 @@ export function abrirGerarComIa(dialog: MatDialog): void {
 }
 
 export function abrirPreviaAceite(dialog: MatDialog, pedido: PreviaPaginaAceite): void {
-  dialog.open(PreviaAceiteDialog, { ...DIALOG_LARGO, width: 'min(1200px, calc(100vw - 32px))', maxHeight: '96vh', data: pedido });
+  dialog.open(PreviaAceiteDialog, { ...DIALOG_PREVIA, data: pedido });
 }

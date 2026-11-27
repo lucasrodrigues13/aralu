@@ -27,14 +27,15 @@ import {
 import { ToastService } from '../../core/toast.service';
 import { CampoDinheiroComponent } from '../../shared/campo-dinheiro';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
-import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
+import { DIALOG, DIALOG_LARGO, DIALOG_PEQUENO } from '../../shared/dialog';
 import { ComprovanteDialog } from '../dinheiro/comprovante.dialog';
 import { GdDinheiroPipe } from '../../shared/gd-dinheiro.pipe';
-import { DIALOG_FORNECEDOR, FornecedorFormDialog } from '../fornecedores/fornecedor-form.dialog';
+import { FornecedorFormDialog } from '../fornecedores/fornecedor-form.dialog';
 import { NovoServicoDialog } from '../fornecedores/novo-servico.dialog';
 import { EventoAbasComponent } from './evento-abas.component';
 import { GraficoOrcamento, RoscaServicos, montarGraficoOrcamento, montarRoscaPorServico } from './orcamento-graficos';
 import { OpcaoSelecao, SeletorMultiploDados, SeletorMultiploDialog } from './seletor-multiplo.dialog';
+import { FecharModal } from '../../shared/fechar-modal';
 
 interface ContratarResultado {
   valor: number;
@@ -43,9 +44,9 @@ interface ContratarResultado {
 
 @Component({
   selector: 'app-contratar-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, CampoDinheiroComponent],
+  imports: [FecharModal, ReactiveFormsModule, MatDialogModule, MatButtonModule, CampoDinheiroComponent],
   template: `
-    <h2 mat-dialog-title>Contratar fornecedor</h2>
+    <h2 mat-dialog-title>Contratar fornecedor <app-fechar-modal /></h2>
     <p class="text-muted text-sm px-6 -mt-2 mb-4">{{ dados.fornecedor }} · {{ dados.servico }}. O parcelamento é feito depois, na aba Financeiro.</p>
     <mat-dialog-content>
       <form id="contratar" class="grid grid-cols-1 gap-4" [formGroup]="form" (submit)="confirmar(); $event.preventDefault()">
@@ -96,9 +97,9 @@ export class ContratarDialog {
 }
 @Component({
   selector: 'app-subitens-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, CampoDinheiroComponent, MatTooltipModule],
+  imports: [FecharModal, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, CampoDinheiroComponent, MatTooltipModule],
   template: `
-    <h2 mat-dialog-title>Subitens — {{ dados.nome }}</h2>
+    <h2 mat-dialog-title>Subitens — {{ dados.nome }} <app-fechar-modal /></h2>
     <mat-dialog-content>
       <form class="grid grid-cols-1 gap-4" [formGroup]="form">
         <app-campo-dinheiro rotulo="Valor estimado (sem subitens)" formControlName="valorEstimado" />
@@ -684,7 +685,7 @@ export class EventoFornecedoresPage implements OnInit {
   protected excluirContrato(servico: EventoServico, vinculo: Vinculo): void {
     this.dialog.open(ConfirmaDialog, {
       ...DIALOG_PEQUENO,
-      data: { titulo: 'Excluir contrato', texto: `Excluir o contrato de ${vinculo.fornecedor}? O arquivo é apagado.`, confirmar: 'Excluir' },
+      data: { titulo: 'Excluir contrato', texto: `Excluir o contrato de ${vinculo.fornecedor}? O arquivo é apagado.`, confirmar: 'Excluir', destrutivo: true },
     }).afterClosed().subscribe((confirmou) => {
       if (!confirmou) {
         return;
@@ -749,7 +750,7 @@ export class EventoFornecedoresPage implements OnInit {
   }
 
   private confirmar(titulo: string, texto: string, acao: () => Observable<EventoDetalhe>, sucesso: string): void {
-    this.dialog.open(ConfirmaDialog, { ...DIALOG_PEQUENO, data: { titulo, texto, confirmar: 'Excluir' } }).afterClosed().subscribe((confirmou) => {
+    this.dialog.open(ConfirmaDialog, { ...DIALOG_PEQUENO, data: { titulo, texto, confirmar: 'Excluir', destrutivo: true } }).afterClosed().subscribe((confirmou) => {
       if (!confirmou) {
         return;
       }
@@ -766,7 +767,7 @@ export class EventoFornecedoresPage implements OnInit {
   private cadastrarFornecedor(): Observable<FornecedorResumo | null> {
     const antes = new Set(this.fornecedores().map((item) => item.id));
     return new Observable<FornecedorResumo | null>((assinante) => {
-      this.dialog.open(FornecedorFormDialog, { ...DIALOG_FORNECEDOR, data: null }).afterClosed().subscribe((ok) => {
+      this.dialog.open(FornecedorFormDialog, { ...DIALOG_LARGO, data: null }).afterClosed().subscribe((ok) => {
         if (!ok) {
           assinante.next(null);
           assinante.complete();

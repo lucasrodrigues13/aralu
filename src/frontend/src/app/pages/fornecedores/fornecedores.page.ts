@@ -13,9 +13,9 @@ import { mensagemDeErro } from '../../core/mensagem-erro';
 import { FornecedorResumo, NegocioClient, ServicoConta } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
-import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
+import { DIALOG, DIALOG_LARGO, DIALOG_PEQUENO } from '../../shared/dialog';
 import { Paginacao } from '../../shared/paginacao';
-import { DIALOG_FORNECEDOR, FornecedorFormDialog } from './fornecedor-form.dialog';
+import { FornecedorFormDialog } from './fornecedor-form.dialog';
 import { NovoServicoDialog } from './novo-servico.dialog';
 import { servicoCombina } from './busca-servico';
 import { ImportarFornecedoresDialog } from './importar-fornecedores.dialog';
@@ -199,12 +199,12 @@ export class FornecedoresPage implements OnInit {
   protected abrirFornecedor(resumo?: FornecedorResumo): void {
     if (resumo) {
       this.negocio.fornecedor(resumo.id).subscribe({
-        next: (detalhe) => this.dialog.open(FornecedorFormDialog, { ...DIALOG_FORNECEDOR, data: detalhe }).afterClosed().subscribe((ok) => ok && this.carregarFornecedores()),
+        next: (detalhe) => this.dialog.open(FornecedorFormDialog, { ...DIALOG_LARGO, data: detalhe }).afterClosed().subscribe((ok) => ok && this.carregarFornecedores()),
         error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
       });
       return;
     }
-    this.dialog.open(FornecedorFormDialog, { ...DIALOG_FORNECEDOR, data: null }).afterClosed().subscribe((ok) => {
+    this.dialog.open(FornecedorFormDialog, { ...DIALOG_LARGO, data: null }).afterClosed().subscribe((ok) => {
       if (ok) {
         this.carregarFornecedores();
         this.carregarServicos();
@@ -224,7 +224,7 @@ export class FornecedoresPage implements OnInit {
   protected excluirFornecedor(item: FornecedorResumo): void {
     this.dialog.open(ConfirmaDialog, {
       ...DIALOG_PEQUENO,
-      data: { titulo: 'Excluir fornecedor', texto: `Confirma a exclusão de "${item.nome}"?`, confirmar: 'Excluir' },
+      data: { titulo: 'Excluir fornecedor', texto: `Confirma a exclusão de "${item.nome}"?`, confirmar: 'Excluir', destrutivo: true },
     }).afterClosed().subscribe((confirmou) => {
       if (!confirmou) {
         return;
@@ -246,7 +246,7 @@ export class FornecedoresPage implements OnInit {
   protected excluirServico(item: ServicoConta): void {
     this.dialog.open(ConfirmaDialog, {
       ...DIALOG_PEQUENO,
-      data: { titulo: 'Excluir serviço', texto: `Confirma a exclusão de "${item.nome}"?`, confirmar: 'Excluir' },
+      data: { titulo: 'Excluir serviço', texto: `Confirma a exclusão de "${item.nome}"?`, confirmar: 'Excluir', destrutivo: true },
     }).afterClosed().subscribe((confirmou) => {
       if (!confirmou) {
         return;

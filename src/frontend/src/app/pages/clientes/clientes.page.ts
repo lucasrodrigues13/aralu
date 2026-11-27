@@ -124,7 +124,7 @@ export class ClientesPage implements OnInit {
       data: {
         titulo: 'Excluir cliente',
         texto: `Confirma a exclusão de "${cliente.nome}"? A oportunidade do funil, se houver, continua existindo.`,
-        confirmar: 'Excluir',
+        confirmar: 'Excluir', destrutivo: true,
       },
     }).afterClosed().subscribe((confirmou) => {
       if (!confirmou) return;
