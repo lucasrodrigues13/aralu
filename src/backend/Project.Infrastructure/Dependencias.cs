@@ -40,6 +40,8 @@ public static class Dependencias
         services.Configure<BootstrapOpcoes>(configuration.GetSection("Bootstrap"));
         services.Configure<ArmazenamentoOpcoes>(configuration.GetSection("Storage"));
         services.Configure<Project.Infrastructure.Assinaturas.AsaasOpcoes>(configuration.GetSection("Asaas"));
+        services.PostConfigure<Project.Infrastructure.Assinaturas.AsaasOpcoes>(opcoes => opcoes.Ambiente = configuration["App:Environment"]);
+        services.AddHostedService<Project.Infrastructure.Assinaturas.AvisoDiagnosticoAsaas>();
         services.AddHttpClient<Project.Infrastructure.Assinaturas.IAsaas, Project.Infrastructure.Assinaturas.AsaasHttp>(cliente => cliente.Timeout = TimeSpan.FromSeconds(20));
         services.AddSingleton<IEmissorJwt, EmissorJwt>();
         services.AddMemoryCache();
