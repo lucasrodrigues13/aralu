@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Security.Cryptography;
 using Project.Application.Comum;
 using Project.Application.Conta;
 using Project.Domain.Equipe;
@@ -66,13 +67,28 @@ public static class EquipeEndpoints
     public static async Task AplicarAcesso(HttpContext http, Func<Task> proximo)
     {
         var usuario = http.User;
-        if (usuario.Identity is not ClaimsIdentity identidade || !identidade.IsAuthenticated || usuario.IsInRole(Papeis.Admin))
+        if (usuario.Identity is not ClaimsIdentity identidade || !identidade.IsAuthenticated)
         {
             await proximo();
             return;
         }
 
         var id = usuario.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        // A07-001: vale para todos, inclusive o Admin, por isso vem antes do atalho dele.
+        if (!await SessaoValidaAsync(http, id))
+        {
+            http.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            await http.Response.WriteAsJsonAsync(new ErroResposta(SessaoServico.ErroSessaoEncerrada, "Sua sessão foi encerrada. Entre novamente."));
+            return;
+        }
+
+        if (usuario.IsInRole(Papeis.Admin))
+        {
+            await proximo();
+            return;
+        }
+
         var acesso = string.IsNullOrWhiteSpace(id)
             ? null
             : await http.RequestServices.GetRequiredService<EquipeServico>().AcessoAsync(id, http.RequestAborted);
@@ -135,6 +151,29 @@ public static class EquipeEndpoints
     }
 
     public const string ContaBloqueada = "conta_bloqueada";
+
+    /// <summary>
+    /// Compara o claim aralu_stamp com o stamp atual (cache de 30 s). Token antigo sem o claim só passa
+    /// antes de Jwt:StampObrigatorioDesde, para o deploy não deslogar todo mundo de uma vez.
+    /// </summary>
+    private static async Task<bool> SessaoValidaAsync(HttpContext http, string? usuarioId)
+    {
+        if (string.IsNullOrWhiteSpace(usuarioId))
+        {
+            return false;
+        }
+
+        var doToken = http.User.FindFirstValue(ContaClaims.Stamp);
+        if (string.IsNullOrWhiteSpace(doToken))
+        {
+            var corte = http.RequestServices.GetRequiredService<Microsoft.Extensions.Options.IOptions<JwtOpcoes>>().Value.StampObrigatorioDesde;
+            return corte is null || DateTimeOffset.UtcNow < corte;
+        }
+
+        var atual = await http.RequestServices.GetRequiredService<SessaoServico>().StampAtualAsync(usuarioId);
+        return atual is not null && CryptographicOperations.FixedTimeEquals(
+            System.Text.Encoding.ASCII.GetBytes(atual), System.Text.Encoding.ASCII.GetBytes(doToken));
+    }
 
     private static bool RotaLiberadaNoBloqueio(string caminho) =>
         !caminho.StartsWith("/api/", StringComparison.OrdinalIgnoreCase)

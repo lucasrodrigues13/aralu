@@ -61,6 +61,13 @@ builder.Services.AddRateLimiter(options =>
                 Math.Ceiling(retryAfter.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture);
         }
 
+        // A09-001: rota pelo modelo do endpoint (não o caminho digitado) e política pelo metadado.
+        var endpointLimitado = contexto.HttpContext.GetEndpoint();
+        contexto.HttpContext.RequestServices.GetRequiredService<Project.Application.Comum.LogSeguranca>().RateLimit(
+            endpointLimitado?.Metadata.GetMetadata<Microsoft.AspNetCore.RateLimiting.EnableRateLimitingAttribute>()?.PolicyName,
+            contexto.HttpContext.Connection.RemoteIpAddress?.ToString(),
+            (endpointLimitado as RouteEndpoint)?.RoutePattern.RawText);
+
         contexto.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
         await contexto.HttpContext.Response.WriteAsJsonAsync(
             new ErroResposta("limite", "A ação não pode ser repetida agora."),

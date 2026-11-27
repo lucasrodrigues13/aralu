@@ -44,7 +44,8 @@ public sealed class EquipeServico(
     AppDbContext banco,
     UserManager<ApplicationUser> usuarios,
     IEnvioEmail email,
-    IConfiguration configuracao)
+    IConfiguration configuracao,
+    SessaoServico sessoes)
 {
     public const string ErroUltimoDono = "ultimo_dono";
     public const string ErroJaMembro = "ja_membro";
@@ -456,9 +457,13 @@ public sealed class EquipeServico(
         }
 
         var troca = await usuarios.ChangePasswordAsync(usuario, atual, nova);
-        return troca.Succeeded
-            ? Resultado<bool>.Sucesso(true)
-            : Resultado<bool>.Erro(Codigos.Validacao, "A senha atual não confere ou a nova não atende às regras.");
+        if (!troca.Succeeded)
+        {
+            return Resultado<bool>.Erro(Codigos.Validacao, "A senha atual não confere ou a nova não atende às regras.");
+        }
+
+        await sessoes.EncerrarAsync(usuario, MotivoEncerramento.SenhaTrocada);
+        return Resultado<bool>.Sucesso(true);
     }
 
     public static string PapelDo(TipoMembro tipo) => tipo == TipoMembro.Dono ? Papeis.Organizer : Papeis.Assistant;

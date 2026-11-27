@@ -6,6 +6,9 @@ public sealed class JwtOpcoes
     public string Issuer { get; set; } = "aralu";
     public string Audience { get; set; } = "aralu";
     public int ExpiryHours { get; set; } = 8;
+
+    /// <summary>A partir desta data, token sem o claim aralu_stamp é recusado (A07-001). Nulo: aceita até vencer.</summary>
+    public DateTimeOffset? StampObrigatorioDesde { get; set; }
 }
 
 public sealed class EmailOpcoes

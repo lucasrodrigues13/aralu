@@ -42,6 +42,13 @@ public static class AdminEndpoints
             extra.AddClaim(new Claim(ClaimTypes.Role, Papeis.Organizer));
             extra.AddClaim(new Claim(ContaClaims.ContaId, dona.Id));
             usuario.AddIdentity(extra);
+
+            // A09-001: rota pelo modelo do endpoint, para não levar ao log texto livre do caminho.
+            http.RequestServices.GetRequiredService<Project.Application.Comum.LogSeguranca>().AdminOperouConta(
+                usuario.FindFirstValue(ClaimTypes.NameIdentifier),
+                dona.Id,
+                http.Request.Method,
+                (http.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText);
         }
 
         await proximo();

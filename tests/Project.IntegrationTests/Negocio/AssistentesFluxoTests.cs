@@ -476,6 +476,26 @@ public class AssistentesFluxoTests
             .ToArray(),
     };
 
+    [Fact]
+    public async Task Trocar_a_senha_invalida_o_token_antigo_do_membro()
+    {
+        var dona = await EntrarOrganizer();
+        var (assistente, _, email) = await ConvidarNoGrupoPadrao(dona);
+        var outroDispositivo = _banco.Fabrica.CreateClient();
+        var entrada = await (await outroDispositivo.PostAsJsonAsync("/api/v1/conta/entrar", new { email, senha = Senha })).Content.ReadFromJsonAsync<Sessao>();
+        outroDispositivo.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", entrada!.Token);
+        Assert.Equal(HttpStatusCode.OK, (await outroDispositivo.GetAsync("/api/v1/minha-conta")).StatusCode);
+
+        Assert.Equal(HttpStatusCode.OK, (await assistente.PostAsJsonAsync("/api/v1/minha-conta/senha", new { atual = Senha, nova = "outrasenha" })).StatusCode);
+
+        foreach (var antigo in new[] { assistente, outroDispositivo })
+        {
+            var depois = await antigo.GetAsync("/api/v1/minha-conta");
+            Assert.Equal(HttpStatusCode.Unauthorized, depois.StatusCode);
+            Assert.Contains("sessao_encerrada", await depois.Content.ReadAsStringAsync(), StringComparison.Ordinal);
+        }
+    }
+
     private async Task<(HttpClient Cliente, Guid Id, string Email)> ConvidarNoGrupoPadrao(HttpClient dona)
     {
         var email = $"ass-{Guid.NewGuid():N}@aralu.test";

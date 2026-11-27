@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Identity;
+using Project.Application.Comum;
 using Project.Application.Conta;
 using Microsoft.EntityFrameworkCore;
 using Project.Domain.Equipe;
@@ -95,8 +96,11 @@ public static class ContaEndpoints
         SignInManager<ApplicationUser> acesso,
         IEmissorJwt emissor,
         AppDbContext banco,
+        LogSeguranca seguranca,
+        HttpContext http,
         CancellationToken ct)
     {
+        var ip = http.Connection.RemoteIpAddress?.ToString();
         var email = EmailNormalizado(pedido.Email);
         if (email is null || string.IsNullOrWhiteSpace(pedido.Senha))
         {
@@ -106,17 +110,20 @@ public static class ContaEndpoints
         var usuario = await usuarios.FindByEmailAsync(email);
         if (usuario is null)
         {
+            seguranca.LoginFalhou(email, ip, MotivoLoginFalhou.Inexistente);
             return CredencialInvalida();
         }
 
         var resultado = await acesso.CheckPasswordSignInAsync(usuario, pedido.Senha!, lockoutOnFailure: true);
         if (resultado.IsLockedOut)
         {
+            seguranca.LoginBloqueado(usuario.Id, email, ip);
             return Erro(StatusCodes.Status423Locked, "bloqueio", "A ação não pode ser repetida agora.");
         }
 
         if (!resultado.Succeeded)
         {
+            seguranca.LoginFalhou(email, ip, MotivoLoginFalhou.Senha);
             return CredencialInvalida();
         }
 
@@ -132,11 +139,15 @@ public static class ContaEndpoints
 
         if (papeis.Count == 0)
         {
+            seguranca.LoginFalhou(email, ip, MotivoLoginFalhou.SemMembro);
             return CredencialInvalida();
         }
 
+        seguranca.LoginOk(usuario.Id, ip);
+
         var emailConfirmado = usuario.Email ?? email;
-        var token = emissor.Emitir(usuario.Id, emailConfirmado, papeis, membro?.ContaId.ToString());
+        var stamp = SessaoServico.HashDoStamp(await usuarios.GetSecurityStampAsync(usuario));
+        var token = emissor.Emitir(usuario.Id, emailConfirmado, papeis, membro?.ContaId.ToString(), stamp);
         return Results.Ok(new { token, email = emailConfirmado, papeis });
     }
 
@@ -211,7 +222,7 @@ public static class ContaEndpoints
         return Results.Ok(new { mensagem = "Se a conta existir, enviaremos um link para redefinir a senha." });
     }
 
-    private static async Task<IResult> RedefinirSenha(RedefinicaoPedido pedido, UserManager<ApplicationUser> usuarios)
+    private static async Task<IResult> RedefinirSenha(RedefinicaoPedido pedido, UserManager<ApplicationUser> usuarios, SessaoServico sessoes)
     {
         if (string.IsNullOrWhiteSpace(pedido.Senha))
         {
@@ -241,10 +252,22 @@ public static class ContaEndpoints
             return TokenInvalido();
         }
 
+        await sessoes.EncerrarAsync(usuario, MotivoEncerramento.SenhaRedefinida);
         return Results.Ok(new { mensagem = "Senha redefinida." });
     }
 
-    private static IResult Sair() => Results.NoContent();
+    /// <summary>Encerra a sessão em todos os dispositivos: troca o security stamp (A07-001).</summary>
+    private static async Task<IResult> Sair(ClaimsPrincipal principal, UserManager<ApplicationUser> usuarios, SessaoServico sessoes)
+    {
+        var id = principal.FindFirstValue(ClaimTypes.NameIdentifier);
+        var usuario = string.IsNullOrWhiteSpace(id) ? null : await usuarios.FindByIdAsync(id);
+        if (usuario is not null)
+        {
+            await sessoes.EncerrarAsync(usuario, MotivoEncerramento.Sair);
+        }
+
+        return Results.NoContent();
+    }
 
     private static IResult Area(ClaimsPrincipal usuario)
     {

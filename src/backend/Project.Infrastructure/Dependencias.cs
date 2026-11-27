@@ -42,6 +42,9 @@ public static class Dependencias
         services.Configure<Project.Infrastructure.Assinaturas.AsaasOpcoes>(configuration.GetSection("Asaas"));
         services.AddHttpClient<Project.Infrastructure.Assinaturas.IAsaas, Project.Infrastructure.Assinaturas.AsaasHttp>(cliente => cliente.Timeout = TimeSpan.FromSeconds(20));
         services.AddSingleton<IEmissorJwt, EmissorJwt>();
+        services.AddMemoryCache();
+        services.AddSingleton<Project.Application.Comum.LogSeguranca>();
+        services.AddScoped<SessaoServico>();
         services.AddScoped<IDados, DadosEf>();
         services.AddScoped<PerfilServico>();
         services.AddScoped<ModeloServico>();
