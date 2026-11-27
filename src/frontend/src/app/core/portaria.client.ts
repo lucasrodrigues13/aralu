@@ -48,9 +48,9 @@ export class PortariaClient {
     return this.http.get<ConvitePortaria>(`${this.publico(token)}/convites/${conviteId}`);
   }
 
-  /** Marca quem do convite compareceu; os confirmados fora da lista voltam a "não entrou". */
-  marcar(token: string, conviteId: string, compareceram: string[]) {
-    return this.http.put<ConvitePortaria>(`${this.publico(token)}/convites/${conviteId}/comparecimento`, { compareceram });
+  /** Envia só o que mudou no convite: quem entrou e de quem a entrada é desfeita. Os demais ficam como estão. */
+  marcar(token: string, conviteId: string, compareceram: string[], desfazer: string[] = []) {
+    return this.http.put<ConvitePortaria>(`${this.publico(token)}/convites/${conviteId}/comparecimento`, { compareceram, desfazer });
   }
 
   private publico(token: string) {

@@ -94,7 +94,7 @@ public class PortariaTests
     }
 
     [Fact]
-    public async Task Marcar_registra_quem_entrou_e_desmarca_os_outros()
+    public async Task Marcar_registra_quem_entrou_e_so_desfaz_quem_foi_pedido()
     {
         var (servico, dados, token) = CriarAsync();
         var convite = NovoConvite(dados, "Silva", SituacaoConvidado.Confirmado, SituacaoConvidado.Confirmado, SituacaoConvidado.Confirmado);
@@ -106,10 +106,21 @@ public class PortariaTests
         Assert.Equal([false, true, true], primeira.Convidados.OrderBy(item => item.Nome).Select(item => item.CompareceuEm is not null));
 
         var depois = Agora.AddMinutes(10);
-        var segunda = (await servico.MarcarComparecimentoAsync(Conta, EventoId, convite.Id, new ComparecimentoPedido([esposa.Id]), depois, default)).Valor!;
+        var marido = convite.Convidados[0];
+        var segunda = (await servico.MarcarComparecimentoAsync(Conta, EventoId, convite.Id, new ComparecimentoPedido([marido.Id, esposa.Id]), depois, default)).Valor!;
 
+        // Quem ficou fora das listas não muda: o filho, marcado por outra pessoa da portaria, continua presente.
+        Assert.Equal(depois, segunda.Convidados.First(item => item.Id == marido.Id).CompareceuEm);
         Assert.Equal(Agora, segunda.Convidados.First(item => item.Id == esposa.Id).CompareceuEm);
-        Assert.Null(segunda.Convidados.First(item => item.Id == filho.Id).CompareceuEm);
+        Assert.Equal(Agora, segunda.Convidados.First(item => item.Id == filho.Id).CompareceuEm);
+
+        var terceira = (await servico.MarcarComparecimentoAsync(Conta, EventoId, convite.Id, new ComparecimentoPedido([], [filho.Id]), depois, default)).Valor!;
+
+        Assert.Null(terceira.Convidados.First(item => item.Id == filho.Id).CompareceuEm);
+        Assert.Equal(Agora, terceira.Convidados.First(item => item.Id == esposa.Id).CompareceuEm);
+
+        var contraditorio = await servico.MarcarComparecimentoAsync(Conta, EventoId, convite.Id, new ComparecimentoPedido([filho.Id], [filho.Id]), depois, default);
+        Assert.Equal(Codigos.Validacao, contraditorio.Falha!.Codigo);
     }
 
     [Fact]

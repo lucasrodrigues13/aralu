@@ -12,8 +12,11 @@ public sealed record ConvitePortaria(Guid Id, string Nome, IReadOnlyList<Convida
 /// <summary>Tela da portaria: totais e a lista completa dos convites que têm ao menos um convidado confirmado (SPEC-058).</summary>
 public sealed record PortariaLeitura(string Evento, DateOnly? Data, int Confirmados, int Compareceram, IReadOnlyList<ConvitePortaria> Convites);
 
-/// <summary>Convidados do convite que a portaria marca como presentes; os confirmados fora da lista voltam a "não entrou".</summary>
-public sealed record ComparecimentoPedido(IReadOnlyList<Guid>? Compareceram);
+/// <summary>
+/// Só o que mudou no convite: quem a portaria marca como presente e de quem ela desfaz a entrada. Quem não está em
+/// nenhuma das listas fica como está, para duas pessoas na portaria não apagarem a marcação uma da outra.
+/// </summary>
+public sealed record ComparecimentoPedido(IReadOnlyList<Guid>? Compareceram, IReadOnlyList<Guid>? Desfazer = null);
 
 public interface IDadosPortaria
 {
@@ -124,7 +127,7 @@ public sealed class PortariaServico(IDadosPortaria dados, IGeradorQr qr)
             : Resultado<ConvitePortaria>.Sucesso(await MontarConviteAsync(convite, ct));
     }
 
-    /// <summary>Marca quem do convite compareceu: os listados entram (mantendo a hora de quem já tinha entrado) e os outros confirmados ficam como não entrou.</summary>
+    /// <summary>Marca quem do convite compareceu (mantendo a hora de quem já tinha entrado) e desfaz a entrada dos listados em Desfazer; os demais não mudam.</summary>
     public async Task<Resultado<ConvitePortaria>> MarcarComparecimentoAsync(
         Guid contaId,
         Guid eventoId,
@@ -146,9 +149,15 @@ public sealed class PortariaServico(IDadosPortaria dados, IGeradorQr qr)
         }
 
         var marcados = (pedido.Compareceram ?? []).Distinct().ToArray();
-        if (marcados.Any(id => convite.Convidados.All(item => item.Id != id)))
+        var desfeitos = (pedido.Desfazer ?? []).Distinct().ToArray();
+        if (marcados.Concat(desfeitos).Any(id => convite.Convidados.All(item => item.Id != id)))
         {
             return Resultado<ConvitePortaria>.Erro(Codigos.Indisponivel, "Indisponível.");
+        }
+
+        if (marcados.Intersect(desfeitos).Any())
+        {
+            return Resultado<ConvitePortaria>.Erro(Codigos.Validacao, "O mesmo convidado não pode ser marcado e desmarcado.");
         }
 
         var presencas = (await dados.ListarPresencasAsync(contexto.Evento.Id, ct)).Where(item => item.ConviteId == conviteId).ToArray();
@@ -163,7 +172,7 @@ public sealed class PortariaServico(IDadosPortaria dados, IGeradorQr qr)
             {
                 presenca.CompareceuEm ??= agora;
             }
-            else
+            else if (desfeitos.Contains(presenca.ConvidadoId))
             {
                 presenca.CompareceuEm = null;
             }

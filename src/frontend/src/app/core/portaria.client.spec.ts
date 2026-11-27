@@ -31,10 +31,10 @@ describe('PortariaClient (SPEC-058)', () => {
   });
 
   it('marca quem compareceu no convite', () => {
-    portaria.marcar('abc', 'c1', ['p1', 'p2']).subscribe();
+    portaria.marcar('abc', 'c1', ['p1', 'p2'], ['p3']).subscribe();
     const req = http.expectOne((r) => r.url.endsWith('/api/v1/publico/equipe/abc/portaria/convites/c1/comparecimento'));
     expect(req.request.method).toBe('PUT');
-    expect(req.request.body).toEqual({ compareceram: ['p1', 'p2'] });
+    expect(req.request.body).toEqual({ compareceram: ['p1', 'p2'], desfazer: ['p3'] });
     req.flush({});
   });
 });

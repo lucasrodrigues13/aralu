@@ -30,13 +30,29 @@ function montar(cliente: Partial<PortariaClient>) {
 }
 
 describe('PortariaPage (SPEC-058)', () => {
-  it('mostra os totais e a lista de convites confirmados', () => {
+  it('mostra os totais e os convites recolhidos, com o status de cada um', () => {
     const { tela } = montar({ ler: () => of(leitura) });
     expect(tela.textContent).toContain('Casamento');
     expect(tela.textContent).toContain('Família Silva');
-    expect(tela.textContent).toContain('Marido');
-    expect(tela.textContent).not.toContain('Tio');
+    expect(tela.textContent).toContain('Pendente');
+    expect(tela.textContent).not.toContain('Marido');
+    expect(tela.querySelector('[data-teste="confirmar-entrada"]')).toBeNull();
     expect(tela.querySelector('[data-teste="escanear"]')).not.toBeNull();
+  });
+
+  it('expandir todos abre os convites e mostra os convidados; recolher todos fecha', () => {
+    const { fixture, tela } = montar({ ler: () => of(leitura) });
+    const alternarTodos = tela.querySelector('[data-teste="alternar-todos"]') as HTMLButtonElement;
+
+    alternarTodos.click();
+    fixture.detectChanges();
+    expect(tela.textContent).toContain('Marido');
+    expect(tela.textContent).toContain('Não comparecerá');
+    expect((tela.querySelector('[data-teste="confirmar-entrada"]') as HTMLButtonElement).disabled).toBe(true);
+
+    alternarTodos.click();
+    fixture.detectChanges();
+    expect(tela.textContent).not.toContain('Marido');
   });
 
   it('link inválido mostra o aviso de indisponível', () => {
@@ -44,21 +60,50 @@ describe('PortariaPage (SPEC-058)', () => {
     expect(tela.textContent).toContain('não está mais disponível');
   });
 
-  it('abre o convite, marca só quem entrou e envia a lista', () => {
-    const marcar = vi.fn(() => of({ ...silva, convidados: silva.convidados.map((p) => (p.id === 'p2' ? { ...p, compareceuEm: '2026-11-21T20:00:00Z' } : p)) }));
+  it('expande o convite, marca quem entrou e envia só o que mudou', () => {
+    const comEsposa = { ...silva, convidados: silva.convidados.map((p) => (p.id === 'p2' ? { ...p, compareceuEm: '2026-11-21T20:00:00Z' } : p)) };
+    const marcar = vi.fn(() => of(comEsposa));
     const { fixture, tela } = montar({ ler: () => of(leitura), marcar });
-    const pagina = fixture.componentInstance as unknown as { abrir(c: ConvitePortaria): void; alternar(id: string, marcado: boolean): void };
+    const pagina = fixture.componentInstance as unknown as { alternar(p: ConvitePortaria['convidados'][number], marcado: boolean): void };
 
-    pagina.abrir(silva);
-    pagina.alternar('p1', false);
+    (tela.querySelector('[data-teste="alternar-convite"]') as HTMLButtonElement).click();
+    pagina.alternar(silva.convidados[1], true);
     fixture.detectChanges();
-    expect(tela.querySelector('[data-teste="convite-portaria"]')).not.toBeNull();
+    (tela.querySelector('[data-teste="confirmar-entrada"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect(marcar).toHaveBeenCalledWith('t', 'c1', ['p2'], []);
+    expect(tela.textContent).toContain('Parcial');
+    expect(tela.textContent).toContain('1 de 2 confirmados entraram');
+    expect(tela.querySelector('[data-teste="confirmar-entrada"]')).toBeNull();
+  });
+
+  it('desmarcar quem já entrou avisa e envia a entrada a desfazer', () => {
+    const comEsposa = { ...silva, convidados: silva.convidados.map((p) => (p.id === 'p2' ? { ...p, compareceuEm: '2026-11-21T20:00:00Z' } : p)) };
+    const marcar = vi.fn(() => of(silva));
+    const { fixture, tela } = montar({ ler: () => of({ ...leitura, compareceram: 1, convites: [comEsposa] }), marcar });
+    const pagina = fixture.componentInstance as unknown as { alternar(p: ConvitePortaria['convidados'][number], marcado: boolean): void };
+
+    (tela.querySelector('[data-teste="alternar-convite"]') as HTMLButtonElement).click();
+    pagina.alternar(comEsposa.convidados[1], false);
+    fixture.detectChanges();
+    expect(tela.textContent).toContain('1 entrada será desfeita');
 
     (tela.querySelector('[data-teste="confirmar-entrada"]') as HTMLButtonElement).click();
     fixture.detectChanges();
 
-    expect(marcar).toHaveBeenCalledWith('t', 'c1', ['p2']);
-    expect(tela.querySelector('[data-teste="convite-portaria"]')).toBeNull();
-    expect(tela.textContent).toContain('Entrou às');
+    expect(marcar).toHaveBeenCalledWith('t', 'c1', [], ['p2']);
+    expect(tela.textContent).toContain('Pendente');
+  });
+
+  it('QR lido abre o convite na lista com quem falta entrar já marcado', () => {
+    const { fixture, tela } = montar({ ler: () => of(leitura), lerPeloQr: () => of(silva) });
+    const pagina = fixture.componentInstance as unknown as { abrirPeloQr(texto: string): void };
+
+    pagina.abrirPeloQr('entrada:xyz');
+    fixture.detectChanges();
+
+    expect(tela.textContent).toContain('Marido');
+    expect((tela.querySelector('[data-teste="confirmar-entrada"]') as HTMLButtonElement).disabled).toBe(false);
   });
 });
