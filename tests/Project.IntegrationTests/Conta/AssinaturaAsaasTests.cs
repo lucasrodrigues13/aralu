@@ -3,8 +3,10 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Project.Domain.Assinaturas;
 using Project.Infrastructure.Persistencia;
 using Project.IntegrationTests.Suporte;
@@ -30,7 +32,7 @@ public partial class AssinaturaAsaasTests
 
         var resposta = await Ler(await dona.PostAsJsonAsync("/api/v1/assinatura/assinar", new { documento = CpfNovo(), nomeCobranca = "Assessoria Teste", formaPagamento = "pix" }));
 
-        var esperado = DateOnly.FromDateTime(cadastro.AddDays(13).UtcDateTime);
+        var esperado = Project.Domain.Comum.HorarioBrasil.Data(cadastro.AddDays(13));
         Assert.Equal(esperado, DateOnly.Parse(resposta.GetProperty("vencimento").GetString()!));
         Assert.Equal(179m, resposta.GetProperty("valor").GetDecimal());
         Assert.StartsWith("https://sandbox.asaas.com/i/", resposta.GetProperty("linkPagamento").GetString());
@@ -61,6 +63,69 @@ public partial class AssinaturaAsaasTests
     }
 
     [Fact]
+    public async Task Aviso_que_falhou_nao_conta_como_repetido_e_o_reenvio_processa()
+    {
+        var (contaId, aviso) = await AssinadaComAvisoQueFalhou();
+
+        var reenvio = await Ler(await Avisar(aviso));
+        Assert.False(reenvio.GetProperty("repetido").GetBoolean());
+        Assert.Equal(SituacaoAssinatura.Ativa, (await Assinatura(contaId)).Situacao);
+        var registro = await EventoDoAviso(aviso);
+        Assert.NotNull(registro.ProcessadoEm);
+        Assert.Null(registro.Erro);
+        Assert.Equal(2, registro.Tentativas);
+
+        // Agora sim processado: o próximo reenvio é repetido.
+        Assert.True((await Ler(await Avisar(aviso))).GetProperty("repetido").GetBoolean());
+    }
+
+    [Fact]
+    public async Task Job_reprocessa_o_aviso_que_falhou_sem_esperar_reenvio()
+    {
+        var (contaId, aviso) = await AssinadaComAvisoQueFalhou();
+
+        await using (var escopo = _banco.Fabrica.Services.CreateAsyncScope())
+        {
+            var servico = escopo.ServiceProvider.GetRequiredService<Project.Infrastructure.Assinaturas.AssinaturaServico>();
+            Assert.True(await servico.ReprocessarAvisosPendentesAsync(CancellationToken.None) >= 1);
+        }
+
+        Assert.Equal(SituacaoAssinatura.Ativa, (await Assinatura(contaId)).Situacao);
+        Assert.NotNull((await EventoDoAviso(aviso)).ProcessadoEm);
+    }
+
+    /// <summary>Conta assinada e um PAYMENT_CONFIRMED que chegou mas falhou no processamento (gravado sem ProcessadoEm).</summary>
+    private async Task<(Guid ContaId, string Aviso)> AssinadaComAvisoQueFalhou()
+    {
+        var (dona, contaId) = await EntrarDono();
+        var resposta = await Ler(await dona.PostAsJsonAsync("/api/v1/assinatura/assinar", new { documento = CpfNovo(), nomeCobranca = "Assessoria Teste", formaPagamento = "pix" }));
+        var vencimento = DateOnly.Parse(resposta.GetProperty("vencimento").GetString()!);
+        var aviso = Aviso("PAYMENT_CONFIRMED", (await Assinatura(contaId)).AsaasSubscriptionId!, vencimento);
+        var no = JsonNode.Parse(aviso)!;
+        await using var banco = Banco();
+        banco.EventosWebhookAsaas.Add(new EventoWebhookAsaas
+        {
+            Id = Guid.NewGuid(),
+            AsaasEventId = no["id"]!.GetValue<string>(),
+            Tipo = "PAYMENT_CONFIRMED",
+            Payload = aviso,
+            RecebidoEm = DateTimeOffset.UtcNow,
+            Tentativas = 1,
+            Erro = "falha de teste",
+        });
+        await banco.SaveChangesAsync();
+        Assert.NotEqual(SituacaoAssinatura.Ativa, (await Assinatura(contaId)).Situacao);
+        return (contaId, aviso);
+    }
+
+    private async Task<EventoWebhookAsaas> EventoDoAviso(string aviso)
+    {
+        var id = JsonNode.Parse(aviso)!["id"]!.GetValue<string>();
+        await using var banco = Banco();
+        return await banco.EventosWebhookAsaas.AsNoTracking().SingleAsync(item => item.AsaasEventId == id);
+    }
+
+    [Fact]
     public async Task Documento_que_ja_assinou_em_outra_conta_vence_no_dia()
     {
         var documento = CpfNovo();
@@ -71,7 +136,7 @@ public partial class AssinaturaAsaasTests
         var resposta = await Ler(await segunda.PostAsJsonAsync("/api/v1/assinatura/assinar", new { documento, nomeCobranca = "Segunda", formaPagamento = "pix" }));
 
         // T4
-        Assert.Equal(DateOnly.FromDateTime(DateTime.UtcNow), DateOnly.Parse(resposta.GetProperty("vencimento").GetString()!));
+        Assert.Equal(Project.Domain.Comum.HorarioBrasil.Data(DateTimeOffset.UtcNow), DateOnly.Parse(resposta.GetProperty("vencimento").GetString()!));
     }
 
     [Fact]
@@ -176,7 +241,7 @@ public partial class AssinaturaAsaasTests
         var vencimento = DateOnly.Parse(resposta.GetProperty("vencimento").GetString()!);
         await Ler(await Avisar(Aviso("PAYMENT_CONFIRMED", (await Assinatura(contaId)).AsaasSubscriptionId!, vencimento)));
         Assert.Equal(HttpStatusCode.OK, (await dona.PostAsync("/api/v1/assinatura/cancelar", null)).StatusCode);
-        await Mudar(contaId, item => item.PagoAte = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(-1));
+        await Mudar(contaId, item => item.PagoAte = Project.Domain.Comum.HorarioBrasil.Data(DateTimeOffset.UtcNow).AddDays(-1));
         Assert.Equal(HttpStatusCode.BadRequest, (await dona.PostAsync("/api/v1/assinatura/reativar", null)).StatusCode);
 
         var nova = await Ler(await dona.PostAsJsonAsync("/api/v1/assinatura/assinar", new { documento, nomeCobranca = "Assessoria", formaPagamento = "pix" }));

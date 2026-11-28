@@ -124,5 +124,5 @@ public static class DinheiroEndpoints
                 _ => StatusCodes.Status400BadRequest,
             });
 
-    private static DateOnly Hoje() => DateOnly.FromDateTime(Relogio.AgoraUtc);
+    private static DateOnly Hoje() => Relogio.Hoje;
 }

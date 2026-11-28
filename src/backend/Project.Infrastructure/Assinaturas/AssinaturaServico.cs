@@ -8,6 +8,7 @@ using Microsoft.Extensions.Options;
 using Project.Application.Comum;
 using Project.Domain.Assinaturas;
 using Project.Infrastructure.Persistencia;
+using Project.Domain.Comum;
 
 namespace Project.Infrastructure.Assinaturas;
 
@@ -119,7 +120,7 @@ public sealed partial class AssinaturaServico(AppDbContext banco, IAsaas asaas, 
         try
         {
             // Cancelou e ainda está no período pago: assinar de novo é reativar a mesma recorrência no Asaas.
-            var hojeAssinar = DateOnly.FromDateTime(agora.UtcDateTime);
+            var hojeAssinar = HorarioBrasil.Data(agora);
             if (assinatura.Situacao == SituacaoAssinatura.Cancelada && assinatura.AsaasSubscriptionId is not null
                 && assinatura.PagoAte is DateOnly pagoAteAssinar && pagoAteAssinar >= hojeAssinar)
             {
@@ -132,7 +133,7 @@ public sealed partial class AssinaturaServico(AppDbContext banco, IAsaas asaas, 
             {
                 var abertas = await asaas.CobrancasDaAssinaturaAsync(existente, passos, ct);
                 var aberta = abertas.FirstOrDefault(item => item.Status is "PENDING" or "OVERDUE") ?? abertas.LastOrDefault();
-                return Resultado<AssinarResposta>.Sucesso(new AssinarResposta(aberta?.Link, aberta?.Vencimento ?? assinatura.ProximoVencimento ?? DateOnly.FromDateTime(agora.UtcDateTime), assinatura.Valor, Diagnostico(passos)));
+                return Resultado<AssinarResposta>.Sucesso(new AssinarResposta(aberta?.Link, aberta?.Vencimento ?? assinatura.ProximoVencimento ?? HorarioBrasil.Data(agora), assinatura.Valor, Diagnostico(passos)));
             }
 
             // Escolha do plano (§6 B1): só entre os que a conta pode assinar.
@@ -181,7 +182,7 @@ public sealed partial class AssinaturaServico(AppDbContext banco, IAsaas asaas, 
             {
                 // Assinou de novo depois de cancelar: dentro do período pago volta a Ativa (nada é cobrado agora);
                 // depois dele, espera o pagamento, que ativa pelo aviso do Asaas.
-                var hoje = DateOnly.FromDateTime(agora.UtcDateTime);
+                var hoje = HorarioBrasil.Data(agora);
                 assinatura.Situacao = assinatura.PagoAte is DateOnly pago && pago >= hoje ? SituacaoAssinatura.Ativa : SituacaoAssinatura.Bloqueada;
             }
 
@@ -273,7 +274,7 @@ public sealed partial class AssinaturaServico(AppDbContext banco, IAsaas asaas, 
     public async Task<Resultado<AssinarResposta>> ReativarAsync(Guid contaId, DateTimeOffset agora, CancellationToken ct)
     {
         var assinatura = await DaContaAsync(contaId, ct, rastrear: true);
-        var hoje = DateOnly.FromDateTime(agora.UtcDateTime);
+        var hoje = HorarioBrasil.Data(agora);
         if (assinatura is null || assinatura.Situacao != SituacaoAssinatura.Cancelada)
         {
             return Resultado<AssinarResposta>.Erro(Codigos.Validacao, "Só uma assinatura cancelada pode ser reativada.");
@@ -401,22 +402,35 @@ public sealed partial class AssinaturaServico(AppDbContext banco, IAsaas asaas, 
         return eventos.Select(item => new EventoDiagnostico(item.Tipo, item.RecebidoEm, item.ProcessadoEm, item.Erro, JsonNode.Parse(item.Payload))).ToList();
     }
 
+    /// <summary>Quantas vezes um aviso que falhou é tentado de novo (reenvio do Asaas + job de hora em hora).</summary>
+    public const int TentativasMaximasAviso = 10;
+
     /// <summary>
     /// Aviso do Asaas (R11). O id do evento é único: o mesmo aviso chegando duas vezes muda a conta uma vez só (T16).
-    /// Devolve falso quando o aviso já tinha chegado.
+    /// Devolve falso quando o aviso já tinha sido processado. Aviso que chegou mas falhou no processamento
+    /// não conta como repetido: o reenvio processa de novo, e o job de hora em hora também tenta.
     /// </summary>
     public async Task<bool> ReceberAvisoAsync(string corpo, DateTimeOffset agora, CancellationToken ct)
     {
         var aviso = JsonNode.Parse(corpo) ?? throw new JsonException("Aviso vazio.");
         var eventoId = aviso["id"]?.GetValue<string>() ?? throw new JsonException("Aviso sem id.");
         var tipo = aviso["event"]?.GetValue<string>() ?? "";
-        if (await banco.EventosWebhookAsaas.AnyAsync(item => item.AsaasEventId == eventoId, ct))
+        var registro = await banco.EventosWebhookAsaas.FirstOrDefaultAsync(item => item.AsaasEventId == eventoId, ct);
+        if (registro is { ProcessadoEm: not null })
         {
             return false;
         }
 
-        var registro = new EventoWebhookAsaas { Id = Guid.NewGuid(), AsaasEventId = eventoId, Tipo = tipo, Payload = corpo, RecebidoEm = agora, Tentativas = 1 };
-        banco.EventosWebhookAsaas.Add(registro);
+        if (registro is null)
+        {
+            registro = new EventoWebhookAsaas { Id = Guid.NewGuid(), AsaasEventId = eventoId, Tipo = tipo, Payload = corpo, RecebidoEm = agora, Tentativas = 1 };
+            banco.EventosWebhookAsaas.Add(registro);
+        }
+        else
+        {
+            registro.Tentativas++;
+        }
+
         try
         {
             await banco.SaveChangesAsync(ct);
@@ -427,19 +441,54 @@ public sealed partial class AssinaturaServico(AppDbContext banco, IAsaas asaas, 
             return false;
         }
 
+        await ProcessarRegistroAsync(registro, aviso, agora, ct);
+        return true;
+    }
+
+    /// <summary>
+    /// Tenta de novo os avisos que chegaram mas falharam (ProcessadoEm vazio), do mais antigo ao mais novo,
+    /// até <see cref="TentativasMaximasAviso"/>. Roda no job de hora em hora. Devolve quantos foram processados agora.
+    /// </summary>
+    public async Task<int> ReprocessarAvisosPendentesAsync(CancellationToken ct)
+    {
+        var pendentes = await banco.EventosWebhookAsaas
+            .Where(item => item.ProcessadoEm == null && item.Tentativas < TentativasMaximasAviso)
+            .OrderBy(item => item.RecebidoEm)
+            .ToListAsync(ct);
+        var processados = 0;
+        foreach (var registro in pendentes)
+        {
+            registro.Tentativas++;
+            await banco.SaveChangesAsync(ct);
+            var aviso = JsonNode.Parse(registro.Payload) ?? throw new JsonException("Aviso vazio.");
+            processados += await ProcessarRegistroAsync(registro, aviso, Relogio.Agora, ct) ? 1 : 0;
+        }
+
+        return processados;
+    }
+
+    /// <summary>
+    /// Processa e grava. Se falhar, desfaz o que ficou pela metade e grava só o erro no registro,
+    /// que continua pendente para a próxima tentativa.
+    /// </summary>
+    private async Task<bool> ProcessarRegistroAsync(EventoWebhookAsaas registro, JsonNode aviso, DateTimeOffset agora, CancellationToken ct)
+    {
         try
         {
-            await ProcessarAsync(tipo, aviso, agora, ct);
+            await ProcessarAsync(registro.Tipo, aviso, agora, ct);
             registro.ProcessadoEm = Relogio.Agora;
+            registro.Erro = null;
+            await banco.SaveChangesAsync(ct);
+            return true;
         }
         catch (Exception erro) when (erro is not OperationCanceledException)
         {
-            logs.LogError(erro, "Falha ao processar o aviso {Evento} ({Tipo}) do Asaas.", eventoId, tipo);
+            logs.LogError(erro, "Falha ao processar o aviso {Evento} ({Tipo}) do Asaas, tentativa {Tentativa}.", registro.AsaasEventId, registro.Tipo, registro.Tentativas);
+            banco.DescartarAlteracoes();
             registro.Erro = erro.Message;
+            await banco.SaveChangesAsync(ct);
+            return false;
         }
-
-        await banco.SaveChangesAsync(ct);
-        return true;
     }
 
     private async Task ProcessarAsync(string tipo, JsonNode aviso, DateTimeOffset agora, CancellationToken ct)

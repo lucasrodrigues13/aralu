@@ -8,6 +8,7 @@ using Project.Application.Negocio;
 using Project.Domain.Assinaturas;
 using Project.Domain.Equipe;
 using Project.Infrastructure.Persistencia;
+using Project.Domain.Comum;
 
 namespace Project.Infrastructure.Assinaturas;
 
@@ -24,8 +25,8 @@ public sealed class AvisosAssinaturaServico(AppDbContext banco, IEnvioEmail emai
 {
     public async Task<RodadaControle> RodarAsync(DateTimeOffset agora, CancellationToken ct)
     {
-        var hoje = DateOnly.FromDateTime(agora.UtcDateTime);
-        var assinaturas = await banco.Assinaturas.IgnoreQueryFilters().ToListAsync(ct);
+        var hoje = HorarioBrasil.Data(agora);
+        var assinaturas = await banco.Assinaturas.IgnoreQueryFilters().OrderBy(item => item.ContaId).ToListAsync(ct);
         var planos = await banco.Planos.AsNoTracking().ToDictionaryAsync(item => item.Id, ct);
         int avisos = 0, mudancas = 0, valores = 0;
         foreach (var assinatura in assinaturas)
@@ -41,6 +42,9 @@ public sealed class AvisosAssinaturaServico(AppDbContext banco, IEnvioEmail emai
             catch (Exception erro) when (erro is not OperationCanceledException)
             {
                 logs.LogError(erro, "Controle diário falhou na conta {Conta}.", assinatura.ContaId);
+
+                // O contexto é o mesmo para todas as contas: sem descartar, a próxima conta tenta gravar de novo o que falhou aqui.
+                banco.DescartarAlteracoes();
             }
         }
 
@@ -117,7 +121,7 @@ public sealed class AvisosAssinaturaServico(AppDbContext banco, IEnvioEmail emai
         if (assinatura.Situacao == SituacaoAssinatura.Trial && assinatura.AsaasSubscriptionId is null && agora < assinatura.TrialTerminaEm)
         {
             var dia = (int)Math.Floor((agora - assinatura.TrialIniciaEm).TotalDays) + 1;
-            var ultimoDia = DateOnly.FromDateTime(assinatura.TrialTerminaEm.UtcDateTime).AddDays(-1);
+            var ultimoDia = HorarioBrasil.Data(assinatura.TrialTerminaEm).AddDays(-1);
             // Só o marco mais recente que já chegou: um aviso atrasado não sai depois do seguinte.
             if (new[] { 14, 13, 11 }.FirstOrDefault(m => dia >= m) is var marco and > 0
                 && await RegistrarAsync(assinatura.ContaId, $"Trial{marco}", ultimoDia, agora, ct))
@@ -235,6 +239,20 @@ public sealed class ControleDiarioAssinaturas(IServiceScopeFactory escopos, ICon
             catch (Exception erro) when (erro is not OperationCanceledException)
             {
                 logs.LogError(erro, "Controle diário de assinaturas falhou.");
+            }
+
+            try
+            {
+                using var escopo = escopos.CreateScope();
+                var reprocessados = await escopo.ServiceProvider.GetRequiredService<AssinaturaServico>().ReprocessarAvisosPendentesAsync(ct);
+                if (reprocessados > 0)
+                {
+                    logs.LogInformation("Avisos do Asaas reprocessados: {Avisos}.", reprocessados);
+                }
+            }
+            catch (Exception erro) when (erro is not OperationCanceledException)
+            {
+                logs.LogError(erro, "Reprocessamento dos avisos do Asaas falhou.");
             }
 
             await Task.Delay(Intervalo, ct);

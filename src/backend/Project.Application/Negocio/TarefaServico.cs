@@ -1,6 +1,7 @@
 using Project.Application.Comum;
 using Project.Domain.Eventos;
 using Project.Domain.Tarefas;
+using Project.Domain.Comum;
 
 namespace Project.Application.Negocio;
 
@@ -478,7 +479,7 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
         DateOnly hoje)
     {
         contextos.TryGetValue(tarefa.EventoId, out var contexto);
-        var criadoEm = contexto?.CriadoEm is DateTimeOffset criado ? DateOnly.FromDateTime(criado.UtcDateTime) : (DateOnly?)null;
+        var criadoEm = contexto?.CriadoEm is DateTimeOffset criado ? HorarioBrasil.Data(criado) : (DateOnly?)null;
         string? servico = null;
         if (tarefa.ServicoEventoId is Guid servicoId)
         {

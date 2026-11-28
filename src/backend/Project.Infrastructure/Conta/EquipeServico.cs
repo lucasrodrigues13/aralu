@@ -581,7 +581,7 @@ public sealed class EquipeServico(
             }
         }
 
-        if (nascimento is DateOnly data && data > DateOnly.FromDateTime(Relogio.AgoraUtc))
+        if (nascimento is DateOnly data && data > Relogio.Hoje)
         {
             return Erro("A data de nascimento não pode ser futura.");
         }

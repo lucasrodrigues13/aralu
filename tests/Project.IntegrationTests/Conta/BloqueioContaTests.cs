@@ -79,7 +79,7 @@ public class BloqueioContaTests
     public async Task Atraso_libera_5_dias_e_cancelada_libera_ate_o_periodo_pago()
     {
         var (dona, contaId) = await EntrarDono();
-        var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
+        var hoje = Project.Domain.Comum.HorarioBrasil.Data(DateTimeOffset.UtcNow);
 
         // T5
         await MudarAssinatura(contaId, item => { item.Situacao = SituacaoAssinatura.EmAtraso; item.ProximoVencimento = hoje.AddDays(-5); });

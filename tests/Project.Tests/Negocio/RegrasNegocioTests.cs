@@ -30,6 +30,25 @@ public class RegrasNegocioTests
         Assert.Equal(new DateOnly(2027, 3, 10), parcelas[4].Vencimento);
     }
 
+    [Theory]
+    [InlineData(BaseEntrada.Valor, 5000)]
+    [InlineData(BaseEntrada.Porcentagem, 100)]
+    public void Entrada_igual_ao_total_nao_gera_parcelas_de_zero(BaseEntrada baseEntrada, int informado)
+    {
+        var parcelas = ParcelasDaAssessoria.Calcular(
+            5000m, 3, new DateOnly(2026, 12, 10), true, baseEntrada, informado, new DateOnly(2026, 11, 10));
+
+        Assert.Empty(parcelas);
+    }
+
+    [Fact]
+    public void Data_do_negocio_e_a_de_brasilia_e_nao_a_utc()
+    {
+        // 01:30 UTC de 10/03 ainda é 22:30 de 09/03 em Brasília.
+        Assert.Equal(new DateOnly(2026, 3, 9), Project.Domain.Comum.HorarioBrasil.Data(new DateTimeOffset(2026, 3, 10, 1, 30, 0, TimeSpan.Zero)));
+        Assert.Equal(new DateOnly(2026, 3, 10), Project.Domain.Comum.HorarioBrasil.Data(new DateTimeOffset(2026, 3, 10, 3, 0, 0, TimeSpan.Zero)));
+    }
+
     [Fact]
     public void Modelo_vem_com_dois_convites_de_exemplo_listas_e_instrucoes()
     {

@@ -67,7 +67,7 @@ public class ControleDiarioTests
     public async Task Atraso_avisa_no_1o_e_no_4o_dia_e_bloqueia_no_6o()
     {
         var (_, contaId, email) = await EntrarDono();
-        var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
+        var hoje = Project.Domain.Comum.HorarioBrasil.Data(DateTimeOffset.UtcNow);
         int Avisos() => _banco.Fabrica.Email.Mensagens.Count(item => item.Email == email && item.Assunto == "Pagamento da Aralu em aberto");
 
         await Mudar(contaId, item => { item.Situacao = SituacaoAssinatura.EmAtraso; item.ProximoVencimento = hoje.AddDays(-1); });
@@ -85,11 +85,54 @@ public class ControleDiarioTests
     }
 
     [Fact]
+    public async Task Conta_que_falha_ao_gravar_nao_trava_as_outras_contas_da_rodada()
+    {
+        var (_, contaA, _) = await EntrarDono();
+        var (_, contaB, _) = await EntrarDono();
+        var hoje = Project.Domain.Comum.HorarioBrasil.Data(DateTimeOffset.UtcNow);
+        foreach (var conta in new[] { contaA, contaB })
+        {
+            await Mudar(conta, item => { item.Situacao = SituacaoAssinatura.EmAtraso; item.ProximoVencimento = hoje.AddDays(-6); });
+        }
+
+        // A rodada vai por ContaId: a conta que falha é a primeira das duas.
+        var (falha, segue) = contaA.CompareTo(contaB) < 0 ? (contaA, contaB) : (contaB, contaA);
+        var assinaturaQueFalha = (await Assinatura(falha)).Id;
+        // Gatilho no banco que recusa só o UPDATE dessa assinatura: simula uma falha ao gravar uma conta.
+        var gatilho = $"""
+            CREATE OR REPLACE FUNCTION teste_falha_assinatura() RETURNS trigger AS $$
+            BEGIN
+                IF NEW."Id" = '{assinaturaQueFalha:D}' THEN RAISE EXCEPTION 'falha de teste'; END IF;
+                RETURN NEW;
+            END $$ LANGUAGE plpgsql;
+            CREATE TRIGGER teste_falha_assinatura BEFORE UPDATE ON "Assinaturas"
+                FOR EACH ROW EXECUTE FUNCTION teste_falha_assinatura();
+            """;
+        await using var banco = Banco();
+        await banco.Database.ExecuteSqlRawAsync(gatilho);
+        try
+        {
+            await Rodar();
+        }
+        finally
+        {
+            await banco.Database.ExecuteSqlRawAsync(
+                """
+                DROP TRIGGER IF EXISTS teste_falha_assinatura ON "Assinaturas";
+                DROP FUNCTION IF EXISTS teste_falha_assinatura();
+                """);
+        }
+
+        Assert.Equal(SituacaoAssinatura.EmAtraso, (await Assinatura(falha)).Situacao);
+        Assert.Equal(SituacaoAssinatura.Bloqueada, (await Assinatura(segue)).Situacao);
+    }
+
+    [Fact]
     public async Task Desconto_avisa_7_dias_antes_e_o_valor_cheio_vai_ao_asaas_depois_do_fim()
     {
         var (dona, contaId, email) = await EntrarDono();
         await Ler(await dona.PostAsJsonAsync("/api/v1/assinatura/assinar", new { documento = "11144477735", nomeCobranca = "X", formaPagamento = "pix" }));
-        var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
+        var hoje = Project.Domain.Comum.HorarioBrasil.Data(DateTimeOffset.UtcNow);
         var assinaturaId = (await Assinatura(contaId)).AsaasSubscriptionId!;
         await Mudar(contaId, item =>
         {

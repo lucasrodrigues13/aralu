@@ -27,7 +27,7 @@ public sealed class OrcamentoFunil : ITemConta
 
     public const string MensagemDias = "A validade da proposta vai de 1 a 180 dias.";
 
-    private static readonly TimeZoneInfo Fuso = LerFuso();
+    private static readonly TimeZoneInfo Fuso = HorarioBrasil.Fuso;
 
     /// <summary>Dias de validade do último envio (SPEC-064 §7: o reenvio vem com esse valor).</summary>
     public int? DiasValidade { get; set; }
@@ -48,18 +48,6 @@ public sealed class OrcamentoFunil : ITemConta
     /// <summary>Último dia de validade para mostrar (<see cref="ValidoAte"/> é a meia-noite seguinte).</summary>
     public static DateOnly UltimoDiaDe(DateTimeOffset validoAte) =>
         DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(validoAte.AddTicks(-1), Fuso).DateTime);
-
-    private static TimeZoneInfo LerFuso()
-    {
-        try
-        {
-            return TimeZoneInfo.FindSystemTimeZoneById("America/Sao_Paulo");
-        }
-        catch (TimeZoneNotFoundException)
-        {
-            return TimeZoneInfo.CreateCustomTimeZone("BRT", TimeSpan.FromHours(-3), "BRT", "BRT");
-        }
-    }
 
     public Guid Id { get; set; }
 

@@ -1519,7 +1519,7 @@ public static class NegocioEndpoints
         [FromHeader(Name = "X-Aralu-Visitante")] string? visitante,
         OrcamentoFunilServico servico,
         CancellationToken ct) =>
-        De(servico.ResponderPublicaAsync(token, Conta(usuario)?.ToString() ?? visitante, pedido, DateOnly.FromDateTime(Relogio.AgoraUtc), ct));
+        De(servico.ResponderPublicaAsync(token, Conta(usuario)?.ToString() ?? visitante, pedido, Relogio.Hoje, ct));
 
     private static Task<IResult> ResponderOrcamentoFunil(
         Guid id,
@@ -1751,7 +1751,7 @@ public static class NegocioEndpoints
     private static string Email(ClaimsPrincipal usuario) =>
         usuario.FindFirstValue(ClaimTypes.Email) ?? usuario.FindFirstValue("email") ?? "";
 
-    private static DateOnly Hoje() => DateOnly.FromDateTime(Relogio.AgoraUtc);
+    private static DateOnly Hoje() => Relogio.Hoje;
 
     private static T? EnumOuNulo<T>(string? valor)
         where T : struct, Enum =>

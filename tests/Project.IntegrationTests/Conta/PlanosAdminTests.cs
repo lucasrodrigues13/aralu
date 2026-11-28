@@ -68,7 +68,7 @@ public class PlanosAdminTests
         Assert.Equal(179m, assinada.GetProperty("valor").GetDecimal());
 
         // T18: 30% até uma data futura: R$ 125,30, e o Asaas recebe o novo valor.
-        var ate = DateOnly.FromDateTime(DateTime.UtcNow).AddMonths(4);
+        var ate = Project.Domain.Comum.HorarioBrasil.Data(DateTimeOffset.UtcNow).AddMonths(4);
         var comDesconto = await Ler(await admin.PostAsJsonAsync($"/api/v1/admin/contas/{contaId}/assinatura/desconto", new { percentual = 30m, ate, motivo = "Campanha" }));
         Assert.Equal(125.30m, comDesconto.GetProperty("valorCobrado").GetDecimal());
         Assert.Contains(125.30m, _banco.Fabrica.Asaas.ValoresAtualizados.Values);
@@ -86,7 +86,7 @@ public class PlanosAdminTests
         // Valor personalizado e trial estendido.
         var fixo = await Ler(await admin.PostAsJsonAsync($"/api/v1/admin/contas/{contaId}/assinatura/valor", new { valor = 150m, motivo = "Negociado" }));
         Assert.Equal(150m, fixo.GetProperty("valorCobrado").GetDecimal());
-        var novoFim = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(30);
+        var novoFim = Project.Domain.Comum.HorarioBrasil.Data(DateTimeOffset.UtcNow).AddDays(30);
         var trial = await Ler(await admin.PostAsJsonAsync($"/api/v1/admin/contas/{contaId}/assinatura/trial", new { trialAte = novoFim, motivo = "Suporte" }));
         Assert.Equal(4, trial.GetProperty("historico").GetArrayLength());
     }

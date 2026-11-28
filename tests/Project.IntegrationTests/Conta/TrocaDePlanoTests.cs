@@ -20,7 +20,7 @@ public partial class AssinaturaAsaasTests
         {
             var (dona, contaId) = await AtivaComPeriodo(diasRestantes: 10);
             var antes = await Assinatura(contaId);
-            var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
+            var hoje = Project.Domain.Comum.HorarioBrasil.Data(DateTimeOffset.UtcNow);
             var esperado = Domain.Assinaturas.Assinatura.CalcularProRata(179m, 299m, antes.PagoAte!.Value, hoje);
 
             var previa = (await Ler(await dona.GetAsync("/api/v1/assinatura/trocas"))).EnumerateArray().Single(item => item.GetProperty("planoId").GetGuid() == superior);
@@ -97,7 +97,7 @@ public partial class AssinaturaAsaasTests
 
             // Agenda de novo e chega o dia: o controle diário aplica.
             await Ler(await dona.PostAsJsonAsync("/api/v1/assinatura/trocar-plano", new { planoId = menor }));
-            await Mudar(contaId, item => item.DowngradeEm = DateOnly.FromDateTime(DateTime.UtcNow));
+            await Mudar(contaId, item => item.DowngradeEm = Project.Domain.Comum.HorarioBrasil.Data(DateTimeOffset.UtcNow));
             await using (var escopo = _banco.Fabrica.Services.CreateAsyncScope())
             {
                 await escopo.ServiceProvider.GetRequiredService<AvisosAssinaturaServico>().RodarAsync(DateTimeOffset.UtcNow, CancellationToken.None);
@@ -176,7 +176,7 @@ public partial class AssinaturaAsaasTests
         var resposta = await Ler(await dona.PostAsJsonAsync("/api/v1/assinatura/assinar", new { documento = CpfNovo(), nomeCobranca = "Assessoria", formaPagamento = "pix" }));
         var vencimento = DateOnly.Parse(resposta.GetProperty("vencimento").GetString()!);
         await Ler(await Avisar(Aviso("PAYMENT_CONFIRMED", (await Assinatura(contaId)).AsaasSubscriptionId!, vencimento)));
-        var pagoAte = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(diasRestantes - 1);
+        var pagoAte = Project.Domain.Comum.HorarioBrasil.Data(DateTimeOffset.UtcNow).AddDays(diasRestantes - 1);
         await Mudar(contaId, item =>
         {
             item.PagoAte = pagoAte;

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Project.Application.Comum;
 using Project.Domain.Assinaturas;
+using Project.Domain.Comum;
 
 namespace Project.Infrastructure.Assinaturas;
 
@@ -113,7 +114,7 @@ public sealed partial class AssinaturaServico
             }
 
             var forma = assinatura.FormaPagamento == FormaPagamento.Cartao ? "CREDIT_CARD" : "PIX";
-            var hoje = DateOnly.FromDateTime(agora.UtcDateTime);
+            var hoje = HorarioBrasil.Data(agora);
             var cobranca = await asaas.CriarCobrancaAsync(
                 assinatura.AsaasCustomerId!,
                 forma,
@@ -254,7 +255,7 @@ public sealed partial class AssinaturaServico
 
     private TrocaPrevia Prever(Assinatura assinatura, Plano atual, Plano destino, DateTimeOffset agora)
     {
-        var hoje = DateOnly.FromDateTime(agora.UtcDateTime);
+        var hoje = HorarioBrasil.Data(agora);
         var aplicaEm = assinatura.Situacao == SituacaoAssinatura.Trial ? null : assinatura.ProximoVencimento;
         var novaMensalidade = ValorDoPlano(assinatura, destino.ValorMensal, aplicaEm ?? hoje);
         var tipo = novaMensalidade > assinatura.Valor ? Upgrade : Downgrade;
@@ -318,5 +319,5 @@ public sealed partial class AssinaturaServico
 
     /// <summary>Valor do plano para a conta (R10 da SPEC-062), com o desconto enquanto valer.</summary>
     private static decimal ValorDoPlano(Assinatura assinatura, decimal valorMensal, DateOnly? vencimento) =>
-        Assinatura.ValorCobrado(valorMensal, null, assinatura.DescontoPercentual, assinatura.DescontoAte, vencimento ?? DateOnly.FromDateTime(Relogio.AgoraUtc));
+        Assinatura.ValorCobrado(valorMensal, null, assinatura.DescontoPercentual, assinatura.DescontoAte, vencimento ?? Relogio.Hoje);
 }

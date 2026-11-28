@@ -133,7 +133,7 @@ public sealed class ContratoFunilServico(IDados dados, IDadosContrato modelos, I
         }
 
         var perfil = await dados.ObterPerfilAsync(contaId, ct);
-        var hoje = DateOnly.FromDateTime(Relogio.AgoraUtc);
+        var hoje = Relogio.Hoje;
         var valores = ContratoPreenchimento.Valores(contratante, oportunidade, perfil, aprovado, hoje);
         conteudo = Mesclagem.Preencher(conteudo, valores, html: HtmlSeguro.EhHtml(conteudo));
         Guid? documentoId = null;
@@ -451,7 +451,7 @@ public sealed class ContratoFunilServico(IDados dados, IDadosContrato modelos, I
 
     private static ContratoFunilLeitura Ler(ContratoFunil item, string oportunidadeNome)
     {
-        var hoje = DateOnly.FromDateTime(Relogio.AgoraUtc);
+        var hoje = Relogio.Hoje;
         return new(
             item.Id,
             item.OportunidadeId,

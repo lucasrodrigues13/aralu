@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Project.Application.Comum;
 using Project.Domain.Assinaturas;
 using Project.Infrastructure.Persistencia;
+using Project.Domain.Comum;
 
 namespace Project.Infrastructure.Assinaturas;
 
@@ -156,7 +157,7 @@ public sealed class PlanosAdminServico(AppDbContext banco, IAsaas asaas, ILogger
             .OrderByDescending(item => item.FeitoEm)
             .Join(banco.Users, item => item.FeitoPorUsuarioId, usuario => usuario.Id, (item, usuario) => new { item, usuario.Email })
             .ToListAsync(ct);
-        var hoje = DateOnly.FromDateTime(Relogio.AgoraUtc);
+        var hoje = Relogio.Hoje;
         return new ContaAssinaturaLeitura(
             contaId,
             assinatura.Situacao.ToString(),
@@ -200,7 +201,7 @@ public sealed class PlanosAdminServico(AppDbContext banco, IAsaas asaas, ILogger
             return Resultado<ContaAssinaturaLeitura>.Erro(Codigos.Indisponivel, "Conta sem assinatura.");
         }
 
-        var hoje = DateOnly.FromDateTime(agora.UtcDateTime);
+        var hoje = HorarioBrasil.Data(agora);
         var planoAtual = await banco.Planos.AsNoTracking().FirstAsync(item => item.Id == assinatura.PlanoId, ct);
         var valorAntes = Assinatura.ValorCobrado(planoAtual.ValorMensal, assinatura.ValorPersonalizado, assinatura.DescontoPercentual, assinatura.DescontoAte, assinatura.ProximoVencimento ?? hoje);
         var registro = new AlteracaoAssinatura

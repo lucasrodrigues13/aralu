@@ -180,7 +180,8 @@ export function blocosDoContrato(html: string): string[] {
     } else if (no instanceof HTMLElement) {
       blocos.push(no.outerHTML);
     } else if (no.textContent?.trim()) {
-      blocos.push(no.textContent);
+      // textContent devolve o texto já decodificado ("&lt;img&gt;" vira "<img>"): escapa de novo antes de virar HTML.
+      blocos.push(escaparAtributo(no.textContent));
     }
   }
   return blocos;

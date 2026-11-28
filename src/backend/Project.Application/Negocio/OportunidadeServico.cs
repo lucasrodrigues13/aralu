@@ -623,7 +623,7 @@ public sealed class OportunidadeServico(IDados dados)
         ContratanteDados? contratante = null;
         if (pedido.Contratante is not null)
         {
-            var normalizado = ContratanteRegras.Normalizar(pedido.Contratante, DateOnly.FromDateTime(Relogio.AgoraUtc).AddDays(1));
+            var normalizado = ContratanteRegras.Normalizar(pedido.Contratante, Relogio.Hoje.AddDays(1));
             if (!normalizado.Ok)
             {
                 return Resultado<Oportunidade>.Erro(normalizado.Falha!.Codigo, normalizado.Falha.Mensagem);

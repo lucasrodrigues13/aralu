@@ -257,5 +257,5 @@ public static class LinkClienteEndpoints
     private static string LimparNome(string nome) =>
         new string(nome.Where(c => !char.IsControl(c) && c != '"' && c != '\\' && c != '/').ToArray()) is { Length: > 0 } limpo ? limpo : "arquivo";
 
-    private static DateOnly Hoje() => DateOnly.FromDateTime(Relogio.AgoraUtc);
+    private static DateOnly Hoje() => Relogio.Hoje;
 }

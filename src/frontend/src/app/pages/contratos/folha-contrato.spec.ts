@@ -32,4 +32,12 @@ describe('limparHtml (A05-001)', () => {
     expect(blocos.join('')).not.toContain('onerror');
     expect(blocos.length).toBe(2);
   });
+
+  it('texto solto entre blocos não volta a virar HTML', () => {
+    const blocos = blocosDoContrato(limparHtml('<p>Cláusula</p>&lt;img src=x onerror=alert(1)&gt;'));
+    const html = blocos.join('');
+    expect(html).not.toContain('<img');
+    expect(html).toContain('&lt;img');
+    expect(blocos.length).toBe(2);
+  });
 });

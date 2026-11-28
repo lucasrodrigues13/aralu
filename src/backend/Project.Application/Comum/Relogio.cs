@@ -14,6 +14,9 @@ public static class Relogio
 
     public static DateTime AgoraUtc => Provedor.GetUtcNow().UtcDateTime;
 
+    /// <summary>Data de hoje no horário de Brasília (não em UTC): vencimentos, prazos e períodos pagos.</summary>
+    public static DateOnly Hoje => Project.Domain.Comum.HorarioBrasil.Data(Agora);
+
     /// <summary>Chamado uma única vez na inicialização da API.</summary>
     public static void Usar(TimeProvider provedor) => Provedor = provedor;
 }

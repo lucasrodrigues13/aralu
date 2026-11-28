@@ -201,7 +201,7 @@ public class NegocioFluxoTests
         var outra = await Entrar();
         var evento = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new { tipo = "Casamento", primeiroNome = "Lia", segundoNome = "Caio" }));
         var eventoId = evento.GetProperty("id").GetGuid();
-        var hoje = DateOnly.FromDateTime(DateTime.UtcNow).ToString("yyyy-MM-dd");
+        var hoje = Project.Domain.Comum.HorarioBrasil.Data(DateTimeOffset.UtcNow).ToString("yyyy-MM-dd");
 
         var criada = await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/tarefas", new { titulo = "Ligar para o buffet" }));
         Assert.Equal("Pendente", criada.GetProperty("situacao").GetString());

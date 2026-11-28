@@ -142,7 +142,7 @@ public class DinheiroFluxoTests
     {
         var dono = await Entrar();
         var outra = await Entrar();
-        var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
+        var hoje = Project.Domain.Comum.HorarioBrasil.Data(DateTimeOffset.UtcNow);
         var evento = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new { tipo = "Casamento", primeiroNome = "Bia", segundoNome = "Leo", data = hoje.AddDays(10).ToString("yyyy-MM-dd") }));
         var eventoId = evento.GetProperty("id").GetGuid();
         await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/tarefas", new { titulo = "Ligar", prazo = hoje.ToString("yyyy-MM-dd") }));

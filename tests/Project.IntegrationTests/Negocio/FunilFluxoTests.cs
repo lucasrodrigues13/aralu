@@ -348,7 +348,7 @@ public class FunilFluxoTests
     {
         var dono = await Entrar();
         var outra = await Entrar();
-        var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
+        var hoje = Project.Domain.Comum.HorarioBrasil.Data(DateTimeOffset.UtcNow);
 
         // Origem fora da lista e "Outro" sem texto não gravam.
         Assert.Equal(HttpStatusCode.BadRequest, (await dono.PostAsJsonAsync("/api/v1/oportunidades", new

@@ -114,8 +114,8 @@ public sealed class Assinatura : ITemConta
         SituacaoAssinatura.Trial => agora < TrialTerminaEm,
         SituacaoAssinatura.Ativa => true,
         SituacaoAssinatura.EmAtraso => ProximoVencimento is DateOnly vencimento
-            && DateOnly.FromDateTime(agora.UtcDateTime) <= vencimento.AddDays(DiasDeTolerancia),
-        SituacaoAssinatura.Cancelada => PagoAte is DateOnly pago && DateOnly.FromDateTime(agora.UtcDateTime) <= pago,
+            && HorarioBrasil.Data(agora) <= vencimento.AddDays(DiasDeTolerancia),
+        SituacaoAssinatura.Cancelada => PagoAte is DateOnly pago && HorarioBrasil.Data(agora) <= pago,
         _ => false,
     };
 
@@ -142,7 +142,7 @@ public sealed class Assinatura : ITemConta
     /// </summary>
     public DateOnly PrimeiroVencimento(DateTimeOffset agora, bool documentoJaUsado)
     {
-        var hoje = DateOnly.FromDateTime(agora.UtcDateTime);
+        var hoje = HorarioBrasil.Data(agora);
 
         // Cancelou e volta dentro do período pago: a próxima cobrança é só no dia seguinte ao fim dele.
         if (Situacao == SituacaoAssinatura.Cancelada && PagoAte is DateOnly pago && pago >= hoje)
@@ -155,7 +155,7 @@ public sealed class Assinatura : ITemConta
             return hoje;
         }
 
-        var ultimoDia = DateOnly.FromDateTime(TrialTerminaEm.UtcDateTime).AddDays(-1);
+        var ultimoDia = HorarioBrasil.Data(TrialTerminaEm).AddDays(-1);
         return ultimoDia > hoje ? ultimoDia : hoje;
     }
 

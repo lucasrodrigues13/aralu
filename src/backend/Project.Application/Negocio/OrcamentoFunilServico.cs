@@ -115,7 +115,7 @@ public sealed class OrcamentoFunilServico(IDados dados)
         }
 
         var perfil = await dados.ObterPerfilAsync(contaId, ct);
-        return Resultado<string>.Sucesso(ParametrosOrcamento.Aplicar(modelo.Texto, oportunidade, valor, DateOnly.FromDateTime(Relogio.AgoraUtc), perfil));
+        return Resultado<string>.Sucesso(ParametrosOrcamento.Aplicar(modelo.Texto, oportunidade, valor, Relogio.Hoje, perfil));
     }
 
     /// <summary>
@@ -137,7 +137,7 @@ public sealed class OrcamentoFunilServico(IDados dados)
             .OrderBy(parcela => parcela.Numero)
             .Select(parcela => new ParcelaOrcamentoLeitura(parcela.Numero, parcela.Vencimento, parcela.Valor, parcela.Entrada))
             .ToArray();
-        var hoje = DateOnly.FromDateTime(Relogio.AgoraUtc);
+        var hoje = Relogio.Hoje;
         var valores = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         foreach (var tag in Domain.Modelos.ParametrosMensagem.Todos)
         {
@@ -189,7 +189,7 @@ public sealed class OrcamentoFunilServico(IDados dados)
             htmlAceite = modelo.HtmlAceite;
             extrasAceite = modelo.ExtrasAceite;
             var perfil = await dados.ObterPerfilAsync(contaId, ct);
-            conteudo = ParametrosOrcamento.Aplicar(modelo.Texto, oportunidade, pedido.Valor, DateOnly.FromDateTime(Relogio.AgoraUtc), perfil);
+            conteudo = ParametrosOrcamento.Aplicar(modelo.Texto, oportunidade, pedido.Valor, Relogio.Hoje, perfil);
         }
         else if (modeloId is Guid mid2)
         {

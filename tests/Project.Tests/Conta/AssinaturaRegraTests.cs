@@ -7,6 +7,7 @@ public class AssinaturaRegraTests
 {
     private static readonly DateTimeOffset Cadastro = new(2026, 3, 1, 12, 0, 0, TimeSpan.Zero);
     private static readonly Plano Pro = new() { Id = Plano.ProId, ValorMensal = 179m };
+    private static readonly TimeSpan Brasilia = TimeSpan.FromHours(-3);
 
     [Fact]
     public void Trial_vale_14_dias_e_bloqueia_no_15o()
@@ -26,17 +27,20 @@ public class AssinaturaRegraTests
     {
         var assinatura = new Assinatura { Situacao = SituacaoAssinatura.EmAtraso, ProximoVencimento = new DateOnly(2026, 4, 10) };
 
-        Assert.True(assinatura.Liberada(new DateTimeOffset(2026, 4, 15, 23, 0, 0, TimeSpan.Zero)));
-        Assert.False(assinatura.Liberada(new DateTimeOffset(2026, 4, 16, 0, 0, 0, TimeSpan.Zero)));
+        // O dia vira à meia-noite de Brasília (03:00 UTC), não à meia-noite UTC.
+        Assert.True(assinatura.Liberada(new DateTimeOffset(2026, 4, 15, 23, 59, 0, Brasilia)));
+        Assert.False(assinatura.Liberada(new DateTimeOffset(2026, 4, 16, 0, 0, 0, Brasilia)));
     }
 
     [Fact]
-    public void Cancelada_libera_ate_o_fim_do_periodo_pago()
+    public void Cancelada_libera_ate_o_fim_do_periodo_pago_no_horario_de_brasilia()
     {
         var assinatura = new Assinatura { Situacao = SituacaoAssinatura.Cancelada, PagoAte = new DateOnly(2026, 4, 30) };
 
-        Assert.True(assinatura.Liberada(new DateTimeOffset(2026, 4, 30, 20, 0, 0, TimeSpan.Zero)));
-        Assert.False(assinatura.Liberada(new DateTimeOffset(2026, 5, 1, 0, 0, 0, TimeSpan.Zero)));
+        // 22h do último dia pago em Brasília já é 01/05 em UTC: a conta continua liberada.
+        Assert.True(assinatura.Liberada(new DateTimeOffset(2026, 5, 1, 1, 0, 0, TimeSpan.Zero)));
+        Assert.True(assinatura.Liberada(new DateTimeOffset(2026, 4, 30, 23, 59, 0, Brasilia)));
+        Assert.False(assinatura.Liberada(new DateTimeOffset(2026, 5, 1, 0, 0, 0, Brasilia)));
     }
 
     [Fact]
