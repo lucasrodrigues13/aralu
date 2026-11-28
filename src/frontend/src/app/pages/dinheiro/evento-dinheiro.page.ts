@@ -1,3 +1,4 @@
+import { ExpandirTodosComponent } from '../../shared/expandir-todos.component';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -26,11 +27,12 @@ import { EventoAbasComponent } from '../eventos/evento-abas.component';
 import { ComprovanteDialog } from './comprovante.dialog';
 import { ParcelarPagamentoDialog } from './parcelar-pagamento.dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { Estado } from '../../shared/estado';
 
 /** Aba Financeiro do evento (SPEC-043): pagamentos a fornecedores, com parcelas, marcação de pago e comprovantes. */
 @Component({
   selector: 'app-evento-dinheiro',
-  imports: [MatCardModule, MatButtonModule, MatCheckboxModule, MatIconModule, GdDataPipe, GdDinheiroPipe, EventoAbasComponent, MatTooltipModule],
+  imports: [ExpandirTodosComponent, MatCardModule, MatButtonModule, MatCheckboxModule, MatIconModule, GdDataPipe, GdDinheiroPipe, EventoAbasComponent, MatTooltipModule, Estado],
   template: `
     <app-evento-abas [eventoId]="id" />
 
@@ -47,15 +49,19 @@ import { MatTooltipModule } from '@angular/material/tooltip';
         </div>
         <mat-card-content class="border-t border-border">
           @if (d.pagamentosFornecedores.length === 0) {
-            <p class="text-center text-muted py-10">Nenhum pagamento. Eles aparecem ao contratar um fornecedor na aba Fornecedores.</p>
+            <app-estado titulo="Nenhum pagamento ainda" texto="Eles aparecem ao contratar um fornecedor na aba Fornecedores." />
           } @else {
-            <ul class="servicos-lista" aria-label="Pagamentos por serviço">
+            <app-expandir-todos [abertos]="todosAbertos()" (alternar)="alternarTodos()">
+              {{ grupos().length }} {{ grupos().length === 1 ? 'serviço' : 'serviços' }} ·
+              {{ d.pagamentosFornecedores.length }} {{ d.pagamentosFornecedores.length === 1 ? 'pagamento' : 'pagamentos' }}
+            </app-expandir-todos>
+            <ul class="grupos-lista com-cabecalho" aria-label="Pagamentos por serviço">
               @for (grupo of grupos(); track grupo.servicoId) {
-                <li class="servico" [class.aberto]="!fechados().has(grupo.servicoId)">
-                  <button type="button" class="servico-cabecalho" [attr.aria-expanded]="!fechados().has(grupo.servicoId)"
+                <li class="grupo" [class.aberto]="!fechados().has(grupo.servicoId)">
+                  <button type="button" class="grupo-cabecalho" [attr.aria-expanded]="!fechados().has(grupo.servicoId)"
                     [attr.aria-controls]="'pagamentos-' + grupo.servicoId" (click)="alternarServico(grupo.servicoId)">
                     <mat-icon class="seta">expand_more</mat-icon>
-                    <span class="servico-texto">
+                    <span class="grupo-texto">
                       <span class="nome">{{ grupo.servico }}</span>
                       <span class="block text-xs text-muted">Contratado {{ grupo.total | gdDinheiro }} · pago {{ grupo.pago | gdDinheiro }}</span>
                     </span>
@@ -145,17 +151,10 @@ import { MatTooltipModule } from '@angular/material/tooltip';
   styles: `
     .nome { display: block; font-weight: 500; }
     .valor { font-weight: 600; white-space: nowrap; }
-    .servicos-lista { list-style: none; padding: 0; margin: 0; border: 1px solid rgba(128,128,128,.25); border-radius: 8px; overflow: hidden; }
-    .servico + .servico { border-top: 1px solid rgba(128,128,128,.25); }
-    .servico-cabecalho { width: 100%; display: flex; align-items: center; gap: 12px; padding: 16px 16px 16px 12px; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
-    .servico-cabecalho:focus-visible { outline: 2px solid var(--mat-sys-primary); outline-offset: -2px; }
-    .servico-texto { flex: 1; min-width: 0; }
-    .seta { transition: transform .15s; flex-shrink: 0; transform: rotate(-90deg); }
-    .servico.aberto .seta { transform: none; }
     .fornecedores { background: rgba(128,128,128,.1); border-top: 1px solid rgba(128,128,128,.3); }
     .fornecedor { display: grid; grid-template-columns: minmax(180px, 2fr) 100px minmax(110px, 1fr) minmax(150px, 1.2fr) auto; align-items: center; gap: 12px; padding: 10px 16px 10px 52px; }
     .fornecedor + .fornecedor { border-top: 1px dashed rgba(128,128,128,.2); }
-    .fornecedor:hover, .servico-cabecalho:hover { background: rgba(128,128,128,.08); }
+    .fornecedor:hover { background: rgba(128,128,128,.08); }
     .fornecedor-nome { position: relative; }
     .seta-parcelas { position: absolute; left: -44px; top: 50%; transform: translateY(-50%); }
     .seta-parcelas mat-icon { transition: transform .15s; transform: rotate(-90deg); }
@@ -182,6 +181,12 @@ export class EventoDinheiroPage implements OnInit {
 
   /** Serviços recolhidos; todos começam abertos. */
   protected readonly fechados = signal<ReadonlySet<string>>(new Set());
+
+  protected readonly todosAbertos = computed(() => this.grupos().every((grupo) => !this.fechados().has(grupo.servicoId)));
+
+  protected alternarTodos(): void {
+    this.fechados.set(this.todosAbertos() ? new Set(this.grupos().map((grupo) => grupo.servicoId)) : new Set());
+  }
 
   /** Pagamentos agrupados por serviço, no mesmo padrão das abas Fornecedores e Contratos. */
   protected readonly grupos = computed(() => {
@@ -236,7 +241,7 @@ export class EventoDinheiroPage implements OnInit {
   protected removerParcelamento(pagamento: PagamentoFornecedor): void {
     this.dialog.open(ConfirmaDialog, {
       ...DIALOG_PEQUENO,
-      data: { titulo: 'Remover parcelamento', texto: `Voltar "${pagamento.servico}" a um pagamento só, sem parcelas?`, confirmar: 'Remover' },
+      data: { titulo: 'Remover parcelamento', texto: `Voltar "${pagamento.servico}" a um pagamento só, sem parcelas?`, confirmar: 'Remover', destrutivo: true },
     }).afterClosed().subscribe((confirmou) => {
       if (confirmou) this.aplicar(this.dinheiro.removerParcelamento(this.id, pagamento.pagamentoId), 'Parcelamento removido.');
     });
@@ -261,7 +266,7 @@ export class EventoDinheiroPage implements OnInit {
     const nome = (parcela ?? pagamento).comprovante?.nome ?? 'comprovante';
     this.dialog.open(ConfirmaDialog, {
       ...DIALOG_PEQUENO,
-      data: { titulo: 'Excluir comprovante', texto: `Excluir "${nome}"? O arquivo é apagado.`, confirmar: 'Excluir' },
+      data: { titulo: 'Excluir comprovante', texto: `Excluir "${nome}"? O arquivo é apagado.`, confirmar: 'Excluir', destrutivo: true },
     }).afterClosed().subscribe((confirmou) => {
       if (confirmou) this.aplicar(this.dinheiro.excluirComprovante(this.id, pagamento.pagamentoId, parcela?.id ?? null), 'Comprovante excluído.');
     });

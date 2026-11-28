@@ -23,13 +23,18 @@ public sealed record OrcamentoFunilLeitura(
     string? RespostaMensagem = null,
     DateTimeOffset? RespostaEm = null,
     string? CriadoPor = null,
-    IReadOnlyList<ParcelaOrcamentoLeitura>? Parcelas = null);
+    IReadOnlyList<ParcelaOrcamentoLeitura>? Parcelas = null,
+    int? DiasValidade = null);
+
+/// <summary>Envio da proposta (SPEC-064): <c>Dias</c> nulo usa o padrão da conta.</summary>
+public sealed record PedidoEnvioProposta(int? Dias);
 
 public sealed record SalvarOrcamentoFunil(
     Guid? OportunidadeId,
     string? Conteudo,
     decimal? Valor,
-    Guid? ModeloId);
+    Guid? ModeloId,
+    int? DiasValidade = null);
 
 /// <summary>Situação da proposta por link no cartão do lead (SPEC-031 §6.6, item 6).</summary>
 public sealed record PropostaResumo(
@@ -58,7 +63,7 @@ public sealed record PropostaPublica(
     bool DaPropriaConta = false,
     IReadOnlyList<ParcelaOrcamentoLeitura>? Parcelas = null,
     ContratanteDados? Contratante = null,
-    string? HtmlAceite = null);
+    string? PaginaAceite = null);
 
 /// <summary>Resposta à proposta. <c>Contratante</c> só vale no aceite pelo link (SPEC-049).</summary>
 public sealed record ResponderProposta(string? Tipo, string? Mensagem, ContratanteDados? Contratante = null);
@@ -68,7 +73,7 @@ public sealed class OrcamentoFunilServico(IDados dados)
     public const int LimiteMensagem = 1000;
 
     public async Task<IReadOnlyList<OrcamentoFunilLeitura>> ListarAsync(
-        string contaId,
+        Guid contaId,
         string? situacao,
         string? busca,
         DateOnly? criadoDe,
@@ -88,7 +93,7 @@ public sealed class OrcamentoFunilServico(IDados dados)
         return itens.Select(item => Ler(item, nomes.GetValueOrDefault(item.OportunidadeId, ""))).ToArray();
     }
 
-    public async Task<Resultado<OrcamentoFunilLeitura>> ObterAsync(string contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<OrcamentoFunilLeitura>> ObterAsync(Guid contaId, Guid id, CancellationToken ct)
     {
         var item = await dados.ObterOrcamentoFunilAsync(contaId, id, ct);
         if (item is null)
@@ -100,7 +105,7 @@ public sealed class OrcamentoFunilServico(IDados dados)
     }
 
     /// <summary>Texto do modelo com os parâmetros trocados pelos dados do lead (SPEC-031 §17, ponto 12).</summary>
-    public async Task<Resultado<string>> TextoDoModeloAsync(string contaId, Guid modeloId, Guid oportunidadeId, decimal? valor, CancellationToken ct)
+    public async Task<Resultado<string>> TextoDoModeloAsync(Guid contaId, Guid modeloId, Guid oportunidadeId, decimal? valor, CancellationToken ct)
     {
         var modelo = await dados.ObterModeloOrcamentoFunilAsync(contaId, modeloId, ct);
         var oportunidade = await dados.ObterOportunidadeAsync(contaId, oportunidadeId, ct);
@@ -110,10 +115,48 @@ public sealed class OrcamentoFunilServico(IDados dados)
         }
 
         var perfil = await dados.ObterPerfilAsync(contaId, ct);
-        return Resultado<string>.Sucesso(ParametrosOrcamento.Aplicar(modelo.Texto, oportunidade, valor, DateOnly.FromDateTime(DateTime.UtcNow), perfil?.NomeEmpresa));
+        return Resultado<string>.Sucesso(ParametrosOrcamento.Aplicar(modelo.Texto, oportunidade, valor, Relogio.Hoje, perfil));
     }
 
-    public async Task<Resultado<OrcamentoFunilLeitura>> CriarAsync(string contaId, SalvarOrcamentoFunil pedido, CancellationToken ct, string? criadoPor = null)
+    /// <summary>
+    /// Modelo de mensagem com as tags trocadas pelos dados do lead e do orçamento. Tag de mensagem sem dado aqui
+    /// (convidado, mesa, QR code…) vira texto vazio; {{link_proposta}} recebe o link informado.
+    /// </summary>
+    public async Task<Resultado<string>> MensagemAsync(Guid contaId, Guid orcamentoId, Guid modeloMensagemId, string? linkProposta, CancellationToken ct)
+    {
+        var item = await dados.ObterOrcamentoFunilAsync(contaId, orcamentoId, ct);
+        var modelo = await dados.ObterMensagemAsync(contaId, modeloMensagemId, ct);
+        var oportunidade = item is null ? null : await dados.ObterOportunidadeAsync(contaId, item.OportunidadeId, ct);
+        if (item is null || modelo is null || oportunidade is null)
+        {
+            return Resultado<string>.Erro(Codigos.Indisponivel, "Indisponível.");
+        }
+
+        var perfil = await dados.ObterPerfilAsync(contaId, ct);
+        var parcelas = item.Parcelas
+            .OrderBy(parcela => parcela.Numero)
+            .Select(parcela => new ParcelaOrcamentoLeitura(parcela.Numero, parcela.Vencimento, parcela.Valor, parcela.Entrada))
+            .ToArray();
+        var hoje = Relogio.Hoje;
+        var valores = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var tag in Domain.Modelos.ParametrosMensagem.Todos)
+        {
+            valores[tag.Trim('{', '}')] = "";
+        }
+
+        var validade = item.ValidoAte is DateTimeOffset ate ? OrcamentoFunil.UltimoDiaDe(ate) : hoje;
+        foreach (var (chave, valor) in ParametrosOrcamento.Valores(oportunidade, item.Valor, validade, perfil, parcelas, validadeJaCalculada: item.ValidoAte is not null))
+        {
+            valores[chave] = valor;
+        }
+
+        valores["nome_evento"] = oportunidade.Nome;
+        valores["nome_da_empresa"] = perfil?.NomeEmpresa ?? "";
+        valores["link_proposta"] = linkProposta ?? "";
+        return Resultado<string>.Sucesso(ParametrosOrcamento.Trocar(modelo.Texto, valores, html: false));
+    }
+
+    public async Task<Resultado<OrcamentoFunilLeitura>> CriarAsync(Guid contaId, SalvarOrcamentoFunil pedido, CancellationToken ct, string? criadoPor = null)
     {
         if (pedido.OportunidadeId is not Guid oportunidadeId ||
             await dados.ObterOportunidadeAsync(contaId, oportunidadeId, ct) is not { } oportunidade)
@@ -126,9 +169,15 @@ public sealed class OrcamentoFunilServico(IDados dados)
             return Resultado<OrcamentoFunilLeitura>.Erro(Codigos.Validacao, "O valor não pode ser negativo.");
         }
 
+        if (pedido.DiasValidade is int diasPedidos && !OrcamentoFunil.DiasValidos(diasPedidos))
+        {
+            return Resultado<OrcamentoFunilLeitura>.Erro(Codigos.Validacao, OrcamentoFunil.MensagemDias);
+        }
+
         var conteudo = HtmlSeguro.LimparRico(pedido.Conteudo);
         Guid? modeloId = pedido.ModeloId;
         string? htmlAceite = null;
+        string? extrasAceite = null;
         if (conteudo is null && modeloId is Guid mid)
         {
             var modelo = await dados.ObterModeloOrcamentoFunilAsync(contaId, mid, ct);
@@ -138,8 +187,9 @@ public sealed class OrcamentoFunilServico(IDados dados)
             }
 
             htmlAceite = modelo.HtmlAceite;
+            extrasAceite = modelo.ExtrasAceite;
             var perfil = await dados.ObterPerfilAsync(contaId, ct);
-            conteudo = ParametrosOrcamento.Aplicar(modelo.Texto, oportunidade, pedido.Valor, DateOnly.FromDateTime(DateTime.UtcNow), perfil?.NomeEmpresa);
+            conteudo = ParametrosOrcamento.Aplicar(modelo.Texto, oportunidade, pedido.Valor, Relogio.Hoje, perfil);
         }
         else if (modeloId is Guid mid2)
         {
@@ -150,6 +200,7 @@ public sealed class OrcamentoFunilServico(IDados dados)
             }
 
             htmlAceite = modelo.HtmlAceite;
+            extrasAceite = modelo.ExtrasAceite;
         }
 
         if (conteudo is null)
@@ -165,17 +216,19 @@ public sealed class OrcamentoFunilServico(IDados dados)
             Conteudo = conteudo,
             Valor = pedido.Valor,
             Situacao = SituacaoOrcamentoFunil.EmAndamento,
-            CriadoEm = DateTimeOffset.UtcNow,
+            CriadoEm = Relogio.Agora,
             ModeloId = modeloId,
             HtmlAceite = htmlAceite,
+            ExtrasAceite = extrasAceite,
             CriadoPor = criadoPor,
+            DiasValidade = pedido.DiasValidade,
         };
         await dados.InserirOrcamentoFunilAsync(item, ct);
         return Resultado<OrcamentoFunilLeitura>.Sucesso(Ler(item, oportunidade.Nome));
     }
 
     public async Task<Resultado<OrcamentoFunilLeitura>> AtualizarAsync(
-        string contaId,
+        Guid contaId,
         Guid id,
         SalvarOrcamentoFunil pedido,
         CancellationToken ct)
@@ -202,6 +255,11 @@ public sealed class OrcamentoFunilServico(IDados dados)
             return Resultado<OrcamentoFunilLeitura>.Erro(Codigos.Validacao, "O valor não pode ser negativo.");
         }
 
+        if (pedido.DiasValidade is int diasPedidos && !OrcamentoFunil.DiasValidos(diasPedidos))
+        {
+            return Resultado<OrcamentoFunilLeitura>.Erro(Codigos.Validacao, OrcamentoFunil.MensagemDias);
+        }
+
         var mudou = item.Conteudo != conteudo || item.Valor != pedido.Valor;
         if (item.Valor != pedido.Valor && item.Parcelas.Count > 0)
         {
@@ -212,6 +270,7 @@ public sealed class OrcamentoFunilServico(IDados dados)
 
         item.Conteudo = conteudo;
         item.Valor = pedido.Valor;
+        item.DiasValidade = pedido.DiasValidade ?? item.DiasValidade;
         if (mudou && item.TokenLink is not null)
         {
             // SPEC-031 §17, ponto 10: o link continua o mesmo e a proposta volta a "ainda não foi aberta".
@@ -227,7 +286,7 @@ public sealed class OrcamentoFunilServico(IDados dados)
     }
 
     /// <summary>Define as parcelas do orçamento a partir do valor dele (SPEC-040). Substitui as anteriores.</summary>
-    public async Task<Resultado<OrcamentoFunilLeitura>> DefinirParcelasAsync(string contaId, Guid id, PedidoParcelas pedido, CancellationToken ct)
+    public async Task<Resultado<OrcamentoFunilLeitura>> DefinirParcelasAsync(Guid contaId, Guid id, PedidoParcelas pedido, CancellationToken ct)
     {
         var item = await dados.ObterOrcamentoFunilAsync(contaId, id, ct);
         if (item is null)
@@ -278,8 +337,20 @@ public sealed class OrcamentoFunilServico(IDados dados)
     /// Enviar proposta (SPEC-031 §6.6): gera o link no primeiro envio (o mesmo link vale nos reenvios,
     /// com a validade renovada) e leva o lead para "Orçamento enviado" quando ele está antes desse estágio.
     /// </summary>
-    public async Task<Resultado<OrcamentoFunilLeitura>> EnviarAsync(string contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<OrcamentoFunilLeitura>> EnviarAsync(Guid contaId, Guid id, CancellationToken ct) =>
+        await EnviarAsync(contaId, id, null, Relogio.Agora, ct);
+
+    /// <summary>
+    /// <paramref name="dias"/> nulo usa a validade salva no orçamento ou, sem ela, o padrão da conta (SPEC-064 R2). O prazo conta a partir de
+    /// <paramref name="agora"/>, também no reenvio, e vale até o fim do último dia (R1).
+    /// </summary>
+    public async Task<Resultado<OrcamentoFunilLeitura>> EnviarAsync(Guid contaId, Guid id, int? dias, DateTimeOffset agora, CancellationToken ct)
     {
+        if (dias is int escolhidos && !OrcamentoFunil.DiasValidos(escolhidos))
+        {
+            return Resultado<OrcamentoFunilLeitura>.Erro(Codigos.Validacao, OrcamentoFunil.MensagemDias);
+        }
+
         var item = await dados.ObterOrcamentoFunilAsync(contaId, id, ct);
         if (item is null)
         {
@@ -291,9 +362,10 @@ public sealed class OrcamentoFunilServico(IDados dados)
             return Resultado<OrcamentoFunilLeitura>.Erro(Codigos.Validacao, "Orçamento cancelado não pode ser enviado.");
         }
 
-        var agora = DateTimeOffset.UtcNow;
+        var validade = dias ?? item.DiasValidade ?? ParametrosOrcamento.DiasDeValidade(await dados.ObterPerfilAsync(contaId, ct));
         item.TokenLink ??= NovoToken();
-        item.ValidoAte = agora.Add(OrcamentoFunil.ValidadeLink);
+        item.DiasValidade = validade;
+        item.ValidoAte = OrcamentoFunil.ValidoAteDe(agora, validade);
         item.EnviadoEm = agora;
 
         var oportunidade = await dados.ObterOportunidadeAsync(contaId, item.OportunidadeId, ct);
@@ -313,7 +385,7 @@ public sealed class OrcamentoFunilServico(IDados dados)
         return Resultado<OrcamentoFunilLeitura>.Sucesso(await LerAsync(contaId, item, ct));
     }
 
-    public Task<Resultado<OrcamentoFunilLeitura>> ResponderAsync(string contaId, Guid id, CancellationToken ct) =>
+    public Task<Resultado<OrcamentoFunilLeitura>> ResponderAsync(Guid contaId, Guid id, CancellationToken ct) =>
         MudarAsync(contaId, id, item =>
         {
             if (item.Situacao != SituacaoOrcamentoFunil.EmAndamento)
@@ -322,11 +394,11 @@ public sealed class OrcamentoFunilServico(IDados dados)
             }
 
             item.Situacao = SituacaoOrcamentoFunil.Respondido;
-            item.RespondidoEm = DateTimeOffset.UtcNow;
+            item.RespondidoEm = Relogio.Agora;
             return null;
         }, ct);
 
-    public Task<Resultado<OrcamentoFunilLeitura>> CancelarAsync(string contaId, Guid id, CancellationToken ct) =>
+    public Task<Resultado<OrcamentoFunilLeitura>> CancelarAsync(Guid contaId, Guid id, CancellationToken ct) =>
         MudarAsync(contaId, id, item =>
         {
             if (item.Situacao != SituacaoOrcamentoFunil.EmAndamento)
@@ -339,7 +411,7 @@ public sealed class OrcamentoFunilServico(IDados dados)
         }, ct);
 
     /// <param name="soCriadoPor">Quando informado (assistente), só exclui o que ele mesmo criou (SPEC-032 §18, passo 1).</param>
-    public async Task<Resultado<bool>> ExcluirAsync(string contaId, Guid id, CancellationToken ct, string? soCriadoPor = null)
+    public async Task<Resultado<bool>> ExcluirAsync(Guid contaId, Guid id, CancellationToken ct, string? soCriadoPor = null)
     {
         var item = await dados.ObterOrcamentoFunilAsync(contaId, id, ct);
         if (item is null)
@@ -373,7 +445,7 @@ public sealed class OrcamentoFunilServico(IDados dados)
             return Resultado<PropostaPublica>.Erro(Codigos.Indisponivel, "Link inválido.");
         }
 
-        var agora = DateTimeOffset.UtcNow;
+        var agora = Relogio.Agora;
         if (item.Situacao != SituacaoOrcamentoFunil.Cancelado &&
             item.LinkValido(agora) &&
             item.AbertoEm is null &&
@@ -401,7 +473,7 @@ public sealed class OrcamentoFunilServico(IDados dados)
             return Resultado<PropostaPublica>.Erro(Codigos.Indisponivel, "Link inválido.");
         }
 
-        var agora = DateTimeOffset.UtcNow;
+        var agora = Relogio.Agora;
         if (item.Situacao == SituacaoOrcamentoFunil.Cancelado || !item.LinkValido(agora))
         {
             return Resultado<PropostaPublica>.Erro(Codigos.Validacao, "Esta proposta não aceita mais resposta.");
@@ -460,7 +532,7 @@ public sealed class OrcamentoFunilServico(IDados dados)
     /// Segue as mesmas regras da resposta pelo link, mas não conta como abertura do link.
     /// </summary>
     public async Task<Resultado<OrcamentoFunilLeitura>> RegistrarRespostaAsync(
-        string contaId,
+        Guid contaId,
         Guid id,
         ResponderProposta pedido,
         DateOnly hoje,
@@ -477,7 +549,7 @@ public sealed class OrcamentoFunilServico(IDados dados)
             return Resultado<OrcamentoFunilLeitura>.Erro(Codigos.Validacao, "Só orçamentos em andamento podem receber resposta.");
         }
 
-        if (await GravarRespostaAsync(item, pedido, hoje, DateTimeOffset.UtcNow, lead: false, ct) is { } falha)
+        if (await GravarRespostaAsync(item, pedido, hoje, Relogio.Agora, lead: false, ct) is { } falha)
         {
             return Resultado<OrcamentoFunilLeitura>.Erro(Codigos.Validacao, falha);
         }
@@ -583,7 +655,7 @@ public sealed class OrcamentoFunilServico(IDados dados)
     }
 
     private static bool DaPropriaConta(OrcamentoFunil item, string? contaDoVisitante) =>
-        !string.IsNullOrEmpty(contaDoVisitante) && contaDoVisitante == item.ContaId;
+        !string.IsNullOrEmpty(contaDoVisitante) && contaDoVisitante == item.ContaId.ToString();
 
     private async Task<PropostaPublica> LerPublicaAsync(OrcamentoFunil item, DateTimeOffset agora, CancellationToken ct)
     {
@@ -602,6 +674,28 @@ public sealed class OrcamentoFunilServico(IDados dados)
 
         var nomes = await dados.NomesOportunidadesAsync(item.ContaId, [item.OportunidadeId], ct);
         var oportunidade = await dados.ObterOportunidadeAsync(item.ContaId, item.OportunidadeId, ct);
+        var parcelas = item.Parcelas
+            .OrderBy(parcela => parcela.Numero)
+            .Select(parcela => new ParcelaOrcamentoLeitura(parcela.Numero, parcela.Vencimento, parcela.Valor, parcela.Entrada))
+            .ToArray();
+        string? pagina = null;
+        if (HtmlSeguro.SanitizarPagina(item.HtmlAceite) is { Length: > 0 } htmlPagina && oportunidade is not null)
+        {
+            var modelo = item.ModeloId is Guid modeloId ? await dados.ObterModeloOrcamentoFunilAsync(item.ContaId, modeloId, ct) : null;
+            var validade = OrcamentoFunil.UltimoDiaDe(item.ValidoAte ?? agora);
+            pagina = PaginaAceite.Montar(new DadosPaginaAceite(
+                htmlPagina,
+                ParametrosOrcamento.Valores(oportunidade, item.Valor, validade, perfil, parcelas, validadeJaCalculada: true),
+                ExtrasAceite.Ler(item.ExtrasAceite),
+                perfil?.FotoId,
+                item.Conteudo,
+                item.Valor,
+                parcelas,
+                modelo?.CorPrimaria,
+                modelo?.CorSecundaria,
+                Previa: false));
+        }
+
         return new PropostaPublica(
             "Disponivel",
             empresa,
@@ -613,16 +707,38 @@ public sealed class OrcamentoFunilServico(IDados dados)
             item.Resposta?.ToString(),
             item.RespostaMensagem,
             item.RespostaEm,
-            Parcelas: item.Parcelas
-                .OrderBy(parcela => parcela.Numero)
-                .Select(parcela => new ParcelaOrcamentoLeitura(parcela.Numero, parcela.Vencimento, parcela.Valor, parcela.Entrada))
-                .ToArray(),
+            Parcelas: parcelas,
             Contratante: oportunidade is null ? null : ContratanteRegras.Ler(oportunidade),
-            HtmlAceite: HtmlSeguro.Sanitizar(item.HtmlAceite) is { Length: > 0 } html ? html : null);
+            PaginaAceite: pagina);
+    }
+
+    /// <summary>O link da proposta ainda abre (não cancelado nem vencido): libera a consulta de CEP do aceite.</summary>
+    public async Task<bool> LinkAtivoAsync(string token, CancellationToken ct)
+    {
+        var item = await PorTokenAsync(token, ct);
+        return item is not null && item.Situacao != SituacaoOrcamentoFunil.Cancelado && item.LinkValido(Relogio.Agora);
+    }
+
+    /// <summary>Foto da página de aceite pelo link da proposta: só as do orçamento (e o logo do perfil). SPEC-061 §8.5.</summary>
+    public async Task<(Guid ContaId, Guid ArquivoId)?> MidiaPublicaAsync(string token, Guid arquivoId, CancellationToken ct)
+    {
+        var item = await PorTokenAsync(token, ct);
+        if (item is null || item.Situacao == SituacaoOrcamentoFunil.Cancelado || !item.LinkValido(Relogio.Agora))
+        {
+            return null;
+        }
+
+        if (ExtrasAceite.Ler(item.ExtrasAceite).Midias.Any(m => m.ArquivoId == arquivoId))
+        {
+            return (item.ContaId, arquivoId);
+        }
+
+        var perfil = await dados.ObterPerfilAsync(item.ContaId, ct);
+        return perfil?.FotoId == arquivoId ? (item.ContaId, arquivoId) : null;
     }
 
     private async Task<Resultado<OrcamentoFunilLeitura>> MudarAsync(
-        string contaId,
+        Guid contaId,
         Guid id,
         Func<OrcamentoFunil, string?> aplicar,
         CancellationToken ct)
@@ -643,7 +759,7 @@ public sealed class OrcamentoFunilServico(IDados dados)
         return Resultado<OrcamentoFunilLeitura>.Sucesso(await LerAsync(contaId, item, ct));
     }
 
-    private async Task<OrcamentoFunilLeitura> LerAsync(string contaId, OrcamentoFunil item, CancellationToken ct)
+    private async Task<OrcamentoFunilLeitura> LerAsync(Guid contaId, OrcamentoFunil item, CancellationToken ct)
     {
         var nomes = await dados.NomesOportunidadesAsync(contaId, [item.OportunidadeId], ct);
         return Ler(item, nomes.GetValueOrDefault(item.OportunidadeId, ""));
@@ -674,5 +790,6 @@ public sealed class OrcamentoFunilServico(IDados dados)
             item.Parcelas
                 .OrderBy(parcela => parcela.Numero)
                 .Select(parcela => new ParcelaOrcamentoLeitura(parcela.Numero, parcela.Vencimento, parcela.Valor, parcela.Entrada))
-                .ToArray());
+                .ToArray(),
+            item.DiasValidade);
 }

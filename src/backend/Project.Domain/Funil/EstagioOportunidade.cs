@@ -1,3 +1,4 @@
+using Project.Domain.Comum;
 namespace Project.Domain.Funil;
 
 /// <summary>Papel do estágio no funil (SPEC-031 §8). Só os abertos são configuráveis.</summary>
@@ -9,11 +10,11 @@ public enum TipoEstagioFunil
 }
 
 /// <summary>Estágio do funil de uma conta: nome, cor e ordem escolhidos pela dona.</summary>
-public sealed class EstagioFunil
+public sealed class EstagioFunil : ITemConta
 {
     public Guid Id { get; set; }
 
-    public string ContaId { get; set; } = "";
+    public Guid ContaId { get; set; }
 
     public string Nome { get; set; } = "";
 
@@ -46,7 +47,7 @@ public static class EstagiosFunil
     public const int TamanhoMaximoNome = 40;
 
     /// <summary>Estágios com que toda conta nasce.</summary>
-    public static List<EstagioFunil> Padrao(string contaId) =>
+    public static List<EstagioFunil> Padrao(Guid contaId) =>
     [
         Novo(contaId, NomeContatoInicial, "info", 0, TipoEstagioFunil.Aberto),
         Novo(contaId, NomeOrcamentoEnviado, "warning", 1, TipoEstagioFunil.Aberto),
@@ -58,6 +59,6 @@ public static class EstagiosFunil
     public static IReadOnlyList<EstagioFunil> Ordenar(IEnumerable<EstagioFunil> estagios) =>
         estagios.OrderBy(e => e.Tipo == TipoEstagioFunil.Aberto ? 0 : (int)e.Tipo).ThenBy(e => e.Ordem).ToArray();
 
-    private static EstagioFunil Novo(string contaId, string nome, string cor, int ordem, TipoEstagioFunil tipo) =>
+    private static EstagioFunil Novo(Guid contaId, string nome, string cor, int ordem, TipoEstagioFunil tipo) =>
         new() { Id = Guid.NewGuid(), ContaId = contaId, Nome = nome, Cor = cor, Ordem = ordem, Tipo = tipo };
 }

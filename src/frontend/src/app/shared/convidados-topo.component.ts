@@ -13,8 +13,8 @@ import { MascaraDirective } from './mascara.directive';
 
 /**
  * Topo da aba Convidados (SPEC-059 §6.5), igual na organizadora e no link do cliente: cards por situação (clicáveis
- * para filtrar), prazo e data de envio, ferramentas (Data de envio, Prazo de confirmação, Lista de presença, Planilha
- * padrão, Importar, Novo convite) e filtros. A lista entra pelo conteúdo projetado. O filtro de observação só aparece
+ * para filtrar), prazo e data de envio, ferramentas (Data de envio, Prazo de confirmação, Lista de presença,
+ * Importar, Novo convite) e filtros. A lista entra pelo conteúdo projetado. O filtro de observação só aparece
  * onde a observação é visível (organizadora).
  */
 @Component({
@@ -101,8 +101,7 @@ import { MascaraDirective } from './mascara.directive';
             <button mat-stroked-button type="button" (click)="envio.emit()"><mat-icon>send</mat-icon> Data de envio</button>
             <button mat-stroked-button type="button" (click)="prazo.emit()"><mat-icon>event_busy</mat-icon> Prazo de confirmação</button>
             <button mat-stroked-button type="button" (click)="presencas.emit()"><mat-icon>fact_check</mat-icon> Lista de presença</button>
-            <button mat-stroked-button type="button" (click)="planilha.emit()"><mat-icon>description</mat-icon> Planilha padrão</button>
-            <button mat-stroked-button type="button" (click)="importar.emit()"><mat-icon>upload</mat-icon> Importar</button>
+            <button mat-stroked-button type="button" (click)="importar.emit()"><mat-icon>upload_file</mat-icon> Importar planilha</button>
             <button mat-flat-button type="button" (click)="novoConvite.emit()"><mat-icon>add</mat-icon> Novo convite</button>
           </div>
         </div>
@@ -124,7 +123,6 @@ export class ConvidadosTopoComponent implements OnInit {
   readonly envio = output<void>();
   readonly prazo = output<void>();
   readonly presencas = output<void>();
-  readonly planilha = output<void>();
   readonly importar = output<void>();
 
   protected readonly cards = computed(() => cardsPorSituacao(this.porSituacao()));

@@ -18,15 +18,26 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     cabecalhos['X-Aralu-Conta'] = conta.id;
   }
 
-  const pedido = token ? req.clone({ setHeaders: cabecalhos }) : req;
+  // SPEC-063, SPEC-066 e SPEC-067: a sessão do link do cliente, do briefing e da equipe vai num cookie; um 401 ali é o pedido de
+  // código, não sessão expirada.
+  const linkCliente = ['/api/v1/publico/cliente/', '/api/v1/publico/briefings/', '/api/v1/publico/equipe/'].some((rota) => req.url.includes(rota));
+  const comCookie = linkCliente ? req.clone({ withCredentials: true }) : req;
+  const pedido = token ? comCookie.clone({ setHeaders: cabecalhos }) : comCookie;
   return next(pedido).pipe(
     catchError((erro: unknown) => {
       // SPEC-032 §6.5: a assistente removida cai na tela de entrar no próximo pedido.
+      // A07-001: sessão encerrada (Sair em outro dispositivo, troca de senha) segue o mesmo caminho.
       // Qualquer outro 401 com token enviado = sessão expirada: volta direto para entrar.
-      if (token && erro instanceof HttpErrorResponse && erro.status === 401) {
-        const aviso = erro.error?.code === 'acesso_removido' ? 'acesso-removido' : 'sessao-expirada';
+      if (token && !linkCliente && erro instanceof HttpErrorResponse && erro.status === 401) {
+        const codigo = erro.error?.code;
+        const aviso = codigo === 'acesso_removido' ? 'acesso-removido' : codigo === 'sessao_encerrada' ? 'sessao-encerrada' : 'sessao-expirada';
         auth.sair();
         void router.navigate(['/entrar'], { queryParams: { aviso } });
+      }
+
+      // SPEC-062 §7: conta fora do prazo vai para a tela de bloqueio, em qualquer página.
+      if (token && erro instanceof HttpErrorResponse && erro.status === 402 && erro.error?.code === 'conta_bloqueada') {
+        void router.navigate(['/conta-bloqueada']);
       }
 
       return throwError(() => erro);

@@ -9,9 +9,10 @@ import { MatListModule } from '@angular/material/list';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { AuthService } from '../core/auth.service';
+import { AuthService, Modulo, permissoesDaArea } from '../core/auth.service';
 import { AssistentesClient } from '../core/assistentes.client';
 import { ContaClient } from '../core/conta.client';
+import { AssinaturaClient, SituacaoAssinatura } from '../core/assinatura.client';
 import { NegocioClient } from '../core/negocio.client';
 import { TemaService } from '../core/tema.service';
 import { NovoEventoDialog } from '../pages/eventos/novo-evento.dialog';
@@ -26,8 +27,8 @@ interface ItemMenu {
   emBreve?: boolean;
   /** Só a dona vê (Perfil, Contratos da conta, Assistentes). */
   soDona?: boolean;
-  /** Só quem pode ver o financeiro. */
-  financeiro?: boolean;
+  /** Módulo do grupo (SPEC-062 §9): some do menu sem a permissão de ver. */
+  modulo?: Modulo;
 }
 
 interface GrupoMenu {
@@ -84,18 +85,20 @@ function telaEstreita(): boolean {
               @for (grupo of grupos(); track grupo.rotulo) {
                 <button
                   type="button"
-                  class="nav-caption flex w-full items-center justify-between bg-transparent border-0 cursor-pointer text-left"
+                  class="nav-caption flex w-full items-center justify-between border-0 cursor-pointer text-left"
                   [attr.aria-expanded]="!grupoFechado(grupo.rotulo)"
                   (click)="alternarGrupo(grupo.rotulo)"
                 >
                   <span class="rotulo-grupo">{{ grupo.rotulo }}</span>
-                  <mat-icon class="shrink-0">{{ grupoFechado(grupo.rotulo) ? 'expand_more' : 'expand_less' }}</mat-icon>
+                  <mat-icon class="seta-grupo shrink-0" [class.fechado]="grupoFechado(grupo.rotulo)">expand_less</mat-icon>
                 </button>
                 @for (item of grupoFechado(grupo.rotulo) ? [] : grupo.itens; track item.rotulo) {
                   @if (item.rota && !item.emBreve) {
                     <a
                       mat-list-item
                       class="menu-list-item"
+                      animate.enter="item-grupo-entra"
+                      animate.leave="item-grupo-sai"
                       [routerLink]="item.rota"
                       routerLinkActive="activeMenu"
                       (click)="fecharMenu()"
@@ -104,7 +107,7 @@ function telaEstreita(): boolean {
                       <span class="hide-menu">{{ item.rotulo }}</span>
                     </a>
                   } @else {
-                    <mat-list-item class="menu-list-item disabled" title="Em breve" aria-disabled="true">
+                    <mat-list-item class="menu-list-item disabled" animate.enter="item-grupo-entra" animate.leave="item-grupo-sai" title="Em breve" aria-disabled="true">
                       <mat-icon matListItemIcon>{{ item.icone }}</mat-icon>
                       <span class="hide-menu">{{ item.rotulo }}</span>
                     </mat-list-item>
@@ -126,7 +129,7 @@ function telaEstreita(): boolean {
                 <span class="block text-xs text-muted">{{ empresa() ? 'Assistente de ' + empresa() : 'Conectado como' }}</span>
                 <span class="block text-sm font-semibold truncate" [title]="nomeDisplay() || auth.email()">{{ nomeDisplay() || auth.email() }}</span>
               </div>
-              <button mat-icon-button type="button" (click)="sair()" aria-label="Sair" matTooltip="Sair">
+              <button mat-icon-button type="button" (click)="sair()" aria-label="Sair de todos os dispositivos" matTooltip="Sair (encerra a sessão em todos os dispositivos)">
                 <mat-icon>logout</mat-icon>
               </button>
             </div>
@@ -180,10 +183,18 @@ function telaEstreita(): boolean {
               <a mat-menu-item routerLink="/perfil"><mat-icon>apartment</mat-icon>Perfil da assessoria</a>
             }
             <a mat-menu-item routerLink="/conta"><mat-icon>manage_accounts</mat-icon>Minha conta</a>
-            <button mat-menu-item type="button" (click)="sair()"><mat-icon>logout</mat-icon>Sair</button>
+            <button mat-menu-item type="button" (click)="sair()" matTooltip="Encerra a sessão em todos os dispositivos"><mat-icon>logout</mat-icon>Sair de todos os dispositivos</button>
           </mat-menu>
         </mat-toolbar>
 
+        @if (trial(); as t) {
+          <div class="flex items-center justify-center gap-3 px-4 py-2 bg-light-warning text-warning text-sm" role="status">
+            <span>Faltam {{ t.diasRestantesTrial }} {{ t.diasRestantesTrial === 1 ? 'dia' : 'dias' }} do seu teste</span>
+            @if (!auth.ehAssistente()) {
+              <a mat-flat-button routerLink="/configuracoes/assinatura">Assinar</a>
+            }
+          </div>
+        }
         <main class="pageWrapper">
           <router-outlet />
         </main>
@@ -214,6 +225,9 @@ export class CascaComponent implements OnDestroy {
   protected readonly menuAberto = signal(false);
 
   protected readonly empresa = signal('');
+  /** Barra de trial (SPEC-062 §13): só durante o teste, com os dias que faltam. */
+  protected readonly trial = signal<SituacaoAssinatura | null>(null);
+  private readonly assinatura = inject(AssinaturaClient);
   protected readonly nomeDisplay = signal('');
   protected readonly fotoUrl = signal<string | null>(null);
   private fotoLocal: string | null = null;
@@ -243,48 +257,56 @@ export class CascaComponent implements OnDestroy {
       rotulo: 'Principal',
       itens: [
         { rotulo: 'Hoje', icone: 'today', rota: '/hoje' },
-        { rotulo: 'Perfil', icone: 'apartment', rota: '/perfil', soDona: true },
-        { rotulo: 'Assistentes', icone: 'support_agent', rota: '/assistentes', soDona: true },
-        { rotulo: 'Gestão Financeira', icone: 'account_balance_wallet', rota: '/gestao-financeira', financeiro: true },
+        { rotulo: 'Gestão Financeira', icone: 'account_balance_wallet', rota: '/gestao-financeira', modulo: 'Financeiro' },
         { rotulo: 'Manual de uso', icone: 'menu_book', rota: '/ajuda' },
       ],
     },
     {
       rotulo: 'Gestão de Eventos',
       itens: [
-        { rotulo: 'Eventos', icone: 'celebration', rota: '/eventos' },
-        { rotulo: 'Tarefas', icone: 'task_alt', rota: '/tarefas' },
-        { rotulo: 'Clientes', icone: 'group', rota: '/clientes' },
-        { rotulo: 'Serviços e Fornecedores', icone: 'storefront', rota: '/fornecedores' },
+        { rotulo: 'Eventos', icone: 'celebration', rota: '/eventos', modulo: 'Eventos' },
+        { rotulo: 'Tarefas', icone: 'task_alt', rota: '/tarefas', modulo: 'Tarefas' },
+        { rotulo: 'Clientes', icone: 'group', rota: '/clientes', modulo: 'Clientes' },
+        { rotulo: 'Serviços e Fornecedores', icone: 'storefront', rota: '/fornecedores', modulo: 'Fornecedores' },
       ],
     },
     {
       rotulo: 'Agenda',
-      itens: [{ rotulo: 'Minha Agenda', icone: 'calendar_month', rota: '/agenda' }],
+      itens: [{ rotulo: 'Minha Agenda', icone: 'calendar_month', rota: '/agenda', modulo: 'Agenda' }],
     },
     {
       rotulo: 'Funil de Vendas',
       itens: [
-        { rotulo: 'Oportunidades', icone: 'trending_up', rota: '/oportunidades' },
-        { rotulo: 'Oportunidades de RSVP', icone: 'rsvp', rota: '/leads-rsvp' },
-        { rotulo: 'Contratos', icone: 'description', rota: '/contratos-funil' },
-        { rotulo: 'Orçamentos', icone: 'request_quote', rota: '/orcamentos-funil' },
-        { rotulo: 'Tarefas do Funil', icone: 'checklist', rota: '/tarefas-funil' },
-        { rotulo: 'Relatórios', icone: 'analytics', rota: '/relatorios-funil' },
+        { rotulo: 'Oportunidades', icone: 'trending_up', rota: '/oportunidades', modulo: 'Funil' },
+        { rotulo: 'Oportunidades de RSVP', icone: 'rsvp', rota: '/leads-rsvp', modulo: 'Funil' },
+        { rotulo: 'Contratos', icone: 'description', rota: '/contratos-funil', modulo: 'OrcamentosContratos' },
+        { rotulo: 'Orçamentos', icone: 'request_quote', rota: '/orcamentos-funil', modulo: 'OrcamentosContratos' },
+        { rotulo: 'Tarefas do Funil', icone: 'checklist', rota: '/tarefas-funil', modulo: 'Funil' },
+        { rotulo: 'Relatórios', icone: 'analytics', rota: '/relatorios-funil', modulo: 'Funil' },
       ],
     },
     {
       rotulo: 'Modelos',
       itens: [
-        { rotulo: 'Modelos de Evento', icone: 'content_copy', rota: '/modelos-evento' },
+        { rotulo: 'Modelos de Evento', icone: 'content_copy', rota: '/modelos-evento', modulo: 'Modelos' },
         { rotulo: 'Modelos de Contrato', icone: 'gavel', rota: '/contratos', soDona: true },
-        { rotulo: 'Modelos de Briefing', icone: 'quiz', rota: '/modelos-briefing' },
-        { rotulo: 'Modelos de Roteiro', icone: 'schedule', rota: '/modelos-roteiro' },
-        { rotulo: 'Modelos de Cronograma', icone: 'view_timeline', rota: '/modelos-cronograma' },
-        { rotulo: 'Modelos de Inspirações', icone: 'photo_library', rota: '/modelos-inspiracoes' },
-        { rotulo: 'Modelos de Mensagens', icone: 'sms', rota: '/modelos-mensagens' },
-        { rotulo: 'Modelos de Serviços', icone: 'category', rota: '/modelos-servicos-funil' },
-        { rotulo: 'Modelo de Orçamento', icone: 'receipt_long', rota: '/modelos-orcamento-funil' },
+        { rotulo: 'Modelos de Briefing', icone: 'quiz', rota: '/modelos-briefing', modulo: 'Modelos' },
+        { rotulo: 'Modelos de Roteiro', icone: 'schedule', rota: '/modelos-roteiro', modulo: 'Modelos' },
+        { rotulo: 'Modelos de Cronograma', icone: 'view_timeline', rota: '/modelos-cronograma', modulo: 'Modelos' },
+        { rotulo: 'Modelos de Inspirações', icone: 'photo_library', rota: '/modelos-inspiracoes', modulo: 'Modelos' },
+        { rotulo: 'Modelos de Mensagens', icone: 'sms', rota: '/modelos-mensagens', modulo: 'Modelos' },
+        { rotulo: 'Modelos de Serviços', icone: 'category', rota: '/modelos-servicos-funil', modulo: 'Funil' },
+        { rotulo: 'Modelo de Orçamento', icone: 'receipt_long', rota: '/modelos-orcamento-funil', modulo: 'OrcamentosContratos' },
+      ],
+    },
+    {
+      rotulo: 'Configurações',
+      itens: [
+        { rotulo: 'Perfil', icone: 'apartment', rota: '/perfil', soDona: true },
+        { rotulo: 'Assinatura', icone: 'credit_card', rota: '/configuracoes/assinatura', soDona: true },
+        { rotulo: 'Propostas', icone: 'request_quote', rota: '/configuracoes/propostas', soDona: true },
+        { rotulo: 'Assistentes', icone: 'support_agent', rota: '/configuracoes/equipe', soDona: true },
+        { rotulo: 'Grupos de acesso', icone: 'admin_panel_settings', rota: '/configuracoes/grupos', soDona: true },
       ],
     },
   ];
@@ -295,7 +317,10 @@ export class CascaComponent implements OnDestroy {
     const admin = this.auth.ehAdmin();
     const grupoAdmin: GrupoMenu = {
       rotulo: 'Administração',
-      itens: [{ rotulo: 'Início Admin', icone: 'admin_panel_settings', rota: '/admin' }],
+      itens: [
+        { rotulo: 'Início Admin', icone: 'admin_panel_settings', rota: '/admin' },
+        { rotulo: 'Planos', icone: 'sell', rota: '/admin/planos' },
+      ],
     };
     // Admin sem conta escolhida só tem o Início Admin; com conta escolhida vê o menu inteiro dela.
     if (admin && !this.auth.contaSelecionada()) {
@@ -306,7 +331,7 @@ export class CascaComponent implements OnDestroy {
       .map((grupo) => ({
         ...grupo,
         itens: grupo.itens.filter(
-          (item) => !(item.soDona && this.auth.ehAssistente()) && !(item.financeiro && !this.auth.podeVerFinanceiro()),
+          (item) => !(item.soDona && this.auth.ehAssistente()) && !(item.modulo && !this.auth.pode(item.modulo)),
         ),
       }))
       .filter((grupo) => grupo.itens.length > 0);
@@ -319,11 +344,18 @@ export class CascaComponent implements OnDestroy {
   });
 
   constructor() {
+    if (!this.auth.ehAdmin() || !!this.auth.contaSelecionada()) {
+      this.assinatura.situacao().subscribe({
+        next: (situacao) => this.trial.set(situacao?.situacao === 'Trial' && situacao.liberada ? situacao : null),
+        error: () => undefined,
+      });
+    }
+
     const destroyRef = inject(DestroyRef);
 
     if (this.auth.ehAssistente()) {
       this.conta.areaUsuario().subscribe({
-        next: (area) => this.auth.permissoes.set({ podeVerFinanceiro: !!area.podeVerFinanceiro, somenteDela: !!area.somenteDela, usuarioId: area.usuarioId }),
+        next: (area) => this.auth.permissoes.set(permissoesDaArea(area)),
         error: () => undefined,
       });
       this.assistentes.minhaConta().subscribe({

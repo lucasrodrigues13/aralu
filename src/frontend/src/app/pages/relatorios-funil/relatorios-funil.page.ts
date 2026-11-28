@@ -12,10 +12,11 @@ import { ToastService } from '../../core/toast.service';
 import { CampoDataComponent } from '../../shared/campo-data';
 import { GdDinheiroPipe } from '../../shared/gd-dinheiro.pipe';
 import { deDataParaIso } from '../../shared/data';
+import { Estado } from '../../shared/estado';
 
 @Component({
   selector: 'app-relatorios-funil',
-  imports: [MatCardModule, ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatTableModule, MatTabsModule, CampoDataComponent, GdDinheiroPipe],
+  imports: [MatCardModule, ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatTableModule, MatTabsModule, CampoDataComponent, GdDinheiroPipe, Estado],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6 flex flex-wrap items-center justify-between gap-4">
@@ -35,7 +36,7 @@ import { deDataParaIso } from '../../shared/data';
             <article class="pt-4">
               <h2>{{ bloco.titulo }}</h2>
               @if (bloco.linhas.length === 0) {
-                <p class="text-center text-muted py-10">Sem movimento no período.</p>
+                <app-estado titulo="Sem movimento no período" />
               } @else {
                 <table mat-table class="min-w-full" [dataSource]="bloco.linhas">
                   <ng-container matColumnDef="chave">

@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using Project.Application.Conta;
@@ -28,9 +29,14 @@ public static class AdminEndpoints
             && http.Request.Headers.TryGetValue(CabecalhoConta, out var valor)
             && !string.IsNullOrWhiteSpace(valor.ToString()))
         {
+            // O cabeçalho traz o id da conta (o mesmo de ListarUsuarios); um sócio Organizer não é conta própria.
+            var banco = http.RequestServices.GetRequiredService<Project.Infrastructure.Persistencia.AppDbContext>();
+            var conta = Guid.TryParse(valor.ToString().Trim(), out var contaId)
+                ? await banco.Contas.AsNoTracking().Where(item => item.Id == contaId).Select(item => new { item.Id, item.DonoUsuarioId }).FirstOrDefaultAsync(http.RequestAborted)
+                : null;
             var usuarios = http.RequestServices.GetRequiredService<UserManager<ApplicationUser>>();
-            var dona = await usuarios.FindByIdAsync(valor.ToString().Trim());
-            if (dona is null || !await usuarios.IsInRoleAsync(dona, Papeis.Organizer))
+            var dona = conta is null ? null : await usuarios.FindByIdAsync(conta.DonoUsuarioId);
+            if (conta is null || dona is null || !await usuarios.IsInRoleAsync(dona, Papeis.Organizer))
             {
                 http.Response.StatusCode = StatusCodes.Status400BadRequest;
                 await http.Response.WriteAsJsonAsync(new ErroResposta("conta", "A conta escolhida não existe."), http.RequestAborted);
@@ -39,18 +45,29 @@ public static class AdminEndpoints
 
             var extra = new ClaimsIdentity();
             extra.AddClaim(new Claim(ClaimTypes.Role, Papeis.Organizer));
-            extra.AddClaim(new Claim(ContaClaims.OrganizerId, dona.Id));
+            extra.AddClaim(new Claim(ContaClaims.ContaId, conta.Id.ToString()));
             usuario.AddIdentity(extra);
+
+            // A09-001: rota pelo modelo do endpoint, para não levar ao log texto livre do caminho.
+            http.RequestServices.GetRequiredService<Project.Application.Comum.LogSeguranca>().AdminOperouConta(
+                usuario.FindFirstValue(ClaimTypes.NameIdentifier),
+                dona.Id,
+                http.Request.Method,
+                (http.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText);
         }
 
         await proximo();
     }
 
-    private static async Task<IResult> ListarUsuarios(UserManager<ApplicationUser> usuarios, CancellationToken ct)
+    /// <summary>
+    /// Contas da plataforma, pelo e-mail de quem a criou (SPEC-062). O id é o da conta: sócios convidados como Dono
+    /// não aparecem como conta própria.
+    /// </summary>
+    private static async Task<IResult> ListarUsuarios(Project.Infrastructure.Persistencia.AppDbContext banco, CancellationToken ct)
     {
-        var donas = await usuarios.GetUsersInRoleAsync(Papeis.Organizer);
-        return Results.Ok(donas
-            .OrderBy(u => u.Email, StringComparer.OrdinalIgnoreCase)
-            .Select(u => new { id = u.Id, email = u.Email, papel = Papeis.Organizer }));
+        var contas = await banco.Contas.AsNoTracking()
+            .Join(banco.Users, conta => conta.DonoUsuarioId, usuario => usuario.Id, (conta, usuario) => new { id = conta.Id.ToString(), email = usuario.Email, papel = Papeis.Organizer })
+            .ToListAsync(ct);
+        return Results.Ok(contas.OrderBy(item => item.email, StringComparer.OrdinalIgnoreCase));
     }
 }

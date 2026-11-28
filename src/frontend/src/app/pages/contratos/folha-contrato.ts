@@ -72,7 +72,7 @@ export class FolhaContrato {
   constructor() {
     afterRenderEffect({
       read: () => {
-        const linhas = blocosDoContrato(this.html());
+        const linhas = blocosDoContrato(limparHtml(this.html()));
         const el = this.medidor().nativeElement;
         const cabecalho = (this.logoUrl() ? '<img class="logo" alt="">' : '') + `<h3 class="titulo">x</h3>`;
         el.innerHTML = cabecalho + linhas.map((linha) => `<div class="linha">${linha}</div>`).join('');
@@ -101,14 +101,23 @@ export class FolhaContrato {
 }
 
 /** A janela de impressão não passa pelo sanitizador do Angular: tira scripts, eventos e URLs perigosas antes. */
-function limparHtml(html: string): string {
+export function limparHtml(html: string): string {
   const doc = new DOMParser().parseFromString(`<body>${html}</body>`, 'text/html');
   doc.querySelectorAll('script, style, iframe, object, embed, link, meta, form').forEach((el) => el.remove());
   doc.querySelectorAll('*').forEach((el) => {
+    const ehImg = el.tagName.toLowerCase() === 'img';
     for (const atributo of Array.from(el.attributes)) {
       const nome = atributo.name.toLowerCase();
       const valor = atributo.value.trim().toLowerCase();
-      if (nome.startsWith('on') || nome === 'style' || ((nome === 'href' || nome === 'src') && !/^(https?:|mailto:|blob:|#)/.test(valor))) {
+      const urlPermitida = /^(https?:|mailto:|blob:|#)/.test(valor) || (ehImg && nome === 'src' && /^data:image\//.test(valor));
+      if (
+        nome.startsWith('on') ||
+        nome === 'style' ||
+        nome === 'srcdoc' ||
+        nome === 'formaction' ||
+        nome === 'xlink:href' ||
+        ((nome === 'href' || nome === 'src') && !urlPermitida)
+      ) {
         el.removeAttribute(atributo.name);
       }
     }
@@ -171,7 +180,8 @@ export function blocosDoContrato(html: string): string[] {
     } else if (no instanceof HTMLElement) {
       blocos.push(no.outerHTML);
     } else if (no.textContent?.trim()) {
-      blocos.push(no.textContent);
+      // textContent devolve o texto já decodificado ("&lt;img&gt;" vira "<img>"): escapa de novo antes de virar HTML.
+      blocos.push(escaparAtributo(no.textContent));
     }
   }
   return blocos;

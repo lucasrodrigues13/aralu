@@ -2,6 +2,8 @@
 
 **Status: aprovada (21/11/2026; aprovação antecipada do dono do projeto, repassada pela sessão que abriu o card #18, com as opções mais simples e conservadoras nos pontos em aberto, listados na seção 17).** Fonte: card #18 do Trello ([tarefas-trello.md](../tarefas-trello.md)); [produto-v1.md](../produto-v1.md) 5.13. Estende a [SPEC-027](027-modelo-de-orcamento-do-funil.md) (modelo de orçamento) e a [SPEC-031](031-funil-estagios-retorno-e-proposta.md) parte C (proposta por link, tela de aceite).
 
+> **Atualização (25/11/2026):** a [SPEC-061](061-pagina-de-aceite-rica.md) substitui os itens 6.4, 8, 12 e 17.3 a 17.7 desta spec. O HTML passa a definir a página de aceite inteira (com CSS), exibida num iframe isolado sem scripts.
+
 ## 1. Identificador e nome
 
 SPEC-057. HTML do modelo de orçamento na tela de aceite.

@@ -5,24 +5,27 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatRadioModule } from '@angular/material/radio';
+import { Estado } from '../../shared/estado';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
+import { PaginaPublica } from '../../shared/pagina-publica';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { NegocioClient } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 
 @Component({
   selector: 'app-rsvp',
-  imports: [ReactiveFormsModule, MatCardModule, MatButtonModule, MatRadioModule, MatCheckboxModule, GdDataPipe],
+  imports: [ReactiveFormsModule, MatCardModule, MatButtonModule, MatRadioModule, MatCheckboxModule, GdDataPipe, Estado, PaginaPublica],
   template: `
-    <section class="flex min-h-screen w-full items-center justify-center p-4 bg-light">
-      <mat-card class="cardWithShadow w-full max-w-[440px] mb-0!">
-        <div class="px-6 pt-6"><h3 class="text-xl font-semibold">{{ titulo() || 'Confirmação de presença' }}</h3></div>
-        <mat-card-content class="pt-6!">
-          @if (expirado()) {
-            <p class="font-semibold" data-teste="convite-expirado">Este convite expirou.</p>
-            <p>O prazo para confirmar presença terminou@if (prazo()) { em {{ prazo() | gdData }} }. Fale com quem enviou o convite.</p>
-          } @else if (convidados().length === 0 && carregado()) {
-            <p>Não há quem responder.</p>
+    <app-pagina-publica [titulo]="titulo() || 'Confirmação de presença'" [estreita]="true">
+      <mat-card class="cardWithShadow">
+        <mat-card-content>
+          @if (!carregado()) {
+            <app-estado titulo="Carregando…" />
+          } @else if (expirado()) {
+            <app-estado icone="event_busy" titulo="Este convite expirou" data-teste="convite-expirado"
+              [texto]="'O prazo para confirmar presença terminou' + (prazo() ? ' em ' + (prazo() | gdData) : '') + '. Fale com quem enviou o convite.'" />
+          } @else if (convidados().length === 0) {
+            <app-estado icone="link_off" titulo="Este link não está mais disponível" texto="Fale com quem enviou o convite." />
           }
           @if (temConfirmado()) {
             <div class="text-center mb-4" data-teste="qr-entrada">
@@ -36,8 +39,8 @@ import { ToastService } from '../../core/toast.service';
               <fieldset class="border border-border rounded p-4">
                 <legend class="font-semibold px-1">{{ pessoa.nome }}</legend>
                 <mat-radio-group class="flex flex-wrap gap-4" [formControlName]="pessoa.id">
-                  <mat-radio-button value="Confirmado">Confirmado</mat-radio-button>
-                  <mat-radio-button value="NaoComparecera">Não comparecerá</mat-radio-button>
+                  <mat-radio-button value="Confirmado">Vou</mat-radio-button>
+                  <mat-radio-button value="NaoComparecera">Não vou</mat-radio-button>
                 </mat-radio-group>
               </fieldset>
             }
@@ -45,12 +48,14 @@ import { ToastService } from '../../core/toast.service';
               <mat-checkbox formControlName="pretendeRealizarEvento">
                 Pretendo realizar um evento nos próximos dois anos
               </mat-checkbox>
-              <button mat-flat-button class="w-full" type="submit">Enviar</button>
+              <div class="acoes-publicas">
+                <button mat-flat-button type="submit">Enviar resposta</button>
+              </div>
             }
           </form>
         </mat-card-content>
       </mat-card>
-    </section>
+    </app-pagina-publica>
   `,
 })
 export class RsvpPage implements OnInit {

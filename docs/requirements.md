@@ -73,16 +73,34 @@ Nos requisitos de conta, o status **Definido** significa **Confirmado** para est
 
 | ID | Requisito | Status |
 |---|---|---|
-| RF-024 | Existem três roles: `Admin`, `Organizer` e `Assistant`. A role `Client` deixa de existir; o cliente usa o link do evento, RF-056. | Definido |
+| RF-024 | Existem três roles: `Admin`, `Organizer` e `Assistant`. A role `Client` deixa de existir; o cliente usa o link do evento, RF-056. | Substituído pelo RF-111 e RF-113 (SPEC-062): fora o `Admin`, o acesso vem do tipo na conta e do grupo |
 | RF-025 | Página privada exige usuário autenticado. | Definido |
 | RF-026 | Página administrativa exige a role `Admin`. | Definido |
 | RF-027 | Conta com role `Organizer` ou `Assistant` não acessa recurso administrativo. | Definido |
 | RF-028 | A autorização é verificada no servidor com `[Authorize]`, roles e policies do ASP.NET Core. Esconder um link na interface não protege a página. | Definido |
-| RF-040 | `Admin` é o admin geral: acesso a tudo e a todas as contas. `Organizer` é o comprador do sistema (organiza eventos e dados da própria conta). `Assistant` é subusuário Identity sempre vinculado a um `Organizer`, com o acesso que a dona concede, RF-045. Fornecedor com login não é role. O cliente não tem conta, RF-056. | Definido |
-| RF-083 | Dados de negócio da conta (eventos, clientes de contato, modelos, funil, agenda, serviços e fornecedores) pertencem ao tenant do `Organizer`. Outro `Organizer` não os vê. A `Assistant` opera dentro do tenant da dona. | Definido |
+| RF-040 | `Admin` é o admin geral: acesso a tudo e a todas as contas. `Organizer` é o comprador do sistema (organiza eventos e dados da própria conta). `Assistant` é subusuário Identity sempre vinculado a um `Organizer`, com o acesso que a dona concede, RF-045. Fornecedor com login não é role. O cliente não tem conta, RF-056. | Substituído pelo RF-110 a RF-113 (SPEC-062); o papel do `Admin` segue igual |
+| RF-083 | Dados de negócio da conta (eventos, clientes de contato, modelos, funil, agenda, serviços e fornecedores) pertencem ao tenant do `Organizer`. Outro `Organizer` não os vê. A `Assistant` opera dentro do tenant da dona. | Substituído pelo RF-110 (SPEC-062): o tenant é a conta |
 | RF-084 | Toda conta `Client` está vinculada a exatamente um `Organizer`. | Substituído pelo RF-045 (a `Assistant` é a única subconta) |
 | RF-085 | O `Organizer` cria e gerencia as contas `Client` da própria conta e define as permissões de módulos e eventos concedidas a cada uma. | Substituído pelo RF-045 |
 | RF-086 | O `Client` só acessa recursos do `Organizer` vinculado e somente o que as permissões concederem (flags vistas: convidados, tarefas, anexos, parcelas, RSVP, mapa e contrato). | Substituído pelo RF-056 (o que o cliente vê é escolhido no link do evento) |
+| RF-110 | O cadastro público cria o login, a conta (assessoria) e o visitante como Dono. Todos os dados de negócio pertencem à conta; outra conta não os vê. SPEC-062. | Definido |
+| RF-111 | Na conta, cada pessoa é Dono ou Membro. A conta pode ter vários Donos (sócios) e sempre tem pelo menos um. SPEC-062. | Definido |
+| RF-112 | Só o Dono gerencia a assinatura, a equipe (convidar, remover, mudar tipo e grupo), os grupos de acesso e o menu Configurações. SPEC-062. | Definido |
+| RF-113 | O Dono cria grupos de acesso com permissões por módulo (ver, editar, excluir) e alcance de eventos (todos ou só os atribuídos). Cada Membro pertence a um grupo. A conta nasce com os grupos Organizadores e Assistentes. SPEC-062. | Definido |
+| RF-114 | O Dono convida pessoas por e-mail como Dono ou Membro de um grupo. O convite vale 7 dias; a pessoa entra com login próprio. SPEC-062. | Definido |
+| RF-115 | Trial de 14 dias corridos no cadastro, um por conta e por CPF/CNPJ. O plano de lançamento é o Pro, R$ 179/mês, cobrado pelo Asaas, por cartão ou Pix. Assinar durante o trial não antecipa a primeira cobrança. SPEC-062. | Definido |
+| RF-116 | A conta fora do prazo (trial vencido, atraso acima de 5 dias, cancelada após o período pago, estorno) fica bloqueada para todos os membros, sem apagar dados. Os links do cliente continuam funcionando. SPEC-062. | Definido |
+| RF-117 | Permissões de grupo são verificadas no servidor a cada ação; mudanças valem na próxima ação do membro. SPEC-062. | Definido |
+| RF-118 | O `Admin` mantém o catálogo de planos: código, nome, descrição, valor mensal, público ou não, ativo, e um plano padrão. SPEC-062. | Definido |
+| RF-119 | Cada plano libera um conjunto de recursos, com limite mensal opcional. A conta só usa os recursos do seu plano; no trial, os do plano padrão ou do plano atribuído. SPEC-062. | Definido |
+| RF-120 | O `Admin` atribui a uma conta qualquer plano (inclusive não público), valor personalizado ou desconto percentual com data de fim opcional. Cada alteração tem motivo e fica no histórico. Mudar o preço de um plano não altera quem já assina. SPEC-062. | Definido |
+| RF-121 | A permissão do grupo não libera recurso fora do plano da conta. As duas checagens são feitas no servidor. SPEC-062. | Definido |
+| RF-122 | Todo link do cliente exige um código enviado ao e-mail de um cliente do evento antes de abrir. O servidor só entrega os dados do link com sessão válida. SPEC-063. | Definido |
+| RF-123 | O código tem 6 dígitos, vale 10 minutos e aceita 5 tentativas. Cada link aceita 1 pedido a cada 2 minutos e, depois de 3 pedidos, espera 15 minutos. A sessão vale 7 dias no mesmo navegador, renova a cada uso e cai quando o link é gerado de novo. Código e sessão são guardados só como hash. SPEC-063. | Definido |
+| RF-125 | O `Organizer` (Dono) define a validade padrão das propostas da conta, em dias (1 a 180, padrão 30). Ao enviar ou reenviar, o organizador pode mudar a validade daquela proposta. A proposta vale até o fim do último dia. SPEC-064. | Definido |
+| RF-126 | O Dono faz upgrade para um plano público de valor maior em Assinatura. Paga agora a diferença proporcional aos dias restantes do período pago (dias reais do ciclo, hoje incluído), numa cobrança avulsa do Asaas. O ciclo e o vencimento não mudam. SPEC-065. | Rascunho |
+| RF-127 | O plano novo e seus recursos valem a partir da confirmação do pagamento do upgrade. Esse pagamento não estende o período pago. Sem pagamento, a conta continua no plano atual com a recorrência ativa. No trial, a troca é sem cobrança. SPEC-065. | Rascunho |
+| RF-128 | O Dono agenda downgrade para um plano público de valor menor. O plano atual vale até o fim do período pago, sem estorno; o menor vale a partir do próximo vencimento, que já é cobrado com o valor menor. O Dono pode desfazer até lá. Dados de recursos que o plano menor não tem ficam guardados, mas o uso é recusado. SPEC-065. | Rascunho |
 
 ### 2.5. Bootstrap do administrador inicial
 
@@ -112,7 +130,7 @@ Ator “Assessoria” na referência corresponde ao `Organizer` neste produto. S
 | ID | Nome | Comportamento | Ator | Regras | Depende de | Status |
 |---|---|---|---|---|---|---|
 | RF-044 | Perfil da assessoria | Cadastro da empresa com nome, responsável, e-mail, CPF ou CNPJ, celular, nascimento, endereço e foto opcional. | Organizer | E-mail da conta não é editável. SPEC-005. | RF-011 | Definido |
-| RF-045 | Assistentes | A dona convida a assistente por e-mail; a assistente entra com login próprio (role `Assistant`). Por assistente, a dona marca "pode ver o financeiro" e "vê todos os eventos" ou "só os dela". | Organizer, Assistant | Plano, Pix, contrato da conta, marca e página pública ficam só com a dona. A assistente não convida outra assistente. produto-v1 5.15. | RF-040, RF-102 | Definido |
+| RF-045 | Assistentes | A dona convida a assistente por e-mail; a assistente entra com login próprio (role `Assistant`). Por assistente, a dona marca "pode ver o financeiro" e "vê todos os eventos" ou "só os dela". | Organizer, Assistant | Plano, Pix, contrato da conta, marca e página pública ficam só com a dona. A assistente não convida outra assistente. produto-v1 5.15. | RF-040, RF-102 | Substituído pelo RF-113 e RF-114 (SPEC-062): viram permissões e alcance do grupo |
 | RF-046 | Busca global | Campo para buscar eventos ou ferramentas. | Organizer | Não fechado nas specs 001–028. | RF-048 | Observado |
 | RF-047 | Notificações | Sino com lista e ação de marcar como lidas. | Organizer | Não fechado nas specs 001–028. | — | Observado |
 | RF-048 | Lista de eventos | Abas em andamento, concluído e cancelado; busca; filtros; card; atalhos de resumo. | Organizer | SPEC-002, SPEC-008, SPEC-011 (resumo/atalhos). | RF-049 | Definido |

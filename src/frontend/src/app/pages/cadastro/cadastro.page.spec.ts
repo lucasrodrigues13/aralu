@@ -16,6 +16,8 @@ describe('CadastroPage', () => {
     senhas[0].dispatchEvent(new Event('input'));
     (senhas[1] as HTMLInputElement).value = confirmacao;
     senhas[1].dispatchEvent(new Event('input'));
+    // Aceite dos termos (SPEC-062 §6 A1).
+    (raiz.querySelector('input[type="checkbox"]') as HTMLInputElement).click();
   }
 
   beforeEach(async () => {
@@ -36,7 +38,7 @@ describe('CadastroPage', () => {
     fixture.detectChanges();
     const navegar = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
 
-    preencher(fixture.nativeElement, 'pessoa@aralu.test', 'abcdefgh', 'abcdefgh');
+    preencher(fixture.nativeElement, 'pessoa@aralu.test', 'ceu-de-junho-42', 'ceu-de-junho-42');
     fixture.detectChanges();
     fixture.nativeElement.querySelector('form').dispatchEvent(new Event('submit'));
 
@@ -48,12 +50,23 @@ describe('CadastroPage', () => {
     http.verify();
   });
 
+  it('liga as palavras do aceite aos termos de uso e à política de privacidade', () => {
+    const fixture = TestBed.createComponent(CadastroPage);
+    fixture.detectChanges();
+
+    const links = Array.from(fixture.nativeElement.querySelectorAll('mat-checkbox a') as NodeListOf<HTMLAnchorElement>);
+    expect(links.map((link) => [link.textContent?.trim(), link.getAttribute('href')])).toEqual([
+      ['termos de uso', '/termos-de-uso'],
+      ['política de privacidade', '/politica-de-privacidade'],
+    ]);
+  });
+
   it('permanece no cadastro quando a conta não é criada', () => {
     const fixture = TestBed.createComponent(CadastroPage);
     fixture.detectChanges();
     const navegar = vi.spyOn(TestBed.inject(Router), 'navigateByUrl');
 
-    preencher(fixture.nativeElement, 'pessoa@aralu.test', 'abcdefgh', 'abcdefgh');
+    preencher(fixture.nativeElement, 'pessoa@aralu.test', 'ceu-de-junho-42', 'ceu-de-junho-42');
     fixture.detectChanges();
     fixture.nativeElement.querySelector('form').dispatchEvent(new Event('submit'));
 

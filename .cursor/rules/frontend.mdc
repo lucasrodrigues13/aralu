@@ -6,14 +6,31 @@ alwaysApply: false
 
 # Frontend
 
-A fonte visual é `docs/design-system.md`, lida da demo pública https://apex-angular.dashboardpack.com e aplicada com Angular Material. O código do template não entra. Uma segunda biblioteca de interface não entra.
+A fonte visual é `docs/design-system.md`, versão 5 (TailwindAdmin Angular free + Angular Material, com as cores da marca aralu). Uma segunda biblioteca de interface não entra.
 
-- Angular 22, componentes standalone e Angular Material. Tokens `--gd-*` da versão 2 do design system (medidos na demo), com modo claro e escuro. Estilos globais em `src/frontend/src/styles/`; não crie estilo global fora deles.
-- Casca autenticada com `mat-sidenav`, barra superior de 64px e, abaixo de 960px, barra inferior (Início, Eventos, + Novo, Dinheiro, Mais). Textos da interface em português.
-- Lista no padrão de Orders: `.gd-cabecalho` com ação verde, `.gd-painel` com `.gd-barra` (abas `.gd-abas` + busca/filtros `.gd-filtros`), tabela `.gd-grade` e Editar/Excluir na última coluna (`.gd-acoes`).
-- **Todo cadastro e toda edição abrem em modal** (`MatDialog` com `DIALOG`, `DIALOG_PEQUENO` ou `DIALOG_LARGO` de `shared/dialog.ts`) na estrutura `mat-dialog-title` / `gd-dialog-descricao` / `mat-dialog-content` / `mat-dialog-actions`. Nunca uma rota só para formulário. Só Perfil, Ajustes, telas de detalhe e telas públicas são página.
-- Campo Material com rótulo sempre acima (padrão global em `app.config.ts`); campos agrupados em `.gd-campos` (`.duas` para duas colunas).
-- Formulário, tabela, diálogo, botão e aviso usam os componentes do Material. Componente próprio só quando o Material não cobre a tela.
+- Angular 22, componentes standalone e Angular Material, com modo claro e escuro. Estilos globais em `src/frontend/src/styles/_aralu.scss`; não crie estilo global fora dele e não crie `styles:` de componente para o que uma classe global ou componente compartilhado já resolve.
+- Casca autenticada com `mat-sidenav`, barra superior de 70px e, abaixo de 960px, barra inferior (Hoje, Eventos, +, Dinheiro, Mais). Textos da interface em português.
+- **Todo cadastro e toda edição abrem em modal** (`MatDialog` com `DIALOG`, `DIALOG_PEQUENO`, `DIALOG_LARGO`, `DIALOG_EM_MASSA` ou `DIALOG_PREVIA` de `shared/dialog.ts`). Nunca uma rota só para formulário. Só Perfil, Ajustes, telas de detalhe e telas públicas são página.
+- Campo Material com rótulo sempre acima (`div.campo` + `mat-label.font-semibold.mb-2.block`, padrão global em `app.config.ts`).
+- Formulário, tabela, diálogo, botão e aviso usam os componentes do Material. Componente próprio só quando o Material não cobre a tela. Os compartilhados da padronização são `app-fechar-modal`, `app-estado`, `app-pagina-publica` e `app-casca-acesso`.
+
+Padrões (detalhe em `docs/design-system.md`):
+
+- D2 Tabela: lista simples usa `table[mat-table]`; lista montada à mão usa `table.tabela`; nunca tabela crua com classes Tailwind.
+- D3 Coluna Ações: cabeçalho "Ações" visível, à direita; até 3 ações em ícones, 4 ou mais com 2 ícones e menu "Mais ações"; Excluir por último.
+- D4 X do modal: todo modal tem `app-fechar-modal` dentro do título.
+- D5 Rodapé do modal: `align="end"`; destrutivo à esquerda, Cancelar ou Fechar, secundários e um único botão principal por último.
+- D6 Confirmação destrutiva: botão de confirmar vermelho (`botao-perigo`, via `destrutivo: true` no `ConfirmaDialog`).
+- D7 Vocabulário: "Excluir" apaga o registro; "Remover" tira um vínculo; "Apagar" e "Tirar" não são usados.
+- D8 Botão principal da lista: em `.barra-lista-acoes`; "Novo/Nova X" ou "Adicionar X" com ícone `add`; importar com `upload_file`.
+- D9 Abas: `mat-button-toggle-group` filtra a mesma lista; `mat-tab-group` troca de seção.
+- D10 Vazio e carregando: `app-estado`; o vazio só aparece depois da primeira resposta da API.
+- D11 Paginação: `Paginacao` de `shared/paginacao.ts` nas listas que podem passar de 50 linhas.
+- D12 Telas de acesso: cartão largo com painel da marca, por `app-casca-acesso`.
+- D13 Telas públicas: casca única `app-pagina-publica`, sempre no tema claro, sem botão de tema e sem assinatura aralu.
+- D14 Erro de campo nas telas de acesso: `mat-error` junto ao campo; o botão só desabilita enquanto envia.
+- Nome clicável: em toda lista em tabela, o nome (primeira coluna) usa `link-nome` e abre o registro.
+
 - Tela nova só existe se uma spec aprovada pedir. O miolo do dashboard continua em cartões e lista, sem gráfico, enquanto um RF não pedir a série.
 - `HttpClient` com a URL da API vinda do ambiente. O token fica em `sessionStorage` e sai em `Authorization: Bearer`. Sem NgRx.
 - Validação da tela não substitui a validação da API.

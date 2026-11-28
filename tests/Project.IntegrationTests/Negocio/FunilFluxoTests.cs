@@ -10,7 +10,7 @@ namespace Project.IntegrationTests.Negocio;
 [Collection(ColecaoApi.Nome)]
 public class FunilFluxoTests
 {
-    private const string Senha = "abcdefgh";
+    private const string Senha = "ceu-de-junho-42";
     private readonly BancoFixture _banco;
 
     public FunilFluxoTests(BancoFixture banco) => _banco = banco;
@@ -348,7 +348,7 @@ public class FunilFluxoTests
     {
         var dono = await Entrar();
         var outra = await Entrar();
-        var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
+        var hoje = Project.Domain.Comum.HorarioBrasil.Data(DateTimeOffset.UtcNow);
 
         // Origem fora da lista e "Outro" sem texto não gravam.
         Assert.Equal(HttpStatusCode.BadRequest, (await dono.PostAsJsonAsync("/api/v1/oportunidades", new
@@ -536,8 +536,76 @@ public class FunilFluxoTests
         Assert.Equal("120", salvo.GetProperty("briefing").GetProperty("itens")[0].GetProperty("resposta").GetString());
 
         Assert.Equal(HttpStatusCode.NotFound, (await outra.GetAsync($"/api/v1/oportunidades/{leadId}/briefing")).StatusCode);
+
+        // SPEC-066: a dona libera o briefing; o cliente abre pelo link com código enviado ao e-mail do contato.
+        var liberado = (await Ler(await dono.PostAsync($"/api/v1/oportunidades/{leadId}/briefing/liberacao", null))).GetProperty("briefing");
+        var token = liberado.GetProperty("token").GetString()!;
+        Assert.Equal(JsonValueKind.String, liberado.GetProperty("validoAte").ValueKind);
+        var publico = $"/api/v1/publico/briefings/{token}";
+        var anonimo = _banco.Fabrica.CreateClient();
+
+        // Sem sessão, nada do briefing sai: só o cabeçalho e o e-mail mascarado.
+        Assert.Equal(HttpStatusCode.Unauthorized, (await anonimo.GetAsync(publico)).StatusCode);
+        var acesso = await Ler(await anonimo.GetAsync(publico + "/acesso"));
+        Assert.Equal("Lead com briefing", acesso.GetProperty("nome").GetString());
+        var opcao = acesso.GetProperty("emails")[0];
+        Assert.DoesNotContain("dani@", opcao.GetProperty("email").GetString());
+
+        (await anonimo.PostAsJsonAsync(publico + "/acesso/codigo", new { emailId = opcao.GetProperty("id").GetGuid() })).EnsureSuccessStatusCode();
+        Assert.Equal(HttpStatusCode.BadRequest, (await anonimo.PostAsJsonAsync(publico + "/acesso/codigo", new { emailId = opcao.GetProperty("id").GetGuid() })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await anonimo.PostAsJsonAsync(publico + "/acesso/confirmar", new { codigo = "000000x" })).StatusCode);
+        var mensagem = _banco.Fabrica.Email.Mensagens.Last(item => item.Email == "dani@ex.com" && item.Assunto == "Seu código para abrir o briefing");
+        var codigo = System.Text.RegularExpressions.Regex.Match(mensagem.Corpo, @"\b\d{6}\b").Value;
+        (await anonimo.PostAsJsonAsync(publico + "/acesso/confirmar", new { codigo })).EnsureSuccessStatusCode();
+
+        var pagina = await Ler(await anonimo.GetAsync(publico));
+        Assert.Equal("120", pagina.GetProperty("itens")[0].GetProperty("resposta").GetString());
+        await Ler(await anonimo.PutAsJsonAsync(publico, new
+        {
+            respostas = new[] { new { id = itens[1].GetProperty("id").GetGuid(), resposta = "R$ 50 mil" } },
+        }));
+        var vistoPelaDona = (await Ler(await dono.GetAsync($"/api/v1/oportunidades/{leadId}/briefing"))).GetProperty("briefing");
+        Assert.Equal("R$ 50 mil", vistoPelaDona.GetProperty("itens")[1].GetProperty("resposta").GetString());
+        Assert.Equal(HttpStatusCode.NotFound, (await outra.PostAsync($"/api/v1/oportunidades/{leadId}/briefing/liberacao", null)).StatusCode);
+
+        // Concluir fecha o link; liberar de novo reabre o mesmo link (precisa de código outra vez).
+        await Ler(await anonimo.PutAsJsonAsync(publico, new { respostas = Array.Empty<object>(), concluir = true }));
+        Assert.Equal(HttpStatusCode.NotFound, (await anonimo.GetAsync(publico + "/acesso")).StatusCode);
+        var concluido = (await Ler(await dono.GetAsync($"/api/v1/oportunidades/{leadId}/briefing"))).GetProperty("briefing");
+        Assert.Equal(JsonValueKind.String, concluido.GetProperty("concluidoEm").ValueKind);
+        var deNovo = (await Ler(await dono.PostAsync($"/api/v1/oportunidades/{leadId}/briefing/liberacao", null))).GetProperty("briefing");
+        Assert.Equal(token, deNovo.GetProperty("token").GetString());
+        Assert.Equal(JsonValueKind.Null, deNovo.GetProperty("concluidoEm").ValueKind);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await anonimo.GetAsync(publico)).StatusCode);
+
+        await Ler(await dono.DeleteAsync($"/api/v1/oportunidades/{leadId}/briefing/liberacao"));
+        Assert.Equal(HttpStatusCode.NotFound, (await anonimo.GetAsync(publico + "/acesso")).StatusCode);
+
         Assert.Equal(HttpStatusCode.NoContent, (await dono.DeleteAsync($"/api/v1/oportunidades/{leadId}/briefing")).StatusCode);
         Assert.Equal(JsonValueKind.Null, (await Ler(await dono.GetAsync($"/api/v1/oportunidades/{leadId}/briefing"))).GetProperty("briefing").ValueKind);
+    }
+
+    [Fact]
+    public async Task Briefing_so_vai_ao_cliente_com_email_do_contato()
+    {
+        var dono = await Entrar();
+        var modelo = await Ler(await dono.PostAsJsonAsync("/api/v1/modelos-briefing", new
+        {
+            nome = "Sem e-mail",
+            secoes = new[] { new { titulo = "Geral", descricao = "", perguntas = new[] { new { enunciado = "Data?", tipo = "TextoCurto" } } } },
+        }));
+        var lead = await Ler(await dono.PostAsJsonAsync("/api/v1/oportunidades", new
+        {
+            nome = "Lead sem e-mail",
+            estagio = "Contato inicial",
+            contatos = new[] { new { nome = "Edu", telefone = "11966660002", email = "" } },
+        }));
+        var leadId = lead.GetProperty("id").GetGuid();
+        await Ler(await dono.PostAsJsonAsync($"/api/v1/oportunidades/{leadId}/briefing", new { modeloId = modelo.GetProperty("id").GetGuid() }));
+
+        var resposta = await dono.PostAsync($"/api/v1/oportunidades/{leadId}/briefing/liberacao", null);
+        Assert.Equal(HttpStatusCode.BadRequest, resposta.StatusCode);
+        Assert.Contains("e-mail", await resposta.Content.ReadAsStringAsync());
     }
 
     [Fact]
@@ -571,7 +639,7 @@ public class FunilFluxoTests
     {
         var email = $"funil-{Guid.NewGuid():N}@aralu.test";
         var cliente = _banco.Fabrica.CreateClient();
-        Assert.Equal(HttpStatusCode.Created, (await cliente.PostAsJsonAsync("/api/v1/conta/cadastro", new { email, senha = Senha, confirmacao = Senha })).StatusCode);
+        Assert.Equal(HttpStatusCode.Created, (await cliente.PostAsJsonAsync("/api/v1/conta/cadastro", new { email, senha = Senha, confirmacao = Senha, aceiteTermos = true })).StatusCode);
         var mensagem = _banco.Fabrica.Email.Mensagens.Last(item => item.Email == email && item.Tipo == "confirmacao");
         var query = QueryHelpers.ParseQuery(new Uri(mensagem.Corpo).Query);
         Assert.Equal(HttpStatusCode.OK, (await cliente.PostAsJsonAsync("/api/v1/conta/confirmar-email", new { usuarioId = query["usuarioId"].ToString(), token = query["token"].ToString() })).StatusCode);

@@ -18,6 +18,7 @@ import { deDataParaIso, deIsoParaData } from '../../shared/data';
 import { clientesParaNovoEvento, vinculoDoCliente } from './clientes-do-novo-evento';
 import { MascaraDirective } from '../../shared/mascara.directive';
 import { horaParaApi, soDigitos } from '../../shared/mascaras';
+import { FecharModal } from '../../shared/fechar-modal';
 
 const ICONES: Record<string, string> = {
   Casamento: 'favorite',
@@ -46,9 +47,9 @@ const NOVO_CLIENTE = '__novo__';
 /** Criação curta do evento num modal só (SPEC-008 v2, 6.1). */
 @Component({
   selector: 'app-novo-evento',
-  imports: [MatChipsModule, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatAutocompleteModule, CampoDataComponent, CampoHoraComponent, MascaraDirective],
+  imports: [FecharModal, MatChipsModule, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatAutocompleteModule, CampoDataComponent, CampoHoraComponent, MascaraDirective],
   template: `
-    <h2 mat-dialog-title>Novo evento</h2>
+    <h2 mat-dialog-title>Novo evento <app-fechar-modal /></h2>
     <p class="text-muted text-sm px-6 -mt-2 mb-4">
       @if (dados?.oportunidadeId) {
         Dados trazidos da oportunidade. Confira e ajuste antes de criar; endereços, horários e padrinhos também vêm dela.
@@ -134,7 +135,7 @@ const NOVO_CLIENTE = '__novo__';
         }
       </form>
     </mat-dialog-content>
-    <mat-dialog-actions>
+    <mat-dialog-actions align="end">
       <button mat-stroked-button type="button" mat-dialog-close>Cancelar</button>
       <button mat-flat-button type="submit" form="novo-evento-form" [disabled]="!tipo() || salvando()">Criar evento</button>
     </mat-dialog-actions>

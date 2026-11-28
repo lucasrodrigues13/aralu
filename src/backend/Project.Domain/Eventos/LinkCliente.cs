@@ -1,13 +1,14 @@
+using Project.Domain.Comum;
 namespace Project.Domain.Eventos;
 
 /// <summary>Link do cliente (SPEC-046): um por evento, sem senha. Trocar o código desliga o endereço antigo.</summary>
-public sealed class LinkCliente
+public sealed class LinkCliente : ITemConta
 {
     public Guid Id { get; set; }
 
     public Guid EventoId { get; set; }
 
-    public string ContaId { get; set; } = "";
+    public Guid ContaId { get; set; }
 
     public string Token { get; set; } = "";
 

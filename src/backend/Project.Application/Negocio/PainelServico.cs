@@ -20,10 +20,16 @@ public sealed record PainelLeitura(
 
 public sealed class PainelServico(IDados dados)
 {
-    public async Task<PainelLeitura> ObterAsync(string contaId, CancellationToken ct)
+    /// <summary>Com <paramref name="liberados"/> (Assistente restrita), contagens e eventos em andamento ficam só nos eventos dela.</summary>
+    public async Task<PainelLeitura> ObterAsync(Guid contaId, CancellationToken ct, IReadOnlySet<Guid>? liberados = null)
     {
-        var contagens = await dados.ContarEventosAsync(contaId, ct);
+        var contagens = await dados.ContarEventosAsync(contaId, ct, liberados);
         var andamento = await dados.ListarEmAndamentoAsync(contaId, ct);
+        if (liberados is not null)
+        {
+            andamento = andamento.Where(evento => liberados.Contains(evento.Id)).ToArray();
+        }
+
         var funil = await new OportunidadeServico(dados).ContarPorEstagioAsync(contaId, ct);
         return new PainelLeitura(
             Quantidade(contagens, SituacaoEvento.EmAndamento),

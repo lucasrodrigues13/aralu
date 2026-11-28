@@ -28,6 +28,9 @@ public static class NegocioEndpoints
         api.AddEndpointFilter(EscopoAssistente.Filtro);
         api.MapGet("/perfil", Perfil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapPut("/perfil", GravarPerfil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
+        // SPEC-064: a janela de envio lê o padrão (Equipe); só o Dono muda (SPEC-062 R5).
+        api.MapGet("/configuracoes/propostas", LerConfiguracaoPropostas).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPut("/configuracoes/propostas", GravarConfiguracaoPropostas).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapPost("/perfil/foto", FotoPerfil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer)).DisableAntiforgery();
         api.MapDelete("/perfil/foto", RemoverFotoPerfil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapGet("/painel", Painel).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
@@ -45,9 +48,16 @@ public static class NegocioEndpoints
         api.MapPost("/eventos/{id:guid}/salvar-como-modelo/previa", PreviaSalvarComoModelo).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/eventos/{id:guid}/salvar-como-modelo", SalvarComoModelo).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapGet("/eventos/estatisticas", Estatisticas).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapGet("/modelos-briefing/planilha", PlanilhaBriefingModelo).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/modelos-briefing/importar", ImportarBriefing).DisableAntiforgery().RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         MapearBiblioteca(api, "/modelos-briefing", Briefings, CriarBriefing, Briefing, AtualizarBriefing, ExcluirBriefing, ClonarBriefing);
+        api.MapGet("/modelos-roteiro/planilha", PlanilhaRoteiroModelo).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/modelos-roteiro/importar", ImportarRoteiro).DisableAntiforgery().RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         MapearBiblioteca(api, "/modelos-roteiro", Roteiros, CriarRoteiro, Roteiro, AtualizarRoteiro, ExcluirRoteiro, ClonarRoteiro);
+        api.MapGet("/modelos-cronograma/planilha", PlanilhaCronogramaModelo).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/modelos-cronograma/importar", ImportarCronograma).DisableAntiforgery().RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         MapearBiblioteca(api, "/modelos-cronograma", Cronogramas, CriarCronograma, Cronograma, AtualizarCronograma, ExcluirCronograma, ClonarCronograma);
+        api.MapPost("/modelos-inspiracoes/arquivos", EnviarArquivoInspiracao).DisableAntiforgery().RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         MapearBiblioteca(api, "/modelos-inspiracoes", Inspiracoes, CriarInspiracao, Inspiracao, AtualizarInspiracao, ExcluirInspiracao, ClonarInspiracao);
         MapearBiblioteca(api, "/modelos-mensagens", Mensagens, CriarMensagem, Mensagem, AtualizarMensagem, ExcluirMensagem, ClonarMensagem);
         api.MapGet("/servicos-conta", ServicosConta).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
@@ -56,6 +66,8 @@ public static class NegocioEndpoints
         api.MapDelete("/servicos-conta/{id:guid}", ExcluirServicoConta).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
         api.MapGet("/fornecedores", Fornecedores).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/fornecedores", CriarFornecedor).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapGet("/fornecedores/planilha", PlanilhaFornecedoresModelo).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/fornecedores/importar", ImportarFornecedores).DisableAntiforgery().RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapGet("/fornecedores/{id:guid}", Fornecedor).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPut("/fornecedores/{id:guid}", AtualizarFornecedor).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapDelete("/fornecedores/{id:guid}", ExcluirFornecedor).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
@@ -69,7 +81,7 @@ public static class NegocioEndpoints
         api.MapDelete("/eventos/{id:guid}/servicos/{servicoId:guid}/fornecedores/{vinculoId:guid}", RemoverFornecedorServico).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/eventos/{id:guid}/servicos/{servicoId:guid}/fornecedores/{vinculoId:guid}/contrato-assinado", EnviarContratoAssinado).DisableAntiforgery().RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapDelete("/eventos/{id:guid}/servicos/{servicoId:guid}/fornecedores/{vinculoId:guid}/contrato-assinado", ExcluirContratoAssinado).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
-        api.MapGet("/eventos/{id:guid}/budget", Budget).RequireAuthorization(AssistenteEndpoints.PoliticaFinanceiro);
+        api.MapGet("/eventos/{id:guid}/budget", Budget).RequireAuthorization(EquipeEndpoints.PoliticaFinanceiro);
         api.MapGet("/eventos/{id:guid}/resumo", ResumoEvento).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapGet("/eventos/{id:guid}/assistentes", AssistentesDoEvento).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPut("/eventos/{id:guid}/assistentes", DefinirAssistentesDoEvento).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
@@ -138,6 +150,8 @@ public static class NegocioEndpoints
         api.MapPost("/oportunidades/{id:guid}/briefing", AplicarBriefingAoLead).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPut("/oportunidades/{id:guid}/briefing", SalvarBriefingDoLead).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapDelete("/oportunidades/{id:guid}/briefing", RemoverBriefingDoLead).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/oportunidades/{id:guid}/briefing/liberacao", LiberarBriefingDoLead).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapDelete("/oportunidades/{id:guid}/briefing/liberacao", EncerrarBriefingDoLead).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapGet("/estagios-funil", EstagiosFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPut("/estagios-funil", SalvarEstagiosFunil).RequireAuthorization(policy => policy.RequireRole(SoOrganizer));
 
@@ -154,9 +168,9 @@ public static class NegocioEndpoints
         api.MapPost("/contratos-funil/{id:guid}/enviar", EnviarContratoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/contratos-funil/{id:guid}/assinar", AssinarContratoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/contratos-funil/{id:guid}/cancelar", CancelarContratoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
-        api.MapPost("/contratos-funil/{id:guid}/parcelas/{parcelaId:guid}/recebimentos", ReceberParcelaContratoFunil).RequireAuthorization(AssistenteEndpoints.PoliticaFinanceiro);
-        api.MapDelete("/contratos-funil/{id:guid}/parcelas/{parcelaId:guid}/recebimentos/ultimo", DesfazerRecebimentoContratoFunil).RequireAuthorization(AssistenteEndpoints.PoliticaFinanceiro);
-        api.MapPut("/contratos-funil/{id:guid}/parcelas", DefinirParcelasContratoFunil).RequireAuthorization(AssistenteEndpoints.PoliticaFinanceiro);
+        api.MapPost("/contratos-funil/{id:guid}/parcelas/{parcelaId:guid}/recebimentos", ReceberParcelaContratoFunil).RequireAuthorization(EquipeEndpoints.PoliticaFinanceiro);
+        api.MapDelete("/contratos-funil/{id:guid}/parcelas/{parcelaId:guid}/recebimentos/ultimo", DesfazerRecebimentoContratoFunil).RequireAuthorization(EquipeEndpoints.PoliticaFinanceiro);
+        api.MapPut("/contratos-funil/{id:guid}/parcelas", DefinirParcelasContratoFunil).RequireAuthorization(EquipeEndpoints.PoliticaFinanceiro);
         api.MapDelete("/contratos-funil/{id:guid}", ExcluirContratoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
 
         api.MapGet("/orcamentos-funil/parametros", () => Results.Ok(ParametrosOrcamento.Lista)).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
@@ -166,6 +180,7 @@ public static class NegocioEndpoints
         api.MapGet("/orcamentos-funil/{id:guid}", OrcamentoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPut("/orcamentos-funil/{id:guid}", AtualizarOrcamentoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPut("/orcamentos-funil/{id:guid}/parcelas", DefinirParcelasOrcamentoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapGet("/orcamentos-funil/{id:guid}/mensagem", MensagemDoOrcamentoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/orcamentos-funil/{id:guid}/enviar", EnviarOrcamentoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/orcamentos-funil/{id:guid}/responder", ResponderOrcamentoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
         api.MapPost("/orcamentos-funil/{id:guid}/cancelar", CancelarOrcamentoFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
@@ -182,14 +197,18 @@ public static class NegocioEndpoints
         api.MapGet("/relatorios-funil/exportar", ExportarRelatoriosFunil).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
 
         MapearBibliotecaSimples(api, "/modelos-servicos-funil", ModelosServicoFunil, CriarModeloServicoFunil, ModeloServicoFunil, AtualizarModeloServicoFunil, ExcluirModeloServicoFunil);
-        MapearBibliotecaSimples(api, "/modelos-orcamento-funil", ModelosOrcamentoFunil, CriarModeloOrcamentoFunil, ModeloOrcamentoFunil, AtualizarModeloOrcamentoFunil, ExcluirModeloOrcamentoFunil);
+        api.MapPost("/modelos-orcamento-funil/midias", EnviarMidiaAceite).DisableAntiforgery().RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        api.MapPost("/modelos-orcamento-funil/pagina-aceite/previa", PreviaPaginaAceite).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
+        MapearBibliotecaSimples(api, "/modelos-orcamento-funil",ModelosOrcamentoFunil, CriarModeloOrcamentoFunil, ModeloOrcamentoFunil, AtualizarModeloOrcamentoFunil, ExcluirModeloOrcamentoFunil);
 
         app.MapGet("/api/v1/rsvp/{token}", AbrirRsvp);
         app.MapGet("/api/v1/rsvp/{token}/qr-entrada", QrEntradaDoRsvp);
-        app.MapPost("/api/v1/rsvp/{token}", ResponderRsvp);
-        app.MapPost("/api/v1/public/leads/{contaId}", LeadPublico);
+        app.MapPost("/api/v1/rsvp/{token}", ResponderRsvp).RequireRateLimiting("publico-ip");
+        app.MapPost("/api/v1/public/leads/{contaId}", LeadPublico).RequireRateLimiting("publico-ip").RequireRateLimiting("lead-conta");
         app.MapGet("/api/v1/publico/propostas/{token}", PropostaPublica);
-        app.MapPost("/api/v1/publico/propostas/{token}/resposta", ResponderPropostaPublica);
+        app.MapPost("/api/v1/publico/propostas/{token}/resposta", ResponderPropostaPublica).RequireRateLimiting("publico-ip");
+        app.MapGet("/api/v1/publico/propostas/{token}/midias/{arquivoId:guid}", MidiaPropostaPublica);
+        app.MapGet("/api/v1/publico/propostas/{token}/cep/{cep}", CepPropostaPublica);
     }
 
     private static Task<IResult> Perfil(ClaimsPrincipal usuario, PerfilServico servico, CancellationToken ct) =>
@@ -231,8 +250,8 @@ public static class NegocioEndpoints
             return Results.Ok(new { mensagem = "Foto removida." });
         });
 
-    private static Task<IResult> Painel(ClaimsPrincipal usuario, PainelServico servico, CancellationToken ct) =>
-        ComConta(usuario, async conta => Results.Ok(await servico.ObterAsync(conta, ct)));
+    private static Task<IResult> Painel(ClaimsPrincipal usuario, PainelServico servico, AppDbContext banco, CancellationToken ct) =>
+        ComConta(usuario, async conta => Results.Ok(await servico.ObterAsync(conta, ct, await EscopoAssistente.LiberadosAsync(usuario, banco, ct))));
 
     private static Task<IResult> Modelos(ClaimsPrincipal usuario, ModeloServico servico, string? nome, CancellationToken ct) =>
         ComConta(usuario, async conta => Results.Ok(await servico.ListarAsync(conta, nome, ct)));
@@ -303,7 +322,26 @@ public static class NegocioEndpoints
 
 
     private static Task<IResult> Estatisticas(ClaimsPrincipal usuario, EstatisticasServico servico, Project.Infrastructure.Persistencia.AppDbContext banco, CancellationToken ct) =>
-        ComConta(usuario, async conta => Results.Ok(await servico.ObterAsync(conta, DateTimeOffset.UtcNow, ct, await EscopoAssistente.LiberadosAsync(usuario, banco, ct))));
+        ComConta(usuario, async conta => Results.Ok(await servico.ObterAsync(conta, Relogio.Agora, ct, await EscopoAssistente.LiberadosAsync(usuario, banco, ct))));
+
+    private static IResult PlanilhaBriefingModelo(BriefingImportacaoServico servico) =>
+        Results.File(servico.Modelo(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "briefing.xlsx");
+
+    /// <summary>Importa a planilha (campo "arquivo") como um novo modelo com o nome do campo "nome": tudo ou nada.</summary>
+    private static Task<IResult> ImportarBriefing(
+        HttpRequest request, ClaimsPrincipal usuario, BriefingImportacaoServico servico, CancellationToken ct) =>
+        ComConta(usuario, async conta =>
+        {
+            var formulario = request.HasFormContentType ? await request.ReadFormAsync(ct) : null;
+            var arquivo = formulario?.Files.GetFile("arquivo");
+            if (arquivo is null)
+            {
+                return await De(Task.FromResult(Resultado<ResultadoImportacaoBriefing>.Erro(Codigos.Validacao, "Envie a planilha.")));
+            }
+
+            await using var fluxo = arquivo.OpenReadStream();
+            return await De(servico.ImportarAsync(conta, formulario!["nome"].ToString(), fluxo, arquivo.FileName, ct));
+        });
 
     private static Task<IResult> Briefings(ClaimsPrincipal usuario, BriefingServico servico, string? nome, CancellationToken ct) =>
         ComConta(usuario, async conta => Results.Ok(await servico.ListarAsync(conta, nome, ct)));
@@ -323,6 +361,25 @@ public static class NegocioEndpoints
     private static Task<IResult> ClonarBriefing(Guid id, ClaimsPrincipal usuario, BriefingServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.ClonarAsync(conta, id, ct)));
 
+    private static IResult PlanilhaRoteiroModelo(RoteiroImportacaoServico servico) =>
+        Results.File(servico.Modelo(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "roteiro.xlsx");
+
+    /// <summary>Importa a planilha (campo "arquivo") como um novo modelo com o nome do campo "nome": tudo ou nada.</summary>
+    private static Task<IResult> ImportarRoteiro(
+        HttpRequest request, ClaimsPrincipal usuario, RoteiroImportacaoServico servico, CancellationToken ct) =>
+        ComConta(usuario, async conta =>
+        {
+            var formulario = request.HasFormContentType ? await request.ReadFormAsync(ct) : null;
+            var arquivo = formulario?.Files.GetFile("arquivo");
+            if (arquivo is null)
+            {
+                return await De(Task.FromResult(Resultado<ResultadoImportacaoRoteiro>.Erro(Codigos.Validacao, "Envie a planilha.")));
+            }
+
+            await using var fluxo = arquivo.OpenReadStream();
+            return await De(servico.ImportarAsync(conta, formulario!["nome"].ToString(), fluxo, arquivo.FileName, ct));
+        });
+
     private static Task<IResult> Roteiros(ClaimsPrincipal usuario, RoteiroServico servico, string? nome, CancellationToken ct) =>
         ComConta(usuario, async conta => Results.Ok(await servico.ListarAsync(conta, nome, ct)));
 
@@ -340,6 +397,25 @@ public static class NegocioEndpoints
 
     private static Task<IResult> ClonarRoteiro(Guid id, ClaimsPrincipal usuario, RoteiroServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.ClonarAsync(conta, id, ct)));
+
+    private static IResult PlanilhaCronogramaModelo(CronogramaImportacaoServico servico) =>
+        Results.File(servico.Modelo(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "cronograma.xlsx");
+
+    /// <summary>Importa a planilha (campo "arquivo") como um novo modelo com o nome do campo "nome": tudo ou nada.</summary>
+    private static Task<IResult> ImportarCronograma(
+        HttpRequest request, ClaimsPrincipal usuario, CronogramaImportacaoServico servico, CancellationToken ct) =>
+        ComConta(usuario, async conta =>
+        {
+            var formulario = request.HasFormContentType ? await request.ReadFormAsync(ct) : null;
+            var arquivo = formulario?.Files.GetFile("arquivo");
+            if (arquivo is null)
+            {
+                return await De(Task.FromResult(Resultado<ResultadoImportacaoCronograma>.Erro(Codigos.Validacao, "Envie a planilha.")));
+            }
+
+            await using var fluxo = arquivo.OpenReadStream();
+            return await De(servico.ImportarAsync(conta, formulario!["nome"].ToString(), fluxo, arquivo.FileName, ct));
+        });
 
     private static Task<IResult> Cronogramas(ClaimsPrincipal usuario, CronogramaServico servico, string? nome, CancellationToken ct) =>
         ComConta(usuario, async conta => Results.Ok(await servico.ListarAsync(conta, nome, ct)));
@@ -361,6 +437,33 @@ public static class NegocioEndpoints
 
     private static Task<IResult> Inspiracoes(ClaimsPrincipal usuario, InspiracaoServico servico, string? nome, CancellationToken ct) =>
         ComConta(usuario, async conta => Results.Ok(await servico.ListarAsync(conta, nome, ct)));
+
+    /// <summary>Foto da galeria: JPG, JPEG ou PNG até 5 MB; imagens grandes são reduzidas no servidor.</summary>
+    private static Task<IResult> EnviarArquivoInspiracao(IFormFile? arquivo, ClaimsPrincipal usuario, IArmazenamentoArquivo armazenamento, CancellationToken ct) =>
+        ComConta(usuario, async conta =>
+        {
+            if (arquivo is null || arquivo.Length == 0)
+            {
+                return Results.Json(new ErroResposta(Codigos.Validacao, "O arquivo não foi aceito. Use JPG, JPEG, PNG ou PDF de até 5 MB."), statusCode: StatusCodes.Status400BadRequest);
+            }
+
+            const string mensagem ="A imagem não foi aceita. Use JPG, JPEG ou PNG de até 5 MB.";
+            await using var fluxo = arquivo.OpenReadStream();
+            var guardado = await armazenamento.GuardarDocumentoAsync(fluxo, arquivo.FileName, conta, ct);
+            if (!guardado.Ok || guardado.Valor is null)
+            {
+                return Results.Json(new ErroResposta(Codigos.Validacao, mensagem), statusCode: StatusCodes.Status400BadRequest);
+            }
+
+            // A galeria aceita só fotos: o armazenamento de documentos também aceita PDF, que é descartado aqui.
+            if (guardado.Valor.TipoConteudo is not ("image/jpeg" or "image/png"))
+            {
+                await armazenamento.DescartarAsync(guardado.Valor.Id, ct);
+                return Results.Json(new ErroResposta(Codigos.Validacao, mensagem), statusCode: StatusCodes.Status400BadRequest);
+            }
+
+            return Results.Ok(new { arquivoId = guardado.Valor.Id, nome = guardado.Valor.NomeOriginal, tipoConteudo = guardado.Valor.TipoConteudo });
+        });
 
     private static Task<IResult> CriarInspiracao(SalvarInspiracao pedido, ClaimsPrincipal usuario, InspiracaoServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.CriarAsync(conta, pedido, ct)));
@@ -407,6 +510,24 @@ public static class NegocioEndpoints
     private static Task<IResult> ExcluirServicoConta(Guid id, ClaimsPrincipal usuario, FornecedorServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.ExcluirServicoAsync(conta, id, ct)));
 
+    private static IResult PlanilhaFornecedoresModelo(FornecedorImportacaoServico servico) =>
+        Results.File(servico.Modelo(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "fornecedores.xlsx");
+
+    /// <summary>Importa a planilha (campo "arquivo"): tudo ou nada; com erros, devolve a lista e não grava.</summary>
+    private static Task<IResult> ImportarFornecedores(
+        HttpRequest request, ClaimsPrincipal usuario, FornecedorImportacaoServico servico, CancellationToken ct) =>
+        ComConta(usuario, async conta =>
+        {
+            var arquivo = request.HasFormContentType ? (await request.ReadFormAsync(ct)).Files.GetFile("arquivo") : null;
+            if (arquivo is null)
+            {
+                return await De(Task.FromResult(Resultado<ResultadoImportacaoFornecedores>.Erro(Codigos.Validacao, "Envie a planilha.")));
+            }
+
+            await using var fluxo = arquivo.OpenReadStream();
+            return await De(servico.ImportarAsync(conta, fluxo, arquivo.FileName, ct));
+        });
+
     private static Task<IResult> Fornecedores(ClaimsPrincipal usuario, FornecedorServico servico, string? nome, CancellationToken ct) =>
         ComConta(usuario, async conta => Results.Ok(await servico.ListarAsync(conta, nome, ct)));
 
@@ -422,7 +543,7 @@ public static class NegocioEndpoints
                 return Falha(fornecedor.Falha!);
             }
 
-            return Results.Ok(AssistenteEndpoints.PodeVerFinanceiro(usuario)
+            return Results.Ok(EquipeEndpoints.PodeVerFinanceiro(usuario)
                 ? fornecedor.Valor
                 : fornecedor.Valor! with { PrecoDe = null, PrecoAte = null });
         });
@@ -575,7 +696,7 @@ public static class NegocioEndpoints
         ComConta(usuario, async conta =>
         {
             var detalhe = await servico.ObterAsync(conta, id, Hoje(), ct);
-            if (detalhe.Ok && !AssistenteEndpoints.PodeVerFinanceiro(usuario))
+            if (detalhe.Ok && !EquipeEndpoints.PodeVerFinanceiro(usuario))
             {
                 return Results.Ok(detalhe.Valor! with { OrcamentoEstimado = null });
             }
@@ -593,9 +714,9 @@ public static class NegocioEndpoints
         {
             var resultado = await servico.CriarAsync(conta, pedido, Hoje(), ct);
             // SPEC-032 §17, ponto 1: o evento criado por uma assistente "só os dela" já nasce com ela marcada.
-            if (resultado.Ok && EscopoAssistente.AssistenteId(usuario) is Guid criadora)
+            if (resultado.Ok && EscopoAssistente.MembroQueCria(usuario) is Guid criadora)
             {
-                banco.EventosAssistentes.Add(new Project.Domain.Equipe.EventoAssistente { EventoId = resultado.Valor!.Id, AssistenteId = criadora });
+                banco.EventosMembros.Add(new Project.Domain.Equipe.EventoMembro { EventoId = resultado.Valor!.Id, MembroId = criadora, ContaId = conta });
                 await banco.SaveChangesAsync(ct);
             }
 
@@ -620,7 +741,7 @@ public static class NegocioEndpoints
                 return Falha(resumo.Falha!);
             }
 
-            return Results.Ok(AssistenteEndpoints.PodeVerFinanceiro(usuario)
+            return Results.Ok(EquipeEndpoints.PodeVerFinanceiro(usuario)
                 ? resumo.Valor
                 : resumo.Valor! with { OrcamentoEstimado = null, ValorContratado = 0, ValorPago = 0 });
         });
@@ -672,6 +793,13 @@ public static class NegocioEndpoints
             return await De(servico.CriarAsync(conta, id, pedido, Hoje(), ct));
         });
 
+    private static Task<IResult> MensagemDoOrcamentoFunil(Guid id, Guid modeloId, string? link, ClaimsPrincipal usuario, OrcamentoFunilServico servico, CancellationToken ct) =>
+        ComConta(usuario, async conta =>
+        {
+            var texto = await servico.MensagemAsync(conta, id, modeloId, link, ct);
+            return texto.Ok ? Results.Ok(new { texto = texto.Valor }) : Falha(texto.Falha!);
+        });
+
     private static Task<IResult> TextoDoModeloOrcamento(Guid modeloId, Guid oportunidadeId, decimal? valor, ClaimsPrincipal usuario, OrcamentoFunilServico servico, CancellationToken ct) =>
         ComConta(usuario, async conta =>
         {
@@ -695,6 +823,12 @@ public static class NegocioEndpoints
             return resultado.Ok ? Results.NoContent() : Falha(resultado.Falha!);
         });
 
+    private static Task<IResult> LiberarBriefingDoLead(Guid id, ClaimsPrincipal usuario, BriefingLeadServico servico, CancellationToken ct) =>
+        ComConta(usuario, async conta => await ComoBriefing(servico.LiberarAsync(conta, id, Relogio.Agora, ct)));
+
+    private static Task<IResult> EncerrarBriefingDoLead(Guid id, ClaimsPrincipal usuario, BriefingLeadServico servico, CancellationToken ct) =>
+        ComConta(usuario, async conta => await ComoBriefing(servico.EncerrarAsync(conta, id, ct)));
+
     private static async Task<IResult> ComoBriefing(Task<Resultado<BriefingLeadLeitura?>> tarefa)
     {
         var resultado = await tarefa;
@@ -704,9 +838,9 @@ public static class NegocioEndpoints
     private static Task<IResult> AssistentesDoEvento(Guid id, ClaimsPrincipal usuario, AppDbContext banco, CancellationToken ct) =>
         ComConta(usuario, async conta =>
         {
-            var ids = await banco.EventosAssistentes.AsNoTracking()
+            var ids = await banco.EventosMembros.AsNoTracking()
                 .Where(item => item.EventoId == id)
-                .Join(banco.Assistentes, item => item.AssistenteId, assistente => assistente.Id, (item, assistente) => assistente)
+                .Join(banco.Membros, item => item.MembroId, assistente => assistente.Id, (item, assistente) => assistente)
                 .Where(assistente => assistente.ContaId == conta)
                 .Select(assistente => assistente.Id)
                 .ToListAsync(ct);
@@ -722,8 +856,8 @@ public static class NegocioEndpoints
             }
 
             var pedidos = (pedido.Assistentes ?? []).Distinct().ToList();
-            var validas = await banco.Assistentes
-                .Where(assistente => assistente.ContaId == conta && assistente.Situacao == Project.Domain.Equipe.SituacaoAssistente.Ativa && pedidos.Contains(assistente.Id))
+            var validas = await banco.Membros
+                .Where(assistente => assistente.ContaId == conta && assistente.Tipo == Project.Domain.Equipe.TipoMembro.Membro && assistente.Situacao == Project.Domain.Equipe.SituacaoMembro.Ativa && pedidos.Contains(assistente.Id))
                 .Select(assistente => assistente.Id)
                 .ToListAsync(ct);
             if (validas.Count != pedidos.Count)
@@ -731,8 +865,8 @@ public static class NegocioEndpoints
                 return Validacao("Escolha só assistentes ativas da conta.");
             }
 
-            await banco.EventosAssistentes.Where(item => item.EventoId == id).ExecuteDeleteAsync(ct);
-            banco.EventosAssistentes.AddRange(validas.Select(assistente => new Project.Domain.Equipe.EventoAssistente { EventoId = id, AssistenteId = assistente }));
+            await banco.EventosMembros.Where(item => item.EventoId == id).ExecuteDeleteAsync(ct);
+            banco.EventosMembros.AddRange(validas.Select(assistente => new Project.Domain.Equipe.EventoMembro { EventoId = id, MembroId = assistente, ContaId = conta }));
             await banco.SaveChangesAsync(ct);
             return Results.Ok(new { assistentes = validas });
         });
@@ -760,7 +894,7 @@ public static class NegocioEndpoints
         ComConta(usuario, async conta =>
         {
 
-            return await De(servico.ComentarAsync(conta, id, pedido, Hoje(), ct));
+            return await De(servico.ComentarAsync(conta, id, pedido, Hoje(), ct, EscopoAssistente.MembroId(usuario)));
         });
 
     private static Task<IResult> AnexarTarefa(Guid id, HttpRequest request, ClaimsPrincipal usuario, TarefaServico servico, CancellationToken ct) =>
@@ -813,8 +947,18 @@ public static class NegocioEndpoints
             return await De(servico.ConcluirAsync(conta, id, pedido.Concluida, Hoje(), ct));
         });
 
-    private static Task<IResult> Clientes(ClaimsPrincipal usuario, ClienteServico servico, string? nome, CancellationToken ct) =>
-        ComConta(usuario, async conta => Results.Ok(await servico.ListarAsync(conta, nome, ct)));
+    private static Task<IResult> Clientes(ClaimsPrincipal usuario, ClienteServico servico, string? nome, AppDbContext banco, CancellationToken ct) =>
+        ComConta(usuario, async conta =>
+        {
+            var lista = await servico.ListarAsync(conta, nome, ct);
+            if (await EscopoAssistente.LiberadosAsync(usuario, banco, ct) is { } liberados)
+            {
+                // O cadastro de clientes é da conta; só os eventos vinculados fora do alcance somem.
+                lista = lista.Select(cliente => cliente with { Eventos = cliente.Eventos.Where(evento => liberados.Contains(evento.Id)).ToArray() }).ToArray();
+            }
+
+            return Results.Ok(lista);
+        });
 
     private static Task<IResult> CriarCliente(NovoCliente pedido, ClaimsPrincipal usuario, ClienteServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.CriarAsync(conta, pedido, Hoje(), ct)));
@@ -984,7 +1128,7 @@ public static class NegocioEndpoints
             }
 
             await using var fluxo = arquivo.OpenReadStream();
-            return await De(servico.EnfileirarAsync(conta, id, fluxo, arquivo.FileName, null, DateTimeOffset.UtcNow, ct));
+            return await De(servico.EnfileirarAsync(conta, id, fluxo, arquivo.FileName, null, Relogio.Agora, ct));
         });
 
     private static Task<IResult> Importacoes(Guid id, ClaimsPrincipal usuario, ImportacaoServico servico, IDados dados, CancellationToken ct) =>
@@ -1030,6 +1174,7 @@ public static class NegocioEndpoints
         HttpContext http,
         IArmazenamentoArquivo armazenamento,
         IDados dados,
+        AppDbContext banco,
         CancellationToken ct)
     {
         var conta = Conta(usuario);
@@ -1038,7 +1183,12 @@ public static class NegocioEndpoints
             return NaoAutenticado();
         }
 
-        var aberto = await armazenamento.AbrirAsync(id, conta, ct);
+        if (!await EscopoAssistente.PodeAbrirArquivoAsync(usuario, banco, id, ct))
+        {
+            return Indisponivel();
+        }
+
+        var aberto = await armazenamento.AbrirAsync(id, conta.Value, ct);
         if (aberto is null)
         {
             return Indisponivel();
@@ -1057,6 +1207,21 @@ public static class NegocioEndpoints
 
         var digitos = Mascaras.SoDigitos(cep);
         var endereco = digitos is null ? null : await consulta.ConsultarAsync(digitos, ct);
+        return endereco is null
+            ? Results.Json(new ErroResposta(Codigos.Validacao, "CEP não encontrado."), statusCode: StatusCodes.Status404NotFound)
+            : Results.Ok(endereco);
+    }
+
+    /// <summary>CEP na página de aceite: sem login, mas só com um link de proposta ativo.</summary>
+    private static async Task<IResult> CepPropostaPublica(string token, string cep, OrcamentoFunilServico servico, IConsultaCep consulta, CancellationToken ct)
+    {
+        if (!await servico.LinkAtivoAsync(token, ct))
+        {
+            return Indisponivel();
+        }
+
+        var digitos = Mascaras.SoDigitos(cep);
+        var endereco = digitos is { Length: 8 } ? await consulta.ConsultarAsync(digitos, ct) : null;
         return endereco is null
             ? Results.Json(new ErroResposta(Codigos.Validacao, "CEP não encontrado."), statusCode: StatusCodes.Status404NotFound)
             : Results.Ok(endereco);
@@ -1183,8 +1348,31 @@ public static class NegocioEndpoints
             return Results.Text(csv, "text/csv");
         });
 
-    private static Task<IResult> LeadPublico(string contaId, LeadPublicoPedido pedido, OportunidadeServico servico, CancellationToken ct) =>
-        De(servico.CriarLeadPublicoAsync(contaId, pedido, ct));
+    private static async Task<IResult> LeadPublico(
+        Guid contaId,
+        LeadPublicoPedido pedido,
+        OportunidadeServico servico,
+        ILoggerFactory logs,
+        CancellationToken ct)
+    {
+        // Honeypot (A06-002): campo isca preenchido ou envio rápido demais = robô.
+        // Responde sucesso falso (201 sem gravar) para o robô não aprender a contornar.
+        var agora = Relogio.Agora.ToUnixTimeMilliseconds();
+        var isca = !string.IsNullOrWhiteSpace(pedido.Site);
+        if (isca || (pedido.IniciadoEm is { } inicio && agora - inicio < LeadPublicoPedido.TempoMinimoMs))
+        {
+            logs.CreateLogger("LeadPublico").LogWarning(
+                "lead_descartado_honeypot conta={ContaId} isca={Isca}",
+                contaId,
+                isca);
+            return Results.Json(new { id = Guid.NewGuid() }, statusCode: StatusCodes.Status201Created);
+        }
+
+        var resultado = await servico.CriarLeadPublicoAsync(contaId, pedido, ct);
+        return resultado.Ok
+            ? Results.Json(resultado.Valor, statusCode: StatusCodes.Status201Created)
+            : Falha(resultado.Falha!);
+    }
 
     private static Task<IResult> LeadsRsvp(ClaimsPrincipal usuario, LeadRsvpServico servico, string? busca, CancellationToken ct) =>
         ComConta(usuario, async conta => Results.Ok(await servico.ListarAsync(conta, busca, ct)));
@@ -1263,8 +1451,14 @@ public static class NegocioEndpoints
     private static Task<IResult> AtualizarOrcamentoFunil(Guid id, SalvarOrcamentoFunil pedido, ClaimsPrincipal usuario, OrcamentoFunilServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.AtualizarAsync(conta, id, pedido, ct)));
 
-    private static Task<IResult> EnviarOrcamentoFunil(Guid id, ClaimsPrincipal usuario, OrcamentoFunilServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.EnviarAsync(conta, id, ct)));
+    private static Task<IResult> EnviarOrcamentoFunil(Guid id, PedidoEnvioProposta? pedido, ClaimsPrincipal usuario, OrcamentoFunilServico servico, CancellationToken ct) =>
+        ComConta(usuario, conta => De(servico.EnviarAsync(conta, id, pedido?.Dias, Relogio.Agora, ct)));
+
+    private static Task<IResult> LerConfiguracaoPropostas(ClaimsPrincipal usuario, PerfilServico servico, CancellationToken ct) =>
+        ComConta(usuario, async conta => Results.Ok(await servico.ObterPropostasAsync(conta, ct)));
+
+    private static Task<IResult> GravarConfiguracaoPropostas(ConfiguracaoPropostas pedido, ClaimsPrincipal usuario, PerfilServico servico, CancellationToken ct) =>
+        ComConta(usuario, conta => De(servico.SalvarPropostasAsync(conta, pedido, ct)));
 
     /// <summary>
     /// Sem login. Se a própria dona estiver logada, a abertura não conta (SPEC-031 §8). A página manda também a
@@ -1277,7 +1471,46 @@ public static class NegocioEndpoints
         [FromHeader(Name = "X-Aralu-Visitante")] string? visitante,
         OrcamentoFunilServico servico,
         CancellationToken ct) =>
-        De(servico.PublicaAsync(token, Conta(usuario) ?? visitante, ct));
+        De(servico.PublicaAsync(token, Conta(usuario)?.ToString() ?? visitante, ct));
+
+    /// <summary>Foto da página de aceite pelo link (SPEC-061 §8.5): só as do orçamento do token.</summary>
+    private static async Task<IResult> MidiaPropostaPublica(
+        string token,
+        Guid arquivoId,
+        HttpContext http,
+        OrcamentoFunilServico servico,
+        IArmazenamentoArquivo armazenamento,
+        CancellationToken ct)
+    {
+        if (await servico.MidiaPublicaAsync(token, arquivoId, ct) is not { } midia ||
+            await armazenamento.AbrirAsync(midia.ArquivoId, midia.ContaId, ct) is not { } aberto)
+        {
+            return Indisponivel();
+        }
+
+        http.Response.Headers.XContentTypeOptions = "nosniff";
+        http.Response.Headers.CacheControl = "private, max-age=3600";
+        return Results.File(aberto.Conteudo, aberto.TipoConteudo);
+    }
+
+    /// <summary>Foto da página de aceite: JPG ou PNG até 5 MB, reduzida no servidor (SPEC-061).</summary>
+    private static Task<IResult> EnviarMidiaAceite(IFormFile? arquivo, ClaimsPrincipal usuario, IArmazenamentoArquivo armazenamento, CancellationToken ct) =>
+        ComConta(usuario, async conta =>
+        {
+            if (arquivo is null || arquivo.Length == 0)
+            {
+                return Results.Json(new ErroResposta(Codigos.Validacao, "A foto não foi aceita. Use JPG ou PNG de até 5 MB."), statusCode: StatusCodes.Status400BadRequest);
+            }
+
+            await using var fluxo = arquivo.OpenReadStream();
+            var guardado = await armazenamento.GuardarImagemAsync(fluxo, arquivo.FileName, conta, ct);
+            return guardado.Ok && guardado.Valor is not null
+                ? Results.Ok(new { arquivoId = guardado.Valor.Id, nome = guardado.Valor.NomeOriginal, tipoConteudo = guardado.Valor.TipoConteudo })
+                : Results.Json(new ErroResposta(guardado.Falha!.Codigo, guardado.Falha.Mensagem), statusCode: StatusCodes.Status400BadRequest);
+        });
+
+    private static Task<IResult> PreviaPaginaAceite(PreviaPaginaAceite pedido, ClaimsPrincipal usuario, ModeloOrcamentoFunilServico servico, CancellationToken ct) =>
+        ComConta(usuario, async conta => Results.Ok(new { html = await servico.PreviaAsync(conta, pedido, ct) }));
 
     private static Task<IResult> ResponderPropostaPublica(
         string token,
@@ -1286,7 +1519,7 @@ public static class NegocioEndpoints
         [FromHeader(Name = "X-Aralu-Visitante")] string? visitante,
         OrcamentoFunilServico servico,
         CancellationToken ct) =>
-        De(servico.ResponderPublicaAsync(token, Conta(usuario) ?? visitante, pedido, DateOnly.FromDateTime(DateTime.UtcNow), ct));
+        De(servico.ResponderPublicaAsync(token, Conta(usuario)?.ToString() ?? visitante, pedido, Relogio.Hoje, ct));
 
     private static Task<IResult> ResponderOrcamentoFunil(
         Guid id,
@@ -1428,7 +1661,7 @@ public static class NegocioEndpoints
         "\"" + (valor ?? "").Replace("\"", "\"\"", StringComparison.Ordinal) + "\"";
 
     private static async Task<IResult> Imagem(
-        string conta,
+        Guid conta,
         IFormFile? arquivo,
         IArmazenamentoArquivo armazenamento,
         Func<Guid, CancellationToken, Task<(bool Ok, Falha? Falha, Guid? Anterior)>> ligar,
@@ -1470,16 +1703,16 @@ public static class NegocioEndpoints
         }
     }
 
-    private static async Task<bool> EventoDaConta(string conta, Guid id, CancellationToken ct, ConviteServico servico)
+    private static async Task<bool> EventoDaConta(Guid conta, Guid id, CancellationToken ct, ConviteServico servico)
     {
         var lista = await servico.ListarAsync(conta, id, new FiltroConvites(null, null, null, null, false), Hoje(), ct);
         return lista.Ok;
     }
 
-    private static Task<IResult> ComConta(ClaimsPrincipal usuario, Func<string, Task<IResult>> acao)
+    private static Task<IResult> ComConta(ClaimsPrincipal usuario, Func<Guid, Task<IResult>> acao)
     {
         var conta = Conta(usuario);
-        return conta is null ? Task.FromResult(NaoAutenticado()) : acao(conta);
+        return conta is null ? Task.FromResult(NaoAutenticado()) : acao(conta.Value);
     }
 
     private static async Task<IResult> De<T>(Task<Resultado<T>> tarefa)
@@ -1513,21 +1746,12 @@ public static class NegocioEndpoints
     private static string? SoDoUsuario(ClaimsPrincipal usuario) =>
         usuario.IsInRole(Papeis.Assistant) ? UsuarioId(usuario) ?? "-" : null;
 
-    private static string? Conta(ClaimsPrincipal usuario)
-    {
-        var organizerId = usuario.FindFirstValue(ContaClaims.OrganizerId);
-        if (!string.IsNullOrWhiteSpace(organizerId))
-        {
-            return organizerId;
-        }
-
-        return usuario.FindFirstValue(ClaimTypes.NameIdentifier);
-    }
+    private static Guid? Conta(ClaimsPrincipal usuario) => ContaAtual.De(usuario);
 
     private static string Email(ClaimsPrincipal usuario) =>
         usuario.FindFirstValue(ClaimTypes.Email) ?? usuario.FindFirstValue("email") ?? "";
 
-    private static DateOnly Hoje() => DateOnly.FromDateTime(DateTime.UtcNow);
+    private static DateOnly Hoje() => Relogio.Hoje;
 
     private static T? EnumOuNulo<T>(string? valor)
         where T : struct, Enum =>

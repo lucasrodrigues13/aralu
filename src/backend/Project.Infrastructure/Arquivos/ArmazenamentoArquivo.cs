@@ -27,28 +27,28 @@ public sealed class ArmazenamentoArquivo(
     public Task<Resultado<ArquivoGuardado>> GuardarImagemAsync(
         Stream conteudo,
         string? nomeOriginal,
-        string contaId,
+        Guid contaId,
         CancellationToken ct) =>
         GuardarAsync(conteudo, nomeOriginal, contaId, documento: false, ct);
 
     public Task<Resultado<ArquivoGuardado>> GuardarDocumentoAsync(
         Stream conteudo,
         string? nomeOriginal,
-        string contaId,
+        Guid contaId,
         CancellationToken ct) =>
         GuardarAsync(conteudo, nomeOriginal, contaId, documento: true, ct);
 
     public Task<Resultado<ArquivoGuardado>> GuardarWordAsync(
         Stream conteudo,
         string? nomeOriginal,
-        string contaId,
+        Guid contaId,
         CancellationToken ct) =>
         GuardarAsync(conteudo, nomeOriginal, contaId, documento: true, ct, word: true);
 
     private async Task<Resultado<ArquivoGuardado>> GuardarAsync(
         Stream conteudo,
         string? nomeOriginal,
-        string contaId,
+        Guid contaId,
         bool documento,
         CancellationToken ct,
         bool word = false)
@@ -98,7 +98,7 @@ public sealed class ArmazenamentoArquivo(
                 total = reduzida.Length;
             }
 
-            var agora = DateTime.UtcNow;
+            var agora = Relogio.AgoraUtc;
             var nomeFisico = $"{Guid.NewGuid():N}{tipo.Value.Extensao}";
             var relativo = Path.Combine(word ? "word" : documento ? "documentos" : "images", agora.Year.ToString("0000"), agora.Month.ToString("00"), nomeFisico);
             final = Path.GetFullPath(Path.Combine(raiz, relativo));
@@ -143,7 +143,7 @@ public sealed class ArmazenamentoArquivo(
         }
     }
 
-    public async Task<ArquivoAberto?> AbrirAsync(Guid id, string contaId, CancellationToken ct)
+    public async Task<ArquivoAberto?> AbrirAsync(Guid id, Guid contaId, CancellationToken ct)
     {
         var registro = await banco.Arquivos.AsNoTracking().FirstOrDefaultAsync(arquivo => arquivo.Id == id && arquivo.ContaId == contaId, ct);
         if (registro is null || registro.CaminhoRelativo.Contains("..", StringComparison.Ordinal))
@@ -173,7 +173,18 @@ public sealed class ArmazenamentoArquivo(
         var raiz = Raiz();
         var completo = Path.GetFullPath(Path.Combine(raiz, registro.CaminhoRelativo.Replace('/', Path.DirectorySeparatorChar)));
         banco.Arquivos.Remove(registro);
-        await banco.SaveChangesAsync(ct);
+        try
+        {
+            await banco.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateException)
+        {
+            // Outro registro ainda usa o arquivo (FK RESTRICT, ex.: logo copiado do modelo para o contrato):
+            // fica guardado e só sai quando ninguém mais usar (SPEC-062 Fase 3).
+            banco.Entry(registro).State = EntityState.Unchanged;
+            return;
+        }
+
         if (completo.StartsWith(raiz, StringComparison.OrdinalIgnoreCase))
         {
             ApagarSilencioso(completo);

@@ -1,10 +1,11 @@
+using Project.Domain.Comum;
 namespace Project.Domain.Modelos;
 
-public sealed class ModeloBriefing
+public sealed class ModeloBriefing : ITemConta
 {
     public Guid Id { get; set; }
 
-    public string ContaId { get; set; } = "";
+    public Guid ContaId { get; set; }
 
     public string Nome { get; set; } = "";
 
@@ -17,9 +18,11 @@ public sealed class ModeloBriefing
     public List<SecaoBriefing> Secoes { get; set; } = [];
 }
 
-public sealed class SecaoBriefing
+public sealed class SecaoBriefing : ITemConta
 {
     public Guid Id { get; set; }
+
+    public Guid ContaId { get; set; }
 
     public Guid ModeloId { get; set; }
 
@@ -37,9 +40,11 @@ public enum TipoPerguntaBriefing
     TextoCurto = 0,
 }
 
-public sealed class PerguntaBriefing
+public sealed class PerguntaBriefing : ITemConta
 {
     public Guid Id { get; set; }
+
+    public Guid ContaId { get; set; }
 
     public Guid SecaoId { get; set; }
 

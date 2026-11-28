@@ -1,10 +1,11 @@
+using Project.Domain.Comum;
 namespace Project.Domain.Fornecedores;
 
-public sealed class Fornecedor
+public sealed class Fornecedor : ITemConta
 {
     public Guid Id { get; set; }
 
-    public string ContaId { get; set; } = "";
+    public Guid ContaId { get; set; }
 
     public string Nome { get; set; } = "";
 
@@ -87,9 +88,11 @@ public sealed class Fornecedor
         && Telefones.Count > 0;
 }
 
-public sealed class TelefoneFornecedor
+public sealed class TelefoneFornecedor : ITemConta
 {
     public Guid Id { get; set; }
+
+    public Guid ContaId { get; set; }
 
     public Guid FornecedorId { get; set; }
 
@@ -102,18 +105,22 @@ public sealed class TelefoneFornecedor
     public bool Movel { get; set; } = true;
 }
 
-public sealed class EmailFornecedor
+public sealed class EmailFornecedor : ITemConta
 {
     public Guid Id { get; set; }
+
+    public Guid ContaId { get; set; }
 
     public Guid FornecedorId { get; set; }
 
     public string Endereco { get; set; } = "";
 }
 
-public sealed class OrcamentoFornecedor
+public sealed class OrcamentoFornecedor : ITemConta
 {
     public Guid Id { get; set; }
+
+    public Guid ContaId { get; set; }
 
     public Guid FornecedorId { get; set; }
 
@@ -126,8 +133,10 @@ public sealed class OrcamentoFornecedor
     public bool VisivelClientes { get; set; }
 }
 
-public sealed class FornecedorServico
+public sealed class FornecedorServico : ITemConta
 {
+
+    public Guid ContaId { get; set; }
     public Guid FornecedorId { get; set; }
 
     public Guid ServicoContaId { get; set; }

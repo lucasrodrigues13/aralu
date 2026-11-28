@@ -1,12 +1,13 @@
+using Project.Domain.Comum;
 using Project.Domain.Eventos;
 
 namespace Project.Domain.Funil;
 
-public sealed class Oportunidade
+public sealed class Oportunidade : ITemConta
 {
     public Guid Id { get; set; }
 
-    public string ContaId { get; set; } = "";
+    public Guid ContaId { get; set; }
 
     public string Nome { get; set; } = "";
 
@@ -171,9 +172,11 @@ public static class EstadosCivis
         Lista.FirstOrDefault(item => string.Equals(item, valor?.Trim(), StringComparison.OrdinalIgnoreCase));
 }
 
-public sealed class ContatoOportunidade
+public sealed class ContatoOportunidade : ITemConta
 {
     public Guid Id { get; set; }
+
+    public Guid ContaId { get; set; }
 
     public Guid OportunidadeId { get; set; }
 

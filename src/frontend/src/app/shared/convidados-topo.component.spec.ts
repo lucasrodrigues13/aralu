@@ -17,7 +17,7 @@ describe('Topo da aba Convidados (SPEC-059 §6.5)', () => {
 
   it('tem as mesmas ferramentas nas duas telas e só a organizadora filtra por observação', () => {
     const organizadora = criar(true).nativeElement as HTMLElement;
-    const ferramentas = ['Data de envio', 'Prazo de confirmação', 'Lista de presença', 'Planilha padrão', 'Importar', 'Novo convite'];
+    const ferramentas = ['Data de envio', 'Prazo de confirmação', 'Lista de presença', 'Importar', 'Novo convite'];
     for (const nome of ferramentas) expect(textos(organizadora).some((texto) => texto.includes(nome))).toBe(true);
     expect(organizadora.querySelector('input[aria-label="Observação"]')).not.toBeNull();
 

@@ -62,7 +62,7 @@ public sealed record EventoVinculado(Guid Id, string Nome);
 
 public sealed class ClienteServico(IDados dados, Cep.IConsultaCep cep)
 {
-    public async Task<IReadOnlyList<ClienteLeitura>> ListarAsync(string contaId, string? nome, CancellationToken ct)
+    public async Task<IReadOnlyList<ClienteLeitura>> ListarAsync(Guid contaId, string? nome, CancellationToken ct)
     {
         var clientes = await dados.ListarClientesAsync(contaId, nome, ct);
         var lista = new List<ClienteLeitura>();
@@ -74,7 +74,7 @@ public sealed class ClienteServico(IDados dados, Cep.IConsultaCep cep)
         return lista;
     }
 
-    public async Task<Resultado<ClienteLeitura>> ObterAsync(string contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<ClienteLeitura>> ObterAsync(Guid contaId, Guid id, CancellationToken ct)
     {
         var cliente = await dados.ObterClienteAsync(contaId, id, ct);
         if (cliente is null)
@@ -85,7 +85,7 @@ public sealed class ClienteServico(IDados dados, Cep.IConsultaCep cep)
         return Resultado<ClienteLeitura>.Sucesso(await LerAsync(contaId, cliente, ct));
     }
 
-    public async Task<Resultado<ClienteLeitura>> CriarAsync(string contaId, NovoCliente? pedido, DateOnly hoje, CancellationToken ct)
+    public async Task<Resultado<ClienteLeitura>> CriarAsync(Guid contaId, NovoCliente? pedido, DateOnly hoje, CancellationToken ct)
     {
         var montado = Montar(contaId, pedido, hoje);
         if (!montado.Ok)
@@ -104,7 +104,7 @@ public sealed class ClienteServico(IDados dados, Cep.IConsultaCep cep)
     }
 
     public async Task<Resultado<ClienteLeitura>> AtualizarAsync(
-        string contaId,
+        Guid contaId,
         Guid id,
         NovoCliente? pedido,
         DateOnly hoje,
@@ -159,7 +159,7 @@ public sealed class ClienteServico(IDados dados, Cep.IConsultaCep cep)
         return Resultado<ClienteLeitura>.Sucesso(await LerAsync(contaId, cliente, ct));
     }
 
-    public async Task<Resultado<bool>> VincularAsync(string contaId, Guid eventoId, Guid clienteId, CancellationToken ct)
+    public async Task<Resultado<bool>> VincularAsync(Guid contaId, Guid eventoId, Guid clienteId, CancellationToken ct)
     {
         var vinculado = await dados.VincularAsync(contaId, clienteId, eventoId, ct);
         if (!vinculado)
@@ -170,7 +170,7 @@ public sealed class ClienteServico(IDados dados, Cep.IConsultaCep cep)
         return Resultado<bool>.Sucesso(true);
     }
 
-    public async Task<Resultado<bool>> DesvincularAsync(string contaId, Guid eventoId, Guid clienteId, CancellationToken ct)
+    public async Task<Resultado<bool>> DesvincularAsync(Guid contaId, Guid eventoId, Guid clienteId, CancellationToken ct)
     {
         var ok = await dados.DesvincularAsync(contaId, clienteId, eventoId, ct);
         if (!ok)
@@ -181,7 +181,7 @@ public sealed class ClienteServico(IDados dados, Cep.IConsultaCep cep)
         return Resultado<bool>.Sucesso(true);
     }
 
-    public async Task<IReadOnlyList<ClienteLeitura>> DoEventoAsync(string contaId, Guid eventoId, CancellationToken ct)
+    public async Task<IReadOnlyList<ClienteLeitura>> DoEventoAsync(Guid contaId, Guid eventoId, CancellationToken ct)
     {
         if (!await dados.EventoDaContaAsync(contaId, eventoId, ct))
         {
@@ -198,7 +198,7 @@ public sealed class ClienteServico(IDados dados, Cep.IConsultaCep cep)
         return lista;
     }
 
-    public async Task<Resultado<Guid?>> GuardarFotoAsync(string contaId, Guid id, Guid fotoId, CancellationToken ct)
+    public async Task<Resultado<Guid?>> GuardarFotoAsync(Guid contaId, Guid id, Guid fotoId, CancellationToken ct)
     {
         var cliente = await dados.ObterClienteAsync(contaId, id, ct);
         if (cliente is null)
@@ -217,7 +217,7 @@ public sealed class ClienteServico(IDados dados, Cep.IConsultaCep cep)
     /// A oportunidade que virou cliente continua existindo, só perde o vínculo (SPEC-020 §7).
     /// Devolve o id da foto, para o chamador apagar o arquivo.
     /// </summary>
-    public async Task<Resultado<Guid?>> ExcluirAsync(string contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<Guid?>> ExcluirAsync(Guid contaId, Guid id, CancellationToken ct)
     {
         var cliente = await dados.ObterClienteAsync(contaId, id, ct);
         if (cliente is null)
@@ -239,7 +239,7 @@ public sealed class ClienteServico(IDados dados, Cep.IConsultaCep cep)
         return Resultado<Guid?>.Sucesso(foto);
     }
 
-    public static Resultado<Cliente> Montar(string contaId, NovoCliente? pedido, DateOnly hoje)
+    public static Resultado<Cliente> Montar(Guid contaId, NovoCliente? pedido, DateOnly hoje)
     {
         if (pedido is null || Domain.Comum.Texto.Vazio(pedido.Nome))
         {
@@ -343,7 +343,7 @@ public sealed class ClienteServico(IDados dados, Cep.IConsultaCep cep)
         return Resultado<bool>.Sucesso(true);
     }
 
-    private async Task<ClienteLeitura> LerAsync(string contaId, Cliente cliente, CancellationToken ct)
+    private async Task<ClienteLeitura> LerAsync(Guid contaId, Cliente cliente, CancellationToken ct)
     {
         var eventos = await dados.EventosDoClienteAsync(contaId, cliente.Id, ct);
         return new ClienteLeitura(

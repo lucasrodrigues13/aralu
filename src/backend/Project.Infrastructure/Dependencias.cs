@@ -29,6 +29,7 @@ public static class Dependencias
 
         services.AddIdentityCore<ApplicationUser>(OpcoesDeConta.Aplicar)
             .AddRoles<IdentityRole>()
+            .AddPasswordValidator<SenhaComumValidador>()
             .AddEntityFrameworkStores<AppDbContext>()
             .AddSignInManager()
             .AddTokenProvider<ConfirmacaoEmailTokenProvider>(ConfirmacaoEmailTokenProvider.Nome)
@@ -39,7 +40,14 @@ public static class Dependencias
         services.Configure<EmailOpcoes>(configuration.GetSection("Email"));
         services.Configure<BootstrapOpcoes>(configuration.GetSection("Bootstrap"));
         services.Configure<ArmazenamentoOpcoes>(configuration.GetSection("Storage"));
+        services.Configure<Project.Infrastructure.Assinaturas.AsaasOpcoes>(configuration.GetSection("Asaas"));
+        services.PostConfigure<Project.Infrastructure.Assinaturas.AsaasOpcoes>(opcoes => opcoes.Ambiente = configuration["App:Environment"]);
+        services.AddHostedService<Project.Infrastructure.Assinaturas.AvisoDiagnosticoAsaas>();
+        services.AddHttpClient<Project.Infrastructure.Assinaturas.IAsaas, Project.Infrastructure.Assinaturas.AsaasHttp>(cliente => cliente.Timeout = TimeSpan.FromSeconds(20));
         services.AddSingleton<IEmissorJwt, EmissorJwt>();
+        services.AddMemoryCache();
+        services.AddSingleton<Project.Application.Comum.LogSeguranca>();
+        services.AddScoped<SessaoServico>();
         services.AddScoped<IDados, DadosEf>();
         services.AddScoped<PerfilServico>();
         services.AddScoped<ModeloServico>();
@@ -51,11 +59,17 @@ public static class Dependencias
         services.AddScoped<InspiracaoServico>();
         services.AddScoped<MensagemServico>();
         services.AddScoped<FornecedorServico>();
+        services.AddScoped<FornecedorImportacaoServico>();
+        services.AddScoped<BriefingImportacaoServico>();
+        services.AddScoped<RoteiroImportacaoServico>();
+        services.AddScoped<CronogramaImportacaoServico>();
         services.AddScoped<PainelServico>();
         services.AddScoped<IDadosDinheiro, DadosDinheiroEf>();
         services.AddScoped<DinheiroServico>();
         services.AddScoped<IDadosLinkCliente, DadosLinkClienteEf>();
         services.AddScoped<LinkClienteServico>();
+        services.AddScoped<IDadosAcessoLinkCliente, DadosAcessoLinkClienteEf>();
+        services.AddScoped<AcessoLinkClienteServico>();
         services.AddScoped<IDadosPortaria, DadosPortariaEf>();
         services.AddScoped<PortariaServico>();
         services.AddScoped<IDadosContrato, DadosContratoEf>();
@@ -83,8 +97,17 @@ public static class Dependencias
         services.AddScoped<RelatorioFunilServico>();
         services.AddScoped<ModeloServicoFunilServico>();
         services.AddScoped<ModeloOrcamentoFunilServico>();
-        services.AddScoped<AssistenteServico>();
+        services.AddScoped<EquipeServico>();
+        services.AddScoped<GrupoServico>();
+        services.AddScoped<Project.Infrastructure.Assinaturas.AssinaturaServico>();
+        services.AddScoped<Project.Infrastructure.Assinaturas.PlanosAdminServico>();
+        services.AddScoped<Project.Infrastructure.Assinaturas.AvisosAssinaturaServico>();
+        services.AddHostedService<Project.Infrastructure.Assinaturas.ControleDiarioAssinaturas>();
+        services.AddScoped<CadastroDeConta>();
         services.AddScoped<BriefingLeadServico>();
+        services.AddScoped<BriefingAcessoServico>();
+        services.AddScoped<EquipeEventoServico>();
+        services.AddScoped<EquipeAcessoServico>();
         services.AddScoped<IArmazenamentoArquivo, ArmazenamentoArquivo>();
         services.AddHttpClient<IConsultaCep, ViaCepConsulta>(cliente =>
         {
@@ -93,6 +116,10 @@ public static class Dependencias
         });
         services.AddSingleton<IPlanilhaConvites, PlanilhaExcel>();
         services.AddSingleton<IPlanilhaTarefasModelo, Eventos.PlanilhaTarefasExcel>();
+        services.AddSingleton<IPlanilhaFornecedores, Fornecedores.PlanilhaFornecedoresExcel>();
+        services.AddSingleton<IPlanilhaBriefing, Modelos.PlanilhaBriefingExcel>();
+        services.AddSingleton<IPlanilhaRoteiro, Modelos.PlanilhaRoteiroExcel>();
+        services.AddSingleton<IPlanilhaCronograma, Modelos.PlanilhaCronogramaExcel>();
         services.AddSingleton<IGeradorQr, GeradorQr>();
         services.AddScoped<IEmailSender<ApplicationUser>, MailKitEmailSender>();
         services.AddScoped<GarantiaDePapeis>();

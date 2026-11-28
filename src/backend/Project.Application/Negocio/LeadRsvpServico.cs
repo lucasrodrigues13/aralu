@@ -9,18 +9,18 @@ public sealed record LeadRsvpLeitura(
     string Evento,
     DateTimeOffset CriadoEm,
     string? Telefone,
-    Guid ConviteId,
-    Guid EventoId);
+    Guid? ConviteId,
+    Guid? EventoId);
 
 public sealed class LeadRsvpServico(IDados dados)
 {
-    public async Task<IReadOnlyList<LeadRsvpLeitura>> ListarAsync(string contaId, string? busca, CancellationToken ct)
+    public async Task<IReadOnlyList<LeadRsvpLeitura>> ListarAsync(Guid contaId, string? busca, CancellationToken ct)
     {
         var itens = await dados.ListarLeadsRsvpAtivosAsync(contaId, busca, ct);
         return itens.Select(Ler).ToArray();
     }
 
-    public async Task<Resultado<OportunidadeLeitura>> GerarOportunidadeAsync(string contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<OportunidadeLeitura>> GerarOportunidadeAsync(Guid contaId, Guid id, CancellationToken ct)
     {
         var lead = await dados.ObterLeadRsvpAsync(contaId, id, ct);
         if (lead is null || lead.Situacao != SituacaoLeadRsvp.Ativo)
@@ -29,7 +29,7 @@ public sealed class LeadRsvpServico(IDados dados)
         }
 
         var primeiro = OportunidadeServico.PrimeiroAberto(await dados.ListarEstagiosFunilAsync(contaId, ct));
-        var agora = DateTimeOffset.UtcNow;
+        var agora = Relogio.Agora;
         var oportunidade = new Oportunidade
         {
             Id = Guid.NewGuid(),
@@ -39,7 +39,7 @@ public sealed class LeadRsvpServico(IDados dados)
             EstagioFunil = primeiro,
             Fonte = OrigensFunil.Outro,
             FonteOutro = "RSVP",
-            Responsavel = contaId,
+            Responsavel = contaId.ToString(),
             CriadoEm = agora,
             EntradaNoEstagioEm = agora,
             Contatos =
@@ -61,7 +61,7 @@ public sealed class LeadRsvpServico(IDados dados)
         return Resultado<OportunidadeLeitura>.Sucesso(OportunidadeServico.Ler(oportunidade));
     }
 
-    public async Task<Resultado<bool>> DescartarAsync(string contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<bool>> DescartarAsync(Guid contaId, Guid id, CancellationToken ct)
     {
         var lead = await dados.ObterLeadRsvpAsync(contaId, id, ct);
         if (lead is null || lead.Situacao != SituacaoLeadRsvp.Ativo)
@@ -74,7 +74,7 @@ public sealed class LeadRsvpServico(IDados dados)
         return Resultado<bool>.Sucesso(true);
     }
 
-    public async Task<Resultado<bool>> MarcarContatadoAsync(string contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<bool>> MarcarContatadoAsync(Guid contaId, Guid id, CancellationToken ct)
     {
         var lead = await dados.ObterLeadRsvpAsync(contaId, id, ct);
         if (lead is null || lead.Situacao != SituacaoLeadRsvp.Ativo)
@@ -82,7 +82,7 @@ public sealed class LeadRsvpServico(IDados dados)
             return Resultado<bool>.Erro(Codigos.Indisponivel, "Indisponível.");
         }
 
-        lead.ContatadoEm ??= DateTimeOffset.UtcNow;
+        lead.ContatadoEm ??= Relogio.Agora;
         await dados.SalvarNegocioAsync(ct);
         return Resultado<bool>.Sucesso(true);
     }

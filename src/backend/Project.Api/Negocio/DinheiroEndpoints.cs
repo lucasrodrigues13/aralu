@@ -13,7 +13,7 @@ public static class DinheiroEndpoints
 
     public static void Mapear(WebApplication app)
     {
-        var api = app.MapGroup("/api/v1").RequireAuthorization(AssistenteEndpoints.PoliticaFinanceiro);
+        var api = app.MapGroup("/api/v1").RequireAuthorization(EquipeEndpoints.PoliticaFinanceiro);
         api.AddEndpointFilter(EscopoAssistente.Filtro);
         api.MapGet("/eventos/{id:guid}/dinheiro", Obter);
         api.MapGet("/eventos/{id:guid}/budget/planilha", PlanilhaBudget);
@@ -32,7 +32,7 @@ public static class DinheiroEndpoints
                 Hoje(),
                 ct,
                 await EscopoAssistente.LiberadosAsync(usuario, banco, ct),
-                AssistenteEndpoints.PodeVerFinanceiro(usuario),
+                EquipeEndpoints.PodeVerFinanceiro(usuario),
                 usuario.IsInRole(Papeis.Organizer))))).RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
     }
 
@@ -66,7 +66,7 @@ public static class DinheiroEndpoints
     private static Task<IResult> Comprovante(
         HttpRequest request,
         ClaimsPrincipal usuario,
-        Func<string, Stream, string, Task<Resultado<DinheiroEventoLeitura>>> enviar,
+        Func<Guid, Stream, string, Task<Resultado<DinheiroEventoLeitura>>> enviar,
         CancellationToken ct) =>
         ComConta(usuario, async conta =>
         {
@@ -100,17 +100,12 @@ public static class DinheiroEndpoints
             return Results.File(conteudo, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", nome);
         });
 
-    private static Task<IResult> ComConta(ClaimsPrincipal usuario, Func<string, Task<IResult>> acao)
+    private static Task<IResult> ComConta(ClaimsPrincipal usuario, Func<Guid, Task<IResult>> acao)
     {
-        var conta = usuario.FindFirstValue(ContaClaims.OrganizerId);
-        if (string.IsNullOrWhiteSpace(conta))
-        {
-            conta = usuario.FindFirstValue(ClaimTypes.NameIdentifier);
-        }
-
-        return string.IsNullOrWhiteSpace(conta)
+        var conta = ContaAtual.De(usuario);
+        return conta is null
             ? Task.FromResult(Results.Json(new ErroResposta("autenticacao", "É preciso entrar para continuar."), statusCode: StatusCodes.Status401Unauthorized))
-            : acao(conta);
+            : acao(conta.Value);
     }
 
     private static async Task<IResult> De<T>(Task<Resultado<T>> tarefa)
@@ -129,5 +124,5 @@ public static class DinheiroEndpoints
                 _ => StatusCodes.Status400BadRequest,
             });
 
-    private static DateOnly Hoje() => DateOnly.FromDateTime(DateTime.UtcNow);
+    private static DateOnly Hoje() => Relogio.Hoje;
 }

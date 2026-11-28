@@ -21,7 +21,14 @@ public static class LinkClienteEndpoints
         dona.MapPut("", Salvar);
         dona.MapDelete("", Desativar);
 
+        // Código de acesso (SPEC-063): estas rotas não pedem sessão; todas as outras do link pedem (R1).
+        var acesso = app.MapGroup("/api/v1/publico/cliente/{token}/acesso").RequireRateLimiting("publico-ip");
+        acesso.MapGet("", LerAcesso);
+        acesso.MapPost("/codigo", PedirCodigo);
+        acesso.MapPost("/confirmar", ConfirmarCodigo);
+
         var cliente = app.MapGroup("/api/v1/publico/cliente/{token}");
+        cliente.AddEndpointFilter(ExigirSessao);
         cliente.MapGet("", LerPagina);
         var pagamento = "/pagamentos/{servicoId:guid}";
         cliente.MapPut(pagamento + "/parcelamento", Parcelar);
@@ -49,7 +56,7 @@ public static class LinkClienteEndpoints
         ComConta(usuario, conta => De(servico.ObterAsync(conta, id, ct)));
 
     private static Task<IResult> Gerar(Guid id, ClaimsPrincipal usuario, LinkClienteServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.GerarAsync(conta, id, DateTimeOffset.UtcNow, ct)));
+        ComConta(usuario, conta => De(servico.GerarAsync(conta, id, Relogio.Agora, ct)));
 
     private static Task<IResult> Salvar(Guid id, SalvarLinkCliente pedido, ClaimsPrincipal usuario, LinkClienteServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.SalvarAsync(conta, id, pedido, ct)));
@@ -59,6 +66,65 @@ public static class LinkClienteEndpoints
 
     private static Task<IResult> LerPagina(string token, LinkClienteServico servico, CancellationToken ct) =>
         De(servico.LerPaginaAsync(token, ct));
+
+    // ---- Código de acesso (SPEC-063) ----
+
+    /// <summary>Cookie da sessão do link: só o navegador guarda o token; vale só para as rotas deste link.</summary>
+    public const string CookieSessao = "aralu_link_cliente";
+
+    private static Task<IResult> LerAcesso(string token, HttpContext http, AcessoLinkClienteServico servico, CancellationToken ct) =>
+        De(servico.LerAsync(token, http.Request.Cookies[CookieSessao], Relogio.Agora, ct));
+
+    private static Task<IResult> PedirCodigo(string token, PedirCodigoLink pedido, AcessoLinkClienteServico servico, CancellationToken ct) =>
+        De(servico.PedirCodigoAsync(token, pedido, Relogio.Agora, ct));
+
+    private static async Task<IResult> ConfirmarCodigo(string token, ConfirmarCodigoLink pedido, HttpContext http, AcessoLinkClienteServico servico, CancellationToken ct)
+    {
+        var resultado = await servico.ConfirmarAsync(token, pedido, Relogio.Agora, ct);
+        if (!resultado.Ok)
+        {
+            return Falha(resultado.Falha!);
+        }
+
+        GravarCookie(http, token, resultado.Valor!.Token, resultado.Valor.ExpiraEm);
+        return Results.Ok(new { ok = true });
+    }
+
+    /// <summary>Nenhum dado do link sai sem sessão válida (SPEC-063 R1); cada uso renova a sessão (R6).</summary>
+    private static async ValueTask<object?> ExigirSessao(EndpointFilterInvocationContext contexto, EndpointFilterDelegate proximo)
+    {
+        var http = contexto.HttpContext;
+        var token = http.Request.RouteValues["token"] as string ?? "";
+        var sessao = http.Request.Cookies[CookieSessao];
+        var servico = http.RequestServices.GetRequiredService<AcessoLinkClienteServico>();
+        var (existe, expira) = await servico.ValidarSessaoAsync(token, sessao, Relogio.Agora, http.RequestAborted);
+        if (!existe)
+        {
+            // A própria rota responde "Link inválido." sem entregar dado.
+            return await proximo(contexto);
+        }
+
+        if (expira is null)
+        {
+            return Results.Json(
+                new ErroResposta("sessao", AcessoLinkClienteServico.SessaoVencida),
+                statusCode: StatusCodes.Status401Unauthorized);
+        }
+
+        GravarCookie(http, token, sessao!, expira.Value);
+        return await proximo(contexto);
+    }
+
+    private static void GravarCookie(HttpContext http, string token, string sessao, DateTimeOffset expira) =>
+        http.Response.Cookies.Append(CookieSessao, sessao, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = http.Request.IsHttps,
+            SameSite = SameSiteMode.Strict,
+            Path = "/api/v1/publico/cliente/" + Uri.EscapeDataString(token),
+            Expires = expira,
+            IsEssential = true,
+        });
 
     private static Task<IResult> DefinirPrazoRsvp(string token, PrazoRsvpPedido pedido, LinkClienteServico servico, CancellationToken ct) =>
         De(servico.DefinirPrazoRsvpAsync(token, pedido.Prazo, Hoje(), ct));
@@ -91,7 +157,7 @@ public static class LinkClienteEndpoints
         }
 
         await using var fluxo = arquivo.OpenReadStream();
-        return await De(servico.EnfileirarImportacaoAsync(token, fluxo, arquivo.FileName, DateTimeOffset.UtcNow, ct));
+        return await De(servico.EnfileirarImportacaoAsync(token, fluxo, arquivo.FileName, Relogio.Agora, ct));
     }
 
     private static Task<IResult> Importacoes(string token, LinkClienteServico servico, CancellationToken ct) =>
@@ -164,17 +230,12 @@ public static class LinkClienteEndpoints
         return await De(enviar(fluxo, arquivo.FileName));
     }
 
-    private static Task<IResult> ComConta(ClaimsPrincipal usuario, Func<string, Task<IResult>> acao)
+    private static Task<IResult> ComConta(ClaimsPrincipal usuario, Func<Guid, Task<IResult>> acao)
     {
-        var conta = usuario.FindFirstValue(ContaClaims.OrganizerId);
-        if (string.IsNullOrWhiteSpace(conta))
-        {
-            conta = usuario.FindFirstValue(ClaimTypes.NameIdentifier);
-        }
-
-        return string.IsNullOrWhiteSpace(conta)
+        var conta = ContaAtual.De(usuario);
+        return conta is null
             ? Task.FromResult(Results.Json(new ErroResposta("autenticacao", "É preciso entrar para continuar."), statusCode: StatusCodes.Status401Unauthorized))
-            : acao(conta);
+            : acao(conta.Value);
     }
 
     private static async Task<IResult> De<T>(Task<Resultado<T>> tarefa)
@@ -196,5 +257,5 @@ public static class LinkClienteEndpoints
     private static string LimparNome(string nome) =>
         new string(nome.Where(c => !char.IsControl(c) && c != '"' && c != '\\' && c != '/').ToArray()) is { Length: > 0 } limpo ? limpo : "arquivo";
 
-    private static DateOnly Hoje() => DateOnly.FromDateTime(DateTime.UtcNow);
+    private static DateOnly Hoje() => Relogio.Hoje;
 }

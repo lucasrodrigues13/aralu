@@ -1,19 +1,22 @@
+using Project.Domain.Comum;
 namespace Project.Domain.Modelos;
 
-public sealed class ModeloRoteiro
+public sealed class ModeloRoteiro : ITemConta
 {
     public Guid Id { get; set; }
 
-    public string ContaId { get; set; } = "";
+    public Guid ContaId { get; set; }
 
     public string Nome { get; set; } = "";
 
     public List<SecaoRoteiro> Secoes { get; set; } = [];
 }
 
-public sealed class SecaoRoteiro
+public sealed class SecaoRoteiro : ITemConta
 {
     public Guid Id { get; set; }
+
+    public Guid ContaId { get; set; }
 
     public Guid ModeloId { get; set; }
 
@@ -28,9 +31,11 @@ public sealed class SecaoRoteiro
     public List<ItemRoteiro> Itens { get; set; } = [];
 }
 
-public sealed class ItemRoteiro
+public sealed class ItemRoteiro : ITemConta
 {
     public Guid Id { get; set; }
+
+    public Guid ContaId { get; set; }
 
     public Guid SecaoId { get; set; }
 

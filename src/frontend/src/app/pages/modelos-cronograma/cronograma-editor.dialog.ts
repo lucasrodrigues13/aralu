@@ -1,0 +1,223 @@
+import { Component, inject, signal } from '@angular/core';
+import { CdkDrag, CdkDragDrop, CdkDropList } from '@angular/cdk/drag-drop';
+import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatDialogModule, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatSelectModule } from '@angular/material/select';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { mensagemDeErro } from '../../core/mensagem-erro';
+import { Cronograma, NegocioClient, PAPEIS_RESPONSAVEL_MODELO } from '../../core/negocio.client';
+import { ToastService } from '../../core/toast.service';
+import { CampoDataComponent } from '../../shared/campo-data';
+import { CampoHoraComponent } from '../../shared/campo-hora';
+import { deDataParaIso, deIsoParaData } from '../../shared/data';
+import { GdDataPipe } from '../../shared/gd-data.pipe';
+import { horaParaApi } from '../../shared/mascaras';
+import { moverControle } from '../../shared/mestre-detalhe';
+import { FecharModal } from '../../shared/fechar-modal';
+import { Estado } from '../../shared/estado';
+
+/** Editor de cronograma em mestre e detalhe: itens à esquerda, campos do item escolhido à direita. */
+@Component({
+  selector: 'app-cronograma-editor-dialog',
+  imports: [FecharModal, 
+    ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule,
+    MatMenuModule, MatSelectModule, MatTooltipModule, CdkDropList, CdkDrag, CampoDataComponent, CampoHoraComponent, GdDataPipe, Estado],
+  template: `
+    <h2 mat-dialog-title>{{ dados ? 'Editar cronograma' : 'Novo cronograma' }} <app-fechar-modal /></h2>
+    <mat-dialog-content>
+      <form [formGroup]="form" (submit)="$event.preventDefault()">
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Título</mat-label>
+          <mat-form-field appearance="outline" class="w-full"><input aria-label="Título" matInput formControlName="titulo" /></mat-form-field>
+        </div>
+        <div class="campo">
+          <mat-label class="font-semibold mb-2 block">Descrição</mat-label>
+          <mat-form-field appearance="outline" class="w-full"><textarea aria-label="Descrição" matInput rows="2" formControlName="descricao"></textarea></mat-form-field>
+        </div>
+
+        <div class="mestre-detalhe" formArrayName="itens">
+          <nav class="mestre" aria-label="Itens do cronograma">
+            <div class="busca">
+              <mat-icon aria-hidden="true">search</mat-icon>
+              <input type="search" aria-label="Buscar item" placeholder="Buscar item" [value]="busca()" (input)="busca.set($any($event.target).value)" />
+            </div>
+            <div cdkDropList (cdkDropListDropped)="moverItem($event)" [cdkDropListDisabled]="!!busca().trim()">
+              @for (item of itens.controls; track item; let i = $index) {
+                @if (combina(item.value.rotulo)) {
+                <button type="button" cdkDrag class="opcao" [class.ativa]="i === selecionado()" [attr.aria-current]="i === selecionado() ? 'true' : null" (click)="selecionado.set(i)">
+                  <span class="opcao-texto">
+                    <span class="titulo" [class.vazio]="!item.value.rotulo">{{ item.value.rotulo || 'Item sem rótulo' }}</span>
+                    @if (item.value.data || item.value.hora) {
+                      <span class="sub">{{ item.value.data | gdData }}@if (item.value.data && item.value.hora) { · }{{ item.value.hora }}</span>
+                    }
+                  </span>
+                </button>
+                }
+              } @empty {
+                <p class="text-sm text-muted px-3 py-2 m-0">Nenhum item ainda.</p>
+              }
+              @if (itens.length > 0 && busca().trim() && !algumCombina()) {
+                <p class="text-sm text-muted px-3 py-2 m-0">Nenhum item com esse nome.</p>
+              }
+            </div>
+            <button mat-button type="button" class="adicionar" (click)="adicionarItem()"><mat-icon>add</mat-icon> Item</button>
+          </nav>
+
+          <section class="detalhe">
+            @if (itemAtual(); as item) {
+              <div [formGroup]="item">
+                <div class="linha">
+                  <mat-form-field appearance="outline" class="grow" subscriptSizing="dynamic">
+                    <input aria-label="Rótulo do item" matInput formControlName="rotulo" placeholder="Rótulo do item" />
+                  </mat-form-field>
+                  <button mat-icon-button type="button" aria-label="Ações do item" matTooltip="Ações do item" [matMenuTriggerFor]="menuItem"><mat-icon>more_vert</mat-icon></button>
+                  <mat-menu #menuItem="matMenu" xPosition="before">
+                    <button mat-menu-item type="button" (click)="removerItem(selecionado())"><mat-icon>delete</mat-icon> Remover item</button>
+                  </mat-menu>
+                </div>
+                <mat-form-field appearance="outline" class="w-full mt-2" subscriptSizing="dynamic">
+                  <textarea aria-label="Descrição do item" matInput rows="2" formControlName="descricao" placeholder="Descrição (opcional): o que preencher ou checar"></textarea>
+                </mat-form-field>
+                <div class="linha mt-3">
+                  <app-campo-data rotulo="Data" formControlName="data" />
+                  <app-campo-hora rotulo="Hora" formControlName="hora" />
+                  <div class="campo grow">
+                  <mat-label class="font-semibold mb-2 block">Responsável</mat-label>
+                  <mat-form-field appearance="outline" class="w-full">
+                    <mat-select aria-label="Responsável" formControlName="responsavel" placeholder="Sem responsável">
+                      <mat-option value="">Sem responsável</mat-option>
+                      @for (papel of papeis; track papel.valor) { <mat-option [value]="papel.valor">{{ papel.rotulo }}</mat-option> }
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+                </div>
+                <div class="campo">
+                  <mat-label class="font-semibold mb-2 block">Recado aos fornecedores</mat-label>
+                  <mat-form-field appearance="outline" class="w-full"><textarea aria-label="Recado aos fornecedores" matInput rows="2" formControlName="recadoFornecedores"></textarea></mat-form-field>
+                </div>
+              </div>
+            } @else {
+              <app-estado titulo="Nenhum item ainda" texto="Crie o primeiro item do cronograma.">
+                <button mat-stroked-button type="button" (click)="adicionarItem()"><mat-icon>add</mat-icon> Novo item</button>
+              </app-estado>
+            }
+          </section>
+        </div>
+      </form>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-stroked-button type="button" (click)="ref.close()">Cancelar</button>
+      <button mat-flat-button type="button" (click)="salvar()">Salvar</button>
+    </mat-dialog-actions>
+  `,
+  styleUrl: '../../shared/mestre-detalhe.scss',
+  styles: `
+    :host { --mestre-altura: calc(90vh - 400px); }
+    .busca { display: flex; align-items: center; gap: 6px; padding: 4px 8px; margin-bottom: 4px; border: 1px solid var(--mat-sys-outline-variant); border-radius: 7px; }
+    .busca mat-icon { font-size: 18px; width: 18px; height: 18px; color: var(--mat-sys-on-surface-variant); }
+    .busca input { flex: 1; min-width: 0; border: 0; outline: 0; background: none; color: inherit; font: inherit; font-size: 0.875rem; padding: 4px 0; }
+  `,
+})
+export class CronogramaEditorDialog {
+  private readonly fb = inject(FormBuilder);
+  private readonly negocio = inject(NegocioClient);
+  private readonly toast = inject(ToastService);
+  protected readonly dados = inject<Cronograma | null>(MAT_DIALOG_DATA);
+  protected readonly ref = inject(MatDialogRef<CronogramaEditorDialog, boolean>);
+  protected readonly selecionado = signal(0);
+  protected readonly papeis = PAPEIS_RESPONSAVEL_MODELO;
+  protected readonly busca = signal('');
+
+  protected readonly form = this.fb.group({
+    titulo: [this.dados?.titulo ?? '', Validators.required],
+    descricao: [this.dados?.descricao ?? ''],
+    itens: this.fb.array<FormGroup>([]),
+  });
+
+  constructor() {
+    for (const item of this.dados?.itens ?? []) {
+      this.itens.push(this.novoItem(item.rotulo ?? '', item.descricao ?? '', deIsoParaData(item.data), (item.hora ?? '').slice(0, 5), this.papel(item.responsavel), item.recadoFornecedores ?? ''));
+    }
+  }
+
+  protected get itens(): FormArray<FormGroup> {
+    return this.form.controls.itens;
+  }
+
+  protected itemAtual(): FormGroup | null {
+    return this.itens.length > 0 ? this.itens.at(Math.min(this.selecionado(), this.itens.length - 1)) : null;
+  }
+
+  /** Busca rápida pelo rótulo, sem diferenciar maiúsculas e acentos. Enquanto filtra, não dá para arrastar. */
+  protected combina(rotulo: string | null): boolean {
+    const termo = this.normalizar(this.busca());
+    return !termo || this.normalizar(rotulo).includes(termo);
+  }
+
+  protected algumCombina(): boolean {
+    return this.itens.controls.some((item) => this.combina(item.value.rotulo));
+  }
+
+  private normalizar(texto: string | null): string {
+    return (texto ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+  }
+
+  protected adicionarItem(): void {
+    this.busca.set('');
+    this.itens.push(this.novoItem('', '', null, '', '', ''));
+    this.selecionado.set(this.itens.length - 1);
+  }
+
+  protected removerItem(i: number): void {
+    this.itens.removeAt(i);
+    this.selecionado.set(Math.max(0, Math.min(i, this.itens.length - 1)));
+  }
+
+  protected moverItem(evento: CdkDragDrop<unknown>): void {
+    const atual = this.itens.at(this.selecionado());
+    moverControle(this.itens, evento.previousIndex, evento.currentIndex);
+    this.selecionado.set(this.itens.controls.indexOf(atual));
+  }
+
+  protected salvar(): void {
+    const valor = this.form.getRawValue() as {
+      titulo: string | null;
+      descricao: string | null;
+      itens: { rotulo: string; descricao: string; data: Date | null; hora: string; responsavel: string; recadoFornecedores: string }[];
+    };
+    const pedido = {
+      titulo: valor.titulo,
+      descricao: valor.descricao || null,
+      itens: valor.itens.map((item) => ({
+        rotulo: item.rotulo || null,
+        descricao: item.descricao || null,
+        data: deDataParaIso(item.data),
+        hora: horaParaApi(item.hora),
+        responsavel: item.responsavel || null,
+        recadoFornecedores: item.recadoFornecedores || null,
+      })),
+    };
+    const req = this.dados ? this.negocio.atualizarCronograma(this.dados.id, pedido) : this.negocio.criarCronograma(pedido);
+    req.subscribe({
+      next: () => {
+        this.toast.sucesso('Cronograma salvo.');
+        this.ref.close(true);
+      },
+      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+    });
+  }
+
+  /** Só papéis entram no campo; um texto livre antigo fica vazio até ser escolhido de novo. */
+  private papel(valor: string | null): string {
+    return this.papeis.some((papel) => papel.valor === valor) ? (valor as string) : '';
+  }
+
+  private novoItem(rotulo: string, descricao: string, data: Date | null, hora: string, responsavel: string, recado: string): FormGroup {
+    return this.fb.group({ rotulo: [rotulo], descricao: [descricao], data: [data], hora: [hora], responsavel: [responsavel], recadoFornecedores: [recado] });
+  }
+}

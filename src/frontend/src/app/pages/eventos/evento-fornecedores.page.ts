@@ -1,3 +1,4 @@
+import { ExpandirTodosComponent } from '../../shared/expandir-todos.component';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -26,14 +27,16 @@ import {
 import { ToastService } from '../../core/toast.service';
 import { CampoDinheiroComponent } from '../../shared/campo-dinheiro';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
-import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
+import { DIALOG, DIALOG_LARGO, DIALOG_PEQUENO } from '../../shared/dialog';
 import { ComprovanteDialog } from '../dinheiro/comprovante.dialog';
 import { GdDinheiroPipe } from '../../shared/gd-dinheiro.pipe';
-import { DIALOG_FORNECEDOR, FornecedorFormDialog } from '../fornecedores/fornecedor-form.dialog';
+import { FornecedorFormDialog } from '../fornecedores/fornecedor-form.dialog';
 import { NovoServicoDialog } from '../fornecedores/novo-servico.dialog';
 import { EventoAbasComponent } from './evento-abas.component';
-import { BarraServico, GraficoOrcamento, montarBarrasPorServico, montarGraficoOrcamento } from './orcamento-graficos';
+import { GraficoOrcamento, RoscaServicos, montarGraficoOrcamento, montarRoscaPorServico } from './orcamento-graficos';
 import { OpcaoSelecao, SeletorMultiploDados, SeletorMultiploDialog } from './seletor-multiplo.dialog';
+import { FecharModal } from '../../shared/fechar-modal';
+import { Estado } from '../../shared/estado';
 
 interface ContratarResultado {
   valor: number;
@@ -42,9 +45,9 @@ interface ContratarResultado {
 
 @Component({
   selector: 'app-contratar-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, CampoDinheiroComponent],
+  imports: [FecharModal, ReactiveFormsModule, MatDialogModule, MatButtonModule, CampoDinheiroComponent],
   template: `
-    <h2 mat-dialog-title>Contratar fornecedor</h2>
+    <h2 mat-dialog-title>Contratar fornecedor <app-fechar-modal /></h2>
     <p class="text-muted text-sm px-6 -mt-2 mb-4">{{ dados.fornecedor }} · {{ dados.servico }}. O parcelamento é feito depois, na aba Financeiro.</p>
     <mat-dialog-content>
       <form id="contratar" class="grid grid-cols-1 gap-4" [formGroup]="form" (submit)="confirmar(); $event.preventDefault()">
@@ -95,9 +98,9 @@ export class ContratarDialog {
 }
 @Component({
   selector: 'app-subitens-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, CampoDinheiroComponent, MatTooltipModule],
+  imports: [FecharModal, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, CampoDinheiroComponent, MatTooltipModule],
   template: `
-    <h2 mat-dialog-title>Subitens — {{ dados.nome }}</h2>
+    <h2 mat-dialog-title>Subitens — {{ dados.nome }} <app-fechar-modal /></h2>
     <mat-dialog-content>
       <form class="grid grid-cols-1 gap-4" [formGroup]="form">
         <app-campo-dinheiro rotulo="Valor estimado (sem subitens)" formControlName="valorEstimado" />
@@ -185,14 +188,14 @@ interface ServicoVisivel {
 const SEM_FORNECEDOR = 'SemFornecedor';
 
 const CLASSE_ETAPA: Record<string, string> = {
-  Orcamento: 'alerta',
-  Contratado: 'ok',
+  Orcamento: 'bg-light-warning text-warning',
+  Contratado: 'bg-light-success text-success',
 };
 
 /** Aba Fornecedores do evento: lista de serviços, cada um com N fornecedores (SPEC-018; SPEC-008 v2, 8.2). */
 @Component({
   selector: 'app-evento-fornecedores',
-  imports: [MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, MatMenuModule, GdDinheiroPipe, DecimalPipe, EventoAbasComponent, MatTooltipModule, RouterLink],
+  imports: [ExpandirTodosComponent, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, MatMenuModule, GdDinheiroPipe, DecimalPipe, EventoAbasComponent, MatTooltipModule, RouterLink, Estado],
   template: `
     <app-evento-abas [eventoId]="id" />
     <mat-card class="cardWithShadow">
@@ -239,16 +242,26 @@ const CLASSE_ETAPA: Record<string, string> = {
           </div>
           <div class="grafico">
             <h4 class="titulo">Por serviço</h4>
-            <ul class="servicos">
-              @for (barra of g.servicos; track barra.id) {
-                <li role="img" [attr.aria-label]="descricaoServico(barra)">
-                  <span class="nome-servico">{{ barra.nome }}</span>
-                  <span class="linha"><span class="trilho"><span class="fatia estimado" [style.width.%]="barra.larguraEstimado"></span></span><span class="num">{{ barra.estimado | gdDinheiro }}</span></span>
-                  <span class="linha"><span class="trilho"><span class="fatia contratado" [style.width.%]="barra.larguraContratado"></span></span><span class="num">{{ barra.contratado | gdDinheiro }}</span></span>
-                </li>
-              }
-            </ul>
-            <p class="legenda-servicos"><span class="ponto estimado"></span>Estimado <span class="ponto contratado"></span>Contratado</p>
+            @if (g.servicos.total === 0) {
+              <p class="text-sm text-muted">Informe o estimado dos serviços para ver os gráficos.</p>
+            } @else {
+              <div class="rosca-area">
+                <div class="rosca" role="img" [attr.aria-label]="descricaoRosca(g.servicos)" [style.background]="g.servicos.fundo">
+                  <div class="rosca-centro"><span class="text-xs text-muted">Total</span><strong>{{ g.servicos.total | gdDinheiro }}</strong></div>
+                </div>
+                <ul class="legenda-rosca">
+                  @for (fatia of g.servicos.fatias; track fatia.id) {
+                    <li>
+                      <span class="ponto" [style.background]="fatia.cor"></span>
+                      <span class="nome-fatia" [title]="fatia.nome">{{ fatia.nome }}</span>
+                      <strong class="num">{{ fatia.valor | gdDinheiro }}</strong>
+                      <span class="text-muted pct">{{ fatia.percentual | number: '1.0-0' }}%</span>
+                    </li>
+                  }
+                </ul>
+              </div>
+              <p class="text-xs text-muted mt-2">Contratado quando houver; senão, o estimado.</p>
+            }
           </div>
         </div>
       </section>
@@ -276,26 +289,29 @@ const CLASSE_ETAPA: Record<string, string> = {
             </div>
            </div>
            <div class="barra-lista-acoes">
-             <button mat-flat-button type="button" (click)="adicionarServicos()"><mat-icon>playlist_add</mat-icon> Adicionar serviço</button>
+             <button mat-flat-button type="button" (click)="adicionarServicos()"><mat-icon>add</mat-icon> Adicionar serviço</button>
            </div>
           </div>
 
         @if (atual.servicos.length === 0) {
-          <div class="flex flex-col items-center gap-3 text-center text-muted py-10">
-            <p>Nenhum serviço neste evento ainda.</p>
-            <button mat-flat-button type="button" (click)="adicionarServicos()"><mat-icon>playlist_add</mat-icon> Adicionar serviço</button>
-          </div>
+          <app-estado titulo="Nenhum serviço ainda">
+            <button mat-flat-button type="button" (click)="adicionarServicos()"><mat-icon>add</mat-icon> Adicionar serviço</button>
+          </app-estado>
         } @else if (visiveis().length === 0) {
-          <p class="text-center text-muted py-10">Nada encontrado com esses filtros.</p>
+          <app-estado titulo="Nada encontrado" texto="Mude a busca ou os filtros." />
         } @else {
-          <ul class="servicos-lista" aria-label="Serviços do evento">
+          <app-expandir-todos [abertos]="todosAbertos()" (alternar)="alternarTodos()">
+            {{ visiveis().length }} {{ visiveis().length === 1 ? 'serviço' : 'serviços' }} ·
+            {{ fornecedoresVisiveis() }} {{ fornecedoresVisiveis() === 1 ? 'fornecedor' : 'fornecedores' }}
+          </app-expandir-todos>
+          <ul class="grupos-lista com-cabecalho" aria-label="Serviços do evento">
             @for (item of visiveis(); track item.servico.id) {
-              <li class="servico" [class.aberto]="estaAberto(item.servico.id)">
-                <div class="servico-cabecalho">
-                  <button type="button" class="servico-alternar" [attr.aria-expanded]="estaAberto(item.servico.id)"
+              <li class="grupo" [class.aberto]="estaAberto(item.servico.id)">
+                <div class="grupo-cabecalho com-acoes">
+                  <button type="button" class="grupo-alternar" [attr.aria-expanded]="estaAberto(item.servico.id)"
                     [attr.aria-controls]="'fornecedores-' + item.servico.id" (click)="alternar(item.servico.id)">
                     <mat-icon class="seta">expand_more</mat-icon>
-                    <span class="servico-texto">
+                    <span class="grupo-texto">
                       <span class="nome">{{ item.servico.nome }}</span>
                       <span class="block text-xs text-muted">
                         Estimado {{ estimado(item.servico) | gdDinheiro }}
@@ -310,7 +326,7 @@ const CLASSE_ETAPA: Record<string, string> = {
                       </span>
                     }
                   </button>
-                  <div class="servico-acoes">
+                  <div class="grupo-acoes">
                     <button mat-stroked-button type="button" (click)="adicionarFornecedores(item.servico)"><mat-icon>add</mat-icon> Fornecedor</button>
                     <button mat-icon-button type="button" aria-label="Ações do serviço" matTooltip="Ações do serviço" [matMenuTriggerFor]="menuServico"><mat-icon>more_vert</mat-icon></button>
                     <mat-menu #menuServico="matMenu" xPosition="before">
@@ -391,26 +407,20 @@ const CLASSE_ETAPA: Record<string, string> = {
     .barra.alerta { box-shadow: 0 0 0 2px #c62828; }
     .ponto { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
     .legenda { list-style: none; padding: 0; margin: 12px 0 0; display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
-    .servicos { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }
-    .nome-servico { display: block; font-size: 13px; font-weight: 500; margin-bottom: 2px; }
-    .linha { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
-    .trilho { flex: 1; height: 10px; border-radius: 5px; background: rgba(128,128,128,.18); overflow: hidden; display: block; }
-    .trilho .fatia { display: block; height: 100%; }
-    .num { min-width: 90px; text-align: right; font-size: 12px; white-space: nowrap; }
-    .legenda-servicos { font-size: 12px; margin: 12px 0 0; }
-    .legenda-servicos .ponto:not(:first-child) { margin-left: 12px; }
+    .rosca-area { display: flex; align-items: center; gap: 20px; }
+    .rosca { position: relative; flex-shrink: 0; width: 160px; height: 160px; border-radius: 50%; }
+    .rosca-centro { position: absolute; inset: 28px; border-radius: 50%; background: var(--mat-sys-surface, #fff); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+    .rosca-centro strong { font-size: 14px; }
+    .legenda-rosca { list-style: none; padding: 0; margin: 0; flex: 1; min-width: 0; max-height: 170px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+    .legenda-rosca li { display: flex; align-items: center; gap: 6px; }
+    .legenda-rosca .ponto { margin-right: 0; flex-shrink: 0; }
+    .nome-fatia { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .num { text-align: right; font-size: 12px; white-space: nowrap; }
+    .pct { width: 36px; text-align: right; font-size: 12px; }
+    @media (max-width: 480px) { .rosca-area { flex-direction: column; align-items: stretch; } .rosca { align-self: center; } }
     .valor { font-weight: 600; white-space: nowrap; }
 
-    .servicos-lista { list-style: none; padding: 0; margin: 0; border: 1px solid rgba(128,128,128,.25); border-radius: 8px; overflow: hidden; }
-    .servico + .servico { border-top: 1px solid rgba(128,128,128,.25); }
-    .servico-cabecalho { display: flex; align-items: center; gap: 8px; padding: 8px 12px 8px 4px; }
-    .servico-cabecalho:hover, .fornecedor:hover { background: rgba(128,128,128,.08); }
-    .servico-alternar { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 8px; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; border-radius: 6px; }
-    .servico-alternar:focus-visible { outline: 2px solid var(--mat-sys-primary); }
-    .servico-texto { flex: 1; min-width: 0; }
-    .seta { transition: transform .15s; flex-shrink: 0; }
-    .servico.aberto .seta { transform: rotate(180deg); }
-    .servico-acoes { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+    .fornecedor:hover { background: rgba(128,128,128,.08); }
     .fornecedores { background: rgba(128,128,128,.1); border-top: 1px solid rgba(128,128,128,.3); }
     .fornecedor { display: grid; grid-template-columns: minmax(160px, 2fr) 110px minmax(110px, 1fr) minmax(140px, 1.4fr) auto; align-items: center; gap: 12px; padding: 10px 16px 10px 52px; }
     .fornecedor + .fornecedor { border-top: 1px dashed rgba(128,128,128,.2); }
@@ -436,10 +446,10 @@ export class EventoFornecedoresPage implements OnInit {
   protected readonly etapa = signal('');
   protected readonly abertos = signal<Set<string>>(new Set());
   protected readonly budget = signal<BudgetEvento | null>(null);
-  protected readonly graficos = computed<{ dados: BudgetEvento; orcamento: GraficoOrcamento; servicos: BarraServico[] } | null>(() => {
+  protected readonly graficos = computed<{ dados: BudgetEvento; orcamento: GraficoOrcamento; servicos: RoscaServicos } | null>(() => {
     const dados = this.budget();
     return dados && dados.servicos.length > 0
-      ? { dados, orcamento: montarGraficoOrcamento(dados), servicos: montarBarrasPorServico(dados) }
+      ? { dados, orcamento: montarGraficoOrcamento(dados), servicos: montarRoscaPorServico(dados) }
       : null;
   });
   protected id = '';
@@ -490,6 +500,17 @@ export class EventoFornecedoresPage implements OnInit {
     return this.abertos().has(servicoId);
   }
 
+  protected todosAbertos(): boolean {
+    const itens = this.visiveis();
+    return itens.length > 0 && itens.every((item) => this.estaAberto(item.servico.id));
+  }
+
+  protected alternarTodos(): void {
+    this.abertos.set(this.todosAbertos() ? new Set() : new Set(this.visiveis().map((item) => item.servico.id)));
+  }
+
+  protected readonly fornecedoresVisiveis = computed(() => this.visiveis().reduce((soma, item) => soma + item.vinculos.length, 0));
+
   protected alternar(servicoId: string): void {
     const novos = new Set(this.abertos());
     if (!novos.delete(servicoId)) novos.add(servicoId);
@@ -509,7 +530,7 @@ export class EventoFornecedoresPage implements OnInit {
   }
 
   protected classeEtapa(etapa: string): string {
-    return `inline-block rounded font-semibold px-2 py-1 text-xs whitespace-nowrap ${CLASSE_ETAPA[etapa] ?? 'neutro'}`;
+    return `inline-block rounded font-semibold px-2 py-1 text-xs whitespace-nowrap ${CLASSE_ETAPA[etapa] ?? 'bg-light-primary text-primary'}`;
   }
 
   /** Serviços do catálogo da conta (ou um novo); os que já estão no evento vêm bloqueados. */
@@ -654,7 +675,7 @@ export class EventoFornecedoresPage implements OnInit {
   protected excluirContrato(servico: EventoServico, vinculo: Vinculo): void {
     this.dialog.open(ConfirmaDialog, {
       ...DIALOG_PEQUENO,
-      data: { titulo: 'Excluir contrato', texto: `Excluir o contrato de ${vinculo.fornecedor}? O arquivo é apagado.`, confirmar: 'Excluir' },
+      data: { titulo: 'Excluir contrato', texto: `Excluir o contrato de ${vinculo.fornecedor}? O arquivo é apagado.`, confirmar: 'Excluir', destrutivo: true },
     }).afterClosed().subscribe((confirmou) => {
       if (!confirmou) {
         return;
@@ -714,12 +735,12 @@ export class EventoFornecedoresPage implements OnInit {
     return grafico.fatias.map((fatia) => `${fatia.rotulo}: ${formatarReais(fatia.valor)}`).join('; ');
   }
 
-  protected descricaoServico(barra: BarraServico): string {
-    return `${barra.nome}: estimado ${formatarReais(barra.estimado)}, contratado ${formatarReais(barra.contratado)}`;
+  protected descricaoRosca(rosca: RoscaServicos): string {
+    return rosca.fatias.map((f) => `${f.nome}: ${formatarReais(f.valor)} (${Math.round(f.percentual)}%)`).join('; ');
   }
 
   private confirmar(titulo: string, texto: string, acao: () => Observable<EventoDetalhe>, sucesso: string): void {
-    this.dialog.open(ConfirmaDialog, { ...DIALOG_PEQUENO, data: { titulo, texto, confirmar: 'Excluir' } }).afterClosed().subscribe((confirmou) => {
+    this.dialog.open(ConfirmaDialog, { ...DIALOG_PEQUENO, data: { titulo, texto, confirmar: 'Excluir', destrutivo: true } }).afterClosed().subscribe((confirmou) => {
       if (!confirmou) {
         return;
       }
@@ -736,7 +757,7 @@ export class EventoFornecedoresPage implements OnInit {
   private cadastrarFornecedor(): Observable<FornecedorResumo | null> {
     const antes = new Set(this.fornecedores().map((item) => item.id));
     return new Observable<FornecedorResumo | null>((assinante) => {
-      this.dialog.open(FornecedorFormDialog, { ...DIALOG_FORNECEDOR, data: null }).afterClosed().subscribe((ok) => {
+      this.dialog.open(FornecedorFormDialog, { ...DIALOG_LARGO, data: null }).afterClosed().subscribe((ok) => {
         if (!ok) {
           assinante.next(null);
           assinante.complete();

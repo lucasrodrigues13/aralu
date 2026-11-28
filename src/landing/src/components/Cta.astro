@@ -1,0 +1,16 @@
+---
+import { site } from '../config';
+interface Props { claro?: boolean; alinhamento?: 'inicio' | 'centro' }
+const { claro = false, alinhamento = 'inicio' } = Astro.props;
+---
+<div class:list={['cta', `cta-${alinhamento}`, { 'cta-claro': claro }]}>
+  <a class:list={['botao', claro ? 'botao-claro' : 'botao-principal']} href={site.cadastro} data-umami-event="experimentar">{site.botao}</a>
+  <p class="cta-nota">{site.semCartao}</p>
+</div>
+
+<style>
+  .cta { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
+  .cta-centro { justify-content: center; }
+  .cta-nota { font-size: 14px; line-height: 20px; font-weight: 500; color: var(--cor-texto-secundario); }
+  .cta-claro .cta-nota { color: var(--cor-texto-creme); }
+</style>

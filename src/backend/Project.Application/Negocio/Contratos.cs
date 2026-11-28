@@ -35,7 +35,8 @@ public sealed record EventoLinha(
     int TarefasConcluidas,
     int Tarefas,
     int ConvidadosConfirmados,
-    int Convidados);
+    int Convidados,
+    bool ContratoPendente = false);
 
 public sealed record ContagemSituacao(SituacaoEvento Situacao, int Quantidade);
 
@@ -54,13 +55,13 @@ public sealed record ContatoNaConta(string Tipo, Guid Id, string Nome, string? E
 
 public interface IDados
 {
-    Task<PerfilAssessoria?> ObterPerfilAsync(string contaId, CancellationToken ct);
+    Task<PerfilAssessoria?> ObterPerfilAsync(Guid contaId, CancellationToken ct);
 
     Task SalvarPerfilAsync(PerfilAssessoria perfil, CancellationToken ct);
 
-    Task<IReadOnlyList<ModeloEvento>> ListarModelosAsync(string contaId, string? nome, CancellationToken ct);
+    Task<IReadOnlyList<ModeloEvento>> ListarModelosAsync(Guid contaId, string? nome, CancellationToken ct);
 
-    Task<ModeloEvento?> ObterModeloAsync(string contaId, Guid id, CancellationToken ct);
+    Task<ModeloEvento?> ObterModeloAsync(Guid contaId, Guid id, CancellationToken ct);
 
     Task InserirModeloAsync(ModeloEvento modelo, CancellationToken ct);
 
@@ -70,11 +71,14 @@ public interface IDados
 
     Task RemoverModeloAsync(ModeloEvento modelo, CancellationToken ct);
 
-    Task<IReadOnlyList<EventoLinha>> ListarEventosAsync(string contaId, FiltroEventos filtro, CancellationToken ct);
+    Task<IReadOnlyList<EventoLinha>> ListarEventosAsync(Guid contaId, FiltroEventos filtro, CancellationToken ct);
 
-    Task<Evento?> ObterEventoAsync(string contaId, Guid id, CancellationToken ct);
+    Task<Evento?> ObterEventoAsync(Guid contaId, Guid id, CancellationToken ct);
 
-    Task<bool> EventoDaContaAsync(string contaId, Guid id, CancellationToken ct);
+    /// <summary>Nome da oportunidade do evento com contrato gerado e nenhum assinado; nulo se não há pendência.</summary>
+    Task<string?> OportunidadeComContratoPendenteAsync(Guid contaId, Guid eventoId, CancellationToken ct);
+
+    Task<bool> EventoDaContaAsync(Guid contaId, Guid id, CancellationToken ct);
 
     Task InserirEventoAsync(
         Evento evento,
@@ -91,7 +95,7 @@ public interface IDados
 
     Task AdicionarServicoAsync(ServicoEvento servico, CancellationToken ct);
 
-    Task<ServicoEvento?> ObterServicoEventoAsync(string contaId, Guid eventoId, Guid servicoId, CancellationToken ct);
+    Task<ServicoEvento?> ObterServicoEventoAsync(Guid contaId, Guid eventoId, Guid servicoId, CancellationToken ct);
 
     Task RemoverConteudoModeloAsync(ModeloEvento modelo, CancellationToken ct);
 
@@ -118,18 +122,18 @@ public interface IDados
     /// <summary>Tira o serviço do evento com fornecedores, contratos e subitens; tarefas ligadas ficam sem serviço.</summary>
     Task RemoverServicoAsync(Guid servicoId, CancellationToken ct);
 
-    Task<IReadOnlyList<Tarefa>> ListarTarefasAsync(string contaId, Guid? eventoId, CancellationToken ct);
+    Task<IReadOnlyList<Tarefa>> ListarTarefasAsync(Guid contaId, Guid? eventoId, CancellationToken ct);
 
-    Task<Tarefa?> ObterTarefaAsync(string contaId, Guid id, CancellationToken ct);
+    Task<Tarefa?> ObterTarefaAsync(Guid contaId, Guid id, CancellationToken ct);
 
-    Task<IReadOnlyDictionary<Guid, ContextoEvento>> ContextosEventoAsync(string contaId, IReadOnlyCollection<Guid> eventoIds, CancellationToken ct);
+    Task<IReadOnlyDictionary<Guid, ContextoEvento>> ContextosEventoAsync(Guid contaId, IReadOnlyCollection<Guid> eventoIds, CancellationToken ct);
 
-    Task<IReadOnlyDictionary<Guid, string>> NomesDeServicosAsync(string contaId, IReadOnlyCollection<Guid> servicoIds, CancellationToken ct);
+    Task<IReadOnlyDictionary<Guid, string>> NomesDeServicosAsync(Guid contaId, IReadOnlyCollection<Guid> servicoIds, CancellationToken ct);
 
-    Task ConcluirTarefasLigadasAsync(string contaId, Guid servicoId, CancellationToken ct);
+    Task ConcluirTarefasLigadasAsync(Guid contaId, Guid servicoId, CancellationToken ct);
 
     /// <summary>Assistentes ativas da conta (SPEC-032): podem ser responsáveis de tarefas.</summary>
-    Task<IReadOnlyList<Guid>> IdsAssistentesAtivasAsync(string contaId, CancellationToken ct);
+    Task<IReadOnlyList<Guid>> IdsAssistentesAtivasAsync(Guid contaId, CancellationToken ct);
 
     Task SubstituirResponsaveisTarefaFunilAsync(Guid tarefaId, IReadOnlyList<ResponsavelTarefaFunil> responsaveis, CancellationToken ct);
 
@@ -143,10 +147,10 @@ public interface IDados
     Task<IReadOnlyList<string>> ReferenciasDosItensAsync(Guid tarefaId, CancellationToken ct);
 
     /// <summary>Move o prazo dos itens abertos das tarefas não concluídas do evento (SPEC-012 §6.6).</summary>
-    Task MoverPrazosDosItensAsync(string contaId, Guid eventoId, int dias, CancellationToken ct);
+    Task MoverPrazosDosItensAsync(Guid contaId, Guid eventoId, int dias, CancellationToken ct);
 
     /// <summary>Recalcula o prazo efetivo das tarefas e itens com prazo relativo depois que a data do evento mudou.</summary>
-    Task RecalcularPrazosRelativosAsync(string contaId, Guid eventoId, DateOnly? dataEvento, CancellationToken ct);
+    Task RecalcularPrazosRelativosAsync(Guid contaId, Guid eventoId, DateOnly? dataEvento, CancellationToken ct);
 
     Task InserirAnexoTarefaAsync(AnexoTarefa anexo, CancellationToken ct);
 
@@ -165,30 +169,30 @@ public interface IDados
         IReadOnlyList<ServicoEvento> servicos,
         CancellationToken ct);
 
-    Task<string?> NomeDoEventoAsync(string contaId, Guid eventoId, CancellationToken ct);
+    Task<string?> NomeDoEventoAsync(Guid contaId, Guid eventoId, CancellationToken ct);
 
-    Task<IReadOnlyList<Cliente>> ListarClientesAsync(string contaId, string? nome, CancellationToken ct);
+    Task<IReadOnlyList<Cliente>> ListarClientesAsync(Guid contaId, string? nome, CancellationToken ct);
 
-    Task<Cliente?> ObterClienteAsync(string contaId, Guid id, CancellationToken ct);
+    Task<Cliente?> ObterClienteAsync(Guid contaId, Guid id, CancellationToken ct);
 
     Task InserirClienteAsync(Cliente cliente, CancellationToken ct);
 
     Task SalvarClienteAsync(CancellationToken ct);
 
     /// <summary>Apaga o cliente e solta dele as oportunidades que viraram cliente (elas continuam existindo).</summary>
-    Task RemoverClienteAsync(string contaId, Cliente cliente, CancellationToken ct);
+    Task RemoverClienteAsync(Guid contaId, Cliente cliente, CancellationToken ct);
 
-    Task<IReadOnlyList<(Guid Id, string Nome)>> EventosDoClienteAsync(string contaId, Guid clienteId, CancellationToken ct);
+    Task<IReadOnlyList<(Guid Id, string Nome)>> EventosDoClienteAsync(Guid contaId, Guid clienteId, CancellationToken ct);
 
-    Task<IReadOnlyList<Cliente>> ClientesDoEventoAsync(string contaId, Guid eventoId, CancellationToken ct);
+    Task<IReadOnlyList<Cliente>> ClientesDoEventoAsync(Guid contaId, Guid eventoId, CancellationToken ct);
 
-    Task<bool> VincularAsync(string contaId, Guid clienteId, Guid eventoId, CancellationToken ct);
+    Task<bool> VincularAsync(Guid contaId, Guid clienteId, Guid eventoId, CancellationToken ct);
 
-    Task<bool> DesvincularAsync(string contaId, Guid clienteId, Guid eventoId, CancellationToken ct);
+    Task<bool> DesvincularAsync(Guid contaId, Guid clienteId, Guid eventoId, CancellationToken ct);
 
-    Task<IReadOnlyList<Convite>> ListarConvitesAsync(string contaId, Guid eventoId, CancellationToken ct);
+    Task<IReadOnlyList<Convite>> ListarConvitesAsync(Guid contaId, Guid eventoId, CancellationToken ct);
 
-    Task<Convite?> ObterConviteAsync(string contaId, Guid id, CancellationToken ct);
+    Task<Convite?> ObterConviteAsync(Guid contaId, Guid id, CancellationToken ct);
 
     Task<Convite?> ObterConvitePorTokenAsync(string token, CancellationToken ct);
 
@@ -196,7 +200,7 @@ public interface IDados
 
     Task<DateOnly?> PrazoRsvpDoEventoAsync(Guid eventoId, CancellationToken ct);
 
-    Task<IReadOnlyList<PresencaLeitura>> ListarPresencasAsync(string contaId, Guid eventoId, CancellationToken ct);
+    Task<IReadOnlyList<PresencaLeitura>> ListarPresencasAsync(Guid contaId, Guid eventoId, CancellationToken ct);
 
     Task InserirConvitesAsync(IReadOnlyList<Convite> convites, CancellationToken ct);
 
@@ -207,29 +211,29 @@ public interface IDados
     /// <summary>Marca um convidado novo de um convite já existente para inclusão (SPEC-059).</summary>
     Task IncluirConvidadoAsync(Convidado convidado, CancellationToken ct);
 
-    Task<Convidado?> ObterConvidadoAsync(string contaId, Guid id, CancellationToken ct);
+    Task<Convidado?> ObterConvidadoAsync(Guid contaId, Guid id, CancellationToken ct);
 
-    Task<IReadOnlyList<ContagemSituacao>> ContarEventosAsync(string contaId, CancellationToken ct, IReadOnlySet<Guid>? liberados = null);
+    Task<IReadOnlyList<ContagemSituacao>> ContarEventosAsync(Guid contaId, CancellationToken ct, IReadOnlySet<Guid>? liberados = null);
 
-    Task<IReadOnlyList<EventoAndamento>> ListarEmAndamentoAsync(string contaId, CancellationToken ct);
+    Task<IReadOnlyList<EventoAndamento>> ListarEmAndamentoAsync(Guid contaId, CancellationToken ct);
 
-    Task<SituacaoEvento?> SituacaoDoEventoAsync(string contaId, Guid eventoId, CancellationToken ct);
+    Task<SituacaoEvento?> SituacaoDoEventoAsync(Guid contaId, Guid eventoId, CancellationToken ct);
 
-    Task<DateOnly?> DataDoEventoAsync(string contaId, Guid eventoId, CancellationToken ct);
+    Task<DateOnly?> DataDoEventoAsync(Guid contaId, Guid eventoId, CancellationToken ct);
 
-    Task<IReadOnlyList<ContagemMes>> ContarEventosPorMesAsync(string contaId, int ano, CancellationToken ct, IReadOnlySet<Guid>? liberados = null);
+    Task<IReadOnlyList<ContagemMes>> ContarEventosPorMesAsync(Guid contaId, int ano, CancellationToken ct, IReadOnlySet<Guid>? liberados = null);
 
-    Task<IReadOnlyList<ParticipacaoNome>> ParticipacaoOrcamentoConcluidosAsync(string contaId, CancellationToken ct, IReadOnlySet<Guid>? liberados = null);
+    Task<IReadOnlyList<ParticipacaoNome>> ParticipacaoOrcamentoConcluidosAsync(Guid contaId, CancellationToken ct, IReadOnlySet<Guid>? liberados = null);
 
-    Task<IReadOnlyList<ContagemNome>> ContarFornecedoresContratadosAsync(string contaId, CancellationToken ct, IReadOnlySet<Guid>? liberados = null);
+    Task<IReadOnlyList<ContagemNome>> ContarFornecedoresContratadosAsync(Guid contaId, CancellationToken ct, IReadOnlySet<Guid>? liberados = null);
 
-    Task<IReadOnlyList<ContagemNome>> ContarServicosUtilizadosAsync(string contaId, CancellationToken ct, IReadOnlySet<Guid>? liberados = null);
+    Task<IReadOnlyList<ContagemNome>> ContarServicosUtilizadosAsync(Guid contaId, CancellationToken ct, IReadOnlySet<Guid>? liberados = null);
 
-    Task<int> ContarTarefasNaSemanaAsync(string contaId, DateOnly inicio, DateOnly fim, CancellationToken ct, IReadOnlySet<Guid>? liberados = null);
+    Task<int> ContarTarefasNaSemanaAsync(Guid contaId, DateOnly inicio, DateOnly fim, CancellationToken ct, IReadOnlySet<Guid>? liberados = null);
 
-    Task<IReadOnlyList<ModeloBriefing>> ListarBriefingsAsync(string contaId, string? nome, CancellationToken ct);
+    Task<IReadOnlyList<ModeloBriefing>> ListarBriefingsAsync(Guid contaId, string? nome, CancellationToken ct);
 
-    Task<ModeloBriefing?> ObterBriefingAsync(string contaId, Guid id, CancellationToken ct);
+    Task<ModeloBriefing?> ObterBriefingAsync(Guid contaId, Guid id, CancellationToken ct);
 
     Task InserirBriefingAsync(ModeloBriefing modelo, CancellationToken ct);
 
@@ -237,9 +241,9 @@ public interface IDados
 
     Task RemoverBriefingAsync(ModeloBriefing modelo, CancellationToken ct);
 
-    Task<IReadOnlyList<ModeloRoteiro>> ListarRoteirosAsync(string contaId, string? nome, CancellationToken ct);
+    Task<IReadOnlyList<ModeloRoteiro>> ListarRoteirosAsync(Guid contaId, string? nome, CancellationToken ct);
 
-    Task<ModeloRoteiro?> ObterRoteiroAsync(string contaId, Guid id, CancellationToken ct);
+    Task<ModeloRoteiro?> ObterRoteiroAsync(Guid contaId, Guid id, CancellationToken ct);
 
     Task InserirRoteiroAsync(ModeloRoteiro modelo, CancellationToken ct);
 
@@ -247,9 +251,9 @@ public interface IDados
 
     Task RemoverRoteiroAsync(ModeloRoteiro modelo, CancellationToken ct);
 
-    Task<IReadOnlyList<ModeloCronograma>> ListarCronogramasAsync(string contaId, string? nome, CancellationToken ct);
+    Task<IReadOnlyList<ModeloCronograma>> ListarCronogramasAsync(Guid contaId, string? nome, CancellationToken ct);
 
-    Task<ModeloCronograma?> ObterCronogramaAsync(string contaId, Guid id, CancellationToken ct);
+    Task<ModeloCronograma?> ObterCronogramaAsync(Guid contaId, Guid id, CancellationToken ct);
 
     Task InserirCronogramaAsync(ModeloCronograma modelo, CancellationToken ct);
 
@@ -257,9 +261,9 @@ public interface IDados
 
     Task RemoverCronogramaAsync(ModeloCronograma modelo, CancellationToken ct);
 
-    Task<IReadOnlyList<ModeloInspiracao>> ListarInspiracoesAsync(string contaId, string? nome, CancellationToken ct);
+    Task<IReadOnlyList<ModeloInspiracao>> ListarInspiracoesAsync(Guid contaId, string? nome, CancellationToken ct);
 
-    Task<ModeloInspiracao?> ObterInspiracaoAsync(string contaId, Guid id, CancellationToken ct);
+    Task<ModeloInspiracao?> ObterInspiracaoAsync(Guid contaId, Guid id, CancellationToken ct);
 
     Task InserirInspiracaoAsync(ModeloInspiracao modelo, CancellationToken ct);
 
@@ -267,9 +271,9 @@ public interface IDados
 
     Task RemoverInspiracaoAsync(ModeloInspiracao modelo, CancellationToken ct);
 
-    Task<IReadOnlyList<ModeloMensagem>> ListarMensagensAsync(string contaId, string? nome, CancellationToken ct);
+    Task<IReadOnlyList<ModeloMensagem>> ListarMensagensAsync(Guid contaId, string? nome, CancellationToken ct);
 
-    Task<ModeloMensagem?> ObterMensagemAsync(string contaId, Guid id, CancellationToken ct);
+    Task<ModeloMensagem?> ObterMensagemAsync(Guid contaId, Guid id, CancellationToken ct);
 
     Task InserirMensagemAsync(ModeloMensagem modelo, CancellationToken ct);
 
@@ -277,67 +281,70 @@ public interface IDados
 
     Task RemoverMensagemAsync(ModeloMensagem modelo, CancellationToken ct);
 
-    Task<IReadOnlyList<ServicoConta>> ListarServicosContaAsync(string contaId, string? nome, CancellationToken ct);
+    Task<IReadOnlyList<ServicoConta>> ListarServicosContaAsync(Guid contaId, string? nome, CancellationToken ct);
 
-    Task<ServicoConta?> ObterServicoContaAsync(string contaId, Guid id, CancellationToken ct);
+    Task<ServicoConta?> ObterServicoContaAsync(Guid contaId, Guid id, CancellationToken ct);
 
-    Task<ServicoConta?> ObterServicoContaPorNomeAsync(string contaId, string nome, CancellationToken ct);
+    Task<ServicoConta?> ObterServicoContaPorNomeAsync(Guid contaId, string nome, CancellationToken ct);
 
     Task InserirServicoContaAsync(ServicoConta servico, CancellationToken ct);
 
     Task RemoverServicoContaAsync(ServicoConta servico, CancellationToken ct);
 
-    Task<IReadOnlyList<Fornecedor>> ListarFornecedoresAsync(string contaId, string? nome, CancellationToken ct);
+    Task<IReadOnlyList<Fornecedor>> ListarFornecedoresAsync(Guid contaId, string? nome, CancellationToken ct);
 
-    Task<Fornecedor?> ObterFornecedorAsync(string contaId, Guid id, CancellationToken ct);
+    Task<Fornecedor?> ObterFornecedorAsync(Guid contaId, Guid id, CancellationToken ct);
 
     Task InserirFornecedorAsync(Fornecedor fornecedor, CancellationToken ct);
+
+    /// <summary>Grava vários de uma vez, numa só transação (importação por planilha).</summary>
+    Task InserirFornecedoresAsync(IReadOnlyList<Fornecedor> fornecedores, CancellationToken ct);
 
     Task SalvarFornecedorAsync(CancellationToken ct);
 
     Task RemoverFornecedorAsync(Fornecedor fornecedor, CancellationToken ct);
 
-    Task<IReadOnlyDictionary<Guid, string>> NomesServicosContaAsync(string contaId, IEnumerable<Guid> ids, CancellationToken ct);
+    Task<IReadOnlyDictionary<Guid, string>> NomesServicosContaAsync(Guid contaId, IEnumerable<Guid> ids, CancellationToken ct);
 
-    Task<IReadOnlyDictionary<Guid, string>> NomesFornecedoresAsync(string contaId, IEnumerable<Guid> ids, CancellationToken ct);
+    Task<IReadOnlyDictionary<Guid, string>> NomesFornecedoresAsync(Guid contaId, IEnumerable<Guid> ids, CancellationToken ct);
 
     Task SalvarNegocioAsync(CancellationToken ct);
 
     Task<IReadOnlyList<CompromissoAgenda>> ListarCompromissosAsync(
-        string contaId,
+        Guid contaId,
         DateOnly? de,
         DateOnly? ate,
         CancellationToken ct);
 
-    Task<CompromissoAgenda?> ObterCompromissoAsync(string contaId, Guid id, CancellationToken ct);
+    Task<CompromissoAgenda?> ObterCompromissoAsync(Guid contaId, Guid id, CancellationToken ct);
 
     Task InserirCompromissoAsync(CompromissoAgenda compromisso, CancellationToken ct);
 
     Task RemoverCompromissoAsync(CompromissoAgenda compromisso, CancellationToken ct);
 
-    Task<bool> TemCompromissoNaDataAsync(string contaId, DateOnly data, CancellationToken ct);
+    Task<bool> TemCompromissoNaDataAsync(Guid contaId, DateOnly data, CancellationToken ct);
 
     /// <summary>Tarefas de evento e do funil com prazo no período, para o calendário.</summary>
-    Task<IReadOnlyList<TarefaNaAgenda>> ListarTarefasDaAgendaAsync(string contaId, DateOnly? de, DateOnly? ate, CancellationToken ct);
+    Task<IReadOnlyList<TarefaNaAgenda>> ListarTarefasDaAgendaAsync(Guid contaId, DateOnly? de, DateOnly? ate, CancellationToken ct);
 
     Task<IReadOnlyList<Oportunidade>> ListarOportunidadesAsync(
-        string contaId,
+        Guid contaId,
         FiltroOportunidades filtro,
         CancellationToken ct);
 
-    Task<Oportunidade?> ObterOportunidadeAsync(string contaId, Guid id, CancellationToken ct);
+    Task<Oportunidade?> ObterOportunidadeAsync(Guid contaId, Guid id, CancellationToken ct);
 
     /// <summary>Estágios da conta (rastreados), já com os padrões criados se a conta não tinha nenhum.</summary>
-    Task<List<EstagioFunil>> ListarEstagiosFunilAsync(string contaId, CancellationToken ct);
+    Task<List<EstagioFunil>> ListarEstagiosFunilAsync(Guid contaId, CancellationToken ct);
 
     /// <summary>Telefones e e-mails dos leads e clientes da conta, para o aviso de contato repetido.</summary>
-    Task<IReadOnlyList<ContatoNaConta>> ListarContatosDaContaAsync(string contaId, CancellationToken ct);
+    Task<IReadOnlyList<ContatoNaConta>> ListarContatosDaContaAsync(Guid contaId, CancellationToken ct);
 
     /// <summary>
     /// Nome de quem pode ser responsável, por id: a dona (id da conta) e todas as assistentes da conta,
     /// inclusive removidas. Usado nos relatórios e no CSV, que guardam o id e mostram o nome.
     /// </summary>
-    Task<IReadOnlyDictionary<string, string>> NomesResponsaveisAsync(string contaId, CancellationToken ct);
+    Task<IReadOnlyDictionary<string, string>> NomesResponsaveisAsync(Guid contaId, CancellationToken ct);
 
     /// <summary>
     /// Marca o contato como novo. Sem isso o EF, ao ver um Id já preenchido numa coleção rastreada,
@@ -350,83 +357,83 @@ public interface IDados
     void RemoverEstagioFunil(EstagioFunil estagio);
 
     /// <summary>Oportunidades (rastreadas) de um estágio, para mover antes de excluí-lo.</summary>
-    Task<List<Oportunidade>> ListarOportunidadesDoEstagioAsync(string contaId, Guid estagioId, CancellationToken ct);
+    Task<List<Oportunidade>> ListarOportunidadesDoEstagioAsync(Guid contaId, Guid estagioId, CancellationToken ct);
 
     Task InserirOportunidadeAsync(Oportunidade oportunidade, CancellationToken ct);
 
     Task RemoverOportunidadeAsync(Oportunidade oportunidade, CancellationToken ct);
 
     Task<IReadOnlyList<ContagemOportunidadeEstagio>> ContarOportunidadesPorEstagioAsync(
-        string contaId,
+        Guid contaId,
         CancellationToken ct);
 
     Task<IReadOnlyDictionary<Guid, string>> NomesOportunidadesAsync(
-        string contaId,
+        Guid contaId,
         IEnumerable<Guid> ids,
         CancellationToken ct);
 
     Task<IReadOnlyList<Oportunidade>> ListarOportunidadesPorCriacaoAsync(
-        string contaId,
+        Guid contaId,
         DateTimeOffset inicio,
         DateTimeOffset fim,
         CancellationToken ct);
 
     Task<IReadOnlyList<Oportunidade>> ListarOportunidadesPorEntradaEstagioAsync(
-        string contaId,
+        Guid contaId,
         DateTimeOffset inicio,
         DateTimeOffset fim,
         CancellationToken ct);
 
-    Task<IReadOnlyList<LeadRsvp>> ListarLeadsRsvpAtivosAsync(string contaId, string? busca, CancellationToken ct);
+    Task<IReadOnlyList<LeadRsvp>> ListarLeadsRsvpAtivosAsync(Guid contaId, string? busca, CancellationToken ct);
 
-    Task<LeadRsvp?> ObterLeadRsvpAsync(string contaId, Guid id, CancellationToken ct);
+    Task<LeadRsvp?> ObterLeadRsvpAsync(Guid contaId, Guid id, CancellationToken ct);
 
     Task InserirLeadRsvpAsync(LeadRsvp lead, CancellationToken ct);
 
     Task<IReadOnlyList<LeadRsvp>> ListarLeadsRsvpPeriodoAsync(
-        string contaId,
+        Guid contaId,
         DateTimeOffset inicio,
         DateTimeOffset fim,
         CancellationToken ct);
 
-    Task<int> ContarLeadsRsvpConvertidosAntesAsync(string contaId, DateTimeOffset limite, CancellationToken ct);
+    Task<int> ContarLeadsRsvpConvertidosAntesAsync(Guid contaId, DateTimeOffset limite, CancellationToken ct);
 
-    Task<MetricasRsvpFunil?> ObterMetricasRsvpFunilAsync(string contaId, CancellationToken ct);
+    Task<MetricasRsvpFunil?> ObterMetricasRsvpFunilAsync(Guid contaId, CancellationToken ct);
 
-    Task IncrementarVisualizacaoRsvpAsync(string contaId, CancellationToken ct);
+    Task IncrementarVisualizacaoRsvpAsync(Guid contaId, CancellationToken ct);
 
-    Task IncrementarCliqueRsvpAsync(string contaId, CancellationToken ct);
+    Task IncrementarCliqueRsvpAsync(Guid contaId, CancellationToken ct);
 
     Task<IReadOnlyList<ContratoFunil>> ListarContratosFunilAsync(
-        string contaId,
+        Guid contaId,
         SituacaoContratoFunil? situacao,
         string? busca,
         DateOnly? criadoDe,
         DateOnly? criadoAte,
         CancellationToken ct);
 
-    Task<ContratoFunil?> ObterContratoFunilAsync(string contaId, Guid id, CancellationToken ct);
+    Task<ContratoFunil?> ObterContratoFunilAsync(Guid contaId, Guid id, CancellationToken ct);
 
     Task InserirContratoFunilAsync(ContratoFunil contrato, CancellationToken ct);
 
     Task RemoverContratoFunilAsync(ContratoFunil contrato, CancellationToken ct);
 
     Task<IReadOnlyList<OrcamentoFunil>> ListarOrcamentosFunilAsync(
-        string contaId,
+        Guid contaId,
         SituacaoOrcamentoFunil? situacao,
         string? busca,
         DateOnly? criadoDe,
         DateOnly? criadoAte,
         CancellationToken ct);
 
-    Task<OrcamentoFunil?> ObterOrcamentoFunilAsync(string contaId, Guid id, CancellationToken ct);
+    Task<OrcamentoFunil?> ObterOrcamentoFunilAsync(Guid contaId, Guid id, CancellationToken ct);
 
     Task InserirOrcamentoFunilAsync(OrcamentoFunil orcamento, CancellationToken ct);
 
     Task RemoverOrcamentoFunilAsync(OrcamentoFunil orcamento, CancellationToken ct);
 
     /// <summary>Orçamento aceito pelo lead (resposta Aceitar), o mais recente, com as parcelas; base do contrato (SPEC-040).</summary>
-    Task<OrcamentoFunil?> OrcamentoAprovadoDaOportunidadeAsync(string contaId, Guid oportunidadeId, CancellationToken ct);
+    Task<OrcamentoFunil?> OrcamentoAprovadoDaOportunidadeAsync(Guid contaId, Guid oportunidadeId, CancellationToken ct);
 
     /// <summary>Troca as parcelas do contrato com o cliente (só sem recebimentos; SPEC-041).</summary>
     Task SubstituirParcelasContratoAsync(Guid contratoId, IReadOnlyList<ParcelaContrato> parcelas, CancellationToken ct);
@@ -444,16 +451,16 @@ public interface IDados
     /// <summary>Só adiciona; grava junto com o próximo <c>SalvarNegocioAsync</c>.</summary>
     void AdicionarRespostaProposta(RespostaPropostaFunil resposta);
 
-    Task<IReadOnlyList<RespostaPropostaFunil>> RespostasPropostaAsync(string contaId, Guid orcamentoId, CancellationToken ct);
+    Task<IReadOnlyList<RespostaPropostaFunil>> RespostasPropostaAsync(Guid contaId, Guid orcamentoId, CancellationToken ct);
 
     /// <summary>Proposta mais recente enviada por link de cada oportunidade, sem as canceladas.</summary>
     Task<IReadOnlyDictionary<Guid, OrcamentoFunil>> PropostasDasOportunidadesAsync(
-        string contaId,
+        Guid contaId,
         IEnumerable<Guid> oportunidadeIds,
         CancellationToken ct);
 
     Task<IReadOnlyList<TarefaFunil>> ListarTarefasFunilAsync(
-        string contaId,
+        Guid contaId,
         DateOnly? prazoDe,
         DateOnly? prazoAte,
         TipoTarefaFunil? tipo,
@@ -461,27 +468,27 @@ public interface IDados
         bool? completa,
         CancellationToken ct);
 
-    Task<TarefaFunil?> ObterTarefaFunilAsync(string contaId, Guid id, CancellationToken ct);
+    Task<TarefaFunil?> ObterTarefaFunilAsync(Guid contaId, Guid id, CancellationToken ct);
 
     Task InserirTarefaFunilAsync(TarefaFunil tarefa, CancellationToken ct);
 
     Task RemoverTarefaFunilAsync(TarefaFunil tarefa, CancellationToken ct);
 
-    Task<IReadOnlyList<ModeloServicoFunil>> ListarModelosServicoFunilAsync(string contaId, string? nome, CancellationToken ct);
+    Task<IReadOnlyList<ModeloServicoFunil>> ListarModelosServicoFunilAsync(Guid contaId, string? nome, CancellationToken ct);
 
-    Task<ModeloServicoFunil?> ObterModeloServicoFunilAsync(string contaId, Guid id, CancellationToken ct);
+    Task<ModeloServicoFunil?> ObterModeloServicoFunilAsync(Guid contaId, Guid id, CancellationToken ct);
 
     Task InserirModeloServicoFunilAsync(ModeloServicoFunil modelo, CancellationToken ct);
 
     Task RemoverModeloServicoFunilAsync(ModeloServicoFunil modelo, CancellationToken ct);
 
-    Task<IReadOnlyList<ModeloOrcamentoFunil>> ListarModelosOrcamentoFunilAsync(string contaId, string? nome, CancellationToken ct);
+    Task<IReadOnlyList<ModeloOrcamentoFunil>> ListarModelosOrcamentoFunilAsync(Guid contaId, string? nome, CancellationToken ct);
 
-    Task<ModeloOrcamentoFunil?> ObterModeloOrcamentoFunilAsync(string contaId, Guid id, CancellationToken ct);
+    Task<ModeloOrcamentoFunil?> ObterModeloOrcamentoFunilAsync(Guid contaId, Guid id, CancellationToken ct);
 
     Task InserirModeloOrcamentoFunilAsync(ModeloOrcamentoFunil modelo, CancellationToken ct);
 
     Task RemoverModeloOrcamentoFunilAsync(ModeloOrcamentoFunil modelo, CancellationToken ct);
 
-    Task<(string ContaId, string Nome)?> ResumoEventoPorIdAsync(Guid eventoId, CancellationToken ct);
+    Task<(Guid ContaId, string Nome)?> ResumoEventoPorIdAsync(Guid eventoId, CancellationToken ct);
 }

@@ -1,3 +1,4 @@
+using Project.Domain.Comum;
 namespace Project.Domain.Funil;
 
 public enum TipoTarefaFunil
@@ -8,11 +9,11 @@ public enum TipoTarefaFunil
     Tarefa = 3,
 }
 
-public sealed class TarefaFunil
+public sealed class TarefaFunil : ITemConta
 {
     public Guid Id { get; set; }
 
-    public string ContaId { get; set; } = "";
+    public Guid ContaId { get; set; }
 
     public Guid OportunidadeId { get; set; }
 
@@ -37,9 +38,11 @@ public sealed class TarefaFunil
     public List<ResponsavelTarefaFunil> Responsaveis { get; set; } = [];
 }
 
-public sealed class ResponsavelTarefaFunil
+public sealed class ResponsavelTarefaFunil : ITemConta
 {
     public Guid Id { get; set; }
+
+    public Guid ContaId { get; set; }
 
     public Guid TarefaFunilId { get; set; }
 
@@ -48,4 +51,7 @@ public sealed class ResponsavelTarefaFunil
 
     /// <summary>Id da conta (dona) ou da assistente.</summary>
     public string ReferenciaId { get; set; } = "";
+
+    /// <summary>Pessoa da equipe responsável (FK para MembrosConta). Preenchido pelo banco a partir de Papel + ReferenciaId.</summary>
+    public Guid? MembroId { get; set; }
 }

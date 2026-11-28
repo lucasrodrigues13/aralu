@@ -363,6 +363,122 @@ html {
   color: var(--mat-sys-primary);
 }
 
+// Nome clicável da primeira coluna (vale para button e a).
+.link-nome {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--mat-sys-primary);
+  cursor: pointer;
+  text-align: start;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.link-nome:hover {
+  text-decoration: underline;
+}
+
+.link-nome:focus-visible {
+  outline: 2px solid var(--mat-sys-primary);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+// ---------------------------------------------------------------- Lista agrupada
+.grupos-lista {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border: 1px solid rgba(128, 128, 128, 0.25);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.grupos-lista.com-cabecalho {
+  border-top-left-radius: 0 !important;
+  border-top-right-radius: 0 !important;
+}
+
+.grupo + .grupo {
+  border-top: 1px solid rgba(128, 128, 128, 0.25);
+}
+
+.grupo-cabecalho {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 16px 16px 12px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.grupo-cabecalho:focus-visible {
+  outline: 2px solid var(--mat-sys-primary);
+  outline-offset: -2px;
+}
+
+.grupo-cabecalho:hover {
+  background: rgba(128, 128, 128, 0.08);
+}
+
+.grupo-texto {
+  flex: 1;
+  min-width: 0;
+}
+
+.grupo-cabecalho .seta {
+  transition: transform 0.15s;
+  flex-shrink: 0;
+  transform: rotate(-90deg);
+}
+
+.grupo.aberto .grupo-cabecalho .seta {
+  transform: none;
+}
+
+// Cabeçalho com ações ao lado: o botão de alternar e as ações são irmãos.
+.grupo-cabecalho.com-acoes {
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 12px 0 4px;
+  cursor: default;
+}
+
+.grupo-alternar {
+  flex: 1 1 240px;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 8px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.grupo-alternar:focus-visible {
+  outline: 2px solid var(--mat-sys-primary);
+}
+
+.grupo-acoes {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
 // ---------------------------------------------------------------- Modal
 .aralu-dialog .mat-mdc-dialog-surface {
   overflow: hidden;
@@ -376,6 +492,15 @@ html {
 
 .aralu-dialog .mat-mdc-dialog-title {
   margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mat-mdc-unelevated-button.botao-perigo:not(:disabled) {
+  --mat-button-filled-container-color: var(--mat-sys-error);
+  --mat-button-filled-label-text-color: var(--mat-sys-on-error);
 }
 
 .aralu-dialog .mat-mdc-dialog-content {
@@ -436,6 +561,29 @@ html {
   top: 16px;
   right: 16px;
   z-index: 30;
+}
+
+body:has(app-pagina-publica) app-tema.tema-fixo {
+  display: none;
+}
+
+.acoes-publicas {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+@media (max-width: 559px) {
+  .acoes-publicas {
+    flex-direction: column-reverse;
+  }
+
+  .acoes-publicas > * {
+    width: 100%;
+    min-height: 44px;
+  }
 }
 
 .painel-marca {
@@ -786,4 +934,70 @@ body:has(.mainWrapper) app-tema.tema-fixo {
 .sidebar-list.mdc-list .menu-list-item:focus,
 .sidebar-list.mdc-list .menu-list-item:focus-visible {
   z-index: auto;
+}
+
+// Cabeçalho dos grupos do menu lateral: maior e com fundo próprio para se distinguir dos itens.
+.sidebar-list .nav-caption {
+  min-height: 44px;
+  margin: 12px 0 4px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--mat-sys-primary) 8%, transparent);
+  color: inherit;
+  transition: background-color 200ms ease;
+
+  &:hover {
+    background: color-mix(in srgb, var(--mat-sys-primary) 14%, transparent);
+  }
+
+  .seta-grupo {
+    transition: transform 250ms ease;
+
+    &.fechado {
+      transform: rotate(180deg);
+    }
+  }
+}
+
+// Abrir e fechar grupo: itens deslizam e aparecem/somem suavemente.
+.sidebar-list .item-grupo-entra {
+  animation: item-grupo-entra 250ms ease-out;
+}
+
+.sidebar-list .item-grupo-sai {
+  animation: item-grupo-sai 200ms ease-in forwards;
+}
+
+@keyframes item-grupo-entra {
+  from {
+    opacity: 0;
+    max-height: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    max-height: 56px;
+    transform: none;
+  }
+}
+
+@keyframes item-grupo-sai {
+  from {
+    opacity: 1;
+    max-height: 56px;
+  }
+  to {
+    opacity: 0;
+    max-height: 0;
+    transform: translateY(-6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-list .item-grupo-entra,
+  .sidebar-list .item-grupo-sai {
+    animation: none;
+  }
 }

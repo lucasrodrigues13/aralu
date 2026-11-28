@@ -53,9 +53,9 @@ public interface IPlanilhaBudget
 public interface IDadosDinheiro
 {
     /// <summary>Evento da conta com os serviços, o contrato de fornecedor e as parcelas (rastreado, para alterar).</summary>
-    Task<Evento?> ObterEventoAsync(string contaId, Guid eventoId, CancellationToken ct);
+    Task<Evento?> ObterEventoAsync(Guid contaId, Guid eventoId, CancellationToken ct);
 
-    Task<IReadOnlyList<PagamentoFornecedorLeitura>> PagamentosFornecedoresAsync(string contaId, Guid eventoId, CancellationToken ct);
+    Task<IReadOnlyList<PagamentoFornecedorLeitura>> PagamentosFornecedoresAsync(Guid contaId, Guid eventoId, CancellationToken ct);
 
     /// <summary>Troca as parcelas do contrato pelas novas (as antigas são apagadas).</summary>
     Task SubstituirParcelasAsync(ContratoFornecedor contrato, IReadOnlyList<ParcelaContratoFornecedor> novas, CancellationToken ct);
@@ -69,7 +69,7 @@ public sealed class DinheiroServico(IDadosDinheiro dados, IPlanilhaBudget planil
     private const int MaximoParcelas = 120;
     private const string Indisponivel = "Indisponível.";
 
-    public async Task<Resultado<DinheiroEventoLeitura>> ObterAsync(string contaId, Guid eventoId, CancellationToken ct)
+    public async Task<Resultado<DinheiroEventoLeitura>> ObterAsync(Guid contaId, Guid eventoId, CancellationToken ct)
     {
         var evento = await dados.ObterEventoAsync(contaId, eventoId, ct);
         return evento is null
@@ -79,7 +79,7 @@ public sealed class DinheiroServico(IDadosDinheiro dados, IPlanilhaBudget planil
 
     /// <summary>Define o parcelamento do pagamento (SPEC-043 §6.2). O total é o valor contratado do serviço.</summary>
     public async Task<Resultado<DinheiroEventoLeitura>> ParcelarAsync(
-        string contaId,
+        Guid contaId,
         Guid eventoId,
         Guid pagamentoId,
         PedidoParcelas pedido,
@@ -147,7 +147,7 @@ public sealed class DinheiroServico(IDadosDinheiro dados, IPlanilhaBudget planil
     }
 
     /// <summary>Volta o pagamento a inteiro, sem parcelas (SPEC-043 §6.2).</summary>
-    public async Task<Resultado<DinheiroEventoLeitura>> RemoverParcelamentoAsync(string contaId, Guid eventoId, Guid pagamentoId, CancellationToken ct)
+    public async Task<Resultado<DinheiroEventoLeitura>> RemoverParcelamentoAsync(Guid contaId, Guid eventoId, Guid pagamentoId, CancellationToken ct)
     {
         var (evento, servico, contrato) = await ObterPagamentoAsync(contaId, eventoId, pagamentoId, ct);
         if (evento is null || servico is null || contrato is null)
@@ -176,7 +176,7 @@ public sealed class DinheiroServico(IDadosDinheiro dados, IPlanilhaBudget planil
 
     /// <summary>Marca ou desfaz o pagamento inteiro: todas as parcelas, ou o próprio pagamento se não tem parcelas (SPEC-043 §6.3).</summary>
     public async Task<Resultado<DinheiroEventoLeitura>> DefinirPagoAsync(
-        string contaId,
+        Guid contaId,
         Guid eventoId,
         Guid pagamentoId,
         bool pago,
@@ -196,7 +196,7 @@ public sealed class DinheiroServico(IDadosDinheiro dados, IPlanilhaBudget planil
 
     /// <summary>Marca ou desmarca uma parcela; todas pagas deixam o pagamento pago sozinho (SPEC-043 §6.3).</summary>
     public async Task<Resultado<DinheiroEventoLeitura>> DefinirParcelaPagaAsync(
-        string contaId,
+        Guid contaId,
         Guid eventoId,
         Guid pagamentoId,
         Guid parcelaId,
@@ -226,7 +226,7 @@ public sealed class DinheiroServico(IDadosDinheiro dados, IPlanilhaBudget planil
 
     /// <summary>Guarda o comprovante da parcela, ou do pagamento sem parcelas, e apaga o anterior (SPEC-043 §6.4).</summary>
     public async Task<Resultado<DinheiroEventoLeitura>> EnviarComprovanteAsync(
-        string contaId,
+        Guid contaId,
         Guid eventoId,
         Guid pagamentoId,
         Guid? parcelaId,
@@ -278,7 +278,7 @@ public sealed class DinheiroServico(IDadosDinheiro dados, IPlanilhaBudget planil
     }
 
     public async Task<Resultado<DinheiroEventoLeitura>> ExcluirComprovanteAsync(
-        string contaId,
+        Guid contaId,
         Guid eventoId,
         Guid pagamentoId,
         Guid? parcelaId,
@@ -315,7 +315,7 @@ public sealed class DinheiroServico(IDadosDinheiro dados, IPlanilhaBudget planil
         return await RecarregarAsync(contaId, eventoId, ct);
     }
 
-    public async Task<Resultado<(string Nome, byte[] Conteudo)>> PlanilhaBudgetAsync(string contaId, Guid eventoId, CancellationToken ct)
+    public async Task<Resultado<(string Nome, byte[] Conteudo)>> PlanilhaBudgetAsync(Guid contaId, Guid eventoId, CancellationToken ct)
     {
         var evento = await dados.ObterEventoAsync(contaId, eventoId, ct);
         if (evento is null)
@@ -354,7 +354,7 @@ public sealed class DinheiroServico(IDadosDinheiro dados, IPlanilhaBudget planil
     }
 
     /// <summary>O pagamento é o contrato de um fornecedor contratado; o id do pagamento é o do vínculo serviço × fornecedor.</summary>
-    private async Task<(Evento? Evento, ServicoEvento? Servico, ContratoFornecedor? Contrato)> ObterPagamentoAsync(string contaId, Guid eventoId, Guid pagamentoId, CancellationToken ct)
+    private async Task<(Evento? Evento, ServicoEvento? Servico, ContratoFornecedor? Contrato)> ObterPagamentoAsync(Guid contaId, Guid eventoId, Guid pagamentoId, CancellationToken ct)
     {
         var evento = await dados.ObterEventoAsync(contaId, eventoId, ct);
         foreach (var servico in evento?.Servicos ?? [])
@@ -386,7 +386,7 @@ public sealed class DinheiroServico(IDadosDinheiro dados, IPlanilhaBudget planil
             : (contrato, null, null);
     }
 
-    private async Task<Resultado<DinheiroEventoLeitura>> RecarregarAsync(string contaId, Guid eventoId, CancellationToken ct)
+    private async Task<Resultado<DinheiroEventoLeitura>> RecarregarAsync(Guid contaId, Guid eventoId, CancellationToken ct)
     {
         var evento = await dados.ObterEventoAsync(contaId, eventoId, ct);
         return evento is null
@@ -394,7 +394,7 @@ public sealed class DinheiroServico(IDadosDinheiro dados, IPlanilhaBudget planil
             : Resultado<DinheiroEventoLeitura>.Sucesso(await LerAsync(contaId, evento, ct));
     }
 
-    private async Task<DinheiroEventoLeitura> LerAsync(string contaId, Evento evento, CancellationToken ct)
+    private async Task<DinheiroEventoLeitura> LerAsync(Guid contaId, Evento evento, CancellationToken ct)
     {
         var pagamentos = await dados.PagamentosFornecedoresAsync(contaId, evento.Id, ct);
         return new DinheiroEventoLeitura(

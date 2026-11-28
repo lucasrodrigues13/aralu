@@ -7,7 +7,7 @@ public static class EventoMapeamento
 {
     public static async Task<EventoDetalhe> DetalheAsync(
         IDados dados,
-        string contaId,
+        Guid contaId,
         Evento evento,
         DateOnly hoje,
         CancellationToken ct)

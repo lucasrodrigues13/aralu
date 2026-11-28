@@ -1,5 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatAutocompleteModule, MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -7,6 +7,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { Observable } from 'rxjs';
+import { FecharModal } from '../../shared/fechar-modal';
 
 export interface OpcaoSelecao {
   id: string;
@@ -35,9 +36,9 @@ const CRIAR = '__criar__';
 /** Escolha de vários itens com busca e cadastro na hora; fecha com os ids marcados. */
 @Component({
   selector: 'app-seletor-multiplo-dialog',
-  imports: [MatDialogModule, MatButtonModule, MatChipsModule, MatAutocompleteModule, MatFormFieldModule, MatIconModule, MatInputModule],
+  imports: [FecharModal, MatDialogModule, MatButtonModule, MatChipsModule, MatAutocompleteModule, MatFormFieldModule, MatIconModule, MatInputModule],
   template: `
-    <h2 mat-dialog-title>{{ dados.titulo }}</h2>
+    <h2 mat-dialog-title>{{ dados.titulo }} <app-fechar-modal /></h2>
     @if (dados.descricao) { <p class="text-muted text-sm px-6 -mt-2 mb-4">{{ dados.descricao }}</p> }
     <mat-dialog-content>
       <div class="campo">
@@ -59,9 +60,10 @@ const CRIAR = '__criar__';
               (input)="termo.set(campo.value)"
               [matChipInputFor]="chips"
               [matAutocomplete]="lista"
+              #gatilho="matAutocompleteTrigger"
             />
           </mat-chip-grid>
-          <mat-autocomplete #lista="matAutocomplete" class="painel-com-criar" (optionSelected)="escolher($event.option.value, campo)">
+          <mat-autocomplete #lista="matAutocomplete" class="painel-com-criar" (optionSelected)="escolher($event.option.value, campo, gatilho)">
             <mat-option class="opcao-criar" [value]="criar"><mat-icon>add</mat-icon> {{ dados.textoCriar }}</mat-option>
             @for (opcao of filtradas(); track opcao.id) {
               <mat-option [value]="opcao.id" [disabled]="opcao.bloqueada">
@@ -109,12 +111,17 @@ export class SeletorMultiploDialog {
     this.ids.update((lista) => lista.filter((item) => item !== id));
   }
 
-  protected escolher(valor: string, campo: HTMLInputElement): void {
+  /** Marcar um item não fecha a lista: ela só fecha ao clicar fora. */
+  protected escolher(valor: string, campo: HTMLInputElement, gatilho: MatAutocompleteTrigger): void {
     const termo = this.termo().trim();
     this.termo.set('');
     campo.value = '';
     if (valor !== CRIAR) {
       this.ids.update((lista) => (lista.includes(valor) ? lista : [...lista, valor]));
+      setTimeout(() => {
+        campo.focus();
+        gatilho.openPanel();
+      });
       return;
     }
     this.dados.criar(termo).subscribe((criadas) => {

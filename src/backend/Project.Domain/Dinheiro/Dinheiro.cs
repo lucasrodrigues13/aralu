@@ -1,3 +1,4 @@
+using Project.Domain.Comum;
 using Project.Domain.Fornecedores;
 
 namespace Project.Domain.Dinheiro;
@@ -5,9 +6,11 @@ namespace Project.Domain.Dinheiro;
 /// <summary>
 /// Parcela do orçamento do funil (SPEC-040). Nasce no orçamento e é copiada para o contrato quando ele é gerado.
 /// </summary>
-public sealed class ParcelaOrcamento
+public sealed class ParcelaOrcamento : ITemConta
 {
     public Guid Id { get; set; }
+
+    public Guid ContaId { get; set; }
 
     public Guid OrcamentoFunilId { get; set; }
 
@@ -21,9 +24,11 @@ public sealed class ParcelaOrcamento
 }
 
 /// <summary>Parcela do contrato com o cliente: o que o cliente paga à organizadora (SPEC-040).</summary>
-public sealed class ParcelaContrato
+public sealed class ParcelaContrato : ITemConta
 {
     public Guid Id { get; set; }
+
+    public Guid ContaId { get; set; }
 
     public Guid ContratoFunilId { get; set; }
 
@@ -62,9 +67,11 @@ public sealed class ParcelaContrato
         Vencimento < hoje ? TipoCobranca.Atrasada : Vencimento == hoje ? TipoCobranca.VenceHoje : TipoCobranca.Lembrete;
 }
 
-public sealed class RecebimentoParcela
+public sealed class RecebimentoParcela : ITemConta
 {
     public Guid Id { get; set; }
+
+    public Guid ContaId { get; set; }
 
     public Guid ParcelaId { get; set; }
 
@@ -78,9 +85,11 @@ public sealed class RecebimentoParcela
 }
 
 /// <summary>Contrato da organizadora com o fornecedor de um serviço do evento (SPEC-040; substitui ParcelaServico). É o "pagamento" da aba Dinheiro (SPEC-043).</summary>
-public sealed class ContratoFornecedor
+public sealed class ContratoFornecedor : ITemConta
 {
     public Guid Id { get; set; }
+
+    public Guid ContaId { get; set; }
 
     public Guid ServicoId { get; set; }
 
@@ -139,9 +148,11 @@ public sealed class ContratoFornecedor
 }
 
 /// <summary>Parcela que se paga ao fornecedor (SPEC-040).</summary>
-public sealed class ParcelaContratoFornecedor
+public sealed class ParcelaContratoFornecedor : ITemConta
 {
     public Guid Id { get; set; }
+
+    public Guid ContaId { get; set; }
 
     public Guid ContratoFornecedorId { get; set; }
 

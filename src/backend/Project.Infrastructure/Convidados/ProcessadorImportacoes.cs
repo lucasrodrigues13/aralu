@@ -1,3 +1,4 @@
+using Project.Application.Comum;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -63,7 +64,7 @@ public sealed class ProcessadorImportacoes(
                     retomou = true;
                 }
 
-                while (await servico.ProcessarProximaAsync(() => DateTimeOffset.UtcNow, ct, atraso))
+                while (await servico.ProcessarProximaAsync(() => Relogio.Agora, ct, atraso))
                 {
                 }
             }

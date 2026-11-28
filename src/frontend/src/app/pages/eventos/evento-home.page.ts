@@ -25,16 +25,17 @@ import { EventoAbasComponent } from './evento-abas.component';
 import { AplicarModeloDialog } from './aplicar-modelo.dialog';
 import { EventoFormPage } from './evento-form.page';
 import { LinkClienteDialog } from './link-cliente.dialog';
-import { LinkPortariaDialog } from './link-portaria.dialog';
+import { EquipeEventoDialog } from './equipe-evento.dialog';
 import { EventoTarefasComponent } from '../tarefas/evento-tarefas.component';
 import { SalvarComoModeloDialog } from './salvar-como-modelo.dialog';
+import { FecharModal } from '../../shared/fechar-modal';
 
 /** Clientes do evento: vincular existente, cadastrar novo ou desvincular. */
 @Component({
   selector: 'app-clientes-evento-dialog',
-  imports: [MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatAutocompleteModule, MatIconModule],
+  imports: [FecharModal, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatAutocompleteModule, MatIconModule],
   template: `
-    <h2 mat-dialog-title>Clientes do evento</h2>
+    <h2 mat-dialog-title>Clientes do evento <app-fechar-modal /></h2>
     <p class="text-muted text-sm px-6 -mt-2 mb-4">Quem contratou ou acompanha o evento.</p>
     <mat-dialog-content>
       @if (vinculados().length === 0) {
@@ -68,8 +69,8 @@ import { SalvarComoModeloDialog } from './salvar-como-modelo.dialog';
         </mat-form-field>
       </div>
     </mat-dialog-content>
-    <mat-dialog-actions>
-      <button mat-flat-button type="button" mat-dialog-close>Pronto</button>
+    <mat-dialog-actions align="end">
+      <button mat-stroked-button type="button" mat-dialog-close>Fechar</button>
     </mat-dialog-actions>
   `,
 })
@@ -198,7 +199,7 @@ export class ClientesEventoDialog implements OnInit {
                 }
                 @if (!auth.ehAssistente()) {
                   <button mat-menu-item type="button" (click)="linkDoCliente()"><mat-icon>link</mat-icon> Link do cliente</button>
-                  <button mat-menu-item type="button" (click)="linkDaPortaria()"><mat-icon>qr_code_scanner</mat-icon> Link da portaria</button>
+                  <button mat-menu-item type="button" (click)="equipeDoEvento()"><mat-icon>badge</mat-icon> Equipe de apoio</button>
                 }
                 @if (atual.situacao === 'EmAndamento') {
                   <button mat-menu-item type="button" (click)="aplicarModelo()"><mat-icon>playlist_add</mat-icon> Aplicar modelo</button>
@@ -353,6 +354,7 @@ export class EventoHomePage implements OnInit, OnDestroy {
       Fornecedores: 'Ver fornecedores',
       ConvidadosPendentes: 'Ver convidados',
       Editar: 'Informar data',
+      Contratos: 'Ver contrato',
     }[alerta.destino];
   }
 
@@ -369,6 +371,9 @@ export class EventoHomePage implements OnInit, OnDestroy {
         break;
       case 'Editar':
         this.editar();
+        break;
+      case 'Contratos':
+        void this.router.navigate(['/contratos-funil'], { queryParams: alerta.busca ? { busca: alerta.busca } : {} });
         break;
     }
   }
@@ -449,8 +454,8 @@ export class EventoHomePage implements OnInit, OnDestroy {
     });
   }
 
-  protected linkDaPortaria(): void {
-    this.dialog.open(LinkPortariaDialog, { ...DIALOG, data: { eventoId: this.id } });
+  protected equipeDoEvento(): void {
+    this.dialog.open(EquipeEventoDialog, { ...DIALOG_LARGO, data: { eventoId: this.id, nomeEvento: this.evento()?.nome ?? '' } });
   }
 
   protected linkDoCliente(): void {

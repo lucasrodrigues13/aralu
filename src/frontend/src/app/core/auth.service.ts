@@ -29,6 +29,36 @@ export interface Permissoes {
   somenteDela: boolean;
   /** Id do usuário logado; serve para saber o que a assistente criou (SPEC-032 §18, passo 1). */
   usuarioId?: string;
+  /** Permissões do grupo do Membro ("Modulo:Acao"). O Dono não tem lista: pode tudo (SPEC-062 §9). */
+  permissoes?: string[];
+}
+
+/** Módulos com permissão por grupo (SPEC-062 §9). */
+export type Modulo =
+  | 'Clientes'
+  | 'Eventos'
+  | 'Convidados'
+  | 'Tarefas'
+  | 'Agenda'
+  | 'Funil'
+  | 'OrcamentosContratos'
+  | 'Financeiro'
+  | 'Fornecedores'
+  | 'Modelos';
+
+/** Converte a resposta de /conta/area nas permissões da sessão. */
+export function permissoesDaArea(area: {
+  podeVerFinanceiro?: boolean;
+  somenteDela?: boolean;
+  usuarioId?: string;
+  permissoes?: string[];
+}): Permissoes {
+  return {
+    podeVerFinanceiro: !!area.podeVerFinanceiro,
+    somenteDela: !!area.somenteDela,
+    usuarioId: area.usuarioId,
+    permissoes: area.permissoes ?? [],
+  };
 }
 
 @Injectable({ providedIn: 'root' })
@@ -65,9 +95,13 @@ export class AuthService {
     return this.sessao()?.papeis.includes('Assistant') ?? false;
   }
 
-  /** A dona vê o financeiro sempre; a assistente só com a permissão. */
+  /** O Dono pode tudo; o Membro, o que o grupo libera (SPEC-062 §9). O servidor confere de novo. */
+  pode(modulo: Modulo, acao: 'Ver' | 'Editar' | 'Excluir' = 'Ver'): boolean {
+    return !this.ehAssistente() || (this.permissoes()?.permissoes ?? []).includes(`${modulo}:${acao}`);
+  }
+
   podeVerFinanceiro(): boolean {
-    return !this.ehAssistente() || (this.permissoes()?.podeVerFinanceiro ?? false);
+    return this.pode('Financeiro');
   }
 
   /** A dona exclui tudo do funil; a assistente só o que ela mesma criou (SPEC-032 §18, passo 1). */

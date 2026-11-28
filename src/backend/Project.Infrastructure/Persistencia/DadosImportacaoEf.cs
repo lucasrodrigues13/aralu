@@ -8,7 +8,7 @@ namespace Project.Infrastructure.Persistencia;
 /// <summary>Fila de importações de convidados (SPEC-059 §6.6).</summary>
 public sealed class DadosImportacaoEf(AppDbContext banco) : IDadosImportacao
 {
-    public async Task<bool?> EventoEmAndamentoAsync(string contaId, Guid eventoId, CancellationToken ct)
+    public async Task<bool?> EventoEmAndamentoAsync(Guid contaId, Guid eventoId, CancellationToken ct)
     {
         var situacao = await banco.Eventos.AsNoTracking()
             .Where(evento => evento.Id == eventoId && evento.ContaId == contaId)
@@ -23,7 +23,7 @@ public sealed class DadosImportacaoEf(AppDbContext banco) : IDadosImportacao
         await banco.SaveChangesAsync(ct);
     }
 
-    public async Task<IReadOnlyList<ImportacaoConvidados>> ListarAsync(string contaId, Guid eventoId, int quantidade, CancellationToken ct) =>
+    public async Task<IReadOnlyList<ImportacaoConvidados>> ListarAsync(Guid contaId, Guid eventoId, int quantidade, CancellationToken ct) =>
         await banco.ImportacoesConvidados.AsNoTracking()
             .Where(item => item.ContaId == contaId && item.EventoId == eventoId)
             .OrderByDescending(item => item.CriadaEm)

@@ -10,6 +10,22 @@ namespace Project.Tests.Conta;
 public class ContaSemBancoTests
 {
     [Fact]
+    public void Jwt_leva_o_hash_curto_do_stamp_e_nunca_o_valor_bruto()
+    {
+        var emissor = new EmissorJwt(Options.Create(new JwtOpcoes { Secret = "segredo-de-teste-com-32-caracteres" }));
+        const string stamp = "STAMP-BRUTO-DO-IDENTITY";
+        var hash = SessaoServico.HashDoStamp(stamp);
+
+        var jwt = new JwtSecurityTokenHandler().ReadJwtToken(emissor.Emitir("usuario-1", "pessoa@aralu.test", [Papeis.Organizer], stampHash: hash));
+
+        Assert.Equal(16, hash.Length);
+        Assert.Equal(hash, SessaoServico.HashDoStamp(stamp));
+        Assert.NotEqual(hash, SessaoServico.HashDoStamp(stamp + "x"));
+        Assert.Contains(jwt.Claims, claim => claim.Type == ContaClaims.Stamp && claim.Value == hash);
+        Assert.DoesNotContain(jwt.Claims, claim => claim.Value.Contains(stamp, StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void Confirmacao_vale_24_horas_e_redefinicao_vale_1_hora()
     {
         Assert.Equal(TimeSpan.FromHours(24), new ConfirmacaoEmailTokenProviderOptions().TokenLifespan);
@@ -18,12 +34,12 @@ public class ContaSemBancoTests
     }
 
     [Fact]
-    public void Senha_exige_8_caracteres_e_minuscula_e_o_bloqueio_e_de_15_minutos()
+    public void Senha_exige_10_caracteres_e_minuscula_e_o_bloqueio_e_de_15_minutos()
     {
         var opcoes = new IdentityOptions();
         OpcoesDeConta.Aplicar(opcoes);
 
-        Assert.Equal(8, opcoes.Password.RequiredLength);
+        Assert.Equal(10, opcoes.Password.RequiredLength);
         Assert.True(opcoes.Password.RequireLowercase);
         Assert.False(opcoes.Password.RequireDigit);
         Assert.False(opcoes.Password.RequireUppercase);
@@ -52,12 +68,12 @@ public class ContaSemBancoTests
         Assert.Equal("aralu-test", jwt.Issuer);
         Assert.Contains(jwt.Claims, claim => claim.Type is "email" or ClaimTypes.Email && claim.Value == "pessoa@aralu.test");
         Assert.Contains(jwt.Claims, claim => claim.Type == ClaimTypes.Role && claim.Value == Papeis.Organizer);
-        Assert.DoesNotContain(jwt.Claims, claim => claim.Type == ContaClaims.OrganizerId);
+        Assert.DoesNotContain(jwt.Claims, claim => claim.Type == ContaClaims.ContaId);
         Assert.InRange((jwt.ValidTo - DateTime.UtcNow).TotalHours, 7.5, 8.1);
     }
 
     [Fact]
-    public void Jwt_de_assistente_inclui_organizer_id()
+    public void Jwt_de_membro_inclui_conta_id()
     {
         var emissor = new EmissorJwt(Options.Create(new JwtOpcoes
         {
@@ -71,7 +87,7 @@ public class ContaSemBancoTests
         var jwt = new JwtSecurityTokenHandler().ReadJwtToken(token);
 
         Assert.Contains(jwt.Claims, claim => claim.Type == ClaimTypes.Role && claim.Value == Papeis.Assistant);
-        Assert.Contains(jwt.Claims, claim => claim.Type == ContaClaims.OrganizerId && claim.Value == "organizer-9");
+        Assert.Contains(jwt.Claims, claim => claim.Type == ContaClaims.ContaId && claim.Value == "organizer-9");
     }
 
     [Fact]
@@ -82,16 +98,5 @@ public class ContaSemBancoTests
         var erro = Assert.Throws<InvalidOperationException>(() => emissor.Emitir("usuario-1", "pessoa@aralu.test", [Papeis.Organizer]));
 
         Assert.DoesNotContain("curto", erro.Message, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public void Assistente_exige_vinculo_com_organizer()
-    {
-        var assistente = new ApplicationUser { Id = "assistente-1" };
-        Assert.Throws<InvalidOperationException>(() => assistente.VincularAoOrganizer(""));
-        Assert.Throws<InvalidOperationException>(() => assistente.VincularAoOrganizer("assistente-1"));
-
-        assistente.VincularAoOrganizer("organizer-1");
-        Assert.Equal("organizer-1", assistente.OrganizerId);
     }
 }

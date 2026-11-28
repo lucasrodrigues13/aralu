@@ -36,7 +36,8 @@ public static class ParcelasDaAssessoria
                 ? decimal.Round(total * valorInformado.Value / 100m, 2, MidpointRounding.AwayFromZero)
                 : decimal.Round(valorInformado.Value, 2, MidpointRounding.AwayFromZero);
 
-            if (entrada <= 0 || entrada > total)
+            // Entrada igual ao total não deixa nada para as parcelas (seriam parcelas de R$ 0,00).
+            if (entrada <= 0 || entrada >= total)
             {
                 return [];
             }

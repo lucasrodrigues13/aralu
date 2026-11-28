@@ -34,22 +34,22 @@ public sealed record TarefaSemResponsavelAtivo(
 public interface IDadosHoje
 {
     /// <summary>Tarefas abertas (evento e funil) com assistente removida entre os responsáveis.</summary>
-    Task<IReadOnlyList<TarefaSemResponsavelAtivo>> TarefasSemResponsavelAtivoAsync(string contaId, CancellationToken ct);
+    Task<IReadOnlyList<TarefaSemResponsavelAtivo>> TarefasSemResponsavelAtivoAsync(Guid contaId, CancellationToken ct);
 
-    Task<IReadOnlyList<EventoHojeDado>> EventosEmAndamentoAsync(string contaId, CancellationToken ct);
+    Task<IReadOnlyList<EventoHojeDado>> EventosEmAndamentoAsync(Guid contaId, CancellationToken ct);
 
-    Task<IReadOnlyList<TarefaHojeDado>> TarefasAsync(string contaId, IReadOnlyCollection<Guid> eventoIds, CancellationToken ct);
+    Task<IReadOnlyList<TarefaHojeDado>> TarefasAsync(Guid contaId, IReadOnlyCollection<Guid> eventoIds, CancellationToken ct);
 
-    Task<IReadOnlyList<ConvidadosEventoDado>> ConvidadosAsync(string contaId, IReadOnlyCollection<Guid> eventoIds, CancellationToken ct);
+    Task<IReadOnlyList<ConvidadosEventoDado>> ConvidadosAsync(Guid contaId, IReadOnlyCollection<Guid> eventoIds, CancellationToken ct);
 
-    Task<IReadOnlyList<ParcelaHojeDado>> CobrancasAsync(string contaId, DateOnly ate, CancellationToken ct);
+    Task<IReadOnlyList<ParcelaHojeDado>> CobrancasAsync(Guid contaId, DateOnly ate, CancellationToken ct);
 
-    Task<IReadOnlyList<PagamentoSemanaDado>> PagamentosPendentesAsync(string contaId, IReadOnlyCollection<Guid> eventoIds, DateOnly de, DateOnly ate, CancellationToken ct);
+    Task<IReadOnlyList<PagamentoSemanaDado>> PagamentosPendentesAsync(Guid contaId, IReadOnlyCollection<Guid> eventoIds, DateOnly de, DateOnly ate, CancellationToken ct);
 
-    Task<ConfiguracaoContaDado> ConfiguracaoAsync(string contaId, CancellationToken ct);
+    Task<ConfiguracaoContaDado> ConfiguracaoAsync(Guid contaId, CancellationToken ct);
 
     /// <summary>Leads em estágio aberto com retorno marcado até a data.</summary>
-    Task<IReadOnlyList<RetornoFunilHoje>> RetornosFunilAsync(string contaId, DateOnly ate, CancellationToken ct);
+    Task<IReadOnlyList<RetornoFunilHoje>> RetornosFunilAsync(Guid contaId, DateOnly ate, CancellationToken ct);
 }
 
 public sealed record CobrancaHoje(Guid ContratoId, string Oportunidade, string Parcela, DateOnly Vencimento, decimal Saldo, bool Atrasada);
@@ -106,7 +106,7 @@ public static class HojeRegras
 public sealed class HojeServico(IDadosHoje dados, PainelServico painel)
 {
     public async Task<HojeLeitura> ObterAsync(
-        string contaId,
+        Guid contaId,
         DateOnly hoje,
         CancellationToken ct,
         IReadOnlySet<Guid>? eventosLiberados = null,

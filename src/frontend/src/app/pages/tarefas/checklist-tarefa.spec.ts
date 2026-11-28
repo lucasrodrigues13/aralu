@@ -2,7 +2,7 @@ import { ItemChecklistTarefa } from '../../core/negocio.client';
 import { itemAtrasado } from './checklist-tarefa';
 
 function item(parcial: Partial<ItemChecklistTarefa>): ItemChecklistTarefa {
-  return { id: '1', texto: 'x', feito: false, cancelado: false, prazo: null, responsavel: null, ...parcial };
+  return { id: '1', texto: 'x', feito: false, cancelado: false, prazo: null, responsavel: null, prazoRelativo: null, ...parcial } as ItemChecklistTarefa;
 }
 
 describe('itemAtrasado', () => {

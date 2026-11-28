@@ -6,14 +6,15 @@ using Project.Domain.Eventos;
 namespace Project.Application.Negocio;
 
 /// <summary>Link do cliente como a organizadora vê (SPEC-046 §6.1). <paramref name="Token"/> é nulo quando não há link.</summary>
-public sealed record LinkClienteLeitura(bool Ativo, string? Token, bool FinanceiroLiberado, bool ConvidadosLiberado = false);
+/// <summary><paramref name="ClienteComEmail"/>: algum cliente do evento tem e-mail para receber o código (SPEC-063 §7).</summary>
+public sealed record LinkClienteLeitura(bool Ativo, string? Token, bool FinanceiroLiberado, bool ConvidadosLiberado = false, bool ClienteComEmail = true);
 
 /// <summary><paramref name="ConvidadosLiberado"/> nulo mantém a marcação como está (SPEC-052).</summary>
 public sealed record SalvarLinkCliente(bool FinanceiroLiberado, bool? ConvidadosLiberado = null);
 
 public sealed record EventoDoLink(
     Guid Id,
-    string ContaId,
+    Guid ContaId,
     string Nome,
     DateOnly? Data,
     bool EmAndamento = true,
@@ -64,7 +65,7 @@ public interface IDadosLinkCliente
     /// <summary>Marca um convidado novo de um convite já existente para inclusão (SPEC-059).</summary>
     Task IncluirConvidadoAsync(Domain.Convidados.Convidado convidado, CancellationToken ct);
 
-    Task<EventoDoLink?> ObterEventoAsync(string contaId, Guid eventoId, CancellationToken ct);
+    Task<EventoDoLink?> ObterEventoAsync(Guid contaId, Guid eventoId, CancellationToken ct);
 
     Task<LinkCliente?> ObterPorEventoAsync(Guid eventoId, CancellationToken ct);
 
@@ -87,7 +88,8 @@ public sealed class LinkClienteServico(
     FornecedorServico fornecedores,
     Arquivos.IArmazenamentoArquivo armazenamento,
     ConviteServico conviteServico,
-    ImportacaoServico importacoes)
+    ImportacaoServico importacoes,
+    IDadosAcessoLinkCliente acessos)
 {
     private const string LinkInvalido = "Link inválido.";
     private const string ConvidadosFechado = "A organizadora ainda não liberou o cadastro de convidados deste evento.";
@@ -95,7 +97,7 @@ public sealed class LinkClienteServico(
 
     // ---- Organizadora ----
 
-    public async Task<Resultado<LinkClienteLeitura>> ObterAsync(string contaId, Guid eventoId, CancellationToken ct)
+    public async Task<Resultado<LinkClienteLeitura>> ObterAsync(Guid contaId, Guid eventoId, CancellationToken ct)
     {
         if (await dados.ObterEventoAsync(contaId, eventoId, ct) is null)
         {
@@ -103,11 +105,11 @@ public sealed class LinkClienteServico(
         }
 
         var link = await dados.ObterPorEventoAsync(eventoId, ct);
-        return Resultado<LinkClienteLeitura>.Sucesso(Ler(link));
+        return Resultado<LinkClienteLeitura>.Sucesso(await LerAsync(contaId, eventoId, link, ct));
     }
 
     /// <summary>Gera o link do evento ou, se já existe, troca o código (o endereço antigo deixa de valer).</summary>
-    public async Task<Resultado<LinkClienteLeitura>> GerarAsync(string contaId, Guid eventoId, DateTimeOffset agora, CancellationToken ct)
+    public async Task<Resultado<LinkClienteLeitura>> GerarAsync(Guid contaId, Guid eventoId, DateTimeOffset agora, CancellationToken ct)
     {
         if (await dados.ObterEventoAsync(contaId, eventoId, ct) is null)
         {
@@ -122,14 +124,16 @@ public sealed class LinkClienteServico(
         }
         else
         {
+            // Link novo derruba as sessões e os códigos do anterior (SPEC-063 R6).
+            await acessos.RemoverAcessosAsync(link.Id, ct);
             link.Token = NovoToken();
         }
 
         await dados.SalvarAsync(ct);
-        return Resultado<LinkClienteLeitura>.Sucesso(Ler(link));
+        return Resultado<LinkClienteLeitura>.Sucesso(await LerAsync(contaId, eventoId, link, ct));
     }
 
-    public async Task<Resultado<LinkClienteLeitura>> SalvarAsync(string contaId, Guid eventoId, SalvarLinkCliente pedido, CancellationToken ct)
+    public async Task<Resultado<LinkClienteLeitura>> SalvarAsync(Guid contaId, Guid eventoId, SalvarLinkCliente pedido, CancellationToken ct)
     {
         var link = await ObterDaContaAsync(contaId, eventoId, ct);
         if (link is null)
@@ -140,10 +144,10 @@ public sealed class LinkClienteServico(
         link.FinanceiroLiberado = pedido.FinanceiroLiberado;
         link.ConvidadosLiberado = pedido.ConvidadosLiberado ?? link.ConvidadosLiberado;
         await dados.SalvarAsync(ct);
-        return Resultado<LinkClienteLeitura>.Sucesso(Ler(link));
+        return Resultado<LinkClienteLeitura>.Sucesso(await LerAsync(contaId, eventoId, link, ct));
     }
 
-    public async Task<Resultado<LinkClienteLeitura>> DesativarAsync(string contaId, Guid eventoId, CancellationToken ct)
+    public async Task<Resultado<LinkClienteLeitura>> DesativarAsync(Guid contaId, Guid eventoId, CancellationToken ct)
     {
         if (await dados.ObterEventoAsync(contaId, eventoId, ct) is null)
         {
@@ -157,7 +161,7 @@ public sealed class LinkClienteServico(
             await dados.SalvarAsync(ct);
         }
 
-        return Resultado<LinkClienteLeitura>.Sucesso(Ler(null));
+        return Resultado<LinkClienteLeitura>.Sucesso(await LerAsync(contaId, eventoId, null, ct));
     }
 
     // ---- Cliente ----
@@ -240,7 +244,7 @@ public sealed class LinkClienteServico(
     private async Task<Resultado<PaginaClienteLeitura>> AgirAsync(
         string token,
         CancellationToken ct,
-        Func<string, Guid, Task<Resultado<DinheiroEventoLeitura>>> acao)
+        Func<Guid, Guid, Task<Resultado<DinheiroEventoLeitura>>> acao)
     {
         var contexto = await ResolverAsync(token, exigirFinanceiro: true, ct);
         if (contexto.Falha is not null)
@@ -257,7 +261,7 @@ public sealed class LinkClienteServico(
     private async Task<Resultado<PaginaClienteLeitura>> AgirComContratoAsync(
         string token,
         CancellationToken ct,
-        Func<string, Guid, Task<Resultado<EventoDetalhe>>> acao)
+        Func<Guid, Guid, Task<Resultado<EventoDetalhe>>> acao)
     {
         var contexto = await ResolverAsync(token, exigirFinanceiro: true, ct);
         if (contexto.Falha is not null)
@@ -375,7 +379,7 @@ public sealed class LinkClienteServico(
             : Resultado<byte[]>.Sucesso(conviteServico.ModeloPlanilha());
     }
 
-    private async Task<Resultado<PaginaClienteLeitura>> AgirNosConvitesAsync(string token, CancellationToken ct, Func<string, Guid, Task<Falha?>> acao)
+    private async Task<Resultado<PaginaClienteLeitura>> AgirNosConvitesAsync(string token, CancellationToken ct, Func<Guid, Guid, Task<Falha?>> acao)
     {
         var contexto = await ResolverAsync(token, Area.Convidados, ct);
         if (contexto.Falha is not null)
@@ -501,8 +505,11 @@ public sealed class LinkClienteServico(
             : new Contexto(link, evento, null);
     }
 
-    private async Task<LinkCliente?> ObterDaContaAsync(string contaId, Guid eventoId, CancellationToken ct) =>
+    private async Task<LinkCliente?> ObterDaContaAsync(Guid contaId, Guid eventoId, CancellationToken ct) =>
         await dados.ObterEventoAsync(contaId, eventoId, ct) is null ? null : await dados.ObterPorEventoAsync(eventoId, ct);
+
+    private async Task<LinkClienteLeitura> LerAsync(Guid contaId, Guid eventoId, LinkCliente? link, CancellationToken ct) =>
+        Ler(link) with { ClienteComEmail = (await acessos.ListarEmailsClientesAsync(contaId, eventoId, ct)).Count > 0 };
 
     private static LinkClienteLeitura Ler(LinkCliente? link) =>
         new(link is not null, link?.Token, link?.FinanceiroLiberado ?? false, link?.ConvidadosLiberado ?? false);

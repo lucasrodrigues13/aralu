@@ -4,6 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { Router } from '@angular/router';
 import { AssistentesClient } from '../../core/assistentes.client';
 import { AuthService } from '../../core/auth.service';
 import { ContaClient } from '../../core/conta.client';
@@ -39,13 +40,14 @@ import { MascaraDirective } from '../../shared/mascara.directive';
           </form>
           <form class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 mt-8" [formGroup]="senha" (ngSubmit)="trocarSenha()">
             <h3 class="sm:col-span-2 text-lg font-semibold">Trocar senha</h3>
+            <p class="sm:col-span-2 text-sm text-muted">Ao trocar a senha, você sai de todos os dispositivos e entra de novo com a senha nova.</p>
             <div class="campo">
               <mat-label class="font-semibold mb-2 block">Senha atual</mat-label>
               <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Senha atual'" matInput type="password" formControlName="atual" autocomplete="current-password" /></mat-form-field>
             </div>
             <div class="campo">
               <mat-label class="font-semibold mb-2 block">Nova senha</mat-label>
-              <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Nova senha'" matInput type="password" formControlName="nova" autocomplete="new-password" /></mat-form-field>
+              <mat-form-field appearance="outline" class="w-full"><input [attr.aria-label]="'Nova senha'" matInput type="password" formControlName="nova" autocomplete="new-password" /><mat-hint>Pelo menos 10 caracteres. Evite senhas comuns.</mat-hint></mat-form-field>
             </div>
             <div class="sm:col-span-2"><button mat-stroked-button type="submit" [disabled]="senha.invalid">Trocar senha</button></div>
           </form>
@@ -60,7 +62,8 @@ export class AreaUsuarioPage implements OnInit {
   private readonly assistentes = inject(AssistentesClient);
   private readonly toast = inject(ToastService);
   private readonly fb = inject(FormBuilder);
-  protected readonly status = signal('Carregando...');
+  private readonly router = inject(Router);
+  protected readonly status = signal('Carregando…');
   protected readonly perfil = this.fb.nonNullable.group({
     nome: ['', [Validators.required, Validators.pattern(/\S/)]],
     celular: '',
@@ -68,7 +71,7 @@ export class AreaUsuarioPage implements OnInit {
   });
   protected readonly senha = this.fb.nonNullable.group({
     atual: ['', Validators.required],
-    nova: ['', [Validators.required, Validators.minLength(8)]],
+    nova: ['', [Validators.required, Validators.minLength(10)]],
   });
 
   ngOnInit(): void {
@@ -107,8 +110,10 @@ export class AreaUsuarioPage implements OnInit {
     const { atual, nova } = this.senha.getRawValue();
     this.assistentes.trocarSenha(atual, nova).subscribe({
       next: () => {
-        this.toast.sucesso('Senha alterada.');
-        this.senha.reset({ atual: '', nova: '' });
+        // A07-001: a troca encerra todas as sessões, inclusive esta.
+        this.toast.sucesso('Senha alterada. Entre novamente com a nova senha.');
+        this.auth.sair();
+        void this.router.navigateByUrl('/entrar');
       },
       error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
     });

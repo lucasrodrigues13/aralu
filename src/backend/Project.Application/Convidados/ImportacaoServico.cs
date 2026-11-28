@@ -16,11 +16,11 @@ public sealed record ImportacaoLeitura(
 public interface IDadosImportacao
 {
     /// <summary>Nulo se o evento não é da conta; senão, se está em andamento.</summary>
-    Task<bool?> EventoEmAndamentoAsync(string contaId, Guid eventoId, CancellationToken ct);
+    Task<bool?> EventoEmAndamentoAsync(Guid contaId, Guid eventoId, CancellationToken ct);
 
     Task InserirAsync(ImportacaoConvidados importacao, CancellationToken ct);
 
-    Task<IReadOnlyList<ImportacaoConvidados>> ListarAsync(string contaId, Guid eventoId, int quantidade, CancellationToken ct);
+    Task<IReadOnlyList<ImportacaoConvidados>> ListarAsync(Guid contaId, Guid eventoId, int quantidade, CancellationToken ct);
 
     /// <summary>Há alguma importação Pendente na fila.</summary>
     Task<bool> TemPendenteAsync(CancellationToken ct);
@@ -52,7 +52,7 @@ public sealed class ImportacaoServico(IDadosImportacao dados, ConviteServico con
     private const int MaximoDeErros = 500;
 
     public async Task<Resultado<ImportacaoLeitura>> EnfileirarAsync(
-        string contaId,
+        Guid contaId,
         Guid eventoId,
         Stream arquivo,
         string? nomeArquivo,
@@ -99,7 +99,7 @@ public sealed class ImportacaoServico(IDadosImportacao dados, ConviteServico con
         return Resultado<ImportacaoLeitura>.Sucesso(Ler(importacao));
     }
 
-    public async Task<Resultado<IReadOnlyList<ImportacaoLeitura>>> ListarAsync(string contaId, Guid eventoId, CancellationToken ct)
+    public async Task<Resultado<IReadOnlyList<ImportacaoLeitura>>> ListarAsync(Guid contaId, Guid eventoId, CancellationToken ct)
     {
         if (await dados.EventoEmAndamentoAsync(contaId, eventoId, ct) is null)
         {

@@ -117,17 +117,12 @@ public static class ContratoEndpoints
     private static Task<IResult> Excluir(Guid id, ClaimsPrincipal usuario, ContratoServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.ExcluirAsync(conta, id, ct)));
 
-    private static Task<IResult> ComConta(ClaimsPrincipal usuario, Func<string, Task<IResult>> acao)
+    private static Task<IResult> ComConta(ClaimsPrincipal usuario, Func<Guid, Task<IResult>> acao)
     {
-        var conta = usuario.FindFirstValue(ContaClaims.OrganizerId);
-        if (string.IsNullOrWhiteSpace(conta))
-        {
-            conta = usuario.FindFirstValue(ClaimTypes.NameIdentifier);
-        }
-
-        return string.IsNullOrWhiteSpace(conta)
+        var conta = ContaAtual.De(usuario);
+        return conta is null
             ? Task.FromResult(Results.Json(new ErroResposta("autenticacao", "É preciso entrar para continuar."), statusCode: StatusCodes.Status401Unauthorized))
-            : acao(conta);
+            : acao(conta.Value);
     }
 
     private static async Task<IResult> De<T>(Task<Resultado<T>> tarefa)

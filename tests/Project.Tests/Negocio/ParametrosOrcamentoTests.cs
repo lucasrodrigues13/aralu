@@ -24,7 +24,7 @@ public class ParametrosOrcamentoTests
             lead,
             12500m,
             new DateOnly(2026, 11, 20),
-            "Aralu Eventos");
+            new Project.Domain.Perfil.PerfilAssessoria { NomeEmpresa = "Aralu Eventos" });
 
         var partes = texto.Split('|');
         Assert.Equal("Casamento Ana e Beto", partes[0]);

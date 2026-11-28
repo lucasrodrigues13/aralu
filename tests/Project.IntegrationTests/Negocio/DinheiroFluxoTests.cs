@@ -10,7 +10,7 @@ namespace Project.IntegrationTests.Negocio;
 [Collection(ColecaoApi.Nome)]
 public class DinheiroFluxoTests
 {
-    private const string Senha = "abcdefgh";
+    private const string Senha = "ceu-de-junho-42";
     private readonly BancoFixture _banco;
 
     public DinheiroFluxoTests(BancoFixture banco) => _banco = banco;
@@ -142,7 +142,7 @@ public class DinheiroFluxoTests
     {
         var dono = await Entrar();
         var outra = await Entrar();
-        var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
+        var hoje = Project.Domain.Comum.HorarioBrasil.Data(DateTimeOffset.UtcNow);
         var evento = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new { tipo = "Casamento", primeiroNome = "Bia", segundoNome = "Leo", data = hoje.AddDays(10).ToString("yyyy-MM-dd") }));
         var eventoId = evento.GetProperty("id").GetGuid();
         await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/tarefas", new { titulo = "Ligar", prazo = hoje.ToString("yyyy-MM-dd") }));
@@ -378,7 +378,7 @@ public class DinheiroFluxoTests
         Assert.False(gerado.GetProperty("financeiroLiberado").GetBoolean());
 
         // Cliente sem login, financeiro fechado: vê o evento, não vê valores nem age.
-        var cliente = _banco.Fabrica.CreateClient();
+        var cliente = await LinkClienteDeTeste.AbrirAsync(_banco.Fabrica, dono, eventoId, token);
         var baseLink = $"/api/v1/publico/cliente/{token}";
         var fechado = await Ler(await cliente.GetAsync(baseLink));
         Assert.False(fechado.GetProperty("financeiroLiberado").GetBoolean());
@@ -424,7 +424,7 @@ public class DinheiroFluxoTests
         var (eventoId, _, _) = await EventoComFornecedorContratado(dono, 1);
         var urlLink = $"/api/v1/eventos/{eventoId}/link-cliente";
         var token = (await Ler(await dono.PostAsync(urlLink, null))).GetProperty("token").GetString()!;
-        var cliente = _banco.Fabrica.CreateClient();
+        var cliente = await LinkClienteDeTeste.AbrirAsync(_banco.Fabrica, dono, eventoId, token);
         var baseLink = $"/api/v1/publico/cliente/{token}";
         var pedido = new
         {
@@ -488,7 +488,7 @@ public class DinheiroFluxoTests
         var (eventoId, _, _) = await EventoComFornecedorContratado(dono, 1);
         var urlLink = $"/api/v1/eventos/{eventoId}/link-cliente";
         var token = (await Ler(await dono.PostAsync(urlLink, null))).GetProperty("token").GetString()!;
-        var cliente = _banco.Fabrica.CreateClient();
+        var cliente = await LinkClienteDeTeste.AbrirAsync(_banco.Fabrica, dono, eventoId, token);
         var baseLink = $"/api/v1/publico/cliente/{token}";
 
         // Fechado: nenhuma ferramenta responde.
@@ -647,7 +647,7 @@ public class DinheiroFluxoTests
     {
         var email = $"pessoa-{Guid.NewGuid():N}@aralu.test";
         var cliente = _banco.Fabrica.CreateClient();
-        var cadastro = await cliente.PostAsJsonAsync("/api/v1/conta/cadastro", new { email, senha = Senha, confirmacao = Senha });
+        var cadastro = await cliente.PostAsJsonAsync("/api/v1/conta/cadastro", new { email, senha = Senha, confirmacao = Senha, aceiteTermos = true });
         Assert.Equal(HttpStatusCode.Created, cadastro.StatusCode);
         var mensagem = _banco.Fabrica.Email.Mensagens.Last(item => item.Email == email && item.Tipo == "confirmacao");
         var query = QueryHelpers.ParseQuery(new Uri(mensagem.Corpo).Query);

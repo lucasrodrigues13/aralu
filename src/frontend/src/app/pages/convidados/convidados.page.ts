@@ -1,4 +1,5 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { ExpandirTodosComponent } from '../../shared/expandir-todos.component';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -13,19 +14,20 @@ import { Convite, ListaConvites, NegocioClient } from '../../core/negocio.client
 import { ConviteDoFormulario, PedidoConvite } from '../../core/convite-formulario';
 import { ConviteFormDados, ConviteFormDialog } from '../../shared/convite-form.dialog';
 import { dadosPreenchidos, FiltroDeConvites, resumoDosConvidados } from '../../shared/convite-lista';
-import { PlanilhaInstrucoesDados, PlanilhaInstrucoesDialog } from '../../shared/planilha-instrucoes.dialog';
 import { ConvidadosTopoComponent } from '../../shared/convidados-topo.component';
 import { DADOS_ENVIO, DADOS_PRAZO, DataConvitesDialog } from '../../shared/data-convites.dialog';
 import { PresencasDialog } from '../../shared/presencas.dialog';
 import { ImportacoesDados, ImportacoesDialog } from '../../shared/importacoes.dialog';
 import { EventoAbasComponent } from '../eventos/evento-abas.component';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatMenuModule } from '@angular/material/menu';
+import { Estado } from '../../shared/estado';
 
 export { cardsPorSituacao } from '../../shared/convite-lista';
 
 @Component({
   selector: 'app-convidados',
-  imports: [MatCardModule, MatButtonToggleModule, MatButtonModule, EventoAbasComponent, MatIconModule, MatDialogModule, ConvidadosTopoComponent, MatTooltipModule],
+  imports: [ExpandirTodosComponent, MatCardModule, MatButtonToggleModule, MatButtonModule, EventoAbasComponent, MatIconModule, MatDialogModule, ConvidadosTopoComponent, MatTooltipModule, MatMenuModule, Estado],
   template: `
     @if (!eventoId()) {
       <mat-card class="cardWithShadow">
@@ -49,7 +51,6 @@ export { cardsPorSituacao } from '../../shared/convite-lista';
         (envio)="abrirEnvio()"
         (prazo)="abrirPrazo()"
         (presencas)="abrirPresencas()"
-        (planilha)="abrirPlanilha()"
         (importar)="abrirImportacoes()">
         <mat-button-toggle-group antesDoFiltro [value]="visao()" (change)="visao.set($event.value)" aria-label="Visão da lista">
           <mat-button-toggle value="convite">Por convite</mat-button-toggle>
@@ -57,12 +58,11 @@ export { cardsPorSituacao } from '../../shared/convite-lista';
         </mat-button-toggle-group>
         @if (lista(); as dados) {
           @if (dados.convites.length === 0) {
-            <div class="flex flex-col items-center gap-2 text-center text-muted py-10">
-              <mat-icon>mail</mat-icon>
-              <strong>Nenhum convite</strong>
-              Crie o primeiro convite ou importe a planilha.
-            </div>
+            <app-estado icone="mail" titulo="Nenhum convite ainda" texto="Crie o primeiro convite ou importe a planilha." />
           } @else if (visao() === 'convite') {
+            <app-expandir-todos [abertos]="todosAbertos()" (alternar)="alternarTodos()">
+              {{ dados.convites.length }} {{ dados.convites.length === 1 ? 'convite' : 'convites' }}
+            </app-expandir-todos>
             <div class="relative">
               <table class="tabela">
                 <thead>
@@ -80,7 +80,7 @@ export { cardsPorSituacao } from '../../shared/convite-lista';
                         <div class="flex items-start gap-1">
                           <button mat-icon-button type="button" class="seta" [class.aberta]="aberto(item.id)" [attr.aria-expanded]="aberto(item.id)" [attr.aria-controls]="'convidados-' + item.id" [attr.aria-label]="(aberto(item.id) ? 'Recolher' : 'Expandir') + ' convidados de ' + item.nome" [matTooltip]="(aberto(item.id) ? 'Recolher' : 'Expandir') + ' convidados de ' + item.nome" (click)="alternar(item.id)"><mat-icon>chevron_right</mat-icon></button>
                           <div class="min-w-0 pt-2">
-                            <strong>{{ item.nome }}</strong>
+                            <button type="button" class="link-nome" (click)="abrirEdicao(item)">{{ item.nome }}</button>
                             @if (item.email) { <span class="block text-xs text-muted">{{ item.email }}</span> }
                             @if (item.observacao) { <span class="block text-xs text-muted">{{ item.observacao }}</span> }
                             @if (item.excecaoPrazoRsvp) { <span class="block text-xs text-muted">Exceção aberta após o prazo</span> }
@@ -91,14 +91,17 @@ export { cardsPorSituacao } from '../../shared/convite-lista';
                       <td>{{ item.telefone || '—' }}</td>
                       <td class="text-sm">{{ resumo(item.convidados) }}</td>
                       <td class="text-end! whitespace-nowrap">
-                        <button mat-icon-button type="button" aria-label="Copiar link de RSVP" matTooltip="Copiar link de RSVP" (click)="copiar(item.token)"><mat-icon>link</mat-icon></button>
-                        <button mat-icon-button type="button" aria-label="Baixar QR Code" matTooltip="Baixar QR Code" (click)="baixarQr(item.id)"><mat-icon>qr_code_2</mat-icon></button>
-                        @if (temConfirmado(item)) {
-                          <button mat-icon-button type="button" aria-label="Baixar QR de entrada" matTooltip="Baixar QR de entrada" (click)="baixarQrEntrada(item.id)"><mat-icon>qr_code_scanner</mat-icon></button>
-                        }
                         <button mat-icon-button type="button" aria-label="Enviar pelo WhatsApp" matTooltip="Enviar pelo WhatsApp" (click)="whatsapp(item.id)"><mat-icon>chat</mat-icon></button>
                         <button mat-icon-button type="button" aria-label="Editar" matTooltip="Editar" (click)="abrirEdicao(item)"><mat-icon>edit</mat-icon></button>
-                        <button mat-icon-button type="button" aria-label="Excluir" matTooltip="Excluir" (click)="semExclusao('convite')"><mat-icon>delete</mat-icon></button>
+                        <button mat-icon-button type="button" aria-label="Mais ações" matTooltip="Mais ações" [matMenuTriggerFor]="mais"><mat-icon>more_vert</mat-icon></button>
+                        <mat-menu #mais="matMenu" class="cardWithShadow">
+                          <button mat-menu-item type="button" (click)="copiar(item.token)"><mat-icon>link</mat-icon> Copiar link de RSVP</button>
+                          <button mat-menu-item type="button" (click)="baixarQr(item.id)"><mat-icon>qr_code_2</mat-icon> Baixar QR Code</button>
+                          @if (temConfirmado(item)) {
+                            <button mat-menu-item type="button" (click)="baixarQrEntrada(item.id)"><mat-icon>qr_code_scanner</mat-icon> Baixar QR de entrada</button>
+                          }
+                          <button mat-menu-item type="button" class="text-error" (click)="semExclusao('convite')"><mat-icon>delete</mat-icon> Excluir</button>
+                        </mat-menu>
                       </td>
                     </tr>
                     @if (aberto(item.id)) {
@@ -296,7 +299,7 @@ export class ConvidadosPage implements OnInit {
   protected excluirConvidado(id: string): void {
     this.dialog.open(ConfirmaDialog, {
       ...DIALOG_PEQUENO,
-      data: { titulo: 'Excluir convidado', texto: 'Confirma a exclusão deste convidado?', confirmar: 'Excluir' },
+      data: { titulo: 'Excluir convidado', texto: 'Confirma a exclusão deste convidado?', confirmar: 'Excluir', destrutivo: true },
     }).afterClosed().subscribe((confirmou) => {
       if (!confirmou) {
         return;
@@ -343,7 +346,7 @@ export class ConvidadosPage implements OnInit {
   protected semExclusao(tipo: string): void {
     this.dialog.open(ConfirmaDialog, {
       ...DIALOG_PEQUENO,
-      data: { titulo: 'Excluir', texto: `Confirma a exclusão deste ${tipo}?`, confirmar: 'Excluir' },
+      data: { titulo: 'Excluir', texto: `Confirma a exclusão deste ${tipo}?`, confirmar: 'Excluir', destrutivo: true },
     }).afterClosed().subscribe((confirmou) => {
       if (confirmou) {
         this.toast.erro('A exclusão ainda não está disponível neste fluxo.');
@@ -352,12 +355,16 @@ export class ConvidadosPage implements OnInit {
   }
 
   /** Instruções de preenchimento com o download do modelo dentro do modal (SPEC-059). */
-  protected abrirPlanilha(): void {
-    const dados: PlanilhaInstrucoesDados = { baixar: () => this.negocio.planilha(this.eventoId()) };
-    this.dialog.open(PlanilhaInstrucoesDialog, { ...DIALOG, data: dados });
+  /** Convites nascem recolhidos; clicar mostra os convidados (SPEC-059). */
+  protected readonly todosAbertos = computed(() => {
+    const convites = this.lista()?.convites ?? [];
+    return convites.length > 0 && convites.every((convite) => this.abertos().has(convite.id));
+  });
+
+  protected alternarTodos(): void {
+    this.abertos.set(this.todosAbertos() ? new Set() : new Set((this.lista()?.convites ?? []).map((convite) => convite.id)));
   }
 
-  /** Convites nascem recolhidos; clicar mostra os convidados (SPEC-059). */
   protected aberto(id: string): boolean {
     return this.abertos().has(id);
   }
@@ -382,6 +389,7 @@ export class ConvidadosPage implements OnInit {
     const dados: ImportacoesDados = {
       listar: () => this.negocio.importacoes(this.eventoId()),
       enviar: (arquivo) => this.negocio.importar(this.eventoId(), arquivo),
+      baixar: () => this.negocio.planilha(this.eventoId()),
     };
     this.dialog.open(ImportacoesDialog, { ...DIALOG, data: dados }).afterClosed().subscribe((importou?: boolean) => {
       if (importou) this.carregar();

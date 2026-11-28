@@ -148,6 +148,26 @@ export interface EstatisticasEventos {
   };
 }
 
+export interface ResultadoImportacaoCronograma {
+  id: string | null;
+  itens: number;
+  erros: string[];
+}
+
+export interface ResultadoImportacaoRoteiro {
+  id: string | null;
+  momentos: number;
+  itens: number;
+  erros: string[];
+}
+
+export interface ResultadoImportacaoBriefing {
+  id: string | null;
+  secoes: number;
+  perguntas: number;
+  erros: string[];
+}
+
 export interface Briefing {
   id: string;
   nome: string;
@@ -183,6 +203,7 @@ export interface Cronograma {
   itens: {
     id: string;
     rotulo: string | null;
+    descricao: string | null;
     data: string | null;
     hora: string | null;
     responsavel: string | null;
@@ -208,6 +229,12 @@ export interface ServicoConta {
   id: string;
   nome: string;
   padrao: boolean;
+}
+
+export interface ResultadoImportacaoFornecedores {
+  criados: number;
+  servicosCriados: number;
+  erros: string[];
 }
 
 export interface FornecedorResumo {
@@ -290,6 +317,8 @@ export interface EventoResumo {
   tarefas: number;
   convidadosConfirmados: number;
   convidados: number;
+  /** Contrato do cliente gerado e ainda não assinado. */
+  contratoPendente?: boolean;
 }
 
 export interface Local {
@@ -654,6 +683,28 @@ export class NegocioClient {
     return this.http.get<Briefing[]>(`${this.base}/api/v1/modelos-briefing`, { params });
   }
 
+  planilhaBriefing() {
+    return this.http.get(`${this.base}/api/v1/modelos-briefing/planilha`, { responseType: 'blob' });
+  }
+
+  importarBriefing(nome: string, arquivo: File) {
+    const dados = new FormData();
+    dados.append('nome', nome);
+    dados.append('arquivo', arquivo);
+    return this.http.post<ResultadoImportacaoBriefing>(`${this.base}/api/v1/modelos-briefing/importar`, dados);
+  }
+
+  planilhaRoteiro() {
+    return this.http.get(`${this.base}/api/v1/modelos-roteiro/planilha`, { responseType: 'blob' });
+  }
+
+  importarRoteiro(nome: string, arquivo: File) {
+    const dados = new FormData();
+    dados.append('nome', nome);
+    dados.append('arquivo', arquivo);
+    return this.http.post<ResultadoImportacaoRoteiro>(`${this.base}/api/v1/modelos-roteiro/importar`, dados);
+  }
+
   briefing(id: string) {
     return this.http.get<Briefing>(`${this.base}/api/v1/modelos-briefing/${id}`);
   }
@@ -668,6 +719,12 @@ export class NegocioClient {
 
   excluirBriefing(id: string) {
     return this.http.delete(`${this.base}/api/v1/modelos-briefing/${id}`);
+  }
+
+  /** Modelo de mensagem com as tags trocadas pelos dados do lead e do orçamento. */
+  mensagemDoOrcamento(orcamentoId: string, modeloId: string, link: string) {
+    const params = new HttpParams().set('modeloId', modeloId).set('link', link);
+    return this.http.get<{ texto: string }>(`${this.base}/api/v1/orcamentos-funil/${orcamentoId}/mensagem`, { params });
   }
 
   textoDoModeloOrcamento(modeloId: string, oportunidadeId: string, valor: number | null) {
@@ -690,6 +747,38 @@ export class NegocioClient {
 
   removerBriefingDoLead(oportunidadeId: string) {
     return this.http.delete<void>(`${this.base}/api/v1/oportunidades/${oportunidadeId}/briefing`);
+  }
+
+  /** Libera o briefing para o cliente responder pelo link (SPEC-066). */
+  liberarBriefingDoLead(oportunidadeId: string) {
+    return this.http.post<{ briefing: BriefingDoLead | null }>(`${this.base}/api/v1/oportunidades/${oportunidadeId}/briefing/liberacao`, {});
+  }
+
+  encerrarBriefingDoLead(oportunidadeId: string) {
+    return this.http.delete<{ briefing: BriefingDoLead | null }>(`${this.base}/api/v1/oportunidades/${oportunidadeId}/briefing/liberacao`);
+  }
+
+  briefingPublico(token: string) {
+    return this.http.get<BriefingPublico>(`${this.base}/api/v1/publico/briefings/${encodeURIComponent(token)}`);
+  }
+
+  /** Salva as respostas; `concluir` fecha o link (SPEC-066). Pede sessão aberta pelo código. */
+  responderBriefingPublico(token: string, respostas: { id: string; resposta: string }[], concluir = false) {
+    return this.http.put<BriefingPublico>(`${this.base}/api/v1/publico/briefings/${encodeURIComponent(token)}`, { respostas, concluir });
+  }
+
+  // Código de acesso do briefing (SPEC-066, regras da SPEC-063): a sessão volta num cookie.
+
+  acessoBriefing(token: string) {
+    return this.http.get<AcessoBriefing>(`${this.base}/api/v1/publico/briefings/${encodeURIComponent(token)}/acesso`);
+  }
+
+  pedirCodigoBriefing(token: string, emailId: string) {
+    return this.http.post<AcessoBriefing>(`${this.base}/api/v1/publico/briefings/${encodeURIComponent(token)}/acesso/codigo`, { emailId });
+  }
+
+  confirmarCodigoBriefing(token: string, codigo: string) {
+    return this.http.post<{ ok: boolean }>(`${this.base}/api/v1/publico/briefings/${encodeURIComponent(token)}/acesso/confirmar`, { codigo });
   }
 
   clonarBriefing(id: string) {
@@ -730,6 +819,17 @@ export class NegocioClient {
     return this.http.get<Cronograma>(`${this.base}/api/v1/modelos-cronograma/${id}`);
   }
 
+  planilhaCronograma() {
+    return this.http.get(`${this.base}/api/v1/modelos-cronograma/planilha`, { responseType: 'blob' });
+  }
+
+  importarCronograma(titulo: string, arquivo: File) {
+    const dados = new FormData();
+    dados.append('nome', titulo);
+    dados.append('arquivo', arquivo);
+    return this.http.post<ResultadoImportacaoCronograma>(`${this.base}/api/v1/modelos-cronograma/importar`, dados);
+  }
+
   criarCronograma(pedido: unknown) {
     return this.http.post<Cronograma>(`${this.base}/api/v1/modelos-cronograma`, pedido);
   }
@@ -753,6 +853,12 @@ export class NegocioClient {
 
   inspiracao(id: string) {
     return this.http.get<Inspiracao>(`${this.base}/api/v1/modelos-inspiracoes/${id}`);
+  }
+
+  enviarArquivoInspiracao(arquivo: File) {
+    const dados = new FormData();
+    dados.append('arquivo', arquivo);
+    return this.http.post<{ arquivoId: string; nome: string; tipoConteudo: string }>(`${this.base}/api/v1/modelos-inspiracoes/arquivos`, dados);
   }
 
   criarInspiracao(pedido: unknown) {
@@ -821,6 +927,16 @@ export class NegocioClient {
 
   fornecedor(id: string) {
     return this.http.get<Fornecedor>(`${this.base}/api/v1/fornecedores/${id}`);
+  }
+
+  planilhaFornecedores() {
+    return this.http.get(`${this.base}/api/v1/fornecedores/planilha`, { responseType: 'blob' });
+  }
+
+  importarFornecedores(arquivo: File) {
+    const dados = new FormData();
+    dados.append('arquivo', arquivo);
+    return this.http.post<ResultadoImportacaoFornecedores>(`${this.base}/api/v1/fornecedores/importar`, dados);
   }
 
   criarFornecedor(pedido: unknown) {
@@ -1013,6 +1129,13 @@ export class NegocioClient {
     );
   }
 
+  /** CEP na página de aceite, liberado pelo token da proposta (sem login). */
+  cepPublico(token: string, cep: string) {
+    return this.http.get<{ endereco: string; estado: string; cidade: string; bairro: string; pais: string }>(
+      `${this.base}/api/v1/publico/propostas/${encodeURIComponent(token)}/cep/${cep}`,
+    );
+  }
+
   convites(eventoId: string, filtro: Record<string, string>) {
     let params = new HttpParams();
     for (const [chave, valor] of Object.entries(filtro)) {
@@ -1126,6 +1249,8 @@ export class NegocioClient {
       quantidadeConvidados?: number | null;
       cidade?: string | null;
       uf?: string | null;
+      site?: string | null;
+      iniciadoEm?: number | null;
     },
   ) {
     return this.http.post(`${this.base}/api/v1/public/leads/${contaId}`, pedido);
@@ -1304,8 +1429,17 @@ export class NegocioClient {
   }
 
   /** Gera (ou mantém) o link da proposta e leva o lead para "Orçamento enviado" (SPEC-031 §6.6). */
-  enviarOrcamentoFunil(id: string) {
-    return this.http.post<OrcamentoFunil>(`${this.base}/api/v1/orcamentos-funil/${id}/enviar`, {});
+  enviarOrcamentoFunil(id: string, dias?: number) {
+    return this.http.post<OrcamentoFunil>(`${this.base}/api/v1/orcamentos-funil/${id}/enviar`, dias ? { dias } : {});
+  }
+
+  /** Validade padrão das propostas da conta, em dias (SPEC-064). */
+  configuracaoPropostas() {
+    return this.http.get<{ validadeDias: number }>(`${this.base}/api/v1/configuracoes/propostas`);
+  }
+
+  salvarConfiguracaoPropostas(validadeDias: number) {
+    return this.http.put<{ validadeDias: number }>(`${this.base}/api/v1/configuracoes/propostas`, { validadeDias });
   }
 
   /** Página pública da proposta, sem login. */
@@ -1407,6 +1541,23 @@ export class NegocioClient {
     return this.http.put<ModeloOrcamentoFunil>(`${this.base}/api/v1/modelos-orcamento-funil/${id}`, pedido);
   }
 
+  /** Foto da página de aceite (SPEC-061): JPG ou PNG até 5 MB. */
+  enviarMidiaAceite(arquivo: File) {
+    const dados = new FormData();
+    dados.append('arquivo', arquivo);
+    return this.http.post<{ arquivoId: string; nome: string; tipoConteudo: string }>(`${this.base}/api/v1/modelos-orcamento-funil/midias`, dados);
+  }
+
+  /** Live Preview da página de aceite: documento com exemplos; fotos como aralu-midia:{id} (SPEC-061). */
+  previaPaginaAceite(pedido: PreviaPaginaAceite) {
+    return this.http.post<{ html: string }>(`${this.base}/api/v1/modelos-orcamento-funil/pagina-aceite/previa`, pedido);
+  }
+
+  /** Endereço público de uma foto da página de aceite, pelo token da proposta. */
+  midiaPropostaPublica(token: string, arquivoId: string) {
+    return `${this.base}/api/v1/publico/propostas/${encodeURIComponent(token)}/midias/${arquivoId}`;
+  }
+
   excluirModeloOrcamentoFunil(id: string) {
     return this.http.delete(`${this.base}/api/v1/modelos-orcamento-funil/${id}`);
   }
@@ -1441,6 +1592,34 @@ export interface BriefingDoLead {
   modeloNome: string;
   aplicadoEm: string;
   itens: { id: string; secao: string | null; pergunta: string; resposta: string | null }[];
+  /** Link público (SPEC-066): token nasce na primeira liberação. */
+  token: string | null;
+  liberadoEm: string | null;
+  respondidoEm: string | null;
+  /** Fim da liberação: o link fecha sozinho. */
+  validoAte: string | null;
+  /** O cliente clicou em "Concluir". */
+  concluidoEm: string | null;
+}
+
+/** Briefing que o cliente abre pelo link, depois do código (SPEC-066). */
+export interface BriefingPublico {
+  empresa: string | null;
+  nome: string;
+  itens: { id: string; secao: string | null; pergunta: string; resposta: string | null }[];
+  respondidoEm: string | null;
+  validoAte: string | null;
+}
+
+/** O que a página do briefing recebe antes do código: e-mails só mascarados. */
+export interface AcessoBriefing {
+  empresa: string | null;
+  nome: string;
+  emails: { id: string; email: string }[];
+  sessaoValida: boolean;
+  aguardarSegundos: number;
+  codigoEnviado: boolean;
+  enviadoPara: string | null;
 }
 
 export interface ContatoOportunidade {
@@ -1541,8 +1720,11 @@ export interface PropostaPublica {
   contato: string | null;
   titulo: string | null;
   conteudo: string | null;
-  /** HTML sanitizado no servidor (SPEC-057); o Angular filtra de novo ao exibir. */
-  htmlAceite?: string | null;
+  /**
+   * Documento completo da página de aceite (SPEC-061), montado e sanitizado no servidor. Vai para um iframe isolado
+   * (sem scripts); fotos vêm como aralu-midia:{id} e os botões como aralu-resposta:{tipo}.
+   */
+  paginaAceite?: string | null;
   valor: number | null;
   validoAte: string | null;
   resposta: RespostaProposta | null;
@@ -1562,8 +1744,9 @@ export interface LeadRsvp {
   evento: string;
   criadoEm: string;
   telefone: string | null;
-  conviteId: string;
-  eventoId: string;
+  /** Nulo se o convite foi apagado depois (SPEC-062: o lead fica como histórico). */
+  conviteId: string | null;
+  eventoId: string | null;
 }
 
 export interface ContratoFunil {
@@ -1611,6 +1794,8 @@ export interface OrcamentoFunil {
   respostaEm: string | null;
   criadoPor?: string | null;
   parcelas: ParcelaOrcamento[];
+  /** Dias de validade do último envio (SPEC-064); nulo antes do primeiro envio. */
+  diasValidade?: number | null;
 }
 
 export interface PedidoParcelas {
@@ -1672,8 +1857,31 @@ export interface ModeloOrcamentoFunil {
   corPrimaria: string | null;
   corSecundaria: string | null;
   parametros: string[];
-  /** HTML já sanitizado pelo servidor, mostrado na tela de aceite (SPEC-057). */
+  /** HTML já sanitizado pelo servidor: a página de aceite inteira (SPEC-061). */
   htmlAceite?: string | null;
+  midias?: MidiaAceite[];
+  depoimentos?: DepoimentoAceite[];
+}
+
+/** Foto de um espaço da página de aceite: logo, imagem:capa, galeria:bastidores, carrossel:dia_do_evento. */
+export interface MidiaAceite {
+  espaco: string;
+  arquivoId: string;
+  ordem: number;
+}
+
+export interface DepoimentoAceite {
+  texto: string;
+  autor: string | null;
+}
+
+export interface PreviaPaginaAceite {
+  texto: string | null;
+  htmlAceite: string | null;
+  corPrimaria: string | null;
+  corSecundaria: string | null;
+  midias: MidiaAceite[];
+  depoimentos: DepoimentoAceite[];
 }
 
 export interface ModeloParaContratoFunil {
@@ -1763,13 +1971,15 @@ export const TIPOS_TAREFA_FUNIL = [
 ];
 
 /** Para onde o alerta do resumo leva (SPEC-008 v2, 8.3). */
-export type DestinoAlerta = 'TarefasAtrasadas' | 'Fornecedores' | 'ConvidadosPendentes' | 'Editar';
+export type DestinoAlerta = 'TarefasAtrasadas' | 'Fornecedores' | 'ConvidadosPendentes' | 'Editar' | 'Contratos';
 
 export interface AlertaEvento {
   codigo: string;
   quantidade: number;
   texto: string;
   destino: DestinoAlerta;
+  /** Texto para filtrar a tela de destino (ex.: nome da oportunidade do contrato). */
+  busca?: string | null;
 }
 
 export interface ResumoEvento {

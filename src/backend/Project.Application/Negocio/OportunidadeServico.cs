@@ -129,14 +129,22 @@ public sealed record LeadPublicoPedido(
     DateOnly? DataPrevista = null,
     int? QuantidadeConvidados = null,
     string? Cidade = null,
-    string? Uf = null);
+    string? Uf = null,
+    string? Site = null,
+    long? IniciadoEm = null)
+{
+    /// <summary>Envio antes disso (desde que o formulário abriu) é tratado como robô.</summary>
+    public const long TempoMinimoMs = 3_000;
+    public const int MaxNome = 120;
+    public const int MaxContato = 200;
+}
 
 public sealed record ChecagemDataLeitura(bool TemCompromisso);
 
 public sealed class OportunidadeServico(IDados dados)
 {
     public async Task<IReadOnlyList<OportunidadeLeitura>> ListarAsync(
-        string contaId,
+        Guid contaId,
         FiltroOportunidades filtro,
         CancellationToken ct)
     {
@@ -145,7 +153,7 @@ public sealed class OportunidadeServico(IDados dados)
         return itens.Select(item => Ler(item, OrcamentoFunilServico.Resumo(propostas.GetValueOrDefault(item.Id)))).ToArray();
     }
 
-    public async Task<Resultado<OportunidadeLeitura>> ObterAsync(string contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<OportunidadeLeitura>> ObterAsync(Guid contaId, Guid id, CancellationToken ct)
     {
         var item = await dados.ObterOportunidadeAsync(contaId, id, ct);
         if (item is null)
@@ -157,7 +165,7 @@ public sealed class OportunidadeServico(IDados dados)
         return Resultado<OportunidadeLeitura>.Sucesso(Ler(item, OrcamentoFunilServico.Resumo(propostas.GetValueOrDefault(item.Id))));
     }
 
-    public async Task<Resultado<OportunidadeLeitura>> CriarAsync(string contaId, SalvarOportunidade pedido, CancellationToken ct, string? criadoPor = null)
+    public async Task<Resultado<OportunidadeLeitura>> CriarAsync(Guid contaId, SalvarOportunidade pedido, CancellationToken ct, string? criadoPor = null)
     {
         var montado = await MontarAsync(contaId, Guid.NewGuid(), pedido, null, ct);
         if (!montado.Ok)
@@ -165,7 +173,7 @@ public sealed class OportunidadeServico(IDados dados)
             return Resultado<OportunidadeLeitura>.Erro(montado.Falha!.Codigo, montado.Falha.Mensagem);
         }
 
-        var agora = DateTimeOffset.UtcNow;
+        var agora = Relogio.Agora;
         montado.Valor!.CriadoEm = agora;
         montado.Valor.EntradaNoEstagioEm = agora;
         montado.Valor.CriadoPor = criadoPor;
@@ -174,7 +182,7 @@ public sealed class OportunidadeServico(IDados dados)
     }
 
     public async Task<Resultado<OportunidadeLeitura>> AtualizarAsync(
-        string contaId,
+        Guid contaId,
         Guid id,
         SalvarOportunidade pedido,
         CancellationToken ct)
@@ -194,7 +202,7 @@ public sealed class OportunidadeServico(IDados dados)
         var novo = montado.Valor!;
         if (novo.EstagioFunilId != item.EstagioFunilId)
         {
-            item.EntradaNoEstagioEm = DateTimeOffset.UtcNow;
+            item.EntradaNoEstagioEm = Relogio.Agora;
         }
 
         item.Nome = novo.Nome;
@@ -258,7 +266,7 @@ public sealed class OportunidadeServico(IDados dados)
     }
 
     public async Task<Resultado<OportunidadeLeitura>> MoverAsync(
-        string contaId,
+        Guid contaId,
         Guid id,
         MoverOportunidade pedido,
         CancellationToken ct)
@@ -305,7 +313,7 @@ public sealed class OportunidadeServico(IDados dados)
     /// Fecha o negócio: liga o lead a um cliente da conta e o coloca em Contratado.
     /// </summary>
     public async Task<Resultado<OportunidadeLeitura>> VincularClienteAsync(
-        string contaId,
+        Guid contaId,
         Guid id,
         VincularClienteOportunidade pedido,
         CancellationToken ct)
@@ -337,7 +345,7 @@ public sealed class OportunidadeServico(IDados dados)
 
     /// <summary>Marca ou limpa a data de retorno do lead (SPEC-031 §6.3).</summary>
     public async Task<Resultado<OportunidadeLeitura>> MarcarRetornoAsync(
-        string contaId,
+        Guid contaId,
         Guid id,
         RetornoOportunidade pedido,
         CancellationToken ct)
@@ -364,7 +372,7 @@ public sealed class OportunidadeServico(IDados dados)
     /// Só avisa: quem decide gravar é a dona.
     /// </summary>
     public async Task<IReadOnlyList<ContatoRepetidoLeitura>> ContatoRepetidoAsync(
-        string contaId,
+        Guid contaId,
         IEnumerable<string?> telefones,
         IEnumerable<string?> emails,
         Guid? ignorar,
@@ -391,7 +399,7 @@ public sealed class OportunidadeServico(IDados dados)
     }
 
     /// <param name="soCriadoPor">Quando informado (assistente), só exclui o que ele mesmo criou (SPEC-032 §18, passo 1).</param>
-    public async Task<Resultado<bool>> ExcluirAsync(string contaId, Guid id, CancellationToken ct, string? soCriadoPor = null)
+    public async Task<Resultado<bool>> ExcluirAsync(Guid contaId, Guid id, CancellationToken ct, string? soCriadoPor = null)
     {
         var item = await dados.ObterOportunidadeAsync(contaId, id, ct);
         if (item is null)
@@ -409,7 +417,7 @@ public sealed class OportunidadeServico(IDados dados)
     }
 
     public async Task<Resultado<OportunidadeLeitura>> CriarLeadPublicoAsync(
-        string contaId,
+        Guid contaId,
         LeadPublicoPedido pedido,
         CancellationToken ct)
     {
@@ -417,6 +425,15 @@ public sealed class OportunidadeServico(IDados dados)
         if (contatoNome is null)
         {
             return Resultado<OportunidadeLeitura>.Erro(Codigos.Validacao, "Informe o nome e o contato.");
+        }
+
+        if (Longo(pedido.Nome, LeadPublicoPedido.MaxNome) || Longo(pedido.ContatoNome, LeadPublicoPedido.MaxNome)
+            || Longo(pedido.Cidade, LeadPublicoPedido.MaxNome)
+            || Longo(pedido.Telefone, LeadPublicoPedido.MaxContato) || Longo(pedido.Email, LeadPublicoPedido.MaxContato)
+            || Longo(pedido.Fonte, LeadPublicoPedido.MaxContato) || Longo(pedido.TipoEvento, LeadPublicoPedido.MaxContato)
+            || Longo(pedido.Uf, 2))
+        {
+            return Resultado<OportunidadeLeitura>.Erro(Codigos.Validacao, "Algum campo passou do tamanho permitido.");
         }
 
         TipoEvento? tipo = null;
@@ -439,8 +456,15 @@ public sealed class OportunidadeServico(IDados dados)
         var nome = Domain.Comum.Texto.Limpo(pedido.Nome)
             ?? (tipo is null ? contatoNome : $"{RotuloTipoLead(tipo.Value)} {contatoNome}");
 
-        var agora = DateTimeOffset.UtcNow;
-        var primeiro = PrimeiroAberto(await dados.ListarEstagiosFunilAsync(contaId, ct));
+        var agora = Relogio.Agora;
+        var estagios = await dados.ListarEstagiosFunilAsync(contaId, ct);
+        if (!estagios.Any(e => e.Tipo == TipoEstagioFunil.Aberto))
+        {
+            // Conta inexistente (ou sem funil): 404, não 500.
+            return Resultado<OportunidadeLeitura>.Erro(Codigos.Indisponivel, "Indisponível.");
+        }
+
+        var primeiro = PrimeiroAberto(estagios);
         var item = new Oportunidade
         {
             Id = Guid.NewGuid(),
@@ -454,7 +478,7 @@ public sealed class OportunidadeServico(IDados dados)
             QuantidadeConvidados = pedido.QuantidadeConvidados,
             Cidade = Domain.Comum.Texto.Limpo(pedido.Cidade),
             Uf = Domain.Comum.Texto.Limpo(pedido.Uf)?.ToUpperInvariant(),
-            Responsavel = contaId,
+            Responsavel = contaId.ToString(),
             CriadoEm = agora,
             EntradaNoEstagioEm = agora,
             Contatos =
@@ -474,17 +498,17 @@ public sealed class OportunidadeServico(IDados dados)
         return Resultado<OportunidadeLeitura>.Sucesso(Ler(item));
     }
 
-    public Task<IReadOnlyDictionary<string, string>> NomesResponsaveisAsync(string contaId, CancellationToken ct) =>
+    public Task<IReadOnlyDictionary<string, string>> NomesResponsaveisAsync(Guid contaId, CancellationToken ct) =>
         dados.NomesResponsaveisAsync(contaId, ct);
 
     /// <summary>Nome do responsável; valores que não são id (texto digitado antes) saem como estão.</summary>
     public static string NomeResponsavel(IReadOnlyDictionary<string, string> nomes, string? valor) =>
         valor is not null && nomes.TryGetValue(valor, out var nome) ? nome : valor ?? "";
 
-    public async Task<ChecagemDataLeitura> ChecarDataAsync(string contaId, DateOnly data, CancellationToken ct) =>
+    public async Task<ChecagemDataLeitura> ChecarDataAsync(Guid contaId, DateOnly data, CancellationToken ct) =>
         new(await dados.TemCompromissoNaDataAsync(contaId, data, ct));
 
-    public async Task<IReadOnlyList<FunilEstagio>> ContarPorEstagioAsync(string contaId, CancellationToken ct)
+    public async Task<IReadOnlyList<FunilEstagio>> ContarPorEstagioAsync(Guid contaId, CancellationToken ct)
     {
         var estagios = EstagiosFunil.Ordenar(await dados.ListarEstagiosFunilAsync(contaId, ct));
         var contagens = await dados.ContarOportunidadesPorEstagioAsync(contaId, ct);
@@ -509,6 +533,8 @@ public sealed class OportunidadeServico(IDados dados)
     };
 
     /// <summary>Primeiro estágio aberto: onde nasce o lead público e o do RSVP.</summary>
+    private static bool Longo(string? valor, int maximo) => valor is not null && valor.Trim().Length > maximo;
+
     internal static EstagioFunil PrimeiroAberto(IEnumerable<EstagioFunil> estagios) =>
         EstagiosFunil.Ordenar(estagios).First(e => e.Tipo == TipoEstagioFunil.Aberto);
 
@@ -516,7 +542,7 @@ public sealed class OportunidadeServico(IDados dados)
     {
         if (item.EstagioFunilId != estagio.Id)
         {
-            item.EntradaNoEstagioEm = DateTimeOffset.UtcNow;
+            item.EntradaNoEstagioEm = Relogio.Agora;
         }
 
         item.EstagioFunilId = estagio.Id;
@@ -554,7 +580,7 @@ public sealed class OportunidadeServico(IDados dados)
     }
 
     private async Task<Resultado<Oportunidade>> MontarAsync(
-        string contaId,
+        Guid contaId,
         Guid id,
         SalvarOportunidade pedido,
         Oportunidade? existente,
@@ -597,7 +623,7 @@ public sealed class OportunidadeServico(IDados dados)
         ContratanteDados? contratante = null;
         if (pedido.Contratante is not null)
         {
-            var normalizado = ContratanteRegras.Normalizar(pedido.Contratante, DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1));
+            var normalizado = ContratanteRegras.Normalizar(pedido.Contratante, Relogio.Hoje.AddDays(1));
             if (!normalizado.Ok)
             {
                 return Resultado<Oportunidade>.Erro(normalizado.Falha!.Codigo, normalizado.Falha.Mensagem);
@@ -681,7 +707,7 @@ public sealed class OportunidadeServico(IDados dados)
             RetornarEm = pedido.RetornarEm,
             RetornarHora = pedido.RetornarEm is null ? null : pedido.RetornarHora,
             ValorProposta = pedido.ValorProposta,
-            Responsavel = Domain.Comum.Texto.Limpo(pedido.Responsavel) ?? contaId,
+            Responsavel = Domain.Comum.Texto.Limpo(pedido.Responsavel) ?? contaId.ToString(),
             ServicoProduto = servicoProduto,
             ModeloServicoFunilId = modeloServicoId,
             TipoEvento = tipo,
@@ -713,8 +739,8 @@ public sealed class OportunidadeServico(IDados dados)
             MotivoDescarte = estagio.Tipo == TipoEstagioFunil.Descartado
                 ? Domain.Comum.Texto.Limpo(pedido.MotivoDescarte)
                 : null,
-            CriadoEm = existente?.CriadoEm ?? DateTimeOffset.UtcNow,
-            EntradaNoEstagioEm = existente?.EntradaNoEstagioEm ?? DateTimeOffset.UtcNow,
+            CriadoEm = existente?.CriadoEm ?? Relogio.Agora,
+            EntradaNoEstagioEm = existente?.EntradaNoEstagioEm ?? Relogio.Agora,
             Contatos = contatos,
         };
         if (contratante is not null)

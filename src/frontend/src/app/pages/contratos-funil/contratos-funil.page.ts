@@ -8,25 +8,31 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatTableModule } from '@angular/material/table';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { ContratoFunil, ModeloParaContratoFunil, NegocioClient, Oportunidade } from '../../core/negocio.client';
 import { AuthService } from '../../core/auth.service';
 import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
-import { DIALOG, DIALOG_LARGO, DIALOG_PEQUENO } from '../../shared/dialog';
+import { DIALOG, DIALOG_LARGO, DIALOG_PEQUENO, DIALOG_PREVIA } from '../../shared/dialog';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { FolhaContrato, imprimirContrato } from '../contratos/folha-contrato';
 import { textoEmHtml } from '../contratos/mesclagem';
 import { PreviaWordComponent } from '../contratos/previa-word';
 import { EditorRico } from '../../shared/editor-rico';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatMenuModule } from '@angular/material/menu';
+import { ActivatedRoute } from '@angular/router';
+import { FecharModal } from '../../shared/fechar-modal';
+import { Estado } from '../../shared/estado';
+import { Paginacao } from '../../shared/paginacao';
 
 @Component({
   selector: 'app-contrato-funil-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, EditorRico],
+  imports: [FecharModal, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, EditorRico],
   template: `
-    <h2 mat-dialog-title>{{ dados ? 'Editar contrato' : 'Novo contrato' }}</h2>
+    <h2 mat-dialog-title>{{ dados ? 'Editar contrato' : 'Novo contrato' }} <app-fechar-modal /></h2>
     <mat-dialog-content>
       <form class="grid grid-cols-1 gap-4" [formGroup]="form">
         @if (!dados) {
@@ -115,9 +121,9 @@ export class ContratoFunilDialog implements OnInit {
 /** Contrato gerado como chega ao cliente: logo, texto e fundo do modelo, com botão de imprimir (SPEC-056). */
 @Component({
   selector: 'app-contrato-funil-ver-dialog',
-  imports: [MatDialogModule, MatButtonModule, MatIconModule, FolhaContrato, PreviaWordComponent],
+  imports: [FecharModal, MatDialogModule, MatButtonModule, MatIconModule, FolhaContrato, PreviaWordComponent],
   template: `
-    <h2 mat-dialog-title>Contrato de {{ dados.oportunidadeNome }}</h2>
+    <h2 mat-dialog-title>Contrato de {{ dados.oportunidadeNome }} <app-fechar-modal /></h2>
     <mat-dialog-content>
       @if (dados.documentoArquivoId) {
         <app-previa-word [documento]="word()" />
@@ -128,7 +134,7 @@ export class ContratoFunilDialog implements OnInit {
     <mat-dialog-actions align="end">
       <button mat-stroked-button type="button" mat-dialog-close>Fechar</button>
       @if (dados.documentoArquivoId) {
-        <button mat-flat-button type="button" [disabled]="!wordBlob()" (click)="baixarWord()"><mat-icon>download</mat-icon> Baixar Word</button>
+        <button mat-stroked-button type="button" [disabled]="!wordBlob()" (click)="baixarWord()"><mat-icon>download</mat-icon> Baixar Word</button>
       } @else {
         <button mat-flat-button type="button" (click)="imprimir()"><mat-icon>print</mat-icon> Imprimir</button>
       }
@@ -183,7 +189,7 @@ export class ContratoFunilVerDialog {
 
 @Component({
   selector: 'app-contratos-funil',
-  imports: [MatButtonToggleModule, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, GdDataPipe, MatTooltipModule],
+  imports: [MatButtonToggleModule, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatPaginatorModule, GdDataPipe, MatTooltipModule, MatMenuModule, Estado],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6">
@@ -192,7 +198,7 @@ export class ContratoFunilVerDialog {
       <mat-card-content class="border-t border-border">
       <div class="barra-lista">
         <div class="barra-lista-filtros">
-          <mat-button-toggle-group [value]="situacao()" (change)="situacao.set($event.value); carregar()" aria-label="Situação">
+          <mat-button-toggle-group [value]="situacao()" (change)="situacao.set($event.value); pagina.inicio(); carregar()" aria-label="Situação">
             @for (aba of abas; track aba.valor) {
               <mat-button-toggle [value]="aba.valor">{{ aba.rotulo }}</mat-button-toggle>
             }
@@ -209,13 +215,15 @@ export class ContratoFunilVerDialog {
           <button mat-flat-button type="button" (click)="abrir()"><mat-icon>add</mat-icon> Novo contrato</button>
         </div>
       </div>
-      @if (lista().length === 0) {
-        <p class="text-center text-muted py-10">Não há contrato nesta aba.</p>
+      @if (!carregado()) {
+        <app-estado titulo="Carregando…" />
+      } @else if (lista().length === 0) {
+        <app-estado [titulo]="busca() ? 'Nada encontrado' : 'Nenhum contrato ainda'" [texto]="busca() ? 'Mude a busca ou os filtros.' : undefined" />
       } @else {
-        <table mat-table class="min-w-full" [dataSource]="lista()">
+        <table mat-table class="min-w-full" [dataSource]="pagina.itens()">
           <ng-container matColumnDef="oportunidade">
             <th mat-header-cell *matHeaderCellDef>Oportunidade</th>
-            <td mat-cell *matCellDef="let item">{{ item.oportunidadeNome }}</td>
+            <td mat-cell *matCellDef="let item"><button type="button" class="link-nome" (click)="ver(item)">{{ item.oportunidadeNome }}</button></td>
           </ng-container>
           <ng-container matColumnDef="criadoEm">
             <th mat-header-cell *matHeaderCellDef>Criado em</th>
@@ -237,24 +245,30 @@ export class ContratoFunilVerDialog {
             <th mat-header-cell *matHeaderCellDef class="text-end! whitespace-nowrap">Ações</th>
             <td mat-cell *matCellDef="let item" class="text-end! whitespace-nowrap">
               <button mat-icon-button type="button" aria-label="Ver contrato" matTooltip="Ver contrato" (click)="ver(item)"><mat-icon>visibility</mat-icon></button>
-              @if (item.situacao === 'EmAndamento') {
-                @if (!item.documentoArquivoId) {
-                  <button mat-icon-button aria-label="Editar contrato" matTooltip="Editar contrato" type="button" (click)="abrir(item)"><mat-icon>edit</mat-icon></button>
-                }
-                <button mat-icon-button aria-label="Enviar contrato" matTooltip="Enviar contrato" type="button" (click)="enviar(item)"><mat-icon>send</mat-icon></button>
-                <button mat-icon-button aria-label="Marcar como assinado" matTooltip="Marcar como assinado" type="button" (click)="assinar(item)"><mat-icon>draw</mat-icon></button>
-                <button mat-icon-button aria-label="Cancelar contrato" matTooltip="Cancelar contrato" type="button" (click)="cancelar(item)"><mat-icon>cancel</mat-icon></button>
-                @if (auth.podeExcluirDoFunil(item.criadoPor)) {
-                  <button mat-icon-button aria-label="Excluir contrato" matTooltip="Excluir contrato" type="button" (click)="excluir(item)"><mat-icon>delete</mat-icon></button>
-                }
-              } @else if (item.situacao === 'Assinado') {
-                <button mat-icon-button aria-label="Cancelar contrato" matTooltip="Cancelar contrato" type="button" (click)="cancelar(item)"><mat-icon>cancel</mat-icon></button>
+              @if (item.situacao === 'EmAndamento' && !item.documentoArquivoId) {
+                <button mat-icon-button aria-label="Editar contrato" matTooltip="Editar contrato" type="button" (click)="abrir(item)"><mat-icon>edit</mat-icon></button>
+              }
+              @if (item.situacao === 'EmAndamento' || item.situacao === 'Assinado') {
+                <button mat-icon-button type="button" aria-label="Mais ações" matTooltip="Mais ações" [matMenuTriggerFor]="mais"><mat-icon>more_vert</mat-icon></button>
+                <mat-menu #mais="matMenu" class="cardWithShadow">
+                  @if (item.situacao === 'EmAndamento') {
+                    <button mat-menu-item type="button" (click)="enviar(item)"><mat-icon>send</mat-icon> Enviar contrato</button>
+                    <button mat-menu-item type="button" (click)="assinar(item)"><mat-icon>draw</mat-icon> Marcar como assinado</button>
+                  }
+                  <button mat-menu-item type="button" (click)="cancelar(item)"><mat-icon>cancel</mat-icon> Cancelar contrato</button>
+                  @if (item.situacao === 'EmAndamento' && auth.podeExcluirDoFunil(item.criadoPor)) {
+                    <button mat-menu-item type="button" class="text-error" (click)="excluir(item)"><mat-icon>delete</mat-icon> Excluir contrato</button>
+                  }
+                </mat-menu>
               }
             </td>
           </ng-container>
           <tr mat-header-row *matHeaderRowDef="colunas"></tr>
           <tr mat-row *matRowDef="let row; columns: colunas"></tr>
         </table>
+        <mat-paginator showFirstLastButtons aria-label="Páginas de contratos"
+          [length]="pagina.total()" [pageIndex]="pagina.indice()" [pageSize]="pagina.tamanho()"
+          [pageSizeOptions]="pagina.tamanhos" (page)="pagina.mudar($event)" />
       }
     </mat-card-content>
     </mat-card>
@@ -271,16 +285,22 @@ export class ContratosFunilPage implements OnInit {
     { valor: 'Cancelado', rotulo: 'Cancelados' },
   ];
   protected readonly situacao = signal('EmAndamento');
+  protected readonly carregado = signal(false);
   protected readonly busca = signal('');
   protected readonly lista = signal<ContratoFunil[]>([]);
+  protected readonly pagina = new Paginacao(this.lista);
   protected readonly colunas = ['oportunidade', 'criadoEm', 'envio', 'acoes'];
 
+  private readonly rota = inject(ActivatedRoute);
+
   ngOnInit(): void {
+    this.busca.set(this.rota.snapshot.queryParamMap.get('busca') ?? '');
     this.carregar();
   }
 
   protected buscar(evento: Event): void {
     this.busca.set((evento.target as HTMLInputElement).value);
+    this.pagina.inicio();
     this.carregar();
   }
 
@@ -289,7 +309,7 @@ export class ContratosFunilPage implements OnInit {
   }
 
   protected ver(item: ContratoFunil): void {
-    this.dialog.open(ContratoFunilVerDialog, { ...DIALOG_LARGO, width: 'min(1100px, calc(100vw - 32px))', data: item });
+    this.dialog.open(ContratoFunilVerDialog, { ...DIALOG_PREVIA, data: item });
   }
 
   protected enviar(item: ContratoFunil): void {
@@ -316,7 +336,7 @@ export class ContratosFunilPage implements OnInit {
   protected excluir(item: ContratoFunil): void {
     this.dialog.open(ConfirmaDialog, {
       ...DIALOG_PEQUENO,
-      data: { titulo: 'Excluir contrato', texto: 'Confirma a exclusão?', confirmar: 'Excluir' },
+      data: { titulo: 'Excluir contrato', texto: 'Confirma a exclusão?', confirmar: 'Excluir', destrutivo: true },
     }).afterClosed().subscribe((ok) => {
       if (!ok) return;
       this.negocio.excluirContratoFunil(item.id).subscribe({
@@ -328,8 +348,8 @@ export class ContratosFunilPage implements OnInit {
 
   protected carregar(): void {
     this.negocio.contratosFunil({ situacao: this.situacao(), busca: this.busca() || undefined }).subscribe({
-      next: (lista) => this.lista.set(lista),
-      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+      next: (lista) => { this.lista.set(lista); this.carregado.set(true); },
+      error: (erro: unknown) => { this.carregado.set(true); this.toast.erro(mensagemDeErro(erro)); },
     });
   }
 }

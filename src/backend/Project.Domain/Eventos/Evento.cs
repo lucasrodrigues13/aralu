@@ -1,12 +1,13 @@
+using Project.Domain.Comum;
 using Project.Domain.Fornecedores;
 
 namespace Project.Domain.Eventos;
 
-public sealed class Evento
+public sealed class Evento : ITemConta
 {
     public Guid Id { get; set; }
 
-    public string ContaId { get; set; } = "";
+    public Guid ContaId { get; set; }
 
     /// <summary>Dia de referência de "Para conferir" (SPEC-003 §6.2). Nulo em eventos anteriores a este campo.</summary>
     public DateTimeOffset? CriadoEm { get; set; }
@@ -63,6 +64,11 @@ public sealed class Evento
 
     public List<ServicoEvento> Servicos { get; set; } = [];
 
+    /// <summary>Roteiro da biblioteca que a equipe do evento vê (SPEC-067). Vira nulo se o modelo for excluído.</summary>
+    public Guid? RoteiroId { get; set; }
+
+    /// <summary>Cronograma da biblioteca que a equipe do evento vê (SPEC-067). Vira nulo se o modelo for excluído.</summary>
+    public Guid? CronogramaId { get; set; }
 }
 
 public sealed class LocalEvento
@@ -84,28 +90,28 @@ public sealed class LocalEvento
     public string? Bairro { get; set; }
 }
 
-public sealed class TagConta
+public sealed class TagConta : ITemConta
 {
     public Guid Id { get; set; }
 
-    public string ContaId { get; set; } = "";
+    public Guid ContaId { get; set; }
 
     public string Nome { get; set; } = "";
 
     public List<Evento> Eventos { get; set; } = [];
 }
 
-public sealed class ServicoEvento
+public sealed class ServicoEvento : ITemConta
 {
     public Guid Id { get; set; }
+
+    public Guid ContaId { get; set; }
 
     public Guid EventoId { get; set; }
 
     public string Nome { get; set; } = "";
 
     public Guid? ServicoContaId { get; set; }
-
-    public string? FornecedorContaId { get; set; }
 
     public bool Contratado { get; set; }
 
@@ -133,9 +139,11 @@ public sealed class ServicoEvento
     public List<FornecedorNoServico> Fornecedores { get; set; } = [];
 }
 
-public sealed class SubitemServico
+public sealed class SubitemServico : ITemConta
 {
     public Guid Id { get; set; }
+
+    public Guid ContaId { get; set; }
 
     public Guid ServicoId { get; set; }
 
@@ -146,9 +154,11 @@ public sealed class SubitemServico
     public decimal ValorUnitario { get; set; }
 }
 
-public sealed class FornecedorNoServico
+public sealed class FornecedorNoServico : ITemConta
 {
     public Guid Id { get; set; }
+
+    public Guid ContaId { get; set; }
 
     public Guid ServicoId { get; set; }
 
@@ -161,11 +171,11 @@ public sealed class FornecedorNoServico
     public string? Observacoes { get; set; }
 }
 
-public sealed class CompromissoAgenda
+public sealed class CompromissoAgenda : ITemConta
 {
     public Guid Id { get; set; }
 
-    public string ContaId { get; set; } = "";
+    public Guid ContaId { get; set; }
 
     public Guid? EventoId { get; set; }
 

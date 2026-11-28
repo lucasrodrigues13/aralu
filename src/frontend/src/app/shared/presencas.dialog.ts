@@ -3,19 +3,20 @@ import { Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { PresencaEvento } from '../core/negocio.client';
+import { FecharModal } from './fechar-modal';
 
 /** Lista de presença do evento (SPEC-054 e SPEC-058), igual na organizadora e no link do cliente. */
 @Component({
   selector: 'app-presencas-dialog',
-  imports: [MatDialogModule, MatButtonModule, DatePipe],
+  imports: [FecharModal, MatDialogModule, MatButtonModule, DatePipe],
   template: `
-    <h2 mat-dialog-title>Lista de presença</h2>
+    <h2 mat-dialog-title>Lista de presença <app-fechar-modal /></h2>
     <mat-dialog-content>
       @if (presencas.length === 0) {
         <p>Ninguém confirmou ainda.</p>
       } @else {
-        <table class="w-full text-sm">
-          <thead><tr><th class="text-start">Id</th><th class="text-start">Convidado</th><th class="text-start">Convite</th><th class="text-start">Confirmou em</th><th class="text-start">Compareceu</th></tr></thead>
+        <table class="tabela">
+          <thead><tr><th>Id</th><th>Convidado</th><th>Convite</th><th>Confirmou em</th><th>Compareceu</th></tr></thead>
           <tbody>
             @for (item of presencas; track item.id) {
               <tr>
@@ -30,8 +31,8 @@ import { PresencaEvento } from '../core/negocio.client';
         </table>
       }
     </mat-dialog-content>
-    <mat-dialog-actions>
-      <button mat-flat-button type="button" mat-dialog-close>Fechar</button>
+    <mat-dialog-actions align="end">
+      <button mat-stroked-button type="button" mat-dialog-close>Fechar</button>
     </mat-dialog-actions>
   `,
 })

@@ -10,14 +10,15 @@ import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { copiarTexto } from '../../shared/copiar-texto';
 import { DIALOG_PEQUENO } from '../../shared/dialog';
+import { FecharModal } from '../../shared/fechar-modal';
 
 /** Link do cliente do evento (SPEC-046 §6.1): gerar, copiar, liberar o financeiro e os convidados, trocar e desativar. */
 @Component({
   selector: 'app-link-cliente-dialog',
-  imports: [MatDialogModule, MatButtonModule, MatIconModule, MatSlideToggleModule],
+  imports: [FecharModal, MatDialogModule, MatButtonModule, MatIconModule, MatSlideToggleModule],
   template: `
-    <h2 mat-dialog-title>Link do cliente</h2>
-    <p class="text-muted text-sm px-6 -mt-2 mb-4">Um endereço por evento, sem senha: quem tem o endereço acessa. Trocar o link desliga o antigo.</p>
+    <h2 mat-dialog-title>Link do cliente <app-fechar-modal /></h2>
+    <p class="text-muted text-sm px-6 -mt-2 mb-4">Um endereço por evento. O cliente recebe um código no e-mail cadastrado para abrir o link. Trocar o link desliga o antigo.</p>
     <mat-dialog-content>
       @if (link(); as atual) {
         @if (!atual.ativo) {
@@ -27,6 +28,9 @@ import { DIALOG_PEQUENO } from '../../shared/dialog';
             <input class="endereco grow" readonly aria-label="Endereço do link do cliente" [value]="endereco()" (focus)="$any($event.target).select()" />
             <button mat-stroked-button type="button" (click)="copiar()"><mat-icon>content_copy</mat-icon> Copiar</button>
           </div>
+          @if (!atual.clienteComEmail) {
+            <p class="aviso-email text-sm mb-4"><mat-icon>warning</mat-icon> Cadastre o e-mail de um cliente do evento para que ele consiga abrir o link.</p>
+          }
           <mat-slide-toggle [checked]="atual.financeiroLiberado" (change)="liberar($event.checked)">
             O cliente acessa o financeiro do evento
           </mat-slide-toggle>
@@ -46,15 +50,18 @@ import { DIALOG_PEQUENO } from '../../shared/dialog';
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       @if (link()?.ativo) {
-        <button mat-button type="button" class="text-error" (click)="desativar()">Desativar link</button>
+        <button mat-button type="button" class="text-error me-auto" (click)="desativar()">Desativar link</button>
+      }
+      <button mat-stroked-button type="button" mat-dialog-close>Fechar</button>
+      @if (link()?.ativo) {
         <button mat-stroked-button type="button" (click)="trocar()">Trocar link</button>
       } @else if (link()) {
         <button mat-flat-button type="button" (click)="gerar()">Gerar link</button>
       }
-      <button mat-stroked-button type="button" mat-dialog-close>Fechar</button>
     </mat-dialog-actions>
   `,
-  styles: `.endereco { padding: 8px 12px; border: 1px solid var(--mat-sys-outline-variant); border-radius: 8px; background: transparent; color: inherit; font: inherit; min-width: 0; }`,
+  styles: `.aviso-email { display: flex; align-items: center; gap: 8px; color: var(--mat-sys-error); }
+  .endereco { padding: 8px 12px; border: 1px solid var(--mat-sys-outline-variant); border-radius: 8px; background: transparent; color: inherit; font: inherit; min-width: 0; }`,
 })
 export class LinkClienteDialog implements OnInit {
   private readonly cliente = inject(LinkClienteClient);
@@ -108,7 +115,7 @@ export class LinkClienteDialog implements OnInit {
   protected desativar(): void {
     this.dialog.open(ConfirmaDialog, {
       ...DIALOG_PEQUENO,
-      data: { titulo: 'Desativar link', texto: 'O endereço deixa de funcionar e o cliente perde o acesso.', confirmar: 'Desativar' },
+      data: { titulo: 'Desativar link', texto: 'O endereço deixa de funcionar e o cliente perde o acesso.', confirmar: 'Desativar', destrutivo: true },
     }).afterClosed().subscribe((confirmou) => {
       if (confirmou) this.aplicar(this.cliente.desativar(this.dados.eventoId), 'Link desativado.');
     });

@@ -1,3 +1,4 @@
+import { ExpandirTodosComponent } from '../../shared/expandir-todos.component';
 import { DatePipe } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
@@ -19,7 +20,7 @@ type Vinculo = EventoServico['fornecedores'][number];
 /** Aba Contratos do evento: contratos de fornecedor enviados ao sistema, pelo organizador ou pelo cliente (SPEC-048). */
 @Component({
   selector: 'app-evento-contratos',
-  imports: [DatePipe, MatCardModule, MatButtonModule, MatIconModule, MatTooltipModule, EventoAbasComponent],
+  imports: [ExpandirTodosComponent, DatePipe, MatCardModule, MatButtonModule, MatIconModule, MatTooltipModule, EventoAbasComponent],
   template: `
     <app-evento-abas [eventoId]="id" />
     <mat-card class="cardWithShadow">
@@ -35,13 +36,17 @@ type Vinculo = EventoServico['fornecedores'][number];
             Nenhum fornecedor neste evento ainda. Adicione serviços e fornecedores na aba Fornecedores para enviar os contratos.
           </p>
         } @else {
-          <ul class="servicos-lista" aria-label="Contratos por serviço">
+          <app-expandir-todos [abertos]="todosAbertos()" (alternar)="alternarTodos()">
+            {{ grupos().length }} {{ grupos().length === 1 ? 'serviço' : 'serviços' }} ·
+            {{ totalFornecedores() }} {{ totalFornecedores() === 1 ? 'fornecedor' : 'fornecedores' }}
+          </app-expandir-todos>
+          <ul class="grupos-lista com-cabecalho" aria-label="Contratos por serviço">
             @for (grupo of grupos(); track grupo.servicoId) {
-              <li class="servico" [class.aberto]="!fechados().has(grupo.servicoId)">
-                <button type="button" class="servico-cabecalho" [attr.aria-expanded]="!fechados().has(grupo.servicoId)"
+              <li class="grupo" [class.aberto]="!fechados().has(grupo.servicoId)">
+                <button type="button" class="grupo-cabecalho" [attr.aria-expanded]="!fechados().has(grupo.servicoId)"
                   [attr.aria-controls]="'contratos-' + grupo.servicoId" (click)="alternar(grupo.servicoId)">
                   <mat-icon class="seta">expand_more</mat-icon>
-                  <span class="servico-texto">
+                  <span class="grupo-texto">
                     <span class="nome">{{ grupo.servico }}</span>
                     <span class="block text-xs text-muted">{{ grupo.enviados }} de {{ grupo.itens.length }} {{ grupo.itens.length === 1 ? 'contrato enviado' : 'contratos enviados' }}</span>
                   </span>
@@ -67,7 +72,7 @@ type Vinculo = EventoServico['fornecedores'][number];
                           <button mat-button type="button" (click)="abrir(contrato.arquivoId, false)"><mat-icon>open_in_new</mat-icon> Abrir</button>
                           <button mat-button type="button" (click)="abrir(contrato.arquivoId, true, contrato.nome)"><mat-icon>download</mat-icon> Baixar</button>
                           <button mat-button type="button" (click)="enviar(grupo.servicoId, vinculo)"><mat-icon>upload_file</mat-icon> Nova versão</button>
-                          <button mat-icon-button type="button" aria-label="Excluir contrato" matTooltip="Excluir contrato" (click)="excluir(grupo.servicoId, vinculo)"><mat-icon>delete</mat-icon></button>
+                          <button mat-icon-button type="button" aria-label="Excluir" matTooltip="Excluir" (click)="excluir(grupo.servicoId, vinculo)"><mat-icon>delete</mat-icon></button>
                         </div>
                       } @else {
                         <div class="text-sm text-muted sem-contrato">Nenhum contrato enviado</div>
@@ -88,18 +93,11 @@ type Vinculo = EventoServico['fornecedores'][number];
   `,
   styles: `
     .nome { display: block; font-weight: 500; }
-    .servicos-lista { list-style: none; padding: 0; margin: 0; border: 1px solid rgba(128,128,128,.25); border-radius: 8px; overflow: hidden; }
-    .servico + .servico { border-top: 1px solid rgba(128,128,128,.25); }
-    .servico-cabecalho { width: 100%; display: flex; align-items: center; gap: 12px; padding: 16px 16px 16px 12px; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
-    .servico-cabecalho:focus-visible { outline: 2px solid var(--mat-sys-primary); outline-offset: -2px; }
-    .seta { transition: transform .15s; flex-shrink: 0; transform: rotate(-90deg); }
-    .servico.aberto .seta { transform: none; }
-    .servico-texto { flex: 1; min-width: 0; }
     .fornecedores { background: rgba(128,128,128,.1); border-top: 1px solid rgba(128,128,128,.3); }
     .sem-contrato { grid-column: span 2; }
     .fornecedor { display: grid; grid-template-columns: minmax(160px, 2fr) minmax(110px, 1fr) minmax(110px, 1fr) auto; align-items: center; gap: 12px; padding: 10px 16px 10px 52px; }
     .fornecedor + .fornecedor { border-top: 1px dashed rgba(128,128,128,.2); }
-    .fornecedor:hover, .servico-cabecalho:hover { background: rgba(128,128,128,.08); }
+    .fornecedor:hover { background: rgba(128,128,128,.08); }
     .fornecedor-acoes { display: flex; justify-content: flex-end; gap: 4px; white-space: nowrap; }
     @media (max-width: 900px) {
       .fornecedor { grid-template-columns: 1fr 1fr; padding-left: 16px; }
@@ -128,6 +126,13 @@ export class EventoContratosPage implements OnInit {
     }))
     .sort((a, b) => a.servico.localeCompare(b.servico, 'pt-BR')));
 
+  protected readonly totalFornecedores = computed(() => this.grupos().reduce((soma, grupo) => soma + grupo.itens.length, 0));
+  protected readonly todosAbertos = computed(() => this.grupos().every((grupo) => !this.fechados().has(grupo.servicoId)));
+
+  protected alternarTodos(): void {
+    this.fechados.set(this.todosAbertos() ? new Set(this.grupos().map((grupo) => grupo.servicoId)) : new Set());
+  }
+
   ngOnInit(): void {
     this.id = this.rota.snapshot.paramMap.get('id') ?? '';
     this.negocio.evento(this.id).subscribe({
@@ -154,7 +159,7 @@ export class EventoContratosPage implements OnInit {
   protected excluir(servicoId: string, vinculo: Vinculo): void {
     this.dialog.open(ConfirmaDialog, {
       ...DIALOG_PEQUENO,
-      data: { titulo: 'Excluir contrato', texto: `Excluir o contrato de ${vinculo.fornecedor}? O arquivo é apagado.`, confirmar: 'Excluir' },
+      data: { titulo: 'Excluir contrato', texto: `Excluir o contrato de ${vinculo.fornecedor}? O arquivo é apagado.`, confirmar: 'Excluir', destrutivo: true },
     }).afterClosed().subscribe((confirmou) => {
       if (!confirmou) return;
       this.negocio.excluirContratoAssinado(this.id, servicoId, vinculo.id).subscribe({

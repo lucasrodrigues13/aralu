@@ -1,3 +1,4 @@
+import { ExpandirTodosComponent } from '../../shared/expandir-todos.component';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -36,6 +37,8 @@ import { AdicionarTarefasEmMassaDialog, ResultadoTarefasEmMassaModelo } from '..
 import { TarefaFormDialog, TarefaModeloEdicao } from '../tarefas/tarefa-form.dialog';
 import { SelecionarBibliotecaDialog, ItemBiblioteca } from './selecionar-biblioteca.dialog';
 import { NgTemplateOutlet } from '@angular/common';
+import { FecharModal } from '../../shared/fechar-modal';
+import { Estado } from '../../shared/estado';
 
 /** Serviço do modelo na tela: a `chave` liga as tarefas a ele até o Salvar. */
 interface ServicoEdicao {
@@ -55,6 +58,20 @@ interface BlocoServico {
   chave: string;
   servico: ServicoEdicao | null;
   tarefas: TarefaEdicao[];
+  /** Título do grupo na visão por tempo faltante ("3 meses antes"). */
+  rotulo?: string;
+}
+
+type ModoAgrupamento = 'servico' | 'prazo';
+
+/** Faixa de tempo faltante para o evento, como "N meses antes" na Assessoria VIP. */
+function faixaDoPrazo(dias: number | null | undefined): { ordem: number; rotulo: string } {
+  if (dias == null) return { ordem: Number.MAX_SAFE_INTEGER, rotulo: 'Sem prazo' };
+  if (dias === 0) return { ordem: 0, rotulo: 'No dia do evento' };
+  if (dias > 0) return { ordem: 1, rotulo: 'Depois do evento' };
+  const meses = Math.floor(-dias / 30);
+  if (meses === 0) return { ordem: -1, rotulo: 'Menos de 1 mês antes' };
+  return { ordem: -1 - meses, rotulo: meses === 1 ? '1 mês antes' : `${meses} meses antes` };
 }
 
 const SEM_SERVICO = '__sem-servico__';
@@ -62,9 +79,9 @@ const SEM_SERVICO = '__sem-servico__';
 /** Valor estimado do serviço do modelo (o nome vem do cadastro). */
 @Component({
   selector: 'app-valor-servico-modelo-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, CampoDinheiroComponent],
+  imports: [FecharModal, ReactiveFormsModule, MatDialogModule, MatButtonModule, CampoDinheiroComponent],
   template: `
-    <h2 mat-dialog-title>Valor estimado · {{ dados.nome }}</h2>
+    <h2 mat-dialog-title>Valor estimado · {{ dados.nome }} <app-fechar-modal /></h2>
     <mat-dialog-content>
       <form id="valor-servico-modelo" [formGroup]="form" (submit)="ref.close({ valor: form.controls.valor.value }); $event.preventDefault()">
         <app-campo-dinheiro rotulo="Valor estimado" formControlName="valor" />
@@ -85,9 +102,9 @@ export class ValorServicoModeloDialog {
 /** Remover serviço com tarefas: mover as tarefas para "Sem serviço" (padrão) ou excluir junto (SPEC-012 v3 §6.3). */
 @Component({
   selector: 'app-remover-servico-modelo-dialog',
-  imports: [MatDialogModule, MatButtonModule],
+  imports: [FecharModal, MatDialogModule, MatButtonModule],
   template: `
-    <h2 mat-dialog-title>Remover serviço</h2>
+    <h2 mat-dialog-title>Remover serviço <app-fechar-modal /></h2>
     <mat-dialog-content>
       <p class="mb-0">"{{ dados.nome }}" tem {{ dados.tarefas }} {{ dados.tarefas === 1 ? 'tarefa' : 'tarefas' }}. O que fazer com {{ dados.tarefas === 1 ? 'ela' : 'elas' }}?</p>
     </mat-dialog-content>
@@ -106,7 +123,7 @@ export class RemoverServicoModeloDialog {
 /** Editor do modelo de evento (SPEC-012 v3 §6.2 e §6.3). */
 @Component({
   selector: 'app-modelo-evento-editor',
-  imports: [MatCardModule, ReactiveFormsModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatTabsModule, MatIconModule, MatMenuModule, MatTooltipModule, NgTemplateOutlet, GdDinheiroPipe],
+  imports: [ExpandirTodosComponent, MatCardModule, ReactiveFormsModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatTabsModule, MatIconModule, MatMenuModule, MatTooltipModule, NgTemplateOutlet, GdDinheiroPipe, Estado],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6 flex flex-wrap items-center justify-between gap-4">
@@ -161,24 +178,23 @@ export class RemoverServicoModeloDialog {
                 </div>
               </div>
               <div class="barra-lista-acoes">
-                <button mat-flat-button type="button" (click)="adicionarVinculos(tipo, titulo, itens)"><mat-icon>add_link</mat-icon> Adicionar {{ titulo }}</button>
+                <button mat-flat-button type="button" (click)="adicionarVinculos(tipo, titulo, itens)"><mat-icon>add</mat-icon> Adicionar {{ titulo }}</button>
               </div>
             </div>
             @if (vinculadosTipo.length === 0) {
-              <div class="flex flex-col items-center gap-3 text-center text-muted py-10">
-                <p>Nenhum modelo de {{ singular }} vinculado.</p>
-                <button mat-flat-button type="button" (click)="adicionarVinculos(tipo, titulo, itens)"><mat-icon>add_link</mat-icon> Adicionar {{ titulo }}</button>
-              </div>
+              <app-estado [titulo]="'Nenhum modelo de ' + singular + ' vinculado'">
+                <button mat-flat-button type="button" (click)="adicionarVinculos(tipo, titulo, itens)"><mat-icon>add</mat-icon> Adicionar {{ titulo }}</button>
+              </app-estado>
             } @else if (listaTipo.length === 0) {
-              <p class="text-center text-muted py-10">Nada encontrado com essa busca.</p>
+              <app-estado titulo="Nada encontrado" texto="Mude a busca ou os filtros." />
             } @else {
-              <ul class="servicos-lista" [attr.aria-label]="cabecalho">
+              <ul class="grupos-lista" [attr.aria-label]="cabecalho">
                 @for (item of listaTipo; track item.id) {
-                  <li class="servico">
-                    <div class="servico-cabecalho vinculo">
+                  <li class="grupo">
+                    <div class="grupo-cabecalho com-acoes vinculo">
                       <mat-icon class="seta text-muted">{{ icone }}</mat-icon>
-                      <span class="servico-texto"><span class="nome">{{ item.nome }}</span></span>
-                      <div class="servico-acoes">
+                      <span class="grupo-texto"><span class="nome">{{ item.nome }}</span></span>
+                      <div class="grupo-acoes">
                         <button mat-icon-button type="button" [attr.aria-label]="'Remover ' + singular" [matTooltip]="'Remover ' + singular" (click)="removerVinculo(tipo, item.id)"><mat-icon>link_off</mat-icon></button>
                       </div>
                     </div>
@@ -221,37 +237,43 @@ export class RemoverServicoModeloDialog {
                   </div>
                 </div>
                 <div class="barra-lista-acoes">
-                  @if (blocos().length > 0) {
-                    <button mat-stroked-button type="button" (click)="alternarTodos()">
-                      <mat-icon>{{ todosAbertos() ? 'unfold_less' : 'unfold_more' }}</mat-icon> {{ todosAbertos() ? 'Recolher todos' : 'Expandir todos' }}
-                    </button>
-                  }
                   <button mat-stroked-button type="button" (click)="emMassa()"><mat-icon>library_add</mat-icon> Adicionar em massa</button>
                   <button mat-stroked-button type="button" (click)="adicionarServicos()"><mat-icon>playlist_add</mat-icon> Adicionar serviços</button>
-                  <button mat-flat-button type="button" (click)="novaTarefa(null)"><mat-icon>add_task</mat-icon> Nova tarefa</button>
+                  <button mat-flat-button type="button" (click)="novaTarefa(null)"><mat-icon>add</mat-icon> Nova tarefa</button>
                 </div>
               </div>
 
+              <div class="modo-agrupamento" role="radiogroup" aria-label="Agrupar tarefas por" [class.prazo]="modo() === 'prazo'">
+                <span class="marcador" aria-hidden="true"></span>
+                <button type="button" role="radio" [attr.aria-checked]="modo() === 'servico'" (click)="trocarModo('servico')"><mat-icon>category</mat-icon> Por serviço</button>
+                <button type="button" role="radio" [attr.aria-checked]="modo() === 'prazo'" (click)="trocarModo('prazo')"><mat-icon>schedule</mat-icon> Por tempo faltante</button>
+              </div>
+
               @if (servicos().length === 0 && tarefas().length === 0) {
-                <div class="flex flex-col items-center gap-3 text-center text-muted py-10">
-                  <p>Nenhum serviço nem tarefa neste modelo ainda.</p>
+                <app-estado titulo="Nenhum serviço nem tarefa ainda">
                   <div class="flex flex-wrap justify-center gap-2">
                     <button mat-stroked-button type="button" (click)="emMassa()"><mat-icon>library_add</mat-icon> Adicionar em massa</button>
                     <button mat-flat-button type="button" (click)="adicionarServicos()"><mat-icon>playlist_add</mat-icon> Adicionar serviços</button>
                   </div>
-                </div>
+                </app-estado>
               } @else if (blocosVisiveis().length === 0) {
-                <p class="text-center text-muted py-10">Nada encontrado com esses filtros.</p>
+                <app-estado titulo="Nada encontrado" texto="Mude a busca ou os filtros." />
               } @else {
-                <ul class="servicos-lista" aria-label="Serviços e tarefas do modelo">
+                <app-expandir-todos [abertos]="todosAbertos()" (alternar)="alternarTodos()">
+                  {{ blocosVisiveis().length }} {{ modo() === 'prazo' ? (blocosVisiveis().length === 1 ? 'faixa' : 'faixas') : (blocosVisiveis().length === 1 ? 'serviço' : 'serviços') }} ·
+                  {{ tarefasVisiveis() }} {{ tarefasVisiveis() === 1 ? 'tarefa' : 'tarefas' }}
+                </app-expandir-todos>
+                <ul class="grupos-lista com-cabecalho" aria-label="Serviços e tarefas do modelo">
                   @for (bloco of blocosVisiveis(); track bloco.chave) {
-                    <li class="servico" [class.aberto]="estaAberto(bloco.chave)">
-                      <div class="servico-cabecalho">
-                        <button type="button" class="servico-alternar" [attr.aria-expanded]="estaAberto(bloco.chave)"
+                    <li class="grupo" [class.aberto]="estaAberto(bloco.chave)">
+                      <div class="grupo-cabecalho com-acoes">
+                        <button type="button" class="grupo-alternar" [attr.aria-expanded]="estaAberto(bloco.chave)"
                           [attr.aria-controls]="'tarefas-' + bloco.chave" (click)="alternar(bloco.chave)">
                           <mat-icon class="seta">expand_more</mat-icon>
-                          <span class="servico-texto">
-                            @if (bloco.servico; as servico) {
+                          <span class="grupo-texto">
+                            @if (bloco.rotulo) {
+                              <span class="nome">{{ bloco.rotulo }}</span>
+                            } @else if (bloco.servico; as servico) {
                               <span class="nome">{{ servico.nome }}@if (!servico.noCadastro) { <span class="text-xs text-muted"> (removido do cadastro)</span> }</span>
                               <span class="block text-xs text-muted">Estimado {{ servico.valorEstimado | gdDinheiro }}</span>
                             } @else {
@@ -267,16 +289,18 @@ export class RemoverServicoModeloDialog {
                             </span>
                           }
                         </button>
-                        <div class="servico-acoes">
-                          <button mat-stroked-button type="button" (click)="novaTarefa(bloco.servico)"><mat-icon>add</mat-icon> Tarefa</button>
-                          @if (bloco.servico; as servico) {
-                            <button mat-icon-button type="button" aria-label="Ações do serviço" matTooltip="Ações do serviço" [matMenuTriggerFor]="menuServico"><mat-icon>more_vert</mat-icon></button>
-                            <mat-menu #menuServico="matMenu" xPosition="before">
-                              <button mat-menu-item type="button" (click)="editarValor(servico)"><mat-icon>calculate</mat-icon> Valor estimado</button>
-                              <button mat-menu-item type="button" (click)="removerServico(servico)"><mat-icon>delete</mat-icon> Remover serviço</button>
-                            </mat-menu>
-                          }
-                        </div>
+                        @if (!bloco.rotulo) {
+                          <div class="grupo-acoes">
+                            <button mat-stroked-button type="button" (click)="novaTarefa(bloco.servico)"><mat-icon>add</mat-icon> Tarefa</button>
+                            @if (bloco.servico; as servico) {
+                              <button mat-icon-button type="button" aria-label="Ações do serviço" matTooltip="Ações do serviço" [matMenuTriggerFor]="menuServico"><mat-icon>more_vert</mat-icon></button>
+                              <mat-menu #menuServico="matMenu" xPosition="before">
+                                <button mat-menu-item type="button" (click)="editarValor(servico)"><mat-icon>calculate</mat-icon> Valor estimado</button>
+                                <button mat-menu-item type="button" (click)="removerServico(servico)"><mat-icon>delete</mat-icon> Remover serviço</button>
+                              </mat-menu>
+                            }
+                          </div>
+                        }
                       </div>
                       @if (estaAberto(bloco.chave)) {
                         <div class="itens" [id]="'tarefas-' + bloco.chave">
@@ -284,6 +308,7 @@ export class RemoverServicoModeloDialog {
                             <div class="tarefa" role="button" tabindex="0" (click)="editarTarefa(tarefa)" (keydown.enter)="editarTarefa(tarefa)">
                               <div class="min-w-0">
                                 <span class="nome">{{ tarefa.titulo }}</span>
+                                @if (bloco.rotulo) { <span class="block text-xs text-muted">{{ nomeServico(tarefa) }}</span> }
                                 @if (tarefa.checklist.length > 0 || tarefa.descricao) {
                                   <span class="block text-xs text-muted truncate">
                                     @if (tarefa.checklist.length > 0) { {{ tarefa.checklist.length }} {{ tarefa.checklist.length === 1 ? 'item' : 'itens' }} }
@@ -298,8 +323,8 @@ export class RemoverServicoModeloDialog {
                                 @if (tarefa.prioridade === 'Alta') { <span class="inline-block rounded font-semibold px-2 py-1 text-xs whitespace-nowrap alerta">Alta</span> }
                               </span>
                               <div class="item-acoes">
-                                <button mat-icon-button type="button" aria-label="Editar tarefa" matTooltip="Editar tarefa" (click)="editarTarefa(tarefa); $event.stopPropagation()"><mat-icon>edit</mat-icon></button>
-                                <button mat-icon-button type="button" aria-label="Excluir tarefa" matTooltip="Excluir tarefa" (click)="removerTarefa(tarefa); $event.stopPropagation()"><mat-icon>delete</mat-icon></button>
+                                <button mat-icon-button type="button" aria-label="Editar" matTooltip="Editar" (click)="editarTarefa(tarefa); $event.stopPropagation()"><mat-icon>edit</mat-icon></button>
+                                <button mat-icon-button type="button" aria-label="Excluir tarefa" matTooltip="Excluir" (click)="removerTarefa(tarefa); $event.stopPropagation()"><mat-icon>delete</mat-icon></button>
                               </div>
                             </div>
                           } @empty {
@@ -334,17 +359,17 @@ export class RemoverServicoModeloDialog {
   `,
   styles: `
     .nome { display: block; font-weight: 500; }
-    .servicos-lista { list-style: none; padding: 0; margin: 0; border: 1px solid rgba(128,128,128,.25); border-radius: 8px; overflow: hidden; }
-    .servico + .servico { border-top: 1px solid rgba(128,128,128,.25); }
-    .servico-cabecalho { display: flex; align-items: center; gap: 8px; padding: 8px 12px 8px 4px; }
-    .servico-cabecalho:hover, .tarefa:hover { background: rgba(128,128,128,.08); }
-    .servico-alternar { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 8px; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; border-radius: 6px; }
-    .servico-alternar:focus-visible, .tarefa:focus-visible { outline: 2px solid var(--mat-sys-primary); }
-    .servico-texto { flex: 1; min-width: 0; }
-    .seta { transition: transform .15s; flex-shrink: 0; }
-    .servico.aberto .seta { transform: rotate(180deg); }
-    .servico-acoes { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
-    .servico-cabecalho.vinculo { padding: 8px 12px 8px 16px; gap: 12px; }
+    .tarefa:hover { background: rgba(128,128,128,.08); }
+    .tarefa:focus-visible { outline: 2px solid var(--mat-sys-primary); }
+    .modo-agrupamento { position: relative; display: inline-grid; grid-template-columns: 1fr 1fr; margin-bottom: 12px; padding: 3px; border: 1px solid rgba(128,128,128,.3); border-radius: 999px; }
+    .modo-agrupamento .marcador { position: absolute; top: 3px; bottom: 3px; left: 3px; width: calc(50% - 3px); border-radius: 999px; background: var(--mat-sys-primary); transition: transform .2s ease; }
+    .modo-agrupamento.prazo .marcador { transform: translateX(100%); }
+    .modo-agrupamento button { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 6px 14px; border: 0; background: none; color: inherit; font: inherit; font-size: .875rem; cursor: pointer; border-radius: 999px; white-space: nowrap; transition: color .2s; }
+    .modo-agrupamento button mat-icon { font-size: 18px; width: 18px; height: 18px; }
+    .modo-agrupamento button[aria-checked="true"] { color: var(--mat-sys-on-primary); }
+    .modo-agrupamento button:focus-visible { outline: 2px solid var(--mat-sys-primary); outline-offset: 2px; }
+    .grupo-cabecalho.vinculo { padding-left: 16px; gap: 12px; flex-wrap: nowrap; }
+    .grupo-cabecalho.vinculo .seta { transform: none; }
     .itens { background: rgba(128,128,128,.1); border-top: 1px solid rgba(128,128,128,.3); }
     .tarefa { display: grid; grid-template-columns: minmax(0, 2fr) minmax(120px, 1fr) minmax(120px, 1fr) 56px auto; align-items: center; gap: 12px; padding: 8px 16px 8px 52px; cursor: pointer; }
     .tarefa + .tarefa { border-top: 1px dashed rgba(128,128,128,.2); }
@@ -407,7 +432,35 @@ export class ModeloEventoEditorPage implements OnInit {
     return blocos;
   });
 
-  protected readonly blocosVisiveis = computed<BlocoServico[]>(() => {
+  protected readonly modo = signal<ModoAgrupamento>('servico');
+
+  protected readonly blocosVisiveis = computed<BlocoServico[]>(() =>
+    this.modo() === 'prazo' ? this.blocosPrazoVisiveis() : this.blocosServicoVisiveis());
+
+  /** Visão por tempo faltante: um bloco por faixa ("N meses antes"), da mais distante até depois do evento. */
+  private readonly blocosPrazoVisiveis = computed<BlocoServico[]>(() => {
+    const termo = normalizar(this.busca());
+    const papel = this.responsavel();
+    const nomes = new Map(this.servicos().map((servico) => [servico.chave, servico.nome]));
+    const faixas = new Map<number, BlocoServico>();
+    const tarefas = [...this.tarefas()]
+      .filter((tarefa) => (!papel || tarefa.responsaveis.includes(papel))
+        && (!termo || normalizar(tarefa.titulo).includes(termo) || normalizar(nomes.get(tarefa.servicoChave ?? '') ?? 'Sem serviço').includes(termo)))
+      .sort((a, b) => ordemPrazoRelativo(a.prazoRelativo) - ordemPrazoRelativo(b.prazoRelativo) || a.titulo.localeCompare(b.titulo, 'pt'));
+    for (const tarefa of tarefas) {
+      const faixa = faixaDoPrazo(tarefa.prazoRelativo);
+      let bloco = faixas.get(faixa.ordem);
+      if (!bloco) faixas.set(faixa.ordem, (bloco = { chave: `prazo:${faixa.ordem}`, servico: null, tarefas: [], rotulo: faixa.rotulo }));
+      bloco.tarefas.push(tarefa);
+    }
+    return [...faixas.entries()].sort(([a], [b]) => a - b).map(([, bloco]) => bloco);
+  });
+
+  protected nomeServico(tarefa: TarefaEdicao): string {
+    return this.servicos().find((servico) => servico.chave === tarefa.servicoChave)?.nome ?? 'Sem serviço';
+  }
+
+  private readonly blocosServicoVisiveis = computed<BlocoServico[]>(() => {
     const termo = normalizar(this.busca());
     const papel = this.responsavel();
     return this.blocos()
@@ -459,8 +512,17 @@ export class ModeloEventoEditorPage implements OnInit {
     return blocos.length > 0 && blocos.every((bloco) => this.estaAberto(bloco.chave));
   }
 
+  protected readonly tarefasVisiveis = computed(() => this.blocosVisiveis().reduce((soma, bloco) => soma + bloco.tarefas.length, 0));
+
+  /** Cada visão começa com todos os blocos recolhidos. */
+  protected trocarModo(modo: ModoAgrupamento): void {
+    if (this.modo() === modo) return;
+    this.modo.set(modo);
+    this.abertos.set(new Set());
+  }
+
   protected alternarTodos(): void {
-    this.abertos.set(this.todosAbertos() ? new Set() : new Set(this.blocos().map((bloco) => bloco.chave)));
+    this.abertos.set(this.todosAbertos() ? new Set() : new Set(this.blocosVisiveis().map((bloco) => bloco.chave)));
   }
 
   /** Serviços do cadastro (ou um novo), como na aba Fornecedores do evento. Os que já estão no modelo vêm bloqueados. */
@@ -740,7 +802,7 @@ export class ModeloEventoEditorPage implements OnInit {
   protected excluir(): void {
     this.dialog.open(ConfirmaDialog, {
       ...DIALOG_PEQUENO,
-      data: { titulo: 'Excluir modelo', texto: 'Confirma a exclusão deste modelo?', confirmar: 'Excluir' },
+      data: { titulo: 'Excluir modelo', texto: 'Confirma a exclusão deste modelo?', confirmar: 'Excluir', destrutivo: true },
     }).afterClosed().subscribe((confirmou) => {
       if (!confirmou) return;
       this.negocio.excluirModelo(this.id).subscribe({

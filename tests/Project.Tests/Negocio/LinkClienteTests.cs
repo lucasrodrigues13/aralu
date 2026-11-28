@@ -10,13 +10,14 @@ namespace Project.Tests.Negocio;
 public class LinkClienteTests
 {
     private static readonly Guid EventoId = Guid.NewGuid();
-    private const string Conta = "conta-1";
+    private static readonly Guid Conta = Guid.Parse("11111111-1111-1111-1111-111111111111");
+    private static readonly Guid OutraConta = Guid.Parse("99999999-9999-9999-9999-999999999999");
 
     private static (LinkClienteServico Servico, DadosFalsos Dados) Criar()
     {
         var dados = new DadosFalsos();
         // O financeiro (DinheiroServico, FornecedorServico) não é alcançado nestes cenários.
-        return (new LinkClienteServico(dados, null!, null!, null!, null!, null!), dados);
+        return (new LinkClienteServico(dados, null!, null!, null!, null!, null!, new AcessosFalsos()), dados);
     }
 
     [Fact]
@@ -64,9 +65,9 @@ public class LinkClienteTests
     {
         var (servico, _) = Criar();
 
-        Assert.Equal(Codigos.Indisponivel, (await servico.GerarAsync("outra", EventoId, DateTimeOffset.UtcNow, default)).Falha!.Codigo);
-        Assert.Equal(Codigos.Indisponivel, (await servico.ObterAsync("outra", EventoId, default)).Falha!.Codigo);
-        Assert.Equal(Codigos.Indisponivel, (await servico.SalvarAsync("outra", EventoId, new SalvarLinkCliente(true), default)).Falha!.Codigo);
+        Assert.Equal(Codigos.Indisponivel, (await servico.GerarAsync(OutraConta, EventoId, DateTimeOffset.UtcNow, default)).Falha!.Codigo);
+        Assert.Equal(Codigos.Indisponivel, (await servico.ObterAsync(OutraConta, EventoId, default)).Falha!.Codigo);
+        Assert.Equal(Codigos.Indisponivel, (await servico.SalvarAsync(OutraConta, EventoId, new SalvarLinkCliente(true), default)).Falha!.Codigo);
     }
 
     [Fact]
@@ -376,7 +377,7 @@ public class LinkClienteTests
             return Task.CompletedTask;
         }
 
-        public Task<EventoDoLink?> ObterEventoAsync(string contaId, Guid eventoId, CancellationToken ct) =>
+        public Task<EventoDoLink?> ObterEventoAsync(Guid contaId, Guid eventoId, CancellationToken ct) =>
             Task.FromResult<EventoDoLink?>(contaId == Conta && eventoId == EventoId ? new EventoDoLink(EventoId, Conta, "Casamento", null, EmAndamento) : null);
 
         public Task<LinkCliente?> ObterPorEventoAsync(Guid eventoId, CancellationToken ct) =>
@@ -396,6 +397,26 @@ public class LinkClienteTests
             links.Remove(link);
             return Task.CompletedTask;
         }
+
+        public Task SalvarAsync(CancellationToken ct) => Task.CompletedTask;
+    }
+
+    /// <summary>Códigos e sessões do link (SPEC-063): não são alcançados nestes cenários.</summary>
+    private sealed class AcessosFalsos : IDadosAcessoLinkCliente
+    {
+        public Task<IReadOnlyList<(Guid ClienteId, string Email)>> ListarEmailsClientesAsync(Guid contaId, Guid eventoId, CancellationToken ct) =>
+            Task.FromResult<IReadOnlyList<(Guid ClienteId, string Email)>>([]);
+
+        public Task<IReadOnlyList<CodigoAcessoCliente>> ListarCodigosAsync(Guid linkId, DateTimeOffset desde, CancellationToken ct) =>
+            Task.FromResult<IReadOnlyList<CodigoAcessoCliente>>([]);
+
+        public Task<SessaoLinkCliente?> ObterSessaoAsync(Guid linkId, string tokenHash, CancellationToken ct) => Task.FromResult<SessaoLinkCliente?>(null);
+
+        public Task InserirCodigoAsync(CodigoAcessoCliente codigo, CancellationToken ct) => Task.CompletedTask;
+
+        public Task InserirSessaoAsync(SessaoLinkCliente sessao, CancellationToken ct) => Task.CompletedTask;
+
+        public Task RemoverAcessosAsync(Guid linkId, CancellationToken ct) => Task.CompletedTask;
 
         public Task SalvarAsync(CancellationToken ct) => Task.CompletedTask;
     }

@@ -19,6 +19,7 @@ function montar(estreita: boolean, assistente = false, financeiro = true): Compo
           ehAdmin: () => false,
           ehAssistente: () => assistente,
           podeVerFinanceiro: () => financeiro,
+          pode: (modulo: string) => (modulo === 'Financeiro' ? financeiro : true),
           permissoes: signal(null),
           sair: () => undefined,
         },
@@ -40,19 +41,20 @@ function montar(estreita: boolean, assistente = false, financeiro = true): Compo
 describe('CascaComponent', () => {
   afterEach(() => TestBed.resetTestingModule());
 
-  it('esconde da assistente Perfil, Contratos da conta, Assistentes e o financeiro sem permissão (SPEC-032 §8)', () => {
+  it('esconde da assistente Perfil, Contratos da conta, Grupos de acesso e o financeiro sem permissão (SPEC-032 §8)', () => {
     const texto = (montar(false, true, false).nativeElement as HTMLElement).textContent ?? '';
     expect(texto).toContain('Eventos');
     expect(texto).not.toContain('Perfil');
-    expect(texto).not.toContain('Assistentes');
+    expect(texto).not.toContain('Grupos de acesso');
     expect(texto).not.toContain('Gestão Financeira');
     expect(texto).toContain('Assistente de Aralu Eventos');
   });
 
-  it('mostra Perfil, Assistentes e Gestão Financeira para a dona, e esta no grupo Principal (SPEC-041)', () => {
+  it('mostra Perfil, Assistentes, Grupos de acesso e Gestão Financeira para a dona, e esta no grupo Principal (SPEC-041)', () => {
     const texto = (montar(false).nativeElement as HTMLElement).textContent ?? '';
     expect(texto).toContain('Perfil');
     expect(texto).toContain('Assistentes');
+    expect(texto).toContain('Grupos de acesso');
     expect(texto).toContain('Gestão Financeira');
     expect(texto).not.toContain('Pagamentos');
     expect(texto.indexOf('Principal')).toBeLessThan(texto.indexOf('Gestão Financeira'));
@@ -86,10 +88,10 @@ describe('CascaComponent', () => {
     expect(raiz.querySelector('mat-sidenav')?.classList.contains('mat-drawer-opened')).toBe(true);
   });
 
-  it('ordena os grupos com Modelos por último e põe os modelos do funil em Modelos (SPEC-034)', () => {
+  it('ordena os grupos com Modelos e Configurações no fim e põe os modelos do funil em Modelos (SPEC-034)', () => {
     const raiz = montar(false).nativeElement as HTMLElement;
     const grupos = Array.from(raiz.querySelectorAll('.nav-caption .rotulo-grupo')).map((e) => e.textContent?.trim());
-    expect(grupos).toEqual(['Principal', 'Gestão de Eventos', 'Agenda', 'Funil de Vendas', 'Modelos']);
+    expect(grupos).toEqual(['Principal', 'Gestão de Eventos', 'Agenda', 'Funil de Vendas', 'Modelos', 'Configurações']);
 
     const itensDe = (rotulo: string) => {
       const itens: string[] = [];

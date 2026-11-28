@@ -48,12 +48,13 @@ import { STATUS } from '../../shared/status';
 import { ClienteFormDialog } from '../clientes/cliente-form.dialog';
 import { NovoEventoDados, NovoEventoDialog } from '../eventos/novo-evento.dialog';
 import { EstagiosFunilDialog } from './estagios-funil.dialog';
+import { FecharModal } from '../../shared/fechar-modal';
 
 @Component({
   selector: 'app-oportunidade-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatCheckboxModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, CampoDataComponent, CampoHoraComponent, CampoDinheiroComponent, LocalCamposComponent, ContratanteCamposComponent, MascaraDirective],
+  imports: [FecharModal, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatCheckboxModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, CampoDataComponent, CampoHoraComponent, CampoDinheiroComponent, LocalCamposComponent, ContratanteCamposComponent, MascaraDirective],
   template: `
-    <h2 mat-dialog-title>{{ dados ? 'Editar oportunidade' : 'Nova oportunidade' }}</h2>
+    <h2 mat-dialog-title>{{ dados ? 'Editar oportunidade' : 'Nova oportunidade' }} <app-fechar-modal /></h2>
     <mat-dialog-content>
       <form class="grid grid-cols-1 gap-4" [formGroup]="form">
         <h3>Contato</h3>
@@ -511,9 +512,9 @@ export class OportunidadeDialog implements OnInit {
 /** Pede o motivo do descarte (SPEC-020 §8). */
 @Component({
   selector: 'app-descarte-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule],
+  imports: [FecharModal, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule],
   template: `
-    <h2 mat-dialog-title>Descartar oportunidade</h2>
+    <h2 mat-dialog-title>Descartar oportunidade <app-fechar-modal /></h2>
     <mat-dialog-content>
       <p class="text-sm text-muted mb-4">{{ dados.nome }} sai do funil ativo. O motivo vai para o relatório de descartes.</p>
       <p class="text-sm mb-4"><strong>Atenção:</strong> ao descartar, o CPF/CNPJ, o nascimento e o endereço do contratante são apagados e não dá para recuperar.</p>
@@ -563,9 +564,9 @@ export type ResultadoRetorno = { data: string; hora: string | null } | null;
 /** Marca, muda ou limpa a data de retorno do lead (SPEC-031 §6.3). */
 @Component({
   selector: 'app-retorno-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, CampoDataComponent, CampoHoraComponent],
+  imports: [FecharModal, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, CampoDataComponent, CampoHoraComponent],
   template: `
-    <h2 mat-dialog-title>{{ dados.modo === 'retornei' ? 'Próximo retorno' : 'Retornar em' }}</h2>
+    <h2 mat-dialog-title>{{ dados.modo === 'retornei' ? 'Próximo retorno' : 'Retornar em' }} <app-fechar-modal /></h2>
     <mat-dialog-content>
       <p class="text-sm text-muted mb-4">
         {{ dados.modo === 'retornei' ? 'Quando você vai falar de novo com ' + dados.nome + '?' : 'Quando você quer voltar a falar com ' + dados.nome + '?' }}
@@ -578,7 +579,7 @@ export type ResultadoRetorno = { data: string; hora: string | null } | null;
     <mat-dialog-actions align="end">
       <button mat-stroked-button type="button" (click)="ref.close()">Cancelar</button>
       @if (dados.modo === 'retornei' || dados.data) {
-        <button mat-button type="button" (click)="ref.close(null)">{{ dados.modo === 'retornei' ? 'Sem próximo retorno' : 'Sem retorno' }}</button>
+        <button mat-stroked-button type="button" (click)="ref.close(null)">{{ dados.modo === 'retornei' ? 'Sem próximo retorno' : 'Sem retorno' }}</button>
       }
       <button mat-flat-button type="button" (click)="salvar()">Salvar</button>
     </mat-dialog-actions>
@@ -801,7 +802,7 @@ matTooltip="Ações do lead"
                 </button>
                 <mat-menu #menu="matMenu">
                   <button mat-menu-item type="button" (click)="abrir(item)"><mat-icon>edit</mat-icon> Editar</button>
-                  <button mat-menu-item type="button" (click)="briefing(item)"><mat-icon>quiz</mat-icon> Briefing</button>
+                  <button mat-menu-item type="button" (click)="briefing(item)"><mat-icon>quiz</mat-icon> Briefing / enviar ao cliente</button>
                   @for (destino of estagios(); track destino.id; let j = $index) {
                     @if (destino.id !== item.estagioId) {
                       <button mat-menu-item type="button" (click)="mover(item, destino)">
@@ -863,9 +864,7 @@ matTooltip="Ações do lead"
                   <li class="linha-retorno" [class.text-error]="sit === 'atrasado'" [class.text-warning]="sit === 'hoje'">
                     <mat-icon>event</mat-icon>
                     <span>retornar {{ textoRetorno(item.retornarEm, item.retornarHora) }}</span>
-                    @if (sit !== 'futuro') {
-                      <button mat-button type="button" class="retornei" (click)="$event.stopPropagation(); marcarRetorno(item, 'retornei')">Retornei</button>
-                    }
+                    <button mat-button type="button" class="retornei" (click)="$event.stopPropagation(); marcarRetorno(item, 'retornei')">Retornei</button>
                   </li>
                 }
                 @if (item.proposta?.mensagem && (item.proposta?.situacao === 'Duvidas' || item.proposta?.situacao === 'Recusada')) {
@@ -1138,7 +1137,18 @@ export class OportunidadesPage implements OnInit {
   }
 
   protected briefing(item: Oportunidade): void {
-    this.dialog.open(BriefingLeadDialog, { ...DIALOG, data: { id: item.id, nome: item.nome } });
+    const contato = item.contatos?.find((c) => c.contratante && c.telefone) ?? item.contatos?.find((c) => c.telefone) ?? item.contatos?.[0];
+    this.dialog.open(BriefingLeadDialog, {
+      ...DIALOG,
+      data: {
+        id: item.id,
+        nome: item.nome,
+        contatoNome: contato?.nome ?? null,
+        telefone: contato?.telefone ?? null,
+        // SPEC-066: o código de acesso vai para o e-mail de um contato ou do contratante.
+        temEmail: !!(item.contatos?.some((c) => c.email?.trim()) || item.contratante?.email?.trim()),
+      },
+    });
   }
 
   protected abrir(item?: Oportunidade): void {
@@ -1243,7 +1253,7 @@ export class OportunidadesPage implements OnInit {
   protected excluir(item: Oportunidade): void {
     this.dialog.open(ConfirmaDialog, {
       ...DIALOG_PEQUENO,
-      data: { titulo: 'Excluir oportunidade', texto: `Confirma a exclusão de "${item.nome}"?`, confirmar: 'Excluir' },
+      data: { titulo: 'Excluir oportunidade', texto: `Confirma a exclusão de "${item.nome}"?`, confirmar: 'Excluir', destrutivo: true },
     }).afterClosed().subscribe((confirmou) => {
       if (!confirmou) return;
       this.negocio.excluirOportunidade(item.id).subscribe({

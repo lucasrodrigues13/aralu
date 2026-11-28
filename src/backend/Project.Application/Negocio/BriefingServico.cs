@@ -28,13 +28,13 @@ public sealed record SalvarBriefing(string? Nome, string? Origem, IReadOnlyList<
 
 public sealed class BriefingServico(IDados dados)
 {
-    public async Task<IReadOnlyList<BriefingLeitura>> ListarAsync(string contaId, string? nome, CancellationToken ct)
+    public async Task<IReadOnlyList<BriefingLeitura>> ListarAsync(Guid contaId, string? nome, CancellationToken ct)
     {
         var modelos = await dados.ListarBriefingsAsync(contaId, nome, ct);
         return modelos.Select(Ler).ToArray();
     }
 
-    public async Task<Resultado<BriefingLeitura>> ObterAsync(string contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<BriefingLeitura>> ObterAsync(Guid contaId, Guid id, CancellationToken ct)
     {
         var modelo = await dados.ObterBriefingAsync(contaId, id, ct);
         return modelo is null
@@ -42,9 +42,9 @@ public sealed class BriefingServico(IDados dados)
             : Resultado<BriefingLeitura>.Sucesso(Ler(modelo));
     }
 
-    public async Task<Resultado<BriefingLeitura>> CriarAsync(string contaId, SalvarBriefing pedido, CancellationToken ct)
+    public async Task<Resultado<BriefingLeitura>> CriarAsync(Guid contaId, SalvarBriefing pedido, CancellationToken ct)
     {
-        var montado = Montar(contaId, Guid.NewGuid(), pedido, DateTimeOffset.UtcNow, padrao: false);
+        var montado = Montar(contaId, Guid.NewGuid(), pedido, Relogio.Agora, padrao: false);
         if (!montado.Ok)
         {
             return Resultado<BriefingLeitura>.Erro(montado.Falha!.Codigo, montado.Falha.Mensagem);
@@ -54,7 +54,7 @@ public sealed class BriefingServico(IDados dados)
         return Resultado<BriefingLeitura>.Sucesso(Ler(montado.Valor!));
     }
 
-    public async Task<Resultado<BriefingLeitura>> AtualizarAsync(string contaId, Guid id, SalvarBriefing pedido, CancellationToken ct)
+    public async Task<Resultado<BriefingLeitura>> AtualizarAsync(Guid contaId, Guid id, SalvarBriefing pedido, CancellationToken ct)
     {
         var modelo = await dados.ObterBriefingAsync(contaId, id, ct);
         if (modelo is null)
@@ -85,7 +85,7 @@ public sealed class BriefingServico(IDados dados)
         return Resultado<BriefingLeitura>.Sucesso(Ler(modelo));
     }
 
-    public async Task<Resultado<BriefingLeitura>> ClonarAsync(string contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<BriefingLeitura>> ClonarAsync(Guid contaId, Guid id, CancellationToken ct)
     {
         var origem = await dados.ObterBriefingAsync(contaId, id, ct);
         if (origem is null)
@@ -100,7 +100,7 @@ public sealed class BriefingServico(IDados dados)
             Nome = origem.Nome + " (cópia)",
             Origem = origem.Origem,
             Padrao = false,
-            CriadoEm = DateTimeOffset.UtcNow,
+            CriadoEm = Relogio.Agora,
         };
         foreach (var secao in origem.Secoes.OrderBy(item => item.Ordem))
         {
@@ -132,7 +132,7 @@ public sealed class BriefingServico(IDados dados)
         return Resultado<BriefingLeitura>.Sucesso(Ler(copia));
     }
 
-    public async Task<Resultado<bool>> ExcluirAsync(string contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<bool>> ExcluirAsync(Guid contaId, Guid id, CancellationToken ct)
     {
         var modelo = await dados.ObterBriefingAsync(contaId, id, ct);
         if (modelo is null)
@@ -145,7 +145,7 @@ public sealed class BriefingServico(IDados dados)
     }
 
     private static Resultado<ModeloBriefing> Montar(
-        string contaId,
+        Guid contaId,
         Guid id,
         SalvarBriefing pedido,
         DateTimeOffset criadoEm,

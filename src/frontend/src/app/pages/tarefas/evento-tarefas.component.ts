@@ -1,3 +1,4 @@
+import { ExpandirTodosComponent } from '../../shared/expandir-todos.component';
 import { Component, computed, inject, input, OnInit, output, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -24,11 +25,12 @@ import { AdicionarTarefasEmMassaDialog } from './adicionar-tarefas-em-massa.dial
 import { exibirPrazoRelativo } from '../../shared/prazo-modelo';
 import { TarefaLeituraDialog } from './tarefa-leitura.dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { Estado } from '../../shared/estado';
 
 /** Tarefas do evento dentro do Resumo (SPEC-051): lista agrupada pela distância até o evento, com todas as ações (SPEC-003 v4). */
 @Component({
   selector: 'app-evento-tarefas',
-  imports: [MatCardModule, MatButtonModule, MatIconModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule, GdDataPipe, ChecklistTarefaComponent, MatTooltipModule],
+  imports: [ExpandirTodosComponent, MatCardModule, MatButtonModule, MatIconModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule, GdDataPipe, ChecklistTarefaComponent, MatTooltipModule, Estado],
   template: `
     <mat-card class="cardWithShadow" id="tarefas-do-evento">
     <div class="p-6 flex flex-wrap items-center justify-between gap-4">
@@ -108,9 +110,15 @@ import { MatTooltipModule } from '@angular/material/tooltip';
             }
             <span class="text-sm text-muted mb-2.5 ml-auto">{{ plural(visiveisEvento().length, 'tarefa encontrada', 'tarefas encontradas') }}</span>
         </div>
-        @if (secoesEvento().length === 0) {
-          <p class="text-center text-muted py-10">Não há tarefa para mostrar.</p>
+        @if (!carregado()) {
+          <app-estado titulo="Carregando…" />
+        } @else if (secoesEvento().length === 0) {
+          <app-estado [titulo]="tarefas().length === 0 ? 'Nenhuma tarefa ainda' : 'Nada encontrado'" [texto]="tarefas().length === 0 ? undefined : 'Mude a busca ou os filtros.'" />
         } @else {
+          <app-expandir-todos [abertos]="todosGruposAbertos()" (alternar)="alternarTodosGrupos()">
+            {{ secoesEvento().length }} {{ secoesEvento().length === 1 ? 'grupo' : 'grupos' }} ·
+            {{ plural(visiveisEvento().length, 'tarefa', 'tarefas') }}
+          </app-expandir-todos>
           <div class="relative">
             <table class="tabela agrupada">
               <thead>
@@ -125,13 +133,13 @@ import { MatTooltipModule } from '@angular/material/tooltip';
               </thead>
               @for (secao of secoesEvento(); track secao.id) {
                 <tbody>
-                  <tr class="cabeca-grupo" (click)="alternarGrupo(secao.id)">
+                  <tr class="cabeca-grupo grupo" [class.aberto]="!grupoFechado(secao.id)" (click)="alternarGrupo(secao.id)">
                     <td colspan="6">
-                      <button type="button" class="botao-grupo" [attr.aria-expanded]="!grupoFechado(secao.id)">
-                        <span class="nome-grupo">{{ secao.rotulo }}</span>
+                      <button type="button" class="grupo-cabecalho" [attr.aria-expanded]="!grupoFechado(secao.id)">
+                        <mat-icon class="seta">expand_more</mat-icon>
+                        <span class="grupo-texto nome-grupo">{{ secao.rotulo }}</span>
                         <span class="contagem-grupo">
                           {{ plural(secao.tarefas.length, 'tarefa', 'tarefas') }}
-                          <mat-icon>{{ grupoFechado(secao.id) ? 'expand_more' : 'expand_less' }}</mat-icon>
                         </span>
                       </button>
                     </td>
@@ -212,9 +220,9 @@ import { MatTooltipModule } from '@angular/material/tooltip';
   styles: `
     tr { cursor: pointer; }
     .coluna-expandir { width: 40px; padding-right: 0 !important; }
-    .seta { width: 32px; height: 32px; padding: 4px; color: var(--mat-sys-surface-container-lowest); }
-    .seta mat-icon { transition: transform 0.15s; }
-    .seta.aberta mat-icon { transform: rotate(90deg); }
+    button.seta { width: 32px; height: 32px; padding: 4px; color: var(--mat-sys-surface-container-lowest); }
+    button.seta mat-icon { transition: transform 0.15s; }
+    button.seta.aberta mat-icon { transform: rotate(90deg); }
     .progresso { display: inline-flex; align-items: center; gap: 2px; vertical-align: middle; }
     .progresso mat-icon { font-size: 14px; width: 14px; height: 14px; }
     tr.com-detalhe td { border-bottom-color: transparent !important; }
@@ -224,10 +232,8 @@ import { MatTooltipModule } from '@angular/material/tooltip';
     td.detalhe { padding: 0 0 12px 40px !important; }
     .agrupada tr.cabeca-grupo td { padding: 0 !important; background: color-mix(in oklab, var(--mat-sys-surface-bright) 60%, transparent); border-bottom: 1px solid var(--mat-sys-outline-variant); }
     .agrupada tr.cabeca-grupo:hover td { background: var(--mat-sys-surface-bright) !important; }
-    .botao-grupo { display: flex; width: 100%; align-items: center; justify-content: space-between; padding: 10px 12px; border: 0; background: transparent; color: var(--mat-sys-on-background); font: inherit; cursor: pointer; }
     .nome-grupo { font-size: 13px; font-weight: 600; letter-spacing: 0.02em; text-transform: uppercase; }
     .contagem-grupo { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--mat-sys-surface-container-lowest); }
-    .contagem-grupo mat-icon { font-size: 18px; width: 18px; height: 18px; }
     .titulo-tarefa { display: flex; align-items: flex-start; gap: 10px; }
     .titulo-tarefa .concluir { flex-shrink: 0; margin: -10px -6px -10px -10px; }
     .titulo-tarefa.concluida .texto-tarefa { color: var(--mat-sys-surface-container-lowest); text-decoration: line-through; }
@@ -251,6 +257,7 @@ export class EventoTarefasComponent implements OnInit {
   protected readonly situacoes = SITUACOES_TAREFA;
   protected readonly papeis = signal<OpcaoResponsavel[]>(opcoesResponsavel([], this.auth.ehAssistente() ? 'Dona da conta' : 'Eu'));
   protected readonly tarefas = signal<Tarefa[]>([]);
+  protected readonly carregado = signal(false);
   protected readonly podeEditar = signal(false);
   protected readonly somenteAtrasadas = signal(false);
   protected readonly dataEvento = signal<string | null>(null);
@@ -350,6 +357,12 @@ export class EventoTarefasComponent implements OnInit {
     return 'alerta';
   }
 
+  protected readonly todosGruposAbertos = computed(() => this.secoesEvento().every((secao) => !this.gruposFechados().has(secao.id)));
+
+  protected alternarTodosGrupos(): void {
+    this.gruposFechados.set(this.todosGruposAbertos() ? new Set(this.secoesEvento().map((secao) => secao.id)) : new Set());
+  }
+
   protected grupoFechado(id: string): boolean {
     return this.gruposFechados().has(id);
   }
@@ -444,7 +457,7 @@ export class EventoTarefasComponent implements OnInit {
   protected excluir(): void {
     this.dialog.open(ConfirmaDialog, {
       ...DIALOG_PEQUENO,
-      data: { titulo: 'Excluir tarefa', texto: 'Confirma a exclusão desta tarefa?', confirmar: 'Excluir' },
+      data: { titulo: 'Excluir tarefa', texto: 'Confirma a exclusão desta tarefa?', confirmar: 'Excluir', destrutivo: true },
     }).afterClosed().subscribe((confirmou) => {
       if (confirmou) this.toast.erro('A exclusão ainda não está disponível neste fluxo.');
     });
@@ -454,9 +467,10 @@ export class EventoTarefasComponent implements OnInit {
     this.negocio.tarefasDoEvento(this.eventoId()).subscribe({
       next: (tarefas) => {
         this.tarefas.set(tarefas);
+        this.carregado.set(true);
         this.mudou.emit();
       },
-      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+      error: (erro: unknown) => { this.carregado.set(true); this.toast.erro(mensagemDeErro(erro)); },
     });
   }
 }

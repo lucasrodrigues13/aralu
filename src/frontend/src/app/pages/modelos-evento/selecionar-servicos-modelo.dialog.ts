@@ -9,6 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { NegocioClient, ServicoConta } from '../../core/negocio.client';
 import { CampoDinheiroComponent } from '../../shared/campo-dinheiro';
+import { FecharModal } from '../../shared/fechar-modal';
 
 export interface SelecionarServicosDados {
   /** Nomes já presentes no checklist do modelo; ficam desabilitados. */
@@ -24,9 +25,9 @@ export interface ServicoEscolhido {
 /** Escolhe vários serviços do cadastro de uma vez e já informa o valor estimado de cada um. */
 @Component({
   selector: 'app-selecionar-servicos-modelo',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatCheckboxModule, MatFormFieldModule, MatInputModule, MatIconModule, CampoDinheiroComponent],
+  imports: [FecharModal, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatCheckboxModule, MatFormFieldModule, MatInputModule, MatIconModule, CampoDinheiroComponent],
   template: `
-    <h2 mat-dialog-title>Adicionar serviços</h2>
+    <h2 mat-dialog-title>Adicionar serviços <app-fechar-modal /></h2>
     <p class="text-muted text-sm px-6 -mt-2 mb-4">Marque os serviços do seu cadastro e, se quiser, já informe o valor estimado de cada um.</p>
     <mat-dialog-content>
       <mat-form-field appearance="outline" class="w-full">

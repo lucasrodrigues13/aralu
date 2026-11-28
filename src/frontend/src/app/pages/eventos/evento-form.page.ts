@@ -22,6 +22,7 @@ import { grupoLocal, localPedido, LocalCamposComponent } from '../../shared/loca
 import { aplicarMascara, horaParaApi } from '../../shared/mascaras';
 import { MoverPrazosDialog } from './mover-prazos.dialog';
 import { nomesDosNoivos } from './noivos-do-evento';
+import { FecharModal } from '../../shared/fechar-modal';
 
 type LocalDoEvento = { nome: string | null; pais: string | null; cep: string | null; endereco: string | null; numero: string | null; estado: string | null; cidade: string | null; bairro: string | null };
 
@@ -31,9 +32,9 @@ export interface EventoFormDados {
 
 @Component({
   selector: 'app-evento-form',
-  imports: [ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule, MatTabsModule, MatDialogModule, CampoDataComponent, CampoHoraComponent, CampoDinheiroComponent, LocalCamposComponent],
+  imports: [FecharModal, ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule, MatTabsModule, MatDialogModule, CampoDataComponent, CampoHoraComponent, CampoDinheiroComponent, LocalCamposComponent],
   template: `
-    <h2 mat-dialog-title>Editar evento</h2>
+    <h2 mat-dialog-title>Editar evento <app-fechar-modal /></h2>
     <p class="text-muted text-sm px-6 -mt-2 mb-4">Informações, detalhes e locais do evento.</p>
     <mat-dialog-content>
       <form id="evento-form" [formGroup]="formulario" (ngSubmit)="salvar()">
@@ -122,7 +123,7 @@ export interface EventoFormDados {
           </mat-tab-group>
       </form>
     </mat-dialog-content>
-    <mat-dialog-actions>
+    <mat-dialog-actions align="end">
       <button mat-stroked-button type="button" mat-dialog-close>Cancelar</button>
       <button mat-flat-button type="submit" form="evento-form">Salvar evento</button>
     </mat-dialog-actions>

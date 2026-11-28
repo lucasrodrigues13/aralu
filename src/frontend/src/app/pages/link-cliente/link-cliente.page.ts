@@ -1,3 +1,4 @@
+import { ExpandirTodosComponent } from '../../shared/expandir-todos.component';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -17,7 +18,6 @@ import { ConviteFormDados, ConviteFormDialog } from '../../shared/convite-form.d
 import { contarPorSituacao, dadosPreenchidos, filtrarConvites, FiltroDeConvites, prazoEncerrado, resumoDosConvidados } from '../../shared/convite-lista';
 import { ConvidadosTopoComponent } from '../../shared/convidados-topo.component';
 import { DADOS_ENVIO, DADOS_PRAZO, DataConvitesDialog } from '../../shared/data-convites.dialog';
-import { PlanilhaInstrucoesDados, PlanilhaInstrucoesDialog } from '../../shared/planilha-instrucoes.dialog';
 import { PresencasDialog } from '../../shared/presencas.dialog';
 import { ImportacoesDados, ImportacoesDialog } from '../../shared/importacoes.dialog';
 import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
@@ -28,32 +28,30 @@ import { ComprovanteDialog } from '../dinheiro/comprovante.dialog';
 import { pagamentosPorMes } from '../dinheiro/pagamentos-por-mes';
 import { ParcelarPagamentoDialog } from '../dinheiro/parcelar-pagamento.dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { HttpErrorResponse } from '@angular/common/http';
+import { AcessoLinkComponent } from './acesso-link.component';
+import { Estado } from '../../shared/estado';
+import { PaginaPublica } from '../../shared/pagina-publica';
 
 /** Página do cliente, sem login (SPEC-046): acompanha e atualiza o financeiro do evento quando a organizadora libera. */
 @Component({
   selector: 'app-cliente',
-  imports: [MatCardModule, MatButtonModule, MatCheckboxModule, MatIconModule, MatTabsModule, GdDataPipe, GdDinheiroPipe, ConvidadosTopoComponent, MatTooltipModule],
+  imports: [ExpandirTodosComponent, MatCardModule, MatButtonModule, MatCheckboxModule, MatIconModule, MatTabsModule, GdDataPipe, GdDinheiroPipe, ConvidadosTopoComponent, MatTooltipModule, AcessoLinkComponent, Estado, PaginaPublica],
   template: `
-    <main class="pagina">
+    <app-pagina-publica [titulo]="titulo()" [subtitulo]="subtitulo()">
       @if (carregando()) {
-        <p class="text-xs text-muted">Carregando…</p>
+        <mat-card class="cardWithShadow"><mat-card-content><app-estado titulo="Carregando…" /></mat-card-content></mat-card>
       } @else if (indisponivel()) {
-        <mat-card class="cardWithShadow"><mat-card-content class="aviso">
-          <mat-icon>link_off</mat-icon>
-          <h1>Este link não está mais disponível</h1>
-          <p class="text-muted">Peça um novo link à organizadora do seu evento.</p>
+        <mat-card class="cardWithShadow"><mat-card-content>
+          <app-estado icone="link_off" titulo="Este link não está mais disponível" texto="Fale com a assessoria." />
         </mat-card-content></mat-card>
+      } @else if (pedeCodigo()) {
+        <app-acesso-link [token]="token" (aberto)="carregar()" />
       } @else if (dados(); as d) {
-        <header class="topo">
-          <h1>{{ d.evento }}</h1>
-          @if (d.data) { <span class="text-sm text-muted">{{ d.data | gdData }}</span> }
-        </header>
-
         @if (!d.financeiro && !d.convites) {
           @if (!d.convidadosLiberado) {
-            <mat-card class="cardWithShadow"><mat-card-content class="aviso">
-              <mat-icon>lock</mat-icon>
-              <p>A organizadora ainda não liberou o financeiro nem o cadastro de convidados deste evento.</p>
+            <mat-card class="cardWithShadow"><mat-card-content>
+              <app-estado icone="lock" titulo="A organizadora ainda não liberou o financeiro nem o cadastro de convidados deste evento." />
             </mat-card-content></mat-card>
           }
         } @else {
@@ -67,7 +65,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
                 </mat-card-content></mat-card>
 
                 @if (d.financeiro.pagamentosFornecedores.length === 0) {
-                  <p class="text-center text-muted py-10">Nenhum pagamento ainda. Eles aparecem quando a organizadora contrata um fornecedor.</p>
+                  <app-estado titulo="Nenhum pagamento ainda" texto="Eles aparecem quando a organizadora contrata um fornecedor." />
                 }
                 @for (grupo of grupos(); track grupo.chave) {
                   <h2 class="mes">{{ grupo.mes }} · {{ grupo.total | gdDinheiro }}</h2>
@@ -141,12 +139,16 @@ import { MatTooltipModule } from '@angular/material/tooltip';
                   (envio)="abrirEnvio(d.dataEnvioConvites)"
                   (prazo)="abrirPrazo(d.prazoRsvp)"
                   (presencas)="abrirPresencas()"
-                  (planilha)="abrirPlanilha()"
                   (importar)="abrirImportacoes()">
                 @if (convites.length === 0) {
-                  <p class="text-center text-muted py-6">Nenhum convite ainda. Use "Novo convite" para cadastrar quem vai receber.</p>
+                  <app-estado titulo="Nenhum convite ainda" texto="Use &quot;Novo convite&quot; para cadastrar quem vai receber." />
                 } @else if (convitesFiltrados().length === 0) {
-                  <p class="text-center text-muted py-6">Nenhum convite com estes filtros.</p>
+                  <app-estado titulo="Nada encontrado" texto="Mude a busca ou os filtros." />
+                }
+                @if (convitesFiltrados().length > 0) {
+                  <app-expandir-todos class="mb-3 rounded-lg! border-b!" [abertos]="todosAbertos()" (alternar)="alternarTodos()">
+                    {{ convitesFiltrados().length }} {{ convitesFiltrados().length === 1 ? 'convite' : 'convites' }}
+                  </app-expandir-todos>
                 }
                 @for (convite of convitesFiltrados(); track convite.id) {
                   <mat-card class="cardWithShadow"><mat-card-content>
@@ -174,15 +176,9 @@ import { MatTooltipModule } from '@angular/material/tooltip';
           </mat-tab-group>
         }
       }
-    </main>
+    </app-pagina-publica>
   `,
   styles: `
-    :host { display: block; min-height: 100vh; background: var(--mat-sys-background); }
-    .pagina { max-width: 760px; margin: 0 auto; padding: 24px 16px 48px; display: grid; gap: 12px; }
-    .topo { border-bottom: 1px solid var(--mat-sys-outline-variant); padding-bottom: 12px; }
-    h1 { font-size: 22px; margin: 0; overflow-wrap: anywhere; }
-    .aviso { text-align: center; padding: 32px 16px; }
-    .aviso mat-icon { font-size: 40px; width: 40px; height: 40px; color: var(--mat-sys-outline); }
     .resumo mat-card-content { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; text-align: center; }
     .rotulo { display: block; font-size: 12px; color: var(--mat-sys-outline); }
     .aba { display: grid; gap: 12px; padding-top: 16px; }
@@ -217,17 +213,33 @@ export class LinkClientePage implements OnInit {
   protected readonly carregando = signal(true);
   protected readonly indisponivel = signal(false);
   protected readonly grupos = computed(() => pagamentosPorMes(this.dados()?.financeiro?.pagamentosFornecedores ?? []));
-  private token = '';
+  /** Sem sessão do link: pede o código enviado ao e-mail do cliente (SPEC-063). */
+  protected readonly pedeCodigo = signal(false);
+  protected token = '';
+  private readonly dataPipe = new GdDataPipe();
+  private readonly aberta = computed(() => (this.carregando() || this.indisponivel() || this.pedeCodigo() ? null : this.dados()));
+  protected readonly titulo = computed(() => this.aberta()?.evento);
+  protected readonly subtitulo = computed(() => {
+    const d = this.aberta();
+    return d?.data ? this.dataPipe.transform(d.data) : undefined;
+  });
 
   ngOnInit(): void {
     this.token = this.rota.snapshot.paramMap.get('token') ?? '';
+    this.carregar();
+  }
+
+  protected carregar(): void {
+    this.carregando.set(true);
     this.cliente.obter(this.token).subscribe({
       next: (dados) => {
         this.dados.set(dados);
+        this.pedeCodigo.set(false);
         this.carregando.set(false);
       },
-      error: () => {
-        this.indisponivel.set(true);
+      error: (erro: unknown) => {
+        if (sessaoVencida(erro)) this.pedeCodigo.set(true);
+        else this.indisponivel.set(true);
         this.carregando.set(false);
       },
     });
@@ -254,20 +266,25 @@ export class LinkClientePage implements OnInit {
     });
   }
 
-  protected abrirPlanilha(): void {
-    const dados: PlanilhaInstrucoesDados = { baixar: () => this.cliente.planilha(this.token) };
-    this.dialog.open(PlanilhaInstrucoesDialog, { ...DIALOG, data: dados });
-  }
-
   /** Fila de importações (SPEC-059 §6.6); ao fechar depois de uma importação concluída, recarrega a lista. */
   protected abrirImportacoes(): void {
     const dados: ImportacoesDados = {
       listar: () => this.cliente.importacoes(this.token),
       enviar: (arquivo) => this.cliente.importar(this.token, arquivo),
+      baixar: () => this.cliente.planilha(this.token),
     };
     this.dialog.open(ImportacoesDialog, { ...DIALOG, data: dados }).afterClosed().subscribe((importou?: boolean) => {
       if (importou) this.cliente.obter(this.token).subscribe((leitura) => this.dados.set(leitura));
     });
+  }
+
+  protected readonly todosAbertos = computed(() => {
+    const convites = this.convitesFiltrados();
+    return convites.length > 0 && convites.every((convite) => this.abertos().has(convite.id));
+  });
+
+  protected alternarTodos(): void {
+    this.abertos.set(this.todosAbertos() ? new Set() : new Set(this.convitesFiltrados().map((convite) => convite.id)));
   }
 
   protected aberto(id: string): boolean {
@@ -363,7 +380,7 @@ export class LinkClientePage implements OnInit {
   }
 
   private confirmar(titulo: string, texto: string, confirmar: string, acao: () => void): void {
-    this.dialog.open(ConfirmaDialog, { ...DIALOG_PEQUENO, data: { titulo, texto, confirmar } }).afterClosed().subscribe((ok) => {
+    this.dialog.open(ConfirmaDialog, { ...DIALOG_PEQUENO, data: { titulo, texto, confirmar, destrutivo: ['Excluir', 'Remover'].includes(confirmar) } }).afterClosed().subscribe((ok) => {
       if (ok) acao();
     });
   }
@@ -374,9 +391,21 @@ export class LinkClientePage implements OnInit {
         this.dados.set(dados);
         this.toast.sucesso(sucesso);
       },
-      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+      error: (erro: unknown) => {
+        if (sessaoVencida(erro)) {
+          this.dados.set(null);
+          this.pedeCodigo.set(true);
+          return;
+        }
+        this.toast.erro(mensagemDeErro(erro));
+      },
     });
   }
+}
+
+/** 401 nas rotas do link = sessão vencida ou ausente (SPEC-063 §11): volta para o pedido de código. */
+function sessaoVencida(erro: unknown): boolean {
+  return erro instanceof HttpErrorResponse && erro.status === 401;
 }
 
 /** Convite como o cliente vê, no formato do formulário único (SPEC-059). Sem observação: o cliente não a vê. */

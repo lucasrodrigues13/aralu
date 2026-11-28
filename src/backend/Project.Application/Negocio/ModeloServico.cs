@@ -85,14 +85,14 @@ public sealed class ModeloServico(IDados dados)
     public static bool PapelEscolhivel(PapelResponsavel papel) =>
         papel is PapelResponsavel.Organizer or PapelResponsavel.Assistente or PapelResponsavel.Cliente;
 
-    public async Task<IReadOnlyList<ModeloLeitura>> ListarAsync(string contaId, string? nome, CancellationToken ct)
+    public async Task<IReadOnlyList<ModeloLeitura>> ListarAsync(Guid contaId, string? nome, CancellationToken ct)
     {
         var modelos = await dados.ListarModelosAsync(contaId, nome, ct);
         var cadastro = await CadastroAsync(contaId, ct);
         return modelos.Select(modelo => Ler(modelo, cadastro)).ToArray();
     }
 
-    public async Task<Resultado<ModeloLeitura>> ObterAsync(string contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<ModeloLeitura>> ObterAsync(Guid contaId, Guid id, CancellationToken ct)
     {
         var modelo = await dados.ObterModeloAsync(contaId, id, ct);
         return modelo is null
@@ -100,7 +100,7 @@ public sealed class ModeloServico(IDados dados)
             : Resultado<ModeloLeitura>.Sucesso(Ler(modelo, await CadastroAsync(contaId, ct)));
     }
 
-    public async Task<Resultado<ModeloLeitura>> CriarAsync(string contaId, NovoModelo pedido, CancellationToken ct)
+    public async Task<Resultado<ModeloLeitura>> CriarAsync(Guid contaId, NovoModelo pedido, CancellationToken ct)
     {
         var nome = Domain.Comum.Texto.Limpo(pedido.Nome);
         if (nome is null)
@@ -135,7 +135,7 @@ public sealed class ModeloServico(IDados dados)
         return Resultado<ModeloLeitura>.Sucesso(Ler(modelo, await CadastroAsync(contaId, ct)));
     }
 
-    public async Task<Resultado<ModeloLeitura>> AtualizarAsync(string contaId, Guid id, AtualizarModelo pedido, CancellationToken ct)
+    public async Task<Resultado<ModeloLeitura>> AtualizarAsync(Guid contaId, Guid id, AtualizarModelo pedido, CancellationToken ct)
     {
         var modelo = await dados.ObterModeloAsync(contaId, id, ct);
         if (modelo is null)
@@ -249,7 +249,7 @@ public sealed class ModeloServico(IDados dados)
         return Resultado<ModeloLeitura>.Sucesso(Ler(atualizado, await CadastroAsync(contaId, ct)));
     }
 
-    public async Task<Resultado<ModeloLeitura>> ClonarAsync(string contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<ModeloLeitura>> ClonarAsync(Guid contaId, Guid id, CancellationToken ct)
     {
         var origem = await dados.ObterModeloAsync(contaId, id, ct);
         if (origem is null)
@@ -305,7 +305,7 @@ public sealed class ModeloServico(IDados dados)
         return Resultado<ModeloLeitura>.Sucesso(Ler(copia, await CadastroAsync(contaId, ct)));
     }
 
-    public async Task<Resultado<bool>> ExcluirAsync(string contaId, Guid id, CancellationToken ct)
+    public async Task<Resultado<bool>> ExcluirAsync(Guid contaId, Guid id, CancellationToken ct)
     {
         var modelo = await dados.ObterModeloAsync(contaId, id, ct);
         if (modelo is null)
@@ -318,7 +318,7 @@ public sealed class ModeloServico(IDados dados)
     }
 
     /// <summary>Serviço do cadastro da conta pelo id; senão pelo nome; senão cadastra (SPEC-012 v3 §8.4).</summary>
-    internal async Task<ServicoConta> GarantirNoCadastroAsync(string contaId, Guid? servicoContaId, string nome, CancellationToken ct)
+    internal async Task<ServicoConta> GarantirNoCadastroAsync(Guid contaId, Guid? servicoContaId, string nome, CancellationToken ct)
     {
         if (servicoContaId is Guid id && await dados.ObterServicoContaAsync(contaId, id, ct) is ServicoConta pelaChave)
         {
@@ -373,7 +373,7 @@ public sealed class ModeloServico(IDados dados)
 
     internal static string Cortar(string titulo) => titulo.Length > MaximoTitulo ? titulo[..MaximoTitulo] : titulo;
 
-    private async Task<IReadOnlyDictionary<Guid, string>> CadastroAsync(string contaId, CancellationToken ct) =>
+    private async Task<IReadOnlyDictionary<Guid, string>> CadastroAsync(Guid contaId, CancellationToken ct) =>
         (await dados.ListarServicosContaAsync(contaId, null, ct)).ToDictionary(servico => servico.Id, servico => servico.Nome);
 
     private static string? ValidarConteudo(AtualizarModelo pedido)

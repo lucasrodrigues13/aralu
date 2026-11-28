@@ -13,6 +13,25 @@ export interface LinkCliente {
   financeiroLiberado: boolean;
   /** O cliente vê e cadastra os convites (SPEC-052). */
   convidadosLiberado: boolean;
+  /** Algum cliente do evento tem e-mail para receber o código (SPEC-063 §7). */
+  clienteComEmail: boolean;
+}
+
+/** E-mail de cliente do evento, mascarado (SPEC-063 R2). */
+export interface EmailDoLink {
+  clienteId: string;
+  email: string;
+}
+
+/** O que a página do link recebe antes do código (SPEC-063 §6.1). */
+export interface AcessoLink {
+  evento: string;
+  emails: EmailDoLink[];
+  sessaoValida: boolean;
+  /** Segundos até poder pedir outro código (0 = já pode). */
+  aguardarSegundos: number;
+  codigoEnviado: boolean;
+  enviadoPara: string | null;
 }
 
 /** Convidado de um convite, como o cliente vê (SPEC-052). */
@@ -89,6 +108,20 @@ export class LinkClienteClient {
   }
 
   // ---- Cliente (sem login) ----
+
+  // Código de acesso (SPEC-063): a sessão volta num cookie do navegador.
+
+  acesso(token: string) {
+    return this.http.get<AcessoLink>(`${this.publico(token)}/acesso`);
+  }
+
+  pedirCodigo(token: string, clienteId: string) {
+    return this.http.post<AcessoLink>(`${this.publico(token)}/acesso/codigo`, { clienteId });
+  }
+
+  confirmarCodigo(token: string, codigo: string) {
+    return this.http.post<{ ok: boolean }>(`${this.publico(token)}/acesso/confirmar`, { codigo });
+  }
 
   obter(token: string) {
     return this.http.get<PaginaClienteLeitura>(this.publico(token));

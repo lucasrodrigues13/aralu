@@ -9,6 +9,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatTableModule } from '@angular/material/table';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import {
@@ -25,13 +26,15 @@ import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { deDataParaIso } from '../../shared/data';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { STATUS } from '../../shared/status';
+import { Estado } from '../../shared/estado';
+import { Paginacao } from '../../shared/paginacao';
 import { EventoFormPage } from './evento-form.page';
 import { NovoEventoDialog } from './novo-evento.dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-eventos',
-  imports: [ReactiveFormsModule, RouterLink, MatButtonModule, MatButtonToggleModule, MatCardModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, MatTableModule, CampoDataComponent, GdDataPipe, MatTooltipModule],
+  imports: [ReactiveFormsModule, RouterLink, MatButtonModule, MatButtonToggleModule, MatCardModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, MatTableModule, MatPaginatorModule, CampoDataComponent, GdDataPipe, MatTooltipModule, Estado],
   template: `
     @if (estatisticas(); as stats) {
       <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 mb-6">
@@ -95,7 +98,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
         </mat-button-toggle-group>
 
         @if (!ehEstatisticas()) {
-          <form class="flex flex-wrap items-end gap-4" [formGroup]="filtro" (ngSubmit)="carregar()">
+          <form class="flex flex-wrap items-end gap-4" [formGroup]="filtro" (ngSubmit)="pagina.inicio(); carregar()">
             <div class="campo w-full sm:w-64">
               <mat-label class="font-semibold mb-2 block">Nome</mat-label>
               <mat-form-field appearance="outline" class="w-full">
@@ -165,7 +168,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
                 <div class="p-4"><mat-card-title>Ranking de orçamento</mat-card-title></div>
                 <mat-card-content class="border-t border-border">
                   @if (stats.rankingOrcamento.length === 0) {
-                    <p class="text-center text-muted py-6">Sem dados.</p>
+                    <app-estado titulo="Sem dados" />
                   } @else {
                     <table mat-table [dataSource]="stats.rankingOrcamento" class="min-w-full">
                       <ng-container matColumnDef="posicao"><th mat-header-cell *matHeaderCellDef class="font-semibold text-sm pl-0!">#</th><td mat-cell *matCellDef="let r" class="pl-0!">{{ r.posicao }}</td></ng-container>
@@ -181,7 +184,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
                 <div class="p-4"><mat-card-title>Fornecedores mais contratados</mat-card-title></div>
                 <mat-card-content class="border-t border-border">
                   @if (stats.rankingFornecedores.length === 0) {
-                    <p class="text-center text-muted py-6">Sem dados.</p>
+                    <app-estado titulo="Sem dados" />
                   } @else {
                     <table mat-table [dataSource]="stats.rankingFornecedores" class="min-w-full">
                       <ng-container matColumnDef="posicao"><th mat-header-cell *matHeaderCellDef class="font-semibold text-sm pl-0!">#</th><td mat-cell *matCellDef="let r" class="pl-0!">{{ r.posicao }}</td></ng-container>
@@ -197,7 +200,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
                 <div class="p-4"><mat-card-title>Serviços mais utilizados</mat-card-title></div>
                 <mat-card-content class="border-t border-border">
                   @if (stats.rankingServicos.length === 0) {
-                    <p class="text-center text-muted py-6">Sem dados.</p>
+                    <app-estado titulo="Sem dados" />
                   } @else {
                     <table mat-table [dataSource]="stats.rankingServicos" class="min-w-full">
                       <ng-container matColumnDef="posicao"><th mat-header-cell *matHeaderCellDef class="font-semibold text-sm pl-0!">#</th><td mat-cell *matCellDef="let r" class="pl-0!">{{ r.posicao }}</td></ng-container>
@@ -211,15 +214,17 @@ import { MatTooltipModule } from '@angular/material/tooltip';
               </mat-card>
             </div>
           }
+        } @else if (!carregado()) {
+          <app-estado titulo="Carregando…" />
         } @else if (eventos().length === 0) {
-          <p class="text-center text-muted py-10">Não há evento para mostrar.</p>
+          <app-estado titulo="Nenhum evento ainda" />
         } @else {
           <div class="relative">
-            <table mat-table [dataSource]="eventos()" class="min-w-full">
+            <table mat-table [dataSource]="pagina.itens()" class="min-w-full">
               <ng-container matColumnDef="nome">
                 <th mat-header-cell *matHeaderCellDef class="font-semibold text-sm pl-0!">Evento</th>
                 <td mat-cell *matCellDef="let evento" class="pl-0! whitespace-nowrap">
-                  <a class="text-sm font-semibold no-underline" [routerLink]="['/eventos', evento.id]">{{ evento.nome }}</a>
+                  <a class="link-nome" [routerLink]="['/eventos', evento.id]">{{ evento.nome }}</a>
                   <span class="block text-xs text-muted">{{ rotuloTipo(evento.tipo) }}</span>
                 </td>
               </ng-container>
@@ -234,7 +239,13 @@ import { MatTooltipModule } from '@angular/material/tooltip';
               </ng-container>
               <ng-container matColumnDef="situacao">
                 <th mat-header-cell *matHeaderCellDef class="font-semibold text-sm">Situação</th>
-                <td mat-cell *matCellDef="let evento" class="whitespace-nowrap"><span [class]="classe(evento.situacao)">{{ rotuloSituacao(evento.situacao) }}</span></td>
+                <td mat-cell *matCellDef="let evento" class="whitespace-nowrap"><span [class]="classe(evento.situacao)">{{ rotuloSituacao(evento.situacao) }}</span>
+                  @if (evento.contratoPendente) {
+                    <span class="ml-2 inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs bg-light-warning text-warning" matTooltip="O contrato do cliente ainda não foi marcado como assinado">
+                      <mat-icon class="text-base! w-4! h-4!">warning</mat-icon>Contrato não assinado
+                    </span>
+                  }
+                </td>
               </ng-container>
               <ng-container matColumnDef="tarefas">
                 <th mat-header-cell *matHeaderCellDef class="font-semibold text-sm">Tarefas</th>
@@ -255,6 +266,9 @@ import { MatTooltipModule } from '@angular/material/tooltip';
               <tr mat-row *matRowDef="let row; columns: colunas"></tr>
             </table>
           </div>
+          <mat-paginator showFirstLastButtons aria-label="Páginas de eventos"
+            [length]="pagina.total()" [pageIndex]="pagina.indice()" [pageSize]="pagina.tamanho()"
+            [pageSizeOptions]="pagina.tamanhos" (page)="pagina.mudar($event)" />
         }
       </mat-card-content>
     </mat-card>
@@ -270,6 +284,8 @@ export class EventosPage implements OnInit {
   protected readonly tipos = TIPOS;
   protected readonly meses = MESES;
   protected readonly eventos = signal<EventoResumo[]>([]);
+  protected readonly pagina = new Paginacao(this.eventos);
+  protected readonly carregado = signal(false);
   protected readonly estatisticas = signal<EstatisticasEventos | null>(null);
   protected readonly abaAtual = signal(0);
   protected readonly colunas = ['nome', 'data', 'situacao', 'tarefas', 'convidados', 'acoes'];
@@ -296,6 +312,7 @@ export class EventosPage implements OnInit {
       const situacao = params.get('situacao') ?? 'EmAndamento';
       const indice = this.abas.findIndex((aba) => aba.valor === situacao);
       this.abaAtual.set(indice >= 0 ? indice : 0);
+      this.pagina.inicio();
       if (this.ehEstatisticas()) {
         this.carregarEstatisticas();
       } else {
@@ -332,7 +349,7 @@ export class EventosPage implements OnInit {
   protected excluir(): void {
     this.dialog.open(ConfirmaDialog, {
       ...DIALOG_PEQUENO,
-      data: { titulo: 'Excluir evento', texto: 'Confirma a exclusão deste evento?', confirmar: 'Excluir' },
+      data: { titulo: 'Excluir evento', texto: 'Confirma a exclusão deste evento?', confirmar: 'Excluir', destrutivo: true },
     }).afterClosed().subscribe((confirmou) => {
       if (confirmou) {
         this.toast.erro('A exclusão ainda não está disponível neste fluxo.');
@@ -342,6 +359,7 @@ export class EventosPage implements OnInit {
 
   protected limparFiltros(): void {
     this.filtro.reset({ nome: '', tipo: '', de: null, ate: null, tag: '' });
+    this.pagina.inicio();
     this.carregar();
   }
 
@@ -355,8 +373,8 @@ export class EventosPage implements OnInit {
       ate: deDataParaIso(valor.ate) ?? '',
       tag: valor.tag ?? '',
     }).subscribe({
-      next: (eventos) => this.eventos.set(eventos),
-      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+      next: (eventos) => { this.eventos.set(eventos); this.carregado.set(true); },
+      error: (erro: unknown) => { this.carregado.set(true); this.toast.erro(mensagemDeErro(erro)); },
     });
   }
 

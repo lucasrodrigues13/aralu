@@ -11,17 +11,19 @@ import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
 import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { AssistenteFormDialog } from './assistente-form.dialog';
+import { Estado } from '../../shared/estado';
+import { STATUS } from '../../shared/status';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
-/** Tela Assistentes (só para a dona): convidar, editar permissões, reenviar, desativar e reativar (SPEC-032 §12). */
+/** Configurações → Assistentes (só o Dono, SPEC-062 §13): convidar Dono ou Membro, mudar tipo e grupo, reenviar, desativar e reativar. */
 @Component({
   selector: 'app-assistentes',
-  imports: [MatCardModule, MatButtonModule, MatIconModule, MatTooltipModule, MatFormFieldModule, MatSelectModule],
+  imports: [MatCardModule, MatButtonModule, MatIconModule, MatTooltipModule, MatFormFieldModule, MatSelectModule, Estado],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6">
         <mat-card-title class="mb-0">Assistentes</mat-card-title>
-        <mat-card-subtitle>Quem trabalha com você, com login próprio.</mat-card-subtitle>
+        <mat-card-subtitle>Donos e membros da conta, cada um com login próprio. O membro acessa o que o grupo dele permite.</mat-card-subtitle>
       </div>
       <mat-card-content class="border-t border-border">
         <div class="barra-lista">
@@ -30,58 +32,58 @@ import { MatTooltipModule } from '@angular/material/tooltip';
               <mat-label class="font-semibold mb-2 block">Situação</mat-label>
               <mat-form-field appearance="outline" class="w-full">
                 <mat-select aria-label="Situação" [value]="filtro()" (valueChange)="filtro.set($event)">
-                  <mat-option value="ativas">Ativas</mat-option>
-                  <mat-option value="inativas">Inativas</mat-option>
+                  <mat-option value="ativas">Ativos</mat-option>
+                  <mat-option value="inativas">Inativos</mat-option>
                 </mat-select>
               </mat-form-field>
             </div>
           </div>
           <div class="barra-lista-acoes">
-            <button mat-flat-button type="button" (click)="convidar()"><mat-icon>person_add</mat-icon> Convidar assistente</button>
+            <button mat-flat-button type="button" (click)="convidar()"><mat-icon>add</mat-icon> Convidar pessoa</button>
           </div>
         </div>
         @if (carregando()) {
-          <p class="text-center text-muted py-10">Carregando...</p>
+          <app-estado titulo="Carregando…" />
         } @else if (itens().length === 0) {
-          <p class="text-center text-muted py-10">Nenhuma assistente ainda. Convide a primeira.</p>
+          <app-estado titulo="Nenhuma pessoa ainda" texto="Convide a primeira pessoa." />
         } @else if (visiveis().length === 0) {
-          <p class="text-center text-muted py-10">{{ filtro() === 'inativas' ? 'Nenhuma assistente com acesso desativado.' : 'Nenhuma assistente ativa.' }}</p>
+          <app-estado titulo="Nada encontrado" texto="Mude a busca ou os filtros." />
         } @else {
           <div>
-            <table class="w-full text-left">
+            <table class="tabela">
               <thead>
-                <tr class="text-muted text-sm">
-                  <th class="py-3 pr-4 font-semibold">Nome</th>
-                  <th class="py-3 pr-4 font-semibold">E-mail</th>
-                  <th class="py-3 pr-4 font-semibold">Situação</th>
-                  <th class="py-3 pr-4 font-semibold">Financeiro</th>
-                  <th class="py-3 pr-4 font-semibold">Eventos</th>
-                  <th class="py-3 font-semibold"><span class="sr-only">Ações</span></th>
+                <tr>
+                  <th>Nome</th>
+                  <th>E-mail</th>
+                  <th>Situação</th>
+                  <th>Tipo</th>
+                  <th>Grupo</th>
+                  <th class="text-end! whitespace-nowrap">Ações</th>
                 </tr>
               </thead>
               <tbody>
                 @for (item of visiveis(); track item.id) {
-                  <tr class="border-t border-border">
-                    <td class="py-3 pr-4">{{ item.nome }}</td>
-                    <td class="py-3 pr-4">{{ item.email }}</td>
-                    <td class="py-3 pr-4">
+                  <tr>
+                    <td><button type="button" class="link-nome" (click)="editar(item)">{{ item.nome }}</button></td>
+                    <td>{{ item.email }}</td>
+                    <td>
                       @switch (item.situacao) {
-                        @case ('Ativa') { <span [class]="selo('success')">Ativa</span> }
-                        @case ('Inativa') { <span [class]="selo('error')">Acesso desativado</span> }
-                        @default { <span [class]="selo('warning')">Convite enviado</span> }
+                        @case ('Ativa') { <span [class]="STATUS.sucesso">Ativa</span> }
+                        @case ('Inativa') { <span [class]="STATUS.erro">Acesso desativado</span> }
+                        @default { <span [class]="STATUS.alerta">Convite enviado</span> }
                       }
                     </td>
-                    <td class="py-3 pr-4">{{ item.podeVerFinanceiro ? 'Sim' : 'Não' }}</td>
-                    <td class="py-3 pr-4">{{ item.somenteDela ? 'Só os dela' : 'Todos' }}</td>
-                    <td class="py-3 whitespace-nowrap text-right">
-                      <button mat-icon-button type="button" [attr.aria-label]="'Editar ' + item.nome" [matTooltip]="'Editar ' + item.nome" (click)="editar(item)"><mat-icon>edit</mat-icon></button>
+                    <td>{{ item.tipo }}</td>
+                    <td>{{ item.grupo ?? "—" }}</td>
+                    <td class="text-end! whitespace-nowrap">
+                      <button mat-icon-button type="button" aria-label="Editar" matTooltip="Editar" (click)="editar(item)"><mat-icon>edit</mat-icon></button>
                       @if (item.situacao === 'Convidada') {
-                        <button mat-icon-button type="button" [attr.aria-label]="'Reenviar convite para ' + item.nome" [matTooltip]="'Reenviar convite para ' + item.nome" (click)="reenviar(item)"><mat-icon>forward_to_inbox</mat-icon></button>
+                        <button mat-icon-button type="button" aria-label="Reenviar convite" matTooltip="Reenviar convite" (click)="reenviar(item)"><mat-icon>forward_to_inbox</mat-icon></button>
                       }
                       @if (item.situacao === 'Inativa') {
-                        <button mat-icon-button type="button" [attr.aria-label]="'Reativar acesso de ' + item.nome" [matTooltip]="'Reativar acesso de ' + item.nome" (click)="reativar(item)"><mat-icon>person_add_alt</mat-icon></button>
+                        <button mat-icon-button type="button" aria-label="Reativar acesso" matTooltip="Reativar acesso" (click)="reativar(item)"><mat-icon>person_add_alt</mat-icon></button>
                       } @else {
-                        <button mat-icon-button type="button" [attr.aria-label]="'Desativar acesso de ' + item.nome" [matTooltip]="'Desativar acesso de ' + item.nome" (click)="desativar(item)"><mat-icon>person_off</mat-icon></button>
+                        <button mat-icon-button type="button" aria-label="Desativar acesso" matTooltip="Desativar acesso" (click)="desativar(item)"><mat-icon>person_off</mat-icon></button>
                       }
                     </td>
                   </tr>
@@ -99,6 +101,7 @@ export class AssistentesPage implements OnInit {
   private readonly dialog = inject(MatDialog);
   private readonly toast = inject(ToastService);
   protected readonly itens = signal<Assistente[]>([]);
+  protected readonly STATUS = STATUS;
   protected readonly carregando = signal(true);
   protected readonly filtro = signal<'ativas' | 'inativas'>('ativas');
   protected readonly visiveis = computed(() =>
@@ -107,10 +110,6 @@ export class AssistentesPage implements OnInit {
 
   ngOnInit(): void {
     this.carregar();
-  }
-
-  protected selo(cor: 'success' | 'warning' | 'error'): string {
-    return `inline-block rounded font-semibold px-2 py-1 text-xs whitespace-nowrap bg-light-${cor} text-${cor}`;
   }
 
   protected convidar(): void {
@@ -157,7 +156,7 @@ export class AssistentesPage implements OnInit {
         data: {
           titulo: 'Desativar acesso',
           texto: `${item.nome} perde o acesso no próximo pedido. O cadastro fica guardado e você pode reativar quando precisar.`,
-          confirmar: 'Desativar acesso',
+          confirmar: 'Desativar acesso', destrutivo: true,
         },
       })
       .afterClosed()

@@ -1,0 +1,27 @@
+# Lote 8 (A08-001): atualizações semanais de actions, imagens (digests) e pacotes, com PR para a staging.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: staging
+    schedule:
+      interval: weekly
+  - package-ecosystem: docker
+    directories:
+      - /src/backend/Project.Api
+      - /src/frontend
+      - /
+      - /deploy/proxy
+    target-branch: staging
+    schedule:
+      interval: weekly
+  - package-ecosystem: npm
+    directory: /src/frontend
+    target-branch: staging
+    schedule:
+      interval: weekly
+  - package-ecosystem: nuget
+    directory: /src/backend
+    target-branch: staging
+    schedule:
+      interval: weekly

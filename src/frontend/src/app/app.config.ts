@@ -12,6 +12,8 @@ import { MAT_DIALOG_DEFAULT_OPTIONS } from '@angular/material/dialog';
 import { MAT_BUTTON_TOGGLE_DEFAULT_OPTIONS } from '@angular/material/button-toggle';
 import { MAT_TABS_CONFIG } from '@angular/material/tabs';
 import { DIALOG } from './shared/dialog';
+import { MatPaginatorIntl } from '@angular/material/paginator';
+import { PaginadorPtBr } from './shared/paginacao';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -34,5 +36,7 @@ export const appConfig: ApplicationConfig = {
     { provide: MAT_TABS_CONFIG, useValue: { stretchTabs: false, alignTabs: 'start' } },
     // Todo modal usa a mesma casca (docs/design-system.md).
     { provide: MAT_DIALOG_DEFAULT_OPTIONS, useValue: { ...DIALOG, hasBackdrop: true } },
+    // Paginação padrão em português (docs/design-system.md, "Paginação").
+    { provide: MatPaginatorIntl, useClass: PaginadorPtBr },
   ],
 };

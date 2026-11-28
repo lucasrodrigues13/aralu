@@ -7,6 +7,8 @@
 #   SSH_USER          usuário SSH, em geral root
 #   SSH_PRIVATE_KEY   chave privada inteira, com as linhas BEGIN e END
 #   SSH_PORT          opcional; se vazio, usa 22
+#   SSH_KNOWN_HOSTS   OBRIGATÓRIO: saída de `ssh-keyscan -p <porta> <IP>`, conferida na VPS com
+#                     `ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub`. Sem ele o deploy falha.
 
 name: Deploy
 
@@ -24,11 +26,35 @@ permissions:
   contents: read
 
 jobs:
+  # Auditoria de dependências (A03/A08). Por enquanto só informativa; depois de zerada, tirar o continue-on-error.
+  audit:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
+
+      - name: npm audit (frontend)
+        working-directory: src/frontend
+        run: npm audit --omit=dev --audit-level=high
+
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1  # v5.4.0
+        if: always()
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Pacotes NuGet vulneráveis (backend)
+        if: always()
+        run: |
+          dotnet restore src/backend/aralu.slnx --locked-mode
+          dotnet list src/backend/aralu.slnx package --vulnerable --include-transitive 2>&1 | tee audit-nuget.txt
+          if grep -q "has the following vulnerable packages" audit-nuget.txt; then exit 1; fi
+
   deploy:
+    needs: audit
     if: github.ref_name == 'main' || github.ref_name == 'staging'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
 
       - name: Publicar na VPS
         env:
@@ -36,11 +62,12 @@ jobs:
           SSH_USER: ${{ secrets.SSH_USER }}
           SSH_PORT: ${{ secrets.SSH_PORT }}
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
           BRANCH: ${{ github.ref_name }}
         run: |
           set -euo pipefail
-          if [ -z "${SSH_HOST}" ] || [ -z "${SSH_USER}" ] || [ -z "${SSH_PRIVATE_KEY}" ]; then
-            echo "Cadastre SSH_HOST, SSH_USER e SSH_PRIVATE_KEY nos segredos do repositório."
+          if [ -z "${SSH_HOST}" ] || [ -z "${SSH_USER}" ] || [ -z "${SSH_PRIVATE_KEY}" ] || [ -z "${SSH_KNOWN_HOSTS}" ]; then
+            echo "Cadastre SSH_HOST, SSH_USER, SSH_PRIVATE_KEY e SSH_KNOWN_HOSTS nos segredos do repositório."
             exit 1
           fi
           if [ "$BRANCH" = "main" ]; then
@@ -54,7 +81,9 @@ jobs:
           install -m 700 -d ~/.ssh
           printf '%s\n' "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/aralu_deploy
           chmod 600 ~/.ssh/aralu_deploy
-          ssh-keyscan -p "$port" -H "$SSH_HOST" >> ~/.ssh/known_hosts
+          # Chave do host vem de secret conferido na VPS, e não de ssh-keyscan na hora do deploy (evita MITM).
+          printf '%s\n' "$SSH_KNOWN_HOSTS" | tr -d '\r' > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
           destino="${SSH_USER}@${SSH_HOST}"
           ssh_base="ssh -i ${HOME}/.ssh/aralu_deploy -p ${port} -o StrictHostKeyChecking=yes -o ConnectTimeout=20 -o ServerAliveInterval=30"
           $ssh_base "$destino" "mkdir -p ${dir}"

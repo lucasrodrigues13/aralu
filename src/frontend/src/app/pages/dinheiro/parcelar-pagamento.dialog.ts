@@ -11,13 +11,14 @@ import { CampoDataComponent } from '../../shared/campo-data';
 import { CampoDinheiroComponent } from '../../shared/campo-dinheiro';
 import { deDataParaIso } from '../../shared/data';
 import { GdDinheiroPipe } from '../../shared/gd-dinheiro.pipe';
+import { FecharModal } from '../../shared/fechar-modal';
 
 /** Parcelamento do pagamento a fornecedor (SPEC-043 §6.2): N parcelas mensais, com entrada opcional. O total é o valor contratado. */
 @Component({
   selector: 'app-parcelar-pagamento-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule, MatSelectModule, CampoDataComponent, CampoDinheiroComponent, GdDinheiroPipe],
+  imports: [FecharModal, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule, MatSelectModule, CampoDataComponent, CampoDinheiroComponent, GdDinheiroPipe],
   template: `
-    <h2 mat-dialog-title>{{ dados.parcelas.length ? 'Refazer parcelamento' : 'Parcelar pagamento' }}</h2>
+    <h2 mat-dialog-title>{{ dados.parcelas.length ? 'Refazer parcelamento' : 'Parcelar pagamento' }} <app-fechar-modal /></h2>
     <p class="text-muted text-sm px-6 -mt-2 mb-4">
       {{ dados.servico }}{{ dados.fornecedor ? " · " + dados.fornecedor : "" }}. O total é o valor contratado ({{ dados.valor | gdDinheiro }}).
     </p>

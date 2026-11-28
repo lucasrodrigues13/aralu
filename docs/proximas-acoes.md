@@ -59,6 +59,16 @@ Efeitos colaterais a considerar:
 
 Menores: o token fica no `sessionStorage` e não há CSP no deploy (um XSS leria o token). Uploads aceitam 50 MB por request, sem rate limit nas rotas autenticadas.
 
+### 0.4.2 Pendências da padronização de interface (27/11/2026)
+
+Sobraram da padronização de UI (fases 1 a 8, já na `staging`). Cada item é uma tarefa própria.
+
+- [ ] **Nome da assessoria nas telas públicas.** RSVP, lead, link do cliente e portaria não mostram a empresa porque a API não devolve `empresa` nessas rotas. Precisa de mudança no backend e de spec.
+- [ ] **Exclusões sem confirmação.** Conferir, uma a uma, se os botões de remover em `fornecedor-form.dialog.ts`, `tarefa-form.dialog.ts`, `tarefa-leitura.dialog.ts`, `convite-form.dialog.ts`, `perfil.page.ts`, `estagios-funil.dialog.ts` e nos editores de briefing, roteiro e cronograma chamam a API na hora. Regra: se apaga na hora, pede confirmação; se só tira da lista até o Salvar, não pede.
+- [ ] **Paginação** em convidados e gestão financeira.
+- [ ] **Dividir arquivos com vários modais dentro da página** (`contratos.page.ts`, `oportunidades.page.ts`, `orcamentos-funil.page.ts`) em arquivos `*.dialog.ts`.
+- [ ] **Conferência visual das fases 1 a 8** no navegador (claro e escuro, computador e 375px; telas públicas só no claro). Não foi feita durante a execução.
+
 ### 0.5 Anterior a 22/11
 
 ## 0-antigo. Próxima tarefa (atualizada em 20/11/2026)

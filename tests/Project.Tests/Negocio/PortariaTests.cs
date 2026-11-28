@@ -6,19 +6,18 @@ using Project.Domain.Eventos;
 
 namespace Project.Tests.Negocio;
 
-/// <summary>Regras da portaria (SPEC-058): link, QR de entrada, lista completa e marcação de quem compareceu.</summary>
+/// <summary>Regras da portaria (SPEC-058): QR de entrada, lista completa e marcação de quem compareceu.</summary>
 public class PortariaTests
 {
     private static readonly Guid EventoId = Guid.NewGuid();
-    private const string Conta = "conta-1";
+    private static readonly Guid Conta = Guid.Parse("11111111-1111-1111-1111-111111111111");
+    private static readonly Guid OutraConta = Guid.Parse("99999999-9999-9999-9999-999999999999");
     private static readonly DateTimeOffset Agora = new(2026, 11, 21, 20, 0, 0, TimeSpan.Zero);
 
-    private static async Task<(PortariaServico Servico, DadosFalsos Dados, string Token)> CriarAsync()
+    private static (PortariaServico Servico, DadosFalsos Dados, string Token) CriarAsync()
     {
         var dados = new DadosFalsos();
-        var servico = new PortariaServico(dados, new QrFalso());
-        var token = (await servico.GerarAsync(Conta, EventoId, Agora, default)).Valor!.Token!;
-        return (servico, dados, token);
+        return (new PortariaServico(dados, new QrFalso()), dados, "");
     }
 
     private static Convite NovoConvite(DadosFalsos dados, string nome, params SituacaoConvidado[] situacoes)
@@ -40,52 +39,24 @@ public class PortariaTests
     }
 
     [Fact]
-    public async Task Gerar_de_novo_troca_o_codigo_e_desativar_apaga_o_link()
+    public async Task Evento_de_outra_conta_e_indisponivel()
     {
-        var (servico, _, primeiro) = await CriarAsync();
+        var (servico, _, _) = CriarAsync();
 
-        var segundo = (await servico.GerarAsync(Conta, EventoId, Agora, default)).Valor!.Token!;
-
-        Assert.NotEqual(primeiro, segundo);
-        Assert.Equal(Codigos.Indisponivel, (await servico.LerAsync(primeiro, default)).Falha!.Codigo);
-        Assert.True((await servico.LerAsync(segundo, default)).Ok);
-
-        var desativado = await servico.DesativarAsync(Conta, EventoId, default);
-
-        Assert.False(desativado.Valor!.Ativo);
-        Assert.Equal(Codigos.Indisponivel, (await servico.LerAsync(segundo, default)).Falha!.Codigo);
-    }
-
-    [Fact]
-    public async Task Outra_conta_nao_gerencia_o_link()
-    {
-        var (servico, _, _) = await CriarAsync();
-
-        Assert.Equal(Codigos.Indisponivel, (await servico.GerarAsync("outra", EventoId, Agora, default)).Falha!.Codigo);
-        Assert.Equal(Codigos.Indisponivel, (await servico.ObterAsync("outra", EventoId, default)).Falha!.Codigo);
-        Assert.Equal(Codigos.Indisponivel, (await servico.DesativarAsync("outra", EventoId, default)).Falha!.Codigo);
-    }
-
-    [Fact]
-    public async Task Link_desconhecido_ou_vazio_e_indisponivel()
-    {
-        var (servico, _, _) = await CriarAsync();
-
-        Assert.Equal(Codigos.Indisponivel, (await servico.LerAsync("nao-existe", default)).Falha!.Codigo);
-        Assert.Equal(Codigos.Indisponivel, (await servico.LerAsync("", default)).Falha!.Codigo);
-        Assert.Equal(Codigos.Indisponivel, (await servico.MarcarComparecimentoAsync("nao-existe", Guid.NewGuid(), new ComparecimentoPedido([]), Agora, default)).Falha!.Codigo);
+        Assert.Equal(Codigos.Indisponivel, (await servico.LerAsync(OutraConta, EventoId, default)).Falha!.Codigo);
+        Assert.Equal(Codigos.Indisponivel, (await servico.MarcarComparecimentoAsync(OutraConta, EventoId, Guid.NewGuid(), new ComparecimentoPedido([]), Agora, default)).Falha!.Codigo);
     }
 
     [Fact]
     public async Task Lista_traz_so_convites_com_confirmados_e_os_totais()
     {
-        var (servico, dados, token) = await CriarAsync();
+        var (servico, dados, token) = CriarAsync();
         NovoConvite(dados, "Silva", SituacaoConvidado.Confirmado, SituacaoConvidado.Confirmado, SituacaoConvidado.NaoComparecera);
         NovoConvite(dados, "Souza", SituacaoConvidado.Pendente);
         var presenca = dados.Presencas[0];
         presenca.CompareceuEm = Agora;
 
-        var lista = (await servico.LerAsync(token, default)).Valor!;
+        var lista = (await servico.LerAsync(Conta, EventoId, default)).Valor!;
 
         Assert.Equal("Casamento", lista.Evento);
         var convite = Assert.Single(lista.Convites);
@@ -98,11 +69,11 @@ public class PortariaTests
     [Fact]
     public async Task Qr_do_convite_abre_o_convite_com_e_sem_prefixo()
     {
-        var (servico, dados, token) = await CriarAsync();
+        var (servico, dados, token) = CriarAsync();
         var convite = NovoConvite(dados, "Silva", SituacaoConvidado.Confirmado);
 
-        var comPrefixo = await servico.LerConviteDoQrAsync(token, PortariaServico.PrefixoQr + convite.Token, default);
-        var semPrefixo = await servico.LerConviteDoQrAsync(token, convite.Token, default);
+        var comPrefixo = await servico.LerConviteDoQrAsync(Conta, EventoId, PortariaServico.PrefixoQr + convite.Token, default);
+        var semPrefixo = await servico.LerConviteDoQrAsync(Conta, EventoId, convite.Token, default);
 
         Assert.Equal(convite.Id, comPrefixo.Valor!.Id);
         Assert.Equal(convite.Id, semPrefixo.Valor!.Id);
@@ -111,45 +82,56 @@ public class PortariaTests
     [Fact]
     public async Task Qr_de_outro_evento_ou_sem_confirmados_ou_invalido_e_indisponivel()
     {
-        var (servico, dados, token) = await CriarAsync();
+        var (servico, dados, token) = CriarAsync();
         var outroEvento = NovoConvite(dados, "Outro", SituacaoConvidado.Confirmado);
         outroEvento.EventoId = Guid.NewGuid();
         var semConfirmado = NovoConvite(dados, "Pendente", SituacaoConvidado.Pendente);
 
-        Assert.Equal(Codigos.Indisponivel, (await servico.LerConviteDoQrAsync(token, outroEvento.Token, default)).Falha!.Codigo);
-        Assert.Equal(Codigos.Indisponivel, (await servico.LerConviteDoQrAsync(token, semConfirmado.Token, default)).Falha!.Codigo);
-        Assert.Equal(Codigos.Indisponivel, (await servico.LerConviteDoQrAsync(token, "lixo", default)).Falha!.Codigo);
-        Assert.Equal(Codigos.Indisponivel, (await servico.LerConviteDoQrAsync(token, null, default)).Falha!.Codigo);
+        Assert.Equal(Codigos.Indisponivel, (await servico.LerConviteDoQrAsync(Conta, EventoId, outroEvento.Token, default)).Falha!.Codigo);
+        Assert.Equal(Codigos.Indisponivel, (await servico.LerConviteDoQrAsync(Conta, EventoId, semConfirmado.Token, default)).Falha!.Codigo);
+        Assert.Equal(Codigos.Indisponivel, (await servico.LerConviteDoQrAsync(Conta, EventoId, "lixo", default)).Falha!.Codigo);
+        Assert.Equal(Codigos.Indisponivel, (await servico.LerConviteDoQrAsync(Conta, EventoId, null, default)).Falha!.Codigo);
     }
 
     [Fact]
-    public async Task Marcar_registra_quem_entrou_e_desmarca_os_outros()
+    public async Task Marcar_registra_quem_entrou_e_so_desfaz_quem_foi_pedido()
     {
-        var (servico, dados, token) = await CriarAsync();
+        var (servico, dados, token) = CriarAsync();
         var convite = NovoConvite(dados, "Silva", SituacaoConvidado.Confirmado, SituacaoConvidado.Confirmado, SituacaoConvidado.Confirmado);
         var esposa = convite.Convidados[1];
         var filho = convite.Convidados[2];
 
-        var primeira = (await servico.MarcarComparecimentoAsync(token, convite.Id, new ComparecimentoPedido([esposa.Id, filho.Id]), Agora, default)).Valor!;
+        var primeira = (await servico.MarcarComparecimentoAsync(Conta, EventoId, convite.Id, new ComparecimentoPedido([esposa.Id, filho.Id]), Agora, default)).Valor!;
 
         Assert.Equal([false, true, true], primeira.Convidados.OrderBy(item => item.Nome).Select(item => item.CompareceuEm is not null));
 
         var depois = Agora.AddMinutes(10);
-        var segunda = (await servico.MarcarComparecimentoAsync(token, convite.Id, new ComparecimentoPedido([esposa.Id]), depois, default)).Valor!;
+        var marido = convite.Convidados[0];
+        var segunda = (await servico.MarcarComparecimentoAsync(Conta, EventoId, convite.Id, new ComparecimentoPedido([marido.Id, esposa.Id]), depois, default)).Valor!;
 
+        // Quem ficou fora das listas não muda: o filho, marcado por outra pessoa da portaria, continua presente.
+        Assert.Equal(depois, segunda.Convidados.First(item => item.Id == marido.Id).CompareceuEm);
         Assert.Equal(Agora, segunda.Convidados.First(item => item.Id == esposa.Id).CompareceuEm);
-        Assert.Null(segunda.Convidados.First(item => item.Id == filho.Id).CompareceuEm);
+        Assert.Equal(Agora, segunda.Convidados.First(item => item.Id == filho.Id).CompareceuEm);
+
+        var terceira = (await servico.MarcarComparecimentoAsync(Conta, EventoId, convite.Id, new ComparecimentoPedido([], [filho.Id]), depois, default)).Valor!;
+
+        Assert.Null(terceira.Convidados.First(item => item.Id == filho.Id).CompareceuEm);
+        Assert.Equal(Agora, terceira.Convidados.First(item => item.Id == esposa.Id).CompareceuEm);
+
+        var contraditorio = await servico.MarcarComparecimentoAsync(Conta, EventoId, convite.Id, new ComparecimentoPedido([filho.Id], [filho.Id]), depois, default);
+        Assert.Equal(Codigos.Validacao, contraditorio.Falha!.Codigo);
     }
 
     [Fact]
     public async Task Marcar_recusa_convidado_nao_confirmado_ou_de_outro_convite()
     {
-        var (servico, dados, token) = await CriarAsync();
+        var (servico, dados, token) = CriarAsync();
         var convite = NovoConvite(dados, "Silva", SituacaoConvidado.Confirmado, SituacaoConvidado.NaoComparecera);
         var outro = NovoConvite(dados, "Souza", SituacaoConvidado.Confirmado);
 
-        var naoConfirmado = await servico.MarcarComparecimentoAsync(token, convite.Id, new ComparecimentoPedido([convite.Convidados[1].Id]), Agora, default);
-        var deOutro = await servico.MarcarComparecimentoAsync(token, convite.Id, new ComparecimentoPedido([outro.Convidados[0].Id]), Agora, default);
+        var naoConfirmado = await servico.MarcarComparecimentoAsync(Conta, EventoId, convite.Id, new ComparecimentoPedido([convite.Convidados[1].Id]), Agora, default);
+        var deOutro = await servico.MarcarComparecimentoAsync(Conta, EventoId, convite.Id, new ComparecimentoPedido([outro.Convidados[0].Id]), Agora, default);
 
         Assert.Equal(Codigos.Validacao, naoConfirmado.Falha!.Codigo);
         Assert.Equal(Codigos.Indisponivel, deOutro.Falha!.Codigo);
@@ -159,31 +141,31 @@ public class PortariaTests
     [Fact]
     public async Task Marcar_com_evento_fora_de_andamento_e_recusado_mas_a_lista_abre()
     {
-        var (servico, dados, token) = await CriarAsync();
+        var (servico, dados, token) = CriarAsync();
         var convite = NovoConvite(dados, "Silva", SituacaoConvidado.Confirmado);
         dados.EmAndamento = false;
 
-        var marcar = await servico.MarcarComparecimentoAsync(token, convite.Id, new ComparecimentoPedido([convite.Convidados[0].Id]), Agora, default);
+        var marcar = await servico.MarcarComparecimentoAsync(Conta, EventoId, convite.Id, new ComparecimentoPedido([convite.Convidados[0].Id]), Agora, default);
 
         Assert.Equal(Codigos.Validacao, marcar.Falha!.Codigo);
-        Assert.True((await servico.LerAsync(token, default)).Ok);
+        Assert.True((await servico.LerAsync(Conta, EventoId, default)).Ok);
     }
 
     [Fact]
     public async Task Convite_de_outro_evento_nao_abre_pelo_link()
     {
-        var (servico, dados, token) = await CriarAsync();
+        var (servico, dados, token) = CriarAsync();
         var convite = NovoConvite(dados, "Silva", SituacaoConvidado.Confirmado);
         convite.EventoId = Guid.NewGuid();
 
-        Assert.Equal(Codigos.Indisponivel, (await servico.LerConviteAsync(token, convite.Id, default)).Falha!.Codigo);
-        Assert.Equal(Codigos.Indisponivel, (await servico.MarcarComparecimentoAsync(token, convite.Id, new ComparecimentoPedido([]), Agora, default)).Falha!.Codigo);
+        Assert.Equal(Codigos.Indisponivel, (await servico.LerConviteAsync(Conta, EventoId, convite.Id, default)).Falha!.Codigo);
+        Assert.Equal(Codigos.Indisponivel, (await servico.MarcarComparecimentoAsync(Conta, EventoId, convite.Id, new ComparecimentoPedido([]), Agora, default)).Falha!.Codigo);
     }
 
     [Fact]
     public async Task Qr_pelo_link_do_convite_so_existe_com_confirmado_e_evento_em_andamento()
     {
-        var (servico, dados, _) = await CriarAsync();
+        var (servico, dados, _) = CriarAsync();
         var confirmado = NovoConvite(dados, "Silva", SituacaoConvidado.Confirmado);
         var pendente = NovoConvite(dados, "Souza", SituacaoConvidado.Pendente);
 
@@ -204,34 +186,14 @@ public class PortariaTests
 
     private sealed class DadosFalsos : IDadosPortaria
     {
-        private readonly List<LinkPortaria> links = [];
-
         public List<Convite> Convites { get; } = [];
 
         public List<PresencaEvento> Presencas { get; } = [];
 
         public bool EmAndamento { get; set; } = true;
 
-        public Task<EventoDoLink?> ObterEventoAsync(string contaId, Guid eventoId, CancellationToken ct) =>
+        public Task<EventoDoLink?> ObterEventoAsync(Guid contaId, Guid eventoId, CancellationToken ct) =>
             Task.FromResult<EventoDoLink?>(contaId == Conta && eventoId == EventoId ? new EventoDoLink(EventoId, Conta, "Casamento", null, EmAndamento) : null);
-
-        public Task<LinkPortaria?> ObterPorEventoAsync(Guid eventoId, CancellationToken ct) =>
-            Task.FromResult(links.FirstOrDefault(link => link.EventoId == eventoId));
-
-        public Task<LinkPortaria?> ObterPorTokenAsync(string token, CancellationToken ct) =>
-            Task.FromResult(links.FirstOrDefault(link => link.Token == token));
-
-        public Task InserirAsync(LinkPortaria link, CancellationToken ct)
-        {
-            links.Add(link);
-            return Task.CompletedTask;
-        }
-
-        public Task RemoverAsync(LinkPortaria link, CancellationToken ct)
-        {
-            links.Remove(link);
-            return Task.CompletedTask;
-        }
 
         public Task<IReadOnlyList<Convite>> ListarConvitesAsync(Guid eventoId, CancellationToken ct) =>
             Task.FromResult<IReadOnlyList<Convite>>(Convites.Where(item => item.EventoId == eventoId).ToList());

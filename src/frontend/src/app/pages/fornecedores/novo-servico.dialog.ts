@@ -11,6 +11,7 @@ import { mensagemDeErro } from '../../core/mensagem-erro';
 import { NegocioClient, ServicoConta } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { nomesDaLista, nomesDoTexto } from './busca-servico';
+import { FecharModal } from '../../shared/fechar-modal';
 
 export interface NovoServicoDados {
   nome?: string;
@@ -21,9 +22,9 @@ const EXTENSOES = ['.txt', '.csv', '.xlsx'];
 /** Fecha com a lista de serviços criados (ou já existentes com o mesmo nome). */
 @Component({
   selector: 'app-novo-servico-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule],
+  imports: [FecharModal, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule],
   template: `
-    <h2 mat-dialog-title>{{ quantidade() > 1 ? 'Novos serviços' : 'Novo serviço' }}</h2>
+    <h2 mat-dialog-title>{{ quantidade() > 1 ? 'Novos serviços' : 'Novo serviço' }} <app-fechar-modal /></h2>
     <mat-dialog-content>
       <p class="intro">Digite um serviço ou vários, separados por vírgula.</p>
       <mat-form-field appearance="outline" class="w-full">

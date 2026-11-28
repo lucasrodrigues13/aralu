@@ -1,9 +1,12 @@
+using Project.Domain.Comum;
 namespace Project.Domain.Tarefas;
 
 /// <summary>Arquivo de trabalho da tarefa: JPG, JPEG, PNG ou PDF até 5 MB (SPEC-003 §6.6).</summary>
-public sealed class AnexoTarefa
+public sealed class AnexoTarefa : ITemConta
 {
     public Guid Id { get; set; }
+
+    public Guid ContaId { get; set; }
 
     public Guid TarefaId { get; set; }
 

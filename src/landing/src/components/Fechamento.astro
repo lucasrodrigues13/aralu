@@ -1,0 +1,26 @@
+---
+import Cta from './Cta.astro';
+---
+<section class="fechamento">
+  <div class="pagina fechamento-grade entra">
+    <h2 class="frase">Seus eventos à vista, para trabalhar tranquila</h2>
+    <hr class="horizonte" />
+    <div class="acao">
+      <p>Comece hoje com um evento de verdade. Em 14 dias você sabe se a Aralu serve para a sua assessoria.</p>
+      <Cta claro />
+    </div>
+  </div>
+</section>
+
+<style>
+  .fechamento { background: var(--cor-fundo-marca); color: var(--cor-texto-creme); padding-block: 80px; }
+  .fechamento-grade { display: grid; gap: 32px; }
+  .frase { font-family: var(--fonte-marca); font-weight: 500; font-size: clamp(32px, 5vw, 56px); line-height: 1.12; max-width: 16em; text-wrap: balance; }
+  .horizonte { background: var(--cor-horizonte-escuro); }
+  .acao { display: grid; gap: 24px; }
+  .acao p { font-size: 18px; line-height: 28px; max-width: 32em; }
+  @media (min-width: 1024px) {
+    .fechamento { padding-block: 128px; }
+    .acao { grid-template-columns: 1fr auto; align-items: center; gap: 48px; }
+  }
+</style>

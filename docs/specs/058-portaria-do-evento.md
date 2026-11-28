@@ -44,10 +44,10 @@ Depois de confirmar, a página de RSVP mostra o **QR code de entrada** do convit
 
 ### 6.3. Equipe da portaria (`/portaria/{código}`)
 
-1. A tela mostra o nome do evento, os totais (**Confirmados**, **Já entraram**, **Faltam**), o botão **Escanear QR code** e a **lista completa** dos convites com confirmados (cada convite com seus convidados confirmados e se já entraram), com busca por convite ou convidado.
-2. **Escanear QR code** abre a câmera do navegador (pede permissão), lê o QR e abre o convite. Sem câmera ou sem permissão, avisa e a equipe escolhe o convite pela lista.
-3. A **tela do convite** mostra todos os convidados do convite: os confirmados com caixa de marcar e os demais (pendente, não comparecerá) sem caixa, com a situação. Os confirmados já presentes vêm marcados; se ninguém entrou ainda, todos os confirmados vêm marcados (o caso comum é a família inteira entrar junta) e a equipe desmarca quem não veio.
-4. **Confirmar presença** grava: quem está marcado passa a "Entrou às HH:mm"; quem não está marcado fica "Ainda não entrou". Dá para voltar ao convite e corrigir depois.
+1. A tela mostra o nome do evento, os totais (**Confirmados**, **Já entraram**, **Faltam**), o botão **Escanear QR code** e a **lista em acordeon** dos convites com confirmados, com busca por convite ou convidado e o botão **Expandir todos / Recolher todos**. Os convites começam recolhidos. A linha do convite mostra o nome, quantos confirmados entraram e o **status** do check-in: **Pendente** (ninguém entrou), **Parcial** (parte entrou) ou **Completo** (todos os confirmados entraram).
+2. **Expandir o convite** mostra todos os convidados: os confirmados com caixa de marcar na primeira coluna e o status (**Entrou às HH:mm** ou **Não entrou**); os demais (pendente, não comparecerá) com a caixa desabilitada e a situação. Quem já entrou vem marcado. Em convite com mais de um confirmado, **Todos os confirmados** marca todos de uma vez; desmarcar essa caixa volta ao que está gravado.
+3. **Escanear QR code** abre a câmera do navegador (pede permissão), lê o QR e expande o convite na lista, com os confirmados que ainda não entraram já marcados (o caso comum é a família inteira entrar junta); a equipe desmarca quem não veio. Se todos já entraram, a tela avisa. Sem câmera ou sem permissão, avisa e a equipe escolhe o convite pela lista.
+4. **Confirmar presença** fica na linha do convite expandido e só habilita quando há mudança. Grava só o que mudou: quem foi marcado passa a "Entrou às HH:mm"; desmarcar quem já entrou desfaz a entrada (a tela avisa antes de confirmar). Depois de gravar, o convite recolhe com o status atualizado.
 
 ## 7. Fluxos alternativos
 
@@ -60,10 +60,10 @@ Depois de confirmar, a página de RSVP mostra o **QR code de entrada** do convit
 
 - **Link da portaria:** um por evento, sem senha, com código aleatório de 256 bits (mesmo padrão do link do cliente). Trocar gera outro código e o antigo deixa de valer. **Desativar apaga o link.** O código só resolve o evento dele; nenhuma rota da portaria aceita convite, convidado ou evento fora dele.
 - **QR de entrada:** carrega o texto `entrada:{código do convite}` (o mesmo código do link de RSVP do convite). Só é gerado com ao menos um convidado confirmado. O QR vale para o convite todo: a tela do convite decide quem entra.
-- **Comparecimento** é por convidado confirmado, guardado na entrada da lista de presença (`PresencasEvento.CompareceuEm`, data e hora UTC). Marcar de novo quem já entrou mantém a hora original. Quem foi desmarcado volta a nulo. Se o convidado desconfirmar e reconfirmar, a entrada nasce de novo (SPEC-054) e o comparecimento zera.
+- **Comparecimento** é por convidado confirmado, guardado na entrada da lista de presença (`PresencasEvento.CompareceuEm`, data e hora UTC). Marcar de novo quem já entrou mantém a hora original. A portaria envia só o que mudou: quem está em `desfazer` volta a nulo e quem não está em nenhuma das listas fica como está, para duas pessoas na portaria não apagarem a marcação uma da outra. O mesmo convidado nas duas listas: 400. Se o convidado desconfirmar e reconfirmar, a entrada nasce de novo (SPEC-054) e o comparecimento zera.
 - **Banco (migration `PortariaDoEvento`, uma só):** tabela nova `LinksPortaria` (`Id`, `EventoId` único, `ContaId`, `Token` único, `CriadoEm`) e coluna `PresencasEvento.CompareceuEm` (data e hora, opcional). Nada é apagado.
 - **API da organizadora:** `GET`, `POST` (gera ou troca) e `DELETE /api/v1/eventos/{id}/link-portaria`; `GET /api/v1/convites/{id}/qr-entrada` (PNG); a lista de presença (`GET /api/v1/eventos/{id}/presencas`) traz `compareceuEm`.
-- **API pública:** `GET /api/v1/rsvp/{token}/qr-entrada` (PNG, 404 sem confirmados). Portaria, base `/api/v1/publico/portaria/{token}`: `GET` (totais e convites), `GET /qr/{texto}` (convite do QR lido), `GET /convites/{conviteId}`, `PUT /convites/{conviteId}/comparecimento` com `{ compareceram: [ids] }`.
+- **API pública:** `GET /api/v1/rsvp/{token}/qr-entrada` (PNG, 404 sem confirmados). Portaria, base `/api/v1/publico/portaria/{token}`: `GET` (totais e convites), `GET /qr/{texto}` (convite do QR lido), `GET /convites/{conviteId}`, `PUT /convites/{conviteId}/comparecimento` com `{ compareceram: [ids], desfazer: [ids] }`.
 
 ## 9. Validações
 

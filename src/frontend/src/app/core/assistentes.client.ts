@@ -8,8 +8,9 @@ export interface Assistente {
   email: string;
   celular: string | null;
   nascimento: string | null;
-  podeVerFinanceiro: boolean;
-  somenteDela: boolean;
+  tipo: 'Dono' | 'Membro';
+  grupoId: string | null;
+  grupo: string | null;
   situacao: 'Convidada' | 'Ativa' | 'Removida' | 'Inativa';
   convidadaEm: string;
   primeiroAcessoEm: string | null;
@@ -19,7 +20,7 @@ export interface Assistente {
 export interface ContaComAssistentes {
   contaId: string;
   emailDaConta: string;
-  assistentes: Assistente[];
+  membros: Assistente[];
 }
 
 export interface NomeAssistente {
@@ -33,8 +34,44 @@ export interface SalvarAssistente {
   email: string;
   celular: string | null;
   nascimento: string | null;
-  podeVerFinanceiro: boolean;
-  somenteDela: boolean;
+  tipo: 'Dono' | 'Membro';
+  grupoId: string | null;
+}
+
+export interface PermissaoGrupo {
+  modulo: string;
+  ver: boolean;
+  editar: boolean;
+  excluir: boolean;
+}
+
+export interface SalvarGrupo {
+  nome: string;
+  veTodosEventos: boolean;
+  permissoes: PermissaoGrupo[];
+}
+
+/** Módulos da grade de permissões, na ordem da SPEC-062 §9. */
+export const MODULOS_GRUPO: { modulo: string; rotulo: string; cobre: string }[] = [
+  { modulo: 'Clientes', rotulo: 'Clientes', cobre: 'Cadastro de clientes.' },
+  { modulo: 'Eventos', rotulo: 'Eventos', cobre: 'Dados do evento, roteiro, cronograma, inspirações, observações.' },
+  { modulo: 'Convidados', rotulo: 'Convidados', cobre: 'Convites, convidados, RSVP, portaria.' },
+  { modulo: 'Tarefas', rotulo: 'Tarefas', cobre: 'Tarefas e checklists do evento.' },
+  { modulo: 'Agenda', rotulo: 'Agenda', cobre: 'Minha agenda e compromissos.' },
+  { modulo: 'Funil', rotulo: 'Funil', cobre: 'Oportunidades, briefings, tarefas do funil.' },
+  { modulo: 'OrcamentosContratos', rotulo: 'Orçamentos e contratos', cobre: 'Propostas, contratos e parcelas com o cliente.' },
+  { modulo: 'Financeiro', rotulo: 'Financeiro', cobre: 'Valores, parcelas, recebimentos, pagamentos e relatórios financeiros.' },
+  { modulo: 'Fornecedores', rotulo: 'Fornecedores', cobre: 'Cadastro e contratação de fornecedores.' },
+  { modulo: 'Modelos', rotulo: 'Modelos', cobre: 'Biblioteca de modelos.' },
+];
+
+export interface GrupoAcesso {
+  id: string;
+  nome: string;
+  veTodosEventos: boolean;
+  padrao: boolean;
+  membros: number;
+  permissoes: PermissaoGrupo[];
 }
 
 export interface MinhaConta {
@@ -52,7 +89,24 @@ export class AssistentesClient {
   private readonly base = inject(API_BASE_URL);
 
   listar() {
-    return this.http.get<Assistente[]>(`${this.base}/api/v1/assistentes`);
+    return this.http.get<Assistente[]>(`${this.base}/api/v1/equipe`);
+  }
+
+  /** Grupos de acesso da conta (SPEC-062 §9). */
+  grupos() {
+    return this.http.get<GrupoAcesso[]>(`${this.base}/api/v1/grupos-acesso`);
+  }
+
+  criarGrupo(pedido: SalvarGrupo) {
+    return this.http.post<GrupoAcesso>(`${this.base}/api/v1/grupos-acesso`, pedido);
+  }
+
+  atualizarGrupo(id: string, pedido: SalvarGrupo) {
+    return this.http.put<GrupoAcesso>(`${this.base}/api/v1/grupos-acesso/${id}`, pedido);
+  }
+
+  excluirGrupo(id: string) {
+    return this.http.delete<void>(`${this.base}/api/v1/grupos-acesso/${id}`);
   }
 
   /** Consulta do Admin: assistentes de todas as contas (só leitura). */
@@ -69,24 +123,24 @@ export class AssistentesClient {
   }
 
   convidar(pedido: SalvarAssistente) {
-    return this.http.post<Assistente>(`${this.base}/api/v1/assistentes`, pedido);
+    return this.http.post<Assistente>(`${this.base}/api/v1/equipe`, pedido);
   }
 
   atualizar(id: string, pedido: SalvarAssistente) {
-    return this.http.put<Assistente>(`${this.base}/api/v1/assistentes/${id}`, pedido);
+    return this.http.put<Assistente>(`${this.base}/api/v1/equipe/${id}`, pedido);
   }
 
   reenviar(id: string) {
-    return this.http.post<Assistente>(`${this.base}/api/v1/assistentes/${id}/reenviar`, null);
+    return this.http.post<Assistente>(`${this.base}/api/v1/equipe/${id}/reenviar`, null);
   }
 
   /** Desativa o acesso sem apagar o cadastro (pode ser reativado). */
   desativar(id: string) {
-    return this.http.post<void>(`${this.base}/api/v1/assistentes/${id}/desativar`, null);
+    return this.http.post<void>(`${this.base}/api/v1/equipe/${id}/desativar`, null);
   }
 
   reativar(id: string) {
-    return this.http.post<Assistente>(`${this.base}/api/v1/assistentes/${id}/reativar`, null);
+    return this.http.post<Assistente>(`${this.base}/api/v1/equipe/${id}/reativar`, null);
   }
 
   aceitarConvite(usuarioId: string, token: string, senha: string, confirmacao: string) {

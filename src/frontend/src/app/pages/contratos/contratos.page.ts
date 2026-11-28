@@ -30,11 +30,13 @@ import { NegocioClient } from '../../core/negocio.client';
 import { FolhaContrato } from './folha-contrato';
 import { ToastService } from '../../core/toast.service';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
-import { DIALOG_LARGO, DIALOG_PEQUENO } from '../../shared/dialog';
+import { Estado } from '../../shared/estado';
+import { DIALOG_LARGO, DIALOG_PEQUENO, DIALOG_PREVIA } from '../../shared/dialog';
 import { GdDataPipe } from '../../shared/gd-data.pipe';
 import { filtrarCampos, previaDestacada, tagsDesconhecidas } from './mesclagem';
 import { EditorRico } from '../../shared/editor-rico';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { FecharModal } from '../../shared/fechar-modal';
 
 /** O que o modal devolve: nome, texto e as mudanças de logo e fundo (arquivo novo, null = remover, ausente = sem mudança). */
 export interface ContratoPedido {
@@ -48,40 +50,35 @@ export interface ContratoPedido {
 /** Ajuda das tags (SPEC-053): como usar e a lista completa, da mesma lista do seletor e do preenchimento. */
 @Component({
   selector: 'app-ajuda-tags-dialog',
-  imports: [MatDialogModule, MatButtonModule],
+  imports: [FecharModal, MatDialogModule, MatButtonModule],
   template: `
-    <h2 mat-dialog-title>Como usar as tags</h2>
+    <h2 mat-dialog-title>Como usar as tags <app-fechar-modal /></h2>
     <mat-dialog-content>
       <p class="text-sm mb-2">
         Tags são trechos como <code>{{ marca({ marca: 'contratante_nome', rotulo: '', fonte: '', exemplo: '' }) }}</code> que o sistema troca pelos dados reais quando o contrato é gerado.
         Use o campo "Inserir tag no cursor" para colocar uma tag onde o cursor está no texto. Quando um dado não existe, aparece uma linha em branco (________).
       </p>
-      <div class="tabela-tags">
-        <table class="w-full text-sm">
-          <thead>
-            <tr><th>Tag</th><th>O que representa</th><th>De onde puxa o valor</th><th>Exemplo</th></tr>
-          </thead>
-          <tbody>
-            @for (campo of dados.campos; track campo.marca) {
-              <tr>
-                <td><code>{{ marca(campo) }}</code></td>
-                <td>{{ campo.rotulo }}</td>
-                <td>{{ campo.fonte }}</td>
-                <td>{{ campo.exemplo }}</td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
+      <table class="tabela">
+        <thead>
+          <tr><th>Tag</th><th>O que representa</th><th>De onde puxa o valor</th><th>Exemplo</th></tr>
+        </thead>
+        <tbody>
+          @for (campo of dados.campos; track campo.marca) {
+            <tr>
+              <td><code>{{ marca(campo) }}</code></td>
+              <td>{{ campo.rotulo }}</td>
+              <td>{{ campo.fonte }}</td>
+              <td>{{ campo.exemplo }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-flat-button type="button" mat-dialog-close>Fechar</button>
+      <button mat-stroked-button type="button" mat-dialog-close>Fechar</button>
     </mat-dialog-actions>
   `,
   styles: `
-    .tabela-tags { overflow-x: auto; }
-    th { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--mat-sys-outline-variant); }
-    td { vertical-align: top; padding: 6px 8px; border-bottom: 1px solid var(--mat-sys-outline-variant); }
     code { font-size: 12px; white-space: nowrap; }
   `,
 })
@@ -163,9 +160,9 @@ const FUNDO_EXEMPLO = () =>
 /** Como funciona o modelo escrito na plataforma: texto, tags, imagens, assinatura e um contrato de exemplo. */
 @Component({
   selector: 'app-ajuda-texto-dialog',
-  imports: [MatDialogModule, MatButtonModule, MatIconModule, FolhaContrato],
+  imports: [FecharModal, MatDialogModule, MatButtonModule, MatIconModule, FolhaContrato],
   template: `
-    <h2 mat-dialog-title>Como funciona o modelo escrito na plataforma</h2>
+    <h2 mat-dialog-title>Como funciona o modelo escrito na plataforma <app-fechar-modal /></h2>
     <mat-dialog-content>
       <ol class="passos text-sm">
         <li><strong>Escreva o texto do contrato</strong> no campo "Texto do contrato", do jeito que ele deve chegar ao cliente: título, cláusulas e parágrafos. Cada quebra de linha do texto vira uma linha no contrato; deixe uma linha vazia para separar os blocos.</li>
@@ -194,8 +191,8 @@ const FUNDO_EXEMPLO = () =>
       <p class="text-muted text-xs mt-3 mb-0">Prefere usar um contrato que já tem pronto? Escolha "Enviar meu documento Word" e veja "Como preparar o Word".</p>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-stroked-button type="button" (click)="ref.close(exemplo)"><mat-icon>edit_note</mat-icon> Usar este exemplo no texto</button>
-      <button mat-flat-button type="button" mat-dialog-close>Entendi</button>
+      <button mat-stroked-button type="button" mat-dialog-close>Fechar</button>
+      <button mat-flat-button type="button" (click)="ref.close(exemplo)"><mat-icon>edit_note</mat-icon> Usar este exemplo no texto</button>
     </mat-dialog-actions>
   `,
   styles: `
@@ -224,9 +221,9 @@ export class AjudaTextoDialog {
 /** Orientações para preparar o próprio Word: como escrever as tags e a lista completa, com botão de copiar. */
 @Component({
   selector: 'app-ajuda-word-dialog',
-  imports: [MatDialogModule, MatButtonModule, MatIconModule, MatTooltipModule],
+  imports: [FecharModal, MatDialogModule, MatButtonModule, MatIconModule, MatTooltipModule],
   template: `
-    <h2 mat-dialog-title>Como preparar o seu contrato no Word</h2>
+    <h2 mat-dialog-title>Como preparar o seu contrato no Word <app-fechar-modal /></h2>
     <mat-dialog-content>
       <ol class="passos text-sm">
         <li>Abra o seu contrato no <strong>Microsoft Word</strong> (ou Google Docs / LibreOffice) e salve no formato <strong>.docx</strong>. Outros formatos (.doc, .pdf, .odt) não são aceitos.</li>
@@ -238,40 +235,35 @@ export class AjudaTextoDialog {
         <li>Quando um dado não existir no cadastro, o contrato mostra uma linha em branco (________) para preencher à mão.</li>
         <li>Para mudar o texto depois, edite o arquivo no seu computador e envie de novo no modelo. Contratos já gerados não mudam.</li>
       </ol>
-      <div class="tabela-tags">
-        <table class="w-full text-sm">
-          <thead>
-            <tr><th>Tag para colar no Word</th><th>O que representa</th><th>De onde puxa o valor</th><th>Exemplo</th></tr>
-          </thead>
-          <tbody>
-            @for (campo of dados.campos; track campo.marca) {
-              <tr>
-                <td class="whitespace-nowrap">
-                  <code>{{ marca(campo) }}</code>
-                  <button mat-icon-button type="button" class="copiar" [attr.aria-label]="'Copiar ' + marca(campo)" [matTooltip]="copiada() === campo.marca ? 'Copiada!' : 'Copiar'" (click)="copiar(campo)">
-                    <mat-icon>{{ copiada() === campo.marca ? 'check' : 'content_copy' }}</mat-icon>
-                  </button>
-                </td>
-                <td>{{ campo.rotulo }}</td>
-                <td>{{ campo.fonte }}</td>
-                <td>{{ campo.exemplo }}</td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
+      <table class="tabela">
+        <thead>
+          <tr><th>Tag para colar no Word</th><th>O que representa</th><th>De onde puxa o valor</th><th>Exemplo</th></tr>
+        </thead>
+        <tbody>
+          @for (campo of dados.campos; track campo.marca) {
+            <tr>
+              <td class="whitespace-nowrap">
+                <code>{{ marca(campo) }}</code>
+                <button mat-icon-button type="button" class="copiar" [attr.aria-label]="'Copiar ' + marca(campo)" [matTooltip]="copiada() === campo.marca ? 'Copiada!' : 'Copiar'" (click)="copiar(campo)">
+                  <mat-icon>{{ copiada() === campo.marca ? 'check' : 'content_copy' }}</mat-icon>
+                </button>
+              </td>
+              <td>{{ campo.rotulo }}</td>
+              <td>{{ campo.fonte }}</td>
+              <td>{{ campo.exemplo }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-stroked-button type="button" (click)="copiarTodas()"><mat-icon>content_copy</mat-icon> Copiar todas as tags</button>
-      <button mat-flat-button type="button" mat-dialog-close>Fechar</button>
+      <button mat-stroked-button type="button" mat-dialog-close>Fechar</button>
+      <button mat-flat-button type="button" (click)="copiarTodas()"><mat-icon>content_copy</mat-icon> Copiar todas as tags</button>
     </mat-dialog-actions>
   `,
   styles: `
     .passos { margin: 0 0 16px; padding-left: 20px; display: grid; gap: 6px; line-height: 1.5; }
     .mini { font-size: 16px; width: 16px; height: 16px; vertical-align: middle; }
-    .tabela-tags { overflow-x: auto; }
-    th { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--mat-sys-outline-variant); }
-    td { vertical-align: middle; padding: 4px 8px; border-bottom: 1px solid var(--mat-sys-outline-variant); }
     code { font-size: 12px; white-space: nowrap; }
     .copiar { transform: scale(0.8); }
   `,
@@ -297,12 +289,9 @@ export class AjudaWordDialog {
 /** Live Preview em tela cheia (os dois formatos): só a visualização, num modal grande. */
 @Component({
   selector: 'app-previa-ampliada-dialog',
-  imports: [MatDialogModule, MatButtonModule, MatIconModule, FolhaContrato, PreviaWordComponent],
+  imports: [FecharModal, MatDialogModule, MatButtonModule, FolhaContrato, PreviaWordComponent],
   template: `
-    <div class="topo">
-      <h2 mat-dialog-title class="m-0!">Live Preview · {{ dados.titulo }}</h2>
-      <button mat-icon-button type="button" aria-label="Fechar" mat-dialog-close><mat-icon>close</mat-icon></button>
-    </div>
+    <h2 mat-dialog-title>Live Preview · {{ dados.titulo }} <app-fechar-modal /></h2>
     <mat-dialog-content class="conteudo">
       @if (dados.word) {
         <app-previa-word [documento]="dados.word" [ampliada]="true" />
@@ -313,10 +302,12 @@ export class AjudaWordDialog {
       }
     </mat-dialog-content>
     <p class="text-muted text-xs px-6 pb-4 m-0">Os valores destacados são exemplos. No contrato real entram os dados do cliente, do evento e do orçamento aprovado.</p>
+    <mat-dialog-actions align="end">
+      <button mat-stroked-button type="button" mat-dialog-close>Fechar</button>
+    </mat-dialog-actions>
   `,
   styles: `
-    .topo { display: flex; align-items: center; justify-content: space-between; padding-right: 12px; }
-    .conteudo { max-height: none !important; height: calc(95vh - 140px); display: flex; flex-direction: column; }
+    .conteudo { max-height: none !important; height: calc(95vh - 200px); display: flex; flex-direction: column; }
     .conteudo > * { flex: 1; min-height: 0; }
     .folha-grande ::ng-deep .area { max-height: none; height: 100%; box-sizing: border-box; }
   `,
@@ -328,7 +319,7 @@ export class PreviaAmpliadaDialog {
 /** Novo/editar modelo de contrato com seletor de tags com busca e ajuda (SPEC-053) e Live Preview (SPEC-055, evolui o "Ver como fica" da SPEC-030 §6.1). */
 @Component({
   selector: 'app-contrato-dialog',
-  imports: [
+  imports: [FecharModal, 
     ReactiveFormsModule,
     MatDialogModule,
     MatButtonModule,
@@ -344,7 +335,7 @@ export class PreviaAmpliadaDialog {
     EditorRico,
   ],
   template: `
-    <h2 mat-dialog-title>{{ dados.contrato ? 'Editar modelo de contrato' : 'Novo modelo de contrato' }}</h2>
+    <h2 mat-dialog-title>{{ dados.contrato ? 'Editar modelo de contrato' : 'Novo modelo de contrato' }} <app-fechar-modal /></h2>
     <p class="text-muted text-sm px-6 -mt-2 mb-4">
       {{ ehWord() ? 'Envie o seu contrato em Word com as tags no lugar dos dados. Elas são trocadas pelos dados do evento.' : 'Clique num campo para inserir no texto. Ele é trocado pelos dados do evento.' }}
     </p>
@@ -632,7 +623,7 @@ export class ContratoDialog {
 
   protected abrirAjudaTexto(): void {
     this.dialog
-      .open(AjudaTextoDialog, { ...DIALOG_LARGO, width: 'min(1200px, calc(100vw - 32px))', maxHeight: '95vh', data: { campos: this.dados.campos } })
+      .open(AjudaTextoDialog, { ...DIALOG_PREVIA, data: { campos: this.dados.campos } })
       .afterClosed()
       .subscribe((texto?: string) => {
         if (texto) this.form.controls.texto.setValue(texto);
@@ -727,7 +718,7 @@ export class ContratoDialog {
 /** Tela Contratos (SPEC-030 §6.1): lista e botão "Novo contrato" acima da tabela. */
 @Component({
   selector: 'app-contratos',
-  imports: [MatCardModule, MatButtonModule, MatIconModule, MatFormFieldModule, MatInputModule, GdDataPipe, MatTooltipModule],
+  imports: [MatCardModule, MatButtonModule, MatIconModule, MatFormFieldModule, MatInputModule, GdDataPipe, MatTooltipModule, Estado],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6">
@@ -751,15 +742,17 @@ export class ContratoDialog {
           <button mat-flat-button type="button" (click)="abrir()"><mat-icon>add</mat-icon> Novo modelo</button>
         </div>
       </div>
-      @if (visiveis().length === 0) {
-        <p class="text-center text-muted py-10">{{ contratos().length === 0 ? 'Nenhum modelo cadastrado.' : 'Nenhum modelo com esse nome.' }}</p>
+      @if (!carregado()) {
+        <app-estado titulo="Carregando…" />
+      } @else if (visiveis().length === 0) {
+        <app-estado [titulo]="contratos().length === 0 ? 'Nenhum modelo ainda' : 'Nada encontrado'" [texto]="contratos().length === 0 ? undefined : 'Mude a busca ou os filtros.'" />
       } @else {
         <table class="tabela">
           <thead><tr><th>Nome</th><th>Tipo</th><th>Atualizado em</th><th class="text-end! whitespace-nowrap">Ações</th></tr></thead>
           <tbody>
             @for (contrato of visiveis(); track contrato.id) {
               <tr>
-                <td>{{ contrato.nome }}</td>
+                <td><button type="button" class="link-nome" (click)="abrir(contrato)">{{ contrato.nome }}</button></td>
                 <td>{{ contrato.formato === 'word' ? 'Documento Word' : 'Escrito na plataforma' }}</td>
                 <td>{{ contrato.atualizadoEm | gdData }}</td>
                 <td class="text-end! whitespace-nowrap">
@@ -780,6 +773,7 @@ export class ContratosPage implements OnInit {
   private readonly dialog = inject(MatDialog);
   private readonly toast = inject(ToastService);
   protected readonly contratos = signal<ContratoResumo[]>([]);
+  protected readonly carregado = signal(false);
   protected readonly busca = signal('');
   private campos: CampoMesclagem[] = [];
 
@@ -835,7 +829,7 @@ export class ContratosPage implements OnInit {
       data: {
         titulo: 'Excluir modelo',
         texto: `Excluir "${contrato.nome}"? Contratos já criados a partir dele não mudam.`,
-        confirmar: 'Excluir',
+        confirmar: 'Excluir', destrutivo: true,
       },
     }).afterClosed().subscribe((confirmou) => {
       if (!confirmou) return;
@@ -851,8 +845,8 @@ export class ContratosPage implements OnInit {
 
   private carregar(): void {
     this.contratoClient.listar().subscribe({
-      next: (lista) => this.contratos.set(lista),
-      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+      next: (lista) => { this.contratos.set(lista); this.carregado.set(true); },
+      error: (erro: unknown) => { this.carregado.set(true); this.toast.erro(mensagemDeErro(erro)); },
     });
   }
 }

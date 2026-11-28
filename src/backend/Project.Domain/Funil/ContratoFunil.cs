@@ -1,3 +1,4 @@
+using Project.Domain.Comum;
 namespace Project.Domain.Funil;
 
 public enum SituacaoContratoFunil
@@ -7,11 +8,11 @@ public enum SituacaoContratoFunil
     Cancelado = 2,
 }
 
-public sealed class ContratoFunil
+public sealed class ContratoFunil : ITemConta
 {
     public Guid Id { get; set; }
 
-    public string ContaId { get; set; } = "";
+    public Guid ContaId { get; set; }
 
     public Guid OportunidadeId { get; set; }
 

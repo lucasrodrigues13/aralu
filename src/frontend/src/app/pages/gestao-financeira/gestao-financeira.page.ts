@@ -20,6 +20,7 @@ import { ChavePixDialog, ReceberDialog } from '../dinheiro/dinheiro.dialogs';
 import { DefinirParcelasContratoDialog } from './definir-parcelas-contrato.dialog';
 import { ParcelasContratoDialog } from './parcelas-contrato.dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { Estado } from '../../shared/estado';
 
 export type SituacaoFinanceira = 'EmAberto' | 'Atrasados' | 'Quitados' | 'SemParcelas';
 
@@ -99,7 +100,7 @@ function hojeLocal(): string {
  */
 @Component({
   selector: 'app-gestao-financeira',
-  imports: [MatButtonModule, MatCardModule, MatFormFieldModule, MatIconModule, MatInputModule, MatSelectModule, GdDataPipe, GdDinheiroPipe, MatTooltipModule],
+  imports: [MatButtonModule, MatCardModule, MatFormFieldModule, MatIconModule, MatInputModule, MatSelectModule, GdDataPipe, GdDinheiroPipe, MatTooltipModule, Estado],
   template: `
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
       <mat-card class="shadow-none text-center mb-0! h-full bg-light-primary">
@@ -129,7 +130,7 @@ function hojeLocal(): string {
         </div>
         <mat-card-content class="border-t border-border">
           @if (parcelasDestaque().length === 0) {
-            <p class="text-center text-muted py-10">Nenhuma parcela atrasada ou vencendo nos próximos 7 dias.</p>
+            <app-estado titulo="Nenhuma parcela atrasada ou a vencer" texto="Considera os próximos 7 dias." />
           } @else {
           <div class="relative">
             <table class="tabela">
@@ -219,7 +220,7 @@ function hojeLocal(): string {
           </div>
         </div>
         @if (visiveis().length === 0) {
-          <p class="text-center text-muted py-10">Nenhum contrato para mostrar.</p>
+          <app-estado titulo="Nenhum contrato ainda" />
         } @else {
           <div class="relative">
             <table class="tabela tabela-contratos">

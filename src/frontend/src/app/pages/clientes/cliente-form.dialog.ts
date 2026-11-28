@@ -14,12 +14,13 @@ import { CampoDdiComponent } from '../../shared/campo-ddi';
 import { deDataParaIso, deIsoParaData } from '../../shared/data';
 import { MascaraDirective } from '../../shared/mascara.directive';
 import { aplicarMascara } from '../../shared/mascaras';
+import { FecharModal } from '../../shared/fechar-modal';
 
 @Component({
   selector: 'app-cliente-form',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatTabsModule, MascaraDirective, CampoDataComponent, CampoDdiComponent],
+  imports: [FecharModal, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatTabsModule, MascaraDirective, CampoDataComponent, CampoDdiComponent],
   template: `
-    <h2 mat-dialog-title>{{ edicao ? 'Editar cliente' : 'Novo cliente' }}</h2>
+    <h2 mat-dialog-title>{{ edicao ? 'Editar cliente' : 'Novo cliente' }} <app-fechar-modal /></h2>
     <mat-dialog-content>
       <form id="cliente-form" class="grid grid-cols-1 gap-4" [formGroup]="formulario" (ngSubmit)="salvar()">
         <mat-tab-group>

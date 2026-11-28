@@ -1,4 +1,5 @@
 using Project.Domain.Eventos;
+using Project.Domain.Comum;
 
 namespace Project.Application.Negocio;
 
@@ -41,7 +42,7 @@ public static class EstatisticasCalculo
 
     public static (DateOnly Inicio, DateOnly Fim) SemanaUtc(DateTimeOffset agoraUtc)
     {
-        var hoje = DateOnly.FromDateTime(agoraUtc.UtcDateTime);
+        var hoje = HorarioBrasil.Data(agoraUtc);
         var diasDesdeSegunda = ((int)hoje.DayOfWeek + 6) % 7;
         var inicio = hoje.AddDays(-diasDesdeSegunda);
         return (inicio, inicio.AddDays(6));
@@ -50,7 +51,7 @@ public static class EstatisticasCalculo
 
 public sealed class EstatisticasServico(IDados dados)
 {
-    public async Task<EstatisticasEventos> ObterAsync(string contaId, DateTimeOffset agoraUtc, CancellationToken ct, IReadOnlySet<Guid>? liberados = null)
+    public async Task<EstatisticasEventos> ObterAsync(Guid contaId, DateTimeOffset agoraUtc, CancellationToken ct, IReadOnlySet<Guid>? liberados = null)
     {
         var contagens = await dados.ContarEventosAsync(contaId, ct, liberados);
         var mapa = contagens.ToDictionary(item => item.Situacao, item => item.Quantidade);

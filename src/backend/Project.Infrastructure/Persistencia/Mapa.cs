@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Project.Domain.Clientes;
+using Project.Domain.Contratos;
 using Project.Domain.Convidados;
 using Project.Domain.Equipe;
 using Project.Domain.Eventos;
@@ -14,11 +15,98 @@ namespace Project.Infrastructure.Persistencia;
 
 public static class Mapa
 {
+    /// <summary>
+    /// Toda entidade com ContaId (Guid) ganha FK RESTRICT para Contas (SPEC-062, RF-110).
+    /// Roda depois do Aplicar, para pegar todas as entidades já mapeadas.
+    /// </summary>
+    public static void LigarContas(ModelBuilder modelBuilder)
+    {
+        var conta = modelBuilder.Entity<ContaAssessoria>();
+        conta.ToTable("Contas");
+        conta.HasOne<ApplicationUser>().WithMany().HasForeignKey(item => item.DonoUsuarioId).OnDelete(DeleteBehavior.Restrict);
+
+        var comConta = modelBuilder.Model.GetEntityTypes()
+            .Where(tipo => !tipo.IsOwned() && tipo.ClrType != typeof(ContaAssessoria))
+            .Where(tipo => tipo.FindProperty("ContaId")?.ClrType == typeof(Guid))
+            .Select(tipo => tipo.ClrType)
+            .ToList();
+        foreach (var tipo in comConta)
+        {
+            modelBuilder.Entity(tipo)
+                .HasOne(typeof(ContaAssessoria))
+                .WithMany()
+                .HasForeignKey("ContaId")
+                .OnDelete(DeleteBehavior.Restrict);
+        }
+
+        // A FK já cria um índice por ContaId em cada tabela. Nas listagens mais usadas,
+        // o índice composto cobre o filtro por conta e a ordenação da tela.
+        modelBuilder.Entity<Evento>().HasIndex(item => new { item.ContaId, item.Data });
+        modelBuilder.Entity<Tarefa>().HasIndex(item => new { item.ContaId, item.Prazo });
+        modelBuilder.Entity<Cliente>().HasIndex(item => new { item.ContaId, item.Nome });
+        modelBuilder.Entity<CompromissoAgenda>().HasIndex(item => new { item.ContaId, item.Data });
+        modelBuilder.Entity<Convite>().HasIndex(item => new { item.ContaId, item.EventoId });
+    }
+
+    /// <summary>
+    /// SPEC-062, lote 2.5: referências que só existiam no código viram FK.
+    /// SET NULL quando o registro sobrevive sem o pai; RESTRICT quando apagar o pai perderia algo
+    /// importante (documento, contrato, proposta); CASCADE quando o filho não tem uso sem o pai.
+    /// Decisões e motivos em docs/banco/fonte/dec.js.
+    /// </summary>
+    public static void LigarReferencias(ModelBuilder modelBuilder)
+    {
+        // Arquivos: imagem opcional some sem levar o registro; documento não pode sumir em uso.
+        Arquivo<Cliente>(modelBuilder, item => item.FotoId, DeleteBehavior.SetNull);
+        Arquivo<Fornecedor>(modelBuilder, item => item.FotoId, DeleteBehavior.SetNull);
+        Arquivo<PerfilAssessoria>(modelBuilder, item => item.FotoId, DeleteBehavior.SetNull);
+        Arquivo<Evento>(modelBuilder, item => item.ImagemId, DeleteBehavior.SetNull);
+        Arquivo<ItemInspiracao>(modelBuilder, item => item.ArquivoId, DeleteBehavior.SetNull);
+        Arquivo<ContratoFunil>(modelBuilder, item => item.DocumentoArquivoId, DeleteBehavior.Restrict);
+        Arquivo<ContratoFunil>(modelBuilder, item => item.LogoArquivoId, DeleteBehavior.Restrict);
+        Arquivo<ContratoFunil>(modelBuilder, item => item.FundoArquivoId, DeleteBehavior.Restrict);
+        Arquivo<ContratoConta>(modelBuilder, item => item.LogoArquivoId, DeleteBehavior.Restrict);
+        Arquivo<ContratoConta>(modelBuilder, item => item.FundoArquivoId, DeleteBehavior.Restrict);
+        Arquivo<ContratoConta>(modelBuilder, item => item.WordArquivoId, DeleteBehavior.Restrict);
+        Arquivo<Project.Domain.Dinheiro.ContratoFornecedor>(modelBuilder, item => item.ComprovanteArquivoId, DeleteBehavior.Restrict);
+        Arquivo<Project.Domain.Dinheiro.ContratoFornecedor>(modelBuilder, item => item.ContratoAssinadoArquivoId, DeleteBehavior.Restrict);
+        Arquivo<Project.Domain.Dinheiro.ParcelaContratoFornecedor>(modelBuilder, item => item.ComprovanteArquivoId, DeleteBehavior.Restrict);
+        Arquivo<AnexoTarefa>(modelBuilder, item => item.ArquivoId, DeleteBehavior.Restrict);
+        Arquivo<TarefaFunil>(modelBuilder, item => item.AnexoArquivoId, DeleteBehavior.Restrict);
+        Arquivo<OrcamentoFornecedor>(modelBuilder, item => item.AnexoId, DeleteBehavior.Restrict);
+
+        // Funil.
+        // Proposta e contrato saem com a oportunidade (SPEC-032: a dona exclui tudo no funil). Bloquear ou arquivar
+        // é decisão pendente do produto (plano, pendência 9).
+        modelBuilder.Entity<ContratoFunil>().HasOne<Oportunidade>().WithMany().HasForeignKey(item => item.OportunidadeId).OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<OrcamentoFunil>().HasOne<Oportunidade>().WithMany().HasForeignKey(item => item.OportunidadeId).OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<TarefaFunil>().HasOne<Oportunidade>().WithMany().HasForeignKey(item => item.OportunidadeId).OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<LeadRsvp>().HasOne<Oportunidade>().WithMany().HasForeignKey(item => item.OportunidadeId).OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<LeadRsvp>().HasOne<Evento>().WithMany().HasForeignKey(item => item.EventoId).OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<LeadRsvp>().HasOne<Convite>().WithMany().HasForeignKey(item => item.ConviteId).OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<Oportunidade>().HasOne<Cliente>().WithMany().HasForeignKey(item => item.ClienteId).OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<Oportunidade>().HasOne<ModeloServicoFunil>().WithMany().HasForeignKey(item => item.ModeloServicoFunilId).OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<OrcamentoFunil>().HasOne<ModeloOrcamentoFunil>().WithMany().HasForeignKey(item => item.ModeloId).OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<ContratoFunil>().HasOne<ContratoConta>().WithMany().HasForeignKey(item => item.ModeloId).OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<BriefingOportunidade>().HasOne<ModeloBriefing>().WithMany().HasForeignKey(item => item.ModeloBriefingId).OnDelete(DeleteBehavior.SetNull);
+
+        // Serviços, fornecedores, convites.
+        modelBuilder.Entity<ServicoEvento>().HasOne<ServicoConta>().WithMany().HasForeignKey(item => item.ServicoContaId).OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<ServicoModelo>().HasOne<ServicoConta>().WithMany().HasForeignKey(item => item.ServicoContaId).OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<FornecedorNoServico>().HasOne<Fornecedor>().WithMany().HasForeignKey(item => item.FornecedorId).OnDelete(DeleteBehavior.Restrict);
+        // Convite.PrincipalId fica sem FK de propósito: aponta para um convidado do próprio convite, que por sua vez
+        // aponta para o convite. FK nos dois sentidos impede gravar convite e convidados juntos (dependência circular).
+        // Os convidados saem em cascata com o convite.
+        modelBuilder.Entity<PresencaEvento>().HasOne<Evento>().WithMany().HasForeignKey(item => item.EventoId).OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<PresencaEvento>().HasOne<Convite>().WithMany().HasForeignKey(item => item.ConviteId).OnDelete(DeleteBehavior.Cascade);
+    }
+
+    private static void Arquivo<T>(ModelBuilder modelBuilder, System.Linq.Expressions.Expression<Func<T, object?>> coluna, DeleteBehavior regra)
+        where T : class =>
+        modelBuilder.Entity<T>().HasOne<ArquivoRegistro>().WithMany().HasForeignKey(coluna).OnDelete(regra);
+
     public static void Aplicar(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<ApplicationUser>()
-            .HasIndex(usuario => usuario.OrganizerId);
-
         modelBuilder.Entity<PerfilAssessoria>().HasIndex(perfil => perfil.ContaId).IsUnique();
 
         var modelo = modelBuilder.Entity<ModeloEvento>();
@@ -47,6 +135,8 @@ public static class Mapa
         evento.OwnsOne(item => item.Recepcao, local => local.Property<bool>("Persistido").HasDefaultValue(true));
         evento.HasMany(item => item.Servicos).WithOne().HasForeignKey(servico => servico.EventoId).OnDelete(DeleteBehavior.Cascade);
         evento.HasMany(item => item.Tags).WithMany(tag => tag.Eventos);
+        evento.HasOne<ModeloRoteiro>().WithMany().HasForeignKey(item => item.RoteiroId).OnDelete(DeleteBehavior.SetNull);
+        evento.HasOne<ModeloCronograma>().WithMany().HasForeignKey(item => item.CronogramaId).OnDelete(DeleteBehavior.SetNull);
 
         var servicoEvento = modelBuilder.Entity<ServicoEvento>();
         servicoEvento.Ignore(servico => servico.ContratosAtivos);
@@ -60,15 +150,38 @@ public static class Mapa
         modelBuilder.Entity<FornecedorNoServico>().Property(item => item.Etapa).HasConversion<string>();
         modelBuilder.Entity<FornecedorNoServico>().Property(item => item.ValorOrcamento).HasPrecision(12, 2);
 
-        var assistente = modelBuilder.Entity<Assistente>();
-        assistente.ToTable("Assistentes");
-        assistente.Property(item => item.Situacao).HasConversion<string>();
-        assistente.Property(item => item.Nome).HasMaxLength(100);
-        assistente.HasIndex(item => item.ContaId);
-        assistente.HasIndex(item => item.UsuarioId);
-        modelBuilder.Entity<EventoAssistente>().ToTable("EventosAssistentes").HasKey(item => new { item.EventoId, item.AssistenteId });
-        modelBuilder.Entity<EventoAssistente>().HasOne<Evento>().WithMany().HasForeignKey(item => item.EventoId).OnDelete(DeleteBehavior.Cascade);
-        modelBuilder.Entity<EventoAssistente>().HasOne<Assistente>().WithMany().HasForeignKey(item => item.AssistenteId).OnDelete(DeleteBehavior.Cascade);
+        var membro = modelBuilder.Entity<MembroConta>();
+        membro.ToTable("MembrosConta", tabela => tabela.HasCheckConstraint(
+            "CK_MembrosConta_Grupo",
+            "(\"Tipo\" = 'Dono' AND \"GrupoId\" IS NULL) OR (\"Tipo\" = 'Membro' AND \"GrupoId\" IS NOT NULL)"));
+        membro.Property(item => item.Situacao).HasConversion<string>().HasMaxLength(20);
+        membro.Property(item => item.Tipo).HasConversion<string>().HasMaxLength(10);
+        membro.Property(item => item.Nome).HasMaxLength(100);
+        membro.HasIndex(item => item.UsuarioId).IsUnique();
+        membro.HasOne<ApplicationUser>().WithMany().HasForeignKey(item => item.UsuarioId).OnDelete(DeleteBehavior.Restrict);
+        membro.HasOne<GrupoAcesso>().WithMany().HasForeignKey(item => item.GrupoId).OnDelete(DeleteBehavior.Restrict);
+        var eventoMembro = modelBuilder.Entity<EventoMembro>();
+        eventoMembro.ToTable("EventosMembros").HasKey(item => new { item.EventoId, item.MembroId });
+        eventoMembro.HasOne<Evento>().WithMany().HasForeignKey(item => item.EventoId).OnDelete(DeleteBehavior.Cascade);
+        eventoMembro.HasOne<MembroConta>().WithMany().HasForeignKey(item => item.MembroId).OnDelete(DeleteBehavior.Cascade);
+        eventoMembro.HasIndex(item => new { item.ContaId, item.MembroId });
+
+        // Responsáveis e autor que são pessoas da equipe (SPEC-062 Fase 3). RESTRICT: membro nunca é apagado, só desativado.
+        modelBuilder.Entity<ResponsavelTarefa>().HasOne<MembroConta>().WithMany().HasForeignKey(item => item.MembroId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<ResponsavelTarefa>().ToTable(tabela => tabela.HasCheckConstraint("CK_ResponsavelTarefa_Membro", "\"MembroId\" IS NULL OR \"Papel\" = 'Assistente'"));
+        modelBuilder.Entity<ResponsavelTarefaFunil>().HasOne<MembroConta>().WithMany().HasForeignKey(item => item.MembroId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<ItemChecklistTarefa>().HasOne<MembroConta>().WithMany().HasForeignKey(item => item.ResponsavelMembroId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<ComentarioTarefa>().HasOne<MembroConta>().WithMany().HasForeignKey(item => item.AutorMembroId).OnDelete(DeleteBehavior.SetNull);
+
+        var grupo = modelBuilder.Entity<GrupoAcesso>();
+        grupo.ToTable("GruposAcesso");
+        grupo.Property(item => item.Nome).HasMaxLength(GrupoAcesso.NomeMaximo);
+        grupo.HasIndex(item => new { item.ContaId, item.Nome }).IsUnique();
+        grupo.HasMany(item => item.Permissoes).WithOne().HasForeignKey(item => item.GrupoId).OnDelete(DeleteBehavior.Cascade);
+        var permissao = modelBuilder.Entity<PermissaoGrupo>();
+        permissao.ToTable("PermissoesGrupo");
+        permissao.Property(item => item.Modulo).HasConversion<string>().HasMaxLength(30);
+        permissao.HasIndex(item => new { item.GrupoId, item.Modulo }).IsUnique();
 
         modelBuilder.Entity<TagConta>().HasIndex(tag => new { tag.ContaId, tag.Nome }).IsUnique();
 
@@ -91,29 +204,56 @@ public static class Mapa
         modelBuilder.Entity<ComentarioTarefa>().ToTable("ComentariosTarefa");
 
         modelBuilder.Entity<Cliente>().Property(cliente => cliente.Papel).HasConversion<string>();
+        modelBuilder.Entity<VinculoCliente>().ToTable("ClienteEventos");
         modelBuilder.Entity<VinculoCliente>().HasKey(vinculo => new { vinculo.ClienteId, vinculo.EventoId });
         modelBuilder.Entity<VinculoCliente>().HasOne<Cliente>().WithMany(cliente => cliente.Vinculos).HasForeignKey(vinculo => vinculo.ClienteId).OnDelete(DeleteBehavior.Cascade);
         modelBuilder.Entity<VinculoCliente>().HasOne<Evento>().WithMany().HasForeignKey(vinculo => vinculo.EventoId).OnDelete(DeleteBehavior.Cascade);
 
         var linkCliente = modelBuilder.Entity<LinkCliente>();
         linkCliente.ToTable("LinksCliente");
-        linkCliente.Property(item => item.ContaId).HasMaxLength(450);
         linkCliente.Property(item => item.Token).HasMaxLength(64);
         linkCliente.HasIndex(item => item.Token).IsUnique();
         linkCliente.HasIndex(item => item.EventoId).IsUnique();
         linkCliente.HasOne<Evento>().WithMany().HasForeignKey(item => item.EventoId).OnDelete(DeleteBehavior.Cascade);
 
-        var linkPortaria = modelBuilder.Entity<LinkPortaria>();
-        linkPortaria.ToTable("LinksPortaria");
-        linkPortaria.Property(item => item.ContaId).HasMaxLength(450);
-        linkPortaria.Property(item => item.Token).HasMaxLength(64);
-        linkPortaria.HasIndex(item => item.Token).IsUnique();
-        linkPortaria.HasIndex(item => item.EventoId).IsUnique();
-        linkPortaria.HasOne<Evento>().WithMany().HasForeignKey(item => item.EventoId).OnDelete(DeleteBehavior.Cascade);
+        var codigoAcesso = modelBuilder.Entity<CodigoAcessoCliente>();
+        codigoAcesso.ToTable("CodigosAcessoCliente");
+        codigoAcesso.Property(item => item.Email).HasMaxLength(320);
+        codigoAcesso.Property(item => item.CodigoHash).HasMaxLength(64);
+        codigoAcesso.HasIndex(item => new { item.LinkId, item.CriadoEm });
+        codigoAcesso.HasOne<LinkCliente>().WithMany().HasForeignKey(item => item.LinkId).OnDelete(DeleteBehavior.Cascade);
+
+        var sessaoLink = modelBuilder.Entity<SessaoLinkCliente>();
+        sessaoLink.ToTable("SessoesLinkCliente");
+        sessaoLink.Property(item => item.TokenHash).HasMaxLength(64);
+        sessaoLink.HasIndex(item => new { item.LinkId, item.TokenHash }).IsUnique();
+        sessaoLink.HasOne<LinkCliente>().WithMany().HasForeignKey(item => item.LinkId).OnDelete(DeleteBehavior.Cascade);
+
+        var pessoaEquipe = modelBuilder.Entity<PessoaEquipeEvento>();
+        pessoaEquipe.ToTable("PessoasEquipeEvento");
+        pessoaEquipe.Property(item => item.Nome).HasMaxLength(200);
+        pessoaEquipe.Property(item => item.Email).HasMaxLength(320);
+        pessoaEquipe.Property(item => item.Telefone).HasMaxLength(40);
+        pessoaEquipe.Property(item => item.Funcao).HasMaxLength(120);
+        pessoaEquipe.Property(item => item.Token).HasMaxLength(64);
+        pessoaEquipe.HasIndex(item => item.Token).IsUnique();
+        pessoaEquipe.HasIndex(item => item.EventoId);
+        pessoaEquipe.HasOne<Evento>().WithMany().HasForeignKey(item => item.EventoId).OnDelete(DeleteBehavior.Cascade);
+
+        var codigoEquipe = modelBuilder.Entity<CodigoAcessoEquipe>();
+        codigoEquipe.ToTable("CodigosAcessoEquipe");
+        codigoEquipe.Property(item => item.CodigoHash).HasMaxLength(64);
+        codigoEquipe.HasIndex(item => new { item.PessoaId, item.CriadoEm });
+        codigoEquipe.HasOne<PessoaEquipeEvento>().WithMany().HasForeignKey(item => item.PessoaId).OnDelete(DeleteBehavior.Cascade);
+
+        var sessaoEquipe = modelBuilder.Entity<SessaoEquipe>();
+        sessaoEquipe.ToTable("SessoesEquipe");
+        sessaoEquipe.Property(item => item.TokenHash).HasMaxLength(64);
+        sessaoEquipe.HasIndex(item => new { item.PessoaId, item.TokenHash }).IsUnique();
+        sessaoEquipe.HasOne<PessoaEquipeEvento>().WithMany().HasForeignKey(item => item.PessoaId).OnDelete(DeleteBehavior.Cascade);
 
         var importacao = modelBuilder.Entity<ImportacaoConvidados>();
         importacao.ToTable("ImportacoesConvidados");
-        importacao.Property(item => item.ContaId).HasMaxLength(450);
         importacao.Property(item => item.NomeArquivo).HasMaxLength(260);
         importacao.Property(item => item.ObservacaoFixa).HasMaxLength(200);
         importacao.Property(item => item.Situacao).HasConversion<string>().HasMaxLength(20);
@@ -199,9 +339,25 @@ public static class Mapa
         briefingLead.ToTable("BriefingsOportunidade");
         briefingLead.HasIndex(item => item.OportunidadeId).IsUnique();
         briefingLead.Property(item => item.ModeloNome).HasMaxLength(200);
+        briefingLead.Property(item => item.TokenLink).HasMaxLength(64);
+        briefingLead.HasIndex(item => item.TokenLink).IsUnique();
         briefingLead.HasOne<Oportunidade>().WithMany().HasForeignKey(item => item.OportunidadeId).OnDelete(DeleteBehavior.Cascade);
         briefingLead.HasMany(item => item.Itens).WithOne().HasForeignKey(item => item.BriefingOportunidadeId).OnDelete(DeleteBehavior.Cascade);
         modelBuilder.Entity<ItemBriefingOportunidade>().ToTable("ItensBriefingOportunidade");
+
+        var codigoBriefing = modelBuilder.Entity<CodigoAcessoBriefing>();
+        codigoBriefing.ToTable("CodigosAcessoBriefing");
+        codigoBriefing.Property(item => item.Email).HasMaxLength(320);
+        codigoBriefing.Property(item => item.CodigoHash).HasMaxLength(64);
+        codigoBriefing.HasIndex(item => new { item.BriefingId, item.CriadoEm });
+        codigoBriefing.HasOne<BriefingOportunidade>().WithMany().HasForeignKey(item => item.BriefingId).OnDelete(DeleteBehavior.Cascade);
+
+        var sessaoBriefing = modelBuilder.Entity<SessaoBriefing>();
+        sessaoBriefing.ToTable("SessoesBriefing");
+        sessaoBriefing.Property(item => item.TokenHash).HasMaxLength(64);
+        sessaoBriefing.HasIndex(item => new { item.BriefingId, item.TokenHash }).IsUnique();
+        sessaoBriefing.HasOne<BriefingOportunidade>().WithMany().HasForeignKey(item => item.BriefingId).OnDelete(DeleteBehavior.Cascade);
+
         modelBuilder.Entity<ResponsavelTarefaFunil>().ToTable("ResponsaveisTarefaFunil");
         modelBuilder.Entity<ResponsavelTarefaFunil>().Property(item => item.Papel).HasConversion<string>();
         modelBuilder.Entity<TarefaFunil>().HasMany(item => item.Responsaveis).WithOne().HasForeignKey(item => item.TarefaFunilId).OnDelete(DeleteBehavior.Cascade);

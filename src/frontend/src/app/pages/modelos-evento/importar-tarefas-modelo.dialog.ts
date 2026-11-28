@@ -11,6 +11,7 @@ import { Modelo, NegocioClient, TIPOS } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { DIALOG_EM_MASSA } from '../../shared/dialog';
 import { AdicionarTarefasEmMassaDialog, ResultadoTarefasEmMassaModelo } from '../tarefas/adicionar-tarefas-em-massa.dialog';
+import { FecharModal } from '../../shared/fechar-modal';
 
 /**
  * "Importar modelo" da biblioteca (SPEC-012 v3 §6.1): pede Nome e Tipo e abre "Adicionar tarefas em massa". O modelo
@@ -18,9 +19,9 @@ import { AdicionarTarefasEmMassaDialog, ResultadoTarefasEmMassaModelo } from '..
  */
 @Component({
   selector: 'app-importar-tarefas-modelo',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule],
+  imports: [FecharModal, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule],
   template: `
-    <h2 mat-dialog-title>Importar modelo</h2>
+    <h2 mat-dialog-title>Importar modelo <app-fechar-modal /></h2>
     <p class="text-muted text-sm px-6 -mt-2 mb-4">Informe o nome e o tipo. Em seguida, cole a lista ou envie a planilha.</p>
     <mat-dialog-content>
       <form id="importar-modelo" class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4" [formGroup]="form" (submit)="continuar(); $event.preventDefault()">

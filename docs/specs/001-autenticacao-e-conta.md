@@ -1,6 +1,6 @@
 # 001. Autenticação e conta
 
-**Status: aprovada.** O código segue esta spec. **Revisão (22/11/2026, [SPEC-060](060-cliente-sem-login-e-link-do-cliente.md)):** a role `Client` saiu; só `Admin`, `Organizer` e `Assistant` entram na plataforma. O cliente acessa apenas o link público com token gerado pelo organizador.
+**Status: aprovada.** O código segue esta spec. **Revisão (22/11/2026, [SPEC-060](060-cliente-sem-login-e-link-do-cliente.md)):** a role `Client` saiu; só `Admin`, `Organizer` e `Assistant` entram na plataforma. O cliente acessa apenas o link público com token gerado pelo organizador. **Revisão (26/11/2026, [SPEC-062](062-conta-assinatura-e-equipe.md)):** o cadastro público passa a criar também a conta, o visitante como Dono, o trial de 14 dias e os grupos padrão; fora o `Admin`, o acesso vem do tipo na conta e do grupo.
 
 ## 1. Identificador e nome
 
@@ -71,14 +71,17 @@ O administrador inicial segue outro caminho: o bootstrap garante as roles `Admin
 - Confirmação vale 24 horas. Redefinição vale 1 hora. São provedores de token separados do Identity. Não há criptografia própria.
 - Bloqueio: 5 falhas, 15 minutos.
 - O JWT de acesso vale 8 horas e não se renova sozinho. Não há refresh nem lista de revogação.
-- Senha: mínimo 8 caracteres. Não se exige dígito, maiúscula nem símbolo. O Identity continua exigindo minúscula porque isso não foi desligado.
+- Senha: mínimo 10 caracteres. Não se exige dígito, maiúscula nem símbolo. O Identity continua exigindo minúscula porque isso não foi desligado.
+- Senha comum é recusada (OWASP A07-002, `SenhaComumValidador`): lista embutida de senhas frequentes, termos do domínio (`aralu`, `casamento`, `cerimonial`, `assessoria` e parecidos) com ou sem números e símbolos em volta, senha só de números e símbolos, sequência numérica com até 3 letras e senha igual ao e-mail ou à parte antes do `@`. A comparação ignora maiúsculas e acentos.
+- A regra vale só para senha nova (cadastro, redefinição, convite e troca). Quem já tem senha de 8 continua entrando.
+- Senha recusada devolve 400 com `motivo`: `curta` ("Use pelo menos 10 caracteres.") ou `comum` ("Essa senha é muito comum.").
 - Limites são por IP, em memória, configuráveis. Só o proxy configurado, o Caddy, define o IP do pedido.
 - Não existe endpoint público de bootstrap.
 - Pedido que altera estado exige o JWT no cabeçalho Authorization. Não há cookie de autenticação.
 
 ## 9. Validações
 
-- E-mail em formato válido e senha com o mínimo e a minúscula ainda exigida.
+- E-mail em formato válido e senha com o mínimo, a minúscula ainda exigida e fora da lista de senhas comuns.
 - Confirmação de senha no cadastro e na redefinição, quando a tela pedir a senha duas vezes. A obrigatoriedade do segundo campo não foi escrita como RF separado. Ver pendências.
 - Token ausente, vencido ou de outro usuário é rejeitado.
 - Credencial de bootstrap ausente com a flag ligada impede a inicialização.

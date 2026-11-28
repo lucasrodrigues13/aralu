@@ -1,0 +1,33 @@
+---
+import type { Bloco } from '../conteudo';
+import Icone from './Icone.astro';
+import Tela from './Tela.astro';
+interface Props { bloco: Bloco; invertido?: boolean; nivel?: 'h2' | 'h3' }
+const { bloco, invertido = false, nivel: Titulo = 'h3' } = Astro.props;
+---
+<article class:list={['bloco', 'entra', { invertido }]} id={bloco.id}>
+  <div class="bloco-texto">
+    <p class="area"><Icone nome={bloco.icone} />{bloco.area}</p>
+    <Titulo class="titulo-m bloco-titulo">{bloco.titulo}</Titulo>
+    <p class="texto-apoio">{bloco.texto}</p>
+    <ul class="itens">
+      {bloco.itens.map((i) => <li><Icone nome="check" peso="bold" />{i}</li>)}
+    </ul>
+  </div>
+  <div class="bloco-tela"><Tela tipo={bloco.tela} /></div>
+</article>
+
+<style>
+  .bloco { display: grid; gap: 32px; align-items: center; }
+  .bloco-texto { display: grid; gap: 16px; max-width: 520px; }
+  .area { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; line-height: 20px; font-weight: 600; color: var(--cor-acao-principal); }
+  .bloco-titulo { font-size: clamp(22px, 2.4vw, 28px); line-height: 1.22; text-wrap: balance; }
+  .itens { display: grid; gap: 8px; margin-top: 8px; }
+  .itens li { display: flex; gap: 10px; align-items: flex-start; color: var(--cor-texto-secundario); }
+  .itens :global(.icone) { width: 16px; height: 16px; margin-top: 4px; color: var(--cor-acao-principal); }
+  @media (min-width: 900px) {
+    .bloco { grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 80px; }
+    .bloco.invertido .bloco-texto { order: 2; }
+    .bloco.invertido .bloco-tela { order: 1; }
+  }
+</style>

@@ -1,3 +1,3 @@
 namespace Project.Api.Conta;
 
-public sealed record ErroResposta(string Code, string Message);
+public sealed record ErroResposta(string Code, string Message, string? Motivo = null);

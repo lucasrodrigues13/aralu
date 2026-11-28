@@ -18,6 +18,19 @@ export class TemaService {
     this.aplicar(!this.escuro());
   }
 
+  /** Força o tema claro (telas públicas) sem gravar a preferência. */
+  fixarClaro(): void {
+    document.documentElement.classList.add('light-theme');
+    document.documentElement.classList.remove('dark-theme');
+  }
+
+  /** Reaplica o tema conforme a preferência atual. */
+  restaurar(): void {
+    const escuro = this.escuro();
+    document.documentElement.classList.toggle('dark-theme', escuro);
+    document.documentElement.classList.toggle('light-theme', !escuro);
+  }
+
   private aplicar(escuro: boolean): void {
     this.escuro.set(escuro);
     // Classes do TailwindAdmin: light-theme / dark-theme no <html>.

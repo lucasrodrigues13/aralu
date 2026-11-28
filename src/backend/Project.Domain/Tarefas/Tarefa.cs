@@ -1,12 +1,13 @@
+using Project.Domain.Comum;
 namespace Project.Domain.Tarefas;
 
-public sealed class Tarefa
+public sealed class Tarefa : ITemConta
 {
     public Guid Id { get; set; }
 
     public Guid EventoId { get; set; }
 
-    public string ContaId { get; set; } = "";
+    public Guid ContaId { get; set; }
 
     public string Titulo { get; set; } = "";
 

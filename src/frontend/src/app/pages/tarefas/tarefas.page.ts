@@ -9,6 +9,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatTableModule } from '@angular/material/table';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { AssistentesClient } from '../../core/assistentes.client';
@@ -27,10 +28,12 @@ import { TarefaFormDialog } from './tarefa-form.dialog';
 import { TarefaLeituraDialog } from './tarefa-leitura.dialog';
 import { ChecklistTarefaComponent, progressoChecklist } from './checklist-tarefa';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { Estado } from '../../shared/estado';
+import { Paginacao } from '../../shared/paginacao';
 
 @Component({
   selector: 'app-tarefas',
-  imports: [RouterLink, ReactiveFormsModule, MatCardModule, MatButtonModule, MatButtonToggleModule, MatIconModule, MatTableModule, MatFormFieldModule, MatInputModule, MatSelectModule, GdDataPipe, CampoDataComponent, ChecklistTarefaComponent, MatCheckboxModule, MatTooltipModule],
+  imports: [RouterLink, ReactiveFormsModule, MatCardModule, MatButtonModule, MatButtonToggleModule, MatIconModule, MatTableModule, MatPaginatorModule, MatFormFieldModule, MatInputModule, MatSelectModule, GdDataPipe, CampoDataComponent, ChecklistTarefaComponent, MatCheckboxModule, MatTooltipModule, Estado],
   template: `
     <mat-card class="cardWithShadow">
     <div class="p-6 flex flex-wrap items-center justify-between gap-4">
@@ -44,7 +47,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
       <div class="flex items-center gap-3 rounded p-4 mb-6 bg-light-warning text-warning">
         <mat-icon>warning</mat-icon>
         <strong class="flex-1 min-w-0">Mostrando só as tarefas atrasadas.</strong>
-        <button mat-stroked-button type="button" (click)="somenteAtrasadas.set(false)">Ver todas</button>
+        <button mat-stroked-button type="button" (click)="somenteAtrasadas.set(false); pagina.inicio()">Ver todas</button>
       </div>
     }
     <form class="flex flex-wrap items-end gap-4 mb-6" [formGroup]="filtro" (ngSubmit)="aplicarFiltro()">
@@ -101,11 +104,13 @@ import { MatTooltipModule } from '@angular/material/tooltip';
       <mat-button-toggle value="dia">Quadro por dia</mat-button-toggle>
     </mat-button-toggle-group>
     @if (visao() === 'lista') {
-        @if (visiveis().length === 0) {
-          <p class="text-center text-muted py-10">Não há tarefa.</p>
+        @if (!carregado()) {
+          <app-estado titulo="Carregando…" />
+        } @else if (visiveis().length === 0) {
+          <app-estado [titulo]="tarefas().length === 0 ? 'Nenhuma tarefa ainda' : 'Nada encontrado'" [texto]="tarefas().length === 0 ? undefined : 'Mude a busca ou os filtros.'" />
         } @else {
           <div class="relative">
-          <table mat-table class="min-w-full" [dataSource]="visiveis()" multiTemplateDataRows>
+          <table mat-table class="min-w-full" [dataSource]="pagina.itens()" multiTemplateDataRows>
             <ng-container matColumnDef="expandir">
               <th mat-header-cell *matHeaderCellDef class="coluna-expandir"><span class="sr-only">Checklist</span></th>
               <td mat-cell *matCellDef="let tarefa" class="coluna-expandir" (click)="$event.stopPropagation()">
@@ -173,10 +178,15 @@ import { MatTooltipModule } from '@angular/material/tooltip';
             <tr mat-row *matRowDef="let row; columns: ['detalhe']" class="linha-detalhe" [class.fechada]="!aberta(row)"></tr>
           </table>
           </div>
+          <mat-paginator showFirstLastButtons aria-label="Páginas de tarefas"
+            [length]="pagina.total()" [pageIndex]="pagina.indice()" [pageSize]="pagina.tamanho()"
+            [pageSizeOptions]="pagina.tamanhos" (page)="pagina.mudar($event)" />
         }
     } @else if (visao() === 'situacao') {
-      @if (visiveis().length === 0) {
-        <p class="text-center text-muted py-10">Não há tarefa.</p>
+      @if (!carregado()) {
+        <app-estado titulo="Carregando…" />
+      } @else if (visiveis().length === 0) {
+        <app-estado [titulo]="tarefas().length === 0 ? 'Nenhuma tarefa ainda' : 'Nada encontrado'" [texto]="tarefas().length === 0 ? undefined : 'Mude a busca ou os filtros.'" />
       } @else {
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           @for (coluna of situacoes; track coluna.valor) {
@@ -190,8 +200,10 @@ import { MatTooltipModule } from '@angular/material/tooltip';
         </div>
       }
     } @else {
-      @if (porDia().length === 0) {
-        <p class="text-center text-muted py-10">Não há tarefa.</p>
+      @if (!carregado()) {
+        <app-estado titulo="Carregando…" />
+      } @else if (porDia().length === 0) {
+        <app-estado [titulo]="tarefas().length === 0 ? 'Nenhuma tarefa ainda' : 'Nada encontrado'" [texto]="tarefas().length === 0 ? undefined : 'Mude a busca ou os filtros.'" />
       } @else {
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           @for (coluna of porDia(); track coluna.id) {
@@ -250,6 +262,7 @@ export class TarefasPage implements OnInit {
   private readonly auth = inject(AuthService);
   protected readonly papeis = signal<OpcaoResponsavel[]>(opcoesResponsavel([], this.auth.ehAssistente() ? 'Dona da conta' : 'Eu'));
   protected readonly tarefas = signal<Tarefa[]>([]);
+  protected readonly carregado = signal(false);
   protected readonly visao = signal('lista');
   protected readonly somenteAtrasadas = signal(false);
   protected readonly filtroAplicado = signal<FiltroTarefasLista>(filtroVazio());
@@ -266,6 +279,7 @@ export class TarefasPage implements OnInit {
     const base = this.somenteAtrasadas() ? this.tarefas().filter(atrasada) : this.tarefas();
     return filtrarTarefas(base, this.filtroAplicado());
   });
+  protected readonly pagina = new Paginacao(this.visiveis);
   protected readonly porDia = computed(() => colunasPorDia(this.visiveis()));
   protected readonly eventos = computed(() => {
     const vistos = new Map<string, string>();
@@ -336,6 +350,7 @@ export class TarefasPage implements OnInit {
 
   protected aplicarFiltro(): void {
     const valor = this.filtro.getRawValue();
+    this.pagina.inicio();
     this.filtroAplicado.set({
       situacao: valor.situacao,
       eventoId: valor.eventoId,
@@ -350,6 +365,7 @@ export class TarefasPage implements OnInit {
   protected limparFiltros(): void {
     this.filtro.reset({ situacao: '', eventoId: '', responsavel: '', servicoId: '', tag: '', prazoDe: null, prazoAte: null });
     this.filtroAplicado.set(filtroVazio());
+    this.pagina.inicio();
   }
 
   protected ler(tarefa: Tarefa): void {
@@ -368,7 +384,7 @@ export class TarefasPage implements OnInit {
   protected excluir(): void {
     this.dialog.open(ConfirmaDialog, {
       ...DIALOG_PEQUENO,
-      data: { titulo: 'Excluir tarefa', texto: 'Confirma a exclusão desta tarefa?', confirmar: 'Excluir' },
+      data: { titulo: 'Excluir tarefa', texto: 'Confirma a exclusão desta tarefa?', confirmar: 'Excluir', destrutivo: true },
     }).afterClosed().subscribe((confirmou) => {
       if (confirmou) {
         this.toast.erro('A exclusão ainda não está disponível neste fluxo.');
@@ -378,8 +394,8 @@ export class TarefasPage implements OnInit {
 
   private carregar(): void {
     this.negocio.tarefas().subscribe({
-      next: (tarefas) => this.tarefas.set(tarefas),
-      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+      next: (tarefas) => { this.tarefas.set(tarefas); this.carregado.set(true); },
+      error: (erro: unknown) => { this.carregado.set(true); this.toast.erro(mensagemDeErro(erro)); },
     });
   }
 }

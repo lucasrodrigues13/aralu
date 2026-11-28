@@ -14,7 +14,7 @@ namespace Project.Infrastructure.Persistencia;
 
 public sealed class DadosEf(AppDbContext banco) : IDados
 {
-    public Task<PerfilAssessoria?> ObterPerfilAsync(string contaId, CancellationToken ct) =>
+    public Task<PerfilAssessoria?> ObterPerfilAsync(Guid contaId, CancellationToken ct) =>
         banco.Perfis.FirstOrDefaultAsync(perfil => perfil.ContaId == contaId, ct);
 
     public async Task SalvarPerfilAsync(PerfilAssessoria perfil, CancellationToken ct)
@@ -27,7 +27,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         await banco.SaveChangesAsync(ct);
     }
 
-    public async Task<IReadOnlyList<ModeloEvento>> ListarModelosAsync(string contaId, string? nome, CancellationToken ct)
+    public async Task<IReadOnlyList<ModeloEvento>> ListarModelosAsync(Guid contaId, string? nome, CancellationToken ct)
     {
         var consulta = ModelosCompletos().AsNoTracking().Where(modelo => modelo.ContaId == contaId);
         if (!string.IsNullOrWhiteSpace(nome))
@@ -39,7 +39,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         return await consulta.OrderBy(modelo => modelo.Nome).ToListAsync(ct);
     }
 
-    public Task<ModeloEvento?> ObterModeloAsync(string contaId, Guid id, CancellationToken ct) =>
+    public Task<ModeloEvento?> ObterModeloAsync(Guid contaId, Guid id, CancellationToken ct) =>
         ModelosCompletos().FirstOrDefaultAsync(modelo => modelo.Id == id && modelo.ContaId == contaId, ct);
 
     public async Task InserirModeloAsync(ModeloEvento modelo, CancellationToken ct)
@@ -67,7 +67,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         await banco.SaveChangesAsync(ct);
     }
 
-    public async Task<IReadOnlyList<EventoLinha>> ListarEventosAsync(string contaId, FiltroEventos filtro, CancellationToken ct)
+    public async Task<IReadOnlyList<EventoLinha>> ListarEventosAsync(Guid contaId, FiltroEventos filtro, CancellationToken ct)
     {
         var consulta = banco.Eventos.AsNoTracking().Where(evento => evento.ContaId == contaId);
         if (filtro.Situacao is SituacaoEvento situacao)
@@ -121,12 +121,24 @@ public sealed class DadosEf(AppDbContext banco) : IDados
                     banco.Convites.Any(convite => convite.Id == convidado.ConviteId && convite.EventoId == evento.Id)
                     && convidado.Situacao == SituacaoConvidado.Confirmado),
                 banco.Convidados.Count(convidado =>
-                    banco.Convites.Any(convite => convite.Id == convidado.ConviteId && convite.EventoId == evento.Id))))
+                    banco.Convites.Any(convite => convite.Id == convidado.ConviteId && convite.EventoId == evento.Id)),
+                banco.Oportunidades.Any(oportunidade =>
+                    oportunidade.EventoId == evento.Id
+                    && banco.ContratosFunil.Any(contrato => contrato.OportunidadeId == oportunidade.Id && contrato.Situacao != SituacaoContratoFunil.Cancelado)
+                    && !banco.ContratosFunil.Any(contrato => contrato.OportunidadeId == oportunidade.Id && contrato.Situacao == SituacaoContratoFunil.Assinado))))
             .ToListAsync(ct);
         return linhas;
     }
 
-    public Task<Evento?> ObterEventoAsync(string contaId, Guid id, CancellationToken ct) =>
+    public Task<string?> OportunidadeComContratoPendenteAsync(Guid contaId, Guid eventoId, CancellationToken ct) =>
+        banco.Oportunidades.AsNoTracking()
+            .Where(oportunidade => oportunidade.ContaId == contaId && oportunidade.EventoId == eventoId)
+            .Where(oportunidade => banco.ContratosFunil.Any(contrato => contrato.OportunidadeId == oportunidade.Id && contrato.Situacao != SituacaoContratoFunil.Cancelado)
+                && !banco.ContratosFunil.Any(contrato => contrato.OportunidadeId == oportunidade.Id && contrato.Situacao == SituacaoContratoFunil.Assinado))
+            .Select(oportunidade => (string?)oportunidade.Nome)
+            .FirstOrDefaultAsync(ct);
+
+    public Task<Evento?> ObterEventoAsync(Guid contaId, Guid id, CancellationToken ct) =>
         banco.Eventos
             .Include(evento => evento.Tags)
             .Include(evento => evento.Servicos).ThenInclude(servico => servico.Contratos).ThenInclude(contrato => contrato.Parcelas)
@@ -134,7 +146,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
             .Include(evento => evento.Servicos).ThenInclude(servico => servico.Fornecedores)
             .FirstOrDefaultAsync(evento => evento.Id == id && evento.ContaId == contaId, ct);
 
-    public Task<bool> EventoDaContaAsync(string contaId, Guid id, CancellationToken ct) =>
+    public Task<bool> EventoDaContaAsync(Guid contaId, Guid id, CancellationToken ct) =>
         banco.Eventos.AnyAsync(evento => evento.Id == id && evento.ContaId == contaId, ct);
 
     public async Task InserirEventoAsync(
@@ -218,7 +230,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         await banco.SaveChangesAsync(ct);
     }
 
-    public Task<ServicoEvento?> ObterServicoEventoAsync(string contaId, Guid eventoId, Guid servicoId, CancellationToken ct) =>
+    public Task<ServicoEvento?> ObterServicoEventoAsync(Guid contaId, Guid eventoId, Guid servicoId, CancellationToken ct) =>
         banco.Set<ServicoEvento>().AsNoTracking()
             .Include(servico => servico.Contratos).ThenInclude(contrato => contrato.Parcelas)
             .Include(servico => servico.Subitens)
@@ -393,7 +405,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
                     .SetProperty(vinculo => vinculo.ValorOrcamento, valorOrcamento),
                 ct);
 
-    public async Task<IReadOnlyList<Tarefa>> ListarTarefasAsync(string contaId, Guid? eventoId, CancellationToken ct)
+    public async Task<IReadOnlyList<Tarefa>> ListarTarefasAsync(Guid contaId, Guid? eventoId, CancellationToken ct)
     {
         var consulta = banco.Tarefas.AsNoTracking().AsSplitQuery()
             .Include(tarefa => tarefa.Responsaveis)
@@ -409,12 +421,12 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         return await consulta.OrderBy(tarefa => tarefa.Prazo).ThenBy(tarefa => tarefa.Titulo).ToListAsync(ct);
     }
 
-    public Task<Tarefa?> ObterTarefaAsync(string contaId, Guid id, CancellationToken ct) =>
+    public Task<Tarefa?> ObterTarefaAsync(Guid contaId, Guid id, CancellationToken ct) =>
         banco.Tarefas.FirstOrDefaultAsync(tarefa => tarefa.Id == id && tarefa.ContaId == contaId, ct);
 
-    public async Task<IReadOnlyList<Guid>> IdsAssistentesAtivasAsync(string contaId, CancellationToken ct) =>
-        await banco.Assistentes.AsNoTracking()
-            .Where(item => item.ContaId == contaId && item.Situacao == Project.Domain.Equipe.SituacaoAssistente.Ativa)
+    public async Task<IReadOnlyList<Guid>> IdsAssistentesAtivasAsync(Guid contaId, CancellationToken ct) =>
+        await banco.Membros.AsNoTracking()
+            .Where(item => item.ContaId == contaId && item.Tipo == Project.Domain.Equipe.TipoMembro.Membro && item.Situacao == Project.Domain.Equipe.SituacaoMembro.Ativa)
             .Select(item => item.Id)
             .ToListAsync(ct);
 
@@ -461,7 +473,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
             .Select(item => item.ResponsavelReferenciaId!)
             .ToListAsync(ct);
 
-    public async Task MoverPrazosDosItensAsync(string contaId, Guid eventoId, int dias, CancellationToken ct)
+    public async Task MoverPrazosDosItensAsync(Guid contaId, Guid eventoId, int dias, CancellationToken ct)
     {
         var itens = await banco.Set<ItemChecklistTarefa>()
             .Where(item => item.Prazo != null && !item.Feito && !item.Cancelado
@@ -478,7 +490,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         await banco.SaveChangesAsync(ct);
     }
 
-    public async Task RecalcularPrazosRelativosAsync(string contaId, Guid eventoId, DateOnly? dataEvento, CancellationToken ct)
+    public async Task RecalcularPrazosRelativosAsync(Guid contaId, Guid eventoId, DateOnly? dataEvento, CancellationToken ct)
     {
         var tarefas = await banco.Tarefas
             .Include(tarefa => tarefa.Checklist)
@@ -519,7 +531,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
     }
 
     public async Task<IReadOnlyDictionary<Guid, ContextoEvento>> ContextosEventoAsync(
-        string contaId,
+        Guid contaId,
         IReadOnlyCollection<Guid> eventoIds,
         CancellationToken ct)
     {
@@ -542,7 +554,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
     }
 
     public async Task<IReadOnlyDictionary<Guid, string>> NomesDeServicosAsync(
-        string contaId,
+        Guid contaId,
         IReadOnlyCollection<Guid> servicoIds,
         CancellationToken ct)
     {
@@ -559,7 +571,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         return servicos.ToDictionary(servico => servico.Id, servico => servico.Nome);
     }
 
-    public Task ConcluirTarefasLigadasAsync(string contaId, Guid servicoId, CancellationToken ct) =>
+    public Task ConcluirTarefasLigadasAsync(Guid contaId, Guid servicoId, CancellationToken ct) =>
         banco.Tarefas
             .Where(tarefa => tarefa.ContaId == contaId
                 && tarefa.ServicoEventoId == servicoId
@@ -597,13 +609,13 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         }
     }
 
-    public async Task<string?> NomeDoEventoAsync(string contaId, Guid eventoId, CancellationToken ct) =>
+    public async Task<string?> NomeDoEventoAsync(Guid contaId, Guid eventoId, CancellationToken ct) =>
         await banco.Eventos.AsNoTracking()
             .Where(evento => evento.Id == eventoId && evento.ContaId == contaId)
             .Select(evento => evento.Nome)
             .FirstOrDefaultAsync(ct);
 
-    public async Task<IReadOnlyList<Cliente>> ListarClientesAsync(string contaId, string? nome, CancellationToken ct)
+    public async Task<IReadOnlyList<Cliente>> ListarClientesAsync(Guid contaId, string? nome, CancellationToken ct)
     {
         var consulta = banco.Clientes.AsNoTracking().Where(cliente => cliente.ContaId == contaId);
         if (!string.IsNullOrWhiteSpace(nome))
@@ -615,7 +627,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         return await consulta.OrderBy(cliente => cliente.Nome).ToListAsync(ct);
     }
 
-    public Task<Cliente?> ObterClienteAsync(string contaId, Guid id, CancellationToken ct) =>
+    public Task<Cliente?> ObterClienteAsync(Guid contaId, Guid id, CancellationToken ct) =>
         banco.Clientes.FirstOrDefaultAsync(cliente => cliente.Id == id && cliente.ContaId == contaId, ct);
 
     public async Task InserirClienteAsync(Cliente cliente, CancellationToken ct)
@@ -626,7 +638,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
 
     public Task SalvarClienteAsync(CancellationToken ct) => banco.SaveChangesAsync(ct);
 
-    public async Task RemoverClienteAsync(string contaId, Cliente cliente, CancellationToken ct)
+    public async Task RemoverClienteAsync(Guid contaId, Cliente cliente, CancellationToken ct)
     {
         // Um SaveChanges só: soltar as oportunidades e apagar o cliente valem juntos ou nada.
         var oportunidades = await banco.Oportunidades
@@ -641,7 +653,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         await banco.SaveChangesAsync(ct);
     }
 
-    public async Task<IReadOnlyList<(Guid Id, string Nome)>> EventosDoClienteAsync(string contaId, Guid clienteId, CancellationToken ct)
+    public async Task<IReadOnlyList<(Guid Id, string Nome)>> EventosDoClienteAsync(Guid contaId, Guid clienteId, CancellationToken ct)
     {
         var eventos = await banco.Vinculos.AsNoTracking()
             .Where(vinculo => vinculo.ClienteId == clienteId)
@@ -655,7 +667,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         return eventos.Select(evento => (evento.Id, evento.Nome)).ToArray();
     }
 
-    public async Task<IReadOnlyList<Cliente>> ClientesDoEventoAsync(string contaId, Guid eventoId, CancellationToken ct) =>
+    public async Task<IReadOnlyList<Cliente>> ClientesDoEventoAsync(Guid contaId, Guid eventoId, CancellationToken ct) =>
         await banco.Vinculos.AsNoTracking()
             .Where(vinculo => vinculo.EventoId == eventoId)
             .Join(
@@ -666,7 +678,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
             .OrderBy(cliente => cliente.Nome)
             .ToListAsync(ct);
 
-    public async Task<bool> VincularAsync(string contaId, Guid clienteId, Guid eventoId, CancellationToken ct)
+    public async Task<bool> VincularAsync(Guid contaId, Guid clienteId, Guid eventoId, CancellationToken ct)
     {
         var clienteOk = await banco.Clientes.AnyAsync(cliente => cliente.Id == clienteId && cliente.ContaId == contaId, ct);
         var eventoOk = await banco.Eventos.AnyAsync(evento => evento.Id == eventoId && evento.ContaId == contaId, ct);
@@ -685,7 +697,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         return true;
     }
 
-    public async Task<bool> DesvincularAsync(string contaId, Guid clienteId, Guid eventoId, CancellationToken ct)
+    public async Task<bool> DesvincularAsync(Guid contaId, Guid clienteId, Guid eventoId, CancellationToken ct)
     {
         var clienteOk = await banco.Clientes.AnyAsync(cliente => cliente.Id == clienteId && cliente.ContaId == contaId, ct);
         var eventoOk = await banco.Eventos.AnyAsync(evento => evento.Id == eventoId && evento.ContaId == contaId, ct);
@@ -704,13 +716,13 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         return true;
     }
 
-    public async Task<IReadOnlyList<Convite>> ListarConvitesAsync(string contaId, Guid eventoId, CancellationToken ct) =>
+    public async Task<IReadOnlyList<Convite>> ListarConvitesAsync(Guid contaId, Guid eventoId, CancellationToken ct) =>
         await banco.Convites.AsNoTracking().Include(convite => convite.Convidados)
             .Where(convite => convite.ContaId == contaId && convite.EventoId == eventoId)
             .OrderBy(convite => convite.Nome)
             .ToListAsync(ct);
 
-    public Task<Convite?> ObterConviteAsync(string contaId, Guid id, CancellationToken ct) =>
+    public Task<Convite?> ObterConviteAsync(Guid contaId, Guid id, CancellationToken ct) =>
         banco.Convites.Include(convite => convite.Convidados)
             .FirstOrDefaultAsync(convite => convite.Id == id && convite.ContaId == contaId, ct);
 
@@ -724,7 +736,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
     public Task<DateOnly?> PrazoRsvpDoEventoAsync(Guid eventoId, CancellationToken ct) =>
         banco.Eventos.Where(evento => evento.Id == eventoId).Select(evento => evento.PrazoRsvp).FirstOrDefaultAsync(ct);
 
-    public async Task<IReadOnlyList<PresencaLeitura>> ListarPresencasAsync(string contaId, Guid eventoId, CancellationToken ct) =>
+    public async Task<IReadOnlyList<PresencaLeitura>> ListarPresencasAsync(Guid contaId, Guid eventoId, CancellationToken ct) =>
         await (from presenca in banco.PresencasEvento.AsNoTracking()
                join convite in banco.Convites.AsNoTracking() on presenca.ConviteId equals convite.Id
                join convidado in banco.Convidados.AsNoTracking() on presenca.ConvidadoId equals convidado.Id
@@ -753,34 +765,34 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         await banco.SaveChangesAsync(ct);
     }
 
-    public Task<Convidado?> ObterConvidadoAsync(string contaId, Guid id, CancellationToken ct) =>
+    public Task<Convidado?> ObterConvidadoAsync(Guid contaId, Guid id, CancellationToken ct) =>
         banco.Convidados.FirstOrDefaultAsync(
             convidado => convidado.Id == id && banco.Convites.Any(convite => convite.Id == convidado.ConviteId && convite.ContaId == contaId),
             ct);
 
     private static Guid[]? Ids(IReadOnlySet<Guid>? liberados) => liberados?.ToArray();
 
-    public async Task<IReadOnlyList<ContagemSituacao>> ContarEventosAsync(string contaId, CancellationToken ct, IReadOnlySet<Guid>? liberados = null) =>
+    public async Task<IReadOnlyList<ContagemSituacao>> ContarEventosAsync(Guid contaId, CancellationToken ct, IReadOnlySet<Guid>? liberados = null) =>
         await banco.Eventos.AsNoTracking()
             .Where(evento => evento.ContaId == contaId && (Ids(liberados) == null || Ids(liberados)!.Contains(evento.Id)))
             .GroupBy(evento => evento.Situacao)
             .Select(grupo => new ContagemSituacao(grupo.Key, grupo.Count()))
             .ToListAsync(ct);
 
-    public async Task<IReadOnlyList<EventoAndamento>> ListarEmAndamentoAsync(string contaId, CancellationToken ct) =>
+    public async Task<IReadOnlyList<EventoAndamento>> ListarEmAndamentoAsync(Guid contaId, CancellationToken ct) =>
         await banco.Eventos.AsNoTracking()
             .Where(evento => evento.ContaId == contaId && evento.Situacao == SituacaoEvento.EmAndamento)
             .OrderBy(evento => evento.Nome)
             .Select(evento => new EventoAndamento(evento.Id, evento.Nome, evento.Data))
             .ToListAsync(ct);
 
-    public Task<DateOnly?> DataDoEventoAsync(string contaId, Guid eventoId, CancellationToken ct) =>
+    public Task<DateOnly?> DataDoEventoAsync(Guid contaId, Guid eventoId, CancellationToken ct) =>
         banco.Eventos.AsNoTracking()
             .Where(evento => evento.Id == eventoId && evento.ContaId == contaId)
             .Select(evento => evento.Data)
             .FirstOrDefaultAsync(ct);
 
-    public async Task<SituacaoEvento?> SituacaoDoEventoAsync(string contaId, Guid eventoId, CancellationToken ct)
+    public async Task<SituacaoEvento?> SituacaoDoEventoAsync(Guid contaId, Guid eventoId, CancellationToken ct)
     {
         var situacao = await banco.Eventos.AsNoTracking()
             .Where(evento => evento.Id == eventoId && evento.ContaId == contaId)
@@ -789,14 +801,14 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         return situacao;
     }
 
-    public async Task<IReadOnlyList<ContagemMes>> ContarEventosPorMesAsync(string contaId, int ano, CancellationToken ct, IReadOnlySet<Guid>? liberados = null) =>
+    public async Task<IReadOnlyList<ContagemMes>> ContarEventosPorMesAsync(Guid contaId, int ano, CancellationToken ct, IReadOnlySet<Guid>? liberados = null) =>
         await banco.Eventos.AsNoTracking()
             .Where(evento => evento.ContaId == contaId && (Ids(liberados) == null || Ids(liberados)!.Contains(evento.Id)) && evento.Data != null && evento.Data.Value.Year == ano)
             .GroupBy(evento => evento.Data!.Value.Month)
             .Select(grupo => new ContagemMes(grupo.Key, grupo.Count()))
             .ToListAsync(ct);
 
-    public async Task<IReadOnlyList<ParticipacaoNome>> ParticipacaoOrcamentoConcluidosAsync(string contaId, CancellationToken ct, IReadOnlySet<Guid>? liberados = null) =>
+    public async Task<IReadOnlyList<ParticipacaoNome>> ParticipacaoOrcamentoConcluidosAsync(Guid contaId, CancellationToken ct, IReadOnlySet<Guid>? liberados = null) =>
         await banco.Set<ServicoEvento>().AsNoTracking()
             .Where(servico =>
                 banco.Eventos.Any(evento =>
@@ -810,7 +822,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
             .Select(grupo => new ParticipacaoNome(grupo.Key, grupo.Sum(servico => servico.ValorContratado!.Value)))
             .ToListAsync(ct);
 
-    public async Task<IReadOnlyList<ContagemNome>> ContarFornecedoresContratadosAsync(string contaId, CancellationToken ct, IReadOnlySet<Guid>? liberados = null)
+    public async Task<IReadOnlyList<ContagemNome>> ContarFornecedoresContratadosAsync(Guid contaId, CancellationToken ct, IReadOnlySet<Guid>? liberados = null)
     {
         var linhas = await (
             from vinculo in banco.Set<FornecedorNoServico>().AsNoTracking()
@@ -826,14 +838,14 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         return linhas;
     }
 
-    public async Task<IReadOnlyList<ContagemNome>> ContarServicosUtilizadosAsync(string contaId, CancellationToken ct, IReadOnlySet<Guid>? liberados = null) =>
+    public async Task<IReadOnlyList<ContagemNome>> ContarServicosUtilizadosAsync(Guid contaId, CancellationToken ct, IReadOnlySet<Guid>? liberados = null) =>
         await banco.Set<ServicoEvento>().AsNoTracking()
             .Where(servico => banco.Eventos.Any(evento => evento.Id == servico.EventoId && evento.ContaId == contaId && (Ids(liberados) == null || Ids(liberados)!.Contains(evento.Id))))
             .GroupBy(servico => servico.Nome)
             .Select(grupo => new ContagemNome(grupo.Key, grupo.Count()))
             .ToListAsync(ct);
 
-    public Task<int> ContarTarefasNaSemanaAsync(string contaId, DateOnly inicio, DateOnly fim, CancellationToken ct, IReadOnlySet<Guid>? liberados = null) =>
+    public Task<int> ContarTarefasNaSemanaAsync(Guid contaId, DateOnly inicio, DateOnly fim, CancellationToken ct, IReadOnlySet<Guid>? liberados = null) =>
         banco.Tarefas.AsNoTracking()
             .CountAsync(
                 tarefa => tarefa.ContaId == contaId
@@ -843,7 +855,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
                     && tarefa.Prazo <= fim,
                 ct);
 
-    public async Task<IReadOnlyList<ModeloBriefing>> ListarBriefingsAsync(string contaId, string? nome, CancellationToken ct)
+    public async Task<IReadOnlyList<ModeloBriefing>> ListarBriefingsAsync(Guid contaId, string? nome, CancellationToken ct)
     {
         var consulta = BriefingsCompletos().AsNoTracking().Where(modelo => modelo.ContaId == contaId);
         if (!string.IsNullOrWhiteSpace(nome))
@@ -855,7 +867,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         return await consulta.OrderBy(modelo => modelo.Nome).ToListAsync(ct);
     }
 
-    public Task<ModeloBriefing?> ObterBriefingAsync(string contaId, Guid id, CancellationToken ct) =>
+    public Task<ModeloBriefing?> ObterBriefingAsync(Guid contaId, Guid id, CancellationToken ct) =>
         BriefingsCompletos().FirstOrDefaultAsync(modelo => modelo.Id == id && modelo.ContaId == contaId, ct);
 
     public async Task InserirBriefingAsync(ModeloBriefing modelo, CancellationToken ct)
@@ -868,11 +880,13 @@ public sealed class DadosEf(AppDbContext banco) : IDados
 
     public async Task RemoverBriefingAsync(ModeloBriefing modelo, CancellationToken ct)
     {
+        // O vínculo com o modelo de evento não tem FK (BibliotecaId aponta para quatro tabelas): sai junto (SPEC-062 Fase 3).
+        await banco.Set<VinculoModeloEvento>().Where(vinculo => vinculo.Tipo == TipoVinculoModelo.Briefing && vinculo.BibliotecaId == modelo.Id).ExecuteDeleteAsync(ct);
         banco.ModelosBriefing.Remove(modelo);
         await banco.SaveChangesAsync(ct);
     }
 
-    public async Task<IReadOnlyList<ModeloRoteiro>> ListarRoteirosAsync(string contaId, string? nome, CancellationToken ct)
+    public async Task<IReadOnlyList<ModeloRoteiro>> ListarRoteirosAsync(Guid contaId, string? nome, CancellationToken ct)
     {
         var consulta = RoteirosCompletos().AsNoTracking().Where(modelo => modelo.ContaId == contaId);
         if (!string.IsNullOrWhiteSpace(nome))
@@ -884,7 +898,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         return await consulta.OrderBy(modelo => modelo.Nome).ToListAsync(ct);
     }
 
-    public Task<ModeloRoteiro?> ObterRoteiroAsync(string contaId, Guid id, CancellationToken ct) =>
+    public Task<ModeloRoteiro?> ObterRoteiroAsync(Guid contaId, Guid id, CancellationToken ct) =>
         RoteirosCompletos().FirstOrDefaultAsync(modelo => modelo.Id == id && modelo.ContaId == contaId, ct);
 
     public async Task InserirRoteiroAsync(ModeloRoteiro modelo, CancellationToken ct)
@@ -897,11 +911,13 @@ public sealed class DadosEf(AppDbContext banco) : IDados
 
     public async Task RemoverRoteiroAsync(ModeloRoteiro modelo, CancellationToken ct)
     {
+        // O vínculo com o modelo de evento não tem FK (BibliotecaId aponta para quatro tabelas): sai junto (SPEC-062 Fase 3).
+        await banco.Set<VinculoModeloEvento>().Where(vinculo => vinculo.Tipo == TipoVinculoModelo.Roteiro && vinculo.BibliotecaId == modelo.Id).ExecuteDeleteAsync(ct);
         banco.ModelosRoteiro.Remove(modelo);
         await banco.SaveChangesAsync(ct);
     }
 
-    public async Task<IReadOnlyList<ModeloCronograma>> ListarCronogramasAsync(string contaId, string? nome, CancellationToken ct)
+    public async Task<IReadOnlyList<ModeloCronograma>> ListarCronogramasAsync(Guid contaId, string? nome, CancellationToken ct)
     {
         var consulta = CronogramasCompletos().AsNoTracking().Where(modelo => modelo.ContaId == contaId);
         if (!string.IsNullOrWhiteSpace(nome))
@@ -913,7 +929,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         return await consulta.OrderBy(modelo => modelo.Titulo).ToListAsync(ct);
     }
 
-    public Task<ModeloCronograma?> ObterCronogramaAsync(string contaId, Guid id, CancellationToken ct) =>
+    public Task<ModeloCronograma?> ObterCronogramaAsync(Guid contaId, Guid id, CancellationToken ct) =>
         CronogramasCompletos().FirstOrDefaultAsync(modelo => modelo.Id == id && modelo.ContaId == contaId, ct);
 
     public async Task InserirCronogramaAsync(ModeloCronograma modelo, CancellationToken ct)
@@ -930,7 +946,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         await banco.SaveChangesAsync(ct);
     }
 
-    public async Task<IReadOnlyList<ModeloInspiracao>> ListarInspiracoesAsync(string contaId, string? nome, CancellationToken ct)
+    public async Task<IReadOnlyList<ModeloInspiracao>> ListarInspiracoesAsync(Guid contaId, string? nome, CancellationToken ct)
     {
         var consulta = InspiracoesCompletas().AsNoTracking().Where(modelo => modelo.ContaId == contaId);
         if (!string.IsNullOrWhiteSpace(nome))
@@ -942,7 +958,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         return await consulta.OrderBy(modelo => modelo.Nome).ToListAsync(ct);
     }
 
-    public Task<ModeloInspiracao?> ObterInspiracaoAsync(string contaId, Guid id, CancellationToken ct) =>
+    public Task<ModeloInspiracao?> ObterInspiracaoAsync(Guid contaId, Guid id, CancellationToken ct) =>
         InspiracoesCompletas().FirstOrDefaultAsync(modelo => modelo.Id == id && modelo.ContaId == contaId, ct);
 
     public async Task InserirInspiracaoAsync(ModeloInspiracao modelo, CancellationToken ct)
@@ -955,11 +971,13 @@ public sealed class DadosEf(AppDbContext banco) : IDados
 
     public async Task RemoverInspiracaoAsync(ModeloInspiracao modelo, CancellationToken ct)
     {
+        // O vínculo com o modelo de evento não tem FK (BibliotecaId aponta para quatro tabelas): sai junto (SPEC-062 Fase 3).
+        await banco.Set<VinculoModeloEvento>().Where(vinculo => vinculo.Tipo == TipoVinculoModelo.Inspiracao && vinculo.BibliotecaId == modelo.Id).ExecuteDeleteAsync(ct);
         banco.ModelosInspiracao.Remove(modelo);
         await banco.SaveChangesAsync(ct);
     }
 
-    public async Task<IReadOnlyList<ModeloMensagem>> ListarMensagensAsync(string contaId, string? nome, CancellationToken ct)
+    public async Task<IReadOnlyList<ModeloMensagem>> ListarMensagensAsync(Guid contaId, string? nome, CancellationToken ct)
     {
         var consulta = banco.ModelosMensagem.AsNoTracking().Where(modelo => modelo.ContaId == contaId);
         if (!string.IsNullOrWhiteSpace(nome))
@@ -971,7 +989,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         return await consulta.OrderBy(modelo => modelo.Nome).ToListAsync(ct);
     }
 
-    public Task<ModeloMensagem?> ObterMensagemAsync(string contaId, Guid id, CancellationToken ct) =>
+    public Task<ModeloMensagem?> ObterMensagemAsync(Guid contaId, Guid id, CancellationToken ct) =>
         banco.ModelosMensagem.FirstOrDefaultAsync(modelo => modelo.Id == id && modelo.ContaId == contaId, ct);
 
     public async Task InserirMensagemAsync(ModeloMensagem modelo, CancellationToken ct)
@@ -984,11 +1002,13 @@ public sealed class DadosEf(AppDbContext banco) : IDados
 
     public async Task RemoverMensagemAsync(ModeloMensagem modelo, CancellationToken ct)
     {
+        // O vínculo com o modelo de evento não tem FK (BibliotecaId aponta para quatro tabelas): sai junto (SPEC-062 Fase 3).
+        await banco.Set<VinculoModeloEvento>().Where(vinculo => vinculo.Tipo == TipoVinculoModelo.Mensagem && vinculo.BibliotecaId == modelo.Id).ExecuteDeleteAsync(ct);
         banco.ModelosMensagem.Remove(modelo);
         await banco.SaveChangesAsync(ct);
     }
 
-    public async Task<IReadOnlyList<ServicoConta>> ListarServicosContaAsync(string contaId, string? nome, CancellationToken ct)
+    public async Task<IReadOnlyList<ServicoConta>> ListarServicosContaAsync(Guid contaId, string? nome, CancellationToken ct)
     {
         var consulta = banco.ServicosConta.AsNoTracking().Where(servico => servico.ContaId == contaId);
         if (!string.IsNullOrWhiteSpace(nome))
@@ -1000,10 +1020,10 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         return await consulta.OrderBy(servico => servico.Nome).ToListAsync(ct);
     }
 
-    public Task<ServicoConta?> ObterServicoContaAsync(string contaId, Guid id, CancellationToken ct) =>
+    public Task<ServicoConta?> ObterServicoContaAsync(Guid contaId, Guid id, CancellationToken ct) =>
         banco.ServicosConta.FirstOrDefaultAsync(servico => servico.Id == id && servico.ContaId == contaId, ct);
 
-    public Task<ServicoConta?> ObterServicoContaPorNomeAsync(string contaId, string nome, CancellationToken ct)
+    public Task<ServicoConta?> ObterServicoContaPorNomeAsync(Guid contaId, string nome, CancellationToken ct)
     {
         var alvo = nome.ToLower();
         return banco.ServicosConta.FirstOrDefaultAsync(
@@ -1023,7 +1043,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         await banco.SaveChangesAsync(ct);
     }
 
-    public async Task<IReadOnlyList<Fornecedor>> ListarFornecedoresAsync(string contaId, string? nome, CancellationToken ct)
+    public async Task<IReadOnlyList<Fornecedor>> ListarFornecedoresAsync(Guid contaId, string? nome, CancellationToken ct)
     {
         var consulta = FornecedoresCompletos().AsNoTracking().Where(fornecedor => fornecedor.ContaId == contaId);
         if (!string.IsNullOrWhiteSpace(nome))
@@ -1035,12 +1055,18 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         return await consulta.OrderBy(fornecedor => fornecedor.Nome).ToListAsync(ct);
     }
 
-    public Task<Fornecedor?> ObterFornecedorAsync(string contaId, Guid id, CancellationToken ct) =>
+    public Task<Fornecedor?> ObterFornecedorAsync(Guid contaId, Guid id, CancellationToken ct) =>
         FornecedoresCompletos().FirstOrDefaultAsync(fornecedor => fornecedor.Id == id && fornecedor.ContaId == contaId, ct);
 
     public async Task InserirFornecedorAsync(Fornecedor fornecedor, CancellationToken ct)
     {
         banco.Fornecedores.Add(fornecedor);
+        await banco.SaveChangesAsync(ct);
+    }
+
+    public async Task InserirFornecedoresAsync(IReadOnlyList<Fornecedor> fornecedores, CancellationToken ct)
+    {
+        banco.Fornecedores.AddRange(fornecedores);
         await banco.SaveChangesAsync(ct);
     }
 
@@ -1052,7 +1078,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         await banco.SaveChangesAsync(ct);
     }
 
-    public async Task<IReadOnlyDictionary<Guid, string>> NomesServicosContaAsync(string contaId, IEnumerable<Guid> ids, CancellationToken ct)
+    public async Task<IReadOnlyDictionary<Guid, string>> NomesServicosContaAsync(Guid contaId, IEnumerable<Guid> ids, CancellationToken ct)
     {
         var lista = ids.Distinct().ToArray();
         if (lista.Length == 0)
@@ -1065,7 +1091,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
             .ToDictionaryAsync(servico => servico.Id, servico => servico.Nome, ct);
     }
 
-    public async Task<IReadOnlyDictionary<Guid, string>> NomesFornecedoresAsync(string contaId, IEnumerable<Guid> ids, CancellationToken ct)
+    public async Task<IReadOnlyDictionary<Guid, string>> NomesFornecedoresAsync(Guid contaId, IEnumerable<Guid> ids, CancellationToken ct)
     {
         var lista = ids.Distinct().ToArray();
         if (lista.Length == 0)
@@ -1081,7 +1107,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
     public Task SalvarNegocioAsync(CancellationToken ct) => banco.SaveChangesAsync(ct);
 
     public async Task<IReadOnlyList<TarefaNaAgenda>> ListarTarefasDaAgendaAsync(
-        string contaId,
+        Guid contaId,
         DateOnly? de,
         DateOnly? ate,
         CancellationToken ct)
@@ -1127,7 +1153,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
     }
 
     public async Task<IReadOnlyList<CompromissoAgenda>> ListarCompromissosAsync(
-        string contaId,
+        Guid contaId,
         DateOnly? de,
         DateOnly? ate,
         CancellationToken ct)
@@ -1147,7 +1173,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         return await consulta.OrderBy(item => item.Data).ThenBy(item => item.Hora).ToListAsync(ct);
     }
 
-    public Task<CompromissoAgenda?> ObterCompromissoAsync(string contaId, Guid id, CancellationToken ct) =>
+    public Task<CompromissoAgenda?> ObterCompromissoAsync(Guid contaId, Guid id, CancellationToken ct) =>
         banco.Compromissos.FirstOrDefaultAsync(item => item.ContaId == contaId && item.Id == id, ct);
 
     public async Task InserirCompromissoAsync(CompromissoAgenda compromisso, CancellationToken ct)
@@ -1162,11 +1188,11 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         await banco.SaveChangesAsync(ct);
     }
 
-    public Task<bool> TemCompromissoNaDataAsync(string contaId, DateOnly data, CancellationToken ct) =>
+    public Task<bool> TemCompromissoNaDataAsync(Guid contaId, DateOnly data, CancellationToken ct) =>
         banco.Compromissos.AsNoTracking().AnyAsync(item => item.ContaId == contaId && item.Data == data, ct);
 
     public async Task<IReadOnlyList<Oportunidade>> ListarOportunidadesAsync(
-        string contaId,
+        Guid contaId,
         FiltroOportunidades filtro,
         CancellationToken ct)
     {
@@ -1210,10 +1236,10 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         return await consulta.ToListAsync(ct);
     }
 
-    public Task<Oportunidade?> ObterOportunidadeAsync(string contaId, Guid id, CancellationToken ct) =>
+    public Task<Oportunidade?> ObterOportunidadeAsync(Guid contaId, Guid id, CancellationToken ct) =>
         OportunidadesCompletas().FirstOrDefaultAsync(item => item.ContaId == contaId && item.Id == id, ct);
 
-    public async Task<List<EstagioFunil>> ListarEstagiosFunilAsync(string contaId, CancellationToken ct)
+    public async Task<List<EstagioFunil>> ListarEstagiosFunilAsync(Guid contaId, CancellationToken ct)
     {
         var estagios = await banco.EstagiosFunil.Where(item => item.ContaId == contaId).ToListAsync(ct);
         if (estagios.Count > 0)
@@ -1240,7 +1266,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         }
     }
 
-    public async Task<IReadOnlyList<ContatoNaConta>> ListarContatosDaContaAsync(string contaId, CancellationToken ct)
+    public async Task<IReadOnlyList<ContatoNaConta>> ListarContatosDaContaAsync(Guid contaId, CancellationToken ct)
     {
         var leads = await banco.Oportunidades.AsNoTracking()
             .Where(item => item.ContaId == contaId)
@@ -1264,16 +1290,16 @@ public sealed class DadosEf(AppDbContext banco) : IDados
             .ToArray();
     }
 
-    public async Task<IReadOnlyDictionary<string, string>> NomesResponsaveisAsync(string contaId, CancellationToken ct)
+    public async Task<IReadOnlyDictionary<string, string>> NomesResponsaveisAsync(Guid contaId, CancellationToken ct)
     {
-        var nomes = await banco.Assistentes.AsNoTracking()
+        var nomes = await banco.Membros.AsNoTracking()
             .Where(item => item.ContaId == contaId)
             .ToDictionaryAsync(item => item.Id.ToString(), item => item.Nome, ct);
         var dona = await banco.Perfis.AsNoTracking()
             .Where(item => item.ContaId == contaId)
             .Select(item => item.Responsavel ?? item.NomeEmpresa)
             .FirstOrDefaultAsync(ct);
-        nomes[contaId] = string.IsNullOrWhiteSpace(dona) ? "Dona da conta" : dona;
+        nomes[contaId.ToString()] = string.IsNullOrWhiteSpace(dona) ? "Dona da conta" : dona;
         return nomes;
     }
 
@@ -1283,7 +1309,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
 
     public void RemoverEstagioFunil(EstagioFunil estagio) => banco.EstagiosFunil.Remove(estagio);
 
-    public Task<List<Oportunidade>> ListarOportunidadesDoEstagioAsync(string contaId, Guid estagioId, CancellationToken ct) =>
+    public Task<List<Oportunidade>> ListarOportunidadesDoEstagioAsync(Guid contaId, Guid estagioId, CancellationToken ct) =>
         banco.Oportunidades.Where(item => item.ContaId == contaId && item.EstagioFunilId == estagioId).ToListAsync(ct);
 
     public async Task InserirOportunidadeAsync(Oportunidade oportunidade, CancellationToken ct)
@@ -1299,7 +1325,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
     }
 
     public async Task<IReadOnlyList<ContagemOportunidadeEstagio>> ContarOportunidadesPorEstagioAsync(
-        string contaId,
+        Guid contaId,
         CancellationToken ct)
     {
         var grupos = await banco.Oportunidades.AsNoTracking()
@@ -1316,7 +1342,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
     }
 
     public async Task<IReadOnlyDictionary<Guid, string>> NomesOportunidadesAsync(
-        string contaId,
+        Guid contaId,
         IEnumerable<Guid> ids,
         CancellationToken ct)
     {
@@ -1332,7 +1358,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
     }
 
     public async Task<IReadOnlyList<Oportunidade>> ListarOportunidadesPorCriacaoAsync(
-        string contaId,
+        Guid contaId,
         DateTimeOffset inicio,
         DateTimeOffset fim,
         CancellationToken ct) =>
@@ -1341,7 +1367,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
             .ToListAsync(ct);
 
     public async Task<IReadOnlyList<Oportunidade>> ListarOportunidadesPorEntradaEstagioAsync(
-        string contaId,
+        Guid contaId,
         DateTimeOffset inicio,
         DateTimeOffset fim,
         CancellationToken ct) =>
@@ -1349,7 +1375,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
             .Where(item => item.ContaId == contaId && item.EntradaNoEstagioEm >= inicio && item.EntradaNoEstagioEm <= fim)
             .ToListAsync(ct);
 
-    public async Task<IReadOnlyList<LeadRsvp>> ListarLeadsRsvpAtivosAsync(string contaId, string? busca, CancellationToken ct)
+    public async Task<IReadOnlyList<LeadRsvp>> ListarLeadsRsvpAtivosAsync(Guid contaId, string? busca, CancellationToken ct)
     {
         var consulta = banco.LeadsRsvp.AsNoTracking()
             .Where(item => item.ContaId == contaId && item.Situacao == SituacaoLeadRsvp.Ativo);
@@ -1364,7 +1390,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         return await consulta.OrderByDescending(item => item.CriadoEm).ToListAsync(ct);
     }
 
-    public Task<LeadRsvp?> ObterLeadRsvpAsync(string contaId, Guid id, CancellationToken ct) =>
+    public Task<LeadRsvp?> ObterLeadRsvpAsync(Guid contaId, Guid id, CancellationToken ct) =>
         banco.LeadsRsvp.FirstOrDefaultAsync(item => item.ContaId == contaId && item.Id == id, ct);
 
     public async Task InserirLeadRsvpAsync(LeadRsvp lead, CancellationToken ct)
@@ -1374,7 +1400,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
     }
 
     public async Task<IReadOnlyList<LeadRsvp>> ListarLeadsRsvpPeriodoAsync(
-        string contaId,
+        Guid contaId,
         DateTimeOffset inicio,
         DateTimeOffset fim,
         CancellationToken ct) =>
@@ -1382,24 +1408,24 @@ public sealed class DadosEf(AppDbContext banco) : IDados
             .Where(item => item.ContaId == contaId && item.CriadoEm >= inicio && item.CriadoEm <= fim)
             .ToListAsync(ct);
 
-    public Task<int> ContarLeadsRsvpConvertidosAntesAsync(string contaId, DateTimeOffset limite, CancellationToken ct) =>
+    public Task<int> ContarLeadsRsvpConvertidosAntesAsync(Guid contaId, DateTimeOffset limite, CancellationToken ct) =>
         banco.LeadsRsvp.AsNoTracking().CountAsync(
             item => item.ContaId == contaId &&
                     item.Situacao == SituacaoLeadRsvp.Convertido &&
                     item.CriadoEm < limite,
             ct);
 
-    public Task<MetricasRsvpFunil?> ObterMetricasRsvpFunilAsync(string contaId, CancellationToken ct) =>
+    public Task<MetricasRsvpFunil?> ObterMetricasRsvpFunilAsync(Guid contaId, CancellationToken ct) =>
         banco.MetricasRsvpFunil.AsNoTracking().FirstOrDefaultAsync(item => item.ContaId == contaId, ct);
 
-    public async Task IncrementarVisualizacaoRsvpAsync(string contaId, CancellationToken ct)
+    public async Task IncrementarVisualizacaoRsvpAsync(Guid contaId, CancellationToken ct)
     {
         var metricas = await GarantirMetricasRsvpAsync(contaId, ct);
         metricas.Visualizacoes++;
         await banco.SaveChangesAsync(ct);
     }
 
-    public async Task IncrementarCliqueRsvpAsync(string contaId, CancellationToken ct)
+    public async Task IncrementarCliqueRsvpAsync(Guid contaId, CancellationToken ct)
     {
         var metricas = await GarantirMetricasRsvpAsync(contaId, ct);
         metricas.CliquesBotao++;
@@ -1407,7 +1433,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
     }
 
     public async Task<IReadOnlyList<ContratoFunil>> ListarContratosFunilAsync(
-        string contaId,
+        Guid contaId,
         SituacaoContratoFunil? situacao,
         string? busca,
         DateOnly? criadoDe,
@@ -1447,7 +1473,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
             nome.Contains(texto, StringComparison.OrdinalIgnoreCase)).ToArray();
     }
 
-    public Task<ContratoFunil?> ObterContratoFunilAsync(string contaId, Guid id, CancellationToken ct) =>
+    public Task<ContratoFunil?> ObterContratoFunilAsync(Guid contaId, Guid id, CancellationToken ct) =>
         banco.ContratosFunil
             .Include(item => item.Parcelas).ThenInclude(parcela => parcela.Recebimentos)
             .FirstOrDefaultAsync(item => item.ContaId == contaId && item.Id == id, ct);
@@ -1465,7 +1491,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
     }
 
     public async Task<IReadOnlyList<OrcamentoFunil>> ListarOrcamentosFunilAsync(
-        string contaId,
+        Guid contaId,
         SituacaoOrcamentoFunil? situacao,
         string? busca,
         DateOnly? criadoDe,
@@ -1505,7 +1531,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
             nome.Contains(texto, StringComparison.OrdinalIgnoreCase)).ToArray();
     }
 
-    public Task<OrcamentoFunil?> ObterOrcamentoFunilAsync(string contaId, Guid id, CancellationToken ct) =>
+    public Task<OrcamentoFunil?> ObterOrcamentoFunilAsync(Guid contaId, Guid id, CancellationToken ct) =>
         banco.OrcamentosFunil
             .Include(item => item.Parcelas)
             .FirstOrDefaultAsync(item => item.ContaId == contaId && item.Id == id, ct);
@@ -1516,7 +1542,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         await banco.SaveChangesAsync(ct);
     }
 
-    public async Task<OrcamentoFunil?> OrcamentoAprovadoDaOportunidadeAsync(string contaId, Guid oportunidadeId, CancellationToken ct) =>
+    public async Task<OrcamentoFunil?> OrcamentoAprovadoDaOportunidadeAsync(Guid contaId, Guid oportunidadeId, CancellationToken ct) =>
         await banco.OrcamentosFunil.AsNoTracking()
             .Include(item => item.Parcelas)
             .Where(item => item.ContaId == contaId
@@ -1560,14 +1586,14 @@ public sealed class DadosEf(AppDbContext banco) : IDados
     public void AdicionarRespostaProposta(RespostaPropostaFunil resposta) =>
         banco.RespostasPropostaFunil.Add(resposta);
 
-    public async Task<IReadOnlyList<RespostaPropostaFunil>> RespostasPropostaAsync(string contaId, Guid orcamentoId, CancellationToken ct) =>
+    public async Task<IReadOnlyList<RespostaPropostaFunil>> RespostasPropostaAsync(Guid contaId, Guid orcamentoId, CancellationToken ct) =>
         await banco.RespostasPropostaFunil.AsNoTracking()
             .Where(item => item.ContaId == contaId && item.OrcamentoFunilId == orcamentoId)
             .OrderBy(item => item.Em)
             .ToListAsync(ct);
 
     public async Task<IReadOnlyDictionary<Guid, OrcamentoFunil>> PropostasDasOportunidadesAsync(
-        string contaId,
+        Guid contaId,
         IEnumerable<Guid> oportunidadeIds,
         CancellationToken ct)
     {
@@ -1589,7 +1615,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
     }
 
     public async Task<IReadOnlyList<TarefaFunil>> ListarTarefasFunilAsync(
-        string contaId,
+        Guid contaId,
         DateOnly? prazoDe,
         DateOnly? prazoAte,
         TipoTarefaFunil? tipo,
@@ -1619,7 +1645,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
             var texto = responsavel.Trim();
             if (texto == "Organizer")
             {
-                texto = contaId;
+                texto = contaId.ToString();
             }
             else if (texto.StartsWith("Assistente:", StringComparison.Ordinal))
             {
@@ -1637,7 +1663,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         return await consulta.OrderBy(item => item.Prazo).ToListAsync(ct);
     }
 
-    public Task<TarefaFunil?> ObterTarefaFunilAsync(string contaId, Guid id, CancellationToken ct) =>
+    public Task<TarefaFunil?> ObterTarefaFunilAsync(Guid contaId, Guid id, CancellationToken ct) =>
         banco.TarefasFunil.Include(item => item.Responsaveis).FirstOrDefaultAsync(item => item.ContaId == contaId && item.Id == id, ct);
 
     public async Task InserirTarefaFunilAsync(TarefaFunil tarefa, CancellationToken ct)
@@ -1653,7 +1679,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
     }
 
     public async Task<IReadOnlyList<ModeloServicoFunil>> ListarModelosServicoFunilAsync(
-        string contaId,
+        Guid contaId,
         string? nome,
         CancellationToken ct)
     {
@@ -1667,7 +1693,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         return await consulta.OrderBy(item => item.Nome).ToListAsync(ct);
     }
 
-    public Task<ModeloServicoFunil?> ObterModeloServicoFunilAsync(string contaId, Guid id, CancellationToken ct) =>
+    public Task<ModeloServicoFunil?> ObterModeloServicoFunilAsync(Guid contaId, Guid id, CancellationToken ct) =>
         banco.ModelosServicoFunil.FirstOrDefaultAsync(item => item.ContaId == contaId && item.Id == id, ct);
 
     public async Task InserirModeloServicoFunilAsync(ModeloServicoFunil modelo, CancellationToken ct)
@@ -1683,7 +1709,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
     }
 
     public async Task<IReadOnlyList<ModeloOrcamentoFunil>> ListarModelosOrcamentoFunilAsync(
-        string contaId,
+        Guid contaId,
         string? nome,
         CancellationToken ct)
     {
@@ -1697,7 +1723,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         return await consulta.OrderBy(item => item.Nome).ToListAsync(ct);
     }
 
-    public Task<ModeloOrcamentoFunil?> ObterModeloOrcamentoFunilAsync(string contaId, Guid id, CancellationToken ct) =>
+    public Task<ModeloOrcamentoFunil?> ObterModeloOrcamentoFunilAsync(Guid contaId, Guid id, CancellationToken ct) =>
         banco.ModelosOrcamentoFunil.FirstOrDefaultAsync(item => item.ContaId == contaId && item.Id == id, ct);
 
     public async Task InserirModeloOrcamentoFunilAsync(ModeloOrcamentoFunil modelo, CancellationToken ct)
@@ -1712,7 +1738,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         await banco.SaveChangesAsync(ct);
     }
 
-    public async Task<(string ContaId, string Nome)?> ResumoEventoPorIdAsync(Guid eventoId, CancellationToken ct)
+    public async Task<(Guid ContaId, string Nome)?> ResumoEventoPorIdAsync(Guid eventoId, CancellationToken ct)
     {
         var evento = await banco.Eventos.AsNoTracking()
             .Where(item => item.Id == eventoId)
@@ -1721,7 +1747,7 @@ public sealed class DadosEf(AppDbContext banco) : IDados
         return evento is null ? null : (evento.ContaId, evento.Nome);
     }
 
-    private async Task<MetricasRsvpFunil> GarantirMetricasRsvpAsync(string contaId, CancellationToken ct)
+    private async Task<MetricasRsvpFunil> GarantirMetricasRsvpAsync(Guid contaId, CancellationToken ct)
     {
         var metricas = await banco.MetricasRsvpFunil.FirstOrDefaultAsync(item => item.ContaId == contaId, ct);
         if (metricas is not null)

@@ -10,7 +10,7 @@ namespace Project.IntegrationTests.Negocio;
 [Collection(ColecaoApi.Nome)]
 public class NegocioFluxoTests
 {
-    private const string Senha = "abcdefgh";
+    private const string Senha = "ceu-de-junho-42";
     private readonly BancoFixture _banco;
 
     public NegocioFluxoTests(BancoFixture banco) => _banco = banco;
@@ -201,7 +201,7 @@ public class NegocioFluxoTests
         var outra = await Entrar();
         var evento = await Ler(await dono.PostAsJsonAsync("/api/v1/eventos", new { tipo = "Casamento", primeiroNome = "Lia", segundoNome = "Caio" }));
         var eventoId = evento.GetProperty("id").GetGuid();
-        var hoje = DateOnly.FromDateTime(DateTime.UtcNow).ToString("yyyy-MM-dd");
+        var hoje = Project.Domain.Comum.HorarioBrasil.Data(DateTimeOffset.UtcNow).ToString("yyyy-MM-dd");
 
         var criada = await Ler(await dono.PostAsJsonAsync($"/api/v1/eventos/{eventoId}/tarefas", new { titulo = "Ligar para o buffet" }));
         Assert.Equal("Pendente", criada.GetProperty("situacao").GetString());
@@ -712,7 +712,7 @@ public class NegocioFluxoTests
     {
         var email = $"pessoa-{Guid.NewGuid():N}@aralu.test";
         var cliente = _banco.Fabrica.CreateClient();
-        var cadastro = await cliente.PostAsJsonAsync("/api/v1/conta/cadastro", new { email, senha = Senha, confirmacao = Senha });
+        var cadastro = await cliente.PostAsJsonAsync("/api/v1/conta/cadastro", new { email, senha = Senha, confirmacao = Senha, aceiteTermos = true });
         Assert.Equal(HttpStatusCode.Created, cadastro.StatusCode);
         var mensagem = _banco.Fabrica.Email.Mensagens.Last(item => item.Email == email && item.Tipo == "confirmacao");
         var query = QueryHelpers.ParseQuery(new Uri(mensagem.Corpo).Query);

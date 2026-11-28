@@ -1,10 +1,11 @@
+using Project.Domain.Comum;
 namespace Project.Infrastructure.Persistencia;
 
-public sealed class ArquivoRegistro
+public sealed class ArquivoRegistro : ITemConta
 {
     public Guid Id { get; set; }
 
-    public string ContaId { get; set; } = "";
+    public Guid ContaId { get; set; }
 
     public string NomeOriginal { get; set; } = "";
 

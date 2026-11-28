@@ -1,0 +1,44 @@
+# Medição de visitas da landing (SPEC-068 §7): Umami, sem cookie e sem guardar IP.
+# Projeto separado do app, com banco próprio. O deploy publica esta pasta em /opt/aralu/deploy/metricas;
+# sobe à mão, uma vez:
+#   cd /opt/aralu/deploy/metricas && cp .env.example .env   (preencha as duas senhas)
+#   docker compose up -d
+# O proxy da VPS atende em metricas.aralu.com.br e repassa para 127.0.0.1:8095.
+# Primeiro acesso: usuário admin, senha umami. Troque a senha na hora.
+
+name: metricas
+
+services:
+  banco:
+    image: postgres:16-alpine@sha256:f2f98726820d0342055351c6e9d36e705f5bfffb3dd53ff556325114b08afb6d
+    environment:
+      POSTGRES_USER: umami
+      POSTGRES_PASSWORD: ${UMAMI_DB_PASSWORD:?defina UMAMI_DB_PASSWORD no .env}
+      POSTGRES_DB: umami
+    volumes:
+      - banco:/var/lib/postgresql/data
+    mem_limit: 256m
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U umami -d umami"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  umami:
+    image: ghcr.io/umami-software/umami:postgresql-latest@sha256:b64f40400d77bcadd39cf5c62a1e368c99524ca442024f96e1133355a19a5dbc
+    environment:
+      DATABASE_URL: postgresql://umami:${UMAMI_DB_PASSWORD:?defina UMAMI_DB_PASSWORD no .env}@banco:5432/umami
+      DATABASE_TYPE: postgresql
+      APP_SECRET: ${UMAMI_APP_SECRET:?defina UMAMI_APP_SECRET no .env}
+      DISABLE_TELEMETRY: "1"
+    ports:
+      - "127.0.0.1:8095:3000"
+    depends_on:
+      banco:
+        condition: service_healthy
+    mem_limit: 512m
+    restart: unless-stopped
+
+volumes:
+  banco:

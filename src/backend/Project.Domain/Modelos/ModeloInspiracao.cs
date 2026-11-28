@@ -1,19 +1,22 @@
+using Project.Domain.Comum;
 namespace Project.Domain.Modelos;
 
-public sealed class ModeloInspiracao
+public sealed class ModeloInspiracao : ITemConta
 {
     public Guid Id { get; set; }
 
-    public string ContaId { get; set; } = "";
+    public Guid ContaId { get; set; }
 
     public string Nome { get; set; } = "";
 
     public List<ItemInspiracao> Itens { get; set; } = [];
 }
 
-public sealed class ItemInspiracao
+public sealed class ItemInspiracao : ITemConta
 {
     public Guid Id { get; set; }
+
+    public Guid ContaId { get; set; }
 
     public Guid GaleriaId { get; set; }
 

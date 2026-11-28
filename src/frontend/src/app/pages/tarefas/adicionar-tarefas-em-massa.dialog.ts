@@ -36,6 +36,8 @@ import {
 import { opcoesResponsavel, OpcaoResponsavel, pedidoResponsavel } from '../../shared/responsaveis';
 import { SeletorServicoComponent } from '../../shared/seletor-servico.component';
 import { TarefaModeloEdicao } from './tarefa-form.dialog';
+import { FecharModal } from '../../shared/fechar-modal';
+import { Estado } from '../../shared/estado';
 
 export type DadosTarefasEmMassa =
   | { modo: 'evento'; eventoId: string }
@@ -85,9 +87,9 @@ type LinhaForm = ReturnType<typeof criarLinha>;
 /** Adicionar tarefas em massa (SPEC-012 v3 §6.4): grade editável que é a prévia; lista colada e planilha preenchem. */
 @Component({
   selector: 'app-adicionar-tarefas-em-massa',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule, MatSelectModule, MatTooltipModule, CampoDataComponent, SeletorServicoComponent],
+  imports: [FecharModal, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule, MatSelectModule, MatTooltipModule, CampoDataComponent, SeletorServicoComponent, Estado],
   template: `
-    <h2 mat-dialog-title>Adicionar tarefas em massa</h2>
+    <h2 mat-dialog-title>Adicionar tarefas em massa <app-fechar-modal /></h2>
     <p class="text-muted text-sm px-6 -mt-2 mb-4">
       Digite, cole uma lista ou envie a planilha. A grade é a prévia: nada é gravado antes de "Adicionar".
       @if (emModelo) { No modelo o prazo é só relativo ao evento. }
@@ -201,7 +203,7 @@ type LinhaForm = ReturnType<typeof criarLinha>;
               }
             </div>
           } @empty {
-            <p class="text-center text-muted py-8">Nenhuma linha ainda. Use "+ Linha", "Colar lista" ou "Enviar planilha".</p>
+            <app-estado titulo="Nenhuma linha ainda" texto="Use &quot;+ Linha&quot;, &quot;Colar lista&quot; ou &quot;Enviar planilha&quot;." />
           }
         </div>
       </div>

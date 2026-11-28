@@ -6,18 +6,21 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatTableModule } from '@angular/material/table';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { Cliente, NegocioClient, ROTULO_PAPEL } from '../../core/negocio.client';
 import { ToastService } from '../../core/toast.service';
 import { DIALOG, DIALOG_PEQUENO } from '../../shared/dialog';
 import { ConfirmaDialog } from '../../shared/confirma-dialog';
+import { Estado } from '../../shared/estado';
+import { Paginacao } from '../../shared/paginacao';
 import { ClienteFormDialog } from './cliente-form.dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-clientes',
-  imports: [MatCardModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatTooltipModule],
+  imports: [MatCardModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatTableModule, MatPaginatorModule, MatTooltipModule, Estado],
   template: `
     <mat-card class="cardWithShadow">
       <div class="p-6">
@@ -44,14 +47,16 @@ import { MatTooltipModule } from '@angular/material/tooltip';
           </button>
         </div>
       </div>
-      @if (clientes().length === 0) {
-        <p class="text-center text-muted py-10">Não há cliente para mostrar.</p>
+      @if (!carregado()) {
+        <app-estado titulo="Carregando…" />
+      } @else if (clientes().length === 0) {
+        <app-estado [titulo]="busca() ? 'Nada encontrado' : 'Nenhum cliente ainda'" [texto]="busca() ? 'Mude a busca ou os filtros.' : undefined" />
       } @else {
-        <table mat-table class="min-w-full" [dataSource]="clientes()">
+        <table mat-table class="min-w-full" [dataSource]="pagina.itens()">
           <ng-container matColumnDef="nome">
             <th mat-header-cell *matHeaderCellDef>Cliente</th>
             <td mat-cell *matCellDef="let cliente">
-              {{ cliente.nome }}
+              <button type="button" class="link-nome" (click)="abrir(cliente)">{{ cliente.nome }}</button>
               <span class="block text-xs text-muted">{{ rotulo(cliente.papel) }}</span>
             </td>
           </ng-container>
@@ -84,6 +89,9 @@ import { MatTooltipModule } from '@angular/material/tooltip';
           <tr mat-header-row *matHeaderRowDef="colunas"></tr>
           <tr mat-row *matRowDef="let row; columns: colunas"></tr>
         </table>
+        <mat-paginator showFirstLastButtons aria-label="Páginas de clientes"
+          [length]="pagina.total()" [pageIndex]="pagina.indice()" [pageSize]="pagina.tamanho()"
+          [pageSizeOptions]="pagina.tamanhos" (page)="pagina.mudar($event)" />
       }
     </mat-card-content>
     </mat-card>
@@ -94,7 +102,9 @@ export class ClientesPage implements OnInit {
   private readonly dialog = inject(MatDialog);
   private readonly toast = inject(ToastService);
   protected readonly clientes = signal<Cliente[]>([]);
+  protected readonly carregado = signal(false);
   protected readonly busca = signal('');
+  protected readonly pagina = new Paginacao(this.clientes);
   protected readonly colunas = ['nome', 'contato', 'eventos', 'acoes'];
 
   ngOnInit(): void {
@@ -107,6 +117,7 @@ export class ClientesPage implements OnInit {
 
   protected buscar(evento: Event): void {
     this.busca.set((evento.target as HTMLInputElement).value);
+    this.pagina.inicio();
     this.carregar();
   }
 
@@ -124,7 +135,7 @@ export class ClientesPage implements OnInit {
       data: {
         titulo: 'Excluir cliente',
         texto: `Confirma a exclusão de "${cliente.nome}"? A oportunidade do funil, se houver, continua existindo.`,
-        confirmar: 'Excluir',
+        confirmar: 'Excluir', destrutivo: true,
       },
     }).afterClosed().subscribe((confirmou) => {
       if (!confirmou) return;
@@ -140,8 +151,8 @@ export class ClientesPage implements OnInit {
 
   private carregar(): void {
     this.negocio.clientes(this.busca()).subscribe({
-      next: (clientes) => this.clientes.set(clientes),
-      error: (erro: unknown) => this.toast.erro(mensagemDeErro(erro)),
+      next: (clientes) => { this.clientes.set(clientes); this.carregado.set(true); },
+      error: (erro: unknown) => { this.carregado.set(true); this.toast.erro(mensagemDeErro(erro)); },
     });
   }
 }

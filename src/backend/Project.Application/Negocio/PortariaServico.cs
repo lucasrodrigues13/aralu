@@ -1,13 +1,9 @@
-using System.Security.Cryptography;
 using Project.Application.Comum;
 using Project.Application.Convidados;
 using Project.Domain.Convidados;
 using Project.Domain.Eventos;
 
 namespace Project.Application.Negocio;
-
-/// <summary>Link da portaria como a organizadora vê (SPEC-058 §6.1). <paramref name="Token"/> é nulo quando não há link.</summary>
-public sealed record LinkPortariaLeitura(bool Ativo, string? Token);
 
 public sealed record ConvidadoPortaria(Guid Id, string Nome, string Situacao, bool Confirmado, DateTimeOffset? CompareceuEm);
 
@@ -16,20 +12,15 @@ public sealed record ConvitePortaria(Guid Id, string Nome, IReadOnlyList<Convida
 /// <summary>Tela da portaria: totais e a lista completa dos convites que têm ao menos um convidado confirmado (SPEC-058).</summary>
 public sealed record PortariaLeitura(string Evento, DateOnly? Data, int Confirmados, int Compareceram, IReadOnlyList<ConvitePortaria> Convites);
 
-/// <summary>Convidados do convite que a portaria marca como presentes; os confirmados fora da lista voltam a "não entrou".</summary>
-public sealed record ComparecimentoPedido(IReadOnlyList<Guid>? Compareceram);
+/// <summary>
+/// Só o que mudou no convite: quem a portaria marca como presente e de quem ela desfaz a entrada. Quem não está em
+/// nenhuma das listas fica como está, para duas pessoas na portaria não apagarem a marcação uma da outra.
+/// </summary>
+public sealed record ComparecimentoPedido(IReadOnlyList<Guid>? Compareceram, IReadOnlyList<Guid>? Desfazer = null);
 
 public interface IDadosPortaria
 {
-    Task<EventoDoLink?> ObterEventoAsync(string contaId, Guid eventoId, CancellationToken ct);
-
-    Task<LinkPortaria?> ObterPorEventoAsync(Guid eventoId, CancellationToken ct);
-
-    Task<LinkPortaria?> ObterPorTokenAsync(string token, CancellationToken ct);
-
-    Task InserirAsync(LinkPortaria link, CancellationToken ct);
-
-    Task RemoverAsync(LinkPortaria link, CancellationToken ct);
+    Task<EventoDoLink?> ObterEventoAsync(Guid contaId, Guid eventoId, CancellationToken ct);
 
     Task<IReadOnlyList<Convite>> ListarConvitesAsync(Guid eventoId, CancellationToken ct);
 
@@ -44,8 +35,8 @@ public interface IDadosPortaria
 }
 
 /// <summary>
-/// Portaria do evento (SPEC-058): a organizadora gerencia o link e o QR de cada convite; a equipe, sem login, confere a lista
-/// e marca quem compareceu. O link só alcança o evento dele e só a portaria.
+/// Portaria do evento (SPEC-058): a equipe, pelo link individual com código (SPEC-067), confere a lista e marca quem
+/// compareceu. Quem chama já validou a sessão e passa o evento da pessoa; nada fora dele é alcançado.
 /// </summary>
 public sealed class PortariaServico(IDadosPortaria dados, IGeradorQr qr)
 {
@@ -54,58 +45,6 @@ public sealed class PortariaServico(IDadosPortaria dados, IGeradorQr qr)
 
     private const string LinkInvalido = "Link inválido.";
     private const string EventoEncerrado = "O evento não está em andamento.";
-
-    // ---- Organizadora ----
-
-    public async Task<Resultado<LinkPortariaLeitura>> ObterAsync(string contaId, Guid eventoId, CancellationToken ct)
-    {
-        if (await dados.ObterEventoAsync(contaId, eventoId, ct) is null)
-        {
-            return Resultado<LinkPortariaLeitura>.Erro(Codigos.Indisponivel, "Indisponível.");
-        }
-
-        return Resultado<LinkPortariaLeitura>.Sucesso(Ler(await dados.ObterPorEventoAsync(eventoId, ct)));
-    }
-
-    /// <summary>Gera o link da portaria ou, se já existe, troca o código (o endereço antigo deixa de valer).</summary>
-    public async Task<Resultado<LinkPortariaLeitura>> GerarAsync(string contaId, Guid eventoId, DateTimeOffset agora, CancellationToken ct)
-    {
-        if (await dados.ObterEventoAsync(contaId, eventoId, ct) is null)
-        {
-            return Resultado<LinkPortariaLeitura>.Erro(Codigos.Indisponivel, "Indisponível.");
-        }
-
-        var link = await dados.ObterPorEventoAsync(eventoId, ct);
-        if (link is null)
-        {
-            link = new LinkPortaria { Id = Guid.NewGuid(), EventoId = eventoId, ContaId = contaId, Token = NovoToken(), CriadoEm = agora };
-            await dados.InserirAsync(link, ct);
-        }
-        else
-        {
-            link.Token = NovoToken();
-        }
-
-        await dados.SalvarAsync(ct);
-        return Resultado<LinkPortariaLeitura>.Sucesso(Ler(link));
-    }
-
-    public async Task<Resultado<LinkPortariaLeitura>> DesativarAsync(string contaId, Guid eventoId, CancellationToken ct)
-    {
-        if (await dados.ObterEventoAsync(contaId, eventoId, ct) is null)
-        {
-            return Resultado<LinkPortariaLeitura>.Erro(Codigos.Indisponivel, "Indisponível.");
-        }
-
-        var link = await dados.ObterPorEventoAsync(eventoId, ct);
-        if (link is not null)
-        {
-            await dados.RemoverAsync(link, ct);
-            await dados.SalvarAsync(ct);
-        }
-
-        return Resultado<LinkPortariaLeitura>.Sucesso(Ler(null));
-    }
 
     /// <summary>QR de entrada pela página de RSVP: quem tem o link do convite vê o QR depois de confirmar.</summary>
     public async Task<Resultado<byte[]>> QrPorTokenAsync(string token, CancellationToken ct)
@@ -126,9 +65,9 @@ public sealed class PortariaServico(IDadosPortaria dados, IGeradorQr qr)
 
     // ---- Portaria ----
 
-    public async Task<Resultado<PortariaLeitura>> LerAsync(string token, CancellationToken ct)
+    public async Task<Resultado<PortariaLeitura>> LerAsync(Guid contaId, Guid eventoId, CancellationToken ct)
     {
-        var contexto = await ResolverAsync(token, exigirAndamento: false, ct);
+        var contexto = await ResolverAsync(contaId, eventoId, exigirAndamento: false, ct);
         if (contexto.Falha is not null)
         {
             return Resultado<PortariaLeitura>.Erro(contexto.Falha.Codigo, contexto.Falha.Mensagem);
@@ -151,9 +90,9 @@ public sealed class PortariaServico(IDadosPortaria dados, IGeradorQr qr)
     }
 
     /// <summary>Abre o convite do QR lido (o texto do QR, com ou sem o prefixo). Convite de outro evento ou sem confirmados é indisponível.</summary>
-    public async Task<Resultado<ConvitePortaria>> LerConviteDoQrAsync(string token, string? codigo, CancellationToken ct)
+    public async Task<Resultado<ConvitePortaria>> LerConviteDoQrAsync(Guid contaId, Guid eventoId, string? codigo, CancellationToken ct)
     {
-        var contexto = await ResolverAsync(token, exigirAndamento: false, ct);
+        var contexto = await ResolverAsync(contaId, eventoId, exigirAndamento: false, ct);
         if (contexto.Falha is not null)
         {
             return Resultado<ConvitePortaria>.Erro(contexto.Falha.Codigo, contexto.Falha.Mensagem);
@@ -174,9 +113,9 @@ public sealed class PortariaServico(IDadosPortaria dados, IGeradorQr qr)
         return Resultado<ConvitePortaria>.Sucesso(await MontarConviteAsync(convite, ct));
     }
 
-    public async Task<Resultado<ConvitePortaria>> LerConviteAsync(string token, Guid conviteId, CancellationToken ct)
+    public async Task<Resultado<ConvitePortaria>> LerConviteAsync(Guid contaId, Guid eventoId, Guid conviteId, CancellationToken ct)
     {
-        var contexto = await ResolverAsync(token, exigirAndamento: false, ct);
+        var contexto = await ResolverAsync(contaId, eventoId, exigirAndamento: false, ct);
         if (contexto.Falha is not null)
         {
             return Resultado<ConvitePortaria>.Erro(contexto.Falha.Codigo, contexto.Falha.Mensagem);
@@ -188,15 +127,16 @@ public sealed class PortariaServico(IDadosPortaria dados, IGeradorQr qr)
             : Resultado<ConvitePortaria>.Sucesso(await MontarConviteAsync(convite, ct));
     }
 
-    /// <summary>Marca quem do convite compareceu: os listados entram (mantendo a hora de quem já tinha entrado) e os outros confirmados ficam como não entrou.</summary>
+    /// <summary>Marca quem do convite compareceu (mantendo a hora de quem já tinha entrado) e desfaz a entrada dos listados em Desfazer; os demais não mudam.</summary>
     public async Task<Resultado<ConvitePortaria>> MarcarComparecimentoAsync(
-        string token,
+        Guid contaId,
+        Guid eventoId,
         Guid conviteId,
         ComparecimentoPedido pedido,
         DateTimeOffset agora,
         CancellationToken ct)
     {
-        var contexto = await ResolverAsync(token, exigirAndamento: true, ct);
+        var contexto = await ResolverAsync(contaId, eventoId, exigirAndamento: true, ct);
         if (contexto.Falha is not null)
         {
             return Resultado<ConvitePortaria>.Erro(contexto.Falha.Codigo, contexto.Falha.Mensagem);
@@ -209,9 +149,15 @@ public sealed class PortariaServico(IDadosPortaria dados, IGeradorQr qr)
         }
 
         var marcados = (pedido.Compareceram ?? []).Distinct().ToArray();
-        if (marcados.Any(id => convite.Convidados.All(item => item.Id != id)))
+        var desfeitos = (pedido.Desfazer ?? []).Distinct().ToArray();
+        if (marcados.Concat(desfeitos).Any(id => convite.Convidados.All(item => item.Id != id)))
         {
             return Resultado<ConvitePortaria>.Erro(Codigos.Indisponivel, "Indisponível.");
+        }
+
+        if (marcados.Intersect(desfeitos).Any())
+        {
+            return Resultado<ConvitePortaria>.Erro(Codigos.Validacao, "O mesmo convidado não pode ser marcado e desmarcado.");
         }
 
         var presencas = (await dados.ListarPresencasAsync(contexto.Evento.Id, ct)).Where(item => item.ConviteId == conviteId).ToArray();
@@ -226,7 +172,7 @@ public sealed class PortariaServico(IDadosPortaria dados, IGeradorQr qr)
             {
                 presenca.CompareceuEm ??= agora;
             }
-            else
+            else if (desfeitos.Contains(presenca.ConvidadoId))
             {
                 presenca.CompareceuEm = null;
             }
@@ -258,11 +204,10 @@ public sealed class PortariaServico(IDadosPortaria dados, IGeradorQr qr)
 
     private sealed record Contexto(EventoDoLink? Evento, Falha? Falha);
 
-    private async Task<Contexto> ResolverAsync(string token, bool exigirAndamento, CancellationToken ct)
+    private async Task<Contexto> ResolverAsync(Guid contaId, Guid eventoId, bool exigirAndamento, CancellationToken ct)
     {
-        var link = string.IsNullOrWhiteSpace(token) ? null : await dados.ObterPorTokenAsync(token, ct);
-        var evento = link is null ? null : await dados.ObterEventoAsync(link.ContaId, link.EventoId, ct);
-        if (link is null || evento is null)
+        var evento = await dados.ObterEventoAsync(contaId, eventoId, ct);
+        if (evento is null)
         {
             return new Contexto(null, new Falha(Codigos.Indisponivel, LinkInvalido));
         }
@@ -271,9 +216,4 @@ public sealed class PortariaServico(IDadosPortaria dados, IGeradorQr qr)
             ? new Contexto(evento, new Falha(Codigos.Validacao, EventoEncerrado))
             : new Contexto(evento, null);
     }
-
-    private static LinkPortariaLeitura Ler(LinkPortaria? link) => new(link is not null, link?.Token);
-
-    private static string NovoToken() =>
-        Convert.ToBase64String(RandomNumberGenerator.GetBytes(32)).Replace('+', '-').Replace('/', '_').TrimEnd('=');
 }

@@ -20,7 +20,7 @@ public sealed record SalvarEstagiosFunil(
 /// <summary>Gerenciar estágios do funil (SPEC-031 §6.1).</summary>
 public sealed class EstagioFunilServico(IDados dados)
 {
-    public async Task<IReadOnlyList<EstagioFunilLeitura>> ListarAsync(string contaId, CancellationToken ct)
+    public async Task<IReadOnlyList<EstagioFunilLeitura>> ListarAsync(Guid contaId, CancellationToken ct)
     {
         var estagios = EstagiosFunil.Ordenar(await dados.ListarEstagiosFunilAsync(contaId, ct));
         var contagens = await dados.ContarOportunidadesPorEstagioAsync(contaId, ct);
@@ -28,7 +28,7 @@ public sealed class EstagioFunilServico(IDados dados)
     }
 
     public async Task<Resultado<IReadOnlyList<EstagioFunilLeitura>>> SalvarAsync(
-        string contaId,
+        Guid contaId,
         SalvarEstagiosFunil pedido,
         CancellationToken ct)
     {
@@ -115,7 +115,7 @@ public sealed class EstagioFunilServico(IDados dados)
             mudancas.AddRange(leads.Select(lead => (lead, alvo)));
         }
 
-        var agora = DateTimeOffset.UtcNow;
+        var agora = Relogio.Agora;
         foreach (var (item, destino) in mudancas)
         {
             item.EstagioFunilId = destino.Id;

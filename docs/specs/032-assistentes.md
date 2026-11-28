@@ -1,6 +1,6 @@
 # 032. Assistentes
 
-**Status: aprovada (20/11/2026).** O código segue esta spec, em três partes (A conta, B permissões, C "só os dela" e responsáveis). O usuário aprovou todas as sugestões da §17, que agora são decisões. Fonte: [produto-v1.md](../produto-v1.md) §5.15 (linha "Assistente com login") e RF-045. Cobre só a parte "assistente" do bloco 13. A ficha da equipe e a equipe do dia (RF-102, RF-051) ficam para outra spec. Cada ponto que os RFs não fecham está na §17, com a decisão.
+**Status: aprovada (20/11/2026). Revista pela [SPEC-062](062-conta-assinatura-e-equipe.md) (26/11/2026):** a assistente vira Membro da conta num grupo de acesso; "pode ver o financeiro" e "só os dela" passam a ser permissão e alcance do grupo; o convite serve para Dono e Membro. O código segue esta spec, em três partes (A conta, B permissões, C "só os dela" e responsáveis). O usuário aprovou todas as sugestões da §17, que agora são decisões. Fonte: [produto-v1.md](../produto-v1.md) §5.15 (linha "Assistente com login") e RF-045. Cobre só a parte "assistente" do bloco 13. A ficha da equipe e a equipe do dia (RF-102, RF-051) ficam para outra spec. Cada ponto que os RFs não fecham está na §17, com a decisão.
 
 ## 1. Identificador e nome
 

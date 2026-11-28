@@ -1,7 +1,7 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { catchError, map, of } from 'rxjs';
-import { AuthService } from './auth.service';
+import { AuthService, Modulo, permissoesDaArea } from './auth.service';
 import { ContaClient } from './conta.client';
 
 export const authGuard: CanActivateFn = () => {
@@ -31,8 +31,8 @@ export const donaGuard: CanActivateFn = () => {
   return auth.ehAssistente() ? router.createUrlTree(['/sem-acesso']) : true;
 };
 
-/** Financeiro: a dona sempre; a assistente só com "pode ver o financeiro". Lê as permissões do servidor. */
-export const financeiroGuard: CanActivateFn = () => {
+/** Módulo do grupo (SPEC-062 §9): o Dono sempre; o Membro só com "ver". Lê as permissões do servidor. */
+export const moduloGuard = (modulo: Modulo): CanActivateFn => () => {
   const auth = inject(AuthService);
   const router = inject(Router);
   const conta = inject(ContaClient);
@@ -46,9 +46,12 @@ export const financeiroGuard: CanActivateFn = () => {
 
   return conta.areaUsuario().pipe(
     map((area) => {
-      auth.permissoes.set({ podeVerFinanceiro: !!area.podeVerFinanceiro, somenteDela: !!area.somenteDela, usuarioId: area.usuarioId });
-      return area.podeVerFinanceiro ? true : router.createUrlTree(['/sem-acesso']);
+      auth.permissoes.set(permissoesDaArea(area));
+      return auth.pode(modulo) ? true : router.createUrlTree(['/sem-acesso']);
     }),
     catchError(() => of(router.createUrlTree(['/sem-acesso']))),
   );
 };
+
+export const financeiroGuard = moduloGuard('Financeiro');
+

@@ -9,26 +9,27 @@ import { MatSelectModule } from '@angular/material/select';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { NegocioClient, TIPOS } from '../../core/negocio.client';
 import { CampoDataComponent } from '../../shared/campo-data';
+import { Estado } from '../../shared/estado';
+import { PaginaPublica } from '../../shared/pagina-publica';
 import { MascaraDirective } from '../../shared/mascara.directive';
 import { deDataParaIso } from '../../shared/data';
 import { ToastService } from '../../core/toast.service';
 
 @Component({
   selector: 'app-lead-publico',
-  imports: [ReactiveFormsModule, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, CampoDataComponent, MascaraDirective],
+  imports: [ReactiveFormsModule, MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, CampoDataComponent, MascaraDirective, Estado, PaginaPublica],
   template: `
-    <section class="flex min-h-screen w-full items-center justify-center p-4 bg-light">
-      <mat-card class="cardWithShadow w-full max-w-[440px] mb-0!">
-        <div class="px-6 pt-6"><h3 class="text-xl font-semibold">Solicitar orçamento</h3></div>
-        <mat-card-content class="pt-6!">
+    <app-pagina-publica titulo="Solicitar orçamento" [estreita]="true">
+      <mat-card class="cardWithShadow">
+        <mat-card-content>
           @if (enviado()) {
-            <p>Recebemos o seu contato. Em breve a assessoria retorna.</p>
+            <app-estado icone="check_circle" titulo="Pedido enviado" texto="Em breve a assessoria retorna." />
           } @else {
             <form class="grid grid-cols-1 gap-4" [formGroup]="form" (ngSubmit)="enviar()">
               <div class="campo">
                 <mat-label class="font-semibold mb-2 block">Seu nome</mat-label>
                 <mat-form-field appearance="outline" class="w-full">
-                <input [attr.aria-label]="'Seu nome'" matInput formControlName="contatoNome" />
+                <input [attr.aria-label]="'Seu nome'" matInput maxlength="120" formControlName="contatoNome" />
               </mat-form-field>
               </div>
               <div class="campo">
@@ -73,12 +74,17 @@ import { ToastService } from '../../core/toast.service';
                   </mat-form-field>
                 </div>
               </div>
-              <button mat-flat-button class="w-full" type="submit" [disabled]="!contaId">Enviar</button>
+              <!-- Campo isca (honeypot): fora da tela; pessoas não preenchem, robôs sim. -->
+              <input type="text" name="site" formControlName="site" tabindex="-1" autocomplete="off" aria-hidden="true"
+                style="position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden" />
+              <div class="acoes-publicas">
+                <button mat-flat-button type="submit" [disabled]="!contaId">Enviar</button>
+              </div>
             </form>
           }
         </mat-card-content>
       </mat-card>
-    </section>
+    </app-pagina-publica>
   `,
 })
 export class LeadPublicoPage implements OnInit {
@@ -90,9 +96,10 @@ export class LeadPublicoPage implements OnInit {
   protected contaId = '';
   protected readonly enviado = signal(false);
   protected readonly form = this.fb.nonNullable.group({
-    contatoNome: ['', Validators.required],
-    telefone: [''],
-    email: [''],
+    contatoNome: ['', [Validators.required, Validators.maxLength(120)]],
+    telefone: ['', Validators.maxLength(200)],
+    email: ['', Validators.maxLength(200)],
+    site: [''],
     tipoEvento: this.fb.control<string | null>(null),
     dataPrevista: this.fb.control<Date | null>(null),
     quantidadeConvidados: this.fb.control<number | null>(null),
@@ -102,7 +109,11 @@ export class LeadPublicoPage implements OnInit {
 
   ngOnInit(): void {
     this.contaId = this.rota.snapshot.paramMap.get('contaId') ?? '';
+    this.iniciadoEm = Date.now();
   }
+
+  /** Quando o formulário abriu (epoch ms): envio rápido demais é descartado no servidor. */
+  private iniciadoEm = 0;
 
   protected enviar(): void {
     if (this.form.invalid || !this.contaId) {
@@ -120,6 +131,8 @@ export class LeadPublicoPage implements OnInit {
       quantidadeConvidados: v.quantidadeConvidados,
       cidade: v.cidade || null,
       uf: v.uf || null,
+      site: v.site || null,
+      iniciadoEm: this.iniciadoEm,
     }).subscribe({
       next: () => {
         this.enviado.set(true);

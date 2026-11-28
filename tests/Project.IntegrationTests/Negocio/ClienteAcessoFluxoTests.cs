@@ -17,7 +17,7 @@ namespace Project.IntegrationTests.Negocio;
 [Collection(ColecaoApi.Nome)]
 public class ClienteAcessoFluxoTests
 {
-    private const string Senha = "abcdefgh";
+    private const string Senha = "ceu-de-junho-42";
     private const string PapelLegado = "Client";
     private readonly BancoFixture _banco;
 
@@ -69,7 +69,6 @@ public class ClienteAcessoFluxoTests
             Assert.True((await usuarios.AddToRoleAsync(organizer, Papeis.Organizer)).Succeeded);
 
             var usuario = new ApplicationUser { UserName = email, Email = email, EmailConfirmed = true };
-            usuario.VincularAoOrganizer(organizer.Id);
             Assert.True((await usuarios.CreateAsync(usuario, Senha)).Succeeded);
             Assert.True((await usuarios.AddToRoleAsync(usuario, PapelLegado)).Succeeded);
         }
@@ -90,9 +89,10 @@ public class ClienteAcessoFluxoTests
             http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
         }
 
-        Assert.Equal(HttpStatusCode.Forbidden, (await http.GetAsync("/api/v1/eventos")).StatusCode);
-        Assert.Equal(HttpStatusCode.Forbidden, (await http.GetAsync("/api/v1/clientes")).StatusCode);
-        Assert.Equal(HttpStatusCode.Forbidden, (await http.GetAsync("/api/v1/conta/area")).StatusCode);
+        // Sem membro na conta (SPEC-062), o token não vale: 401 antes mesmo da checagem de papel.
+        Assert.Equal(HttpStatusCode.Unauthorized, (await http.GetAsync("/api/v1/eventos")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await http.GetAsync("/api/v1/clientes")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await http.GetAsync("/api/v1/conta/area")).StatusCode);
     }
 
     [Fact]
@@ -125,7 +125,7 @@ public class ClienteAcessoFluxoTests
     {
         var email = $"org-{Guid.NewGuid():N}@aralu.test";
         var cliente = _banco.Fabrica.CreateClient();
-        Assert.Equal(HttpStatusCode.Created, (await cliente.PostAsJsonAsync("/api/v1/conta/cadastro", new { email, senha = Senha, confirmacao = Senha })).StatusCode);
+        Assert.Equal(HttpStatusCode.Created, (await cliente.PostAsJsonAsync("/api/v1/conta/cadastro", new { email, senha = Senha, confirmacao = Senha, aceiteTermos = true })).StatusCode);
         var mensagem = _banco.Fabrica.Email.Mensagens.Last(item => item.Email == email && item.Tipo == "confirmacao");
         var query = QueryHelpers.ParseQuery(new Uri(mensagem.Corpo).Query);
         Assert.Equal(HttpStatusCode.OK, (await cliente.PostAsJsonAsync("/api/v1/conta/confirmar-email", new

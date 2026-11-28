@@ -4,10 +4,12 @@ namespace Project.Tests.Negocio;
 
 public class FunilRegrasTests
 {
+    private static readonly Guid ContaDoTeste = Guid.Parse("22222222-2222-2222-2222-222222222222");
+
     [Fact]
     public void Conta_nasce_com_os_quatro_estagios_da_spec_007()
     {
-        var estagios = EstagiosFunil.Padrao("conta");
+        var estagios = EstagiosFunil.Padrao(ContaDoTeste);
 
         Assert.Equal(
             ["Contato inicial", "Orçamento enviado", "Contratado", "Descartado"],

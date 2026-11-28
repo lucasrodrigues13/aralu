@@ -1,10 +1,11 @@
+using Project.Domain.Comum;
 namespace Project.Domain.Perfil;
 
-public sealed class PerfilAssessoria
+public sealed class PerfilAssessoria : ITemConta
 {
     public Guid Id { get; set; }
 
-    public string ContaId { get; set; } = "";
+    public Guid ContaId { get; set; }
 
     public string? NomeEmpresa { get; set; }
 
@@ -40,6 +41,9 @@ public sealed class PerfilAssessoria
     public string? ChavePix { get; set; }
 
     public bool CapturaLeadRsvp { get; set; } = true;
+
+    /// <summary>Validade padrão das propostas, em dias (SPEC-064). Nulo vale <see cref="Funil.OrcamentoFunil.DiasPadrao"/>.</summary>
+    public int? ValidadePropostaDias { get; set; }
 
     /// <summary>Endereço em uma linha, montado dos campos estruturados (tag contratada_endereco, SPEC-038).</summary>
     public string EnderecoCompleto()

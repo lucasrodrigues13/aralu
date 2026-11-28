@@ -1,27 +1,28 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { Assistente, AssistentesClient } from '../../core/assistentes.client';
+import { Assistente, AssistentesClient, GrupoAcesso } from '../../core/assistentes.client';
 import { mensagemDeErro } from '../../core/mensagem-erro';
 import { ToastService } from '../../core/toast.service';
 import { CampoDataComponent } from '../../shared/campo-data';
 import { deDataParaIso, deIsoParaData } from '../../shared/data';
 import { MascaraDirective } from '../../shared/mascara.directive';
+import { FecharModal } from '../../shared/fechar-modal';
 
 export interface AssistenteFormDados {
   assistente?: Assistente;
 }
 
-/** Convidar ou editar assistente (SPEC-032 §6.1 e §6.3). */
+/** Convidar ou editar pessoa da equipe: tipo Dono ou Membro e, para Membro, o grupo (SPEC-062 parte C). */
 @Component({
   selector: 'app-assistente-form',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MascaraDirective, CampoDataComponent],
+  imports: [FecharModal, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MascaraDirective, CampoDataComponent],
   template: `
-    <h2 mat-dialog-title>{{ dados.assistente ? 'Editar assistente' : 'Convidar assistente' }}</h2>
+    <h2 mat-dialog-title>{{ dados.assistente ? 'Editar pessoa da equipe' : 'Convidar para a equipe' }} <app-fechar-modal [manual]="true" (fechar)="ref.close(false)" /></h2>
     <p class="text-muted text-sm px-6 -mt-2 mb-4">
       {{ dados.assistente ? 'A mudança vale no próximo pedido dela.' : 'Ela recebe um e-mail com o link para criar a senha.' }}
     </p>
@@ -50,23 +51,26 @@ export interface AssistenteFormDados {
           </div>
           <app-campo-data rotulo="Nascimento (opcional)" formControlName="nascimento" />
           <div class="campo">
-            <mat-label class="font-semibold mb-2 block">Pode ver o financeiro</mat-label>
+            <mat-label class="font-semibold mb-2 block">Tipo</mat-label>
             <mat-form-field appearance="outline" class="w-full">
-              <mat-select [attr.aria-label]="'Pode ver o financeiro'" formControlName="podeVerFinanceiro">
-                <mat-option [value]="false">Não</mat-option>
-                <mat-option [value]="true">Sim</mat-option>
+              <mat-select [attr.aria-label]="'Tipo'" formControlName="tipo">
+                <mat-option value="Membro">Membro (acesso pelo grupo)</mat-option>
+                <mat-option value="Dono">Dono (acesso total e Configurações)</mat-option>
               </mat-select>
             </mat-form-field>
           </div>
-          <div class="campo">
-            <mat-label class="font-semibold mb-2 block">Eventos que ela vê</mat-label>
-            <mat-form-field appearance="outline" class="w-full">
-              <mat-select [attr.aria-label]="'Eventos que ela vê'" formControlName="somenteDela">
-                <mat-option [value]="false">Todos os eventos</mat-option>
-                <mat-option [value]="true">Só os dela</mat-option>
-              </mat-select>
-            </mat-form-field>
-          </div>
+          @if (formulario.controls.tipo.value === 'Membro') {
+            <div class="campo">
+              <mat-label class="font-semibold mb-2 block">Grupo</mat-label>
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-select [attr.aria-label]="'Grupo'" formControlName="grupoId">
+                  @for (grupo of grupos(); track grupo.id) {
+                    <mat-option [value]="grupo.id">{{ grupo.nome }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            </div>
+          }
         </div>
       </form>
     </mat-dialog-content>
@@ -90,9 +94,19 @@ export class AssistenteFormDialog {
     email: [this.dados.assistente?.email ?? '', [Validators.required, Validators.email]],
     celular: this.dados.assistente?.celular ?? '',
     nascimento: this.fb.control<Date | null>(deIsoParaData(this.dados.assistente?.nascimento)),
-    podeVerFinanceiro: this.dados.assistente?.podeVerFinanceiro ?? false,
-    somenteDela: this.dados.assistente?.somenteDela ?? false,
+    tipo: this.dados.assistente?.tipo ?? 'Membro',
+    grupoId: this.fb.control<string | null>(this.dados.assistente?.grupoId ?? null),
   });
+  protected readonly grupos = signal<GrupoAcesso[]>([]);
+
+  constructor() {
+    this.cliente.grupos().subscribe((grupos) => {
+      this.grupos.set(grupos);
+      if (!this.formulario.controls.grupoId.value) {
+        this.formulario.controls.grupoId.setValue(grupos.find((g) => g.nome === 'Assistentes')?.id ?? grupos[0]?.id ?? null);
+      }
+    });
+  }
 
   protected salvar(): void {
     if (this.formulario.invalid) {
@@ -107,8 +121,8 @@ export class AssistenteFormDialog {
       email: valor.email.trim(),
       celular: valor.celular.trim() || null,
       nascimento: deDataParaIso(valor.nascimento),
-      podeVerFinanceiro: valor.podeVerFinanceiro,
-      somenteDela: valor.somenteDela,
+      tipo: valor.tipo,
+      grupoId: valor.tipo === 'Membro' ? valor.grupoId : null,
     };
     this.enviando = true;
     const destino = this.dados.assistente

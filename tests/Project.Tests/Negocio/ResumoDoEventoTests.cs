@@ -10,7 +10,7 @@ namespace Project.Tests.Negocio;
 
 public class ResumoDoEventoTests
 {
-    private const string Conta = "conta-1";
+    private static readonly Guid Conta = Guid.Parse("11111111-1111-1111-1111-111111111111");
     private static readonly DateOnly Hoje = new(2026, 11, 18);
 
     [Fact]
@@ -24,6 +24,16 @@ public class ResumoDoEventoTests
         var alerta = Assert.Single(resumo.Alertas);
         Assert.Equal("sem-data", alerta.Codigo);
         Assert.Equal(DestinoAlerta.Editar, alerta.Destino);
+    }
+
+    [Fact]
+    public void Contrato_nao_assinado_vem_primeiro_e_leva_a_busca_da_oportunidade()
+    {
+        var resumo = ResumoDoEvento.Calcular(Evento(null), [], [], null, Hoje, "Casamento Ana e Pedro");
+
+        Assert.Equal("contrato-nao-assinado", resumo.Alertas[0].Codigo);
+        Assert.Equal(DestinoAlerta.Contratos, resumo.Alertas[0].Destino);
+        Assert.Equal("Casamento Ana e Pedro", resumo.Alertas[0].Busca);
     }
 
     [Fact]
