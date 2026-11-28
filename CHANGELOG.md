@@ -2,6 +2,11 @@
 
 Todas as mudanças relevantes da Aralu, por versão. Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e versionamento semântico (MAJOR.MINOR.PATCH). O passo a passo está na skill `.claude/skills/versao-release`.
 
+## [1.0.1] - 2026-11-28
+
+### Corrigido
+- aralu.com.br passa a abrir a landing page em vez de redirecionar para o app; se a landing estiver fora do ar, o endereço leva ao app (SPEC-068, 069).
+
 ## [1.0.0] - 2026-11-28
 
 Primeira versão em produção.
