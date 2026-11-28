@@ -1,7 +1,7 @@
 # ── Produção ─────────────────────────────────────────────────────────
-# aralu.com.br vai ser a landing (SPEC-068). Até ela existir, tudo vai para o app
-# com redirecionamento temporário: um 301 da raiz ficaria guardado nos navegadores
-# e esconderia a landing depois. /api/* continua encaminhado, porque redirecionar
+# aralu.com.br é a landing (SPEC-068), servida pelo container "landing" em 127.0.0.1:8091.
+# Links antigos do app (RSVP, proposta, QR...) são redirecionados para app.aralu.com.br
+# pela própria landing. /api/* continua encaminhado ao app, porque redirecionar
 # transforma POST em GET e quebraria webhook e formulários abertos (SPEC-069 §4.2).
 aralu.com.br {
 	encode zstd gzip
@@ -13,7 +13,17 @@ aralu.com.br {
 	}
 
 	handle {
-		redir https://app.aralu.com.br{uri} 302
+		reverse_proxy 127.0.0.1:8091
+	}
+
+	# Landing fora do ar (container parado ou ainda não ligado no .env): manda para o app
+	# com redirecionamento temporário, em vez de mostrar erro.
+	handle_errors {
+		@landing_fora {
+			not path /api/*
+			expression {err.status_code} in [502, 503, 504]
+		}
+		redir @landing_fora https://app.aralu.com.br{uri} 302
 	}
 }
 
