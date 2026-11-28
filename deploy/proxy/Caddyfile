@@ -9,6 +9,17 @@ www.aralu.com.br {
 	redir https://aralu.com.br{uri} permanent
 }
 
+# Endereço definitivo do app (SPEC-069). Enquanto a virada não termina, o app
+# responde aqui e em aralu.com.br. Buscadores não indexam o app.
+app.aralu.com.br {
+	encode zstd gzip
+	header {
+		-Server
+		X-Robots-Tag "noindex, nofollow"
+	}
+	reverse_proxy 127.0.0.1:8081
+}
+
 # ── Staging ──────────────────────────────────────────────────────────
 staging.aralu.com.br {
 	encode zstd gzip
