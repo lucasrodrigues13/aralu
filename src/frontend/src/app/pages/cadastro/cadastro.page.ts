@@ -51,7 +51,14 @@ import { CascaAcesso } from '../../shared/casca-acesso';
           </mat-form-field>
         </div>
         <div>
-          <mat-checkbox formControlName="aceiteTermos">Li e aceito os termos de uso e a política de privacidade da Aralu.</mat-checkbox>
+          <!-- Os links abrem em outra aba para não perder o que já foi preenchido. -->
+          <mat-checkbox formControlName="aceiteTermos">
+            Li e aceito os
+            <a class="text-primary font-semibold" routerLink="/termos-de-uso" target="_blank" (click)="$event.stopPropagation()">termos de uso</a>
+            e a
+            <a class="text-primary font-semibold" routerLink="/politica-de-privacidade" target="_blank" (click)="$event.stopPropagation()">política de privacidade</a>
+            da Aralu.
+          </mat-checkbox>
           @if (formulario.controls.aceiteTermos.touched && formulario.controls.aceiteTermos.invalid) {
             <p class="text-error text-sm m-0">Aceite os termos para continuar.</p>
           }

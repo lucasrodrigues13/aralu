@@ -15,6 +15,11 @@ export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'entrar' },
   { path: 'entrar', loadComponent: () => import('./pages/entrar/entrar.page').then((m) => m.EntrarPage) },
   { path: 'cadastro', loadComponent: () => import('./pages/cadastro/cadastro.page').then((m) => m.CadastroPage) },
+  { path: 'termos-de-uso', loadComponent: () => import('./pages/legal/termos-de-uso.page').then((m) => m.TermosDeUsoPage) },
+  {
+    path: 'politica-de-privacidade',
+    loadComponent: () => import('./pages/legal/politica-de-privacidade.page').then((m) => m.PoliticaDePrivacidadePage),
+  },
   {
     path: 'confirmar-email',
     loadComponent: () => import('./pages/confirmar-email/confirmar-email.page').then((m) => m.ConfirmarEmailPage),

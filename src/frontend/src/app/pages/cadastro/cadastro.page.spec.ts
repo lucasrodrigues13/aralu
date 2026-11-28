@@ -50,6 +50,17 @@ describe('CadastroPage', () => {
     http.verify();
   });
 
+  it('liga as palavras do aceite aos termos de uso e à política de privacidade', () => {
+    const fixture = TestBed.createComponent(CadastroPage);
+    fixture.detectChanges();
+
+    const links = Array.from(fixture.nativeElement.querySelectorAll('mat-checkbox a') as NodeListOf<HTMLAnchorElement>);
+    expect(links.map((link) => [link.textContent?.trim(), link.getAttribute('href')])).toEqual([
+      ['termos de uso', '/termos-de-uso'],
+      ['política de privacidade', '/politica-de-privacidade'],
+    ]);
+  });
+
   it('permanece no cadastro quando a conta não é criada', () => {
     const fixture = TestBed.createComponent(CadastroPage);
     fixture.detectChanges();
