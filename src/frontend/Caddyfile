@@ -14,11 +14,22 @@
 	# CSP em Report-Only até rodar os roteiros de teste sem violações. img-src https: cobre a capa do YouTube da página de aceite (o iframe srcdoc herda a CSP).
 	header {
 		Strict-Transport-Security "max-age=86400"
-		X-Frame-Options "DENY"
 		X-Content-Type-Options "nosniff"
 		Referrer-Policy "strict-origin-when-cross-origin"
 		Permissions-Policy "camera=(self), geolocation=(), microphone=()"
+	}
+
+	# Anti-clickjacking: DENY em tudo, exceto o manual, que a tela Ajuda > Manual mostra num iframe do próprio app.
+	# Matchers excludentes para não depender da ordem em que o Caddy aplica diretivas header com o mesmo nome.
+	@manual path /manual/*
+	@app not path /manual/*
+	header @app {
+		X-Frame-Options "DENY"
 		Content-Security-Policy-Report-Only "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' https: blob: data:; frame-src 'self' blob:; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'"
+	}
+	header @manual {
+		X-Frame-Options "SAMEORIGIN"
+		Content-Security-Policy-Report-Only "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' https: blob: data:; frame-src 'self' blob:; frame-ancestors 'self'; object-src 'none'; base-uri 'self'; form-action 'self'"
 	}
 
 	handle /api/* {
