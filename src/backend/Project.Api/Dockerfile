@@ -15,7 +15,7 @@ COPY src/backend/ src/backend/
 RUN dotnet publish src/backend/Project.Api/Project.Api.csproj -c Release -o /app --no-restore /p:UseAppHost=false
 
 # dotnet/aspnet:10.0 fixado por digest
-FROM mcr.microsoft.com/dotnet/aspnet:10.0@sha256:aac50ceef10391e78a899e3d2ccd00bbafa2dcb56ccf4586cbccf00edb84fc21
+FROM mcr.microsoft.com/dotnet/aspnet:11.0@sha256:ca396ece3f2a2e62c7a03f1d7d710b8bc7e8c9dea5597d091178d9f5bfca13f0
 WORKDIR /app
 COPY --from=build /app .
 # Volume nomeado herda o dono deste diretório. A API roda como APP_UID.
