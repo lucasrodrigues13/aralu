@@ -1,3 +1,4 @@
+using Project.Application.Comum;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 
@@ -18,7 +19,7 @@ internal static class TokenSmtpEntra
         await Trava.WaitAsync(cancellationToken);
         try
         {
-            if (_token is not null && _chave == chave && DateTimeOffset.UtcNow < _expira)
+            if (_token is not null && _chave == chave && Relogio.Agora < _expira)
             {
                 return _token;
             }
@@ -55,7 +56,7 @@ internal static class TokenSmtpEntra
 
             _token = token.AccessToken;
             _chave = chave;
-            _expira = DateTimeOffset.UtcNow.AddSeconds(Math.Max(token.ExpiresIn - 300, 0));
+            _expira = Relogio.Agora.AddSeconds(Math.Max(token.ExpiresIn - 300, 0));
             return _token;
         }
         finally

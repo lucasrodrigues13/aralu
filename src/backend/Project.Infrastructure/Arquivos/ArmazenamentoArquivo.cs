@@ -98,7 +98,7 @@ public sealed class ArmazenamentoArquivo(
                 total = reduzida.Length;
             }
 
-            var agora = DateTime.UtcNow;
+            var agora = Relogio.AgoraUtc;
             var nomeFisico = $"{Guid.NewGuid():N}{tipo.Value.Extensao}";
             var relativo = Path.Combine(word ? "word" : documento ? "documentos" : "images", agora.Year.ToString("0000"), agora.Month.ToString("00"), nomeFisico);
             final = Path.GetFullPath(Path.Combine(raiz, relativo));

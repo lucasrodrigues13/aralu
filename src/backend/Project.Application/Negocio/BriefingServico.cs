@@ -44,7 +44,7 @@ public sealed class BriefingServico(IDados dados)
 
     public async Task<Resultado<BriefingLeitura>> CriarAsync(Guid contaId, SalvarBriefing pedido, CancellationToken ct)
     {
-        var montado = Montar(contaId, Guid.NewGuid(), pedido, DateTimeOffset.UtcNow, padrao: false);
+        var montado = Montar(contaId, Guid.NewGuid(), pedido, Relogio.Agora, padrao: false);
         if (!montado.Ok)
         {
             return Resultado<BriefingLeitura>.Erro(montado.Falha!.Codigo, montado.Falha.Mensagem);
@@ -100,7 +100,7 @@ public sealed class BriefingServico(IDados dados)
             Nome = origem.Nome + " (cópia)",
             Origem = origem.Origem,
             Padrao = false,
-            CriadoEm = DateTimeOffset.UtcNow,
+            CriadoEm = Relogio.Agora,
         };
         foreach (var secao in origem.Secoes.OrderBy(item => item.Ordem))
         {

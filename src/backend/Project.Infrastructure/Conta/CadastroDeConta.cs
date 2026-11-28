@@ -1,3 +1,4 @@
+using Project.Application.Comum;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Project.Application.Conta;
@@ -49,7 +50,7 @@ public sealed class CadastroDeConta(AppDbContext banco, UserManager<ApplicationU
         }
 
         var contaId = Guid.Parse(usuario.Id);
-        var agora = DateTimeOffset.UtcNow;
+        var agora = Relogio.Agora;
         banco.Contas.Add(new ContaAssessoria { Id = contaId, DonoUsuarioId = usuario.Id, CriadaEm = agora, AceiteTermosEm = agora, VersaoTermos = VersaoTermos });
         banco.Grupos.AddRange(GruposPadrao.Criar(contaId));
         // Trial de 14 dias no plano padrão (R1, RF-115).

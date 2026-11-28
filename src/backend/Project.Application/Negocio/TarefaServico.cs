@@ -111,7 +111,7 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
             ArquivoId = guardado.Valor!.Id,
             Nome = guardado.Valor.NomeOriginal,
             TipoConteudo = guardado.Valor.TipoConteudo,
-            EnviadoEm = DateTimeOffset.UtcNow,
+            EnviadoEm = Relogio.Agora,
         }, ct);
         return Resultado<TarefaLeitura>.Sucesso(await RelerAsync(contaId, tarefa, hoje, ct));
     }
@@ -363,7 +363,7 @@ public sealed class TarefaServico(IDados dados, Arquivos.IArmazenamentoArquivo a
             AutorContaId = contaId.ToString(),
             AutorMembroId = autorMembroId,
             Texto = texto,
-            CriadoEm = DateTimeOffset.UtcNow,
+            CriadoEm = Relogio.Agora,
         }, ct);
         return Resultado<TarefaLeitura>.Sucesso(await LerUmaAsync(contaId, tarefa, hoje, ct));
     }

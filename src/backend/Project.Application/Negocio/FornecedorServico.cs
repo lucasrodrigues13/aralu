@@ -339,7 +339,7 @@ public sealed class FornecedorServico(IDados dados, Arquivos.IArmazenamentoArqui
             EventoId = eventoId,
             Nome = catalogo.Nome,
             ServicoContaId = catalogo.Id,
-            Ordem = DateTime.UtcNow.Millisecond,
+            Ordem = Relogio.AgoraUtc.Millisecond,
         }, ct);
         return await DetalheEventoAsync(contaId, eventoId, hoje, ct);
     }

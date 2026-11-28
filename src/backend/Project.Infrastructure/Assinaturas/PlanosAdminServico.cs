@@ -156,7 +156,7 @@ public sealed class PlanosAdminServico(AppDbContext banco, IAsaas asaas, ILogger
             .OrderByDescending(item => item.FeitoEm)
             .Join(banco.Users, item => item.FeitoPorUsuarioId, usuario => usuario.Id, (item, usuario) => new { item, usuario.Email })
             .ToListAsync(ct);
-        var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
+        var hoje = DateOnly.FromDateTime(Relogio.AgoraUtc);
         return new ContaAssinaturaLeitura(
             contaId,
             assinatura.Situacao.ToString(),

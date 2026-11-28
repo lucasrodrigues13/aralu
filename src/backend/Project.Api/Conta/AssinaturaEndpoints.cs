@@ -19,7 +19,7 @@ public static class AssinaturaEndpoints
     {
         // Toda a equipe lê a situação (barra de trial, tela de bloqueio); só o Dono assina e cancela (R5).
         app.MapGet("/api/v1/assinatura", (ClaimsPrincipal u, AssinaturaServico s, CancellationToken ct) =>
-            ComConta(u, async conta => await s.SituacaoAsync(conta, DateTimeOffset.UtcNow, ct) is { } situacao ? Results.Ok(situacao) : Results.NoContent()))
+            ComConta(u, async conta => await s.SituacaoAsync(conta, Relogio.Agora, ct) is { } situacao ? Results.Ok(situacao) : Results.NoContent()))
             .RequireAuthorization(policy => policy.RequireRole(Papeis.Equipe));
 
         var dono = app.MapGroup("/api/v1/assinatura").RequireAuthorization(policy => policy.RequireRole(SoDono));
@@ -28,30 +28,30 @@ public static class AssinaturaEndpoints
         dono.MapPost("/reativar", (ClaimsPrincipal u, AssinaturaServico s, CancellationToken ct) =>
             ComConta(u, async conta =>
             {
-                var r = await s.ReativarAsync(conta, DateTimeOffset.UtcNow, ct);
+                var r = await s.ReativarAsync(conta, Relogio.Agora, ct);
                 return r.Ok ? Results.Ok(r.Valor) : Erro(r.Falha!, s.UltimoDiagnostico);
             }));
         dono.MapPost("/cancelar", (ClaimsPrincipal u, AssinaturaServico s, CancellationToken ct) =>
             ComConta(u, async conta =>
             {
-                var r = await s.CancelarAsync(conta, DateTimeOffset.UtcNow, ct);
+                var r = await s.CancelarAsync(conta, Relogio.Agora, ct);
                 return r.Ok
                     ? Results.Ok(new { mensagem = "Assinatura cancelada. A conta segue liberada até o fim do período pago.", diagnostico = r.Valor })
                     : Erro(r.Falha!, null);
             }));
         // SPEC-065: troca de plano pelo Dono. Prévia calculada aqui; upgrade cobra a diferença, downgrade agenda.
         dono.MapGet("/trocas", (ClaimsPrincipal u, AssinaturaServico s, CancellationToken ct) =>
-            ComConta(u, async conta => Results.Ok(await s.TrocasAsync(conta, DateTimeOffset.UtcNow, ct))));
+            ComConta(u, async conta => Results.Ok(await s.TrocasAsync(conta, Relogio.Agora, ct))));
         dono.MapPost("/trocar-plano", (TrocaPedido pedido, ClaimsPrincipal u, AssinaturaServico s, CancellationToken ct) =>
             ComConta(u, async conta =>
             {
-                var r = await s.TrocarPlanoAsync(conta, pedido, DateTimeOffset.UtcNow, ct);
+                var r = await s.TrocarPlanoAsync(conta, pedido, Relogio.Agora, ct);
                 return r.Ok ? Results.Ok(r.Valor) : Erro(r.Falha!, s.UltimoDiagnostico);
             }));
         dono.MapPost("/desistir-troca", (ClaimsPrincipal u, AssinaturaServico s, CancellationToken ct) =>
             ComConta(u, async conta =>
             {
-                var r = await s.DesistirDaTrocaAsync(conta, DateTimeOffset.UtcNow, ct);
+                var r = await s.DesistirDaTrocaAsync(conta, Relogio.Agora, ct);
                 return r.Ok ? Results.Ok(new { diagnostico = r.Valor }) : Erro(r.Falha!, null);
             }));
         dono.MapGet("/faturas", (ClaimsPrincipal u, AssinaturaServico s, CancellationToken ct) =>
@@ -70,9 +70,9 @@ public static class AssinaturaEndpoints
         var admin = app.MapGroup("/api/v1/admin").RequireAuthorization(policy => policy.RequireRole(Papeis.Admin));
         admin.MapGet("/planos", async (PlanosAdminServico s, CancellationToken ct) => Results.Ok(await s.ListarAsync(ct)));
         admin.MapPost("/planos", async (PlanoPedido pedido, PlanosAdminServico s, CancellationToken ct) =>
-            Resposta(await s.SalvarAsync(null, pedido, DateTimeOffset.UtcNow, ct), StatusCodes.Status201Created));
+            Resposta(await s.SalvarAsync(null, pedido, Relogio.Agora, ct), StatusCodes.Status201Created));
         admin.MapPut("/planos/{id:guid}", async (Guid id, PlanoPedido pedido, PlanosAdminServico s, CancellationToken ct) =>
-            Resposta(await s.SalvarAsync(id, pedido, DateTimeOffset.UtcNow, ct)));
+            Resposta(await s.SalvarAsync(id, pedido, Relogio.Agora, ct)));
         admin.MapGet("/contas/{contaId:guid}/assinatura", async (Guid contaId, PlanosAdminServico s, CancellationToken ct) =>
             await s.ContaAsync(contaId, ct) is { } conta ? Results.Ok(conta) : Results.NotFound());
         admin.MapPost("/contas/{contaId:guid}/assinatura/{tipo}", async (Guid contaId, string tipo, AjustePedido pedido, ClaimsPrincipal u, PlanosAdminServico s, CancellationToken ct) =>
@@ -87,7 +87,7 @@ public static class AssinaturaEndpoints
             };
             return nome is null
                 ? Results.NotFound()
-                : Resposta(await s.AjustarAsync(contaId, nome, pedido, u.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", DateTimeOffset.UtcNow, ct));
+                : Resposta(await s.AjustarAsync(contaId, nome, pedido, u.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", Relogio.Agora, ct));
         });
 
         // Aviso do Asaas: público, autenticado pelo token do webhook. Responde 200 rápido; repetido não muda nada (T16).
@@ -98,7 +98,7 @@ public static class AssinaturaEndpoints
         ComConta(usuario, async conta =>
         {
             var email = usuario.FindFirstValue(ClaimTypes.Email) ?? usuario.FindFirstValue("email") ?? "";
-            var resultado = await servico.AssinarAsync(conta, email, pedido, DateTimeOffset.UtcNow, ct);
+            var resultado = await servico.AssinarAsync(conta, email, pedido, Relogio.Agora, ct);
             return resultado.Ok ? Results.Ok(resultado.Valor) : Erro(resultado.Falha!, servico.UltimoDiagnostico);
         });
 
@@ -117,7 +117,7 @@ public static class AssinaturaEndpoints
         var corpo = await leitor.ReadToEndAsync(ct);
         try
         {
-            var novo = await servico.ReceberAvisoAsync(corpo, DateTimeOffset.UtcNow, ct);
+            var novo = await servico.ReceberAvisoAsync(corpo, Relogio.Agora, ct);
             return Results.Ok(new { recebido = true, repetido = !novo });
         }
         catch (System.Text.Json.JsonException)

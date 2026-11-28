@@ -562,7 +562,7 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
 
         if (convite.RespondidoEm is null && convite.AcessadoEm is null)
         {
-            convite.AcessadoEm = DateTimeOffset.UtcNow;
+            convite.AcessadoEm = Relogio.Agora;
             await dados.SalvarConvitesAsync(ct);
         }
 
@@ -620,7 +620,7 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
             convidado.Situacao = resposta.Situacao;
         }
 
-        convite.RespondidoEm = DateTimeOffset.UtcNow;
+        convite.RespondidoEm = Relogio.Agora;
         await dados.SalvarConvitesAsync(ct);
 
         if (pretendeRealizarEvento == true)
@@ -643,7 +643,7 @@ public sealed class ConviteServico(IDados dados, IPlanilhaConvites planilha, IGe
                         NomeConvite = convite.Nome,
                         NomeEvento = dadosEvento.Nome,
                         Telefone = telefone,
-                        CriadoEm = DateTimeOffset.UtcNow,
+                        CriadoEm = Relogio.Agora,
                         Situacao = Domain.Funil.SituacaoLeadRsvp.Ativo,
                     }, ct);
                     await dados.IncrementarCliqueRsvpAsync(dadosEvento.ContaId, ct);

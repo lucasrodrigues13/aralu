@@ -20,6 +20,17 @@ if (string.IsNullOrWhiteSpace(segredoJwt) || segredoJwt.Length < 32)
     throw new InvalidOperationException("O segredo do JWT não está configurado.");
 }
 
+// Relógio: real em todo ambiente; controlável só no E2E (docs/testes/e2e-matriz.md).
+Project.Api.Comum.TesteEndpoints.GarantirForaDeProducao(builder.Configuration, builder.Environment);
+Project.Application.Comum.RelogioControlavel? relogioDeTeste = null;
+if (Project.Api.Comum.TesteEndpoints.Ligado(builder.Configuration))
+{
+    relogioDeTeste = new Project.Application.Comum.RelogioControlavel();
+    Project.Application.Comum.Relogio.Usar(relogioDeTeste);
+}
+
+builder.Services.AddSingleton(Project.Application.Comum.Relogio.Provedor);
+
 var chaves = builder.Configuration["DataProtection:KeysPath"];
 if (string.IsNullOrWhiteSpace(chaves))
 {
@@ -223,6 +234,10 @@ LinkClienteEndpoints.Mapear(app);
 BriefingPublicoEndpoints.Mapear(app);
 EquipeEventoEndpoints.Mapear(app);
 ContratoEndpoints.Mapear(app);
+if (relogioDeTeste is not null)
+{
+    Project.Api.Comum.TesteEndpoints.Mapear(app, relogioDeTeste);
+}
 
 await using (var escopo = app.Services.CreateAsyncScope())
 {

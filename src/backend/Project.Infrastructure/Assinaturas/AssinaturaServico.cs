@@ -430,7 +430,7 @@ public sealed partial class AssinaturaServico(AppDbContext banco, IAsaas asaas, 
         try
         {
             await ProcessarAsync(tipo, aviso, agora, ct);
-            registro.ProcessadoEm = DateTimeOffset.UtcNow;
+            registro.ProcessadoEm = Relogio.Agora;
         }
         catch (Exception erro) when (erro is not OperationCanceledException)
         {
@@ -488,7 +488,8 @@ public sealed partial class AssinaturaServico(AppDbContext banco, IAsaas asaas, 
 
                 break;
             case "PAYMENT_OVERDUE":
-                if (assinatura.Situacao is SituacaoAssinatura.Ativa or SituacaoAssinatura.EmAtraso)
+                // Cobrança já paga: o aviso de atraso chegou fora de ordem e é ignorado.
+                if (guardada.PagaEm is null && assinatura.Situacao is SituacaoAssinatura.Ativa or SituacaoAssinatura.EmAtraso)
                 {
                     assinatura.Situacao = SituacaoAssinatura.EmAtraso;
                     assinatura.ProximoVencimento = cobranca.Vencimento;
@@ -518,7 +519,13 @@ public sealed partial class AssinaturaServico(AppDbContext banco, IAsaas asaas, 
 
         existente.Valor = cobranca.Valor;
         existente.Vencimento = cobranca.Vencimento;
-        existente.Status = cobranca.Status;
+        // Aviso fora de ordem (OVERDUE/PENDING depois do pagamento) não desfaz o "pago" da cobrança.
+        var rebaixaPaga = existente.PagaEm is not null && cobranca.Status is "OVERDUE" or "PENDING";
+        if (!rebaixaPaga)
+        {
+            existente.Status = cobranca.Status;
+        }
+
         existente.LinkFatura = cobranca.Link ?? existente.LinkFatura;
         existente.FormaPagamento = cobranca.FormaPagamento switch
         {

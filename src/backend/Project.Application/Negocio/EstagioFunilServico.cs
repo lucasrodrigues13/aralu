@@ -115,7 +115,7 @@ public sealed class EstagioFunilServico(IDados dados)
             mudancas.AddRange(leads.Select(lead => (lead, alvo)));
         }
 
-        var agora = DateTimeOffset.UtcNow;
+        var agora = Relogio.Agora;
         foreach (var (item, destino) in mudancas)
         {
             item.EstagioFunilId = destino.Id;

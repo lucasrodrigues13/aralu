@@ -133,7 +133,7 @@ public sealed class ContratoFunilServico(IDados dados, IDadosContrato modelos, I
         }
 
         var perfil = await dados.ObterPerfilAsync(contaId, ct);
-        var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
+        var hoje = DateOnly.FromDateTime(Relogio.AgoraUtc);
         var valores = ContratoPreenchimento.Valores(contratante, oportunidade, perfil, aprovado, hoje);
         conteudo = Mesclagem.Preencher(conteudo, valores, html: HtmlSeguro.EhHtml(conteudo));
         Guid? documentoId = null;
@@ -158,7 +158,7 @@ public sealed class ContratoFunilServico(IDados dados, IDadosContrato modelos, I
             OportunidadeId = oportunidadeId,
             Conteudo = conteudo,
             Situacao = SituacaoContratoFunil.EmAndamento,
-            CriadoEm = DateTimeOffset.UtcNow,
+            CriadoEm = Relogio.Agora,
             ModeloId = modeloId,
             LogoArquivoId = logoId,
             FundoArquivoId = fundoId,
@@ -222,7 +222,7 @@ public sealed class ContratoFunilServico(IDados dados, IDadosContrato modelos, I
                 return "Só contratos em andamento podem ser enviados.";
             }
 
-            item.EnviadoEm = DateTimeOffset.UtcNow;
+            item.EnviadoEm = Relogio.Agora;
             return null;
         }, ct);
 
@@ -235,7 +235,7 @@ public sealed class ContratoFunilServico(IDados dados, IDadosContrato modelos, I
             }
 
             item.Situacao = SituacaoContratoFunil.Assinado;
-            item.AssinadoEm = DateTimeOffset.UtcNow;
+            item.AssinadoEm = Relogio.Agora;
             return null;
         }, ct);
 
@@ -345,7 +345,7 @@ public sealed class ContratoFunilServico(IDados dados, IDadosContrato modelos, I
             Valor = decimal.Round(valor, 2, MidpointRounding.AwayFromZero),
             Forma = forma,
             Data = data,
-            CriadoEm = DateTimeOffset.UtcNow,
+            CriadoEm = Relogio.Agora,
         };
         dados.AdicionarRecebimentoParcela(recebimento);
         await dados.SalvarNegocioAsync(ct);
@@ -451,7 +451,7 @@ public sealed class ContratoFunilServico(IDados dados, IDadosContrato modelos, I
 
     private static ContratoFunilLeitura Ler(ContratoFunil item, string oportunidadeNome)
     {
-        var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
+        var hoje = DateOnly.FromDateTime(Relogio.AgoraUtc);
         return new(
             item.Id,
             item.OportunidadeId,

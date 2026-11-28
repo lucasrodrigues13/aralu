@@ -103,7 +103,7 @@ public sealed class ContratoServico(IDadosContrato dados, IArmazenamentoArquivo?
             }
         }
 
-        var agora = DateTimeOffset.UtcNow;
+        var agora = Relogio.Agora;
         ContratoConta? contrato;
         if (id is Guid existente)
         {
@@ -161,7 +161,7 @@ public sealed class ContratoServico(IDadosContrato dados, IArmazenamentoArquivo?
             contrato.FundoArquivoId = arquivoId;
         }
 
-        contrato.AtualizadoEm = DateTimeOffset.UtcNow;
+        contrato.AtualizadoEm = Relogio.Agora;
         await dados.SalvarAsync(ct);
         return Resultado<Guid?>.Sucesso(anterior);
     }

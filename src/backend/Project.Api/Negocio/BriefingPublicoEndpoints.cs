@@ -21,14 +21,14 @@ public static class BriefingPublicoEndpoints
     }
 
     private static Task<IResult> LerAcesso(string token, HttpContext http, BriefingAcessoServico servico, CancellationToken ct) =>
-        De(servico.LerAsync(token, http.Request.Cookies[CookieSessao], DateTimeOffset.UtcNow, ct));
+        De(servico.LerAsync(token, http.Request.Cookies[CookieSessao], Relogio.Agora, ct));
 
     private static Task<IResult> PedirCodigo(string token, PedirCodigoBriefing pedido, BriefingAcessoServico servico, CancellationToken ct) =>
-        De(servico.PedirCodigoAsync(token, pedido, DateTimeOffset.UtcNow, ct));
+        De(servico.PedirCodigoAsync(token, pedido, Relogio.Agora, ct));
 
     private static async Task<IResult> Confirmar(string token, ConfirmarCodigoBriefing pedido, HttpContext http, BriefingAcessoServico servico, CancellationToken ct)
     {
-        var resultado = await servico.ConfirmarAsync(token, pedido, DateTimeOffset.UtcNow, ct);
+        var resultado = await servico.ConfirmarAsync(token, pedido, Relogio.Agora, ct);
         if (!resultado.Ok)
         {
             return Falha(resultado.Falha!);
@@ -47,10 +47,10 @@ public static class BriefingPublicoEndpoints
     }
 
     private static Task<IResult> Obter(string token, HttpContext http, BriefingAcessoServico servico, CancellationToken ct) =>
-        De(servico.ObterAsync(token, http.Request.Cookies[CookieSessao], DateTimeOffset.UtcNow, ct));
+        De(servico.ObterAsync(token, http.Request.Cookies[CookieSessao], Relogio.Agora, ct));
 
     private static Task<IResult> Responder(string token, ResponderBriefingPublico pedido, HttpContext http, BriefingAcessoServico servico, CancellationToken ct) =>
-        De(servico.ResponderAsync(token, http.Request.Cookies[CookieSessao], pedido, DateTimeOffset.UtcNow, ct));
+        De(servico.ResponderAsync(token, http.Request.Cookies[CookieSessao], pedido, Relogio.Agora, ct));
 
     private static async Task<IResult> De<T>(Task<Resultado<T>> tarefa)
     {

@@ -260,7 +260,7 @@ public sealed class EventoServico(IDados dados, IConsultaCep cep)
             SegundoNome = Domain.Comum.Texto.Limpo(pedido.SegundoNome),
             Tipo = tipoEvento,
             Situacao = SituacaoEvento.EmAndamento,
-            CriadoEm = DateTimeOffset.UtcNow,
+            CriadoEm = Relogio.Agora,
             Data = pedido.Data,
             Hora = pedido.Hora,
             OrcamentoEstimado = pedido.OrcamentoEstimado,

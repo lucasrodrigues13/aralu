@@ -322,7 +322,7 @@ public static class NegocioEndpoints
 
 
     private static Task<IResult> Estatisticas(ClaimsPrincipal usuario, EstatisticasServico servico, Project.Infrastructure.Persistencia.AppDbContext banco, CancellationToken ct) =>
-        ComConta(usuario, async conta => Results.Ok(await servico.ObterAsync(conta, DateTimeOffset.UtcNow, ct, await EscopoAssistente.LiberadosAsync(usuario, banco, ct))));
+        ComConta(usuario, async conta => Results.Ok(await servico.ObterAsync(conta, Relogio.Agora, ct, await EscopoAssistente.LiberadosAsync(usuario, banco, ct))));
 
     private static IResult PlanilhaBriefingModelo(BriefingImportacaoServico servico) =>
         Results.File(servico.Modelo(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "briefing.xlsx");
@@ -824,7 +824,7 @@ public static class NegocioEndpoints
         });
 
     private static Task<IResult> LiberarBriefingDoLead(Guid id, ClaimsPrincipal usuario, BriefingLeadServico servico, CancellationToken ct) =>
-        ComConta(usuario, async conta => await ComoBriefing(servico.LiberarAsync(conta, id, DateTimeOffset.UtcNow, ct)));
+        ComConta(usuario, async conta => await ComoBriefing(servico.LiberarAsync(conta, id, Relogio.Agora, ct)));
 
     private static Task<IResult> EncerrarBriefingDoLead(Guid id, ClaimsPrincipal usuario, BriefingLeadServico servico, CancellationToken ct) =>
         ComConta(usuario, async conta => await ComoBriefing(servico.EncerrarAsync(conta, id, ct)));
@@ -1128,7 +1128,7 @@ public static class NegocioEndpoints
             }
 
             await using var fluxo = arquivo.OpenReadStream();
-            return await De(servico.EnfileirarAsync(conta, id, fluxo, arquivo.FileName, null, DateTimeOffset.UtcNow, ct));
+            return await De(servico.EnfileirarAsync(conta, id, fluxo, arquivo.FileName, null, Relogio.Agora, ct));
         });
 
     private static Task<IResult> Importacoes(Guid id, ClaimsPrincipal usuario, ImportacaoServico servico, IDados dados, CancellationToken ct) =>
@@ -1357,7 +1357,7 @@ public static class NegocioEndpoints
     {
         // Honeypot (A06-002): campo isca preenchido ou envio rápido demais = robô.
         // Responde sucesso falso (201 sem gravar) para o robô não aprender a contornar.
-        var agora = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        var agora = Relogio.Agora.ToUnixTimeMilliseconds();
         var isca = !string.IsNullOrWhiteSpace(pedido.Site);
         if (isca || (pedido.IniciadoEm is { } inicio && agora - inicio < LeadPublicoPedido.TempoMinimoMs))
         {
@@ -1452,7 +1452,7 @@ public static class NegocioEndpoints
         ComConta(usuario, conta => De(servico.AtualizarAsync(conta, id, pedido, ct)));
 
     private static Task<IResult> EnviarOrcamentoFunil(Guid id, PedidoEnvioProposta? pedido, ClaimsPrincipal usuario, OrcamentoFunilServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.EnviarAsync(conta, id, pedido?.Dias, DateTimeOffset.UtcNow, ct)));
+        ComConta(usuario, conta => De(servico.EnviarAsync(conta, id, pedido?.Dias, Relogio.Agora, ct)));
 
     private static Task<IResult> LerConfiguracaoPropostas(ClaimsPrincipal usuario, PerfilServico servico, CancellationToken ct) =>
         ComConta(usuario, async conta => Results.Ok(await servico.ObterPropostasAsync(conta, ct)));
@@ -1519,7 +1519,7 @@ public static class NegocioEndpoints
         [FromHeader(Name = "X-Aralu-Visitante")] string? visitante,
         OrcamentoFunilServico servico,
         CancellationToken ct) =>
-        De(servico.ResponderPublicaAsync(token, Conta(usuario)?.ToString() ?? visitante, pedido, DateOnly.FromDateTime(DateTime.UtcNow), ct));
+        De(servico.ResponderPublicaAsync(token, Conta(usuario)?.ToString() ?? visitante, pedido, DateOnly.FromDateTime(Relogio.AgoraUtc), ct));
 
     private static Task<IResult> ResponderOrcamentoFunil(
         Guid id,
@@ -1751,7 +1751,7 @@ public static class NegocioEndpoints
     private static string Email(ClaimsPrincipal usuario) =>
         usuario.FindFirstValue(ClaimTypes.Email) ?? usuario.FindFirstValue("email") ?? "";
 
-    private static DateOnly Hoje() => DateOnly.FromDateTime(DateTime.UtcNow);
+    private static DateOnly Hoje() => DateOnly.FromDateTime(Relogio.AgoraUtc);
 
     private static T? EnumOuNulo<T>(string? valor)
         where T : struct, Enum =>

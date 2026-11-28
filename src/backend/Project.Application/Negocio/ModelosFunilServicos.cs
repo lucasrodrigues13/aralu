@@ -280,7 +280,7 @@ public sealed class ModeloOrcamentoFunilServico(IDados dados)
 
         var extras = ExtrasAceite.Montar(pedido.Midias, pedido.Depoimentos) is { Ok: true } ok ? ok.Valor! : ExtrasAceite.Vazio;
         var texto = HtmlSeguro.LimparRico(pedido.Texto) ?? "";
-        var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
+        var hoje = DateOnly.FromDateTime(Relogio.AgoraUtc);
         return PaginaAceite.Montar(new DadosPaginaAceite(
             pedido.HtmlAceite ?? "",
             valores,

@@ -42,6 +42,12 @@ public sealed class SessaoServico(UserManager<ApplicationUser> usuarios, IMemory
         return hash;
     }
 
+    /// <summary>
+    /// Quem troca o stamp por fora (EquipeServico: desativar, reativar, reenviar convite) chama isto, senão o login novo
+    /// fica até 30 s recusado com "sessão encerrada" porque o cache ainda guarda o hash antigo.
+    /// </summary>
+    public void Esquecer(string usuarioId) => cache.Remove(Chave(usuarioId));
+
     /// <summary>Encerra todas as sessões do usuário: troca o stamp e invalida o cache.</summary>
     public async Task EncerrarAsync(ApplicationUser usuario, MotivoEncerramento motivo)
     {

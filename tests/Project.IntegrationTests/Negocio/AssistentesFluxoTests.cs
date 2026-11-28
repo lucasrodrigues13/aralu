@@ -97,6 +97,14 @@ public class AssistentesFluxoTests
         // Reativar devolve o acesso com a mesma senha e os mesmos eventos marcados.
         var reativada = await Ler(await dona.PostAsync($"/api/v1/equipe/{assistenteId}/reativar", null));
         Assert.Equal("Ativa", reativada.GetProperty("situacao").GetString());
+
+        // Desativar encerrou as sessões: o token antigo não volta a valer; ela entra de novo com a mesma senha.
+        Assert.Equal(HttpStatusCode.Unauthorized, (await assistente.GetAsync($"/api/v1/eventos/{marcado}")).StatusCode);
+        assistente.DefaultRequestHeaders.Authorization = null;
+        var entrada = await assistente.PostAsJsonAsync("/api/v1/conta/entrar", new { email, senha = Senha });
+        Assert.Equal(HttpStatusCode.OK, entrada.StatusCode);
+        var novoToken = (await Ler(entrada)).GetProperty("token").GetString();
+        assistente.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", novoToken);
         Assert.Equal(HttpStatusCode.OK, (await assistente.GetAsync($"/api/v1/eventos/{marcado}")).StatusCode);
     }
 

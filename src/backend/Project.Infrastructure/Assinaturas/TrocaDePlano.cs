@@ -318,5 +318,5 @@ public sealed partial class AssinaturaServico
 
     /// <summary>Valor do plano para a conta (R10 da SPEC-062), com o desconto enquanto valer.</summary>
     private static decimal ValorDoPlano(Assinatura assinatura, decimal valorMensal, DateOnly? vencimento) =>
-        Assinatura.ValorCobrado(valorMensal, null, assinatura.DescontoPercentual, assinatura.DescontoAte, vencimento ?? DateOnly.FromDateTime(DateTime.UtcNow));
+        Assinatura.ValorCobrado(valorMensal, null, assinatura.DescontoPercentual, assinatura.DescontoAte, vencimento ?? DateOnly.FromDateTime(Relogio.AgoraUtc));
 }

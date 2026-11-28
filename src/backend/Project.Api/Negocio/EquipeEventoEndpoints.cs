@@ -44,16 +44,16 @@ public static class EquipeEventoEndpoints
     // ---- Organizer ----
 
     private static Task<IResult> Obter(Guid id, ClaimsPrincipal usuario, EquipeEventoServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.ObterAsync(conta, id, DateTimeOffset.UtcNow, ct)));
+        ComConta(usuario, conta => De(servico.ObterAsync(conta, id, Relogio.Agora, ct)));
 
     private static Task<IResult> DefinirModelos(Guid id, ModelosDaEquipe pedido, ClaimsPrincipal usuario, EquipeEventoServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.DefinirModelosAsync(conta, id, pedido, DateTimeOffset.UtcNow, ct)));
+        ComConta(usuario, conta => De(servico.DefinirModelosAsync(conta, id, pedido, Relogio.Agora, ct)));
 
     private static Task<IResult> Criar(Guid id, SalvarPessoaEquipe pedido, ClaimsPrincipal usuario, EquipeEventoServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.CriarAsync(conta, id, pedido, DateTimeOffset.UtcNow, ct)));
+        ComConta(usuario, conta => De(servico.CriarAsync(conta, id, pedido, Relogio.Agora, ct)));
 
     private static Task<IResult> Atualizar(Guid id, Guid pessoaId, SalvarPessoaEquipe pedido, ClaimsPrincipal usuario, EquipeEventoServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.AtualizarAsync(conta, id, pessoaId, pedido, DateTimeOffset.UtcNow, ct)));
+        ComConta(usuario, conta => De(servico.AtualizarAsync(conta, id, pessoaId, pedido, Relogio.Agora, ct)));
 
     private static Task<IResult> Remover(Guid id, Guid pessoaId, ClaimsPrincipal usuario, EquipeEventoServico servico, CancellationToken ct) =>
         ComConta(usuario, async conta =>
@@ -63,22 +63,22 @@ public static class EquipeEventoEndpoints
         });
 
     private static Task<IResult> Liberar(Guid id, Guid pessoaId, ClaimsPrincipal usuario, EquipeEventoServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.LiberarAsync(conta, id, pessoaId, DateTimeOffset.UtcNow, ct)));
+        ComConta(usuario, conta => De(servico.LiberarAsync(conta, id, pessoaId, Relogio.Agora, ct)));
 
     private static Task<IResult> Encerrar(Guid id, Guid pessoaId, ClaimsPrincipal usuario, EquipeEventoServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.EncerrarAsync(conta, id, pessoaId, DateTimeOffset.UtcNow, ct)));
+        ComConta(usuario, conta => De(servico.EncerrarAsync(conta, id, pessoaId, Relogio.Agora, ct)));
 
     // ---- Pessoa da equipe (sem login) ----
 
     private static Task<IResult> LerAcesso(string token, HttpContext http, EquipeAcessoServico servico, CancellationToken ct) =>
-        De(servico.LerAsync(token, Sessao(http), DateTimeOffset.UtcNow, ct));
+        De(servico.LerAsync(token, Sessao(http), Relogio.Agora, ct));
 
     private static Task<IResult> PedirCodigo(string token, EquipeAcessoServico servico, CancellationToken ct) =>
-        De(servico.PedirCodigoAsync(token, DateTimeOffset.UtcNow, ct));
+        De(servico.PedirCodigoAsync(token, Relogio.Agora, ct));
 
     private static async Task<IResult> Confirmar(string token, ConfirmarCodigoEquipe pedido, HttpContext http, EquipeAcessoServico servico, CancellationToken ct)
     {
-        var resultado = await servico.ConfirmarAsync(token, pedido, DateTimeOffset.UtcNow, ct);
+        var resultado = await servico.ConfirmarAsync(token, pedido, Relogio.Agora, ct);
         if (!resultado.Ok)
         {
             return Falha(resultado.Falha!);
@@ -97,13 +97,13 @@ public static class EquipeEventoEndpoints
     }
 
     private static Task<IResult> LerPainel(string token, HttpContext http, EquipeAcessoServico servico, CancellationToken ct) =>
-        De(servico.ObterAsync(token, Sessao(http), DateTimeOffset.UtcNow, ct));
+        De(servico.ObterAsync(token, Sessao(http), Relogio.Agora, ct));
 
     private static Task<IResult> LerRoteiro(string token, HttpContext http, EquipeAcessoServico servico, CancellationToken ct) =>
-        De(servico.RoteiroAsync(token, Sessao(http), DateTimeOffset.UtcNow, ct));
+        De(servico.RoteiroAsync(token, Sessao(http), Relogio.Agora, ct));
 
     private static Task<IResult> LerCronograma(string token, HttpContext http, EquipeAcessoServico servico, CancellationToken ct) =>
-        De(servico.CronogramaAsync(token, Sessao(http), DateTimeOffset.UtcNow, ct));
+        De(servico.CronogramaAsync(token, Sessao(http), Relogio.Agora, ct));
 
     private static Task<IResult> LerPortaria(string token, HttpContext http, EquipeAcessoServico acesso, PortariaServico portaria, CancellationToken ct) =>
         NaPortaria(token, http, acesso, pessoa => De(portaria.LerAsync(pessoa.ContaId, pessoa.EventoId, ct)), ct);
@@ -122,11 +122,11 @@ public static class EquipeEventoEndpoints
         EquipeAcessoServico acesso,
         PortariaServico portaria,
         CancellationToken ct) =>
-        NaPortaria(token, http, acesso, pessoa => De(portaria.MarcarComparecimentoAsync(pessoa.ContaId, pessoa.EventoId, conviteId, pedido, DateTimeOffset.UtcNow, ct)), ct);
+        NaPortaria(token, http, acesso, pessoa => De(portaria.MarcarComparecimentoAsync(pessoa.ContaId, pessoa.EventoId, conviteId, pedido, Relogio.Agora, ct)), ct);
 
     private static async Task<IResult> NaPortaria(string token, HttpContext http, EquipeAcessoServico acesso, Func<PessoaAutorizada, Task<IResult>> acao, CancellationToken ct)
     {
-        var autorizada = await acesso.AutorizarPortariaAsync(token, Sessao(http), DateTimeOffset.UtcNow, ct);
+        var autorizada = await acesso.AutorizarPortariaAsync(token, Sessao(http), Relogio.Agora, ct);
         return autorizada.Ok ? await acao(autorizada.Valor!) : Falha(autorizada.Falha!);
     }
 

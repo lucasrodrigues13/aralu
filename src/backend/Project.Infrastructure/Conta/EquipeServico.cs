@@ -173,7 +173,7 @@ public sealed class EquipeServico(
             Celular = celular,
             Nascimento = pedido.Nascimento,
             Situacao = SituacaoMembro.Convidada,
-            ConvidadaEm = DateTimeOffset.UtcNow,
+            ConvidadaEm = Relogio.Agora,
         };
         banco.Membros.Add(membro);
         await banco.SaveChangesAsync(ct);
@@ -255,6 +255,7 @@ public sealed class EquipeServico(
         if (emailMudou && membro.Situacao == SituacaoMembro.Convidada)
         {
             await usuarios.UpdateSecurityStampAsync(usuario);
+            sessoes.Esquecer(usuario.Id);
             enviado = await EnviarConviteAsync(usuario, membro, ct);
         }
 
@@ -282,7 +283,8 @@ public sealed class EquipeServico(
 
         // Novo carimbo de segurança invalida o link anterior.
         await usuarios.UpdateSecurityStampAsync(usuario);
-        membro.ConvidadaEm = DateTimeOffset.UtcNow;
+        sessoes.Esquecer(usuario.Id);
+        membro.ConvidadaEm = Relogio.Agora;
         await banco.SaveChangesAsync(ct);
         var enviado = await EnviarConviteAsync(usuario, membro, ct);
         return Resultado<MembroLeitura>.Sucesso(Ler(membro, await NomesDosGruposAsync(contaId, ct), enviado));
@@ -311,13 +313,14 @@ public sealed class EquipeServico(
         }
 
         membro.Situacao = SituacaoMembro.Inativa;
-        membro.RemovidaEm = DateTimeOffset.UtcNow;
+        membro.RemovidaEm = Relogio.Agora;
         await banco.SaveChangesAsync(ct);
 
         var usuario = await usuarios.FindByIdAsync(membro.UsuarioId);
         if (usuario is not null)
         {
             await usuarios.UpdateSecurityStampAsync(usuario);
+            sessoes.Esquecer(usuario.Id);
         }
 
         return Resultado<bool>.Sucesso(true);
@@ -353,9 +356,10 @@ public sealed class EquipeServico(
         else
         {
             membro.Situacao = SituacaoMembro.Convidada;
-            membro.ConvidadaEm = DateTimeOffset.UtcNow;
+            membro.ConvidadaEm = Relogio.Agora;
             await banco.SaveChangesAsync(ct);
             await usuarios.UpdateSecurityStampAsync(usuario);
+            sessoes.Esquecer(usuario.Id);
             enviado = await EnviarConviteAsync(usuario, membro, ct);
         }
 
@@ -400,8 +404,9 @@ public sealed class EquipeServico(
         }
 
         await usuarios.UpdateSecurityStampAsync(usuario);
+        sessoes.Esquecer(usuario.Id);
         membro.Situacao = SituacaoMembro.Ativa;
-        membro.PrimeiroAcessoEm = DateTimeOffset.UtcNow;
+        membro.PrimeiroAcessoEm = Relogio.Agora;
         await banco.SaveChangesAsync(ct);
         return Resultado<bool>.Sucesso(true);
     }
@@ -576,7 +581,7 @@ public sealed class EquipeServico(
             }
         }
 
-        if (nascimento is DateOnly data && data > DateOnly.FromDateTime(DateTime.UtcNow))
+        if (nascimento is DateOnly data && data > DateOnly.FromDateTime(Relogio.AgoraUtc))
         {
             return Erro("A data de nascimento não pode ser futura.");
         }

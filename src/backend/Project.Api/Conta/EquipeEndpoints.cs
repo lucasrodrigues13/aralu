@@ -78,6 +78,17 @@ public static class EquipeEndpoints
         // A07-001: vale para todos, inclusive o Admin, por isso vem antes do atalho dele.
         if (!await SessaoValidaAsync(http, id))
         {
+            // Desativada ou removida pelo Dono: a mensagem certa é "acesso removido", não "sessão encerrada".
+            var membroAtual = string.IsNullOrWhiteSpace(id) || usuario.IsInRole(Papeis.Admin)
+                ? null
+                : await http.RequestServices.GetRequiredService<EquipeServico>().AcessoAsync(id, http.RequestAborted);
+            if (!string.IsNullOrWhiteSpace(id) && !usuario.IsInRole(Papeis.Admin) && (membroAtual is not { } m || m.Membro.Situacao != SituacaoMembro.Ativa))
+            {
+                http.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                await http.Response.WriteAsJsonAsync(new ErroResposta("acesso_removido", "Seu acesso foi removido."));
+                return;
+            }
+
             http.Response.StatusCode = StatusCodes.Status401Unauthorized;
             await http.Response.WriteAsJsonAsync(new ErroResposta(SessaoServico.ErroSessaoEncerrada, "Sua sessão foi encerrada. Entre novamente."));
             return;
@@ -125,7 +136,7 @@ public static class EquipeEndpoints
         var caminho = http.Request.Path.Value ?? "";
         if (!RotaLiberadaNoBloqueio(caminho)
             && !await http.RequestServices.GetRequiredService<Project.Infrastructure.Assinaturas.AssinaturaServico>()
-                .LiberadaAsync(membro.ContaId, DateTimeOffset.UtcNow, http.RequestAborted))
+                .LiberadaAsync(membro.ContaId, Relogio.Agora, http.RequestAborted))
         {
             http.Response.StatusCode = StatusCodes.Status402PaymentRequired;
             await http.Response.WriteAsJsonAsync(new ErroResposta(
@@ -167,7 +178,7 @@ public static class EquipeEndpoints
         if (string.IsNullOrWhiteSpace(doToken))
         {
             var corte = http.RequestServices.GetRequiredService<Microsoft.Extensions.Options.IOptions<JwtOpcoes>>().Value.StampObrigatorioDesde;
-            return corte is null || DateTimeOffset.UtcNow < corte;
+            return corte is null || Relogio.Agora < corte;
         }
 
         var atual = await http.RequestServices.GetRequiredService<SessaoServico>().StampAtualAsync(usuarioId);

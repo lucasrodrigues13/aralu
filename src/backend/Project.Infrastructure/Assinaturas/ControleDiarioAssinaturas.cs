@@ -1,3 +1,4 @@
+using Project.Application.Comum;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -226,7 +227,7 @@ public sealed class ControleDiarioAssinaturas(IServiceScopeFactory escopos, ICon
             try
             {
                 using var escopo = escopos.CreateScope();
-                var rodada = await escopo.ServiceProvider.GetRequiredService<AvisosAssinaturaServico>().RodarAsync(DateTimeOffset.UtcNow, ct);
+                var rodada = await escopo.ServiceProvider.GetRequiredService<AvisosAssinaturaServico>().RodarAsync(Relogio.Agora, ct);
                 logs.LogInformation(
                     "Controle de assinaturas: {Contas} contas, {Avisos} avisos, {Mudancas} situações e {Valores} valores atualizados.",
                     rodada.Contas, rodada.Avisos, rodada.Mudancas, rodada.ValoresAtualizados);

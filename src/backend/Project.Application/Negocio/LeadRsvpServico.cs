@@ -29,7 +29,7 @@ public sealed class LeadRsvpServico(IDados dados)
         }
 
         var primeiro = OportunidadeServico.PrimeiroAberto(await dados.ListarEstagiosFunilAsync(contaId, ct));
-        var agora = DateTimeOffset.UtcNow;
+        var agora = Relogio.Agora;
         var oportunidade = new Oportunidade
         {
             Id = Guid.NewGuid(),
@@ -82,7 +82,7 @@ public sealed class LeadRsvpServico(IDados dados)
             return Resultado<bool>.Erro(Codigos.Indisponivel, "Indisponível.");
         }
 
-        lead.ContatadoEm ??= DateTimeOffset.UtcNow;
+        lead.ContatadoEm ??= Relogio.Agora;
         await dados.SalvarNegocioAsync(ct);
         return Resultado<bool>.Sucesso(true);
     }

@@ -1,3 +1,4 @@
+using Project.Application.Comum;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -174,7 +175,7 @@ public sealed class AsaasHttp(HttpClient http, IOptions<AsaasOpcoes> opcoes, ILo
     public static CobrancaAsaas LerCobranca(JsonNode item) => new(
         item["id"]?.GetValue<string>() ?? "",
         item["value"]?.GetValue<decimal>() ?? 0m,
-        DateOnly.Parse(item["dueDate"]?.GetValue<string>() ?? DateTime.UtcNow.ToString("yyyy-MM-dd")),
+        DateOnly.Parse(item["dueDate"]?.GetValue<string>() ?? Relogio.AgoraUtc.ToString("yyyy-MM-dd")),
         item["status"]?.GetValue<string>() ?? "",
         item["invoiceUrl"]?.GetValue<string>(),
         item["billingType"]?.GetValue<string>());

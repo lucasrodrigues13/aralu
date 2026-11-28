@@ -56,7 +56,7 @@ public static class LinkClienteEndpoints
         ComConta(usuario, conta => De(servico.ObterAsync(conta, id, ct)));
 
     private static Task<IResult> Gerar(Guid id, ClaimsPrincipal usuario, LinkClienteServico servico, CancellationToken ct) =>
-        ComConta(usuario, conta => De(servico.GerarAsync(conta, id, DateTimeOffset.UtcNow, ct)));
+        ComConta(usuario, conta => De(servico.GerarAsync(conta, id, Relogio.Agora, ct)));
 
     private static Task<IResult> Salvar(Guid id, SalvarLinkCliente pedido, ClaimsPrincipal usuario, LinkClienteServico servico, CancellationToken ct) =>
         ComConta(usuario, conta => De(servico.SalvarAsync(conta, id, pedido, ct)));
@@ -73,14 +73,14 @@ public static class LinkClienteEndpoints
     public const string CookieSessao = "aralu_link_cliente";
 
     private static Task<IResult> LerAcesso(string token, HttpContext http, AcessoLinkClienteServico servico, CancellationToken ct) =>
-        De(servico.LerAsync(token, http.Request.Cookies[CookieSessao], DateTimeOffset.UtcNow, ct));
+        De(servico.LerAsync(token, http.Request.Cookies[CookieSessao], Relogio.Agora, ct));
 
     private static Task<IResult> PedirCodigo(string token, PedirCodigoLink pedido, AcessoLinkClienteServico servico, CancellationToken ct) =>
-        De(servico.PedirCodigoAsync(token, pedido, DateTimeOffset.UtcNow, ct));
+        De(servico.PedirCodigoAsync(token, pedido, Relogio.Agora, ct));
 
     private static async Task<IResult> ConfirmarCodigo(string token, ConfirmarCodigoLink pedido, HttpContext http, AcessoLinkClienteServico servico, CancellationToken ct)
     {
-        var resultado = await servico.ConfirmarAsync(token, pedido, DateTimeOffset.UtcNow, ct);
+        var resultado = await servico.ConfirmarAsync(token, pedido, Relogio.Agora, ct);
         if (!resultado.Ok)
         {
             return Falha(resultado.Falha!);
@@ -97,7 +97,7 @@ public static class LinkClienteEndpoints
         var token = http.Request.RouteValues["token"] as string ?? "";
         var sessao = http.Request.Cookies[CookieSessao];
         var servico = http.RequestServices.GetRequiredService<AcessoLinkClienteServico>();
-        var (existe, expira) = await servico.ValidarSessaoAsync(token, sessao, DateTimeOffset.UtcNow, http.RequestAborted);
+        var (existe, expira) = await servico.ValidarSessaoAsync(token, sessao, Relogio.Agora, http.RequestAborted);
         if (!existe)
         {
             // A própria rota responde "Link inválido." sem entregar dado.
@@ -157,7 +157,7 @@ public static class LinkClienteEndpoints
         }
 
         await using var fluxo = arquivo.OpenReadStream();
-        return await De(servico.EnfileirarImportacaoAsync(token, fluxo, arquivo.FileName, DateTimeOffset.UtcNow, ct));
+        return await De(servico.EnfileirarImportacaoAsync(token, fluxo, arquivo.FileName, Relogio.Agora, ct));
     }
 
     private static Task<IResult> Importacoes(string token, LinkClienteServico servico, CancellationToken ct) =>
@@ -257,5 +257,5 @@ public static class LinkClienteEndpoints
     private static string LimparNome(string nome) =>
         new string(nome.Where(c => !char.IsControl(c) && c != '"' && c != '\\' && c != '/').ToArray()) is { Length: > 0 } limpo ? limpo : "arquivo";
 
-    private static DateOnly Hoje() => DateOnly.FromDateTime(DateTime.UtcNow);
+    private static DateOnly Hoje() => DateOnly.FromDateTime(Relogio.AgoraUtc);
 }

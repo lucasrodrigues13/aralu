@@ -78,7 +78,7 @@ public sealed class BriefingLeadServico(AppDbContext banco)
             OportunidadeId = oportunidadeId,
             ModeloBriefingId = modelo.Id,
             ModeloNome = modelo.Nome,
-            AplicadoEm = DateTimeOffset.UtcNow,
+            AplicadoEm = Relogio.Agora,
             // Trocar o modelo mantém o mesmo link: quem já recebeu passa a ver as perguntas novas.
             TokenLink = anterior?.TokenLink,
             LiberadoEm = anterior?.LiberadoEm,

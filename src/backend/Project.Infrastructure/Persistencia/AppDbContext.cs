@@ -1,3 +1,4 @@
+using Project.Application.Comum;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Project.Domain.Clientes;
@@ -279,7 +280,7 @@ public sealed class AppDbContext : IdentityDbContext<ApplicationUser>
 
         var ids = criar.Select(item => item.Id).ToArray();
         var jaTem = (await PresencasEvento.Where(item => ids.Contains(item.ConvidadoId)).Select(item => item.ConvidadoId).ToListAsync(ct)).ToHashSet();
-        var agora = DateTimeOffset.UtcNow;
+        var agora = Relogio.Agora;
         foreach (var convidado in criar.Where(item => !jaTem.Contains(item.Id)))
         {
             var eventoId = ChangeTracker.Entries<Convite>().FirstOrDefault(item => item.Entity.Id == convidado.ConviteId)?.Entity.EventoId

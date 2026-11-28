@@ -173,7 +173,7 @@ public sealed class OportunidadeServico(IDados dados)
             return Resultado<OportunidadeLeitura>.Erro(montado.Falha!.Codigo, montado.Falha.Mensagem);
         }
 
-        var agora = DateTimeOffset.UtcNow;
+        var agora = Relogio.Agora;
         montado.Valor!.CriadoEm = agora;
         montado.Valor.EntradaNoEstagioEm = agora;
         montado.Valor.CriadoPor = criadoPor;
@@ -202,7 +202,7 @@ public sealed class OportunidadeServico(IDados dados)
         var novo = montado.Valor!;
         if (novo.EstagioFunilId != item.EstagioFunilId)
         {
-            item.EntradaNoEstagioEm = DateTimeOffset.UtcNow;
+            item.EntradaNoEstagioEm = Relogio.Agora;
         }
 
         item.Nome = novo.Nome;
@@ -456,7 +456,7 @@ public sealed class OportunidadeServico(IDados dados)
         var nome = Domain.Comum.Texto.Limpo(pedido.Nome)
             ?? (tipo is null ? contatoNome : $"{RotuloTipoLead(tipo.Value)} {contatoNome}");
 
-        var agora = DateTimeOffset.UtcNow;
+        var agora = Relogio.Agora;
         var estagios = await dados.ListarEstagiosFunilAsync(contaId, ct);
         if (!estagios.Any(e => e.Tipo == TipoEstagioFunil.Aberto))
         {
@@ -542,7 +542,7 @@ public sealed class OportunidadeServico(IDados dados)
     {
         if (item.EstagioFunilId != estagio.Id)
         {
-            item.EntradaNoEstagioEm = DateTimeOffset.UtcNow;
+            item.EntradaNoEstagioEm = Relogio.Agora;
         }
 
         item.EstagioFunilId = estagio.Id;
@@ -623,7 +623,7 @@ public sealed class OportunidadeServico(IDados dados)
         ContratanteDados? contratante = null;
         if (pedido.Contratante is not null)
         {
-            var normalizado = ContratanteRegras.Normalizar(pedido.Contratante, DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1));
+            var normalizado = ContratanteRegras.Normalizar(pedido.Contratante, DateOnly.FromDateTime(Relogio.AgoraUtc).AddDays(1));
             if (!normalizado.Ok)
             {
                 return Resultado<Oportunidade>.Erro(normalizado.Falha!.Codigo, normalizado.Falha.Mensagem);
@@ -739,8 +739,8 @@ public sealed class OportunidadeServico(IDados dados)
             MotivoDescarte = estagio.Tipo == TipoEstagioFunil.Descartado
                 ? Domain.Comum.Texto.Limpo(pedido.MotivoDescarte)
                 : null,
-            CriadoEm = existente?.CriadoEm ?? DateTimeOffset.UtcNow,
-            EntradaNoEstagioEm = existente?.EntradaNoEstagioEm ?? DateTimeOffset.UtcNow,
+            CriadoEm = existente?.CriadoEm ?? Relogio.Agora,
+            EntradaNoEstagioEm = existente?.EntradaNoEstagioEm ?? Relogio.Agora,
             Contatos = contatos,
         };
         if (contratante is not null)
