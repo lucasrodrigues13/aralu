@@ -1,0 +1,131 @@
+# Ambiente descartável da suíte E2E (docs/testes/e2e-matriz.md). Nunca usar em staging ou produção.
+# Tudo em memória (tmpfs): sem volumes nomeados. Subir e derrubar sempre com `-p aralu-e2e` (ver justfile: e2e).
+# Relógio controlável ligado (Testes__RelogioControlavel) e e-mails presos no Mailpit.
+
+name: aralu-e2e
+
+services:
+  postgres:
+    image: postgres:16-alpine@sha256:f2f98726820d0342055351c6e9d36e705f5bfffb3dd53ff556325114b08afb6d
+    environment:
+      POSTGRES_USER: aralu
+      POSTGRES_PASSWORD: aralu
+      POSTGRES_DB: aralu
+    tmpfs:
+      - /var/lib/postgresql/data
+    networks: [interna]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aralu -d aralu"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  migrate:
+    image: postgres:16-alpine@sha256:f2f98726820d0342055351c6e9d36e705f5bfffb3dd53ff556325114b08afb6d
+    environment:
+      PGPASSWORD: aralu
+      PGHOST: postgres
+      PGUSER: aralu
+      PGDATABASE: aralu
+    volumes:
+      - ./deploy/schema.sql:/schema.sql:ro
+    command: ["psql", "-v", "ON_ERROR_STOP=1", "-f", "/schema.sql"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [interna]
+    restart: "no"
+
+  mailpit:
+    image: axllent/mailpit:v1.27
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: "1"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "1"
+      MP_MAX_MESSAGES: "5000"
+    ports:
+      - "18025:8025"
+    networks: [interna]
+
+  asaas-falso:
+    image: node:22-alpine
+    command: ["node", "/app/server.mjs"]
+    environment:
+      ASAAS_API_KEY: e2e-asaas
+    volumes:
+      - ./tests/e2e/asaas-falso:/app:ro
+    ports:
+      - "18082:8080"
+    networks: [interna]
+
+  api:
+    build:
+      context: .
+      dockerfile: src/backend/Project.Api/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: E2E
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Default: Host=postgres;Port=5432;Database=aralu;Username=aralu;Password=aralu
+      Jwt__Secret: e2e-apenas-aralu-jwt-segredo-descartavel-32
+      Jwt__Issuer: aralu
+      Jwt__Audience: aralu
+      Jwt__ExpiryHours: "8"
+      DataProtection__KeysPath: /keys
+      Storage__Root: /storage
+      PublicUrl: http://localhost:18080
+      Cors__Origins__0: http://localhost:18080
+      Email__Host: mailpit
+      Email__Port: "1025"
+      Email__StartTls: "false"
+      Email__Username: e2e
+      Email__Password: e2e
+      Email__From: nao-responda@aralu.test
+      Bootstrap__Enabled: "true"
+      Bootstrap__AdminEmail: admin@aralu.test
+      Bootstrap__AdminPassword: Admin-E2E-2026!
+      Asaas__BaseUrl: http://asaas-falso:8080
+      Asaas__ApiKey: e2e-asaas
+      Asaas__WebhookToken: e2e-webhook
+      Testes__RelogioControlavel: "true"
+      Importacao__AtrasoSegundos: "0"
+      RateLimit__CadastroPorHora: "10000"
+      RateLimit__LoginPorMinuto: "10000"
+      RateLimit__LoginPorEmail: "10000"
+      RateLimit__RecuperacaoPorHora: "10000"
+      RateLimit__ReenvioPorHora: "10000"
+      RateLimit__PublicoPorMinuto: "10000"
+      RateLimit__LeadsPorContaPorHora: "10000"
+      ForwardedHeaders__KnownNetworks__0: 172.16.0.0/12
+      ForwardedHeaders__KnownNetworks__1: 10.0.0.0/8
+      ForwardedHeaders__KnownNetworks__2: 192.168.0.0/16
+    tmpfs:
+      - /storage:uid=1654,gid=1654,mode=0700
+      - /keys:uid=1654,gid=1654,mode=0700
+    ports:
+      - "18081:8080"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      mailpit:
+        condition: service_started
+      asaas-falso:
+        condition: service_started
+    networks: [interna]
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/127.0.0.1/8080'"]
+      interval: 2s
+      timeout: 5s
+      retries: 60
+
+  frontend:
+    build:
+      context: .
+      dockerfile: src/frontend/Dockerfile
+    ports:
+      - "18080:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    networks: [interna]
+
+networks:
+  interna:

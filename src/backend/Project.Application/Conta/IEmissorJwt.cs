@@ -1,0 +1,6 @@
+namespace Project.Application.Conta;
+
+public interface IEmissorJwt
+{
+    string Emitir(string usuarioId, string email, IReadOnlyList<string> papeis, string? contaId = null, string? stampHash = null);
+}

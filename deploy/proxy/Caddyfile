@@ -1,0 +1,66 @@
+# ── Produção ─────────────────────────────────────────────────────────
+# aralu.com.br vai ser a landing (SPEC-068). Até ela existir, tudo vai para o app
+# com redirecionamento temporário: um 301 da raiz ficaria guardado nos navegadores
+# e esconderia a landing depois. /api/* continua encaminhado, porque redirecionar
+# transforma POST em GET e quebraria webhook e formulários abertos (SPEC-069 §4.2).
+aralu.com.br {
+	encode zstd gzip
+	header -Server
+
+	@api path /api/*
+	handle @api {
+		reverse_proxy 127.0.0.1:8081
+	}
+
+	handle {
+		redir https://app.aralu.com.br{uri} 302
+	}
+}
+
+www.aralu.com.br {
+	redir https://aralu.com.br{uri} permanent
+}
+
+# Endereço do app de produção (SPEC-069). Buscadores não indexam o app.
+app.aralu.com.br {
+	encode zstd gzip
+	header {
+		-Server
+		X-Robots-Tag "noindex, nofollow"
+	}
+	reverse_proxy 127.0.0.1:8081
+}
+
+# Medição de visitas da landing (Umami, deploy/metricas). Só o painel e o script; fora dos buscadores.
+metricas.aralu.com.br {
+	encode zstd gzip
+	header {
+		-Server
+		X-Robots-Tag "noindex, nofollow"
+	}
+	reverse_proxy 127.0.0.1:8095
+}
+
+# ── Staging ──────────────────────────────────────────────────────────
+staging.aralu.com.br {
+	encode zstd gzip
+	header {
+		-Server
+		X-Robots-Tag "noindex, nofollow"
+	}
+	reverse_proxy 127.0.0.1:8082
+}
+
+# ── Landing pages (repositório landing-pages, container isolado) ──────
+jmreboque.com.br {
+	reverse_proxy 127.0.0.1:8090
+}
+
+www.jmreboque.com.br {
+	redir https://jmreboque.com.br{uri} permanent
+}
+
+# ── Domínio antigo (DNS na Wix aponta para esta VPS) ──────────────────
+voltexstores.com, www.voltexstores.com {
+	redir https://aralu.com.br{uri} permanent
+}

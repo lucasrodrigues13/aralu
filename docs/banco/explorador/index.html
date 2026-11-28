@@ -1,0 +1,463 @@
+<title>Banco Aralu</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: barra fixa no topo, quadro infinito arrastável no centro, painel de notas à direita. */
+:root {
+  --bg: #f3f4f1; --grid: #e3e5df; --surface: #ffffff; --fg: #1d2420; --muted: #66706a; --line: #d5d9d2;
+  --accent: #2d6a4f; --accent-soft: #e2efe8; --fk: #4b5563; --ref: #c27a12; --poly: #8b44c9;
+  --new: #16a34a; --new-soft: #dcfce7; --ren: #2563eb; --ren-soft: #dbeafe; --del: #c2410c; --del-soft: #ffedd5;
+  --pk: #a85b0a; --shadow: 0 1px 2px rgba(20,30,25,.08), 0 4px 14px rgba(20,30,25,.06);
+  --sans: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif; --mono: "IBM Plex Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #141816; --grid: #1e2421; --surface: #1c221f; --fg: #e6ebe7; --muted: #95a19a; --line: #2f3833;
+  --accent: #6fcf97; --accent-soft: #1f3a2c; --fk: #aab4bd; --ref: #e9a23b; --poly: #c08af0;
+  --new: #4ade80; --new-soft: #173b25; --ren: #7aa7ff; --ren-soft: #1b2a4a; --del: #fb923c; --del-soft: #3d2414;
+  --pk: #f0a655; --shadow: 0 1px 2px rgba(0,0,0,.4), 0 4px 14px rgba(0,0,0,.3); color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #141816; --grid: #1e2421; --surface: #1c221f; --fg: #e6ebe7; --muted: #95a19a; --line: #2f3833;
+  --accent: #6fcf97; --accent-soft: #1f3a2c; --fk: #aab4bd; --ref: #e9a23b; --poly: #c08af0;
+  --new: #4ade80; --new-soft: #173b25; --ren: #7aa7ff; --ren-soft: #1b2a4a; --del: #fb923c; --del-soft: #3d2414;
+  --pk: #f0a655; --shadow: 0 1px 2px rgba(0,0,0,.4), 0 4px 14px rgba(0,0,0,.3); color-scheme: dark }
+html, body { height: 100% }
+body { background: var(--bg); color: var(--fg); font-family: var(--sans); overflow: hidden }
+.app { height: 100%; display: grid; grid-template-rows: auto 1fr; }
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding-block: 10px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); background: var(--surface); border-bottom: 1px solid var(--line); z-index: 5 }
+.bar h1 { font-size: 16px; margin: 0; font-weight: 700; letter-spacing: -.01em }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden }
+.seg button { border: 0; background: transparent; color: var(--fg); font: 600 13px var(--sans); padding: 6px 12px; cursor: pointer }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--surface) }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0 }
+.chip { border: 1px solid var(--line); background: var(--surface); color: var(--fg); border-radius: 999px; padding: 3px 10px 3px 8px; font: 500 12px var(--sans); cursor: pointer; display: inline-flex; align-items: center; gap: 6px }
+.chip i { width: 9px; height: 9px; border-radius: 50%; display: inline-block }
+.chip[aria-pressed="false"] { opacity: .45 }
+.tools { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap }
+.btn { border: 1px solid var(--line); background: var(--surface); color: var(--fg); border-radius: 8px; padding: 6px 10px; font: 500 12.5px var(--sans); cursor: pointer }
+.btn:hover { border-color: var(--accent) }
+.btn.primary { background: var(--accent); color: var(--surface); border-color: var(--accent) }
+button:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+.main { position: relative; min-height: 0; display: grid; grid-template-columns: 1fr 360px }
+.board { position: relative; overflow: hidden; cursor: grab; background-color: var(--bg); background-image: radial-gradient(var(--grid) 1.2px, transparent 1.2px); background-size: 22px 22px; touch-action: none }
+.board.panning { cursor: grabbing }
+.world { position: absolute; left: 0; top: 0; transform-origin: 0 0 }
+svg.edges { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none }
+.zone { position: absolute; border-radius: 18px; border: 1.5px dashed; pointer-events: none }
+.zone b { position: absolute; top: -26px; left: 6px; font: 700 15px var(--sans); white-space: nowrap }
+.card { position: absolute; width: 250px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); font-size: 12px; user-select: none }
+.card.sel { outline: 2.5px solid var(--accent); outline-offset: 2px }
+.card.dim { opacity: .28 }
+.card.st-nova { border: 2px solid var(--new) }
+.card.st-renomeada { border: 2px solid var(--ren) }
+.card header { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 9px 9px 0 0; color: #fff; cursor: move }
+.card header .nm { font-weight: 700; font-size: 13px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.card header .tg { font: 700 9.5px var(--sans); letter-spacing: .06em; text-transform: uppercase; background: rgba(255,255,255,.22); padding: 2px 6px; border-radius: 4px }
+.card header .nb { font: 700 10px var(--sans); background: #fff; color: #1d2420; border-radius: 999px; padding: 1px 6px }
+.rows { padding: 4px 0 }
+.row { display: grid; grid-template-columns: 28px 1fr auto; gap: 4px; padding: 1.5px 10px; align-items: baseline }
+.row .k { font: 700 9px var(--sans); letter-spacing: .03em }
+.row .k.pk { color: var(--pk) } .row .k.fk { color: var(--fk) } .row .k.ref { color: var(--ref) } .row .k.poly { color: var(--poly) }
+.row .n { overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.row .n.b { font-weight: 600 }
+.row .t { font: 10.5px var(--mono); color: var(--muted) }
+.row.new { background: var(--new-soft) } .row.chg { background: var(--ren-soft) }
+.row .uq { font: 700 8.5px var(--sans); color: var(--ren); margin-left: 4px }
+.idx { display: flex; justify-content: space-between; gap: 6px; margin: 4px 8px 2px; padding: 3px 7px; border-radius: 6px; font: 10.5px var(--mono); background: var(--accent-soft); color: var(--fg) }
+.idx b { font: 700 9.5px var(--sans); color: var(--accent); white-space: nowrap }
+.idx.novo { background: var(--new-soft) } .idx.novo b { color: var(--new) }
+.more { width: 100%; border: 0; border-top: 1px solid var(--line); background: transparent; color: var(--muted); font: 500 11.5px var(--sans); padding: 5px; cursor: pointer; border-radius: 0 0 10px 10px }
+.more:hover { color: var(--accent) }
+.ghost { position: absolute; padding: 6px 10px; border: 1.5px dashed var(--del); background: var(--del-soft); border-radius: 10px; font-size: 12px; width: 250px; pointer-events: auto; cursor: pointer }
+.ghost b { text-decoration: line-through }
+.panel { border-left: 1px solid var(--line); background: var(--surface); display: flex; flex-direction: column; min-height: 0 }
+.panel .hd { padding: 14px 16px 10px; border-bottom: 1px solid var(--line) }
+.panel h2 { margin: 0 0 4px; font-size: 17px }
+.panel .sub { color: var(--muted); font-size: 12.5px; line-height: 1.45 }
+.why { margin-top: 10px; padding: 9px 11px; border-radius: 8px; font-size: 12.5px; line-height: 1.45 }
+.why.nova { background: var(--new-soft) } .why.renomeada { background: var(--ren-soft) } .why.removida { background: var(--del-soft) }
+.notes { flex: 1; overflow: auto; padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; min-height: 0 }
+.note { border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px; font-size: 13px; line-height: 1.45 }
+.note .meta { display: flex; gap: 8px; align-items: center; font-size: 11px; color: var(--muted); margin-bottom: 4px }
+.note .meta .x { margin-left: auto; border: 0; background: none; color: var(--muted); cursor: pointer; font-size: 12px }
+.note .meta a { color: var(--accent); cursor: pointer; font-weight: 600 }
+.pill { font: 700 10px var(--sans); padding: 2px 7px; border-radius: 999px; letter-spacing: .02em }
+.pill.entendi { background: var(--new-soft); color: var(--new) } .pill.duvida { background: var(--del-soft); color: var(--del) } .pill.mudaria { background: var(--ren-soft); color: var(--ren) }
+.note p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere }
+.empty { color: var(--muted); font-size: 13px; line-height: 1.5 }
+.compose { border-top: 1px solid var(--line); padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)) }
+.compose .types { display: flex; gap: 6px }
+.compose .types button { flex: 1 }
+.compose .types button[aria-pressed="true"].entendi { background: var(--new-soft); border-color: var(--new); color: var(--new) }
+.compose .types button[aria-pressed="true"].duvida { background: var(--del-soft); border-color: var(--del); color: var(--del) }
+.compose .types button[aria-pressed="true"].mudaria { background: var(--ren-soft); border-color: var(--ren); color: var(--ren) }
+.compose textarea { width: 100%; box-sizing: border-box; min-height: 64px; resize: vertical; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); font: 13px var(--sans); padding: 8px 10px }
+.status { font-size: 11.5px; color: var(--muted) }
+.legend { position: absolute; left: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; font-size: 11.5px; display: flex; flex-wrap: wrap; gap: 6px 14px; max-width: calc(100% - 24px); box-shadow: var(--shadow); z-index: 2 }
+.legend span { display: inline-flex; align-items: center; gap: 5px }
+.sw { width: 22px; height: 0; border-top: 2px solid } .sw.d { border-top-style: dashed }
+.box { width: 12px; height: 10px; border-radius: 3px; border: 2px solid }
+.hint { position: absolute; right: 12px; top: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; font-size: 11.5px; color: var(--muted); z-index: 2 }
+@media (max-width: 860px) {
+  .main { grid-template-columns: 1fr; grid-template-rows: 1fr 46% }
+  .panel { border-left: 0; border-top: 1px solid var(--line) }
+  .hint { display: none }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important } }
+</style>
+
+<div class="app">
+  <div class="bar">
+    <h1>Banco Aralu</h1>
+    <div class="seg" role="group" aria-label="Estado do banco">
+      <button id="v-hoje" aria-pressed="true">Hoje</button>
+      <button id="v-proposta" aria-pressed="false">Proposta</button>
+    </div>
+    <div class="chips" id="chips"></div>
+    <div class="tools">
+      <button class="btn" id="b-keys" aria-pressed="true">Mostrar todas as colunas</button>
+      <button class="btn" id="b-fit">Enquadrar</button>
+      <button class="btn" id="b-reset">Reorganizar</button>
+      <button class="btn" id="b-copy">Copiar notas</button>
+    </div>
+  </div>
+  <div class="main">
+    <div class="board" id="board">
+      <div class="world" id="world"><svg class="edges" id="edges"></svg></div>
+      <div class="hint">Arraste o cabeçalho de uma tabela para movê-la · arraste o fundo para navegar · roda do mouse para zoom</div>
+      <div class="legend">
+        <span><b style="color:var(--pk)">PK</b> chave</span><span><b style="color:var(--fk)">FK</b> chave estrangeira</span>
+        <span><b style="color:var(--ref)">ref</b> só no código</span><span><b style="color:var(--poly)">poli</b> polimórfica</span>
+        <span><i class="sw" style="border-color:var(--fk)"></i>FK</span><span><i class="sw d" style="border-color:var(--ref)"></i>ref</span>
+        <span id="lg-p" hidden><i class="box" style="border-color:var(--new)"></i>nova <i class="box" style="border-color:var(--ren)"></i>renomeada/alterada <i class="box" style="border-color:var(--del);border-style:dashed"></i>removida</span>
+      </div>
+    </div>
+    <aside class="panel">
+      <div class="hd" id="p-hd"></div>
+      <div class="notes" id="p-notes"></div>
+      <form class="compose" id="f-note">
+        <div class="types" role="group" aria-label="Tipo da nota">
+          <button type="button" class="btn entendi" data-t="entendi" aria-pressed="false">Entendi</button>
+          <button type="button" class="btn duvida" data-t="duvida" aria-pressed="true">Dúvida</button>
+          <button type="button" class="btn mudaria" data-t="mudaria" aria-pressed="false">Mudaria</button>
+        </div>
+        <textarea id="note-text" placeholder="Escreva o que entendeu, o que não entendeu ou o que faria diferente…"></textarea>
+        <div style="display:flex;gap:8px;align-items:center"><button class="btn primary" type="submit" id="note-send">Salvar nota</button><span class="status" id="st"></span></div>
+      </form>
+    </aside>
+  </div>
+</div>
+
+<script>
+(() => {
+const COLORS = { conta: '#6b5bd6', eventos: '#1f8a70', convites: '#c0567d', tarefas: '#c27a12', fornec: '#2f7dc0', modelos: '#6f7f24', funil: '#b5453a', saas: '#16a34a' };
+const TYPE_LABEL = { entendi: 'Entendi', duvida: 'Dúvida', mudaria: 'Mudaria' };
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const store = { get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} } };
+
+let DATA = null, view = 'hoje', compact = true, sel = null, noteType = 'duvida';
+let hidden = new Set(), expanded = new Set();
+let layouts = { hoje: {}, proposta: {} };
+let notes = [];
+let db = null, me = null;
+const cam = { x: 40, y: 50, z: 0.7 };
+const board = $('board'), world = $('world'), edgesSvg = $('edges');
+
+// ---------- dados ----------
+fetch('data.json').then(r => r.json()).then(d => { DATA = d; boot(); }).catch(() => { $('p-hd').innerHTML = '<h2>Não consegui carregar o schema</h2><p class="sub">Recarregue a página.</p>'; });
+
+function S() { return DATA[view]; }
+function domainOf(n) { return S().domains.find(d => d.t.includes(n)); }
+function tableStatus(n) { return view === 'proposta' ? DATA.status.tables[n] : null; }
+
+// ---------- layout inicial ----------
+const ZONES = { modelos: [0, 0], conta: [1, 0], funil: [2, 0], fornec: [0, 1], eventos: [1, 1], convites: [2, 1], tarefas: [2, 2], saas: [1, 2] };
+function estH(n) { const t = S().tables[n]; const shown = compact ? t.cols.filter(keyCol).length : t.cols.length; return 36 + shown * 18 + (compact && shown < t.cols.length ? 26 : 0); }
+function keyCol(c) { return c.pk || c.fk || c.ref || c.poly || c.n === 'ContaId' || c.isNew; }
+function autoLayout() {
+  const pos = {};
+  const colW = 280, zoneW = 3 * colW + 120;
+  const rowH = [0, 0, 0];
+  // primeiro mede altura de cada zona
+  const zoneData = {};
+  for (const d of S().domains) {
+    const names = d.t.filter(n => S().tables[n]);
+    const cols = [[], [], []], h = [0, 0, 0];
+    for (const n of names) { const i = h.indexOf(Math.min(...h)); cols[i].push(n); h[i] += estH(n) + 22; }
+    zoneData[d.id] = { cols, h: Math.max(...h) };
+    const [, r] = ZONES[d.id]; rowH[r] = Math.max(rowH[r], zoneData[d.id].h);
+  }
+  const rowY = [0, rowH[0] + 120, rowH[0] + rowH[1] + 240];
+  for (const d of S().domains) {
+    const [c, r] = ZONES[d.id];
+    zoneData[d.id].cols.forEach((col, i) => { let y = rowY[r]; col.forEach(n => { pos[n] = [c * zoneW + i * colW, y]; y += estH(n) + 22; }); });
+  }
+  return pos;
+}
+
+// ---------- render ----------
+const cardEls = {};
+function render() {
+  world.querySelectorAll('.card,.zone,.ghost').forEach(e => e.remove());
+  for (const k in cardEls) delete cardEls[k];
+  const L = layouts[view];
+  const auto = autoLayout();
+  for (const n in S().tables) if (!L[n]) L[n] = auto[n];
+  const newCols = new Set(DATA.status.newCols);
+  for (const d of S().domains) {
+    for (const n of d.t) {
+      const t = S().tables[n]; if (!t) continue;
+      const st = tableStatus(n);
+      const el = document.createElement('div');
+      el.className = 'card' + (st ? ' st-' + st.s : '') + (hidden.has(d.id) ? ' dim' : '') + (sel === n ? ' sel' : '');
+      el.dataset.n = n;
+      const cnt = notes.filter(x => x.tabela === n).length;
+      const isNewT = st && st.s === 'nova';
+      const cols = t.cols.map(c => ({ ...c, isNew: view === 'proposta' && (isNewT || newCols.has(n + '.' + c.n)) }));
+      const show = compact && !expanded.has(n) ? cols.filter(keyCol) : cols;
+      let rows = '';
+      for (const c of show) {
+        const k = c.pk ? '<span class="k pk">PK</span>' : c.fk ? '<span class="k fk">FK</span>' : c.ref ? '<span class="k ref">ref</span>' : c.poly ? '<span class="k poly">poli</span>' : '<span></span>';
+        const cls = 'row' + ((c.isNew || c.novaTenant) && !isNewT ? ' new' : '') + (c.mudou && !c.novaTenant ? ' chg' : '');
+        rows += `<div class="${cls}" data-c="${esc(c.n)}" title="${esc(c.mudou || c.poly || (c.fk ? '→ ' + c.fk + (c.on ? ' (on delete ' + c.on.toLowerCase() + ')' : '') : c.ref ? '→ ' + c.ref + ' (sem FK)' : ''))}">${k}<span class="n${c.pk ? ' b' : ''}">${esc(c.n)}${c.uq ? '<span class="uq">UQ</span>' : ''}</span><span class="t">${esc(c.t)}${c.nn ? '' : '?'}</span></div>`;
+      }
+      const rest = cols.length - show.length;
+      if (view === 'proposta' && t.tenant) {
+        const tn = t.tenant;
+        rows += `<div class="idx${tn.existe ? '' : ' novo'}" title="${tn.existe ? 'Já existe um índice começando por ContaId; a proposta recomenda este formato.' : 'Índice novo recomendado.'}"><span>${tn.unique ? 'único' : 'índice'} (${esc(tn.idx.join(', '))})</span><b>${tn.existe ? 'já tem índice' : 'novo'}</b></div>`;
+      }
+      el.innerHTML = `<header style="background:${isNewT ? 'var(--new)' : st && st.s === 'renomeada' ? 'var(--ren)' : COLORS[d.id]}"><span class="nm">${esc(n)}</span>${st ? `<span class="tg">${esc(st.s)}</span>` : ''}${cnt ? `<span class="nb">${cnt}</span>` : ''}</header><div class="rows">${rows}</div>` +
+        (rest > 0 ? `<button class="more" type="button">+ ${rest} colunas</button>` : expanded.has(n) && compact ? `<button class="more" type="button">recolher</button>` : '');
+      el.style.left = L[n][0] + 'px'; el.style.top = L[n][1] + 'px';
+      world.appendChild(el); cardEls[n] = el;
+    }
+  }
+  // removidas (proposta)
+  if (view === 'proposta') {
+    let i = 0;
+    for (const [n, why] of Object.entries(DATA.status.removed)) {
+      const key = '__rm_' + n;
+      if (!L[key]) { const a = L.MembrosConta || [0, 0]; L[key] = [a[0] + 290, a[1] + i * 64]; }
+      const g = document.createElement('div'); g.className = 'ghost'; g.dataset.n = key; g.dataset.rm = n;
+      g.innerHTML = `<b>${esc(n)}</b> · removida<div style="color:var(--muted);font-size:11px;margin-top:2px">${esc(why)}</div>`;
+      g.style.left = L[key][0] + 'px'; g.style.top = L[key][1] + 'px';
+      world.appendChild(g); cardEls[key] = g; i++;
+    }
+  }
+  drawEdges(); applyCam();
+}
+
+function rowAnchor(n, col) {
+  const el = cardEls[n]; if (!el) return null;
+  const r = el.querySelector(`.row[data-c="${CSS.escape(col)}"]`);
+  const x = parseFloat(el.style.left), y = parseFloat(el.style.top);
+  const yy = r ? y + r.offsetTop + r.offsetHeight / 2 : y + 16;
+  return { l: x, r: x + el.offsetWidth, y: yy };
+}
+function drawEdges() {
+  let s = '';
+  for (const [n, t] of Object.entries(S().tables)) {
+    const d = domainOf(n); if (!d || !cardEls[n]) continue;
+    for (const c of t.cols) {
+      const to = c.fk || c.ref; if (!to || to === n || !cardEls[to]) continue;
+      if (c.n === 'ContaId' && to !== 'Contas') continue;
+      if (c.n === 'ContaId' && !['Contas'].includes(to)) continue;
+      const contaEdge = c.n === 'ContaId';
+      const a = rowAnchor(n, c.n), b = rowAnchor(to, 'Id') || rowAnchor(to, '');
+      if (!a || !b) continue;
+      let x1, x2, dir1, dir2;
+      if (b.r < a.l) { x1 = a.l; x2 = b.r; dir1 = -1; dir2 = 1; } else if (b.l > a.r) { x1 = a.r; x2 = b.l; dir1 = 1; dir2 = -1; } else { x1 = a.r; x2 = b.r; dir1 = 1; dir2 = 1; }
+      const dx = Math.max(40, Math.abs(x2 - x1) / 2);
+      const dim = hidden.has(d.id) || (domainOf(to) && hidden.has(domainOf(to).id));
+      const focus = sel && (sel === n || sel === to);
+      const color = c.fk ? 'var(--fk)' : 'var(--ref)';
+      const op = contaEdge ? (focus ? .9 : .12) : dim ? .08 : sel ? (focus ? 1 : .18) : .7;
+      s += `<path d="M${x1},${a.y} C${x1 + dir1 * dx},${a.y} ${x2 + dir2 * dx},${b.y} ${x2},${b.y}" fill="none" stroke="${color}" stroke-width="${focus ? 2.4 : 1.4}" ${c.ref ? 'stroke-dasharray="5 4"' : ''} opacity="${op}"/>`;
+      s += `<path d="M${x1},${a.y - 5} L${x1 + dir1 * 9},${a.y} L${x1},${a.y + 5}" fill="none" stroke="${color}" stroke-width="1.3" opacity="${op}"/><circle cx="${x2}" cy="${b.y}" r="3" fill="${color}" opacity="${op}"/>`;
+    }
+  }
+  edgesSvg.innerHTML = s;
+}
+
+function applyCam() { world.style.transform = `translate(${cam.x}px,${cam.y}px) scale(${cam.z})`; }
+function fit() {
+  const L = layouts[view]; const xs = [], ys = [];
+  for (const n in cardEls) { const p = L[n]; if (!p) continue; xs.push(p[0], p[0] + 260); ys.push(p[1], p[1] + cardEls[n].offsetHeight); }
+  if (!xs.length) return;
+  const w = Math.max(...xs) - Math.min(...xs), h = Math.max(...ys) - Math.min(...ys);
+  const bw = board.clientWidth, bh = board.clientHeight;
+  cam.z = Math.min(1.2, Math.max(0.12, Math.min((bw - 60) / w, (bh - 80) / h)));
+  cam.x = (bw - w * cam.z) / 2 - Math.min(...xs) * cam.z; cam.y = 40 - Math.min(...ys) * cam.z;
+  applyCam();
+}
+
+// ---------- interação: arrastar cards e navegar ----------
+let drag = null;
+board.addEventListener('pointerdown', e => {
+  const more = e.target.closest('.more');
+  if (more) return;
+  const card = e.target.closest('.card,.ghost');
+  if (card && (e.target.closest('header') || card.classList.contains('ghost'))) {
+    const n = card.dataset.n; const p = layouts[view][n];
+    drag = { kind: 'card', n, sx: e.clientX, sy: e.clientY, ox: p[0], oy: p[1], moved: false, el: card };
+    card.style.zIndex = 3;
+  } else if (card) {
+    drag = { kind: 'click', n: card.dataset.n, sx: e.clientX, sy: e.clientY };
+  } else {
+    drag = { kind: 'pan', sx: e.clientX, sy: e.clientY, ox: cam.x, oy: cam.y, moved: false };
+    board.classList.add('panning');
+  }
+  board.setPointerCapture(e.pointerId);
+});
+board.addEventListener('pointermove', e => {
+  if (!drag) return;
+  const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
+  if (Math.abs(dx) + Math.abs(dy) > 3) drag.moved = true;
+  if (drag.kind === 'card') {
+    const p = layouts[view][drag.n]; p[0] = drag.ox + dx / cam.z; p[1] = drag.oy + dy / cam.z;
+    drag.el.style.left = p[0] + 'px'; drag.el.style.top = p[1] + 'px'; drawEdges();
+  } else if (drag.kind === 'pan') { cam.x = drag.ox + dx; cam.y = drag.oy + dy; applyCam(); }
+});
+board.addEventListener('pointerup', e => {
+  if (!drag) return;
+  const d = drag; drag = null; board.classList.remove('panning');
+  if (d.kind === 'card') { d.el.style.zIndex = ''; if (d.moved) saveLayout(); else select(d.n.startsWith('__rm_') ? d.n : d.n); }
+  else if (d.kind === 'click') select(d.n);
+  else if (d.kind === 'pan' && !d.moved) select(null);
+});
+board.addEventListener('click', e => {
+  const more = e.target.closest('.more'); if (!more) return;
+  const n = more.closest('.card').dataset.n;
+  if (expanded.has(n)) expanded.delete(n); else expanded.add(n);
+  render();
+});
+board.addEventListener('wheel', e => {
+  e.preventDefault();
+  const r = board.getBoundingClientRect(); const mx = e.clientX - r.left, my = e.clientY - r.top;
+  const nz = Math.min(2, Math.max(0.12, cam.z * Math.exp(-e.deltaY * 0.0015)));
+  cam.x = mx - (mx - cam.x) * nz / cam.z; cam.y = my - (my - cam.y) * nz / cam.z; cam.z = nz; applyCam();
+}, { passive: false });
+
+// ---------- seleção e painel ----------
+function select(n) {
+  sel = n;
+  world.querySelectorAll('.card').forEach(c => c.classList.toggle('sel', c.dataset.n === n));
+  drawEdges(); renderPanel();
+}
+function renderPanel() {
+  const hd = $('p-hd');
+  if (!sel) {
+    const t = S().tables, nT = Object.keys(t).length;
+    hd.innerHTML = `<h2>Notas gerais</h2><p class="sub">${view === 'hoje' ? 'Banco como está hoje' : 'Proposta: SaaS, Contas/MembrosConta e ClienteEventos'} · ${nT} tabelas. Clique numa tabela para ver os detalhes e anotar nela.</p>`;
+  } else if (sel.startsWith('__rm_')) {
+    const n = sel.slice(5);
+    hd.innerHTML = `<h2>${esc(n)}</h2><div class="why removida"><b>Removida na proposta.</b> ${esc(DATA.status.removed[n])}</div>`;
+  } else {
+    const t = S().tables[sel]; const d = domainOf(sel); const st = tableStatus(sel);
+    const fks = t.cols.filter(c => c.fk && c.n !== 'ContaId').map(c => `${c.n} → ${c.fk}`);
+    const refs = t.cols.filter(c => c.ref).map(c => `${c.n} → ${c.ref}`);
+    const children = Object.entries(S().tables).filter(([m, x]) => m !== sel && x.cols.some(c => (c.fk === sel || c.ref === sel) && c.n !== 'ContaId')).map(([m]) => m);
+    hd.innerHTML = `<h2>${esc(sel)}</h2><p class="sub">${esc(d ? d.nome : '')} · ${t.cols.length} colunas${t.cols.some(c => c.n === 'ContaId') ? ' · separada por conta (ContaId)' : ''}</p>` +
+      (view === 'proposta' && t.tenant ? `<div class="why ${t.tenant.had ? 'renomeada' : 'nova'}"><b>Tenant:</b> ${t.tenant.had ? 'já tinha ContaId (text, sem FK); passa a uuid com FK para Contas.' : 'ganha a coluna ContaId (uuid, FK para Contas). Hoje só chega na conta pela tabela pai.'} Índice ${t.tenant.unique ? 'único ' : ''}recomendado: <code>(${esc(t.tenant.idx.join(', '))})</code>${t.tenant.existe ? ', no lugar do índice por ContaId que já existe.' : ', novo.'}</div>` : view === 'proposta' && !sel.startsWith('AspNet') ? `<div class="why renomeada"><b>Sem ContaId:</b> ${sel === 'Contas' ? 'é a própria conta.' : 'registro técnico global, recebido antes de saber de qual conta é.'}</div>` : '') +
+      (view === 'proposta' && t.cols.some(c => c.decisao) ? `<div class="why renomeada"><b>Ligações revistas:</b><ul style="margin:4px 0 0;padding-left:18px">${t.cols.filter(c => c.decisao).map(c => `<li><b>${esc(c.n)}</b>: ${esc(c.mudou)}</li>`).join('')}</ul></div>` : '') +
+      (st ? `<div class="why ${st.s}"><b>${st.s === 'nova' ? 'Nova' : 'Renomeada'}${st.de ? ' (era ' + esc(st.de) + ')' : ''}.</b> ${esc(st.why)}</div>` : '') +
+      `<p class="sub" style="margin-top:8px">${fks.length ? '<b>Aponta para:</b> ' + esc(fks.join(', ')) + '<br>' : ''}${refs.length ? '<b>Referência sem FK:</b> ' + esc(refs.join(', ')) + '<br>' : ''}${children.length ? '<b>Usada por:</b> ' + esc(children.join(', ')) : ''}</p>`;
+  }
+  renderNotes();
+}
+function renderNotes() {
+  const box = $('p-notes');
+  const list = notes.filter(x => sel ? x.tabela === sel : true).sort((a, b) => (b.criadoEm || 0) - (a.criadoEm || 0));
+  if (!list.length) { box.innerHTML = `<p class="empty">${sel ? 'Nenhuma nota nesta tabela ainda. Use o campo abaixo para registrar uma dúvida ou uma ideia.' : 'Nenhuma nota ainda. Clique numa tabela e escreva o que entendeu, o que não entendeu ou o que mudaria. As notas ficam salvas e o Claude consegue lê-las.'}</p>`; return; }
+  box.innerHTML = list.map(x => `<div class="note"><div class="meta"><span class="pill ${x.tipo}">${TYPE_LABEL[x.tipo] || x.tipo}</span>${!sel && x.tabela ? `<a data-go="${esc(x.tabela)}">${esc(x.tabela.replace('__rm_', ''))}</a>` : ''}<span>${x.visao === 'proposta' ? 'proposta' : 'hoje'} · ${new Date(x.criadoEm || 0).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span><button class="x" data-del="${esc(x.id)}" title="Apagar nota" aria-label="Apagar nota">✕</button></div><p>${esc(x.texto)}</p></div>`).join('');
+}
+$('p-notes').addEventListener('click', e => {
+  const go = e.target.closest('[data-go]'); if (go) { const n = go.dataset.go; if (cardEls[n]) select(n); return; }
+  const del = e.target.closest('[data-del]'); if (del) deleteNote(del.dataset.del);
+});
+document.querySelectorAll('.compose .types button').forEach(b => b.addEventListener('click', () => {
+  noteType = b.dataset.t; document.querySelectorAll('.compose .types button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+}));
+$('f-note').addEventListener('submit', async e => {
+  e.preventDefault();
+  const texto = $('note-text').value.trim(); if (!texto) return;
+  const nota = { tabela: sel || '', tipo: noteType, texto, visao: view, criadoEm: Date.now() };
+  $('note-text').value = '';
+  await addNote(nota);
+});
+
+// ---------- persistência ----------
+function status(msg) { $('st').textContent = msg; }
+async function addNote(n) {
+  if (db) {
+    try { await db.collection('notas').add(n); status('Nota salva'); return; }
+    catch (err) { status(err && err.code === 'invalid_argument' ? 'Sem permissão para salvar aqui' : 'Não salvou; tente de novo'); return; }
+  }
+  n.id = 'l' + Date.now(); notes.push(n); store.set('aralu-notas', notes); status('Nota salva só neste navegador'); afterNotes();
+}
+async function deleteNote(id) {
+  if (db && !id.startsWith('l')) { try { await db.collection('notas').doc(id).delete(); } catch { status('Não apagou; tente de novo'); } return; }
+  notes = notes.filter(x => x.id !== id); store.set('aralu-notas', notes); afterNotes();
+}
+function afterNotes() { renderNotes(); world.querySelectorAll('.card').forEach(el => { const n = el.dataset.n, c = notes.filter(x => x.tabela === n).length; let nb = el.querySelector('.nb'); if (c && !nb) { nb = document.createElement('span'); nb.className = 'nb'; el.querySelector('header').appendChild(nb); } if (nb) { if (c) nb.textContent = c; else nb.remove(); } }); }
+let saveTimer = null, saving = false, saveAgain = false;
+function saveLayout() {
+  store.set('aralu-layout', layouts);
+  clearTimeout(saveTimer); saveTimer = setTimeout(flushLayout, 600);
+}
+async function flushLayout() {
+  if (!db) return;
+  if (saving) { saveAgain = true; return; }
+  saving = true;
+  try { await db.doc('layouts/' + view).set({ pos: layouts[view] }); } catch {}
+  saving = false; if (saveAgain) { saveAgain = false; flushLayout(); }
+}
+
+// ---------- barra ----------
+function renderChips() {
+  $('chips').innerHTML = S().domains.map(d => `<button class="chip" data-d="${d.id}" aria-pressed="${!hidden.has(d.id)}"><i style="background:${COLORS[d.id]}"></i>${esc(d.nome)}</button>`).join('');
+}
+$('chips').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; const id = b.dataset.d; hidden.has(id) ? hidden.delete(id) : hidden.add(id); renderChips(); render(); });
+function setView(v) {
+  view = v; $('v-hoje').setAttribute('aria-pressed', String(v === 'hoje')); $('v-proposta').setAttribute('aria-pressed', String(v === 'proposta'));
+  $('lg-p').hidden = v !== 'proposta';
+  if (sel && !S().tables[sel] && !sel.startsWith('__rm_')) sel = null;
+  renderChips(); render(); renderPanel(); store.set('aralu-view', v);
+}
+$('v-hoje').onclick = () => { setView('hoje'); fit(); };
+$('v-proposta').onclick = () => { setView('proposta'); fit(); };
+$('b-keys').onclick = () => { compact = !compact; expanded.clear(); $('b-keys').textContent = compact ? 'Mostrar todas as colunas' : 'Só chaves'; $('b-keys').setAttribute('aria-pressed', String(compact)); render(); };
+$('b-fit').onclick = fit;
+$('b-reset').onclick = () => { layouts[view] = {}; render(); fit(); saveLayout(); };
+$('b-copy').onclick = () => {
+  const txt = notes.slice().sort((a, b) => a.criadoEm - b.criadoEm).map(x => `[${TYPE_LABEL[x.tipo]}] ${x.tabela ? x.tabela.replace('__rm_', '') + ' (' + x.visao + ')' : 'Geral'}: ${x.texto}`).join('\n') || 'Sem notas.';
+  navigator.clipboard.writeText(txt).then(() => status('Notas copiadas'), () => { $('note-text').value = txt; $('note-text').select(); status('Selecionei as notas no campo; copie com Ctrl+C'); });
+};
+
+// ---------- início ----------
+function boot() {
+  const lv = store.get('aralu-layout'); if (lv && lv.hoje) layouts = lv;
+  const ln = store.get('aralu-notas'); if (Array.isArray(ln)) notes = ln;
+  const v = store.get('aralu-view'); setView(v === 'proposta' ? 'proposta' : 'hoje');
+  requestAnimationFrame(fit);
+  connect();
+}
+async function connect() {
+  if (!window.claude || !window.claude.use) return;
+  const d = await window.claude.use('db'); if (!d) return;
+  db = d;
+  const timer = setTimeout(() => status('As notas salvas ainda não carregaram'), 10000);
+  db.collection('notas').onSnapshot(snap => {
+    if (!snap.metadata.fromCache) clearTimeout(timer);
+    const local = notes.filter(x => String(x.id || '').startsWith('l'));
+    notes = snap.docs.map(s => ({ id: s.id, ...s.data() })).concat(local);
+    afterNotes();
+  }, () => { clearTimeout(timer); status('Não consegui ler as notas salvas'); });
+  for (const v of ['hoje', 'proposta']) {
+    try { const s = await db.doc('layouts/' + v).get(); if (s.exists && s.data().pos) { layouts[v] = { ...s.data().pos }; } } catch {}
+  }
+  render();
+}
+})();
+</script>

@@ -1,0 +1,26 @@
+# Todo PR para a main precisa declarar a versão em que a mudança entra (VERSION + CHANGELOG.md).
+# A regra está em scripts/versao.sh e o passo a passo para o agente em .claude/skills/versao-release.
+# Para bloquear o merge de verdade, marque o check "Versão / versao" como obrigatório na proteção da branch.
+
+name: Versão
+
+on:
+  pull_request:
+    branches: [main, main-v1]
+    types: [opened, synchronize, reopened, edited]
+
+permissions:
+  contents: read
+
+jobs:
+  versao:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
+        with:
+          fetch-depth: 0
+
+      - name: Confere a versão do PR
+        env:
+          BASE: ${{ github.base_ref }}
+        run: bash scripts/versao.sh "origin/$BASE" HEAD

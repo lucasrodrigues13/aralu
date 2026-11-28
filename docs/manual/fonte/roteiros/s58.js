@@ -1,0 +1,36 @@
+const EV = '/eventos/9da95638-fbfc-44c8-8db4-9ab2995d2ab3';
+module.exports = async (p, H) => {
+  const D = 'mat-dialog-container';
+  const L = 'mat-dialog-container:last-of-type';
+  await H.go(p, '/gestao-financeira');
+  await H.click(p, 'Parcelas do contrato', 'main');
+  await H.wd(p);
+  await H.click(p, 'Recebi', D);
+  await H.wait(p, 1000);
+  const dls = await p.$$(D);
+  const last = dls[dls.length - 1];
+  const val = await last.$('input');
+  await val.click({ clickCount: 3 }); await p.keyboard.type('540000');
+  const ins = await last.$$('input');
+  await ins[ins.length - 1].click({ clickCount: 3 }); await p.keyboard.type('10/12/2026');
+  await last.screenshot({ path: 'shots/29c-recebi.png' });
+  const bs = await last.$$('button');
+  for (const b of bs) { if ((await b.evaluate((e) => e.innerText.trim())) === 'Registrar') { await b.click(); break; } }
+  await H.wait(p, 1500);
+  await H.dlg(p, '29d-entrada-recebida');
+  await H.esc(p);
+  await H.go(p, '/gestao-financeira');
+  await H.shot(p, '29a-gestao-financeira');
+  await H.go(p, '/hoje');
+  await H.shot(p, '49-hoje-final', true);
+  await H.go(p, '/relatorios-funil');
+  await H.shot(p, '50-relatorios', true);
+  console.log((await H.txt(p, 'main')).replace(/\n+/g, ' | ').slice(0, 1500));
+  console.log(await H.inter(p, 'main'));
+  await H.go(p, EV);
+  await H.click(p, 'Mais', 'main');
+  await H.opt(p, 'Salvar como modelo');
+  await H.wd(p);
+  await H.dump(p, D);
+  await H.dlg(p, '51a-salvar-como-modelo');
+};

@@ -1,0 +1,20 @@
+module.exports = async (p, H) => {
+  const D = 'mat-dialog-container';
+  await H.go(p, '/oportunidades');
+  await H.click(p, 'more_vert', 'main', 1);
+  await H.opt(p, 'Editar'); await H.wd(p);
+  await H.wait(p, 800);
+  await H.dlg(p, '17a-lead-beatriz-aberto');
+  await H.fill(p, 'Nome da oportunidade', 'Casamento Beatriz e Gustavo', D);
+  await H.click(p, 'É o contratante', D);
+  await H.click(p, '+ Contato', D);
+  await H.fill(p, 'Nome', 'Gustavo Ramos', D, 1);
+  await H.fill(p, 'Telefone', '11923456789', D, 1);
+  await H.fill(p, 'E-mail', 'gustavo.ramos@email.test', D, 1);
+  await H.fill(p, 'Data prevista', '15/05/2027', D);
+  await H.fill(p, 'Horário do convite', '1600', D);
+  await H.fill(p, 'Horário da cerimônia', '1630', D);
+  await H.fill(p, 'Horário da recepção', '1800', D);
+  await H.fill(p, 'Horário da festa', '1900', D);
+  await H.dump(p, D);
+};

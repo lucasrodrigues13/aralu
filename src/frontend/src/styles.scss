@@ -1,0 +1,11 @@
+// Estilos globais: base do TailwindAdmin Angular (free) com as cores da marca aralu.
+// Ver docs/design-system.md. Tailwind e @theme ficam em src/globals.css.
+@use 'styles/tailwindadmin/variables' as *;
+@use 'styles/tailwindadmin/override-component';
+@use 'styles/tailwindadmin/theme-variables/default-variables';
+@use 'styles/tailwindadmin/theme-variables/light-theme-variables';
+@use 'styles/tailwindadmin/theme-variables/dark-theme-variables';
+@use 'styles/tailwindadmin/layouts/transitions';
+@use 'styles/tailwindadmin/container';
+@use 'styles/tailwindadmin/layouts/layouts';
+@use 'styles/aralu';

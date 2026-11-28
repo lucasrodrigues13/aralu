@@ -1,0 +1,149 @@
+using Project.Application.Comum;
+using Project.Domain.Eventos;
+
+namespace Project.Application.Negocio;
+
+public sealed record CompromissoLeitura(
+    Guid Id,
+    string Descricao,
+    DateOnly Data,
+    TimeOnly? Hora,
+    Guid? EventoId,
+    bool DeEvento,
+    string Origem = "compromisso",
+    bool Concluida = false,
+    Guid? OportunidadeId = null,
+    string? Contexto = null);
+
+/// <summary>Tarefa (de evento ou do funil) com prazo, exibida no calendário.</summary>
+public sealed record TarefaNaAgenda(
+    Guid Id,
+    string Titulo,
+    DateOnly Prazo,
+    bool Concluida,
+    Guid? EventoId,
+    Guid? OportunidadeId,
+    string? Contexto);
+
+public sealed record SalvarCompromisso(string? Descricao, DateOnly? Data, TimeOnly? Hora);
+
+public sealed class AgendaServico(IDados dados)
+{
+    /// <summary>Compromissos e todas as tarefas com prazo no período (tarefas entram como itens só de leitura).</summary>
+    public async Task<IReadOnlyList<CompromissoLeitura>> ListarAsync(
+        Guid contaId,
+        DateOnly? de,
+        DateOnly? ate,
+        CancellationToken ct)
+    {
+        var itens = await dados.ListarCompromissosAsync(contaId, de, ate, ct);
+        var tarefas = await dados.ListarTarefasDaAgendaAsync(contaId, de, ate, ct);
+        return itens.Select(Ler)
+            .Concat(tarefas.Select(tarefa => new CompromissoLeitura(
+                tarefa.Id,
+                tarefa.Titulo,
+                tarefa.Prazo,
+                null,
+                tarefa.EventoId,
+                false,
+                tarefa.EventoId is not null ? "tarefa" : "tarefaFunil",
+                tarefa.Concluida,
+                tarefa.OportunidadeId,
+                tarefa.Contexto)))
+            .OrderBy(item => item.Data)
+            .ToArray();
+    }
+
+    public async Task<Resultado<CompromissoLeitura>> CriarAsync(Guid contaId, SalvarCompromisso pedido, CancellationToken ct)
+    {
+        var montado = Montar(contaId, Guid.NewGuid(), pedido, null);
+        if (!montado.Ok)
+        {
+            return Resultado<CompromissoLeitura>.Erro(montado.Falha!.Codigo, montado.Falha.Mensagem);
+        }
+
+        await dados.InserirCompromissoAsync(montado.Valor!, ct);
+        return Resultado<CompromissoLeitura>.Sucesso(Ler(montado.Valor!));
+    }
+
+    public async Task<Resultado<CompromissoLeitura>> AtualizarAsync(
+        Guid contaId,
+        Guid id,
+        SalvarCompromisso pedido,
+        CancellationToken ct)
+    {
+        var item = await dados.ObterCompromissoAsync(contaId, id, ct);
+        if (item is null)
+        {
+            return Resultado<CompromissoLeitura>.Erro(Codigos.Indisponivel, "Indisponível.");
+        }
+
+        if (item.EventoId is not null)
+        {
+            return Resultado<CompromissoLeitura>.Erro(Codigos.Validacao, "Compromisso de evento não é editado nesta tela.");
+        }
+
+        var montado = Montar(contaId, item.Id, pedido, null);
+        if (!montado.Ok)
+        {
+            return Resultado<CompromissoLeitura>.Erro(montado.Falha!.Codigo, montado.Falha.Mensagem);
+        }
+
+        item.Descricao = montado.Valor!.Descricao;
+        item.Data = montado.Valor.Data;
+        item.Hora = montado.Valor.Hora;
+        await dados.SalvarNegocioAsync(ct);
+        return Resultado<CompromissoLeitura>.Sucesso(Ler(item));
+    }
+
+    public async Task<Resultado<bool>> ExcluirAsync(Guid contaId, Guid id, CancellationToken ct)
+    {
+        var item = await dados.ObterCompromissoAsync(contaId, id, ct);
+        if (item is null)
+        {
+            return Resultado<bool>.Erro(Codigos.Indisponivel, "Indisponível.");
+        }
+
+        if (item.EventoId is not null)
+        {
+            return Resultado<bool>.Erro(Codigos.Validacao, "Compromisso de evento não é excluído nesta tela.");
+        }
+
+        await dados.RemoverCompromissoAsync(item, ct);
+        return Resultado<bool>.Sucesso(true);
+    }
+
+    public Task<bool> TemCompromissoNaDataAsync(Guid contaId, DateOnly data, CancellationToken ct) =>
+        dados.TemCompromissoNaDataAsync(contaId, data, ct);
+
+    private static Resultado<CompromissoAgenda> Montar(
+        Guid contaId,
+        Guid id,
+        SalvarCompromisso pedido,
+        Guid? eventoId)
+    {
+        var descricao = Domain.Comum.Texto.Limpo(pedido.Descricao);
+        if (descricao is null)
+        {
+            return Resultado<CompromissoAgenda>.Erro(Codigos.Validacao, "Informe a descrição.");
+        }
+
+        if (pedido.Data is not DateOnly data)
+        {
+            return Resultado<CompromissoAgenda>.Erro(Codigos.Validacao, "Informe a data.");
+        }
+
+        return Resultado<CompromissoAgenda>.Sucesso(new CompromissoAgenda
+        {
+            Id = id,
+            ContaId = contaId,
+            EventoId = eventoId,
+            Descricao = descricao,
+            Data = data,
+            Hora = pedido.Hora,
+        });
+    }
+
+    private static CompromissoLeitura Ler(CompromissoAgenda item) =>
+        new(item.Id, item.Descricao, item.Data!.Value, item.Hora, item.EventoId, item.EventoId is not null);
+}

@@ -1,0 +1,29 @@
+---
+import Base from './Base.astro';
+import { empresa } from '../config';
+interface Props { titulo: string; descricao: string; nome: string }
+const { titulo, descricao, nome } = Astro.props;
+---
+<Base titulo={titulo} descricao={descricao}>
+  <article class="pagina legal">
+    <header class="legal-cabeca">
+      <h1 class="titulo-secao">{nome}</h1>
+      <p class="texto-pequeno">Em vigor desde {empresa.vigencia}</p>
+    </header>
+    <div class="prosa"><slot /></div>
+  </article>
+</Base>
+
+<style>
+  .legal { padding-block: 64px 96px; }
+  .legal-cabeca { display: grid; gap: 12px; margin-bottom: 40px; max-width: var(--largura-leitura); }
+  .prosa { max-width: var(--largura-leitura); display: grid; gap: 16px; }
+  .prosa :global(h2) { font-size: 22px; line-height: 28px; font-weight: 600; margin-top: 32px; }
+  .prosa :global(h3) { font-size: 18px; line-height: 26px; font-weight: 600; margin-top: 8px; }
+  .prosa :global(p), .prosa :global(li) { color: var(--cor-texto-secundario); text-wrap: pretty; }
+  .prosa :global(ul) { list-style: disc; padding-left: 24px; display: grid; gap: 8px; }
+  .prosa :global(table) { width: 100%; border-collapse: collapse; font-size: 14px; line-height: 20px; }
+  .prosa :global(th), .prosa :global(td) { text-align: left; vertical-align: top; padding: 12px 12px 12px 0; border-bottom: 1px solid var(--cor-borda-divisoria); }
+  .prosa :global(th) { font-weight: 600; color: var(--cor-texto-principal); }
+  .prosa :global(.rolagem) { overflow-x: auto; }
+</style>

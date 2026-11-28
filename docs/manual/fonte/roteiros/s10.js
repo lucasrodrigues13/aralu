@@ -1,0 +1,36 @@
+module.exports = async (p, H) => {
+  const D = 'mat-dialog-container';
+  const ctx = await p.browser().createBrowserContext();
+  const a = await ctx.newPage();
+  await a.setViewport({ width: 1366, height: 850 });
+  await a.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: 'light' }]);
+  await H.go(a, '/lead/2677f34a-c61b-4f66-bcc0-bff28f623ef6');
+  await H.shot(a, '15a-lead-publico');
+  await H.fill(a, 'Seu nome', 'Beatriz Monteiro');
+  await H.fill(a, 'Telefone', '11912345678');
+  await H.fill(a, 'E-mail', 'beatriz.monteiro@email.test');
+  await H.select(a, 'Tipo de evento', 'Casamento');
+  await H.fill(a, 'Convidados', '180');
+  await H.fill(a, 'Cidade', 'São Paulo');
+  await H.fill(a, 'UF', 'SP');
+  await H.shot(a, '15b-lead-publico-preenchido');
+  await H.click(a, 'Enviar');
+  await H.wait(a, 1500);
+  await H.shot(a, '15c-lead-publico-enviado');
+  console.log(await H.txt(a));
+  await ctx.close();
+  // lead manual
+  await H.go(p, '/oportunidades');
+  await H.click(p, 'Nova oportunidade', 'main');
+  await H.fill(p, 'Nome da oportunidade', 'Casamento Larissa e Felipe', D);
+  await H.fill(p, 'Nome', 'Larissa Prado', D, 1);
+  await H.fill(p, 'Telefone', '11977778888', D);
+  await H.select(p, 'Tipo', 'Casamento', D);
+  await H.fill(p, 'Convidados', '120', D);
+  await H.select(p, 'Origem', 'Instagram', D);
+  await H.dlg(p, '16a-nova-oportunidade');
+  await H.click(p, 'Salvar', D);
+  await H.wait(p, 1500);
+  await H.shot(p, '16b-quadro-dois-leads');
+  console.log((await H.txt(p, 'main')).replace(/\n+/g, ' | ').slice(0, 1500));
+};

@@ -1,0 +1,71 @@
+@use "@angular/material" as mat;
+
+// TailwindAdmin dark-theme, com o fundo puxado para o petróleo da marca.
+html.dark-theme {
+  color-scheme: dark;
+  --mat-sys-corner-small: 7px;
+  --mat-sys-primary: #3a8c9f;
+  --mat-sys-primary-fixed-dim: rgb(58 140 159 / 0.2);
+  --mat-sys-background: #172429;
+  --mat-sys-on-background: rgba(255, 255, 255, 0.9);
+  --mat-sys-on-surface: rgba(255, 255, 255, 0.9);
+  --mat-sys-on-primary: #fff;
+  --mat-sys-surface-bright: #ffffff08;
+  --mat-sys-surface: #172429;
+  --mat-sys-surface-container: #1b2a30;
+  --mat-sys-surface-container-low: #172429;
+  --mat-sys-surface-container-lowest: rgba(255, 255, 255, 0.67);
+  --mat-sys-outline-variant: #2a3c42;
+  --mat-sys-outline: #34484e;
+  --mat-form-field-outlined-hover-outline-color: #4a6168;
+  --mat-checkbox-unselected-hover-state-layer-color: #1f3035;
+  --mat-menu-item-hover-state-layer-color: #1f3035;
+  --mat-button-toggle-state-layer-color: #1f3035;
+  --mat-option-focus-state-layer-color: #1f3035;
+  --mat-option-hover-state-layer-color: #1f3035;
+  --mat-slide-toggle-unselected-track-color: #1f3035;
+  --mat-stepper-header-focus-state-layer-color: #1f3035;
+  --mat-stepper-header-hover-state-layer-color: #1f3035;
+  --mat-expansion-header-hover-state-layer-color: #1f3035;
+  --mat-dialog-supporting-text-color: var(--mat-sys-on-background);
+  @include mat.card-overrides(
+    (
+      elevated-container-color: #172429,
+      elevated-container-elevation: "#919eab4d 0px 0px 2px 0px,#919eab05 0px 12px 24px -4px",
+      subtitle-text-color: rgba(255, 255, 255, 0.67),
+    )
+  );
+  @include mat.theme-overrides(
+    (
+      level1: "#919eab4d 0px 0px 2px 0px,#919eab05 0px 12px 24px -4px",
+      level2: "#919eab4d 0px 0px 2px 0px,#919eab05 0px 12px 24px -4px",
+      level3: "#919eab4d 0px 0px 2px 0px,#919eab05 0px 12px 24px -4px",
+    )
+  );
+}
+
+// _dark.scss do template
+.dark-theme {
+  color: rgba(255, 255, 255, 0.67);
+
+  .text-muted {
+    color: rgba(255, 255, 255, 0.67) !important;
+  }
+
+  .mat-mdc-menu-panel {
+    color: var(--mat-sys-on-background) !important;
+  }
+
+  .bg-white,
+  .mdc-menu-surface {
+    background-color: var(--mat-sys-surface) !important;
+  }
+
+  .topbar {
+    background-color: var(--mat-sys-surface);
+  }
+
+  .topbar .mat-mdc-icon-button {
+    color: rgba(255, 255, 255, 0.67) !important;
+  }
+}

@@ -1,0 +1,23 @@
+const EV = '/eventos/9da95638-fbfc-44c8-8db4-9ab2995d2ab3';
+module.exports = async (p, H) => {
+  const D = 'mat-dialog-container';
+  await H.go(p, EV + '/dinheiro');
+  await H.click(p, 'Parcelar', 'main', 1);
+  await H.wd(p);
+  await H.fill(p, 'Número de parcelas', '4', D);
+  await H.fill(p, 'Vencimento da 1ª parcela', '10/01/2027', D);
+  const s = (await p.$$(D + ' mat-select'))[0];
+  await s.click(); await H.wait(p, 600);
+  console.log('ENTRADA OPTS', await p.evaluate(() => [...document.querySelectorAll('mat-option')].map((o) => o.innerText).join('|')));
+  await H.opt(p, 'Com entrada');
+  await H.wait(p, 500);
+  await H.dump(p, D);
+  await H.fill(p, 'Valor da entrada', '1260000', D).catch((e) => console.log(e.message));
+  await H.fill(p, 'Data da entrada', '10/12/2026', D).catch((e) => console.log(e.message));
+  await H.dlg(p, '38b-parcelar-buffet');
+  await H.click(p, 'Salvar parcelamento', D);
+  await H.wait(p, 1800);
+  console.log('dlg', !!(await p.$(D)));
+  await H.shot(p, '38c-buffet-parcelado', true);
+  await H.dump(p, 'main');
+};

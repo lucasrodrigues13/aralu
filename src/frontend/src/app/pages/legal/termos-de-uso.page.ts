@@ -1,0 +1,128 @@
+import { Component } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { PaginaPublica } from '../../shared/pagina-publica';
+import { empresa, plano } from './legal.dados';
+import { ESTILOS_LEGAL } from './legal.estilos';
+
+// PENDENTE (SPEC-068 D3): texto inicial, a revisar com apoio jurídico antes do lançamento.
+// Mesmo texto de src/landing/src/pages/termos-de-uso.astro.
+@Component({
+  selector: 'app-termos-de-uso',
+  imports: [PaginaPublica, RouterLink],
+  styles: ESTILOS_LEGAL,
+  template: `
+    <app-pagina-publica titulo="Termos de uso" [subtitulo]="'Em vigor desde ' + empresa.vigencia">
+      <article class="prosa">
+        <p>
+          Estes termos regulam o uso da Aralu, sistema para cerimonialistas oferecido por {{ quem }} ("Aralu"). Ao criar uma conta, você declara que leu e aceita estes termos e a <a routerLink="/politica-de-privacidade">Política de privacidade</a>.
+        </p>
+
+        <h2>1. O serviço</h2>
+        <p>
+          A Aralu é um sistema pela internet para organizar o trabalho de assessorias de cerimonial: funil de vendas, orçamentos, contratos, eventos, tarefas, fornecedores, convidados e pagamentos. O serviço é oferecido como assinatura mensal e pode receber melhorias e mudanças ao longo do tempo.
+        </p>
+
+        <h2>2. Conta e cadastro</h2>
+        <ul>
+          <li>Para usar a Aralu você precisa ter 18 anos ou mais e informar dados verdadeiros.</li>
+          <li>Quem cria a conta é o Dono da conta e responde por ela, inclusive pelo que os membros da equipe fizerem.</li>
+          <li>A senha é pessoal. Avise a Aralu se notar acesso indevido à sua conta.</li>
+          <li>O Dono pode convidar membros e definir o que cada grupo pode ver e alterar.</li>
+        </ul>
+
+        <h2>3. Período de teste</h2>
+        <ul>
+          <li>Toda conta nova tem {{ plano.diasDeTeste }} dias corridos para usar todas as funções, sem pagamento e sem cadastro de cartão de crédito.</li>
+          <li>Cada assessoria tem direito a um período de teste. Um mesmo CPF ou CNPJ não tem um segundo período em outra conta.</li>
+          <li>Ao fim do teste, sem assinatura, o acesso fica bloqueado. Os dados não são apagados nesse momento e voltam a ficar disponíveis quando a conta é assinada.</li>
+        </ul>
+
+        <h2>4. Assinatura e pagamento</h2>
+        <ul>
+          <li>O plano {{ plano.nome }} custa {{ plano.valorTexto }} por mês. O valor em vigor é o exibido na página Plano e na sua conta no momento da assinatura.</li>
+          <li>O pagamento é mensal, por cartão de crédito ou Pix, e é processado pelo Asaas, instituição de pagamento parceira. A Aralu não guarda os dados do seu cartão.</li>
+          <li>Quem assina durante o período de teste tem a primeira cobrança no último dia do teste.</li>
+          <li>Mudança de preço vale para assinaturas novas. Para quem já assina, qualquer reajuste é avisado por e-mail com pelo menos 30 dias de antecedência.</li>
+          <li>Com pagamento em atraso, a conta segue liberada por 5 dias depois do vencimento. Depois disso, o acesso fica bloqueado até a regularização.</li>
+        </ul>
+
+        <h2>5. Cancelamento</h2>
+        <ul>
+          <li>Você pode cancelar a assinatura a qualquer momento, na própria conta, sem multa.</li>
+          <li>O acesso continua até o fim do período já pago. Valores de períodos já iniciados não são devolvidos, salvo quando a lei determinar.</li>
+          <li>Quem contratou pela internet pode desistir em até 7 dias da primeira cobrança e receber o valor de volta, como prevê o Código de Defesa do Consumidor.</li>
+          <li>Depois do cancelamento, você pode pedir uma cópia dos seus dados. O prazo de guarda e exclusão está na <a routerLink="/politica-de-privacidade">Política de privacidade</a>.</li>
+        </ul>
+
+        <h2>6. Seu conteúdo e os dados dos seus clientes</h2>
+        <ul>
+          <li>O que você cadastra na Aralu é seu: clientes, convidados, fornecedores, contratos, modelos e arquivos.</li>
+          <li>Você é responsável por ter base legal para cadastrar dados de outras pessoas e por informá-las sobre o uso desses dados. Nessa relação, você é a controladora e a Aralu é a operadora, como explica a Política de privacidade.</li>
+          <li>A Aralu usa o seu conteúdo apenas para prestar o serviço a você. Não vende dados nem os usa para oferecer produtos aos seus clientes.</li>
+        </ul>
+
+        <h2>7. Uso adequado</h2>
+        <p>Ao usar a Aralu, você se compromete a não:</p>
+        <ul>
+          <li>enviar mensagens não solicitadas em massa ou conteúdo ilegal;</li>
+          <li>cadastrar dados de pessoas sem base legal;</li>
+          <li>tentar acessar contas de outras assessorias ou contornar limites do sistema;</li>
+          <li>copiar, revender ou fazer engenharia reversa do sistema;</li>
+          <li>usar meios automatizados que prejudiquem o funcionamento do serviço.</li>
+        </ul>
+        <p>O descumprimento pode levar à suspensão ou ao encerramento da conta, com aviso sempre que possível.</p>
+
+        <h2>8. Contratos, assinaturas e mensagens enviados pelo sistema</h2>
+        <ul>
+          <li>Os modelos de contrato, orçamento e mensagem são pontos de partida. O conteúdo final é de responsabilidade de quem envia.</li>
+          <li>A assinatura eletrônica registra quem assinou, quando e de onde. Cabe a você avaliar se esse formato atende ao seu tipo de contrato.</li>
+          <li>A Aralu não é parte dos contratos entre você, seus clientes e seus fornecedores.</li>
+        </ul>
+
+        <h2>9. Disponibilidade e suporte</h2>
+        <ul>
+          <li>A Aralu trabalha para manter o serviço no ar todos os dias, mas podem ocorrer paradas para manutenção ou por falha de terceiros. Manutenções programadas são avisadas com antecedência quando possível.</li>
+          <li>São feitas cópias de segurança periódicas. Ainda assim, recomendamos que você guarde cópia dos documentos essenciais do seu negócio.</li>
+          <li>O suporte é feito por e-mail, em <a [href]="'mailto:' + empresa.contato">{{ empresa.contato }}</a>.</li>
+        </ul>
+
+        <h2>10. Propriedade intelectual</h2>
+        <p>
+          O sistema, a marca Aralu, o código e o visual pertencem à Aralu. A assinatura dá a você o direito de usar o sistema enquanto a conta estiver ativa, sem exclusividade e sem transferência a terceiros.
+        </p>
+
+        <h2>11. Limite de responsabilidade</h2>
+        <ul>
+          <li>A Aralu é uma ferramenta de organização. As decisões sobre os eventos, os prazos e os pagamentos são suas.</li>
+          <li>A Aralu não responde por prejuízos causados por dados incorretos cadastrados na conta, por falhas de serviços de terceiros ou por uso em desacordo com estes termos.</li>
+          <li>Na medida permitida pela lei, a responsabilidade da Aralu fica limitada ao valor pago por você nos 12 meses anteriores ao fato.</li>
+        </ul>
+
+        <h2>12. Mudanças nestes termos</h2>
+        <p>
+          Estes termos podem mudar. Mudanças relevantes são avisadas por e-mail ou dentro do sistema com pelo menos 15 dias de antecedência. Continuar usando a Aralu depois desse prazo significa aceitar a nova versão.
+        </p>
+
+        <h2>13. Lei e foro</h2>
+        <p>
+          Estes termos seguem as leis do Brasil. {{ foro }}respeitado o direito do consumidor de recorrer ao foro do seu domicílio.
+        </p>
+
+        <h2>14. Contato</h2>
+        <p>
+          Dúvidas sobre estes termos: <a [href]="'mailto:' + empresa.contato">{{ empresa.contato }}</a>.
+        </p>
+      </article>
+    </app-pagina-publica>
+  `,
+})
+export class TermosDeUsoPage {
+  protected readonly empresa = empresa;
+  protected readonly plano = plano;
+  protected readonly quem = empresa.razaoSocial
+    ? `${empresa.razaoSocial}${empresa.cnpj ? `, CNPJ ${empresa.cnpj}` : ''}${empresa.endereco ? `, com sede em ${empresa.endereco}` : ''}`
+    : 'a empresa responsável pela plataforma Aralu';
+  protected readonly foro = empresa.foro
+    ? `Fica eleito o foro de ${empresa.foro} para resolver qualquer questão, `
+    : 'Qualquer questão será resolvida no foro previsto em lei, ';
+}

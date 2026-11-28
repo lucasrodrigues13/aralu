@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://aralu.com.br/sitemap-index.xml

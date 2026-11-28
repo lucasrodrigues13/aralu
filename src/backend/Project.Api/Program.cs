@@ -1,0 +1,264 @@
+using System.Net;
+using System.Text;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.IdentityModel.Tokens;
+using System.Text.Json.Serialization;
+using Project.Api.Conta;
+using Project.Api.Negocio;
+using Project.Application.Conta;
+using Project.Infrastructure;
+using Project.Infrastructure.Conta;
+
+var builder = WebApplication.CreateBuilder(args);
+
+var segredoJwt = builder.Configuration["Jwt:Secret"];
+if (string.IsNullOrWhiteSpace(segredoJwt) || segredoJwt.Length < 32)
+{
+    throw new InvalidOperationException("O segredo do JWT não está configurado.");
+}
+
+// Relógio: real em todo ambiente; controlável só no E2E (docs/testes/e2e-matriz.md).
+Project.Api.Comum.TesteEndpoints.GarantirForaDeProducao(builder.Configuration, builder.Environment);
+Project.Application.Comum.RelogioControlavel? relogioDeTeste = null;
+if (Project.Api.Comum.TesteEndpoints.Ligado(builder.Configuration))
+{
+    relogioDeTeste = new Project.Application.Comum.RelogioControlavel();
+    Project.Application.Comum.Relogio.Usar(relogioDeTeste);
+}
+
+builder.Services.AddSingleton(Project.Application.Comum.Relogio.Provedor);
+
+var chaves = builder.Configuration["DataProtection:KeysPath"];
+if (string.IsNullOrWhiteSpace(chaves))
+{
+    chaves = "keys";
+}
+
+Directory.CreateDirectory(chaves);
+builder.Services.AddDataProtection().PersistKeysToFileSystem(new DirectoryInfo(chaves));
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IContaAtual, ContaAtualHttp>();
+builder.Services.AddInfraestrutura(builder.Configuration);
+builder.Services.ConfigureHttpJsonOptions(opcoes =>
+{
+    opcoes.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
+builder.WebHost.ConfigureKestrel(opcoes =>
+{
+    opcoes.Limits.MaxRequestBodySize = builder.Configuration.GetValue<long?>("Storage:MaxRequestBytes") ?? 52_428_800;
+});
+builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(opcoes =>
+{
+    opcoes.MultipartBodyLengthLimit = builder.Configuration.GetValue<long?>("Storage:MaxRequestBytes") ?? 52_428_800;
+});
+
+var limites = builder.Configuration.GetSection("RateLimit");
+var cadastroPorHora = limites.GetValue("CadastroPorHora", 5);
+var loginPorMinuto = limites.GetValue("LoginPorMinuto", 10);
+var recuperacaoPorHora = limites.GetValue("RecuperacaoPorHora", 3);
+var reenvioPorHora = limites.GetValue("ReenvioPorHora", 3);
+builder.Services.AddSingleton(new Project.Api.Conta.LimiteLoginPorEmail(
+    limites.GetValue("LoginPorEmail", 5),
+    TimeSpan.FromMinutes(limites.GetValue("LoginPorEmailMinutos", 15))));
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = async (contexto, ct) =>
+    {
+        if (contexto.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+        {
+            contexto.HttpContext.Response.Headers.RetryAfter =
+                Math.Ceiling(retryAfter.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture);
+        }
+
+        // A09-001: rota pelo modelo do endpoint (não o caminho digitado) e política pelo metadado.
+        var endpointLimitado = contexto.HttpContext.GetEndpoint();
+        contexto.HttpContext.RequestServices.GetRequiredService<Project.Application.Comum.LogSeguranca>().RateLimit(
+            endpointLimitado?.Metadata.GetMetadata<Microsoft.AspNetCore.RateLimiting.EnableRateLimitingAttribute>()?.PolicyName,
+            contexto.HttpContext.Connection.RemoteIpAddress?.ToString(),
+            (endpointLimitado as RouteEndpoint)?.RoutePattern.RawText);
+
+        contexto.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+        await contexto.HttpContext.Response.WriteAsJsonAsync(
+            new ErroResposta("limite", "A ação não pode ser repetida agora."),
+            ct);
+    };
+
+    options.AddPolicy("cadastro", http => Janela(http, cadastroPorHora, TimeSpan.FromHours(1)));
+    options.AddPolicy("login", http => Janela(http, loginPorMinuto, TimeSpan.FromMinutes(1)));
+    options.AddPolicy("recuperacao", http => Janela(http, recuperacaoPorHora, TimeSpan.FromHours(1)));
+    options.AddPolicy("reenvio", http => Janela(http, reenvioPorHora, TimeSpan.FromHours(1)));
+
+    // Lote 5 (A06-002): rotas anônimas — por IP e, no lead público, também por conta.
+    var publicoPorMinuto = limites.GetValue("PublicoPorMinuto", 20);
+    var leadsPorHora = limites.GetValue("LeadsPorContaPorHora", 30);
+    options.AddPolicy("publico-ip", http => Janela(http, publicoPorMinuto, TimeSpan.FromMinutes(1)));
+    options.AddPolicy("lead-conta", http => RateLimitPartition.GetFixedWindowLimiter(
+        "lead:" + (http.Request.RouteValues["contaId"]?.ToString() ?? "desconhecida"),
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = leadsPorHora,
+            Window = TimeSpan.FromHours(1),
+            QueueLimit = 0,
+        }));
+});
+
+var origens = builder.Configuration.GetSection("Cors:Origins").Get<string[]>() ?? ["http://localhost:4200"];
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy => policy.WithOrigins(origens).AllowAnyHeader().AllowAnyMethod().AllowCredentials());
+});
+
+var issuer = builder.Configuration["Jwt:Issuer"] ?? "aralu";
+var audience = builder.Configuration["Jwt:Audience"] ?? "aralu";
+builder.Services.AddAuthentication(Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = issuer,
+            ValidateAudience = true,
+            ValidAudience = audience,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(segredoJwt)),
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromMinutes(1),
+            RoleClaimType = System.Security.Claims.ClaimTypes.Role,
+            NameClaimType = System.Security.Claims.ClaimTypes.NameIdentifier,
+        };
+        options.Events = new Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerEvents
+        {
+            OnChallenge = async contexto =>
+            {
+                contexto.HandleResponse();
+                contexto.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                await contexto.Response.WriteAsJsonAsync(
+                    new ErroResposta("autenticacao", "É preciso entrar para continuar."));
+            },
+            OnForbidden = async contexto =>
+            {
+                contexto.Response.StatusCode = StatusCodes.Status403Forbidden;
+                await contexto.Response.WriteAsJsonAsync(
+                    new ErroResposta("autorizacao", "Você não tem acesso a esta área."));
+            },
+        };
+    });
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(Project.Api.Conta.EquipeEndpoints.PoliticaFinanceiro, policy => policy
+        .RequireAuthenticatedUser()
+        .RequireAssertion(contexto => Project.Api.Conta.EquipeEndpoints.PodeVerFinanceiro(contexto.User)));
+});
+
+var swagger = builder.Configuration.GetValue("Swagger:Enabled", false);
+if (swagger)
+{
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen();
+}
+
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    // Proxy da VPS -> Caddy interno -> API: dois saltos (A06-001).
+    options.ForwardLimit = 2;
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+    foreach (var rede in builder.Configuration.GetSection("ForwardedHeaders:KnownNetworks").Get<string[]>() ?? [])
+    {
+        var partes = rede.Split('/');
+        if (partes.Length == 2 && IPAddress.TryParse(partes[0], out var endereco) && int.TryParse(partes[1], out var prefixo))
+        {
+            options.KnownIPNetworks.Add(new System.Net.IPNetwork(endereco, prefixo));
+        }
+    }
+});
+
+var app = builder.Build();
+
+app.UseExceptionHandler(handler =>
+{
+    handler.Run(async contexto =>
+    {
+        var falha = contexto.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>();
+        if (Project.Api.Comum.RegistroEmUso.Mensagem(falha?.Error) is { } emUso)
+        {
+            contexto.Response.StatusCode = StatusCodes.Status409Conflict;
+            await contexto.Response.WriteAsJsonAsync(new ErroResposta(Project.Api.Comum.RegistroEmUso.Codigo, emUso));
+            return;
+        }
+
+        var logger = contexto.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("aralu");
+        logger.LogError(
+            "Falha interna {Tipo} ao processar {Metodo} {Caminho}.",
+            falha?.Error.GetType().Name,
+            contexto.Request.Method,
+            contexto.Request.Path);
+        contexto.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        await contexto.Response.WriteAsJsonAsync(new ErroResposta("erro", "Não foi possível concluir a ação."));
+    });
+});
+app.UseForwardedHeaders();
+app.Use(Project.Api.Comum.CabecalhosDeSeguranca.Aplicar);
+if (swagger)
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseCors();
+app.UseRateLimiter();
+app.UseAuthentication();
+app.Use(Project.Api.Conta.EquipeEndpoints.AplicarAcesso);
+app.Use(Project.Api.Conta.AdminEndpoints.AplicarContaDoAdmin);
+app.UseAuthorization();
+
+app.MapGet("/api/health", (HttpContext http, ILoggerFactory logs) =>
+{
+    // Temporário (A06-001): confirmar na VPS que o IP real chega até a API.
+    logs.CreateLogger("aralu").LogDebug("RemoteIp {RemoteIp}", http.Connection.RemoteIpAddress?.ToString());
+    return Results.Ok(new { status = "ok" });
+});
+ContaEndpoints.Mapear(app);
+Project.Api.Conta.EquipeEndpoints.Mapear(app);
+Project.Api.Conta.AssinaturaEndpoints.Mapear(app);
+Project.Api.Conta.AdminEndpoints.Mapear(app);
+NegocioEndpoints.Mapear(app);
+DinheiroEndpoints.Mapear(app);
+LinkClienteEndpoints.Mapear(app);
+BriefingPublicoEndpoints.Mapear(app);
+EquipeEventoEndpoints.Mapear(app);
+ContratoEndpoints.Mapear(app);
+if (relogioDeTeste is not null)
+{
+    Project.Api.Comum.TesteEndpoints.Mapear(app, relogioDeTeste);
+}
+
+await using (var escopo = app.Services.CreateAsyncScope())
+{
+    await escopo.ServiceProvider.GetRequiredService<GarantiaDePapeis>().GarantirAsync();
+    await escopo.ServiceProvider.GetRequiredService<BootstrapAdministrador>().ExecutarAsync();
+}
+
+app.Run();
+
+static RateLimitPartition<string> Janela(HttpContext http, int limite, TimeSpan janela)
+{
+    var ip = http.Connection.RemoteIpAddress?.ToString();
+    var chave = string.IsNullOrWhiteSpace(ip) ? "desconhecido" : ip;
+    return RateLimitPartition.GetFixedWindowLimiter(
+        chave,
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = limite,
+            Window = janela,
+            QueueLimit = 0,
+        });
+}
+
+public partial class Program;

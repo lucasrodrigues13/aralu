@@ -1,0 +1,103 @@
+# Dispara no push da main (produção) ou da staging (staging), e também pelo botão "Run workflow".
+#   main     -> /opt/aralu          projeto Compose "aralu"
+#   staging  -> /opt/aralu-staging  projeto Compose "aralu-staging"
+# Cada diretório tem o próprio .env; o projeto separa containers, rede e volumes (o banco inclusive).
+# Os valores não ficam neste arquivo. Cadastre os segredos do repositório:
+#   SSH_HOST          IP público da VPS
+#   SSH_USER          usuário SSH, em geral root
+#   SSH_PRIVATE_KEY   chave privada inteira, com as linhas BEGIN e END
+#   SSH_PORT          opcional; se vazio, usa 22
+#   SSH_KNOWN_HOSTS   OBRIGATÓRIO: saída de `ssh-keyscan -p <porta> <IP>`, conferida na VPS com
+#                     `ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub`. Sem ele o deploy falha.
+
+name: Deploy
+
+on:
+  push:
+    branches: [main, staging]
+  workflow_dispatch:
+
+# Um deploy por vez na VPS, para os dois ambientes não compilarem ao mesmo tempo.
+concurrency:
+  group: deploy-vps
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  # Auditoria de dependências (A03/A08). Por enquanto só informativa; depois de zerada, tirar o continue-on-error.
+  audit:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
+
+      - name: npm audit (frontend)
+        working-directory: src/frontend
+        run: npm audit --omit=dev --audit-level=high
+
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1  # v5.4.0
+        if: always()
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Pacotes NuGet vulneráveis (backend)
+        if: always()
+        run: |
+          dotnet restore src/backend/aralu.slnx --locked-mode
+          dotnet list src/backend/aralu.slnx package --vulnerable --include-transitive 2>&1 | tee audit-nuget.txt
+          if grep -q "has the following vulnerable packages" audit-nuget.txt; then exit 1; fi
+
+  deploy:
+    needs: audit
+    if: github.ref_name == 'main' || github.ref_name == 'staging'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
+
+      - name: Publicar na VPS
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          if [ -z "${SSH_HOST}" ] || [ -z "${SSH_USER}" ] || [ -z "${SSH_PRIVATE_KEY}" ] || [ -z "${SSH_KNOWN_HOSTS}" ]; then
+            echo "Cadastre SSH_HOST, SSH_USER, SSH_PRIVATE_KEY e SSH_KNOWN_HOSTS nos segredos do repositório."
+            exit 1
+          fi
+          if [ "$BRANCH" = "main" ]; then
+            projeto="aralu"
+          else
+            projeto="aralu-staging"
+          fi
+          dir="/opt/${projeto}"
+          echo "Publicando a branch ${BRANCH} em ${dir} (projeto ${projeto})."
+          port="${SSH_PORT:-22}"
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/aralu_deploy
+          chmod 600 ~/.ssh/aralu_deploy
+          # Chave do host vem de secret conferido na VPS, e não de ssh-keyscan na hora do deploy (evita MITM).
+          printf '%s\n' "$SSH_KNOWN_HOSTS" | tr -d '\r' > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+          destino="${SSH_USER}@${SSH_HOST}"
+          ssh_base="ssh -i ${HOME}/.ssh/aralu_deploy -p ${port} -o StrictHostKeyChecking=yes -o ConnectTimeout=20 -o ServerAliveInterval=30"
+          $ssh_base "$destino" "mkdir -p ${dir}"
+          rsync -az --delete \
+            --exclude '.git/' \
+            --exclude '.env' \
+            --exclude 'node_modules/' \
+            -e "$ssh_base" \
+            ./ "${destino}:${dir}/"
+          $ssh_base "$destino" "if [ ! -f ${dir}/.env ]; then cp ${dir}/.env.example ${dir}/.env; chmod 600 ${dir}/.env; echo 'Preencha ${dir}/.env e rode este workflow de novo.'; exit 1; fi"
+          $ssh_base "$destino" "cd ${dir} && docker compose -p ${projeto} -f compose.production.yaml up -d --build --remove-orphans --wait"
+          # O proxy (80/443) atende os dois ambientes e só é atualizado pela main.
+          if [ "$BRANCH" = "main" ]; then
+            $ssh_base "$destino" "mkdir -p /opt/proxy"
+            rsync -az --delete -e "$ssh_base" ./deploy/proxy/ "${destino}:/opt/proxy/"
+            $ssh_base "$destino" "cd /opt/proxy && docker compose up -d --remove-orphans && docker compose exec -T caddy caddy reload --config /etc/caddy/proxy/Caddyfile"
+          fi

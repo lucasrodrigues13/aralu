@@ -1,0 +1,10 @@
+module.exports=async(p,H)=>{ await H.go(p,'/perfil'); await H.shot(p,'03-perfil-vazio');
+const f=(a,b)=>H.fill(p,a,b);
+await f('Nome da empresa','Ateliê Flor de Lis Cerimonial'); await f('Responsável','Helena Duarte'); await f('E-mail','contato@atelieflordelis.test');
+await f('CPF ou CNPJ','11222333000181'); await f('Celular','11987654321'); await f('Nascimento','12/03/1988');
+await f('CEP','01310100'); await H.wait(p,2500); await f('Número','1578'); await f('Complemento','Conjunto 42');
+await f('Chave Pix','contato@atelieflordelis.test');
+await H.shot(p,'04-perfil-preenchido',true);
+await H.click(p,'Salvar'); await H.wait(p,1500); await H.shot(p,'04b-perfil-salvo');
+console.log(await H.txt(p).then(t=>t.slice(-900)));
+};

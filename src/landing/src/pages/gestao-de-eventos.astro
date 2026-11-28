@@ -1,0 +1,31 @@
+---
+import Area from '../layouts/Area.astro';
+import { blocos } from '../conteudo';
+const daArea = blocos.filter((b) => ['evento', 'convidados', 'dinheiro', 'equipe'].includes(b.id));
+---
+<Area
+  titulo="Sistema de gestão de eventos para cerimonial e assessoria | Aralu"
+  descricao="Sistema de gestão de eventos para cerimonialistas: tarefas, roteiro, cronograma, convidados com RSVP, portaria com QR e pagamentos. 14 dias sem cartão."
+  sobretitulo="Sistema de gestão de eventos"
+  chamada="Vários eventos ao mesmo tempo, cada um no seu prazo"
+  resumo="Casamento, 15 anos, bodas ou formatura: cada um tem tarefas, fornecedores, convidados e parcelas no mesmo lugar, do contrato ao dia do evento."
+  tela="evento"
+  blocos={daArea}
+>
+  <h2>Gestão de eventos sociais, do planejamento ao dia</h2>
+  <p>
+    A Aralu é um sistema de gestão de eventos para quem organiza casamentos, aniversários, bodas e formaturas. Ela não vende ingressos nem inscrições: cuida do planejamento, dos fornecedores, dos convidados e do dinheiro de cada evento.
+  </p>
+  <h2>Modelos que guardam o seu jeito de trabalhar</h2>
+  <p>
+    Você monta uma vez os modelos de evento, briefing, roteiro, cronograma e mensagens. Cada evento novo começa com as tarefas no prazo certo, contado a partir da data do evento.
+  </p>
+  <h2>Fornecedores e contratos por evento</h2>
+  <p>
+    Cada serviço do evento tem os fornecedores cotados, o contratado, o contrato assinado e os pagamentos com vencimento. Você sabe quanto já foi pago e o que ainda vence.
+  </p>
+  <h2>Minha agenda e tarefas de todos os eventos</h2>
+  <p>
+    A agenda reúne os compromissos de todos os eventos em mês, semana, dia ou lista. A tela de tarefas mostra o que vence hoje e o que cada pessoa da equipe tem para fazer.
+  </p>
+</Area>

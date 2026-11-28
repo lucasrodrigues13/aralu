@@ -1,0 +1,17 @@
+---
+description: Convenções de C# e .NET para o aralu
+globs: "**/*.cs"
+alwaysApply: false
+---
+
+# Código
+
+- PascalCase para tipos, métodos e propriedades públicas. camelCase para parâmetros e locais. Interface com prefixo `I`. Async com sufixo `Async`.
+- Namespace segue o projeto e a pasta. Um tipo principal por arquivo.
+- Dependência entra por construtor. Não instancie SMTP, `DbContext` nem relógio dentro de regra de negócio.
+- I/O público é assíncrono e recebe `CancellationToken`. Não use `.Result` nem `.Wait()`.
+- Exceção de domínio não vira stack trace na resposta. Logue o erro com contexto. Nunca logue senha, token, connection string, senha SMTP nem chave do Data Protection.
+- Validação na borda da aplicação. Não confie só na validação da tela para regra que também vale fora da UI.
+- EF Core: consulta filtrada no servidor, sem carregar tabela inteira. Migration é explícita e revisada. Sem `EnsureCreated` e sem migrate na inicialização.
+- JWT, HTTPS e autorização por role seguem os RF de conta. Esconder a ação na tela não autoriza o endpoint. Download privado só depois da checagem de permissão.
+- Teste unitário não abre banco nem rede. Integração usa `WebApplicationFactory` e Testcontainers. E-mail de teste é falso.

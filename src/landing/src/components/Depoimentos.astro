@@ -1,0 +1,53 @@
+---
+// A seção só é montada com ao menos um depoimento publicado (SPEC-068 R4).
+// Sem endereço configurado, com lista vazia ou com falha na consulta, nada aparece.
+import { depoimentosUrl } from '../config';
+---
+{depoimentosUrl && (
+  <>
+    <section class="secao depoimentos" id="depoimentos" hidden data-url={depoimentosUrl}>
+      <div class="pagina">
+        <h2 class="titulo-secao">Quem usa a Aralu</h2>
+        <ul class="depoimentos-lista"></ul>
+      </div>
+    </section>
+    <template id="depoimento-modelo">
+      <li class="depoimento cartao">
+        <blockquote></blockquote>
+        <p class="autoria"><strong></strong><span></span></p>
+      </li>
+    </template>
+    <script>
+      const secao = document.getElementById('depoimentos');
+      const modelo = document.getElementById('depoimento-modelo') as HTMLTemplateElement | null;
+      const url = secao?.dataset.url;
+      if (secao && modelo && url) {
+        fetch(url, { credentials: 'omit' })
+          .then((r) => (r.ok ? r.json() : []))
+          .then((itens: { nome: string; papel?: string; assessoria?: string; cidade?: string; uf?: string; texto: string }[]) => {
+            if (!Array.isArray(itens) || itens.length === 0) return;
+            const lista = secao.querySelector('ul')!;
+            for (const d of itens.slice(0, 6)) {
+              const no = modelo.content.cloneNode(true) as DocumentFragment;
+              no.querySelector('blockquote')!.textContent = d.texto;
+              no.querySelector('strong')!.textContent = d.nome;
+              const local = [d.cidade, d.uf].filter(Boolean).join(', ');
+              no.querySelector('span')!.textContent = [d.papel, d.assessoria, local].filter(Boolean).join(' · ');
+              lista.appendChild(no);
+            }
+            secao.hidden = false;
+          })
+          .catch(() => {});
+      }
+    </script>
+  </>
+)}
+
+<style is:global>
+  .depoimentos .titulo-secao { margin-bottom: 40px; }
+  .depoimentos-lista { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+  .depoimento { padding: 24px; display: grid; gap: 20px; align-content: space-between; }
+  .depoimento blockquote { font-family: var(--fonte-marca); font-style: italic; font-weight: 500; font-size: 20px; line-height: 30px; color: var(--cor-acao-principal); }
+  .depoimento .autoria { display: grid; gap: 2px; }
+  .depoimento .autoria span { font-size: 14px; line-height: 20px; color: var(--cor-texto-terciario); }
+</style>

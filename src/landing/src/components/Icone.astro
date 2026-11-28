@@ -1,0 +1,15 @@
+---
+// Phosphor Icons 2.1 (manual 06). O SVG entra no HTML, sem requisição extra.
+const arquivos = import.meta.glob('/node_modules/@phosphor-icons/core/assets/{regular,light,bold}/*.svg', {
+  query: '?raw',
+  import: 'default',
+});
+interface Props { nome: string; peso?: 'regular' | 'light' | 'bold'; classe?: string }
+const { nome, peso = 'regular', classe = '' } = Astro.props;
+const sufixo = peso === 'regular' ? '' : `-${peso}`;
+const caminho = `/node_modules/@phosphor-icons/core/assets/${peso}/${nome}${sufixo}.svg`;
+const carregar = arquivos[caminho];
+if (!carregar) throw new Error(`Ícone não encontrado: ${nome} (${peso})`);
+const svg = ((await carregar()) as string).replace('<svg', `<svg class="icone ${classe}" aria-hidden="true" focusable="false"`);
+---
+<Fragment set:html={svg} />
