@@ -8,7 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
   template: `
     <div class="flex flex-col items-center gap-2 text-center py-10">
       @if (icone()) {
-        <mat-icon style="font-size: 40px; width: 40px; height: 40px; color: var(--mat-sys-outline)">{{ icone() }}</mat-icon>
+        <mat-icon style="font-size: 40px; width: 40px; height: 40px; line-height: 40px; color: var(--mat-sys-outline)">{{ icone() }}</mat-icon>
       }
       @if (icone() || texto()) {
         <p class="font-semibold m-0">{{ titulo() }}</p>
