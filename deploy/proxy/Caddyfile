@@ -1,16 +1,27 @@
 # ── Produção ─────────────────────────────────────────────────────────
+# aralu.com.br vai ser a landing (SPEC-068). Até ela existir, tudo vai para o app
+# com redirecionamento temporário: um 301 da raiz ficaria guardado nos navegadores
+# e esconderia a landing depois. /api/* continua encaminhado, porque redirecionar
+# transforma POST em GET e quebraria webhook e formulários abertos (SPEC-069 §4.2).
 aralu.com.br {
 	encode zstd gzip
 	header -Server
-	reverse_proxy 127.0.0.1:8081
+
+	@api path /api/*
+	handle @api {
+		reverse_proxy 127.0.0.1:8081
+	}
+
+	handle {
+		redir https://app.aralu.com.br{uri} 302
+	}
 }
 
 www.aralu.com.br {
 	redir https://aralu.com.br{uri} permanent
 }
 
-# Endereço definitivo do app (SPEC-069). Enquanto a virada não termina, o app
-# responde aqui e em aralu.com.br. Buscadores não indexam o app.
+# Endereço do app de produção (SPEC-069). Buscadores não indexam o app.
 app.aralu.com.br {
 	encode zstd gzip
 	header {
