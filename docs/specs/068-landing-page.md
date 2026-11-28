@@ -1,6 +1,6 @@
 # 068. Landing page da Aralu
 
-**Status: proposta (27/11/2026).** Fonte: pedido do dono para o lançamento em produção. Depende da [SPEC-069](069-app-em-subdominio.md) (o app sai de `aralu.com.br` para `app.aralu.com.br`) e usa o cadastro e o trial da [SPEC-062](062-conta-assinatura-e-equipe.md). Visual e texto seguem [regras-de-design.md](../marca/regras-de-design.md), não o app atual.
+**Status: em construção (28/11/2026).** Landing estática construída em `src/landing` e conferida localmente; falta publicar, os depoimentos no backend e a migration do valor do plano (ver §13). Fonte: pedido do dono para o lançamento em produção. Depende da [SPEC-069](069-app-em-subdominio.md) (o app sai de `aralu.com.br` para `app.aralu.com.br`) e usa o cadastro e o trial da [SPEC-062](062-conta-assinatura-e-equipe.md). Visual e texto seguem [regras-de-design.md](../marca/regras-de-design.md), não o app atual.
 
 ## 1. Identificador e nome
 
@@ -143,9 +143,9 @@ Regras do texto comparativo:
 | # | Decisão | Quem |
 |---|---|---|
 | D1 | ~~Valor do plano~~ **Decidido em 27/11/2026: R$ 179,90 por mês.** Ver §9. | Dono |
-| D2 | Imagens: só telas do produto, ou também fotos reais de cerimonialistas trabalhando. | Dono |
-| D3 | Termos de uso e Política de privacidade: texto e endereço. | Dono |
-| D4 | Medição de visitas: Plausible, outra sem cookie, ou nenhuma. | Dono |
+| D2 | ~~Imagens~~ **Decidido em 28/11/2026:** uma foto de bastidores do material da proposta padrão, com uso autorizado por enquanto, e representações das telas. Fotos melhores ficam para a segunda rodada (§13). | Dono |
+| D3 | Termos de uso e Política de privacidade: há um texto inicial publicado em `/termos-de-uso` e `/politica-de-privacidade`. **Antes do lançamento:** revisar com apoio jurídico e preencher os dados da empresa (§13). | Dono |
+| D4 | ~~Medição de visitas~~ **Decidido em 28/11/2026:** Umami em servidor próprio (`deploy/metricas`), sem cookie. | Dono |
 | D5 | Conferir no uso o que a Wedy Pro entrega de graça, antes de fechar o texto dos diferenciais. | Dono |
 
 ## 12. Referências
@@ -153,3 +153,41 @@ Regras do texto comparativo:
 - Estrutura: `wedy.com/negocios` (abertura com prova, produto em movimento, blocos por área, migração, depoimentos, perguntas). O visual escuro, os emojis e o vocabulário de lá não se aplicam.
 - Rolagem: `aisleplanner.com` (Lenis).
 - Respiro e hierarquia: Linear, Things e Squarespace.
+
+## 13. Estado da construção e pendências
+
+### Feito (28/11/2026)
+
+- Site em `src/landing` (Astro): `/`, `/crm-para-cerimonialistas`, `/gestao-de-eventos`, `/planos`, `/termos-de-uso` e `/politica-de-privacidade`, com sitemap, `robots.txt`, dados estruturados e imagem de compartilhamento.
+- Container próprio (`src/landing/Dockerfile`) e serviço `landing` no `compose.production.yaml`, ligado só onde o `.env` tem `COMPOSE_PROFILES=landing`.
+- O que não é página da landing redireciona para o app com 301, dentro do container da landing (SPEC-069 §4.2).
+- Medição de visitas: Umami em `deploy/metricas`, atendido em `metricas.aralu.com.br`. O script só entra no HTML com `UMAMI_SCRIPT` e `UMAMI_SITE` preenchidos.
+- A seção de depoimentos existe na página, mas só é montada com `DEPOIMENTOS_URL` preenchido e ao menos um depoimento publicado.
+
+### Para publicar
+
+1. DNS `metricas` apontando para a VPS; subir `deploy/metricas`; trocar a senha do Umami; criar o site e copiar o id para `UMAMI_SITE`.
+2. No `.env` de produção: `COMPOSE_PROFILES=landing`, `UMAMI_SCRIPT` e `UMAMI_SITE`.
+3. No proxy, trocar o bloco de `aralu.com.br`: `/api/*` continua no app; o resto vai para a landing (`127.0.0.1:8091`). Só depois de o container da landing estar no ar.
+4. Search Console: propriedade do domínio e envio de `sitemap-index.xml`.
+
+### Antes do lançamento
+
+| # | Pendência |
+|---|---|
+| P1 | **Termos e privacidade:** revisar com apoio jurídico. Pontos a decidir: prazo de guarda depois do cancelamento (o texto diz até 6 meses), limite de responsabilidade (12 meses de assinatura), aviso de reajuste (30 dias), direito de arrependimento de 7 dias, foro, e quem é o encarregado de dados. |
+| P2 | **Dados da empresa** em `src/landing/src/config.ts`: razão social, CNPJ, endereço, foro e e-mail de contato (hoje `contato@aralu.com.br`, a confirmar que a caixa existe). |
+| P3 | **LGPD no produto:** conferir se o que a política promete está implementado: exclusão de dados a pedido, exportação dos dados da conta, registro de acesso por 6 meses, aceite dos termos no cadastro (com data e versão) e contrato de operador com as assessorias. Listar os fornecedores e onde cada um guarda dados. |
+| P4 | **Backend dos depoimentos** (§5.5 e §9): tabela, tela do Admin e endpoint público. |
+| P5 | **Migration do valor do plano** para R$ 179,90 (§9). Até lá a landing mostra R$ 179,90 e o app cobra R$ 179,00. |
+| P6 | Conferir no uso o que a Wedy Pro entrega de graça e ajustar os diferenciais (D5). |
+| P7 | Medir no Lighthouse com o site publicado (metas do §8). |
+
+### Segunda rodada
+
+| # | Pendência |
+|---|---|
+| S1 | **Fotos melhores:** a foto atual (`src/landing/src/assets/bastidores.jpg`) tem resolução baixa e mostra um buquê, que o manual pede para evitar. Trocar por fotos de cerimonialistas trabalhando, com autorização de uso de imagem por escrito. |
+| S2 | **Capturas reais** do produto, de uma conta de demonstração, no lugar das representações de tela (`Tela.astro`). |
+| S3 | Páginas de comparação e blog (§3). |
+

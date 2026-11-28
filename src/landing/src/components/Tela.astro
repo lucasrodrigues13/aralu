@@ -1,0 +1,195 @@
+---
+// Representações das telas do produto, com dados fictícios (SPEC-068 R7).
+// PENDENTE: trocar por capturas reais de uma conta de demonstração.
+import Icone from './Icone.astro';
+interface Props { tipo: 'painel' | 'funil' | 'evento' | 'convidados' | 'dinheiro' | 'cliente' | 'equipe' }
+const { tipo } = Astro.props;
+const rotulos = {
+  painel: 'Painel da Aralu com os eventos da semana e as tarefas de hoje',
+  funil: 'Funil de vendas com oportunidades em quatro estágios',
+  evento: 'Tarefas e cronograma de um evento',
+  convidados: 'Confirmações de presença de um evento',
+  dinheiro: 'Parcelas do cliente e pagamentos a fornecedores',
+  cliente: 'Link do cliente com o nome da assessoria',
+  equipe: 'Equipe da assessoria e equipe de apoio do evento',
+};
+---
+<div class="tela" role="img" aria-label={rotulos[tipo]}>
+  <div class="tela-conteudo" aria-hidden="true">
+    {tipo === 'painel' && (
+      <>
+        <div class="barra">
+          <span class="barra-titulo">Hoje</span>
+          <span class="barra-data">sáb., 28/11</span>
+        </div>
+        <div class="estado">
+          <span class="ponto-de-luz"></span>
+          <span class="estado-texto">Tudo em dia</span>
+          <span class="estado-nota">3 eventos nesta semana, nenhuma tarefa atrasada</span>
+        </div>
+        <ul class="lista">
+          <li><span class="hora">9h</span><span class="item"><strong>Visita técnica</strong><small>Casamento Helena e Davi · Fazenda Boa Vista</small></span><span class="tag tag-info"><Icone nome="calendar-blank" peso="bold" />Hoje</span></li>
+          <li><span class="hora">14h30</span><span class="item"><strong>Enviar roteiro ao buffet</strong><small>15 anos da Lívia</small></span><span class="tag tag-alerta"><Icone nome="clock" peso="bold" />Vence hoje</span></li>
+          <li><span class="hora">17h</span><span class="item"><strong>Conferir 2ª parcela</strong><small>Bodas de Marta e Jorge · R$ 1.200,00</small></span><span class="tag tag-sucesso"><Icone nome="check-circle" peso="bold" />Pago</span></li>
+        </ul>
+        <div class="regua">
+          {Array.from({ length: 14 }).map((_, i) => <span class:list={['traco', { longo: i % 7 === 0, hoje: i === 5 }]}></span>)}
+        </div>
+      </>
+    )}
+
+    {tipo === 'funil' && (
+      <>
+        <div class="barra"><span class="barra-titulo">Oportunidades</span><span class="barra-data">12 em aberto</span></div>
+        <div class="colunas">
+          <div class="coluna"><p class="coluna-titulo">Contato inicial<small>5 · R$ 31.500,00</small></p><div class="cartaozinho"><strong>Casamento em Atibaia</strong><small>out. de 2027 · 180 convidados</small></div><div class="cartaozinho"><strong>15 anos da Lívia</strong><small>mar. de 2027 · 120 convidados</small></div></div>
+          <div class="coluna"><p class="coluna-titulo">Orçamento enviado<small>4 · R$ 28.900,00</small></p><div class="cartaozinho"><strong>Bodas de prata</strong><small>Proposta vale até 05/12</small></div></div>
+          <div class="coluna"><p class="coluna-titulo">Contratado<small>3 · R$ 24.600,00</small></p><div class="cartaozinho"><strong>Helena e Davi</strong><small>Contrato assinado em 20/11</small></div></div>
+        </div>
+      </>
+    )}
+
+    {tipo === 'evento' && (
+      <>
+        <div class="barra"><span class="barra-titulo">Casamento Helena e Davi</span><span class="barra-data">sáb., 15/05/2027</span></div>
+        <ul class="lista">
+          <li><span class="caixa feita"><Icone nome="check" peso="bold" /></span><span class="item"><strong>Fechar o buffet</strong><small>Concluída em 12/11</small></span></li>
+          <li><span class="caixa"></span><span class="item"><strong>Aprovar o convite com os clientes</strong><small>Vence qui., 03/12</small></span></li>
+          <li><span class="caixa"></span><span class="item"><strong>Receber o briefing preenchido</strong><small>Enviado ao cliente em 26/11</small></span></li>
+        </ul>
+        <div class="cronograma">
+          <span><b>16h</b> Cerimônia</span><span><b>17h30</b> Recepção</span><span><b>19h</b> Jantar</span><span><b>21h</b> Pista</span>
+        </div>
+      </>
+    )}
+
+    {tipo === 'convidados' && (
+      <>
+        <div class="barra"><span class="barra-titulo">Convidados</span><span class="barra-data">Confirmar até 30/04</span></div>
+        <div class="numeros">
+          <p><b>132</b><small>Confirmados</small></p><p><b>18</b><small>Aguardando</small></p><p><b>10</b><small>Não vão</small></p>
+        </div>
+        <div class="faixa"><span style="width:82.5%"></span></div>
+        <ul class="lista">
+          <li><span class="item"><strong>Família Andrade</strong><small>4 pessoas · mesa 7</small></span><span class="tag tag-sucesso"><Icone nome="check-circle" peso="bold" />Confirmado</span></li>
+          <li><span class="item"><strong>Rafael Nogueira</strong><small>2 pessoas</small></span><span class="tag tag-info"><Icone nome="hourglass" peso="bold" />Aguardando</span></li>
+        </ul>
+      </>
+    )}
+
+    {tipo === 'dinheiro' && (
+      <>
+        <div class="barra"><span class="barra-titulo">Parcelas de dezembro</span><span class="barra-data">Recebido: R$ 4.800,00 de R$ 7.200,00</span></div>
+        <div class="faixa"><span style="width:66.6%"></span></div>
+        <ul class="lista">
+          <li><span class="item"><strong>3ª parcela · Helena e Davi</strong><small>Vence 05/12</small></span><span class="valor">R$ 1.200,00</span><span class="tag tag-info"><Icone nome="hourglass" peso="bold" />A vencer</span></li>
+          <li><span class="item"><strong>Buffet Sabor da Serra</strong><small>Pagamento a fornecedor · 10/12</small></span><span class="valor">R$ 3.500,00</span><span class="tag tag-alerta"><Icone nome="clock" peso="bold" />Em 12 dias</span></li>
+          <li><span class="item"><strong>2ª parcela · 15 anos da Lívia</strong><small>Paga em 01/12</small></span><span class="valor">R$ 900,00</span><span class="tag tag-sucesso"><Icone nome="check-circle" peso="bold" />Pago</span></li>
+        </ul>
+      </>
+    )}
+
+    {tipo === 'cliente' && (
+      <>
+        <div class="assessoria">
+          <span class="monograma">LD</span>
+          <span><strong>Luz do Dia Cerimonial</strong><small>Casamento Helena e Davi · 15/05/2027</small></span>
+        </div>
+        <ul class="lista">
+          <li><Icone nome="clipboard-text" /><span class="item"><strong>Briefing</strong><small>Faltam 4 respostas</small></span></li>
+          <li><Icone nome="envelope-simple" /><span class="item"><strong>Convites</strong><small>160 cadastrados</small></span></li>
+          <li><Icone nome="wallet" /><span class="item"><strong>Pagamentos</strong><small>Próxima parcela em 05/12</small></span></li>
+        </ul>
+        <p class="com-tecnologia">com tecnologia Aralu</p>
+      </>
+    )}
+
+    {tipo === 'equipe' && (
+      <>
+        <div class="barra"><span class="barra-titulo">Equipe de apoio</span><span class="barra-data">Dia do evento</span></div>
+        <ul class="lista">
+          <li><span class="monograma pequeno">CA</span><span class="item"><strong>Carla Antunes</strong><small>Recepção · Portaria</small></span><span class="tag tag-sucesso"><Icone nome="check-circle" peso="bold" />Acessou</span></li>
+          <li><span class="monograma pequeno">BM</span><span class="item"><strong>Bruno Matos</strong><small>Buffet · Cronograma e roteiro</small></span><span class="tag tag-info"><Icone nome="paper-plane-tilt" peso="bold" />Enviado</span></li>
+          <li><span class="monograma pequeno">DJ</span><span class="item"><strong>DJ Renan</strong><small>Música · Roteiro</small></span><span class="tag tag-info"><Icone nome="paper-plane-tilt" peso="bold" />Enviado</span></li>
+        </ul>
+      </>
+    )}
+  </div>
+</div>
+
+<style>
+  .tela {
+    background: var(--cor-fundo-superficie);
+    border: 1px solid var(--cor-borda-divisoria);
+    border-radius: var(--raio-folha);
+    box-shadow: var(--sombra-flutua);
+    font-size: 14px;
+    line-height: 20px;
+    overflow: hidden;
+  }
+  .tela-conteudo { padding: 20px; display: grid; gap: 16px; }
+  .tela :global(.icone) { width: 16px; height: 16px; }
+  small { display: block; font-size: 12px; line-height: 16px; font-weight: 500; color: var(--cor-texto-terciario); }
+  strong { font-weight: 600; }
+
+  .barra { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 16px; padding-bottom: 12px; border-bottom: 1px solid var(--cor-borda-divisoria); }
+  .barra-titulo { font-size: 18px; line-height: 26px; font-weight: 600; }
+  .barra-data { font-size: 12px; line-height: 16px; font-weight: 500; color: var(--cor-texto-terciario); font-variant-numeric: tabular-nums; }
+
+  .estado { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+  .ponto-de-luz { width: 12px; height: 12px; border-radius: 50%; background: var(--cor-marca-estrela); }
+  .estado-texto { font-family: var(--fonte-marca); font-weight: 500; font-size: 22px; line-height: 28px; color: var(--cor-acao-principal); }
+  .estado-nota { flex-basis: 100%; color: var(--cor-texto-secundario); }
+
+  .lista { display: grid; gap: 0; }
+  .lista li { display: flex; align-items: center; gap: 12px; padding-block: 10px; border-top: 1px solid var(--cor-borda-divisoria); }
+  .lista li:first-child { border-top: 0; padding-top: 0; }
+  .lista li:last-child { padding-bottom: 0; }
+  .lista li > :global(.icone) { width: 20px; height: 20px; color: var(--cor-icone-apoio); }
+  .item { flex: 1; min-width: 0; }
+  .item strong { display: block; }
+  .hora { width: 44px; flex: none; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--cor-acao-principal); }
+  .valor { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  .tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: var(--raio-tag); border: 1px solid currentColor; font-size: 12px; line-height: 16px; font-weight: 600; white-space: nowrap; }
+  .tag-sucesso { background: var(--cor-sucesso-fundo); color: var(--cor-sucesso-texto); }
+  .tag-alerta { background: var(--cor-alerta-fundo); color: var(--cor-alerta-texto); }
+  .tag-info { background: var(--cor-info-fundo); color: var(--cor-info-texto); }
+  .tag :global(.icone) { width: 12px; height: 12px; }
+
+  .regua { display: flex; align-items: flex-end; justify-content: space-between; height: 16px; }
+  .traco { width: 1px; height: 8px; background: var(--cor-horizonte); }
+  .traco.longo { height: 16px; }
+  .traco.hoje { background: var(--cor-acao-principal); width: 2px; }
+
+  .colunas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .coluna { display: grid; gap: 8px; align-content: start; }
+  .coluna-titulo { font-size: 12px; line-height: 16px; font-weight: 600; }
+  .cartaozinho { padding: 10px; border: 1px solid var(--cor-borda-divisoria); border-radius: var(--raio); background: var(--cor-fundo-pagina); font-size: 12px; line-height: 16px; }
+  .cartaozinho strong { display: block; margin-bottom: 2px; }
+
+  .caixa { width: 20px; height: 20px; flex: none; display: grid; place-items: center; border: 1px solid var(--cor-borda-campo); border-radius: var(--raio-tag); }
+  .caixa.feita { background: var(--cor-acao-principal); border-color: var(--cor-acao-principal); color: var(--cor-texto-sobre-marca); }
+  .caixa :global(.icone) { width: 12px; height: 12px; }
+  .cronograma { display: flex; flex-wrap: wrap; gap: 8px; }
+  .cronograma span { padding: 6px 10px; border-radius: var(--raio); background: var(--cor-fundo-ceu); color: var(--cor-acao-principal); font-size: 12px; line-height: 16px; }
+  .cronograma b { font-weight: 600; font-variant-numeric: tabular-nums; margin-right: 4px; }
+
+  .numeros { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .numeros b { display: block; font-size: 32px; line-height: 36px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--cor-acao-principal); }
+  .faixa { height: 8px; border-radius: var(--raio-tag); background: var(--cor-fundo-superficie-2); overflow: hidden; }
+  .faixa span { display: block; height: 100%; background: var(--cor-acao-principal); }
+
+  .assessoria { display: flex; align-items: center; gap: 12px; padding-bottom: 16px; border-bottom: 1px solid var(--cor-borda-divisoria); }
+  .assessoria strong { display: block; font-family: var(--fonte-marca); font-weight: 500; font-size: 20px; line-height: 26px; }
+  .monograma { width: 48px; height: 48px; flex: none; display: grid; place-items: center; border-radius: 50%; background: var(--cor-fundo-areia); color: var(--cor-acao-principal); font-weight: 600; }
+  .monograma.pequeno { width: 32px; height: 32px; font-size: 12px; }
+  .com-tecnologia { font-size: 12px; line-height: 16px; color: var(--cor-texto-terciario); text-align: center; }
+
+  @media (max-width: 420px) {
+    .tela-conteudo { padding: 16px; }
+    .colunas { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .coluna:nth-child(3) { display: none; }
+    .lista li { flex-wrap: wrap; }
+  }
+</style>

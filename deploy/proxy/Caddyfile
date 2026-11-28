@@ -31,6 +31,16 @@ app.aralu.com.br {
 	reverse_proxy 127.0.0.1:8081
 }
 
+# Medição de visitas da landing (Umami, deploy/metricas). Só o painel e o script; fora dos buscadores.
+metricas.aralu.com.br {
+	encode zstd gzip
+	header {
+		-Server
+		X-Robots-Tag "noindex, nofollow"
+	}
+	reverse_proxy 127.0.0.1:8095
+}
+
 # ── Staging ──────────────────────────────────────────────────────────
 staging.aralu.com.br {
 	encode zstd gzip

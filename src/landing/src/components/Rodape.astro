@@ -1,0 +1,28 @@
+---
+import { empresa, site } from '../config';
+---
+<footer class="rodape">
+  <div class="pagina">
+    <div class="rodape-linha">
+      <p class="assinatura">Aralu · {site.promessa}</p>
+      <nav class="rodape-links" aria-label="Rodapé">
+        <a href="/crm-para-cerimonialistas">CRM para cerimonialistas</a>
+        <a href="/gestao-de-eventos">Gestão de eventos</a>
+        <a href="/planos">Plano</a>
+        <a href="/termos-de-uso">Termos de uso</a>
+        <a href="/politica-de-privacidade">Política de privacidade</a>
+        <a href={`mailto:${empresa.contato}`}>{empresa.contato}</a>
+      </nav>
+    </div>
+    <p class="texto-pequeno">© 2026 Aralu. Sistema para cerimonialistas.</p>
+  </div>
+</footer>
+
+<style>
+  .rodape { padding-block: 40px 48px; border-top: 1px solid var(--cor-borda-divisoria); }
+  .rodape-linha { display: flex; flex-wrap: wrap; gap: 16px 48px; justify-content: space-between; margin-bottom: 24px; }
+  .assinatura { font-family: var(--fonte-marca); font-weight: 500; font-size: 20px; line-height: 28px; color: var(--cor-acao-principal); }
+  .rodape-links { display: flex; flex-wrap: wrap; gap: 4px 24px; }
+  .rodape-links a { display: inline-flex; align-items: center; min-height: 44px; color: var(--cor-texto-secundario); text-decoration: none; }
+  .rodape-links a:hover { color: var(--cor-acao-principal); text-decoration: underline; }
+</style>

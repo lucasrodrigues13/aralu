@@ -1,0 +1,49 @@
+---
+import { plano, site } from '../config';
+import Cta from './Cta.astro';
+import Icone from './Icone.astro';
+interface Props { nivel?: 'h1' | 'h2' }
+const { nivel: Titulo = 'h2' } = Astro.props;
+---
+<section class="secao plano-secao" id="plano">
+  <div class="pagina plano-grade">
+    <div class="plano-texto entra">
+      <Titulo class="titulo-secao">Um plano, com tudo o que você viu aqui</Titulo>
+      <p class="texto-grande">
+        Você usa a Aralu por {plano.diasDeTeste} dias sem pagar e sem cadastrar cartão. Se quiser continuar, assina por cartão ou Pix.
+      </p>
+    </div>
+    <div class="cartao plano-cartao entra">
+      <p class="plano-nome">Plano {plano.nome}</p>
+      <p class="plano-valor"><span class="numero">{plano.valorTexto}</span> <span class="por-mes">por mês</span></p>
+      <p class="plano-teste"><Icone nome="credit-card" />{plano.diasDeTeste} dias para experimentar, sem cartão de crédito</p>
+      <hr class="divisoria" />
+      <ul class="plano-lista">
+        {plano.inclui.map((i) => <li><Icone nome="check" peso="bold" />{i}</li>)}
+      </ul>
+      <Cta />
+      <p class="texto-pequeno">Cancele quando quiser, na própria conta. <a href={site.entrar}>Já tenho conta</a></p>
+    </div>
+  </div>
+</section>
+
+<style>
+  .plano-secao { background: var(--cor-fundo-areia); }
+  .plano-grade { display: grid; gap: 40px; align-items: start; }
+  .plano-texto { display: grid; gap: 20px; }
+  .plano-cartao { padding: 24px; display: grid; gap: 20px; border-radius: var(--raio-folha); }
+  .divisoria { border: 0; height: 1px; margin: 0; background: var(--cor-borda-divisoria); }
+  .plano-nome { font-weight: 600; color: var(--cor-acao-principal); }
+  .plano-valor { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; }
+  .numero { font-size: clamp(40px, 6vw, 56px); line-height: 1; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+  .por-mes { color: var(--cor-texto-secundario); }
+  .plano-teste { display: flex; gap: 10px; align-items: center; padding: 12px 16px; border-radius: var(--raio); background: var(--cor-fundo-ceu); color: var(--cor-acao-principal); font-weight: 600; }
+  .plano-lista { display: grid; gap: 10px; }
+  .plano-lista li { display: flex; gap: 10px; align-items: flex-start; }
+  .plano-lista :global(.icone) { width: 16px; height: 16px; margin-top: 4px; color: var(--cor-acao-principal); }
+  @media (min-width: 900px) {
+    .plano-grade { grid-template-columns: minmax(0, 5fr) minmax(0, 5fr); gap: 80px; }
+    .plano-cartao { padding: 40px; }
+    .plano-texto { position: sticky; top: 112px; }
+  }
+</style>

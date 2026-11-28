@@ -1,0 +1,70 @@
+---
+// Página de uma área do produto (funil ou eventos): abertura, blocos, texto de apoio, plano e fechamento.
+import Base from './Base.astro';
+import Bloco from '../components/Bloco.astro';
+import Cta from '../components/Cta.astro';
+import Fechamento from '../components/Fechamento.astro';
+import Plano from '../components/Plano.astro';
+import Tela from '../components/Tela.astro';
+import type { Bloco as TipoBloco, TipoTela } from '../conteudo';
+
+interface Props {
+  titulo: string;
+  descricao: string;
+  sobretitulo: string;
+  chamada: string;
+  resumo: string;
+  tela: TipoTela;
+  blocos: TipoBloco[];
+}
+const { titulo, descricao, sobretitulo, chamada, resumo, tela, blocos } = Astro.props;
+---
+<Base titulo={titulo} descricao={descricao}>
+  <section class="abertura">
+    <div class="pagina abertura-grade">
+      <div class="abertura-texto">
+        <h1 class="titulo-marca">
+          <span class="sobretitulo">{sobretitulo}</span>
+          {chamada}
+        </h1>
+        <p class="texto-grande">{resumo}</p>
+        <Cta />
+      </div>
+      <div class="abertura-tela"><Tela tipo={tela} /></div>
+    </div>
+  </section>
+
+  <section class="secao">
+    <div class="pagina blocos">
+      {blocos.map((b, i) => <Bloco bloco={b} invertido={i % 2 === 0} nivel="h2" />)}
+    </div>
+  </section>
+
+  <section class="secao leitura-secao">
+    <div class="pagina">
+      <div class="leitura entra"><slot /></div>
+    </div>
+  </section>
+
+  <Plano />
+  <Fechamento />
+</Base>
+
+<style>
+  .abertura { padding-block: 48px 32px; }
+  .abertura-grade { display: grid; gap: 48px; align-items: center; }
+  .abertura-texto { display: grid; gap: 24px; }
+  .abertura-tela { max-width: 560px; }
+  .titulo-marca { font-size: clamp(34px, 5vw, 56px); }
+  .blocos { display: grid; gap: 80px; }
+  .leitura-secao { padding-top: 0; }
+  .leitura { max-width: var(--largura-leitura); display: grid; gap: 16px; }
+  .leitura :global(h2) { font-size: 22px; line-height: 28px; font-weight: 600; margin-top: 24px; }
+  .leitura :global(p) { color: var(--cor-texto-secundario); text-wrap: pretty; }
+  @media (min-width: 1024px) {
+    .abertura { padding-block: 96px 48px; }
+    .abertura-grade { grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: 64px; }
+    .abertura-tela { justify-self: end; width: 100%; }
+    .blocos { gap: 128px; }
+  }
+</style>

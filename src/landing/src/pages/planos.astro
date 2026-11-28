@@ -1,0 +1,29 @@
+---
+import Base from '../layouts/Base.astro';
+import Fechamento from '../components/Fechamento.astro';
+import Perguntas from '../components/Perguntas.astro';
+import Plano from '../components/Plano.astro';
+import { perguntas } from '../conteudo';
+import { plano } from '../config';
+
+const dados = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: perguntas.map((q) => ({
+      '@type': 'Question',
+      name: q.p,
+      acceptedAnswer: { '@type': 'Answer', text: q.r },
+    })),
+  },
+];
+---
+<Base
+  titulo={`Plano e preço: ${plano.valorTexto} por mês, 14 dias sem cartão | Aralu`}
+  descricao={`A Aralu tem um plano: ${plano.valorTexto} por mês, com todas as funções. Experimente por 14 dias sem cadastrar cartão de crédito e cancele quando quiser.`}
+  dados={dados}
+>
+  <Plano nivel="h1" />
+  <Perguntas />
+  <Fechamento />
+</Base>

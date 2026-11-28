@@ -1,0 +1,35 @@
+---
+import { perguntas } from '../conteudo';
+import Icone from './Icone.astro';
+---
+<section class="secao" id="perguntas">
+  <div class="pagina perguntas-grade">
+    <h2 class="titulo-secao entra">Perguntas frequentes</h2>
+    <div class="lista entra">
+      {perguntas.map((q) => (
+        <details>
+          <summary><span>{q.p}</span><Icone nome="plus" /></summary>
+          <p>{q.r}</p>
+        </details>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .perguntas-grade { display: grid; gap: 32px; }
+  .lista { border-top: 1px solid var(--cor-borda-divisoria); max-width: var(--largura-leitura); }
+  details { border-bottom: 1px solid var(--cor-borda-divisoria); }
+  summary {
+    display: flex; justify-content: space-between; align-items: center; gap: 16px;
+    min-height: 64px; padding-block: 16px; cursor: pointer; list-style: none;
+    font-size: 18px; line-height: 26px; font-weight: 600;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary :global(.icone) { color: var(--cor-acao-principal); transition: transform 200ms var(--entrada); }
+  details[open] summary :global(.icone) { transform: rotate(45deg); }
+  details p { padding-bottom: 24px; color: var(--cor-texto-secundario); max-width: 60ch; }
+  @media (min-width: 900px) {
+    .perguntas-grade { grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: 80px; }
+  }
+</style>

@@ -1,0 +1,52 @@
+---
+import { site } from '../config';
+import logo from '../assets/aralu.svg?raw';
+---
+<header class="cabecalho">
+  <div class="pagina cabecalho-linha">
+    <a class="logo" href="/" aria-label="Aralu, página inicial"><Fragment set:html={logo} /></a>
+    <nav class="menu" aria-label="Principal">
+      <a href="/#funcoes">Funções</a>
+      <a href="/crm-para-cerimonialistas">Funil</a>
+      <a href="/gestao-de-eventos">Eventos</a>
+      <a href="/planos">Plano</a>
+    </nav>
+    <div class="acoes">
+      <a class="botao botao-texto" href={site.entrar}>Entrar</a>
+      <a class="botao botao-principal botao-topo" href={site.cadastro} data-umami-event="experimentar-topo">
+        <span class="curto">Experimentar</span><span class="longo">{site.botao}</span>
+      </a>
+    </div>
+  </div>
+</header>
+
+<style>
+  .cabecalho {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: color-mix(in srgb, var(--cor-fundo-pagina) 92%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--cor-borda-divisoria);
+  }
+  .cabecalho-linha { display: flex; align-items: center; gap: 16px; min-height: 64px; }
+  .logo { display: block; width: 88px; flex: none; }
+  .logo :global(svg) { width: 100%; height: auto; }
+  .menu { display: none; gap: 4px; margin-left: 24px; }
+  .menu a {
+    display: inline-flex; align-items: center; min-height: 44px; padding-inline: 12px;
+    border-radius: var(--raio); color: var(--cor-texto-secundario); font-weight: 500; text-decoration: none;
+  }
+  .menu a:hover { background: var(--cor-fundo-superficie-2); color: var(--cor-texto-principal); }
+  .acoes { display: flex; align-items: center; gap: 4px; margin-left: auto; }
+  .botao-topo { min-height: 40px; padding: 8px 16px; }
+  .longo { display: none; }
+  @media (min-width: 600px) {
+    .curto { display: none; }
+    .longo { display: inline; }
+  }
+  @media (min-width: 1024px) {
+    .menu { display: flex; }
+    .logo { width: 96px; }
+  }
+</style>

@@ -114,6 +114,25 @@ services:
       - interna
     restart: unless-stopped
 
+  # Landing estática de aralu.com.br (SPEC-068). Só sobe onde o .env tem COMPOSE_PROFILES=landing
+  # (produção); no staging o serviço é ignorado.
+  landing:
+    profiles: ["landing"]
+    build:
+      context: .
+      dockerfile: src/landing/Dockerfile
+      args:
+        PUBLIC_APP_URL: ${PUBLIC_SCHEME:-http}://${DOMAIN:?defina DOMAIN no .env}
+        PUBLIC_UMAMI_SCRIPT: ${UMAMI_SCRIPT:-}
+        PUBLIC_UMAMI_SITE: ${UMAMI_SITE:-}
+        PUBLIC_DEPOIMENTOS_URL: ${DEPOIMENTOS_URL:-}
+    environment:
+      APP_URL: ${PUBLIC_SCHEME:-http}://${DOMAIN:?defina DOMAIN no .env}
+    ports:
+      - "127.0.0.1:${LANDING_PORT:-8091}:80"
+    mem_limit: 128m
+    restart: unless-stopped
+
 volumes:
   banco:
   storage:

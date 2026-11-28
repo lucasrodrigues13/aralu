@@ -1,0 +1,36 @@
+{
+	servers {
+		trusted_proxies static private_ranges
+	}
+}
+
+:80 {
+	encode zstd gzip
+	root * /srv/landing
+
+	header {
+		Strict-Transport-Security "max-age=86400"
+		X-Frame-Options "DENY"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), geolocation=(), microphone=()"
+	}
+
+	# Arquivos com hash no nome não mudam: cache longo.
+	@fixos path /_astro/*
+	header @fixos Cache-Control "public, max-age=31536000, immutable"
+
+	# Página da landing: o arquivo existe como está ou com .html.
+	@landing file {
+		try_files {path} {path}.html {path}/index.html
+	}
+	handle @landing {
+		rewrite * {file_match.relative}
+		file_server
+	}
+
+	# O resto são links antigos do app (RSVP, proposta, cliente, QR...): vão para o endereço novo (SPEC-069 §4.2).
+	handle {
+		redir {$APP_URL:https://app.aralu.com.br}{uri} permanent
+	}
+}

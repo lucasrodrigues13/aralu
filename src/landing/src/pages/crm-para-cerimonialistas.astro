@@ -1,0 +1,31 @@
+---
+import Area from '../layouts/Area.astro';
+import { blocos } from '../conteudo';
+const daArea = blocos.filter((b) => ['funil', 'cliente', 'dinheiro'].includes(b.id));
+---
+<Area
+  titulo="CRM para cerimonialistas: funil, orçamento e contrato | Aralu"
+  descricao="CRM feito para assessoria de cerimonial: oportunidades por estágio, orçamento com parcelas, contrato com assinatura eletrônica e relatórios. 14 dias sem cartão."
+  sobretitulo="CRM para cerimonialistas"
+  chamada="Cada contato vira proposta, e cada proposta tem resposta"
+  resumo="Você registra a oportunidade, envia o orçamento do seu modelo e acompanha até o contrato assinado. Nenhum contato fica esquecido em conversa."
+  tela="funil"
+  blocos={daArea}
+>
+  <h2>O que um CRM precisa ter para cerimonial</h2>
+  <p>
+    Um CRM genérico fala de "negócios" e "leads". No cerimonial, a oportunidade tem tipo de evento, data prevista, número de convidados, local da cerimônia e da recepção. Na Aralu, esses campos já estão na ficha e alimentam o orçamento e o contrato.
+  </p>
+  <h2>Do orçamento ao evento, sem digitar de novo</h2>
+  <p>
+    Quando o cliente aceita a proposta, as parcelas combinadas viram parcelas do evento. Os dados do contratante preenchem o contrato pelas tags do seu modelo, e a assinatura acontece pela internet.
+  </p>
+  <h2>Saber de onde vêm os seus clientes</h2>
+  <p>
+    Os relatórios mostram oportunidades por fonte, serviço, estágio, região e responsável, além dos motivos de descarte. Você vê quais indicações fecham mais e onde vale investir.
+  </p>
+  <h2>Convidados que viram oportunidades</h2>
+  <p>
+    Na confirmação de presença, o convidado pode dizer que pretende realizar um evento nos próximos anos. Esses contatos chegam ao funil em uma lista separada, prontos para o primeiro contato.
+  </p>
+</Area>

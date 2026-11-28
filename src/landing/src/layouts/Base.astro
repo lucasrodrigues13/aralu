@@ -1,0 +1,79 @@
+---
+import '@fontsource-variable/red-hat-text/index.css';
+import '@fontsource/playfair-display/latin-500.css';
+import '../styles/global.css';
+import Cabecalho from '../components/Cabecalho.astro';
+import Rodape from '../components/Rodape.astro';
+import { medicao, site } from '../config';
+
+interface Props { titulo: string; descricao: string; dados?: object[] }
+const { titulo, descricao, dados = [] } = Astro.props;
+const caminho = Astro.url.pathname.replace(/\.html$/, '').replace(/\/$/, '');
+const canonico = `${site.url}${caminho}`;
+const imagem = `${site.url}/compartilhar.png`;
+---
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{titulo}</title>
+    <meta name="description" content={descricao} />
+    <link rel="canonical" href={canonico} />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="theme-color" content="#f7f4ed" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:site_name" content="Aralu" />
+    <meta property="og:title" content={titulo} />
+    <meta property="og:description" content={descricao} />
+    <meta property="og:url" content={canonico} />
+    <meta property="og:image" content={imagem} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    {dados.map((d) => <script type="application/ld+json" set:html={JSON.stringify(d)} />)}
+    {medicao.script && medicao.site && (
+      <script is:inline defer src={medicao.script} data-website-id={medicao.site} data-do-not-track="true"></script>
+    )}
+  </head>
+  <body>
+    <a class="pular" href="#conteudo">Ir para o conteúdo</a>
+    <Cabecalho />
+    <main id="conteudo">
+      <slot />
+    </main>
+    <Rodape />
+    <script>
+      // Movimento só para quem não pediu "reduzir movimento" (SPEC-068 §5.4).
+      const semMovimento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (!semMovimento) {
+        const itens = document.querySelectorAll('.entra');
+        if ('IntersectionObserver' in window && itens.length) {
+          document.documentElement.classList.add('anima');
+          const observador = new IntersectionObserver(
+            (entradas) => {
+              for (const e of entradas) {
+                if (e.isIntersecting) {
+                  e.target.classList.add('visivel');
+                  observador.unobserve(e.target);
+                }
+              }
+            },
+            { rootMargin: '0px 0px -10% 0px' },
+          );
+          itens.forEach((i) => observador.observe(i));
+        }
+        // Rolagem suave: só a suavização, sem prender a rolagem. Carrega depois da página.
+        const iniciar = async () => {
+          const { default: Lenis } = await import('lenis');
+          new Lenis({ autoRaf: true, anchors: true });
+        };
+        if ('requestIdleCallback' in window) requestIdleCallback(iniciar);
+        else setTimeout(iniciar, 200);
+      }
+    </script>
+  </body>
+</html>

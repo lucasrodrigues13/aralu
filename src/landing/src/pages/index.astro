@@ -1,0 +1,162 @@
+---
+import { Image } from 'astro:assets';
+import Base from '../layouts/Base.astro';
+import Bloco from '../components/Bloco.astro';
+import Cta from '../components/Cta.astro';
+import Depoimentos from '../components/Depoimentos.astro';
+import Fechamento from '../components/Fechamento.astro';
+import Icone from '../components/Icone.astro';
+import Perguntas from '../components/Perguntas.astro';
+import Plano from '../components/Plano.astro';
+import Tela from '../components/Tela.astro';
+import bastidores from '../assets/bastidores.jpg';
+import { blocos, diferenciais, perguntas } from '../conteudo';
+import { plano, site } from '../config';
+
+const titulo = 'Sistema para cerimonialistas: eventos, clientes e pagamentos em dia | Aralu';
+const descricao =
+  'A Aralu organiza funil de vendas, contratos, tarefas, convidados e pagamentos da sua assessoria de cerimonial. Experimente por 14 dias, sem cartão de crédito.';
+
+const dados = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'Aralu',
+    url: site.url,
+    logo: `${site.url}/apple-touch-icon.png`,
+    slogan: site.promessa,
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: 'Aralu',
+    applicationCategory: 'BusinessApplication',
+    operatingSystem: 'Web',
+    url: site.url,
+    description: descricao,
+    inLanguage: 'pt-BR',
+    offers: {
+      '@type': 'Offer',
+      price: plano.valor.toFixed(2),
+      priceCurrency: 'BRL',
+      url: `${site.url}/planos`,
+      description: `Plano ${plano.nome}, por mês. ${plano.diasDeTeste} dias para experimentar, sem cartão de crédito.`,
+    },
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: perguntas.map((q) => ({
+      '@type': 'Question',
+      name: q.p,
+      acceptedAnswer: { '@type': 'Answer', text: q.r },
+    })),
+  },
+];
+---
+<Base titulo={titulo} descricao={descricao} dados={dados}>
+  <section class="abertura">
+    <div class="pagina abertura-grade">
+      <div class="abertura-texto">
+        <h1 class="titulo-marca">
+          <span class="sobretitulo">Sistema para cerimonialistas</span>
+          Tudo em dia, do primeiro contato ao dia do evento
+        </h1>
+        <p class="texto-grande">
+          A Aralu reúne funil de vendas, contratos, tarefas, convidados e pagamentos de todos os seus eventos. Você abre o Painel e sabe o que fazer hoje.
+        </p>
+        <Cta />
+      </div>
+      <div class="abertura-tela"><Tela tipo="painel" /></div>
+    </div>
+  </section>
+
+  <section class="secao" id="funcoes">
+    <div class="pagina">
+      <div class="cabeca entra">
+        <h2 class="titulo-secao">O trabalho da sua assessoria, na ordem em que ele acontece</h2>
+        <p class="texto-grande">Seis áreas que conversam entre si: o que você fecha no funil vira evento, com tarefas, convidados e parcelas.</p>
+      </div>
+      <div class="blocos">
+        {blocos.map((b, i) => <Bloco bloco={b} invertido={i % 2 === 1} />)}
+      </div>
+    </div>
+  </section>
+
+  <section class="dia">
+    <div class="pagina dia-grade">
+      <figure class="dia-foto entra">
+        <Image
+          src={bastidores}
+          alt="Duas cerimonialistas de preto seguram a cauda do vestido de uma cliente que desce uma escada de pedra, as três sorrindo"
+          widths={[480, 800, 1200]}
+          sizes="(min-width: 900px) 50vw, 100vw"
+          quality={70}
+          loading="lazy"
+        />
+      </figure>
+      <div class="dia-texto entra">
+        <h2 class="titulo-secao">No dia do evento, sua atenção fica nas pessoas</h2>
+        <p class="texto-grande">
+          Roteiro, cronograma e lista da portaria estão no celular de quem precisa. Você não procura nada em planilha nem em conversa antiga.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="secao" id="diferenciais">
+    <div class="pagina">
+      <div class="cabeca entra">
+        <h2 class="titulo-secao">Por que a Aralu</h2>
+      </div>
+      <ul class="diferenciais">
+        {diferenciais.map((d) => (
+          <li class="cartao diferencial entra">
+            <Icone nome={d.icone} peso="light" classe="icone-g" />
+            <h3 class="titulo-p">{d.titulo}</h3>
+            <p class="texto-apoio">{d.texto}</p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <Depoimentos />
+  <Plano />
+  <Perguntas />
+  <Fechamento />
+</Base>
+
+<style>
+  .abertura { padding-block: 48px 64px; }
+  .abertura-grade { display: grid; gap: 48px; align-items: center; }
+  .abertura-texto { display: grid; gap: 24px; }
+  .abertura-tela { max-width: 560px; }
+  @media (min-width: 1024px) {
+    .abertura { padding-block: 96px 112px; }
+    .abertura-grade { grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: 64px; }
+    .abertura-tela { justify-self: end; width: 100%; }
+  }
+
+  .cabeca { display: grid; gap: 20px; max-width: 760px; margin-bottom: 64px; }
+  .blocos { display: grid; gap: 80px; }
+  @media (min-width: 1024px) {
+    .cabeca { margin-bottom: 96px; }
+    .blocos { gap: 128px; }
+  }
+
+  .dia { background: var(--cor-fundo-areia); }
+  .dia-grade { display: grid; gap: 32px; align-items: center; padding-block: 64px; }
+  .dia-foto img { width: 100%; aspect-ratio: 5 / 4; object-fit: cover; object-position: 50% 30%; border-radius: var(--raio-folha); }
+  .dia-texto { display: grid; gap: 20px; }
+  @media (min-width: 900px) {
+    .dia-grade { grid-template-columns: 1fr 1fr; gap: 80px; padding-block: 112px; }
+  }
+
+  .diferenciais { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+  .diferencial { padding: 24px; display: grid; gap: 12px; align-content: start; }
+  .diferencial :global(.icone) { color: var(--cor-icone-apoio); margin-bottom: 8px; }
+  @media (min-width: 1024px) {
+    .diferencial { padding: 32px; }
+  }
+</style>
